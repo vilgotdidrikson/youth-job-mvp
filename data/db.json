@@ -1,0 +1,268 @@
+{
+  "users": [
+    {
+      "id": "admin-1",
+      "email": "admin@workspot.se",
+      "password": "admin123",
+      "role": "admin",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "youth-demo",
+      "email": "demo@youth.se",
+      "password": "demo123",
+      "role": "youth",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-demo",
+      "email": "demo@company.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-cafe",
+      "email": "jobs@fikaexpress.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-events",
+      "email": "team@eventjunior.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-logistics",
+      "email": "hello@packsnabb.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-kids",
+      "email": "work@barnfokus.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "company-tech",
+      "email": "apply@codecampyouth.se",
+      "password": "demo123",
+      "role": "company",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "youthProfiles": [
+    {
+      "userId": "youth-demo",
+      "name": "Maja Nilsson",
+      "age": 17,
+      "city": "Stockholm",
+      "targetRole": "Cafe barista",
+      "skills": [
+        "Customer service",
+        "Social media",
+        "Teamwork"
+      ],
+      "interests": [
+        "Retail",
+        "Cafe work",
+        "Events"
+      ],
+      "experience": [
+        "Volunteered at school event check-in desk",
+        "Helped in local cafe during weekend rush"
+      ],
+      "availability": "Weekdays after school + weekends",
+      "premiumBadge": false,
+      "cv": {
+        "summary": "Service-minded student in Stockholm looking for part-time and summer opportunities.",
+        "content": "Maja Nilsson\nStockholm, Sweden\n\nSummary\nService-minded high school student with school event volunteering and strong teamwork skills.\n\nSkills\n- Customer service\n- Social media\n- Teamwork\n\nInterests\nRetail, cafe work, events.\n\nExperience\n- Volunteered at school event check-in desk.\n- Helped in local cafe during weekend rush.\n\nAvailability\nWeekdays after school and weekends.",
+        "qualityScore": 80,
+        "updatedAt": "2026-02-20T12:00:00.000Z"
+      },
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "companyProfiles": [
+    {
+      "userId": "company-demo",
+      "companyName": "Nordic Youth Retail",
+      "city": "Stockholm",
+      "description": "Retail chain hiring youth for flexible shifts.",
+      "tier": "free",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "company-cafe",
+      "companyName": "Fika Express",
+      "city": "Stockholm",
+      "description": "Cafe group with evening and weekend shifts.",
+      "tier": "premium",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "company-events",
+      "companyName": "Event Junior",
+      "city": "Gothenburg",
+      "description": "Temporary event and festival staffing for youth.",
+      "tier": "free",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "company-logistics",
+      "companyName": "PackSnabb",
+      "city": "Malmo",
+      "description": "Warehouse and e-commerce support for seasonal peaks.",
+      "tier": "free",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "company-kids",
+      "companyName": "BarnFokus",
+      "city": "Uppsala",
+      "description": "After-school and family support programs.",
+      "tier": "free",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "company-tech",
+      "companyName": "CodeCamp Youth",
+      "city": "Stockholm",
+      "description": "Tech workshops and junior helper roles.",
+      "tier": "premium",
+      "updatedAt": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "job-demo-1",
+      "companyId": "company-demo",
+      "title": "Summer Store Assistant",
+      "description": "Help customers, restock shelves, and support checkout flow.",
+      "location": "Stockholm",
+      "jobType": "summer",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-demo-2",
+      "companyId": "company-demo",
+      "title": "Weekend Cashier Helper",
+      "description": "Support senior cashier and greet customers during peak hours.",
+      "location": "Stockholm",
+      "jobType": "part-time",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-cafe-1",
+      "companyId": "company-cafe",
+      "title": "Junior Barista",
+      "description": "Prepare drinks, handle counter orders, and keep cafe area clean.",
+      "location": "Stockholm",
+      "jobType": "part-time",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-cafe-2",
+      "companyId": "company-cafe",
+      "title": "Cafe Summer Staff",
+      "description": "Support kitchen prep, customer service, and table service.",
+      "location": "Stockholm",
+      "jobType": "summer",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-events-1",
+      "companyId": "company-events",
+      "title": "Festival Crew Assistant",
+      "description": "Help with visitor guidance, wristband checks, and queue flow.",
+      "location": "Gothenburg",
+      "jobType": "temporary",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-events-2",
+      "companyId": "company-events",
+      "title": "Event Setup Helper",
+      "description": "Assist in setup and teardown for youth sports events.",
+      "location": "Gothenburg",
+      "jobType": "temporary",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-log-1",
+      "companyId": "company-logistics",
+      "title": "Package Sorting Assistant",
+      "description": "Sort and label parcels with team leads in evening shifts.",
+      "location": "Malmo",
+      "jobType": "part-time",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-log-2",
+      "companyId": "company-logistics",
+      "title": "Summer Warehouse Helper",
+      "description": "Support inbound and outbound package handling.",
+      "location": "Malmo",
+      "jobType": "summer",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-kids-1",
+      "companyId": "company-kids",
+      "title": "After-School Activity Helper",
+      "description": "Support group activities and check-in for younger students.",
+      "location": "Uppsala",
+      "jobType": "part-time",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-kids-2",
+      "companyId": "company-kids",
+      "title": "Weekend Babysitting Support",
+      "description": "Assist families with playful, safe childcare sessions.",
+      "location": "Uppsala",
+      "jobType": "temporary",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-tech-1",
+      "companyId": "company-tech",
+      "title": "Coding Workshop Helper",
+      "description": "Help younger students during beginner coding sessions.",
+      "location": "Stockholm",
+      "jobType": "temporary",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "job-tech-2",
+      "companyId": "company-tech",
+      "title": "Content Assistant (Tech)",
+      "description": "Create short social posts and event photos for workshop days.",
+      "location": "Stockholm",
+      "jobType": "part-time",
+      "active": true,
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "youthActions": [],
+  "companyDecisions": [],
+  "matches": [],
+  "notifications": []
+}
