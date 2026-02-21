@@ -55,6 +55,13 @@
       "password": "demo123",
       "role": "company",
       "createdAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "069cde2f-fe60-433d-9896-82308f8da7e5",
+      "email": "wehfowefoef@gmail.com",
+      "password": "oiasdoajg",
+      "role": "youth",
+      "createdAt": "2026-02-21T14:03:32.499Z"
     }
   ],
   "youthProfiles": [
@@ -87,6 +94,20 @@
         "updatedAt": "2026-02-20T12:00:00.000Z"
       },
       "updatedAt": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "userId": "069cde2f-fe60-433d-9896-82308f8da7e5",
+      "name": "",
+      "age": null,
+      "city": "",
+      "targetRole": "",
+      "skills": [],
+      "interests": [],
+      "experience": [],
+      "availability": "",
+      "premiumBadge": false,
+      "cv": null,
+      "updatedAt": "2026-02-21T14:03:32.499Z"
     }
   ],
   "companyProfiles": [

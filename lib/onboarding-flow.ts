@@ -16,6 +16,8 @@ export interface OnboardingDraft {
   experience: string[];
 }
 
+type FlowLanguage = "en" | "sv";
+
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "name",
   "age",
@@ -27,15 +29,27 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   "experience",
 ];
 
-const STEP_QUESTIONS: Record<OnboardingStep, string> = {
-  name: "What is your name?",
-  age: "How old are you? (12-20)",
-  city: "Which city do you live in?",
-  targetRole: "What type of job do you want first?",
-  interests: "What interests you most?",
-  skills: "What are your strongest skills?",
-  availability: "When can you work?",
-  experience: "Any earlier experience? One short example is enough.",
+const STEP_QUESTIONS: Record<FlowLanguage, Record<OnboardingStep, string>> = {
+  en: {
+    name: "What is your name?",
+    age: "How old are you? (12-20)",
+    city: "Which city do you live in?",
+    targetRole: "What type of job do you want first?",
+    interests: "What interests you most?",
+    skills: "What are your strongest skills?",
+    availability: "When can you work?",
+    experience: "Any earlier experience? One short example is enough.",
+  },
+  sv: {
+    name: "Vad heter du?",
+    age: "Hur gammal är du? (12-20)",
+    city: "Vilken stad bor du i?",
+    targetRole: "Vilken typ av jobb vill du börja med?",
+    interests: "Vad är du mest intresserad av?",
+    skills: "Vilka är dina starkaste färdigheter?",
+    availability: "När kan du jobba?",
+    experience: "Har du tidigare erfarenhet? Ett kort exempel räcker.",
+  },
 };
 
 function normalizeList(value: string): string[] {
@@ -159,25 +173,36 @@ export function completionPercent(draft: OnboardingDraft): number {
   return Math.round((done / ONBOARDING_STEPS.length) * 100);
 }
 
-export function questionForStep(step: OnboardingStep): string {
-  return STEP_QUESTIONS[step];
+export function questionForStep(step: OnboardingStep, language: FlowLanguage = "en"): string {
+  return STEP_QUESTIONS[language][step];
 }
 
 export function applyAnswer(input: {
   draft: OnboardingDraft;
   step: OnboardingStep;
   answer: string;
+  language?: FlowLanguage;
 }): { accepted: boolean; hint?: string; draft: OnboardingDraft } {
   const next = { ...input.draft };
   const answer = input.answer.trim();
+  const language = input.language || "en";
+  const t = (en: string, sv: string): string => (language === "sv" ? sv : en);
   if (!answer) {
-    return { accepted: false, hint: "Please write a short answer.", draft: next };
+    return {
+      accepted: false,
+      hint: t("Please write a short answer.", "Skriv ett kort svar."),
+      draft: next,
+    };
   }
 
   if (input.step === "name") {
     const name = parseName(answer);
     if (name.length < 2) {
-      return { accepted: false, hint: "Please write your full first name.", draft: next };
+      return {
+        accepted: false,
+        hint: t("Please write your full first name.", "Skriv ditt fullständiga förnamn."),
+        draft: next,
+      };
     }
     next.name = name;
     return { accepted: true, draft: next };
@@ -186,7 +211,14 @@ export function applyAnswer(input: {
   if (input.step === "age") {
     const age = parseAge(answer);
     if (!age || age < 12 || age > 20) {
-      return { accepted: false, hint: "Please enter an age between 12 and 20.", draft: next };
+      return {
+        accepted: false,
+        hint: t(
+          "Please enter an age between 12 and 20.",
+          "Ange en ålder mellan 12 och 20.",
+        ),
+        draft: next,
+      };
     }
     next.age = age;
     return { accepted: true, draft: next };
@@ -195,7 +227,7 @@ export function applyAnswer(input: {
   if (input.step === "city") {
     const city = parseCity(answer);
     if (city.length < 2) {
-      return { accepted: false, hint: "Please type your city.", draft: next };
+      return { accepted: false, hint: t("Please type your city.", "Skriv din stad."), draft: next };
     }
     next.city = city;
     return { accepted: true, draft: next };
@@ -204,7 +236,11 @@ export function applyAnswer(input: {
   if (input.step === "targetRole") {
     const roles = parseRoles(answer);
     if (roles.length === 0) {
-      return { accepted: false, hint: "Pick or type a role you want.", draft: next };
+      return {
+        accepted: false,
+        hint: t("Pick or type a role you want.", "Välj eller skriv en roll du vill ha."),
+        draft: next,
+      };
     }
     next.targetRole = roles.join(", ");
     return { accepted: true, draft: next };
@@ -213,7 +249,11 @@ export function applyAnswer(input: {
   if (input.step === "interests") {
     const interests = unique(normalizeList(answer)).slice(0, 8);
     if (interests.length === 0) {
-      return { accepted: false, hint: "Add at least one interest.", draft: next };
+      return {
+        accepted: false,
+        hint: t("Add at least one interest.", "Lägg till minst ett intresse."),
+        draft: next,
+      };
     }
     next.interests = interests;
     return { accepted: true, draft: next };
@@ -222,7 +262,11 @@ export function applyAnswer(input: {
   if (input.step === "skills") {
     const skills = unique(normalizeList(answer)).slice(0, 12);
     if (skills.length < 2) {
-      return { accepted: false, hint: "Add at least two skills.", draft: next };
+      return {
+        accepted: false,
+        hint: t("Add at least two skills.", "Lägg till minst två färdigheter."),
+        draft: next,
+      };
     }
     next.skills = skills;
     return { accepted: true, draft: next };
@@ -230,7 +274,14 @@ export function applyAnswer(input: {
 
   if (input.step === "availability") {
     if (answer.length < 3) {
-      return { accepted: false, hint: "Add a short availability sentence.", draft: next };
+      return {
+        accepted: false,
+        hint: t(
+          "Add a short availability sentence.",
+          "Skriv en kort mening om din tillgänglighet.",
+        ),
+        draft: next,
+      };
     }
     next.availability = answer;
     return { accepted: true, draft: next };
@@ -238,7 +289,11 @@ export function applyAnswer(input: {
 
   const experience = unique(normalizeList(answer)).slice(0, 8);
   if (experience.length === 0) {
-    return { accepted: false, hint: "Share one short experience.", draft: next };
+    return {
+      accepted: false,
+      hint: t("Share one short experience.", "Dela en kort erfarenhet."),
+      draft: next,
+    };
   }
   next.experience = experience;
   return { accepted: true, draft: next };

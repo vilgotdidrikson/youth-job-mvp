@@ -92,6 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       draft,
       step,
       answer: body.answer,
+      language: body.language || "en",
     });
     draft = result.draft;
 
@@ -118,7 +119,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     done,
     completion: completionPercent(draft),
     step: done ? "done" : activeStep,
-    question: done ? "Great. Review and save your profile." : questionForStep(activeStep),
+    question:
+      done
+        ? body.language === "sv"
+          ? "Bra. Granska och spara din profil."
+          : "Great. Review and save your profile."
+        : questionForStep(activeStep, body.language || "en"),
     validationError,
     recommendations: done ? [] : recommendations(activeStep),
     draftProfile: draft,

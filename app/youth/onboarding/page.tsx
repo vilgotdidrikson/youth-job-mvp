@@ -107,21 +107,7 @@ export default function YouthOnboardingPage() {
     return recommendations.slice(start, end);
   }, [recommendationPage, recommendations]);
 
-  const readyToSave = useMemo(
-    () =>
-      !!(
-        draftProfile.name &&
-        draftProfile.age &&
-        draftProfile.city &&
-        draftProfile.targetRole &&
-        draftProfile.skills.length > 0 &&
-        draftProfile.interests.length > 0 &&
-        draftProfile.experience.length > 0 &&
-        draftProfile.availability &&
-        draftCv
-      ),
-    [draftCv, draftProfile],
-  );
+  const readyToSave = useMemo(() => !!draftCv, [draftCv]);
 
   const hydrateCollectorForStep = useCallback(
     (nextStep: OnboardingStep | "done", nextDraft: DraftProfile) => {

@@ -61,11 +61,11 @@ const ACTION_VERBS_EN = [
 ];
 
 const ACTION_VERBS_SV = [
-  "Stottade",
+  "Stödde",
   "Organiserade",
-  "Hjalpte till med",
+  "Hjälpte till med",
   "Koordinerade",
-  "Ansvarade for",
+  "Ansvarade för",
   "Bidrog till",
 ];
 
@@ -103,6 +103,7 @@ function inferKeywords(
   targetRole: string | undefined,
   targetJobType: JobType | "any",
   skills: string[],
+  language: CvLanguage,
 ): string[] {
   const keywords = [...skills];
   if (targetRole) {
@@ -112,16 +113,16 @@ function inferKeywords(
     keywords.push(targetJobType);
   }
   if (targetJobType === "summer") {
-    keywords.push("seasonal");
-    keywords.push("flexible");
+    keywords.push(language === "sv" ? "säsongsjobb" : "seasonal");
+    keywords.push(language === "sv" ? "flexibel" : "flexible");
   }
   if (targetJobType === "part-time") {
-    keywords.push("evening shifts");
-    keywords.push("weekends");
+    keywords.push(language === "sv" ? "kvällspass" : "evening shifts");
+    keywords.push(language === "sv" ? "helger" : "weekends");
   }
   if (targetJobType === "temporary") {
-    keywords.push("fast onboarding");
-    keywords.push("adaptable");
+    keywords.push(language === "sv" ? "snabb introduktion" : "fast onboarding");
+    keywords.push(language === "sv" ? "anpassningsbar" : "adaptable");
   }
   return unique(keywords).slice(0, 14);
 }
@@ -130,6 +131,7 @@ function inferExperienceHints(
   text: string,
   interests: string[],
   profileExperience: string[],
+  language: CvLanguage,
 ): string[] {
   const hintsFromText = text
     .split(/[.!?\n]/)
@@ -148,10 +150,15 @@ function inferExperienceHints(
   }
 
   if (interests.length > 0) {
+    if (language === "sv") {
+      return interests.slice(0, 3).map((interest) => `Aktivt intresse för ${interest}.`);
+    }
     return interests.slice(0, 3).map((interest) => `Active interest in ${interest}.`);
   }
 
-  return ["Contributed to school and community activities."];
+  return language === "sv"
+    ? ["Bidrog i skol- och samhällsaktiviteter."]
+    : ["Contributed to school and community activities."];
 }
 
 function buildExperienceBullets(
@@ -167,7 +174,7 @@ function buildExperienceBullets(
 
 function resolveToneText(tone: CvTone, language: CvLanguage): string {
   if (language === "sv") {
-    if (tone === "confident") return "malinriktad och driven";
+    if (tone === "confident") return "målinriktad och driven";
     if (tone === "friendly") return "positiv och samarbetsinriktad";
     return "ansvarsfull och professionell";
   }
@@ -190,13 +197,21 @@ function buildSummary(input: {
     targetRole || (language === "sv" ? "deltidsarbete" : "part-time opportunities");
   const topSkills = skills.slice(0, 4).join(", ");
   const availability = profile.availability || (language === "sv" ? "flexibel" : "flexible");
-  const city = profile.city || "Sweden";
+  const city = profile.city || (language === "sv" ? "Sverige" : "Sweden");
 
   if (language === "sv") {
-    return `${profile.name || "Kandidat"} ar en ${toneText} ungdom i ${city} som soker ${roleText}. Stark inom ${topSkills || "samarbete och service"} med tillganglighet: ${availability}.`;
+    const typeText =
+      targetJobType === "any"
+        ? "deltids- och tillfälliga jobb"
+        : targetJobType === "part-time"
+          ? "deltid"
+          : targetJobType === "temporary"
+            ? "tillfälligt jobb"
+            : "sommarjobb";
+    return `Jag är en ${toneText} ungdom i ${city} som söker ${roleText} (${typeText}). Jag är stark inom ${topSkills || "samarbete och service"} och har tillgänglighet: ${availability}.`;
   }
   const typeText = targetJobType === "any" ? "part-time and temporary work" : targetJobType;
-  return `${profile.name || "Candidate"} is a ${toneText} youth based in ${city} seeking ${roleText} (${typeText}). Strong in ${topSkills || "teamwork and service"} with availability: ${availability}.`;
+  return `I am a ${toneText} youth based in ${city} seeking ${roleText} (${typeText}). I am strong in ${topSkills || "teamwork and service"} and available: ${availability}.`;
 }
 
 function buildSuggestions(input: {
@@ -204,19 +219,36 @@ function buildSuggestions(input: {
   skills: string[];
   experienceHints: string[];
   targetRole?: string;
+  language: CvLanguage;
 }): string[] {
   const suggestions: string[] = [];
+  const t = (en: string, sv: string): string => (input.language === "sv" ? sv : en);
   if (input.skills.length < 4) {
-    suggestions.push("Add at least 2-3 more concrete skills.");
+    suggestions.push(t("Add at least 2-3 more concrete skills.", "Lägg till minst 2-3 konkreta färdigheter till."));
   }
   if (input.experienceHints.length < 2) {
-    suggestions.push("Describe one school project or volunteer activity with outcomes.");
+    suggestions.push(
+      t(
+        "Describe one school project or volunteer activity with outcomes.",
+        "Beskriv ett skolprojekt eller volontärarbete med resultat.",
+      ),
+    );
   }
   if (!input.profile.availability) {
-    suggestions.push("Add exact availability (e.g., weekdays after 16:00, weekends).");
+    suggestions.push(
+      t(
+        "Add exact availability (e.g., weekdays after 16:00, weekends).",
+        "Lägg till exakt tillgänglighet (t.ex. vardagar efter 16:00, helger).",
+      ),
+    );
   }
   if (!input.targetRole) {
-    suggestions.push("Set a target role to tailor the CV for matching.");
+    suggestions.push(
+      t(
+        "Set a target role to tailor the CV for matching.",
+        "Välj en målroll för att anpassa CV:t bättre för matchning.",
+      ),
+    );
   }
   return suggestions;
 }
@@ -253,6 +285,7 @@ export function generateCv(input: CvGenerateInput): CvGenerateOutput {
     sourceText,
     input.profile.interests,
     input.profile.experience || [],
+    language,
   );
   const experienceBullets = buildExperienceBullets(experienceHints, language);
   const summary = buildSummary({
@@ -263,12 +296,13 @@ export function generateCv(input: CvGenerateInput): CvGenerateOutput {
     targetRole,
     targetJobType,
   });
-  const keywords = inferKeywords(targetRole, targetJobType, skills);
+  const keywords = inferKeywords(targetRole, targetJobType, skills, language);
   const suggestions = buildSuggestions({
     profile: input.profile,
     skills,
     experienceHints,
     targetRole,
+    language,
   });
   const qualityScore = computeQualityScore({
     profile: input.profile,
@@ -278,19 +312,21 @@ export function generateCv(input: CvGenerateInput): CvGenerateOutput {
     text: sourceText,
   });
 
-  const name = input.profile.name || "Youth Candidate";
-  const city = input.profile.city || "Sweden";
+  const name = input.profile.name || (language === "sv" ? "Ung kandidat" : "Youth Candidate");
+  const city = input.profile.city || "";
+  const country = language === "sv" ? "Sverige" : "Sweden";
+  const locationLine = city ? `${city}, ${country}` : country;
   const interests = input.profile.interests.length
     ? input.profile.interests
     : language === "sv"
-      ? ["Service", "Butik", "Larande"]
+      ? ["Service", "Butik", "Lärande"]
       : ["Service", "Retail", "Learning"];
   const availability =
     input.profile.availability ||
-    (language === "sv" ? "Flexibel enligt overenskommelse" : "Flexible by agreement");
+    (language === "sv" ? "Flexibel enligt överenskommelse" : "Flexible by agreement");
   const ageLine = input.profile.age
     ? language === "sv"
-      ? `${input.profile.age} ar`
+      ? `${input.profile.age} år`
       : `${input.profile.age} years old`
     : "";
 
@@ -303,9 +339,9 @@ export function generateCv(input: CvGenerateInput): CvGenerateOutput {
           experience: "Erfarenhet och projekt",
           education: "Utbildning",
           interests: "Intressen",
-          availability: "Tillganglighet",
+          availability: "Tillgänglighet",
           references: "Referenser",
-          keywords: "Sokord for matchning",
+          keywords: "Sökord för matchning",
         }
       : {
           title: "CV",
@@ -321,66 +357,86 @@ export function generateCv(input: CvGenerateInput): CvGenerateOutput {
 
   const contactEmail = `${name.toLowerCase().replace(/\s+/g, ".")}@mail.com`;
   const roleLine = targetRole
-    ? `${language === "sv" ? "Soker roll" : "Target Role"}: ${targetRole}`
+    ? `${language === "sv" ? "Målroll" : "Target Role"}: ${targetRole}`
     : "";
   const educationLine =
     language === "sv"
-      ? "Pagaende gymnasiestudier (eller motsvarande)."
+      ? "Pågående gymnasiestudier (eller motsvarande)."
       : "Ongoing upper-secondary studies (or equivalent).";
   const referencesLine =
     language === "sv"
-      ? "Referenser lamnas pa begaran."
+      ? "Referenser lämnas på begäran."
       : "References available on request.";
 
+  const sectionTitle = (title: string): string => `**${title}**`;
   const content = [
-    headings.title,
-    "==============================",
-    name,
-    ageLine ? `${city}, Sweden | ${ageLine}` : `${city}, Sweden`,
+    name.toUpperCase(),
+    ageLine ? `${locationLine} | ${ageLine}` : locationLine,
     `${language === "sv" ? "Kontakt" : "Contact"}: ${contactEmail} | +46 70 000 00 00`,
     roleLine,
     "",
-    headings.summary,
-    "------------------------------",
+    sectionTitle(headings.summary),
+    "",
     summary,
     "",
-    headings.skills,
-    "------------------------------",
+    "",
+    sectionTitle(headings.skills),
+    "",
     ...skills.map((skill) => `- ${skill}`),
     "",
-    headings.experience,
-    "------------------------------",
+    "",
+    sectionTitle(headings.experience),
+    "",
     ...experienceBullets.map((bullet) => `- ${bullet}`),
     "",
-    headings.education,
-    "------------------------------",
+    "",
+    sectionTitle(headings.education),
+    "",
     `- ${educationLine}`,
     "",
-    headings.interests,
-    "------------------------------",
+    "",
+    sectionTitle(headings.interests),
+    "",
     ...interests.map((interest) => `- ${interest}`),
     "",
-    headings.availability,
-    "------------------------------",
+    "",
+    sectionTitle(headings.availability),
+    "",
     availability,
     "",
-    headings.references,
-    "------------------------------",
+    "",
+    sectionTitle(headings.references),
+    "",
     referencesLine,
     "",
-    headings.keywords,
-    "------------------------------",
+    "",
+    sectionTitle(headings.keywords),
+    "",
     keywords.join(", "),
   ].join("\n");
 
   const highlights = [
-    skills.length >= 5 ? "Skill coverage is strong." : "Add more role-specific skills.",
+    skills.length >= 5
+      ? language === "sv"
+        ? "Stark täckning av relevanta färdigheter."
+        : "Skill coverage is strong."
+      : language === "sv"
+        ? "Lägg till fler rollspecifika färdigheter."
+        : "Add more role-specific skills.",
     experienceHints.length >= 3
-      ? "Experience signals are clear."
-      : "Add one more concrete experience example.",
+      ? language === "sv"
+        ? "Erfarenheten är tydlig och konkret."
+        : "Experience signals are clear."
+      : language === "sv"
+        ? "Lägg till ytterligare ett konkret exempel på erfarenhet."
+        : "Add one more concrete experience example.",
     qualityScore >= 80
-      ? "CV quality is high for MVP matching."
-      : "Improve details to increase match quality.",
+      ? language === "sv"
+        ? "CV-kvaliteten är hög för matchning i MVP."
+        : "CV quality is high for MVP matching."
+      : language === "sv"
+        ? "Förbättra detaljer för bättre matchningskvalitet."
+        : "Improve details to increase match quality.",
   ];
 
   return {
@@ -406,12 +462,13 @@ export function generateCvChatReply(input: {
     text,
     input.profile.interests,
     input.profile.experience || [],
+    "en",
   );
 
   const missingFields: string[] = [];
   if (extractedSkills.length < 4) missingFields.push("skills");
   if (extractedExperienceHints.length < 2) missingFields.push("experience");
-  if (!input.profile.availability && !/week|helg|kvall|evening|weekend/i.test(text)) {
+  if (!input.profile.availability && !/week|helg|kvall|kväll|evening|weekend/i.test(text)) {
     missingFields.push("availability");
   }
   if (!/apply|role|jobb|position|assistant|cashier|barista|lager|store/i.test(text)) {
