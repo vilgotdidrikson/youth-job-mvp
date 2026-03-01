@@ -1,7 +1,7 @@
 import { OnboardingStep, YouthProfile } from "@/lib/types";
 import {
-  CITY_RECOMMENDATIONS,
-  ROLE_RECOMMENDATIONS,
+  ALL_CITY_RECOMMENDATIONS,
+  ALL_ROLE_RECOMMENDATIONS,
   recommendationsForStep,
 } from "@/lib/recommendations";
 
@@ -105,10 +105,29 @@ function parseName(text: string): string {
 
 function parseCity(text: string): string {
   const lowered = text.toLowerCase();
-  const known = CITY_RECOMMENDATIONS.find((city) =>
+  const known = ALL_CITY_RECOMMENDATIONS.find((city) =>
     lowered.includes(city.toLowerCase()),
   );
-  if (known) return known;
+  if (known) {
+    const cityCanonicalMap: Record<string, string> = {
+      gothenburg: "Göteborg",
+      malmo: "Malmö",
+      vasteras: "Västerås",
+      orebro: "Örebro",
+      linkoping: "Linköping",
+      jonkoping: "Jönköping",
+      norrkoping: "Norrköping",
+      umea: "Umeå",
+      gavle: "Gävle",
+      boras: "Borås",
+      sodertalje: "Södertälje",
+      vaxjo: "Växjö",
+      lulea: "Luleå",
+      trollhattan: "Trollhättan",
+      skovde: "Skövde",
+    };
+    return cityCanonicalMap[known.toLowerCase()] || known;
+  }
   return text
     .replace(/^(i live in|from|bor i|in)\s*/i, "")
     .trim();
@@ -126,7 +145,7 @@ function parseRoles(text: string): string[] {
     .map((part) => parseRole(part))
     .filter(Boolean);
 
-  const matchedRecommended = ROLE_RECOMMENDATIONS.filter((role) =>
+  const matchedRecommended = ALL_ROLE_RECOMMENDATIONS.filter((role) =>
     normalized.some((entry) =>
       role.toLowerCase().includes(entry.toLowerCase()) ||
       entry.toLowerCase().includes(role.toLowerCase()),
@@ -305,6 +324,9 @@ export function nextStep(step: OnboardingStep): OnboardingStep | null {
   return ONBOARDING_STEPS[index + 1];
 }
 
-export function recommendations(step: OnboardingStep): string[] {
-  return recommendationsForStep(step);
+export function recommendations(
+  step: OnboardingStep,
+  language: FlowLanguage = "en",
+): string[] {
+  return recommendationsForStep(step, language);
 }

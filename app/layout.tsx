@@ -15,7 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "WorkSpot Youth Jobs",
   description:
-    "Mobile-first job matching platform for youth in Sweden and companies hiring for part-time, temporary, and summer roles.",
+    "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
 };
 
 export default function RootLayout({

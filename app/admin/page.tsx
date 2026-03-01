@@ -44,6 +44,13 @@ export default function AdminPage() {
   const [overview, setOverview] = useState<AdminOverviewResponse | null>(null);
   const [error, setError] = useState("");
 
+  const handleLogout = () => {
+    if (!window.confirm("Är du säker på att du vill logga ut?")) {
+      return;
+    }
+    logout();
+  };
+
   useEffect(() => {
     if (!user) return;
     const loadOverview = async () => {
@@ -60,7 +67,7 @@ export default function AdminPage() {
   }, [user]);
 
   if (loading || !user) {
-    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Loading...</div>;
+    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Laddar...</div>;
   }
 
   return (
@@ -68,10 +75,10 @@ export default function AdminPage() {
       <header className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-[#4f6a8a]">Admin</p>
-          <h1 className="text-2xl font-semibold text-[#132640]">Platform Overview</h1>
+          <h1 className="text-2xl font-semibold text-[#132640]">Plattformsöversikt</h1>
         </div>
-        <button className="secondary-btn px-3 py-2 text-sm" onClick={logout}>
-          Log out
+        <button className="secondary-btn px-3 py-2 text-sm" onClick={handleLogout}>
+          Logga ut
         </button>
       </header>
 
@@ -80,19 +87,19 @@ export default function AdminPage() {
       )}
 
       {!overview && !error && (
-        <div className="glass-card p-4 text-sm text-[#3f6186]">Loading overview...</div>
+        <div className="glass-card p-4 text-sm text-[#3f6186]">Laddar översikt...</div>
       )}
 
       {overview && (
         <>
           <section className="grid grid-cols-2 gap-2">
             {[
-              { label: "Users", value: overview.stats.users },
-              { label: "Youth", value: overview.stats.youthProfiles },
-              { label: "Companies", value: overview.stats.companies },
-              { label: "Jobs", value: overview.stats.jobs },
-              { label: "Matches", value: overview.stats.matches },
-              { label: "Interests", value: overview.stats.interests },
+              { label: "Användare", value: overview.stats.users },
+              { label: "Ungdomar", value: overview.stats.youthProfiles },
+              { label: "Företag", value: overview.stats.companies },
+              { label: "Jobb", value: overview.stats.jobs },
+              { label: "Matchningar", value: overview.stats.matches },
+              { label: "Intressen", value: overview.stats.interests },
             ].map((item) => (
               <article key={item.label} className="glass-card p-3">
                 <p className="text-xs uppercase tracking-[0.12em] text-[#5d7691]">{item.label}</p>
@@ -102,21 +109,21 @@ export default function AdminPage() {
           </section>
 
           <section className="glass-card p-4">
-            <p className="text-sm font-semibold text-[#17365b]">Monetization Snapshot</p>
+            <p className="text-sm font-semibold text-[#17365b]">Intäktsöversikt</p>
             <p className="mt-2 text-sm text-[#2f4f74]">
-              Free companies: {overview.monetization.companiesByTier.free}
+              Free-företag: {overview.monetization.companiesByTier.free}
             </p>
             <p className="text-sm text-[#2f4f74]">
-              Premium companies: {overview.monetization.companiesByTier.premium}
+              Premium-företag: {overview.monetization.companiesByTier.premium}
             </p>
             <p className="text-sm text-[#2f4f74]">
-              Free companies at post limit ({overview.monetization.freePostLimit} jobs):{" "}
+              Free-företag vid postningsgräns ({overview.monetization.freePostLimit} jobb):{" "}
               {overview.monetization.freeTierLimitReached}
             </p>
           </section>
 
           <section className="glass-card p-4">
-            <p className="text-sm font-semibold text-[#17365b]">Recent Users</p>
+            <p className="text-sm font-semibold text-[#17365b]">Senaste användare</p>
             <div className="mt-2 space-y-2">
               {overview.recentUsers.map((entry) => (
                 <div key={entry.id} className="rounded-xl bg-[#f4f9ff] px-3 py-2 text-sm text-[#2f4f74]">
@@ -127,7 +134,7 @@ export default function AdminPage() {
           </section>
 
           <section className="glass-card p-4">
-            <p className="text-sm font-semibold text-[#17365b]">Recent Jobs</p>
+            <p className="text-sm font-semibold text-[#17365b]">Senaste jobb</p>
             <div className="mt-2 space-y-2">
               {overview.recentJobs.map((job) => (
                 <div key={job.id} className="rounded-xl bg-[#f4f9ff] px-3 py-2 text-sm text-[#2f4f74]">

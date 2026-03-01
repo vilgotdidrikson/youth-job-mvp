@@ -8,37 +8,37 @@ export default function Home() {
               WorkSpot Sweden
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-[#11233f]">
-              Jobs for youth.
+              Jobb för ungdomar.
               <br />
-              Matches for companies.
+              Matchningar för företag.
             </h1>
             <p className="mt-3 text-sm text-[#2f4f72]">
-              A mobile-first MVP for ages 12-20 in Sweden to discover part-time,
-              temporary, and summer jobs with quick profile-based matching.
+              En mobilanpassad MVP för 12-20-åringar i Sverige som vill hitta
+              deltidsjobb, tillfälliga jobb och sommarjobb med snabb profilbaserad matchning.
             </p>
           </div>
           <div className="space-y-3 p-5 text-sm text-[#2f4663]">
             <div className="flex items-center justify-between rounded-2xl bg-[#f5faff] px-3 py-2">
-              <span>Youth: onboarding + AI CV mock</span>
+              <span>Ungdom: onboarding + AI-CV (demo)</span>
               <span className="chip">MVP</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-[#f5faff] px-3 py-2">
-              <span>Company: post jobs + review candidates</span>
+              <span>Företag: publicera jobb + granska kandidater</span>
               <span className="chip">MVP</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-[#f5faff] px-3 py-2">
-              <span>Matching + notifications</span>
-              <span className="chip">Live</span>
+              <span>Matchning + notiser</span>
+              <span className="chip">Aktiv</span>
             </div>
           </div>
         </div>
 
         <div className="glass-card space-y-3 p-4 text-sm text-[#304f73]">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#4f6986]">
-            Demo Accounts
+            Demokonton
           </p>
-          <p>Youth: `demo@youth.se` / `demo123`</p>
-          <p>Company: `demo@company.se` / `demo123`</p>
+          <p>Ungdom: `demo@youth.se` / `demo123`</p>
+          <p>Företag: `demo@company.se` / `demo123`</p>
           <p>Admin: `admin@workspot.se` / `admin123`</p>
         </div>
       </main>
@@ -48,7 +48,7 @@ export default function Home() {
           href="/auth"
           className="cta-btn block w-full px-4 py-4 text-center text-base"
         >
-          Open WorkSpot
+          Öppna WorkSpot
         </a>
       </div>
     </div>

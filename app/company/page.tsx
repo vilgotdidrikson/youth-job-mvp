@@ -130,7 +130,7 @@ export default function CompanyPage() {
         setSelectedJobId(jobsResponse.jobs[0].id);
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load company data.");
+      setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda företagsdata.");
     } finally {
       setBusy(false);
     }
@@ -155,7 +155,7 @@ export default function CompanyPage() {
       setError(
         candidateError instanceof Error
           ? candidateError.message
-          : "Could not load candidates.",
+          : "Kunde inte ladda kandidater.",
       );
     }
   }, [selectedJobId, user]);
@@ -194,7 +194,7 @@ export default function CompanyPage() {
       setJobType("part-time");
       await loadDashboard();
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "Could not create job.");
+      setError(createError instanceof Error ? createError.message : "Kunde inte skapa jobbet.");
     } finally {
       setSavingJob(false);
     }
@@ -219,7 +219,7 @@ export default function CompanyPage() {
       setError(
         decisionError instanceof Error
           ? decisionError.message
-          : "Failed to update candidate.",
+          : "Kunde inte uppdatera kandidaten.",
       );
     }
   };
@@ -245,7 +245,7 @@ export default function CompanyPage() {
       });
       await loadDashboard();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Could not save settings.");
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte spara inställningarna.");
     }
   };
 
@@ -261,17 +261,24 @@ export default function CompanyPage() {
       await loadDashboard();
     } catch (tierError) {
       setError(
-        tierError instanceof Error ? tierError.message : "Failed to change tier.",
+        tierError instanceof Error ? tierError.message : "Kunde inte ändra nivå.",
       );
     }
   };
 
+  const handleLogout = () => {
+    if (!window.confirm("Är du säker på att du vill logga ut?")) {
+      return;
+    }
+    logout();
+  };
+
   if (loading || !user) {
-    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Loading...</div>;
+    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Laddar...</div>;
   }
 
   if (busy && !profile) {
-    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Loading dashboard...</div>;
+    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Laddar dashboard...</div>;
   }
 
   return (
@@ -279,16 +286,13 @@ export default function CompanyPage() {
       <header className="mb-4 flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-[#4f6a8a]">
-            Company Mode
+            Företagsläge
           </p>
           <h1 className="text-2xl font-semibold text-[#132640]">
-            {profile?.companyName || "Company Dashboard"}
+            {profile?.companyName || "Företagspanel"}
           </h1>
-          <p className="text-sm text-[#3d5d82]">{profile?.city || "Sweden"}</p>
+          <p className="text-sm text-[#3d5d82]">{profile?.city || "Sverige"}</p>
         </div>
-        <button className="secondary-btn px-3 py-2 text-sm" onClick={logout}>
-          Log out
-        </button>
       </header>
 
       {error && (
@@ -302,31 +306,31 @@ export default function CompanyPage() {
           <div className="glass-card p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-[#2f5074]">
-                Tier: <strong>{tier}</strong>
+                Nivå: <strong>{tier}</strong>
               </p>
-              <p className="text-xs text-[#4f6f92]">Free limit: {freePostLimit} active jobs</p>
+              <p className="text-xs text-[#4f6f92]">Gratisgräns: {freePostLimit} aktiva jobb</p>
             </div>
           </div>
 
           <form className="glass-card space-y-3 p-4" onSubmit={handleCreateJob}>
-            <p className="text-sm font-semibold text-[#17365b]">Create Job Listing</p>
+            <p className="text-sm font-semibold text-[#17365b]">Skapa jobbannons</p>
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
-              placeholder="Job title"
+              placeholder="Jobbtitel"
               value={jobTitle}
               onChange={(event) => setJobTitle(event.target.value)}
               required
             />
             <textarea
               className="min-h-24 w-full rounded-2xl border border-[#cce0ff] p-3 text-sm outline-none"
-              placeholder="Job description"
+              placeholder="Jobbbeskrivning"
               value={jobDescription}
               onChange={(event) => setJobDescription(event.target.value)}
               required
             />
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
-              placeholder="Location"
+              placeholder="Plats"
               value={jobLocation}
               onChange={(event) => setJobLocation(event.target.value)}
               required
@@ -338,12 +342,12 @@ export default function CompanyPage() {
                 setJobType(event.target.value as "part-time" | "temporary" | "summer")
               }
             >
-              <option value="part-time">Part-time</option>
-              <option value="temporary">Temporary</option>
-              <option value="summer">Summer</option>
+              <option value="part-time">Deltid</option>
+              <option value="temporary">Tillfälligt</option>
+              <option value="summer">Sommar</option>
             </select>
             <button className="cta-btn w-full px-4 py-3 text-sm" disabled={savingJob}>
-              {savingJob ? "Creating..." : "Post job"}
+              {savingJob ? "Skapar..." : "Publicera jobb"}
             </button>
           </form>
 
@@ -357,7 +361,7 @@ export default function CompanyPage() {
                 <p className="mt-1 text-sm text-[#3f6288]">{job.location}</p>
                 <p className="mt-2 text-sm text-[#2b4769]">{job.description}</p>
                 <p className="mt-3 text-xs text-[#48698f]">
-                  Interested candidates: {job.interestedCount}
+                  Intresserade kandidater: {job.interestedCount}
                 </p>
               </article>
             ))}
@@ -369,7 +373,7 @@ export default function CompanyPage() {
         <section className="tab-fade space-y-3">
           <div className="glass-card p-4">
             <label className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">
-              Select Job
+              Välj jobb
             </label>
             <select
               className="mt-2 w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
@@ -386,13 +390,13 @@ export default function CompanyPage() {
 
           {candidateJobTitle && (
             <div className="glass-card p-4 text-sm text-[#2e4f75]">
-              Reviewing candidates for <strong>{candidateJobTitle}</strong>
+              Visar kandidater för <strong>{candidateJobTitle}</strong>
             </div>
           )}
 
           {candidates.length === 0 && (
             <div className="glass-card p-4 text-sm text-[#3f6186]">
-              No interested candidates yet.
+              Inga intresserade kandidater ännu.
             </div>
           )}
 
@@ -403,7 +407,7 @@ export default function CompanyPage() {
                 {candidate.premiumBadge && <span className="chip">Premium badge</span>}
               </div>
               <p className="text-sm text-[#3e5f84]">
-                {candidate.age ? `${candidate.age} years` : "Age not set"} - {candidate.city}
+                {candidate.age ? `${candidate.age} år` : "Ålder saknas"} - {candidate.city}
               </p>
               <p className="mt-2 text-sm text-[#2f4f74]">{candidate.availability}</p>
               <div className="mt-3 flex flex-wrap gap-1">
@@ -423,17 +427,17 @@ export default function CompanyPage() {
                   className="secondary-btn px-3 py-2 text-sm"
                   onClick={() => handleCandidateDecision(candidate.youthId, "reject")}
                 >
-                  Reject
+                  Avslå
                 </button>
                 <button
                   className="cta-btn px-3 py-2 text-sm"
                   onClick={() => handleCandidateDecision(candidate.youthId, "accept")}
                 >
-                  Accept
+                  Acceptera
                 </button>
               </div>
               {candidate.decision && (
-                <p className="mt-2 text-xs text-[#567493]">Decision: {candidate.decision}</p>
+                <p className="mt-2 text-xs text-[#567493]">Beslut: {candidate.decision}</p>
               )}
             </article>
           ))}
@@ -444,12 +448,12 @@ export default function CompanyPage() {
         <section className="tab-fade space-y-3">
           {matches.length === 0 && (
             <div className="glass-card p-4 text-sm text-[#3f6186]">
-              No matches yet. Accept interested candidates to match.
+              Inga matchningar ännu. Acceptera intresserade kandidater för att matcha.
             </div>
           )}
           {matches.map((match) => (
             <article key={match.id} className="glass-card p-4">
-              <p className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">Match</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">Matchning</p>
               <h3 className="mt-1 text-lg font-semibold text-[#132743]">{match.candidateName}</h3>
               <p className="text-sm text-[#3d5e82]">{match.jobTitle}</p>
               <p className="text-sm text-[#3d5e82]">{match.location}</p>
@@ -463,14 +467,14 @@ export default function CompanyPage() {
         <section className="tab-fade space-y-3">
           <div className="glass-card flex items-center justify-between p-4">
             <p className="text-sm text-[#2f5074]">
-              {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up"}
+              {unreadCount > 0 ? `${unreadCount} olästa notiser` : "Du är ikapp"}
             </p>
             <button className="secondary-btn px-3 py-2 text-sm" onClick={handleMarkAllRead}>
-              Mark all read
+              Markera alla som lästa
             </button>
           </div>
           {notifications.length === 0 && (
-            <div className="glass-card p-4 text-sm text-[#3f6186]">No notifications yet.</div>
+            <div className="glass-card p-4 text-sm text-[#3f6186]">Inga notiser ännu.</div>
           )}
           {notifications.map((notification) => (
             <article key={notification.id} className="glass-card p-4">
@@ -486,7 +490,7 @@ export default function CompanyPage() {
       {tab === "settings" && profile && (
         <section className="tab-fade space-y-3">
           <form className="glass-card space-y-3 p-4" onSubmit={handleSaveCompanyProfile}>
-            <p className="text-sm font-semibold text-[#17365b]">Company Settings</p>
+            <p className="text-sm font-semibold text-[#17365b]">Företagsinställningar</p>
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
               value={profile.companyName}
@@ -495,7 +499,7 @@ export default function CompanyPage() {
                   current ? { ...current, companyName: event.target.value } : current,
                 )
               }
-              placeholder="Company name"
+              placeholder="Företagsnamn"
             />
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
@@ -505,7 +509,7 @@ export default function CompanyPage() {
                   current ? { ...current, city: event.target.value } : current,
                 )
               }
-              placeholder="City"
+              placeholder="Stad"
             />
             <textarea
               className="min-h-24 w-full rounded-2xl border border-[#cce0ff] p-3 text-sm outline-none"
@@ -515,32 +519,40 @@ export default function CompanyPage() {
                   current ? { ...current, description: event.target.value } : current,
                 )
               }
-              placeholder="Short company description"
+              placeholder="Kort företagsbeskrivning"
             />
-            <button className="cta-btn w-full px-4 py-3 text-sm">Save settings</button>
+            <button className="cta-btn w-full px-4 py-3 text-sm">Spara inställningar</button>
           </form>
 
           <div className="glass-card p-4">
             <p className="text-sm text-[#2f5074]">
-              Current tier: <strong>{profile.tier}</strong>
+              Nuvarande nivå: <strong>{profile.tier}</strong>
             </p>
             <button className="secondary-btn mt-3 w-full px-4 py-3 text-sm" onClick={handleTierToggle}>
               {profile.tier === "free"
-                ? "Upgrade to Premium (mock)"
-                : "Switch back to Free"}
+                ? "Uppgradera till Premium (demo)"
+                : "Byt tillbaka till Free"}
             </button>
           </div>
+
+          <button
+            className="w-full rounded-xl border border-[#ffcfcf] bg-[#ffe8e8] px-4 py-3 text-sm font-semibold text-[#b42323]"
+            onClick={handleLogout}
+            type="button"
+          >
+            Logga ut
+          </button>
         </section>
       )}
 
       <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-[#d2e3ff] bg-[#f7fbff]/95 px-2 py-2 backdrop-blur">
         <div className="grid grid-cols-5 gap-2">
           {[
-            { key: "jobs", label: "Jobs" },
-            { key: "candidates", label: "Candidates" },
-            { key: "matches", label: "Matches" },
-            { key: "alerts", label: `Alerts${unreadCount ? ` (${unreadCount})` : ""}` },
-            { key: "settings", label: "Settings" },
+            { key: "jobs", label: "Jobb" },
+            { key: "candidates", label: "Kandidater" },
+            { key: "matches", label: "Matchningar" },
+            { key: "alerts", label: `Notiser${unreadCount ? ` (${unreadCount})` : ""}` },
+            { key: "settings", label: "Inställningar" },
           ].map((item) => (
             <button
               key={item.key}

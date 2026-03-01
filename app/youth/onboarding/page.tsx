@@ -68,12 +68,12 @@ export default function YouthOnboardingPage() {
   const { user, loading } = useSession("youth");
 
   const [error, setError] = useState("");
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguage] = useState<Language>("sv");
   const [tone, setTone] = useState<Tone>("friendly");
   const [targetType, setTargetType] = useState<TargetType>("any");
 
   const [step, setStep] = useState<OnboardingStep | "done">("name");
-  const [question, setQuestion] = useState("What is your name?");
+  const [question, setQuestion] = useState("Vad heter du?");
   const [completion, setCompletion] = useState(0);
   const [validationError, setValidationError] = useState("");
   const [inputValue, setInputValue] = useState("");
@@ -164,7 +164,7 @@ export default function YouthOnboardingPage() {
       setDraftCv(response.cv);
       hydrateCollectorForStep(response.step, response.draftProfile);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Could not start onboarding.");
+      setError(loadError instanceof Error ? loadError.message : "Kunde inte starta onboarding.");
     } finally {
       setBootLoading(false);
     }
@@ -206,7 +206,7 @@ export default function YouthOnboardingPage() {
       setInputValue("");
       hydrateCollectorForStep(response.step, response.draftProfile);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Could not process answer.");
+      setError(submitError instanceof Error ? submitError.message : "Kunde inte behandla svaret.");
     } finally {
       setSending(false);
     }
@@ -226,7 +226,7 @@ export default function YouthOnboardingPage() {
   const submitCollector = async () => {
     if (!isMultiStep) return;
     if (collector.length === 0) {
-      setValidationError("Add at least one item before continuing.");
+      setValidationError("Lägg till minst ett alternativ innan du fortsätter.");
       return;
     }
     const answer = collector.join(", ");
@@ -278,28 +278,28 @@ export default function YouthOnboardingPage() {
       });
       router.push("/youth");
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Could not save profile.");
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
     } finally {
       setSaving(false);
     }
   };
 
   if (loading || !user || bootLoading) {
-    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Loading...</div>;
+    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Laddar...</div>;
   }
 
   return (
     <div className="mobile-shell space-y-3 pb-8">
       <div className="glass-card p-4">
-        <p className="text-xs uppercase tracking-[0.15em] text-[#547295]">AI Profile Builder</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[#123357]">One question at a time</h1>
+        <p className="text-xs uppercase tracking-[0.15em] text-[#547295]">AI Profilbyggare</p>
+        <h1 className="mt-1 text-2xl font-semibold text-[#123357]">En fråga i taget</h1>
         <div className="mt-3 h-2 rounded-full bg-[#e7f0ff]">
           <div
             className="h-2 rounded-full bg-gradient-to-r from-[#0e74ff] to-[#18a8ff]"
             style={{ width: `${completion}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-[#5a7a9d]">{completion}% complete</p>
+        <p className="mt-2 text-xs text-[#5a7a9d]">{completion}% klart</p>
       </div>
 
       <div className="glass-card p-4">
@@ -309,33 +309,33 @@ export default function YouthOnboardingPage() {
             onChange={(event) => setLanguage(event.target.value as Language)}
             className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
           >
-            <option value="en">English</option>
-            <option value="sv">Swedish</option>
+            <option value="en">Engelska</option>
+            <option value="sv">Svenska</option>
           </select>
           <select
             value={tone}
             onChange={(event) => setTone(event.target.value as Tone)}
             className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
           >
-            <option value="friendly">Friendly</option>
-            <option value="professional">Professional</option>
-            <option value="confident">Confident</option>
+            <option value="friendly">Vänlig</option>
+            <option value="professional">Professionell</option>
+            <option value="confident">Självsäker</option>
           </select>
           <select
             value={targetType}
             onChange={(event) => setTargetType(event.target.value as TargetType)}
             className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
           >
-            <option value="any">Any</option>
-            <option value="part-time">Part-time</option>
-            <option value="temporary">Temporary</option>
-            <option value="summer">Summer</option>
+            <option value="any">Alla</option>
+            <option value="part-time">Deltid</option>
+            <option value="temporary">Tillfälligt</option>
+            <option value="summer">Sommar</option>
           </select>
         </div>
       </div>
 
       <div className="glass-card p-4">
-        <p className="text-xs uppercase tracking-[0.12em] text-[#56769b]">Current Question</p>
+        <p className="text-xs uppercase tracking-[0.12em] text-[#56769b]">Aktuell fråga</p>
         <p className="mt-2 text-lg font-semibold text-[#14365b]">{question}</p>
 
         {step !== "done" && (
@@ -343,7 +343,7 @@ export default function YouthOnboardingPage() {
             <div className="mt-3 flex gap-2">
               <input
                 className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-                placeholder={isMultiStep ? "Add one item..." : "Short answer..."}
+                placeholder={isMultiStep ? "Lägg till ett alternativ..." : "Kort svar..."}
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
                 onKeyDown={(event) => {
@@ -354,7 +354,7 @@ export default function YouthOnboardingPage() {
                 }}
               />
               <button className="cta-btn px-4 py-2 text-sm" onClick={handleSend} disabled={sending}>
-                {sending ? "..." : isMultiStep ? "Add" : "Send"}
+                {sending ? "..." : isMultiStep ? "Lägg till" : "Skicka"}
               </button>
             </div>
 
@@ -375,7 +375,7 @@ export default function YouthOnboardingPage() {
 
             {recommendationSlice.length > 0 && (
               <div className="mt-3">
-                <p className="mb-2 text-xs text-[#57779d]">Suggestions</p>
+                <p className="mb-2 text-xs text-[#57779d]">Förslag</p>
                 <div className="flex flex-wrap gap-2">
                   {recommendationSlice.map((item) => (
                     <button
@@ -396,7 +396,7 @@ export default function YouthOnboardingPage() {
                     onClick={showMoreRecommendations}
                     type="button"
                   >
-                    Show more
+                    Visa fler
                   </button>
                 )}
               </div>
@@ -409,7 +409,7 @@ export default function YouthOnboardingPage() {
                 disabled={sending}
                 type="button"
               >
-                I&apos;m done
+                Jag är klar
               </button>
             )}
           </>
@@ -424,7 +424,7 @@ export default function YouthOnboardingPage() {
 
       {history.length > 0 && (
         <div className="glass-card p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-[#5b7898]">Recent Answers</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-[#5b7898]">Senaste svar</p>
           <div className="mt-2 space-y-2">
             {history.map((entry, index) => (
               <div key={`${entry.q}-${index}`} className="rounded-xl bg-[#f5f9ff] px-3 py-2">
@@ -438,9 +438,9 @@ export default function YouthOnboardingPage() {
 
       {draftCv && (
         <div className="glass-card p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-[#58779d]">AI CV Draft</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-[#58779d]">AI CV-utkast</p>
           <p className="mt-1 text-sm text-[#2d537d]">
-            Quality: <strong>{draftCv.qualityScore}/100</strong>
+            Kvalitet: <strong>{draftCv.qualityScore}/100</strong>
           </p>
           <textarea
             className="mt-2 min-h-20 w-full rounded-xl border border-[#cfe2ff] p-3 text-sm outline-none"
@@ -472,7 +472,7 @@ export default function YouthOnboardingPage() {
         disabled={!readyToSave || saving}
         onClick={handleFinalize}
       >
-        {saving ? "Saving..." : "Save Profile & Continue"}
+        {saving ? "Sparar..." : "Spara profil och fortsätt"}
       </button>
     </div>
   );

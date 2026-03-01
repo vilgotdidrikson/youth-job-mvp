@@ -126,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           : "Great. Review and save your profile."
         : questionForStep(activeStep, body.language || "en"),
     validationError,
-    recommendations: done ? [] : recommendations(activeStep),
+    recommendations: done ? [] : recommendations(activeStep, body.language || "en"),
     draftProfile: draft,
     cv: {
       summary: generatedCv.summary,

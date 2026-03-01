@@ -1,6 +1,37 @@
 import { OnboardingStep } from "@/lib/types";
 
+export type RecommendationLanguage = "en" | "sv";
+
 export const CITY_RECOMMENDATIONS = [
+  "Stockholm",
+  "Göteborg",
+  "Malmö",
+  "Uppsala",
+  "Västerås",
+  "Örebro",
+  "Linköping",
+  "Helsingborg",
+  "Jönköping",
+  "Norrköping",
+  "Lund",
+  "Umeå",
+  "Gävle",
+  "Borås",
+  "Södertälje",
+  "Karlstad",
+  "Växjö",
+  "Halmstad",
+  "Sundsvall",
+  "Luleå",
+  "Eskilstuna",
+  "Trollhättan",
+  "Skövde",
+  "Falun",
+  "Kalmar",
+  "Kristianstad",
+];
+
+export const CITY_RECOMMENDATIONS_EN = [
   "Stockholm",
   "Gothenburg",
   "Malmo",
@@ -30,6 +61,49 @@ export const CITY_RECOMMENDATIONS = [
 ];
 
 export const ROLE_RECOMMENDATIONS = [
+  "Cafébiträde",
+  "Kassabiträde på café",
+  "Butiksbiträde",
+  "Säljhjälp i butik",
+  "Varuplockare i butik",
+  "Snabbmatsmedarbetare",
+  "Serveringshjälp",
+  "Diskhjälp",
+  "Köksbiträde",
+  "Glasskioskpersonal",
+  "Biografvärd",
+  "Festivalmedarbetare",
+  "Incheckningshjälp på event",
+  "Arenahjälp",
+  "Cykelbudshjälp",
+  "Paketsorterare",
+  "Lagerplockare",
+  "Receptionistassistent",
+  "Kontorsassistent",
+  "Sociala medier-assistent",
+  "Innehållsassistent",
+  "Foto/video-assistent",
+  "Hundrastare",
+  "Djurpassningshjälp",
+  "Barnvakt",
+  "Fritidsledarassistent",
+  "Läxhjälpare",
+  "Simhallsassistent",
+  "Biblioteksassistent",
+  "Städhjälp",
+  "Frukostvärd på hotell",
+  "Housekeeping-assistent",
+  "Trädgårdshjälp",
+  "Bilvårdsassistent",
+  "Ungdomsagent på callcenter",
+  "Hjälpledare i kodworkshop",
+  "Junior webbassistent",
+  "Speltest-assistent",
+  "E-handelsassistent",
+  "Kundservicepraktikant",
+];
+
+export const ROLE_RECOMMENDATIONS_EN = [
   "Cafe barista",
   "Cafe cashier",
   "Store assistant",
@@ -73,6 +147,29 @@ export const ROLE_RECOMMENDATIONS = [
 ];
 
 export const INTEREST_RECOMMENDATIONS = [
+  "Butik",
+  "Kaffe och café",
+  "Servering",
+  "Event",
+  "Sport",
+  "Barnomsorg",
+  "E-handel",
+  "Teknik",
+  "Sociala medier",
+  "Fotografi",
+  "Design",
+  "Musik",
+  "Gaming",
+  "Djur",
+  "Friluftsliv",
+  "Logistik",
+  "Hotell och restaurang",
+  "Utbildning",
+  "Hälsa och välmående",
+  "Lokalsamhälle",
+];
+
+export const INTEREST_RECOMMENDATIONS_EN = [
   "Retail",
   "Coffee and cafes",
   "Food service",
@@ -96,6 +193,37 @@ export const INTEREST_RECOMMENDATIONS = [
 ];
 
 export const SKILL_RECOMMENDATIONS = [
+  "Kundservice",
+  "Kommunikation",
+  "Samarbete",
+  "Ansvarstagande",
+  "Punktlighet",
+  "Tidsplanering",
+  "Problemlösning",
+  "Positiv attityd",
+  "Konflikthantering",
+  "Säljstöd",
+  "Kassahantering",
+  "Livsmedelshygien",
+  "Ordermottagning",
+  "Publicering i sociala medier",
+  "Bildredigering",
+  "Videoredigering",
+  "Grundläggande Excel",
+  "Google Docs",
+  "Canva",
+  "Engelska i tal",
+  "Svenska i tal",
+  "Eventuppsättning",
+  "Packning och sortering",
+  "Grundläggande programmering",
+  "HTML/CSS",
+  "Barnpassning",
+  "Grundläggande läxhjälp",
+  "Städrutiner",
+];
+
+export const SKILL_RECOMMENDATIONS_EN = [
   "Customer service",
   "Communication",
   "Teamwork",
@@ -127,6 +255,19 @@ export const SKILL_RECOMMENDATIONS = [
 ];
 
 export const AVAILABILITY_RECOMMENDATIONS = [
+  "Vardagar efter skolan",
+  "Endast helger",
+  "Kvällar (17:00-21:00)",
+  "Fredagar och helger",
+  "Heltid under sommaren",
+  "Skollov",
+  "Måndag/onsdag/fredag",
+  "Valfri dag efter 16:00",
+  "Flexibel deltid",
+  "Varannan helg",
+];
+
+export const AVAILABILITY_RECOMMENDATIONS_EN = [
   "Weekdays after school",
   "Weekends only",
   "Evenings (17:00-21:00)",
@@ -140,6 +281,24 @@ export const AVAILABILITY_RECOMMENDATIONS = [
 ];
 
 export const EXPERIENCE_RECOMMENDATIONS = [
+  "Hjälpte till vid skolevenemang med incheckning",
+  "Var volontär på ungdomsidrott",
+  "Hjälpte till på familjens café under helger",
+  "Gav läxhjälp till yngre elever i matte/engelska",
+  "Skötte sociala medier för skolklubb",
+  "Arbetade i teamprojekt med deadlines",
+  "Hjälpte grannar med djurpassning",
+  "Organiserade klassens insamlingsevent",
+  "Hjälpte till i lokalt aktivitetscenter",
+  "Stöttade lokal butik med varupåfyllning",
+  "Drev ett litet onlineprojekt för vidareförsäljning",
+  "Skapade innehåll för skolaktiviteter",
+  "Hjälpte till i fritidsverksamhet",
+  "Assisterade i sommarlägeraktiviteter",
+  "Arbetade deltid inom servering",
+];
+
+export const EXPERIENCE_RECOMMENDATIONS_EN = [
   "Helped at school events with visitor check-in",
   "Volunteered at youth sports activities",
   "Supported family cafe on busy weekends",
@@ -157,12 +316,45 @@ export const EXPERIENCE_RECOMMENDATIONS = [
   "Worked part-time in food service",
 ];
 
-export function recommendationsForStep(step: OnboardingStep): string[] {
+export function recommendationSet(language: RecommendationLanguage) {
+  if (language === "en") {
+    return {
+      cities: CITY_RECOMMENDATIONS,
+      roles: ROLE_RECOMMENDATIONS_EN,
+      interests: INTEREST_RECOMMENDATIONS_EN,
+      skills: SKILL_RECOMMENDATIONS_EN,
+      availability: AVAILABILITY_RECOMMENDATIONS_EN,
+      experience: EXPERIENCE_RECOMMENDATIONS_EN,
+    };
+  }
+  return {
+    cities: CITY_RECOMMENDATIONS,
+    roles: ROLE_RECOMMENDATIONS,
+    interests: INTEREST_RECOMMENDATIONS,
+    skills: SKILL_RECOMMENDATIONS,
+    availability: AVAILABILITY_RECOMMENDATIONS,
+    experience: EXPERIENCE_RECOMMENDATIONS,
+  };
+}
+
+export const ALL_CITY_RECOMMENDATIONS = Array.from(
+  new Set([...CITY_RECOMMENDATIONS, ...CITY_RECOMMENDATIONS_EN]),
+);
+
+export const ALL_ROLE_RECOMMENDATIONS = Array.from(
+  new Set([...ROLE_RECOMMENDATIONS, ...ROLE_RECOMMENDATIONS_EN]),
+);
+
+export function recommendationsForStep(
+  step: OnboardingStep,
+  language: RecommendationLanguage = "sv",
+): string[] {
+  const set = recommendationSet(language);
   if (step === "city") return CITY_RECOMMENDATIONS;
-  if (step === "targetRole") return ROLE_RECOMMENDATIONS;
-  if (step === "interests") return INTEREST_RECOMMENDATIONS;
-  if (step === "skills") return SKILL_RECOMMENDATIONS;
-  if (step === "availability") return AVAILABILITY_RECOMMENDATIONS;
-  if (step === "experience") return EXPERIENCE_RECOMMENDATIONS;
+  if (step === "targetRole") return set.roles;
+  if (step === "interests") return set.interests;
+  if (step === "skills") return set.skills;
+  if (step === "availability") return set.availability;
+  if (step === "experience") return set.experience;
   return [];
 }

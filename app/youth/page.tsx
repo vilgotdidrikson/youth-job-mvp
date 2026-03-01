@@ -10,15 +10,9 @@ import {
   useState,
 } from "react";
 import { ApiError, apiRequest } from "@/lib/client-api";
+import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import {
-  AVAILABILITY_RECOMMENDATIONS,
-  CITY_RECOMMENDATIONS,
-  EXPERIENCE_RECOMMENDATIONS,
-  INTEREST_RECOMMENDATIONS,
-  ROLE_RECOMMENDATIONS,
-  SKILL_RECOMMENDATIONS,
-} from "@/lib/recommendations";
+import { recommendationSet } from "@/lib/recommendations";
 
 type ViewKey = "feed" | "matches" | "cv" | "profile" | "alerts";
 
@@ -105,6 +99,7 @@ function SuggestionRow(props: {
   page: number;
   onMore: () => void;
   onPick: (value: string) => void;
+  moreLabel: string;
 }) {
   const visible = pageItems(props.values, props.page);
   return (
@@ -116,7 +111,7 @@ function SuggestionRow(props: {
           className="text-xs font-semibold text-[#2c6098]"
           onClick={props.onMore}
         >
-          More
+          {props.moreLabel}
         </button>
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -143,6 +138,10 @@ function MultiAddField(props: {
   page: number;
   onMore: () => void;
   placeholder: string;
+  addLabel: string;
+  suggestionsLabel: string;
+  helperText: string;
+  moreLabel: string;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -184,7 +183,7 @@ function MultiAddField(props: {
           className="secondary-btn px-3 py-2 text-xs"
           onClick={() => addItem(draft)}
         >
-          Add
+          {props.addLabel}
         </button>
       </div>
 
@@ -204,19 +203,21 @@ function MultiAddField(props: {
       )}
 
       <SuggestionRow
-        title="Suggestions"
+        title={props.suggestionsLabel}
         values={props.suggestions}
         page={props.page}
         onMore={props.onMore}
         onPick={addItem}
+        moreLabel={props.moreLabel}
       />
-      <p className="text-xs text-[#6683a2]">Add one item at a time, then continue.</p>
+      <p className="text-xs text-[#6683a2]">{props.helperText}</p>
     </div>
   );
 }
 
 export default function YouthPage() {
   const { user, loading, logout } = useSession("youth");
+  const { language } = useLanguage();
   const [view, setView] = useState<ViewKey>("feed");
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -252,6 +253,130 @@ export default function YouthPage() {
 
   const feedJobs = useMemo(() => jobs.filter((job) => !job.decision), [jobs]);
   const currentJob = feedJobs[0];
+  const t =
+    language === "sv"
+      ? {
+          more: "Fler",
+          add: "Lägg till",
+          suggestions: "Förslag",
+          helperText: "Lägg till en i taget och fortsätt sedan.",
+          confirmLogout: "Är du säker på att du vill logga ut?",
+          loading: "Laddar...",
+          interested: "Intresserad",
+          skip: "Hoppa över",
+          left: "kvar",
+          noJobs: "Inga jobb kvar i ditt flöde just nu.",
+          refreshFeed: "Uppdatera flöde",
+          noMatches: "Inga matchningar ännu.",
+          match: "Matchning",
+          english: "Engelska",
+          swedish: "Svenska",
+          professional: "Professionell",
+          friendly: "Vänlig",
+          confident: "Självsäker",
+          targetRole: "Målroll",
+          anyType: "Alla typer",
+          partTime: "Deltid",
+          temporary: "Tillfälligt",
+          summer: "Sommar",
+          cvPrompt: "Extra detaljer för AI-CV (valfritt)",
+          generateCv: "Generera CV",
+          quality: "Kvalitet",
+          saveCv: "Spara CV",
+          profile: "Profil",
+          sweden: "Sverige",
+          profileStrength: "Profilstyrka",
+          name: "Namn",
+          age: "Ålder",
+          city: "Stad",
+          citySuggestions: "Stadsförslag",
+          targetRoles: "Målroller",
+          skills: "Kompetenser",
+          interests: "Intressen",
+          workingTime: "Arbetstid",
+          experience: "Erfarenhet",
+          addOneRole: "Lägg till en roll",
+          addOneSkill: "Lägg till en kompetens",
+          addOneInterest: "Lägg till ett intresse",
+          addOneAvailability: "Lägg till en tidsönskan",
+          addOneExperience: "Lägg till en erfarenhet",
+          saveProfile: "Spara profil",
+          saving: "Sparar...",
+          logout: "Logga ut",
+          markAllRead: "Markera alla som lästa",
+          noNotifications: "Inga notiser.",
+          feed: "Flöde",
+          matches: "Matchningar",
+          alerts: "Notiser",
+        }
+      : {
+          more: "More",
+          add: "Add",
+          suggestions: "Suggestions",
+          helperText: "Add one item at a time, then continue.",
+          confirmLogout: "Are you sure you want to log out?",
+          loading: "Loading...",
+          interested: "Interested",
+          skip: "Skip",
+          left: "left",
+          noJobs: "No jobs left in your feed right now.",
+          refreshFeed: "Refresh feed",
+          noMatches: "No matches yet.",
+          match: "Match",
+          english: "English",
+          swedish: "Swedish",
+          professional: "Professional",
+          friendly: "Friendly",
+          confident: "Confident",
+          targetRole: "Target role",
+          anyType: "Any type",
+          partTime: "Part-time",
+          temporary: "Temporary",
+          summer: "Summer",
+          cvPrompt: "Extra details for AI CV (optional)",
+          generateCv: "Generate CV",
+          quality: "Quality",
+          saveCv: "Save CV",
+          profile: "Profile",
+          sweden: "Sweden",
+          profileStrength: "Profile strength",
+          name: "Name",
+          age: "Age",
+          city: "City",
+          citySuggestions: "City suggestions",
+          targetRoles: "Target roles",
+          skills: "Skills",
+          interests: "Interests",
+          workingTime: "Working time",
+          experience: "Experience",
+          addOneRole: "Add one role",
+          addOneSkill: "Add one skill",
+          addOneInterest: "Add one interest",
+          addOneAvailability: "Add one time preference",
+          addOneExperience: "Add one experience",
+          saveProfile: "Save profile",
+          saving: "Saving...",
+          logout: "Log out",
+          markAllRead: "Mark all as read",
+          noNotifications: "No notifications.",
+          feed: "Feed",
+          matches: "Matches",
+          alerts: "Alerts",
+        };
+        const suggestionSet = recommendationSet(language);
+        const cityRecommendations = suggestionSet.cities;
+        const roleRecommendations = suggestionSet.roles;
+        const skillRecommendations = suggestionSet.skills;
+        const interestRecommendations = suggestionSet.interests;
+        const availabilityRecommendations = suggestionSet.availability;
+        const experienceRecommendations = suggestionSet.experience;
+
+  const formatJobType = (jobType: string) => {
+    if (jobType === "part-time") return t.partTime;
+    if (jobType === "temporary") return t.temporary;
+    if (jobType === "summer") return t.summer;
+    return jobType;
+  };
   const roleValues = useMemo(() => splitCsv(profile?.targetRole || ""), [profile?.targetRole]);
   const availabilityValues = useMemo(
     () => splitCsv(profile?.availability || ""),
@@ -285,7 +410,7 @@ export default function YouthPage() {
       if (loadError instanceof ApiError && loadError.status === 401) {
         return;
       }
-      setError(loadError instanceof Error ? loadError.message : "Failed to load dashboard.");
+      setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda dashboarden.");
     } finally {
       setBusy(false);
     }
@@ -311,7 +436,7 @@ export default function YouthPage() {
         });
         await load();
       } catch (saveError) {
-        setError(saveError instanceof Error ? saveError.message : "Failed to save profile.");
+        setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
       } finally {
         setSaving(false);
       }
@@ -338,7 +463,7 @@ export default function YouthPage() {
       setCvPrompt("");
       await load();
     } catch (cvError) {
-      setError(cvError instanceof Error ? cvError.message : "Failed to generate CV.");
+      setError(cvError instanceof Error ? cvError.message : "Kunde inte generera CV.");
     } finally {
       setSaving(false);
     }
@@ -356,7 +481,7 @@ export default function YouthPage() {
       });
       await load();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Failed to save CV.");
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte spara CV.");
     } finally {
       setSaving(false);
     }
@@ -371,6 +496,13 @@ export default function YouthPage() {
     });
     await load();
   }, [load, user]);
+
+  const handleLogout = useCallback(() => {
+    if (!window.confirm(t.confirmLogout)) {
+      return;
+    }
+    logout();
+  }, [logout, t.confirmLogout]);
 
   const saveJobAction = useCallback(
     async (jobId: string, action: "interested" | "skip") => {
@@ -388,7 +520,7 @@ export default function YouthPage() {
         setJobs((current) =>
           current.map((job) => (job.id === jobId ? { ...job, decision: null } : job)),
         );
-        setError(actionError instanceof Error ? actionError.message : "Could not save action.");
+        setError(actionError instanceof Error ? actionError.message : "Kunde inte spara åtgärden.");
       }
       await load();
     },
@@ -439,7 +571,7 @@ export default function YouthPage() {
   };
 
   if (loading || !user || (busy && !profile)) {
-    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Loading...</div>;
+    return <div className="mobile-shell py-10 text-sm text-[#3e648d]">{t.loading}</div>;
   }
 
   const likedOpacity = Math.max(0, Math.min(1, dragX / 120));
@@ -466,13 +598,13 @@ export default function YouthPage() {
                   className="pointer-events-none absolute left-4 top-4 z-20 rounded-xl border-2 border-[#2ca98d] bg-white px-3 py-1 text-lg font-semibold text-[#2ca98d]"
                   style={{ opacity: likedOpacity }}
                 >
-                  INTERESTED
+                  {t.interested.toUpperCase()}
                 </div>
                 <div
                   className="pointer-events-none absolute right-4 top-4 z-20 rounded-xl border-2 border-[#ff6f5e] bg-white px-3 py-1 text-lg font-semibold text-[#ff6f5e]"
                   style={{ opacity: skippedOpacity }}
                 >
-                  SKIP
+                  {t.skip.toUpperCase()}
                 </div>
 
                 <article
@@ -486,9 +618,9 @@ export default function YouthPage() {
                 >
                   <div className="mb-3 flex items-center justify-between">
                     <span className="rounded-full bg-[#e2f0ff] px-3 py-1 text-xs font-semibold text-[#24527f]">
-                      {currentJob.jobType}
+                      {formatJobType(currentJob.jobType)}
                     </span>
-                    <span className="text-xs text-[#4e6f92]">{feedJobs.length} left</span>
+                    <span className="text-xs text-[#4e6f92]">{feedJobs.length} {t.left}</span>
                   </div>
                   <h2 className="text-3xl font-semibold text-[#123359]">{currentJob.title}</h2>
                   <p className="mt-2 text-sm text-[#365f88]">{currentJob.companyName}</p>
@@ -504,26 +636,26 @@ export default function YouthPage() {
                     onClick={() => commitSwipe("left")}
                     type="button"
                   >
-                    Skip
+                    {t.skip}
                   </button>
                   <button
                     className="rounded-2xl bg-gradient-to-r from-[#0f8a79] to-[#25b4a2] px-4 py-3 text-sm font-semibold text-white"
                     onClick={() => commitSwipe("right")}
                     type="button"
                   >
-                    Interested
+                    {t.interested}
                   </button>
                 </div>
               </div>
             ) : (
               <SectionCard>
-                <p className="text-sm text-[#375f89]">No jobs left in your feed right now.</p>
+                <p className="text-sm text-[#375f89]">{t.noJobs}</p>
                 <button
                   className="cta-btn mt-3 w-full px-4 py-3 text-sm"
                   onClick={() => void load()}
                   type="button"
                 >
-                  Refresh Feed
+                  {t.refreshFeed}
                 </button>
               </SectionCard>
             )}
@@ -532,14 +664,14 @@ export default function YouthPage() {
 
         {view === "matches" && (
           <section className="space-y-3">
-            {matches.length === 0 && <SectionCard>No matches yet.</SectionCard>}
+            {matches.length === 0 && <SectionCard>{t.noMatches}</SectionCard>}
             {matches.map((match) => (
               <SectionCard key={match.id}>
-                <p className="text-xs uppercase tracking-[0.12em] text-[#55739a]">Match</p>
+                <p className="text-xs uppercase tracking-[0.12em] text-[#55739a]">{t.match}</p>
                 <h2 className="mt-1 text-lg font-semibold text-[#123358]">{match.jobTitle}</h2>
                 <p className="text-sm text-[#3d6288]">{match.companyName}</p>
                 <p className="text-sm text-[#3d6288]">
-                  {match.location} - {match.jobType}
+                  {match.location} - {formatJobType(match.jobType)}
                 </p>
               </SectionCard>
             ))}
@@ -555,8 +687,8 @@ export default function YouthPage() {
                   value={cvLanguage}
                   onChange={(event) => setCvLanguage(event.target.value as "en" | "sv")}
                 >
-                  <option value="en">English</option>
-                  <option value="sv">Swedish</option>
+                  <option value="en">{t.english}</option>
+                  <option value="sv">{t.swedish}</option>
                 </select>
                 <select
                   className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
@@ -565,15 +697,15 @@ export default function YouthPage() {
                     setCvTone(event.target.value as "professional" | "friendly" | "confident")
                   }
                 >
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="confident">Confident</option>
+                  <option value="professional">{t.professional}</option>
+                  <option value="friendly">{t.friendly}</option>
+                  <option value="confident">{t.confident}</option>
                 </select>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <input
                   className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-                  placeholder="Target role"
+                  placeholder={t.targetRole}
                   value={cvTargetRole}
                   onChange={(event) => setCvTargetRole(event.target.value)}
                 />
@@ -586,15 +718,15 @@ export default function YouthPage() {
                     )
                   }
                 >
-                  <option value="any">Any type</option>
-                  <option value="part-time">Part-time</option>
-                  <option value="temporary">Temporary</option>
-                  <option value="summer">Summer</option>
+                  <option value="any">{t.anyType}</option>
+                  <option value="part-time">{t.partTime}</option>
+                  <option value="temporary">{t.temporary}</option>
+                  <option value="summer">{t.summer}</option>
                 </select>
               </div>
               <textarea
                 className="mt-3 min-h-24 w-full rounded-xl border border-[#cfe2ff] p-3 text-sm outline-none"
-                placeholder="Extra details for AI CV (optional)"
+                placeholder={t.cvPrompt}
                 value={cvPrompt}
                 onChange={(event) => setCvPrompt(event.target.value)}
               />
@@ -604,14 +736,14 @@ export default function YouthPage() {
                 type="button"
                 disabled={saving}
               >
-                Generate CV
+                {t.generateCv}
               </button>
             </SectionCard>
 
             {profile?.cv && (
               <SectionCard>
                 <p className="text-sm text-[#284f77]">
-                  Quality: <strong>{profile.cv.qualityScore || 0}/100</strong>
+                  {t.quality}: <strong>{profile.cv.qualityScore || 0}/100</strong>
                 </p>
                 <textarea
                   className="mt-2 min-h-24 w-full rounded-xl border border-[#cfe2ff] p-3 text-sm outline-none"
@@ -641,7 +773,7 @@ export default function YouthPage() {
                   type="button"
                   disabled={saving}
                 >
-                  Save CV
+                  {t.saveCv}
                 </button>
               </SectionCard>
             )}
@@ -651,13 +783,13 @@ export default function YouthPage() {
         {view === "profile" && profile && (
           <section className="space-y-3">
             <SectionCard>
-              <p className="text-xs uppercase tracking-[0.15em] text-[#547298]">Profile</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-[#547298]">{t.profile}</p>
               <h1 className="mt-1 text-2xl font-semibold text-[#123257]">
-                {profile.name || "Profile"}
+                {profile.name || t.profile}
               </h1>
-              <p className="text-sm text-[#3e6289]">{profile.city || "Sweden"}</p>
+              <p className="text-sm text-[#3e6289]">{profile.city || t.sweden}</p>
               <p className="mt-2 text-sm text-[#365b82]">
-                Strength: <strong>{profileStrength}%</strong>
+                {t.profileStrength}: <strong>{profileStrength}%</strong>
               </p>
             </SectionCard>
 
@@ -665,7 +797,7 @@ export default function YouthPage() {
               <input
                 className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                 value={profile.name}
-                placeholder="Name"
+                placeholder={t.name}
                 onChange={(event) =>
                   setProfile((current) =>
                     current ? { ...current, name: event.target.value } : current,
@@ -679,7 +811,7 @@ export default function YouthPage() {
                   max={20}
                   className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                   value={profile.age ?? ""}
-                  placeholder="Age"
+                  placeholder={t.age}
                   onChange={(event) =>
                     setProfile((current) =>
                       current
@@ -694,7 +826,7 @@ export default function YouthPage() {
                 <input
                   className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                   value={profile.city}
-                  placeholder="City"
+                  placeholder={t.city}
                   onChange={(event) =>
                     setProfile((current) =>
                       current ? { ...current, city: event.target.value } : current,
@@ -703,99 +835,128 @@ export default function YouthPage() {
                 />
               </div>
               <SuggestionRow
-                title="City suggestions"
-                values={CITY_RECOMMENDATIONS}
+                title={t.citySuggestions}
+                values={cityRecommendations}
                 page={cityPage}
                 onMore={() =>
-                  setCityPage((page) => nextSuggestionPage(page, CITY_RECOMMENDATIONS.length))
+                  setCityPage((page) => nextSuggestionPage(page, cityRecommendations.length))
                 }
                 onPick={(value) =>
                   setProfile((current) => (current ? { ...current, city: value } : current))
                 }
+                moreLabel={t.more}
               />
 
               <MultiAddField
-                title="Target roles"
+                title={t.targetRoles}
                 values={roleValues}
                 onChange={(values) =>
                   setProfile((current) =>
                     current ? { ...current, targetRole: values.join(", ") } : current,
                   )
                 }
-                suggestions={ROLE_RECOMMENDATIONS}
+                suggestions={roleRecommendations}
                 page={rolePage}
                 onMore={() =>
-                  setRolePage((page) => nextSuggestionPage(page, ROLE_RECOMMENDATIONS.length))
+                  setRolePage((page) => nextSuggestionPage(page, roleRecommendations.length))
                 }
-                placeholder="Add one role"
+                placeholder={t.addOneRole}
+                addLabel={t.add}
+                suggestionsLabel={t.suggestions}
+                helperText={t.helperText}
+                moreLabel={t.more}
               />
 
               <MultiAddField
-                title="Skills"
+                title={t.skills}
                 values={profile.skills}
                 onChange={(values) =>
                   setProfile((current) => (current ? { ...current, skills: values } : current))
                 }
-                suggestions={SKILL_RECOMMENDATIONS}
+                suggestions={skillRecommendations}
                 page={skillPage}
                 onMore={() =>
-                  setSkillPage((page) => nextSuggestionPage(page, SKILL_RECOMMENDATIONS.length))
+                  setSkillPage((page) => nextSuggestionPage(page, skillRecommendations.length))
                 }
-                placeholder="Add one skill"
+                placeholder={t.addOneSkill}
+                addLabel={t.add}
+                suggestionsLabel={t.suggestions}
+                helperText={t.helperText}
+                moreLabel={t.more}
               />
 
               <MultiAddField
-                title="Interests"
+                title={t.interests}
                 values={profile.interests}
                 onChange={(values) =>
                   setProfile((current) => (current ? { ...current, interests: values } : current))
                 }
-                suggestions={INTEREST_RECOMMENDATIONS}
+                suggestions={interestRecommendations}
                 page={interestPage}
                 onMore={() =>
                   setInterestPage((page) =>
-                    nextSuggestionPage(page, INTEREST_RECOMMENDATIONS.length),
+                    nextSuggestionPage(page, interestRecommendations.length),
                   )
                 }
-                placeholder="Add one interest"
+                placeholder={t.addOneInterest}
+                addLabel={t.add}
+                suggestionsLabel={t.suggestions}
+                helperText={t.helperText}
+                moreLabel={t.more}
               />
 
               <MultiAddField
-                title="Working time"
+                title={t.workingTime}
                 values={availabilityValues}
                 onChange={(values) =>
                   setProfile((current) =>
                     current ? { ...current, availability: values.join(", ") } : current,
                   )
                 }
-                suggestions={AVAILABILITY_RECOMMENDATIONS}
+                suggestions={availabilityRecommendations}
                 page={availabilityPage}
                 onMore={() =>
                   setAvailabilityPage((page) =>
-                    nextSuggestionPage(page, AVAILABILITY_RECOMMENDATIONS.length),
+                    nextSuggestionPage(page, availabilityRecommendations.length),
                   )
                 }
-                placeholder="Add one time preference"
+                placeholder={t.addOneAvailability}
+                addLabel={t.add}
+                suggestionsLabel={t.suggestions}
+                helperText={t.helperText}
+                moreLabel={t.more}
               />
 
               <MultiAddField
-                title="Experience"
+                title={t.experience}
                 values={profile.experience}
                 onChange={(values) =>
                   setProfile((current) => (current ? { ...current, experience: values } : current))
                 }
-                suggestions={EXPERIENCE_RECOMMENDATIONS}
+                suggestions={experienceRecommendations}
                 page={experiencePage}
                 onMore={() =>
                   setExperiencePage((page) =>
-                    nextSuggestionPage(page, EXPERIENCE_RECOMMENDATIONS.length),
+                    nextSuggestionPage(page, experienceRecommendations.length),
                   )
                 }
-                placeholder="Add one experience"
+                placeholder={t.addOneExperience}
+                addLabel={t.add}
+                suggestionsLabel={t.suggestions}
+                helperText={t.helperText}
+                moreLabel={t.more}
               />
 
               <button className="cta-btn w-full px-4 py-3 text-sm" disabled={saving}>
-                {saving ? "Saving..." : "Save profile"}
+                {saving ? t.saving : t.saveProfile}
+              </button>
+
+              <button
+                className="w-full rounded-xl border border-[#ffcfcf] bg-[#ffe8e8] px-4 py-3 text-sm font-semibold text-[#b42323]"
+                onClick={handleLogout}
+                type="button"
+              >
+                {t.logout}
               </button>
             </form>
           </section>
@@ -809,15 +970,17 @@ export default function YouthPage() {
                 onClick={() => void markAllRead()}
                 type="button"
               >
-                Mark all as read
+                {t.markAllRead}
               </button>
             </SectionCard>
-            {notifications.length === 0 && <SectionCard>No notifications.</SectionCard>}
+            {notifications.length === 0 && <SectionCard>{t.noNotifications}</SectionCard>}
             {notifications.map((notification) => (
               <SectionCard key={notification.id}>
                 <p className="text-sm text-[#2f5074]">{notification.message}</p>
                 <p className="mt-1 text-xs text-[#5b7694]">
-                  {new Date(notification.createdAt).toLocaleString()}
+                  {new Date(notification.createdAt).toLocaleString(
+                    language === "sv" ? "sv-SE" : "en-US",
+                  )}
                 </p>
               </SectionCard>
             ))}
@@ -828,11 +991,11 @@ export default function YouthPage() {
       <footer className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-[#cfe2ff] bg-white/95 px-3 py-2 backdrop-blur">
         <div className="grid grid-cols-5 gap-2">
           {[
-            { key: "feed", label: "Feed" },
-            { key: "matches", label: "Matches" },
+            { key: "feed", label: t.feed },
+            { key: "matches", label: t.matches },
             { key: "cv", label: "CV" },
-            { key: "profile", label: "Profile" },
-            { key: "alerts", label: `Alerts${unreadCount ? ` (${unreadCount})` : ""}` },
+            { key: "profile", label: t.profile },
+            { key: "alerts", label: `${t.alerts}${unreadCount ? ` (${unreadCount})` : ""}` },
           ].map((item) => (
             <button
               key={item.key}
@@ -848,13 +1011,6 @@ export default function YouthPage() {
             </button>
           ))}
         </div>
-        <button
-          className="mt-2 w-full rounded-xl border border-[#d6e8ff] bg-[#f6fbff] px-3 py-2 text-xs font-semibold text-[#2d5f95]"
-          onClick={logout}
-          type="button"
-        >
-          Log out
-        </button>
       </footer>
     </div>
   );
