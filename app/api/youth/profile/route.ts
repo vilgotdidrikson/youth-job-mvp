@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, normalizeCsvInput, requireUser } from "@/lib/api-auth";
-import { updateDb } from "@/lib/db";
+import { readDb, updateDb } from "@/lib/db";
 import { profileStrength } from "@/lib/profile";
 import { CVData, YouthProfile } from "@/lib/types";
 
@@ -8,6 +8,8 @@ interface YouthProfileBody {
   name?: string;
   age?: number | null;
   city?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   targetRole?: string;
   skills?: string[] | string;
   interests?: string[] | string;
@@ -36,31 +38,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return auth.error;
   }
 
-  const result = await updateDb((db) => {
-    let profile = db.youthProfiles.find(
-      (candidate) => candidate.userId === auth.user.id,
-    );
-
-    if (!profile) {
-      profile = {
-        userId: auth.user.id,
-        name: "",
-        age: null,
-        city: "",
-        targetRole: "",
-        skills: [],
-        interests: [],
-        experience: [],
-        availability: "",
-        premiumBadge: false,
-        cv: null,
-        updatedAt: new Date().toISOString(),
-      };
-      db.youthProfiles.push(profile);
-    }
-
-    return profile;
-  });
+  const db = await readDb();
+  const result =
+    db.youthProfiles.find((candidate) => candidate.userId === auth.user.id) ||
+    ({
+      userId: auth.user.id,
+      name: "",
+      age: null,
+      city: "",
+      contactEmail: auth.user.email,
+      contactPhone: "",
+      targetRole: "",
+      skills: [],
+      interests: [],
+      experience: [],
+      availability: "",
+      premiumBadge: false,
+      cv: null,
+      updatedAt: new Date().toISOString(),
+    } satisfies YouthProfile);
 
   return NextResponse.json({
     profile: result,
@@ -94,6 +90,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         name: "",
         age: null,
         city: "",
+        contactEmail: auth.user.email,
+        contactPhone: "",
         targetRole: "",
         skills: [],
         interests: [],
@@ -114,6 +112,9 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
           ? body.age
           : profile.age;
     profile.city = body.city?.trim() ?? profile.city;
+    profile.contactEmail =
+      body.contactEmail?.trim().toLowerCase() ?? profile.contactEmail ?? auth.user.email;
+    profile.contactPhone = body.contactPhone?.trim() ?? profile.contactPhone;
     profile.targetRole = body.targetRole?.trim() ?? profile.targetRole;
     profile.skills = normalizeList(body.skills, profile.skills);
     profile.interests = normalizeList(body.interests, profile.interests);
@@ -122,6 +123,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     profile.premiumBadge = body.premiumBadge ?? profile.premiumBadge;
     profile.cv = body.cv === undefined ? profile.cv : body.cv;
     profile.updatedAt = new Date().toISOString();
+
     return profile;
   });
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,12 +8,13 @@ import { OnboardingStep } from "@/lib/types";
 
 type Language = "en" | "sv";
 type Tone = "professional" | "friendly" | "confident";
-type TargetType = "any" | "part-time" | "temporary" | "summer";
 
 interface DraftProfile {
   name: string;
   age: number | null;
   city: string;
+  contactEmail: string;
+  contactPhone: string;
   targetRole: string;
   interests: string[];
   skills: string[];
@@ -70,7 +71,6 @@ export default function YouthOnboardingPage() {
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<Language>("sv");
   const [tone, setTone] = useState<Tone>("friendly");
-  const [targetType, setTargetType] = useState<TargetType>("any");
 
   const [step, setStep] = useState<OnboardingStep | "done">("name");
   const [question, setQuestion] = useState("Vad heter du?");
@@ -90,6 +90,8 @@ export default function YouthOnboardingPage() {
     name: "",
     age: null,
     city: "",
+    contactEmail: "",
+    contactPhone: "",
     targetRole: "",
     interests: [],
     skills: [],
@@ -98,13 +100,11 @@ export default function YouthOnboardingPage() {
   });
   const [draftCv, setDraftCv] = useState<DraftCv | null>(null);
 
-  const isMultiStep =
-    step !== "done" && MULTI_STEPS.includes(step as OnboardingStep);
+  const isMultiStep = step !== "done" && MULTI_STEPS.includes(step as OnboardingStep);
 
   const recommendationSlice = useMemo(() => {
     const start = recommendationPage * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    return recommendations.slice(start, end);
+    return recommendations.slice(start, start + PAGE_SIZE);
   }, [recommendationPage, recommendations]);
 
   const readyToSave = useMemo(() => !!draftCv, [draftCv]);
@@ -151,7 +151,7 @@ export default function YouthOnboardingPage() {
           mode: "init",
           language,
           tone,
-          targetJobType: targetType,
+          targetJobType: "any",
         }),
       });
       setStep(response.step);
@@ -168,7 +168,7 @@ export default function YouthOnboardingPage() {
     } finally {
       setBootLoading(false);
     }
-  }, [hydrateCollectorForStep, language, targetType, tone, user]);
+  }, [hydrateCollectorForStep, language, tone, user]);
 
   useEffect(() => {
     if (user) {
@@ -191,7 +191,7 @@ export default function YouthOnboardingPage() {
           draft: draftProfile,
           language,
           tone,
-          targetJobType: targetType,
+          targetJobType: "any",
         }),
       });
       setHistory((current) => [...current, { q: question, a: answer }].slice(-4));
@@ -229,8 +229,7 @@ export default function YouthOnboardingPage() {
       setValidationError("Lägg till minst ett alternativ innan du fortsätter.");
       return;
     }
-    const answer = collector.join(", ");
-    await submitAnswer(answer);
+    await submitAnswer(collector.join(", "));
   };
 
   const handleSend = async () => {
@@ -258,6 +257,8 @@ export default function YouthOnboardingPage() {
           name: draftProfile.name,
           age: draftProfile.age,
           city: draftProfile.city,
+          contactEmail: draftProfile.contactEmail,
+          contactPhone: draftProfile.contactPhone,
           targetRole: draftProfile.targetRole,
           skills: draftProfile.skills,
           interests: draftProfile.interests,
@@ -303,7 +304,7 @@ export default function YouthOnboardingPage() {
       </div>
 
       <div className="glass-card p-4">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <select
             value={language}
             onChange={(event) => setLanguage(event.target.value as Language)}
@@ -320,16 +321,6 @@ export default function YouthOnboardingPage() {
             <option value="friendly">Vänlig</option>
             <option value="professional">Professionell</option>
             <option value="confident">Självsäker</option>
-          </select>
-          <select
-            value={targetType}
-            onChange={(event) => setTargetType(event.target.value as TargetType)}
-            className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-          >
-            <option value="any">Alla</option>
-            <option value="part-time">Deltid</option>
-            <option value="temporary">Tillfälligt</option>
-            <option value="summer">Sommar</option>
           </select>
         </div>
       </div>
@@ -381,9 +372,7 @@ export default function YouthOnboardingPage() {
                     <button
                       key={item}
                       className="rounded-full border border-[#cfe2ff] bg-[#f4f9ff] px-3 py-1 text-xs text-[#2e567f]"
-                      onClick={() =>
-                        isMultiStep ? addToCollector(item) : void submitAnswer(item)
-                      }
+                      onClick={() => (isMultiStep ? addToCollector(item) : void submitAnswer(item))}
                       type="button"
                     >
                       {item}
@@ -446,34 +435,25 @@ export default function YouthOnboardingPage() {
             className="mt-2 min-h-20 w-full rounded-xl border border-[#cfe2ff] p-3 text-sm outline-none"
             value={draftCv.summary}
             onChange={(event) =>
-              setDraftCv((current) =>
-                current ? { ...current, summary: event.target.value } : current,
-              )
+              setDraftCv((current) => (current ? { ...current, summary: event.target.value } : current))
             }
           />
           <textarea
             className="mt-2 min-h-40 w-full rounded-xl border border-[#cfe2ff] p-3 text-xs outline-none"
             value={draftCv.content}
             onChange={(event) =>
-              setDraftCv((current) =>
-                current ? { ...current, content: event.target.value } : current,
-              )
+              setDraftCv((current) => (current ? { ...current, content: event.target.value } : current))
             }
           />
         </div>
       )}
 
-      {error && (
-        <p className="rounded-xl bg-[#ffe8e6] px-3 py-2 text-sm text-[#8f3a2e]">{error}</p>
-      )}
+      {error && <p className="rounded-xl bg-[#ffe8e6] px-3 py-2 text-sm text-[#8f3a2e]">{error}</p>}
 
-      <button
-        className="cta-btn w-full px-4 py-3 text-sm"
-        disabled={!readyToSave || saving}
-        onClick={handleFinalize}
-      >
+      <button className="cta-btn w-full px-4 py-3 text-sm" disabled={!readyToSave || saving} onClick={handleFinalize}>
         {saving ? "Sparar..." : "Spara profil och fortsätt"}
       </button>
     </div>
   );
 }
+

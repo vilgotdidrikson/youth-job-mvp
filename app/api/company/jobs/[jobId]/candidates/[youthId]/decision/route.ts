@@ -106,31 +106,6 @@ export async function POST(
         }
       }
 
-      db.notifications.push({
-        id: createId(),
-        userId: youthId,
-        type: body.decision === "accept" ? "match" : "decision",
-        message:
-          body.decision === "accept"
-            ? `You matched with "${job.title}".`
-            : `Your interest in "${job.title}" was declined.`,
-        read: false,
-        createdAt: now,
-        metadata: `decision:${job.id}:${auth.user.id}:${youthId}:${body.decision}`,
-      });
-
-      if (matched) {
-        db.notifications.push({
-          id: createId(),
-          userId: auth.user.id,
-          type: "match",
-          message: `You matched with a candidate for "${job.title}".`,
-          read: false,
-          createdAt: now,
-          metadata: `company-match:${job.id}:${youthId}`,
-        });
-      }
-
       return {
         decision: body.decision,
         matched,

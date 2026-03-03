@@ -23,6 +23,11 @@ export async function apiRequest<T>(
   headers.set("Content-Type", "application/json");
   const fallbackSession = readSession();
   const sessionUserId = options.userId || fallbackSession?.id;
+  const isApiPath = path.startsWith("/api/");
+  const isAuthPath = path.startsWith("/api/auth/");
+  if (isApiPath && !isAuthPath && !sessionUserId) {
+    throw new ApiError("Unauthorized.", 401);
+  }
   if (sessionUserId) {
     headers.set("x-user-id", sessionUserId);
   }

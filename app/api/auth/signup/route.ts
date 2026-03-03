@@ -12,6 +12,7 @@ interface SignUpBody {
   email?: string;
   password?: string;
   role?: Role;
+  phone?: string;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const email = body.email?.trim().toLowerCase();
   const password = body.password?.trim();
   const role = body.role;
+  const phone = body.phone?.trim() || "";
 
   if (!email || !password || !role) {
     return jsonError("Email, password, and role are required.");
@@ -53,6 +55,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           name: "",
           age: null,
           city: "",
+          contactEmail: email,
+          contactPhone: phone,
           targetRole: "",
           skills: [],
           interests: [],

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
-import { updateDb } from "@/lib/db";
+import { readDb, updateDb } from "@/lib/db";
 
 interface NotificationPatchBody {
   id?: string;
@@ -13,11 +13,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return auth.error;
   }
 
-  const result = await updateDb((db) => {
-    return db.notifications
-      .filter((entry) => entry.userId === auth.user.id)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  });
+  const db = await readDb();
+  const result = db.notifications
+    .filter((entry) => entry.userId === auth.user.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return NextResponse.json({
     notifications: result,

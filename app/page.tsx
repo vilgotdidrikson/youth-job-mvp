@@ -1,4 +1,4 @@
-export default function Home() {
+﻿export default function Home() {
   return (
     <div className="mobile-shell flex flex-col justify-between">
       <main className="space-y-5">
@@ -54,3 +54,4 @@ export default function Home() {
     </div>
   );
 }
+

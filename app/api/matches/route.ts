@@ -41,6 +41,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         candidateAvailability: youthProfile?.availability || "",
         candidateSkills: youthProfile?.skills || [],
         candidateCvSummary: youthProfile?.cv?.summary || "",
+        youthId: match.youthId,
+        companyId: match.companyId,
+        companyUserEmail: companyUser?.email || "",
+        candidateUserEmail: youthUser?.email || "",
         createdAt: match.createdAt,
       };
     });

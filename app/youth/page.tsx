@@ -1,18 +1,9 @@
-"use client";
+﻿"use client";
 
-import {
-  FormEvent,
-  PointerEvent,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, PointerEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, apiRequest } from "@/lib/client-api";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import { recommendationSet } from "@/lib/recommendations";
 
 type ViewKey = "feed" | "matches" | "cv" | "profile" | "alerts";
 
@@ -20,6 +11,8 @@ interface YouthProfileView {
   name: string;
   age: number | null;
   city: string;
+  contactEmail: string;
+  contactPhone: string;
   targetRole: string;
   skills: string[];
   interests: string[];
@@ -46,14 +39,29 @@ interface JobsResponse {
   }>;
 }
 
+interface MatchItem {
+  id: string;
+  jobTitle: string;
+  companyName: string;
+  location: string;
+  jobType: string;
+  youthId: string;
+  companyId: string;
+  companyUserEmail: string;
+  candidateName?: string;
+  candidateUserEmail?: string;
+}
+
 interface MatchesResponse {
-  matches: Array<{
-    id: string;
-    jobTitle: string;
-    companyName: string;
-    location: string;
-    jobType: string;
-  }>;
+  matches: MatchItem[];
+}
+
+interface MatchMessage {
+  id: string;
+  matchId: string;
+  senderId: string;
+  message: string;
+  createdAt: string;
 }
 
 interface NotificationsResponse {
@@ -66,8 +74,6 @@ interface NotificationsResponse {
   unreadCount: number;
 }
 
-const SUGGESTIONS_PER_PAGE = 6;
-
 function splitCsv(value: string): string[] {
   return value
     .split(",")
@@ -75,160 +81,62 @@ function splitCsv(value: string): string[] {
     .filter(Boolean);
 }
 
-function unique(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+function toCsv(values: string): string[] {
+  return splitCsv(values);
 }
 
-function pageItems(values: string[], page: number): string[] {
-  const start = page * SUGGESTIONS_PER_PAGE;
-  return values.slice(start, start + SUGGESTIONS_PER_PAGE);
+function fromCsv(values: string[]): string {
+  return values.join(", ");
 }
 
-function nextSuggestionPage(page: number, total: number): number {
-  const maxPage = Math.max(1, Math.ceil(total / SUGGESTIONS_PER_PAGE));
-  return page + 1 >= maxPage ? 0 : page + 1;
-}
-
-function SectionCard({ children }: { children: ReactNode }) {
-  return <div className="glass-card min-h-[120px] w-full p-4">{children}</div>;
-}
-
-function SuggestionRow(props: {
-  title: string;
-  values: string[];
-  page: number;
-  onMore: () => void;
-  onPick: (value: string) => void;
-  moreLabel: string;
-}) {
-  const visible = pageItems(props.values, props.page);
-  return (
-    <div className="rounded-xl bg-[#f4f9ff] p-2">
-      <div className="mb-1 flex items-center justify-between">
-        <p className="text-xs text-[#5d7a98]">{props.title}</p>
-        <button
-          type="button"
-          className="text-xs font-semibold text-[#2c6098]"
-          onClick={props.onMore}
-        >
-          {props.moreLabel}
-        </button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {visible.map((value) => (
-          <button
-            key={value}
-            type="button"
-            className="rounded-full border border-[#cfe2ff] bg-white px-2.5 py-1 text-xs text-[#315b86]"
-            onClick={() => props.onPick(value)}
-          >
-            {value}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MultiAddField(props: {
-  title: string;
-  values: string[];
-  onChange: (values: string[]) => void;
-  suggestions: string[];
-  page: number;
-  onMore: () => void;
-  placeholder: string;
-  addLabel: string;
-  suggestionsLabel: string;
-  helperText: string;
-  moreLabel: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  const addItem = useCallback(
-    (raw: string) => {
-      const value = raw.trim();
-      if (!value) return;
-      props.onChange(unique([...props.values, value]));
-      setDraft("");
-    },
-    [props],
-  );
-
-  const removeItem = useCallback(
-    (value: string) => {
-      props.onChange(props.values.filter((entry) => entry !== value));
-    },
-    [props],
-  );
-
-  return (
-    <div className="space-y-2 rounded-xl border border-[#d7e7ff] bg-white p-3">
-      <p className="text-sm font-medium text-[#23486f]">{props.title}</p>
-      <div className="flex gap-2">
-        <input
-          className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-          placeholder={props.placeholder}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              addItem(draft);
-            }
-          }}
-        />
-        <button
-          type="button"
-          className="secondary-btn px-3 py-2 text-xs"
-          onClick={() => addItem(draft)}
-        >
-          {props.addLabel}
-        </button>
-      </div>
-
-      {props.values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {props.values.map((value) => (
-            <button
-              key={value}
-              type="button"
-              className="rounded-full border border-[#cfe2ff] bg-[#f6faff] px-2.5 py-1 text-xs text-[#335b84]"
-              onClick={() => removeItem(value)}
-            >
-              {value} x
-            </button>
-          ))}
-        </div>
-      )}
-
-      <SuggestionRow
-        title={props.suggestionsLabel}
-        values={props.suggestions}
-        page={props.page}
-        onMore={props.onMore}
-        onPick={addItem}
-        moreLabel={props.moreLabel}
-      />
-      <p className="text-xs text-[#6683a2]">{props.helperText}</p>
-    </div>
-  );
+function toSwedishJobText(value: string): string {
+  return value
+    .replace("Summer Store Assistant", "Sommarjobb i butik")
+    .replace("Weekend Cashier Helper", "Kassahjälp på helger")
+    .replace("Junior Barista", "Junior barista")
+    .replace("Cafe Summer Staff", "Sommarpersonal på café")
+    .replace("Festival Crew Assistant", "Festivalmedarbetare")
+    .replace("Event Setup Helper", "Eventhjälp vid uppsättning")
+    .replace("Package Sorting Assistant", "Paketsorterare")
+    .replace("Summer Warehouse Helper", "Sommarhjälp på lager")
+    .replace("After-School Activity Helper", "Hjälp i fritidsaktiviteter")
+    .replace("Weekend Babysitting Support", "Barnpassningshjälp på helger")
+    .replace("Coding Workshop Helper", "Hjälp i kodworkshop")
+    .replace("Content Assistant (Tech)", "Innehållsassistent (tech)")
+    .replace("Help customers, restock shelves, and support checkout flow.", "Hjälp kunder, fyll på varor och stötta kassan.")
+    .replace("Support senior cashier and greet customers during peak hours.", "Stötta huvudkassan och välkomna kunder under rusningstid.")
+    .replace("Prepare drinks, handle counter orders, and keep cafe area clean.", "Förbered drycker, ta beställningar och håll caféytan ren.")
+    .replace("Support kitchen prep, customer service, and table service.", "Hjälp till med köksförberedelser, kundservice och servering.")
+    .replace("Help with visitor guidance, wristband checks, and queue flow.", "Hjälp till med besökarservice, armband och köflöde.")
+    .replace("Assist in setup and teardown for youth sports events.", "Hjälp till vid upp- och nedmontering på ungdomsevenemang.")
+    .replace("Sort and label parcels with team leads in evening shifts.", "Sortera och märk paket tillsammans med teamet på kvällspass.")
+    .replace("Support inbound and outbound package handling.", "Hjälp till med inkommande och utgående paket.")
+    .replace("Support group activities and check-in for younger students.", "Stötta gruppaktiviteter och incheckning för yngre elever.")
+    .replace("Assist families with playful, safe childcare sessions.", "Hjälp familjer med trygg och lekfull barnpassning.")
+    .replace("Help younger students during beginner coding sessions.", "Stötta yngre elever under nybörjarkurser i kodning.")
+    .replace("Create short social posts and event photos for workshop days.", "Skapa sociala inlägg och eventfoton under workshopdagar.");
 }
 
 export default function YouthPage() {
   const { user, loading, logout } = useSession("youth");
   const { language } = useLanguage();
+
   const [view, setView] = useState<ViewKey>("feed");
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
+
   const [profile, setProfile] = useState<YouthProfileView | null>(null);
-  const [profileStrength, setProfileStrength] = useState(0);
   const [jobs, setJobs] = useState<JobsResponse["jobs"]>([]);
-  const [matches, setMatches] = useState<MatchesResponse["matches"]>([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [selectedMatchId, setSelectedMatchId] = useState<string>("");
+  const [messagesByMatch, setMessagesByMatch] = useState<Record<string, MatchMessage[]>>({});
+  const [chatDraft, setChatDraft] = useState("");
   const [notifications, setNotifications] = useState<NotificationsResponse["notifications"]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [saving, setSaving] = useState(false);
-
+  const [authFailed, setAuthFailed] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -236,191 +144,188 @@ export default function YouthPage() {
 
   const [cvPrompt, setCvPrompt] = useState("");
   const [cvTargetRole, setCvTargetRole] = useState("");
-  const [cvLanguage, setCvLanguage] = useState<"en" | "sv">("en");
-  const [cvTone, setCvTone] = useState<"professional" | "friendly" | "confident">(
-    "professional",
-  );
-  const [cvTargetJobType, setCvTargetJobType] = useState<
-    "any" | "part-time" | "temporary" | "summer"
-  >("any");
+  const [cvLanguage, setCvLanguage] = useState<"en" | "sv">("sv");
+  const [cvTone, setCvTone] = useState<"professional" | "friendly" | "confident">("friendly");
 
-  const [cityPage, setCityPage] = useState(0);
-  const [rolePage, setRolePage] = useState(0);
-  const [skillPage, setSkillPage] = useState(0);
-  const [interestPage, setInterestPage] = useState(0);
-  const [availabilityPage, setAvailabilityPage] = useState(0);
-  const [experiencePage, setExperiencePage] = useState(0);
-
-  const feedJobs = useMemo(() => jobs.filter((job) => !job.decision), [jobs]);
-  const currentJob = feedJobs[0];
   const t =
     language === "sv"
       ? {
-          more: "Fler",
-          add: "Lägg till",
-          suggestions: "Förslag",
-          helperText: "Lägg till en i taget och fortsätt sedan.",
-          confirmLogout: "Är du säker på att du vill logga ut?",
           loading: "Laddar...",
+          noJobs: "Inga jobb finns i ditt flöde just nu.",
+          searchPlaceholder: "Sök jobb (t.ex. Café barista)",
+          search: "Sök",
+          clear: "Rensa",
+          recommendations: "Rekommenderade jobb (från publicerade annonser)",
+          noSearchResults:
+            "Inga jobb av den typen är tillgängliga just nu. De visas när de kommer in.",
           interested: "Intresserad",
           skip: "Hoppa över",
-          left: "kvar",
-          noJobs: "Inga jobb kvar i ditt flöde just nu.",
-          refreshFeed: "Uppdatera flöde",
           noMatches: "Inga matchningar ännu.",
-          match: "Matchning",
+          chatWith: "Chat med",
+          writeMessage: "Skriv meddelande...",
+          send: "Skicka",
+          markAllRead: "Markera alla som lästa",
+          noNotifications: "Inga notiser.",
+          save: "Spara",
+          saving: "Sparar...",
+          profile: "Profil",
+          feed: "Jobb",
+          matches: "Matchningar",
+          alerts: "Notiser",
+          targetRole: "Målroll",
+          cvPrompt: "Extra detaljer till CV (valfritt)",
+          generateCv: "Generera CV",
+          quality: "Kvalitet",
+          saveCv: "Spara CV",
           english: "Engelska",
           swedish: "Svenska",
           professional: "Professionell",
           friendly: "Vänlig",
           confident: "Självsäker",
-          targetRole: "Målroll",
-          anyType: "Alla typer",
-          partTime: "Deltid",
-          temporary: "Tillfälligt",
-          summer: "Sommar",
-          cvPrompt: "Extra detaljer för AI-CV (valfritt)",
-          generateCv: "Generera CV",
-          quality: "Kvalitet",
-          saveCv: "Spara CV",
-          profile: "Profil",
-          sweden: "Sverige",
-          profileStrength: "Profilstyrka",
           name: "Namn",
           age: "Ålder",
           city: "Stad",
-          citySuggestions: "Stadsförslag",
-          targetRoles: "Målroller",
-          skills: "Kompetenser",
-          interests: "Intressen",
-          workingTime: "Arbetstid",
-          experience: "Erfarenhet",
-          addOneRole: "Lägg till en roll",
-          addOneSkill: "Lägg till en kompetens",
-          addOneInterest: "Lägg till ett intresse",
-          addOneAvailability: "Lägg till en tidsönskan",
-          addOneExperience: "Lägg till en erfarenhet",
-          saveProfile: "Spara profil",
-          saving: "Sparar...",
+          contactEmail: "Kontakt e-post",
+          contactPhone: "Kontakt telefon",
+          skills: "Färdigheter (kommaseparerat)",
+          interests: "Intressen (kommaseparerat)",
+          experience: "Erfarenhet (kommaseparerat)",
+          availability: "När kan du jobba",
           logout: "Logga ut",
-          markAllRead: "Markera alla som lästa",
-          noNotifications: "Inga notiser.",
-          feed: "Flöde",
-          matches: "Matchningar",
-          alerts: "Notiser",
         }
       : {
-          more: "More",
-          add: "Add",
-          suggestions: "Suggestions",
-          helperText: "Add one item at a time, then continue.",
-          confirmLogout: "Are you sure you want to log out?",
           loading: "Loading...",
+          noJobs: "No jobs in your feed right now.",
+          searchPlaceholder: "Search jobs (e.g. Cafe barista)",
+          search: "Search",
+          clear: "Clear",
+          recommendations: "Recommended jobs (from posted listings)",
+          noSearchResults:
+            "No jobs like that are available right now. They will appear when posted.",
           interested: "Interested",
           skip: "Skip",
-          left: "left",
-          noJobs: "No jobs left in your feed right now.",
-          refreshFeed: "Refresh feed",
           noMatches: "No matches yet.",
-          match: "Match",
+          chatWith: "Chat with",
+          writeMessage: "Write a message...",
+          send: "Send",
+          markAllRead: "Mark all as read",
+          noNotifications: "No notifications.",
+          save: "Save",
+          saving: "Saving...",
+          profile: "Profile",
+          feed: "Jobs",
+          matches: "Matches",
+          alerts: "Alerts",
+          targetRole: "Target role",
+          cvPrompt: "Extra details for CV (optional)",
+          generateCv: "Generate CV",
+          quality: "Quality",
+          saveCv: "Save CV",
           english: "English",
           swedish: "Swedish",
           professional: "Professional",
           friendly: "Friendly",
           confident: "Confident",
-          targetRole: "Target role",
-          anyType: "Any type",
-          partTime: "Part-time",
-          temporary: "Temporary",
-          summer: "Summer",
-          cvPrompt: "Extra details for AI CV (optional)",
-          generateCv: "Generate CV",
-          quality: "Quality",
-          saveCv: "Save CV",
-          profile: "Profile",
-          sweden: "Sweden",
-          profileStrength: "Profile strength",
           name: "Name",
           age: "Age",
           city: "City",
-          citySuggestions: "City suggestions",
-          targetRoles: "Target roles",
-          skills: "Skills",
-          interests: "Interests",
-          workingTime: "Working time",
-          experience: "Experience",
-          addOneRole: "Add one role",
-          addOneSkill: "Add one skill",
-          addOneInterest: "Add one interest",
-          addOneAvailability: "Add one time preference",
-          addOneExperience: "Add one experience",
-          saveProfile: "Save profile",
-          saving: "Saving...",
+          contactEmail: "Contact email",
+          contactPhone: "Contact phone",
+          skills: "Skills (comma separated)",
+          interests: "Interests (comma separated)",
+          experience: "Experience (comma separated)",
+          availability: "Availability",
           logout: "Log out",
-          markAllRead: "Mark all as read",
-          noNotifications: "No notifications.",
-          feed: "Feed",
-          matches: "Matches",
-          alerts: "Alerts",
         };
-        const suggestionSet = recommendationSet(language);
-        const cityRecommendations = suggestionSet.cities;
-        const roleRecommendations = suggestionSet.roles;
-        const skillRecommendations = suggestionSet.skills;
-        const interestRecommendations = suggestionSet.interests;
-        const availabilityRecommendations = suggestionSet.availability;
-        const experienceRecommendations = suggestionSet.experience;
 
-  const formatJobType = (jobType: string) => {
-    if (jobType === "part-time") return t.partTime;
-    if (jobType === "temporary") return t.temporary;
-    if (jobType === "summer") return t.summer;
-    return jobType;
-  };
-  const roleValues = useMemo(() => splitCsv(profile?.targetRole || ""), [profile?.targetRole]);
-  const availabilityValues = useMemo(
-    () => splitCsv(profile?.availability || ""),
-    [profile?.availability],
+  const feedJobs = useMemo(() => jobs.filter((job) => !job.decision), [jobs]);
+  const currentJob = feedJobs[0];
+
+  const load = useCallback(
+    async (query?: string) => {
+      if (!user || authFailed) return;
+      setBusy(true);
+      setError("");
+      try {
+        const encodedQuery = encodeURIComponent(query ?? searchQuery);
+        const [profileResponse, jobsResponse, notificationsResponse] =
+          await Promise.all([
+            apiRequest<{ profile: YouthProfileView }>("/api/youth/profile", { userId: user.id }),
+            apiRequest<JobsResponse>(`/api/jobs${encodedQuery ? `?q=${encodedQuery}` : ""}`, {
+              userId: user.id,
+            }),
+            apiRequest<NotificationsResponse>("/api/notifications", { userId: user.id }),
+          ]);
+
+        setProfile(profileResponse.profile);
+        setJobs(jobsResponse.jobs);
+        setNotifications(notificationsResponse.notifications);
+        setUnreadCount(notificationsResponse.unreadCount);
+        setCvTargetRole(profileResponse.profile.targetRole || "");
+      } catch (loadError) {
+        if (loadError instanceof ApiError && loadError.status === 401) {
+          setAuthFailed(true);
+          return;
+        }
+        setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda dashboarden.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [authFailed, searchQuery, user],
   );
 
-  const load = useCallback(async () => {
-    if (!user) return;
-    setBusy(true);
-    setError("");
+  const loadMatches = useCallback(async () => {
+    if (!user || authFailed) return;
     try {
-      const [profileResponse, jobsResponse, matchesResponse, notificationsResponse] =
-        await Promise.all([
-          apiRequest<{ profile: YouthProfileView; profileStrength: number }>(
-            "/api/youth/profile",
-            { userId: user.id },
-          ),
-          apiRequest<JobsResponse>("/api/jobs", { userId: user.id }),
-          apiRequest<MatchesResponse>("/api/matches", { userId: user.id }),
-          apiRequest<NotificationsResponse>("/api/notifications", { userId: user.id }),
-        ]);
-
-      setProfile(profileResponse.profile);
-      setProfileStrength(profileResponse.profileStrength);
-      setJobs(jobsResponse.jobs);
+      const matchesResponse = await apiRequest<MatchesResponse>("/api/matches", {
+        userId: user.id,
+      });
       setMatches(matchesResponse.matches);
-      setNotifications(notificationsResponse.notifications);
-      setUnreadCount(notificationsResponse.unreadCount);
-      setCvTargetRole(profileResponse.profile.targetRole || "");
+      if (!selectedMatchId && matchesResponse.matches.length > 0) {
+        setSelectedMatchId(matchesResponse.matches[0].id);
+      }
     } catch (loadError) {
       if (loadError instanceof ApiError && loadError.status === 401) {
+        setMatches([]);
         return;
       }
-      setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda dashboarden.");
-    } finally {
-      setBusy(false);
+      setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda matchningar.");
     }
-  }, [user]);
+  }, [authFailed, selectedMatchId, user]);
+
+  const loadChat = useCallback(
+    async (matchId: string) => {
+      if (!user || !matchId) return;
+      try {
+        const response = await apiRequest<{ messages: MatchMessage[] }>(`/api/matches/${matchId}/chat`, {
+          userId: user.id,
+        });
+        setMessagesByMatch((current) => ({ ...current, [matchId]: response.messages }));
+      } catch (chatError) {
+        setError(chatError instanceof Error ? chatError.message : "Kunde inte ladda chatten.");
+      }
+    },
+    [user],
+  );
 
   useEffect(() => {
-    if (user) {
+    if (user && !authFailed) {
       void load();
     }
-  }, [load, user]);
+  }, [authFailed, load, user]);
+
+  useEffect(() => {
+    if (selectedMatchId) {
+      void loadChat(selectedMatchId);
+    }
+  }, [loadChat, selectedMatchId]);
+
+  useEffect(() => {
+    if (view === "matches") {
+      void loadMatches();
+    }
+  }, [loadMatches, view]);
 
   const saveProfile = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -436,7 +341,7 @@ export default function YouthPage() {
         });
         await load();
       } catch (saveError) {
-        setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
       } finally {
         setSaving(false);
       }
@@ -455,7 +360,7 @@ export default function YouthPage() {
         body: JSON.stringify({
           prompt: cvPrompt,
           targetRole: cvTargetRole || profile?.targetRole || "",
-          targetJobType: cvTargetJobType,
+          targetJobType: "any",
           language: cvLanguage,
           tone: cvTone,
         }),
@@ -467,7 +372,7 @@ export default function YouthPage() {
     } finally {
       setSaving(false);
     }
-  }, [cvLanguage, cvPrompt, cvTargetJobType, cvTargetRole, cvTone, load, profile?.targetRole, user]);
+  }, [cvLanguage, cvPrompt, cvTargetRole, cvTone, load, profile?.targetRole, user]);
 
   const saveCv = useCallback(async () => {
     if (!user || !profile?.cv) return;
@@ -487,42 +392,19 @@ export default function YouthPage() {
     }
   }, [load, profile?.cv, user]);
 
-  const markAllRead = useCallback(async () => {
-    if (!user) return;
-    await apiRequest("/api/notifications", {
-      method: "PATCH",
-      userId: user.id,
-      body: JSON.stringify({ markAllRead: true }),
-    });
-    await load();
-  }, [load, user]);
-
-  const handleLogout = useCallback(() => {
-    if (!window.confirm(t.confirmLogout)) {
-      return;
-    }
-    logout();
-  }, [logout, t.confirmLogout]);
-
-  const saveJobAction = useCallback(
+  const sendAction = useCallback(
     async (jobId: string, action: "interested" | "skip") => {
       if (!user) return;
-      setJobs((current) =>
-        current.map((job) => (job.id === jobId ? { ...job, decision: action } : job)),
-      );
       try {
         await apiRequest(`/api/jobs/${jobId}/action`, {
           method: "POST",
           userId: user.id,
           body: JSON.stringify({ action }),
         });
+        await load();
       } catch (actionError) {
-        setJobs((current) =>
-          current.map((job) => (job.id === jobId ? { ...job, decision: null } : job)),
-        );
-        setError(actionError instanceof Error ? actionError.message : "Kunde inte spara åtgärden.");
+        setError(actionError instanceof Error ? actionError.message : "Kunde inte spara valet.");
       }
-      await load();
     },
     [load, user],
   );
@@ -534,10 +416,10 @@ export default function YouthPage() {
       setTimeout(() => {
         setDragX(0);
         setSwipeDirection(null);
-        void saveJobAction(currentJob.id, direction === "right" ? "interested" : "skip");
+        void sendAction(currentJob.id, direction === "right" ? "interested" : "skip");
       }, 130);
     },
-    [currentJob, saveJobAction],
+    [currentJob, sendAction],
   );
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -552,8 +434,7 @@ export default function YouthPage() {
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!dragging || !currentJob) return;
     event.preventDefault();
-    const delta = event.clientX - dragStartX;
-    setDragX(delta);
+    setDragX(event.clientX - dragStartX);
   };
 
   const onPointerUp = () => {
@@ -570,10 +451,49 @@ export default function YouthPage() {
     setDragX(0);
   };
 
+  const onSearchSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSearchQuery(searchInput.trim());
+    await load(searchInput.trim());
+  };
+
+  const onClearSearch = async () => {
+    setSearchInput("");
+    setSearchQuery("");
+    await load("");
+  };
+
+  const sendChatMessage = useCallback(async () => {
+    if (!user || !selectedMatchId || !chatDraft.trim()) return;
+    try {
+      await apiRequest(`/api/matches/${selectedMatchId}/chat`, {
+        method: "POST",
+        userId: user.id,
+        body: JSON.stringify({ message: chatDraft.trim() }),
+      });
+      setChatDraft("");
+      await loadChat(selectedMatchId);
+    } catch (sendError) {
+      setError(sendError instanceof Error ? sendError.message : "Kunde inte skicka meddelande.");
+    }
+  }, [chatDraft, loadChat, selectedMatchId, user]);
+
+  const markAllRead = useCallback(async () => {
+    if (!user) return;
+    await apiRequest("/api/notifications", {
+      method: "PATCH",
+      userId: user.id,
+      body: JSON.stringify({ markAllRead: true }),
+    });
+    await load();
+  }, [load, user]);
+
   if (loading || !user || (busy && !profile)) {
     return <div className="mobile-shell py-10 text-sm text-[#3e648d]">{t.loading}</div>;
   }
 
+  const selectedMatch = matches.find((match) => match.id === selectedMatchId) || null;
+  const selectedMessages = messagesByMatch[selectedMatchId] || [];
   const likedOpacity = Math.max(0, Math.min(1, dragX / 120));
   const skippedOpacity = Math.max(0, Math.min(1, -dragX / 120));
   const cardTransform =
@@ -585,15 +505,40 @@ export default function YouthPage() {
 
   return (
     <div className="relative mx-auto min-h-screen max-w-[430px] bg-gradient-to-b from-[#eaf5ff] via-[#f4f9ff] to-[#dbeeff] pb-24">
-      <main className={`${view === "feed" ? "px-3 pt-3" : "space-y-3 px-4 pt-4"} min-h-[calc(100vh-92px)]`}>
-        {error && (
-          <p className="rounded-xl bg-[#ffe8e6] px-3 py-2 text-sm text-[#983a2d]">{error}</p>
-        )}
+      <main className="space-y-3 px-4 pt-4">
+        {error && <p className="rounded-xl bg-[#ffe8e6] px-3 py-2 text-sm text-[#983a2d]">{error}</p>}
 
         {view === "feed" && (
-          <section className="h-[calc(100vh-106px)] select-none">
-            {currentJob ? (
-              <div className="relative h-full w-full">
+          <section className="space-y-3">
+            <form className="glass-card p-3" onSubmit={onSearchSubmit}>
+              <div className="flex gap-2">
+                <input
+                  className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                  placeholder={t.searchPlaceholder}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                />
+                <button className="cta-btn px-3 py-2 text-sm" type="submit">
+                  {t.search}
+                </button>
+              </div>
+              {searchQuery && (
+                <button className="secondary-btn mt-2 w-full px-3 py-2 text-xs" type="button" onClick={onClearSearch}>
+                  {t.clear}
+                </button>
+              )}
+            </form>
+
+            {searchQuery && jobs.length === 0 && (
+              <div className="glass-card p-4 text-sm text-[#3d6288]">{t.noSearchResults}</div>
+            )}
+
+            {!searchQuery && jobs.length === 0 && (
+              <div className="glass-card p-4 text-sm text-[#3d6288]">{t.noJobs}</div>
+            )}
+
+            {currentJob && (
+              <div className="relative h-[62vh] select-none">
                 <div
                   className="pointer-events-none absolute left-4 top-4 z-20 rounded-xl border-2 border-[#2ca98d] bg-white px-3 py-1 text-lg font-semibold text-[#2ca98d]"
                   style={{ opacity: likedOpacity }}
@@ -618,15 +563,19 @@ export default function YouthPage() {
                 >
                   <div className="mb-3 flex items-center justify-between">
                     <span className="rounded-full bg-[#e2f0ff] px-3 py-1 text-xs font-semibold text-[#24527f]">
-                      {formatJobType(currentJob.jobType)}
+                      {currentJob.jobType}
                     </span>
-                    <span className="text-xs text-[#4e6f92]">{feedJobs.length} {t.left}</span>
+                    <span className="text-xs text-[#4e6f92]">{feedJobs.length} kvar</span>
                   </div>
-                  <h2 className="text-3xl font-semibold text-[#123359]">{currentJob.title}</h2>
+                  <h2 className="text-3xl font-semibold text-[#123359]">
+                    {language === "sv" ? toSwedishJobText(currentJob.title) : currentJob.title}
+                  </h2>
                   <p className="mt-2 text-sm text-[#365f88]">{currentJob.companyName}</p>
                   <p className="text-sm text-[#365f88]">{currentJob.location}</p>
                   <p className="mt-5 rounded-2xl bg-white/80 p-4 text-sm leading-relaxed text-[#2c4f74]">
-                    {currentJob.description}
+                    {language === "sv"
+                      ? toSwedishJobText(currentJob.description)
+                      : currentJob.description}
                   </p>
                 </article>
 
@@ -647,40 +596,81 @@ export default function YouthPage() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <SectionCard>
-                <p className="text-sm text-[#375f89]">{t.noJobs}</p>
-                <button
-                  className="cta-btn mt-3 w-full px-4 py-3 text-sm"
-                  onClick={() => void load()}
-                  type="button"
-                >
-                  {t.refreshFeed}
-                </button>
-              </SectionCard>
             )}
           </section>
         )}
 
         {view === "matches" && (
           <section className="space-y-3">
-            {matches.length === 0 && <SectionCard>{t.noMatches}</SectionCard>}
-            {matches.map((match) => (
-              <SectionCard key={match.id}>
-                <p className="text-xs uppercase tracking-[0.12em] text-[#55739a]">{t.match}</p>
-                <h2 className="mt-1 text-lg font-semibold text-[#123358]">{match.jobTitle}</h2>
-                <p className="text-sm text-[#3d6288]">{match.companyName}</p>
-                <p className="text-sm text-[#3d6288]">
-                  {match.location} - {formatJobType(match.jobType)}
-                </p>
-              </SectionCard>
-            ))}
+            {matches.length === 0 && <div className="glass-card p-4 text-sm text-[#3d6288]">{t.noMatches}</div>}
+            {matches.length > 0 && (
+              <>
+                <div className="glass-card space-y-2 p-3">
+                  {matches.map((match) => (
+                    <button
+                      key={match.id}
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+                        selectedMatchId === match.id
+                          ? "border-[#1474ff] bg-[#eaf2ff] text-[#0f3f7a]"
+                          : "border-[#d7e8ff] bg-white text-[#365f88]"
+                      }`}
+                      type="button"
+                      onClick={() => setSelectedMatchId(match.id)}
+                    >
+                      <div className="font-semibold">{match.jobTitle}</div>
+                      <div>{match.companyName}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedMatch && (
+                  <div className="glass-card p-3">
+                    <p className="text-xs uppercase tracking-[0.12em] text-[#55739a]">{t.chatWith}</p>
+                    <h3 className="text-base font-semibold text-[#123358]">{selectedMatch.companyName}</h3>
+                    <div className="mt-2 max-h-72 space-y-2 overflow-y-auto rounded-xl bg-[#f7fbff] p-2">
+                      {selectedMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`rounded-xl px-3 py-2 text-sm ${
+                            message.senderId === user.id
+                              ? "ml-8 bg-[#dff0ff] text-[#214f7f]"
+                              : "mr-8 bg-white text-[#335b84]"
+                          }`}
+                        >
+                          <p>{message.message}</p>
+                          <p className="mt-1 text-[10px] text-[#6a86a4]">
+                            {new Date(message.createdAt).toLocaleString(language === "sv" ? "sv-SE" : "en-US")}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                        placeholder={t.writeMessage}
+                        value={chatDraft}
+                        onChange={(event) => setChatDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            void sendChatMessage();
+                          }
+                        }}
+                      />
+                      <button className="cta-btn px-4 py-2 text-sm" type="button" onClick={() => void sendChatMessage()}>
+                        {t.send}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </section>
         )}
 
         {view === "cv" && (
           <section className="space-y-3">
-            <SectionCard>
+            <div className="glass-card p-4">
               <div className="grid grid-cols-2 gap-2">
                 <select
                   className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
@@ -693,55 +683,32 @@ export default function YouthPage() {
                 <select
                   className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                   value={cvTone}
-                  onChange={(event) =>
-                    setCvTone(event.target.value as "professional" | "friendly" | "confident")
-                  }
+                  onChange={(event) => setCvTone(event.target.value as "professional" | "friendly" | "confident")}
                 >
                   <option value="professional">{t.professional}</option>
                   <option value="friendly">{t.friendly}</option>
                   <option value="confident">{t.confident}</option>
                 </select>
               </div>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <input
-                  className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-                  placeholder={t.targetRole}
-                  value={cvTargetRole}
-                  onChange={(event) => setCvTargetRole(event.target.value)}
-                />
-                <select
-                  className="rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
-                  value={cvTargetJobType}
-                  onChange={(event) =>
-                    setCvTargetJobType(
-                      event.target.value as "any" | "part-time" | "temporary" | "summer",
-                    )
-                  }
-                >
-                  <option value="any">{t.anyType}</option>
-                  <option value="part-time">{t.partTime}</option>
-                  <option value="temporary">{t.temporary}</option>
-                  <option value="summer">{t.summer}</option>
-                </select>
-              </div>
+              <input
+                className="mt-2 w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                placeholder={t.targetRole}
+                value={cvTargetRole}
+                onChange={(event) => setCvTargetRole(event.target.value)}
+              />
               <textarea
                 className="mt-3 min-h-24 w-full rounded-xl border border-[#cfe2ff] p-3 text-sm outline-none"
                 placeholder={t.cvPrompt}
                 value={cvPrompt}
                 onChange={(event) => setCvPrompt(event.target.value)}
               />
-              <button
-                className="cta-btn mt-3 w-full px-4 py-3 text-sm"
-                onClick={() => void generateCv()}
-                type="button"
-                disabled={saving}
-              >
+              <button className="cta-btn mt-3 w-full px-4 py-3 text-sm" onClick={() => void generateCv()} type="button" disabled={saving}>
                 {t.generateCv}
               </button>
-            </SectionCard>
+            </div>
 
             {profile?.cv && (
-              <SectionCard>
+              <div className="glass-card p-4">
                 <p className="text-sm text-[#284f77]">
                   {t.quality}: <strong>{profile.cv.qualityScore || 0}/100</strong>
                 </p>
@@ -750,9 +717,7 @@ export default function YouthPage() {
                   value={profile.cv.summary}
                   onChange={(event) =>
                     setProfile((current) =>
-                      current && current.cv
-                        ? { ...current, cv: { ...current.cv, summary: event.target.value } }
-                        : current,
+                      current && current.cv ? { ...current, cv: { ...current.cv, summary: event.target.value } } : current,
                     )
                   }
                 />
@@ -761,48 +726,26 @@ export default function YouthPage() {
                   value={profile.cv.content}
                   onChange={(event) =>
                     setProfile((current) =>
-                      current && current.cv
-                        ? { ...current, cv: { ...current.cv, content: event.target.value } }
-                        : current,
+                      current && current.cv ? { ...current, cv: { ...current.cv, content: event.target.value } } : current,
                     )
                   }
                 />
-                <button
-                  className="cta-btn mt-3 w-full px-4 py-3 text-sm"
-                  onClick={() => void saveCv()}
-                  type="button"
-                  disabled={saving}
-                >
+                <button className="cta-btn mt-3 w-full px-4 py-3 text-sm" onClick={() => void saveCv()} type="button" disabled={saving}>
                   {t.saveCv}
                 </button>
-              </SectionCard>
+              </div>
             )}
           </section>
         )}
 
         {view === "profile" && profile && (
           <section className="space-y-3">
-            <SectionCard>
-              <p className="text-xs uppercase tracking-[0.15em] text-[#547298]">{t.profile}</p>
-              <h1 className="mt-1 text-2xl font-semibold text-[#123257]">
-                {profile.name || t.profile}
-              </h1>
-              <p className="text-sm text-[#3e6289]">{profile.city || t.sweden}</p>
-              <p className="mt-2 text-sm text-[#365b82]">
-                {t.profileStrength}: <strong>{profileStrength}%</strong>
-              </p>
-            </SectionCard>
-
-            <form className="glass-card w-full space-y-3 p-4" onSubmit={saveProfile}>
+            <form className="glass-card space-y-2 p-4" onSubmit={saveProfile}>
               <input
                 className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                 value={profile.name}
                 placeholder={t.name}
-                onChange={(event) =>
-                  setProfile((current) =>
-                    current ? { ...current, name: event.target.value } : current,
-                  )
-                }
+                onChange={(event) => setProfile((current) => (current ? { ...current, name: event.target.value } : current))}
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -815,10 +758,7 @@ export default function YouthPage() {
                   onChange={(event) =>
                     setProfile((current) =>
                       current
-                        ? {
-                            ...current,
-                            age: Number(event.target.value) > 0 ? Number(event.target.value) : null,
-                          }
+                        ? { ...current, age: Number(event.target.value) > 0 ? Number(event.target.value) : null }
                         : current,
                     )
                   }
@@ -827,134 +767,72 @@ export default function YouthPage() {
                   className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
                   value={profile.city}
                   placeholder={t.city}
-                  onChange={(event) =>
-                    setProfile((current) =>
-                      current ? { ...current, city: event.target.value } : current,
-                    )
-                  }
+                  onChange={(event) => setProfile((current) => (current ? { ...current, city: event.target.value } : current))}
                 />
               </div>
-              <SuggestionRow
-                title={t.citySuggestions}
-                values={cityRecommendations}
-                page={cityPage}
-                onMore={() =>
-                  setCityPage((page) => nextSuggestionPage(page, cityRecommendations.length))
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={profile.contactEmail}
+                placeholder={t.contactEmail}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, contactEmail: event.target.value } : current))
                 }
-                onPick={(value) =>
-                  setProfile((current) => (current ? { ...current, city: value } : current))
-                }
-                moreLabel={t.more}
               />
-
-              <MultiAddField
-                title={t.targetRoles}
-                values={roleValues}
-                onChange={(values) =>
-                  setProfile((current) =>
-                    current ? { ...current, targetRole: values.join(", ") } : current,
-                  )
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={profile.contactPhone}
+                placeholder={t.contactPhone}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, contactPhone: event.target.value } : current))
                 }
-                suggestions={roleRecommendations}
-                page={rolePage}
-                onMore={() =>
-                  setRolePage((page) => nextSuggestionPage(page, roleRecommendations.length))
-                }
-                placeholder={t.addOneRole}
-                addLabel={t.add}
-                suggestionsLabel={t.suggestions}
-                helperText={t.helperText}
-                moreLabel={t.more}
               />
-
-              <MultiAddField
-                title={t.skills}
-                values={profile.skills}
-                onChange={(values) =>
-                  setProfile((current) => (current ? { ...current, skills: values } : current))
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={profile.targetRole}
+                placeholder={t.targetRole}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, targetRole: event.target.value } : current))
                 }
-                suggestions={skillRecommendations}
-                page={skillPage}
-                onMore={() =>
-                  setSkillPage((page) => nextSuggestionPage(page, skillRecommendations.length))
-                }
-                placeholder={t.addOneSkill}
-                addLabel={t.add}
-                suggestionsLabel={t.suggestions}
-                helperText={t.helperText}
-                moreLabel={t.more}
               />
-
-              <MultiAddField
-                title={t.interests}
-                values={profile.interests}
-                onChange={(values) =>
-                  setProfile((current) => (current ? { ...current, interests: values } : current))
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={fromCsv(profile.skills)}
+                placeholder={t.skills}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, skills: toCsv(event.target.value) } : current))
                 }
-                suggestions={interestRecommendations}
-                page={interestPage}
-                onMore={() =>
-                  setInterestPage((page) =>
-                    nextSuggestionPage(page, interestRecommendations.length),
-                  )
-                }
-                placeholder={t.addOneInterest}
-                addLabel={t.add}
-                suggestionsLabel={t.suggestions}
-                helperText={t.helperText}
-                moreLabel={t.more}
               />
-
-              <MultiAddField
-                title={t.workingTime}
-                values={availabilityValues}
-                onChange={(values) =>
-                  setProfile((current) =>
-                    current ? { ...current, availability: values.join(", ") } : current,
-                  )
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={fromCsv(profile.interests)}
+                placeholder={t.interests}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, interests: toCsv(event.target.value) } : current))
                 }
-                suggestions={availabilityRecommendations}
-                page={availabilityPage}
-                onMore={() =>
-                  setAvailabilityPage((page) =>
-                    nextSuggestionPage(page, availabilityRecommendations.length),
-                  )
-                }
-                placeholder={t.addOneAvailability}
-                addLabel={t.add}
-                suggestionsLabel={t.suggestions}
-                helperText={t.helperText}
-                moreLabel={t.more}
               />
-
-              <MultiAddField
-                title={t.experience}
-                values={profile.experience}
-                onChange={(values) =>
-                  setProfile((current) => (current ? { ...current, experience: values } : current))
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={fromCsv(profile.experience)}
+                placeholder={t.experience}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, experience: toCsv(event.target.value) } : current))
                 }
-                suggestions={experienceRecommendations}
-                page={experiencePage}
-                onMore={() =>
-                  setExperiencePage((page) =>
-                    nextSuggestionPage(page, experienceRecommendations.length),
-                  )
-                }
-                placeholder={t.addOneExperience}
-                addLabel={t.add}
-                suggestionsLabel={t.suggestions}
-                helperText={t.helperText}
-                moreLabel={t.more}
               />
-
+              <input
+                className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                value={profile.availability}
+                placeholder={t.availability}
+                onChange={(event) =>
+                  setProfile((current) => (current ? { ...current, availability: event.target.value } : current))
+                }
+              />
               <button className="cta-btn w-full px-4 py-3 text-sm" disabled={saving}>
-                {saving ? t.saving : t.saveProfile}
+                {saving ? t.saving : t.save}
               </button>
-
               <button
                 className="w-full rounded-xl border border-[#ffcfcf] bg-[#ffe8e8] px-4 py-3 text-sm font-semibold text-[#b42323]"
-                onClick={handleLogout}
                 type="button"
+                onClick={logout}
               >
                 {t.logout}
               </button>
@@ -964,25 +842,19 @@ export default function YouthPage() {
 
         {view === "alerts" && (
           <section className="space-y-3">
-            <SectionCard>
-              <button
-                className="secondary-btn w-full px-4 py-3 text-sm"
-                onClick={() => void markAllRead()}
-                type="button"
-              >
+            <div className="glass-card p-4">
+              <button className="secondary-btn w-full px-4 py-3 text-sm" onClick={() => void markAllRead()} type="button">
                 {t.markAllRead}
               </button>
-            </SectionCard>
-            {notifications.length === 0 && <SectionCard>{t.noNotifications}</SectionCard>}
+            </div>
+            {notifications.length === 0 && <div className="glass-card p-4 text-sm text-[#3d6288]">{t.noNotifications}</div>}
             {notifications.map((notification) => (
-              <SectionCard key={notification.id}>
+              <div key={notification.id} className="glass-card p-4">
                 <p className="text-sm text-[#2f5074]">{notification.message}</p>
                 <p className="mt-1 text-xs text-[#5b7694]">
-                  {new Date(notification.createdAt).toLocaleString(
-                    language === "sv" ? "sv-SE" : "en-US",
-                  )}
+                  {new Date(notification.createdAt).toLocaleString(language === "sv" ? "sv-SE" : "en-US")}
                 </p>
-              </SectionCard>
+              </div>
             ))}
           </section>
         )}
@@ -1001,7 +873,7 @@ export default function YouthPage() {
               key={item.key}
               type="button"
               onClick={() => setView(item.key as ViewKey)}
-              className={`rounded-xl px-2 py-2 text-xs font-semibold ${
+              className={`min-h-[42px] whitespace-normal break-words rounded-xl px-1 py-2 text-[11px] leading-tight font-semibold ${
                 view === item.key
                   ? "bg-[#1474ff] text-white"
                   : "border border-[#d4e6ff] bg-[#f9fcff] text-[#3d638a]"
@@ -1015,3 +887,4 @@ export default function YouthPage() {
     </div>
   );
 }
+

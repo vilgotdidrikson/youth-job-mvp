@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,15 +15,21 @@ interface AuthResponse {
   needsOnboarding: boolean;
 }
 
+function isValidPhone(value: string): boolean {
+  return /^\+?\d[\d\s-]{6,}$/.test(value.trim());
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("youth");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const t =
     language === "sv"
       ? {
@@ -34,6 +40,7 @@ export default function AuthPage() {
           signupSub: "Välj roll och kom igång på under en minut.",
           loginSub: "Logga in för att fortsätta matcha.",
           password: "Lösenord",
+          phone: "Telefonnummer",
           youth: "Ungdom",
           company: "Företag",
           wait: "Vänta...",
@@ -42,6 +49,7 @@ export default function AuthPage() {
           googleSoon: "Fortsätt med Google (snart)",
           alreadyHave: "Har du redan ett konto? Logga in",
           needAccount: "Behöver du ett konto? Skapa ett",
+          phoneInvalid: "Ange ett giltigt telefonnummer.",
         }
       : {
           failed: "Authentication failed.",
@@ -51,6 +59,7 @@ export default function AuthPage() {
           signupSub: "Choose role and get started in under a minute.",
           loginSub: "Sign in to continue matching.",
           password: "Password",
+          phone: "Phone number",
           youth: "Youth",
           company: "Company",
           wait: "Please wait...",
@@ -59,19 +68,22 @@ export default function AuthPage() {
           googleSoon: "Continue with Google (soon)",
           alreadyHave: "Already have an account? Sign in",
           needAccount: "Need an account? Create one",
+          phoneInvalid: "Please enter a valid phone number.",
         };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    if (!isValidPhone(phone)) {
+      setError(t.phoneInvalid);
+      return;
+    }
     setLoading(true);
 
     try {
       const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
       const payload =
-        mode === "signup"
-          ? { email, password, role }
-          : { email, password };
+        mode === "signup" ? { email, phone, password, role } : { email, phone, password };
 
       const response = await apiRequest<AuthResponse>(endpoint, {
         method: "POST",
@@ -80,6 +92,17 @@ export default function AuthPage() {
 
       saveSession(response.user);
 
+      if (response.user.role === "youth" && phone.trim()) {
+        await apiRequest("/api/youth/profile", {
+          method: "PUT",
+          userId: response.user.id,
+          body: JSON.stringify({
+            contactEmail: email.trim().toLowerCase(),
+            contactPhone: phone.trim(),
+          }),
+        });
+      }
+
       if (response.user.role === "youth" && response.needsOnboarding) {
         router.push("/youth/onboarding");
         return;
@@ -87,9 +110,7 @@ export default function AuthPage() {
 
       router.push(roleHome(response.user.role));
     } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : t.failed,
-      );
+      setError(submitError instanceof Error ? submitError.message : t.failed);
     } finally {
       setLoading(false);
     }
@@ -107,9 +128,7 @@ export default function AuthPage() {
         <h1 className="mt-2 text-2xl font-semibold text-[#132742]">
           {mode === "signup" ? t.signupHeading : t.loginHeading}
         </h1>
-        <p className="mt-2 text-sm text-[#3f5f82]">
-          {mode === "signup" ? t.signupSub : t.loginSub}
-        </p>
+        <p className="mt-2 text-sm text-[#3f5f82]">{mode === "signup" ? t.signupSub : t.loginSub}</p>
 
         <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
           <input
@@ -118,6 +137,15 @@ export default function AuthPage() {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+          <input
+            className="w-full rounded-2xl border border-[#cce0ff] bg-white px-4 py-3 text-sm outline-none focus:border-[#1474ff]"
+            placeholder={t.phone}
+            type="tel"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            pattern="^\+?\d[\d\s-]{6,}$"
             required
           />
           <input
@@ -156,24 +184,12 @@ export default function AuthPage() {
             </div>
           )}
 
-          {error && (
-            <p className="rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">
-              {error}
-            </p>
-          )}
+          {error && <p className="rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error}</p>}
 
-          <button
-            type="submit"
-            className="cta-btn w-full px-4 py-3 text-sm"
-            disabled={loading}
-          >
+          <button type="submit" className="cta-btn w-full px-4 py-3 text-sm" disabled={loading}>
             {loading ? t.wait : mode === "signup" ? t.createAccount : t.signIn}
           </button>
-          <button
-            type="button"
-            className="secondary-btn w-full px-4 py-3 text-sm opacity-70"
-            disabled
-          >
+          <button type="button" className="secondary-btn w-full px-4 py-3 text-sm opacity-70" disabled>
             {t.googleSoon}
           </button>
         </form>
@@ -189,3 +205,4 @@ export default function AuthPage() {
     </div>
   );
 }
+

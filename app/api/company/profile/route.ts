@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, requireUser } from "@/lib/api-auth";
-import { updateDb } from "@/lib/db";
+import { readDb, updateDb } from "@/lib/db";
 import { CompanyProfile } from "@/lib/types";
 
 interface CompanyProfileBody {
@@ -16,23 +16,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return auth.error;
   }
 
-  const profile = await updateDb((db) => {
-    let current = db.companyProfiles.find(
-      (candidate) => candidate.userId === auth.user.id,
-    );
-    if (!current) {
-      current = {
-        userId: auth.user.id,
-        companyName: "",
-        city: "",
-        description: "",
-        tier: "free",
-        updatedAt: new Date().toISOString(),
-      } satisfies CompanyProfile;
-      db.companyProfiles.push(current);
-    }
-    return current;
-  });
+  const db = await readDb();
+  const profile =
+    db.companyProfiles.find((candidate) => candidate.userId === auth.user.id) ||
+    ({
+      userId: auth.user.id,
+      companyName: "",
+      city: "",
+      description: "",
+      tier: "free",
+      updatedAt: new Date().toISOString(),
+    } satisfies CompanyProfile);
 
   return NextResponse.json({ profile });
 }
