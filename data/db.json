@@ -55,13 +55,6 @@
       "password": "demo123",
       "role": "company",
       "createdAt": "2026-02-20T12:00:00.000Z"
-    },
-    {
-      "id": "069cde2f-fe60-433d-9896-82308f8da7e5",
-      "email": "wehfowefoef@gmail.com",
-      "password": "oiasdoajg",
-      "role": "youth",
-      "createdAt": "2026-02-21T14:03:32.499Z"
     }
   ],
   "youthProfiles": [
@@ -94,20 +87,6 @@
         "updatedAt": "2026-02-20T12:00:00.000Z"
       },
       "updatedAt": "2026-02-20T12:00:00.000Z"
-    },
-    {
-      "userId": "069cde2f-fe60-433d-9896-82308f8da7e5",
-      "name": "",
-      "age": null,
-      "city": "",
-      "targetRole": "",
-      "skills": [],
-      "interests": [],
-      "experience": [],
-      "availability": "",
-      "premiumBadge": false,
-      "cv": null,
-      "updatedAt": "2026-02-21T14:03:32.499Z"
     }
   ],
   "companyProfiles": [
@@ -130,7 +109,7 @@
     {
       "userId": "company-events",
       "companyName": "Event Junior",
-      "city": "Gothenburg",
+      "city": "Göteborg",
       "description": "Temporary event and festival staffing for youth.",
       "tier": "free",
       "updatedAt": "2026-02-20T12:00:00.000Z"
@@ -138,7 +117,7 @@
     {
       "userId": "company-logistics",
       "companyName": "PackSnabb",
-      "city": "Malmo",
+      "city": "Malmö",
       "description": "Warehouse and e-commerce support for seasonal peaks.",
       "tier": "free",
       "updatedAt": "2026-02-20T12:00:00.000Z"
@@ -206,7 +185,7 @@
       "companyId": "company-events",
       "title": "Festival Crew Assistant",
       "description": "Help with visitor guidance, wristband checks, and queue flow.",
-      "location": "Gothenburg",
+      "location": "Göteborg",
       "jobType": "temporary",
       "active": true,
       "createdAt": "2026-02-20T12:00:00.000Z"
@@ -216,7 +195,7 @@
       "companyId": "company-events",
       "title": "Event Setup Helper",
       "description": "Assist in setup and teardown for youth sports events.",
-      "location": "Gothenburg",
+      "location": "Göteborg",
       "jobType": "temporary",
       "active": true,
       "createdAt": "2026-02-20T12:00:00.000Z"
@@ -226,7 +205,7 @@
       "companyId": "company-logistics",
       "title": "Package Sorting Assistant",
       "description": "Sort and label parcels with team leads in evening shifts.",
-      "location": "Malmo",
+      "location": "Malmö",
       "jobType": "part-time",
       "active": true,
       "createdAt": "2026-02-20T12:00:00.000Z"
@@ -236,7 +215,7 @@
       "companyId": "company-logistics",
       "title": "Summer Warehouse Helper",
       "description": "Support inbound and outbound package handling.",
-      "location": "Malmo",
+      "location": "Malmö",
       "jobType": "summer",
       "active": true,
       "createdAt": "2026-02-20T12:00:00.000Z"
