@@ -20,33 +20,32 @@ export async function POST(
     params: Promise<{ jobId: string }> | { jobId: string };
   },
 ): Promise<NextResponse> {
+  const body = (await request.json().catch(() => ({}))) as ActionBody;
+  const action = body.action;
+  if (!action || !["interested", "skip"].includes(action)) {
+    return jsonError("Action must be 'interested' or 'skip'.");
+  }
+
   const auth = await requireUser(request, ["youth"]);
   if ("error" in auth) {
     return auth.error;
   }
 
-  const body = (await request.json().catch(() => ({}))) as ActionBody;
-  if (!body.action || !["interested", "skip"].includes(body.action)) {
-    return jsonError("Action must be 'interested' or 'skip'.");
-  }
-  const action = body.action;
-
   const jobId = await readJobId(context);
 
   try {
     const result = await updateDb((db) => {
-      const job = db.jobs.find((candidate) => candidate.id === jobId);
+      const job = db.jobs.find((entry) => entry.id === jobId);
       if (!job || !job.active) {
         throw new Error("JOB_NOT_FOUND");
       }
 
       const existing = db.youthActions.find(
-        (action) =>
-          action.jobId === jobId && action.youthId === auth.user.id,
+        (entry) => entry.jobId === jobId && entry.youthId === auth.user.id,
       );
 
       if (existing) {
-        existing.action = action as YouthJobActionType;
+        existing.action = action;
         existing.createdAt = new Date().toISOString();
       } else {
         db.youthActions.push({
@@ -58,21 +57,7 @@ export async function POST(
         });
       }
 
-      if (action === "interested") {
-        db.notifications.push({
-          id: createId(),
-          userId: job.companyId,
-          type: "interest",
-          message: `${auth.user.email} showed interest in "${job.title}".`,
-          read: false,
-          createdAt: new Date().toISOString(),
-          metadata: `interest:${job.id}:${auth.user.id}`,
-        });
-      }
-
-      return {
-        action,
-      };
+      return { action };
     });
 
     return NextResponse.json(result);

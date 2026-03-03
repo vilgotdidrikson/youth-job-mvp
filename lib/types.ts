@@ -48,6 +48,8 @@ export interface YouthProfile {
   name: string;
   age: number | null;
   city: string;
+  contactEmail: string;
+  contactPhone: string;
   targetRole: string;
   skills: string[];
   interests: string[];
@@ -103,6 +105,14 @@ export interface MatchRecord {
   createdAt: string;
 }
 
+export interface MatchMessage {
+  id: string;
+  matchId: string;
+  senderId: string;
+  message: string;
+  createdAt: string;
+}
+
 export interface NotificationRecord {
   id: string;
   userId: string;
@@ -121,6 +131,7 @@ export interface Database {
   youthActions: YouthJobAction[];
   companyDecisions: CompanyDecision[];
   matches: MatchRecord[];
+  matchMessages: MatchMessage[];
   notifications: NotificationRecord[];
 }
 

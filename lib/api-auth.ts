@@ -56,13 +56,18 @@ export async function requireUser(
 > {
   const userId = request.headers.get("x-user-id");
   const userEmail = request.headers.get("x-user-email")?.toLowerCase().trim();
-  if (!userId) {
+  if (!userId && !userEmail) {
     return { error: jsonError("Unauthorized.", 401) };
   }
 
   const db = await readDb();
-  const userById = db.users.find((candidate) => candidate.id === userId);
-  const user = userById || db.users.find((candidate) => candidate.email === userEmail);
+  const userById = userId
+    ? db.users.find((candidate) => candidate.id === userId)
+    : undefined;
+  const userByEmail = userEmail
+    ? db.users.find((candidate) => candidate.email === userEmail)
+    : undefined;
+  const user = userById || userByEmail;
   if (!user) {
     return { error: jsonError("Unauthorized.", 401) };
   }

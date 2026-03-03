@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { SiteLanguage } from "@/hooks/use-language";
 
@@ -16,7 +16,8 @@ export function LanguageToggle({ language, onToggle }: LanguageToggleProps) {
       aria-label={language === "sv" ? "Byt språk till engelska" : "Switch language to Swedish"}
       title={language === "sv" ? "Byt till engelska" : "Switch to Swedish"}
     >
-      {language === "sv" ? "Svenska • EN" : "English • SV"}
+      {language === "sv" ? "Svenska â€¢ EN" : "English â€¢ SV"}
     </button>
   );
 }
+

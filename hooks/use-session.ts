@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   clearSession,
@@ -50,10 +50,10 @@ export function useSession(requiredRole?: Role): UseSessionResult {
     }
   }, [loading, requiredRole, router, user]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearSession();
     router.replace("/auth");
-  };
+  }, [router]);
 
   return { user, loading, logout };
 }

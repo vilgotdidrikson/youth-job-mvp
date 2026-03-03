@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, requireUser } from "@/lib/api-auth";
-import { createId, updateDb } from "@/lib/db";
+import { readDb } from "@/lib/db";
 
 async function readJobId(context: {
   params: Promise<{ jobId: string }> | { jobId: string };
@@ -23,16 +23,12 @@ export async function GET(
   const jobId = await readJobId(context);
 
   try {
-    const result = await updateDb((db) => {
+    const db = await readDb();
+    const result = (() => {
       const job = db.jobs.find((candidate) => candidate.id === jobId);
       if (!job || job.companyId !== auth.user.id) {
         throw new Error("JOB_NOT_FOUND");
       }
-
-      const companyProfile = db.companyProfiles.find(
-        (candidate) => candidate.userId === auth.user.id,
-      );
-      const companyName = companyProfile?.companyName || auth.user.email;
 
       const interestedActions = db.youthActions.filter(
         (action) => action.jobId === jobId && action.action === "interested",
@@ -49,22 +45,6 @@ export async function GET(
         const decision = decisions.find(
           (entry) => entry.youthId === action.youthId,
         );
-
-        const metadataKey = `profile_view:${jobId}:${auth.user.id}:${action.youthId}`;
-        const alreadyNotified = db.notifications.some(
-          (entry) => entry.metadata === metadataKey,
-        );
-        if (!alreadyNotified) {
-          db.notifications.push({
-            id: createId(),
-            userId: action.youthId,
-            type: "profile_view",
-            message: `${companyName} viewed your profile for "${job.title}".`,
-            read: false,
-            metadata: metadataKey,
-            createdAt: new Date().toISOString(),
-          });
-        }
 
         return {
           youthId: action.youthId,
@@ -89,7 +69,7 @@ export async function GET(
           b.interestedAt.localeCompare(a.interestedAt),
         ),
       };
-    });
+    })();
 
     return NextResponse.json(result);
   } catch (error) {

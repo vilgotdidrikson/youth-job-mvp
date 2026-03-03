@@ -1,4 +1,4 @@
-import { OnboardingStep, YouthProfile } from "@/lib/types";
+﻿import { OnboardingStep, YouthProfile } from "@/lib/types";
 import {
   ALL_CITY_RECOMMENDATIONS,
   ALL_ROLE_RECOMMENDATIONS,
@@ -9,6 +9,8 @@ export interface OnboardingDraft {
   name: string;
   age: number | null;
   city: string;
+  contactEmail: string;
+  contactPhone: string;
   targetRole: string;
   interests: string[];
   skills: string[];
@@ -35,7 +37,7 @@ const STEP_QUESTIONS: Record<FlowLanguage, Record<OnboardingStep, string>> = {
     age: "How old are you? (12-20)",
     city: "Which city do you live in?",
     targetRole: "What type of job do you want first?",
-    interests: "What interests you most?",
+    interests: "What do you enjoy in daily life? (for example sports, music, gaming)",
     skills: "What are your strongest skills?",
     availability: "When can you work?",
     experience: "Any earlier experience? One short example is enough.",
@@ -45,7 +47,7 @@ const STEP_QUESTIONS: Record<FlowLanguage, Record<OnboardingStep, string>> = {
     age: "Hur gammal är du? (12-20)",
     city: "Vilken stad bor du i?",
     targetRole: "Vilken typ av jobb vill du börja med?",
-    interests: "Vad är du mest intresserad av?",
+    interests: "Vad gillar du i vardagen? (t.ex. sport, musik, gaming)",
     skills: "Vilka är dina starkaste färdigheter?",
     availability: "När kan du jobba?",
     experience: "Har du tidigare erfarenhet? Ett kort exempel räcker.",
@@ -96,11 +98,10 @@ function parseAge(text: string): number | null {
 }
 
 function parseName(text: string): string {
-  const cleaned = text
+  return text
     .replace(/^(my name is|i am|i'm|jag heter|name is)\s*/i, "")
     .replace(/[0-9]/g, "")
     .trim();
-  return cleaned;
 }
 
 function parseCity(text: string): string {
@@ -110,21 +111,21 @@ function parseCity(text: string): string {
   );
   if (known) {
     const cityCanonicalMap: Record<string, string> = {
-      gothenburg: "Göteborg",
-      malmo: "Malmö",
-      vasteras: "Västerås",
-      orebro: "Örebro",
-      linkoping: "Linköping",
-      jonkoping: "Jönköping",
-      norrkoping: "Norrköping",
-      umea: "Umeå",
-      gavle: "Gävle",
-      boras: "Borås",
-      sodertalje: "Södertälje",
-      vaxjo: "Växjö",
-      lulea: "Luleå",
-      trollhattan: "Trollhättan",
-      skovde: "Skövde",
+      gothenburg: "Goteborg",
+      malmo: "Malmo",
+      vasteras: "Vasteras",
+      orebro: "Orebro",
+      linkoping: "Linkoping",
+      jonkoping: "Jonkoping",
+      norrkoping: "Norrkoping",
+      umea: "Umea",
+      gavle: "Gavle",
+      boras: "Boras",
+      sodertalje: "Sodertalje",
+      vaxjo: "Vaxjo",
+      lulea: "Lulea",
+      trollhattan: "Trollhattan",
+      skovde: "Skovde",
     };
     return cityCanonicalMap[known.toLowerCase()] || known;
   }
@@ -141,14 +142,13 @@ function parseRole(text: string): string {
 
 function parseRoles(text: string): string[] {
   const rawParts = normalizeList(text);
-  const normalized = rawParts
-    .map((part) => parseRole(part))
-    .filter(Boolean);
+  const normalized = rawParts.map((part) => parseRole(part)).filter(Boolean);
 
   const matchedRecommended = ALL_ROLE_RECOMMENDATIONS.filter((role) =>
-    normalized.some((entry) =>
-      role.toLowerCase().includes(entry.toLowerCase()) ||
-      entry.toLowerCase().includes(role.toLowerCase()),
+    normalized.some(
+      (entry) =>
+        role.toLowerCase().includes(entry.toLowerCase()) ||
+        entry.toLowerCase().includes(role.toLowerCase()),
     ),
   );
   return unique([...matchedRecommended, ...normalized]).slice(0, 8);
@@ -159,6 +159,8 @@ export function draftFromProfile(profile: YouthProfile): OnboardingDraft {
     name: profile.name || "",
     age: profile.age || null,
     city: profile.city || "",
+    contactEmail: profile.contactEmail || "",
+    contactPhone: profile.contactPhone || "",
     targetRole: profile.targetRole || "",
     interests: profile.interests || [],
     skills: profile.skills || [],
@@ -232,10 +234,7 @@ export function applyAnswer(input: {
     if (!age || age < 12 || age > 20) {
       return {
         accepted: false,
-        hint: t(
-          "Please enter an age between 12 and 20.",
-          "Ange en ålder mellan 12 och 20.",
-        ),
+        hint: t("Please enter an age between 12 and 20.", "Ange en ålder mellan 12 och 20."),
         draft: next,
       };
     }
@@ -324,9 +323,7 @@ export function nextStep(step: OnboardingStep): OnboardingStep | null {
   return ONBOARDING_STEPS[index + 1];
 }
 
-export function recommendations(
-  step: OnboardingStep,
-  language: FlowLanguage = "en",
-): string[] {
+export function recommendations(step: OnboardingStep, language: FlowLanguage = "en"): string[] {
   return recommendationsForStep(step, language);
 }
+

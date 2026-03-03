@@ -7,6 +7,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if ("error" in auth) {
     return auth.error;
   }
+  const query = request.nextUrl.searchParams.get("q")?.trim().toLowerCase() || "";
 
   const db = await readDb();
   const actionMap = new Map(
@@ -15,8 +16,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .map((action) => [action.jobId, action.action]),
   );
 
-  const jobs = db.jobs
-    .filter((job) => job.active)
+  const activeJobs = db.jobs.filter((job) => job.active);
+
+  const jobs = activeJobs
+    .filter((job) => {
+      if (!query) return true;
+      const company = db.companyProfiles.find(
+        (candidate) => candidate.userId === job.companyId,
+      );
+      const haystack = `${job.title} ${job.description} ${job.location} ${company?.companyName || ""}`
+        .toLowerCase()
+        .trim();
+      return haystack.includes(query);
+    })
     .filter((job) => actionMap.get(job.id) !== "skip")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((job) => {

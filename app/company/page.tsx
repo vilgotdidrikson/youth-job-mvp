@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { apiRequest } from "@/lib/client-api";
+import { ApiError, apiRequest } from "@/lib/client-api";
 import { useSession } from "@/hooks/use-session";
 
 type CompanyTab = "jobs" | "candidates" | "matches" | "alerts" | "settings";
@@ -46,18 +46,25 @@ interface CandidateResponse {
   }>;
 }
 
+interface MatchItem {
+  id: string;
+  jobTitle: string;
+  location: string;
+  candidateName: string;
+  companyId: string;
+  youthId: string;
+}
+
 interface MatchesResponse {
-  matches: Array<{
-    id: string;
-    jobTitle: string;
-    location: string;
-    candidateName: string;
-    candidateCity: string;
-    candidateAvailability: string;
-    candidateSkills: string[];
-    candidateCvSummary: string;
-    createdAt: string;
-  }>;
+  matches: MatchItem[];
+}
+
+interface MatchMessage {
+  id: string;
+  matchId: string;
+  senderId: string;
+  message: string;
+  createdAt: string;
 }
 
 interface NotificationsResponse {
@@ -76,47 +83,38 @@ export default function CompanyPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
 
-  const [profile, setProfile] = useState<CompanyProfileResponse["profile"] | null>(
-    null,
-  );
+  const [profile, setProfile] = useState<CompanyProfileResponse["profile"] | null>(null);
   const [jobs, setJobs] = useState<CompanyJobsResponse["jobs"]>([]);
   const [tier, setTier] = useState<"free" | "premium">("free");
   const [freePostLimit, setFreePostLimit] = useState(3);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateResponse["candidates"]>([]);
   const [candidateJobTitle, setCandidateJobTitle] = useState("");
-  const [matches, setMatches] = useState<MatchesResponse["matches"]>([]);
-  const [notifications, setNotifications] = useState<
-    NotificationsResponse["notifications"]
-  >([]);
+  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [selectedMatchId, setSelectedMatchId] = useState("");
+  const [messagesByMatch, setMessagesByMatch] = useState<Record<string, MatchMessage[]>>({});
+  const [chatDraft, setChatDraft] = useState("");
+  const [notifications, setNotifications] = useState<NotificationsResponse["notifications"]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [jobLocation, setJobLocation] = useState("");
-  const [jobType, setJobType] = useState<"part-time" | "temporary" | "summer">(
-    "part-time",
-  );
+  const [jobType, setJobType] = useState<"part-time" | "temporary" | "summer">("part-time");
   const [savingJob, setSavingJob] = useState(false);
+  const [authFailed, setAuthFailed] = useState(false);
 
   const loadDashboard = useCallback(async () => {
-    if (!user) return;
+    if (!user || authFailed) return;
     setBusy(true);
     setError("");
     try {
-      const [profileResponse, jobsResponse, matchesResponse, notificationsResponse] =
-        await Promise.all([
-          apiRequest<CompanyProfileResponse>("/api/company/profile", {
-            userId: user.id,
-          }),
-          apiRequest<CompanyJobsResponse>("/api/company/jobs", {
-            userId: user.id,
-          }),
-          apiRequest<MatchesResponse>("/api/matches", { userId: user.id }),
-          apiRequest<NotificationsResponse>("/api/notifications", {
-            userId: user.id,
-          }),
-        ]);
+      const [profileResponse, jobsResponse, matchesResponse, notificationsResponse] = await Promise.all([
+        apiRequest<CompanyProfileResponse>("/api/company/profile", { userId: user.id }),
+        apiRequest<CompanyJobsResponse>("/api/company/jobs", { userId: user.id }),
+        apiRequest<MatchesResponse>("/api/matches", { userId: user.id }),
+        apiRequest<NotificationsResponse>("/api/notifications", { userId: user.id }),
+      ]);
 
       setProfile(profileResponse.profile);
       setJobs(jobsResponse.jobs);
@@ -129,12 +127,20 @@ export default function CompanyPage() {
       if (!selectedJobId && jobsResponse.jobs.length > 0) {
         setSelectedJobId(jobsResponse.jobs[0].id);
       }
+      if (!selectedMatchId && matchesResponse.matches.length > 0) {
+        setSelectedMatchId(matchesResponse.matches[0].id);
+      }
     } catch (loadError) {
+      if (loadError instanceof ApiError && loadError.status === 401) {
+        setAuthFailed(true);
+        logout();
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda företagsdata.");
     } finally {
       setBusy(false);
     }
-  }, [selectedJobId, user]);
+  }, [authFailed, logout, selectedJobId, selectedMatchId, user]);
 
   const loadCandidates = useCallback(async () => {
     if (!user || !selectedJobId) {
@@ -143,34 +149,48 @@ export default function CompanyPage() {
     }
 
     try {
-      const response = await apiRequest<CandidateResponse>(
-        `/api/company/jobs/${selectedJobId}/candidates`,
-        {
-          userId: user.id,
-        },
-      );
+      const response = await apiRequest<CandidateResponse>(`/api/company/jobs/${selectedJobId}/candidates`, {
+        userId: user.id,
+      });
       setCandidates(response.candidates);
       setCandidateJobTitle(response.jobTitle);
     } catch (candidateError) {
-      setError(
-        candidateError instanceof Error
-          ? candidateError.message
-          : "Kunde inte ladda kandidater.",
-      );
+      setError(candidateError instanceof Error ? candidateError.message : "Kunde inte ladda kandidater.");
     }
   }, [selectedJobId, user]);
 
+  const loadChat = useCallback(
+    async (matchId: string) => {
+      if (!user || !matchId) return;
+      try {
+        const response = await apiRequest<{ messages: MatchMessage[] }>(`/api/matches/${matchId}/chat`, {
+          userId: user.id,
+        });
+        setMessagesByMatch((current) => ({ ...current, [matchId]: response.messages }));
+      } catch (chatError) {
+        setError(chatError instanceof Error ? chatError.message : "Kunde inte ladda chatten.");
+      }
+    },
+    [user],
+  );
+
   useEffect(() => {
-    if (user) {
+    if (user && !authFailed) {
       void loadDashboard();
     }
-  }, [loadDashboard, user]);
+  }, [authFailed, loadDashboard, user]);
 
   useEffect(() => {
     if (user && selectedJobId) {
       void loadCandidates();
     }
   }, [loadCandidates, selectedJobId, user]);
+
+  useEffect(() => {
+    if (user && selectedMatchId) {
+      void loadChat(selectedMatchId);
+    }
+  }, [loadChat, selectedMatchId, user]);
 
   const handleCreateJob = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -200,27 +220,17 @@ export default function CompanyPage() {
     }
   };
 
-  const handleCandidateDecision = async (
-    youthId: string,
-    decision: "accept" | "reject",
-  ) => {
+  const handleCandidateDecision = async (youthId: string, decision: "accept" | "reject") => {
     if (!user || !selectedJobId) return;
     try {
-      await apiRequest(
-        `/api/company/jobs/${selectedJobId}/candidates/${youthId}/decision`,
-        {
-          method: "POST",
-          userId: user.id,
-          body: JSON.stringify({ decision }),
-        },
-      );
+      await apiRequest(`/api/company/jobs/${selectedJobId}/candidates/${youthId}/decision`, {
+        method: "POST",
+        userId: user.id,
+        body: JSON.stringify({ decision }),
+      });
       await Promise.all([loadCandidates(), loadDashboard()]);
     } catch (decisionError) {
-      setError(
-        decisionError instanceof Error
-          ? decisionError.message
-          : "Kunde inte uppdatera kandidaten.",
-      );
+      setError(decisionError instanceof Error ? decisionError.message : "Kunde inte uppdatera kandidaten.");
     }
   };
 
@@ -260,17 +270,23 @@ export default function CompanyPage() {
       });
       await loadDashboard();
     } catch (tierError) {
-      setError(
-        tierError instanceof Error ? tierError.message : "Kunde inte ändra nivå.",
-      );
+      setError(tierError instanceof Error ? tierError.message : "Kunde inte ändra nivå.");
     }
   };
 
-  const handleLogout = () => {
-    if (!window.confirm("Är du säker på att du vill logga ut?")) {
-      return;
+  const sendChatMessage = async () => {
+    if (!user || !selectedMatchId || !chatDraft.trim()) return;
+    try {
+      await apiRequest(`/api/matches/${selectedMatchId}/chat`, {
+        method: "POST",
+        userId: user.id,
+        body: JSON.stringify({ message: chatDraft.trim() }),
+      });
+      setChatDraft("");
+      await loadChat(selectedMatchId);
+    } catch (sendError) {
+      setError(sendError instanceof Error ? sendError.message : "Kunde inte skicka meddelande.");
     }
-    logout();
   };
 
   if (loading || !user) {
@@ -281,32 +297,27 @@ export default function CompanyPage() {
     return <div className="mobile-shell py-10 text-sm text-[#3e648d]">Laddar dashboard...</div>;
   }
 
+  const selectedMessages = messagesByMatch[selectedMatchId] || [];
+  const selectedMatch = matches.find((m) => m.id === selectedMatchId) || null;
+
   return (
     <div className="mobile-shell">
       <header className="mb-4 flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.15em] text-[#4f6a8a]">
-            Företagsläge
-          </p>
-          <h1 className="text-2xl font-semibold text-[#132640]">
-            {profile?.companyName || "Företagspanel"}
-          </h1>
+          <p className="text-xs uppercase tracking-[0.15em] text-[#4f6a8a]">Företagsläge</p>
+          <h1 className="text-2xl font-semibold text-[#132640]">{profile?.companyName || "Företagspanel"}</h1>
           <p className="text-sm text-[#3d5d82]">{profile?.city || "Sverige"}</p>
         </div>
       </header>
 
-      {error && (
-        <p className="mb-3 rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">
-          {error}
-        </p>
-      )}
+      {error && <p className="mb-3 rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error}</p>}
 
       {tab === "jobs" && (
         <section className="tab-fade space-y-3">
           <div className="glass-card p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-[#2f5074]">
-                Nivå: <strong>{tier}</strong>
+                Niva: <strong>{tier}</strong>
               </p>
               <p className="text-xs text-[#4f6f92]">Gratisgräns: {freePostLimit} aktiva jobb</p>
             </div>
@@ -338,9 +349,7 @@ export default function CompanyPage() {
             <select
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
               value={jobType}
-              onChange={(event) =>
-                setJobType(event.target.value as "part-time" | "temporary" | "summer")
-              }
+              onChange={(event) => setJobType(event.target.value as "part-time" | "temporary" | "summer")}
             >
               <option value="part-time">Deltid</option>
               <option value="temporary">Tillfälligt</option>
@@ -360,9 +369,7 @@ export default function CompanyPage() {
                 </div>
                 <p className="mt-1 text-sm text-[#3f6288]">{job.location}</p>
                 <p className="mt-2 text-sm text-[#2b4769]">{job.description}</p>
-                <p className="mt-3 text-xs text-[#48698f]">
-                  Intresserade kandidater: {job.interestedCount}
-                </p>
+                <p className="mt-3 text-xs text-[#48698f]">Intresserade kandidater: {job.interestedCount}</p>
               </article>
             ))}
           </div>
@@ -372,9 +379,7 @@ export default function CompanyPage() {
       {tab === "candidates" && (
         <section className="tab-fade space-y-3">
           <div className="glass-card p-4">
-            <label className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">
-              Välj jobb
-            </label>
+            <label className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">Välj jobb</label>
             <select
               className="mt-2 w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
               value={selectedJobId}
@@ -394,11 +399,7 @@ export default function CompanyPage() {
             </div>
           )}
 
-          {candidates.length === 0 && (
-            <div className="glass-card p-4 text-sm text-[#3f6186]">
-              Inga intresserade kandidater ännu.
-            </div>
-          )}
+          {candidates.length === 0 && <div className="glass-card p-4 text-sm text-[#3f6186]">Inga intresserade kandidater an.</div>}
 
           {candidates.map((candidate) => (
             <article key={candidate.youthId} className="glass-card p-4">
@@ -417,28 +418,16 @@ export default function CompanyPage() {
                   </span>
                 ))}
               </div>
-              {candidate.cvSummary && (
-                <p className="mt-3 rounded-xl bg-[#f5f9ff] p-3 text-sm text-[#2f5074]">
-                  {candidate.cvSummary}
-                </p>
-              )}
+              {candidate.cvSummary && <p className="mt-3 rounded-xl bg-[#f5f9ff] p-3 text-sm text-[#2f5074]">{candidate.cvSummary}</p>}
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  className="secondary-btn px-3 py-2 text-sm"
-                  onClick={() => handleCandidateDecision(candidate.youthId, "reject")}
-                >
+                <button className="secondary-btn px-3 py-2 text-sm" onClick={() => handleCandidateDecision(candidate.youthId, "reject")}>
                   Avslå
                 </button>
-                <button
-                  className="cta-btn px-3 py-2 text-sm"
-                  onClick={() => handleCandidateDecision(candidate.youthId, "accept")}
-                >
+                <button className="cta-btn px-3 py-2 text-sm" onClick={() => handleCandidateDecision(candidate.youthId, "accept")}>
                   Acceptera
                 </button>
               </div>
-              {candidate.decision && (
-                <p className="mt-2 text-xs text-[#567493]">Beslut: {candidate.decision}</p>
-              )}
+              {candidate.decision && <p className="mt-2 text-xs text-[#567493]">Beslut: {candidate.decision}</p>}
             </article>
           ))}
         </section>
@@ -447,41 +436,84 @@ export default function CompanyPage() {
       {tab === "matches" && (
         <section className="tab-fade space-y-3">
           {matches.length === 0 && (
-            <div className="glass-card p-4 text-sm text-[#3f6186]">
-              Inga matchningar ännu. Acceptera intresserade kandidater för att matcha.
-            </div>
+            <div className="glass-card p-4 text-sm text-[#3f6186]">Inga matchningar än. Acceptera kandidater för att matcha.</div>
           )}
-          {matches.map((match) => (
-            <article key={match.id} className="glass-card p-4">
-              <p className="text-xs uppercase tracking-[0.15em] text-[#4f6b89]">Matchning</p>
-              <h3 className="mt-1 text-lg font-semibold text-[#132743]">{match.candidateName}</h3>
-              <p className="text-sm text-[#3d5e82]">{match.jobTitle}</p>
-              <p className="text-sm text-[#3d5e82]">{match.location}</p>
-              <p className="mt-2 text-sm text-[#2f4f74]">{match.candidateAvailability}</p>
-            </article>
-          ))}
+          {matches.length > 0 && (
+            <>
+              <div className="glass-card space-y-2 p-3">
+                {matches.map((match) => (
+                  <button
+                    key={match.id}
+                    className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+                      selectedMatchId === match.id
+                        ? "border-[#1474ff] bg-[#eaf2ff] text-[#0f3f7a]"
+                        : "border-[#d7e8ff] bg-white text-[#365f88]"
+                    }`}
+                    type="button"
+                    onClick={() => setSelectedMatchId(match.id)}
+                  >
+                    <div className="font-semibold">{match.candidateName}</div>
+                    <div>{match.jobTitle}</div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedMatch && (
+                <div className="glass-card p-3">
+                  <p className="text-xs uppercase tracking-[0.12em] text-[#55739a]">Chat</p>
+                  <h3 className="text-base font-semibold text-[#123358]">{selectedMatch.candidateName}</h3>
+                  <div className="mt-2 max-h-72 space-y-2 overflow-y-auto rounded-xl bg-[#f7fbff] p-2">
+                    {selectedMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`rounded-xl px-3 py-2 text-sm ${
+                          message.senderId === user.id
+                            ? "ml-8 bg-[#dff0ff] text-[#214f7f]"
+                            : "mr-8 bg-white text-[#335b84]"
+                        }`}
+                      >
+                        <p>{message.message}</p>
+                        <p className="mt-1 text-[10px] text-[#6a86a4]">{new Date(message.createdAt).toLocaleString("sv-SE")}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      className="w-full rounded-xl border border-[#cfe2ff] px-3 py-2 text-sm outline-none"
+                      placeholder="Skriv meddelande..."
+                      value={chatDraft}
+                      onChange={(event) => setChatDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void sendChatMessage();
+                        }
+                      }}
+                    />
+                    <button className="cta-btn px-4 py-2 text-sm" type="button" onClick={() => void sendChatMessage()}>
+                      Skicka
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </section>
       )}
 
       {tab === "alerts" && (
         <section className="tab-fade space-y-3">
           <div className="glass-card flex items-center justify-between p-4">
-            <p className="text-sm text-[#2f5074]">
-              {unreadCount > 0 ? `${unreadCount} olästa notiser` : "Du är ikapp"}
-            </p>
+            <p className="text-sm text-[#2f5074]">{unreadCount > 0 ? `${unreadCount} olästa notiser` : "Du är ikapp"}</p>
             <button className="secondary-btn px-3 py-2 text-sm" onClick={handleMarkAllRead}>
               Markera alla som lästa
             </button>
           </div>
-          {notifications.length === 0 && (
-            <div className="glass-card p-4 text-sm text-[#3f6186]">Inga notiser ännu.</div>
-          )}
+          {notifications.length === 0 && <div className="glass-card p-4 text-sm text-[#3f6186]">Inga notiser än.</div>}
           {notifications.map((notification) => (
             <article key={notification.id} className="glass-card p-4">
               <p className="text-sm text-[#27496f]">{notification.message}</p>
-              <p className="mt-2 text-xs text-[#5d7591]">
-                {new Date(notification.createdAt).toLocaleString()}
-              </p>
+              <p className="mt-2 text-xs text-[#5d7591]">{new Date(notification.createdAt).toLocaleString("sv-SE")}</p>
             </article>
           ))}
         </section>
@@ -494,31 +526,19 @@ export default function CompanyPage() {
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
               value={profile.companyName}
-              onChange={(event) =>
-                setProfile((current) =>
-                  current ? { ...current, companyName: event.target.value } : current,
-                )
-              }
+              onChange={(event) => setProfile((current) => (current ? { ...current, companyName: event.target.value } : current))}
               placeholder="Företagsnamn"
             />
             <input
               className="w-full rounded-2xl border border-[#cce0ff] px-4 py-3 text-sm outline-none"
               value={profile.city}
-              onChange={(event) =>
-                setProfile((current) =>
-                  current ? { ...current, city: event.target.value } : current,
-                )
-              }
+              onChange={(event) => setProfile((current) => (current ? { ...current, city: event.target.value } : current))}
               placeholder="Stad"
             />
             <textarea
               className="min-h-24 w-full rounded-2xl border border-[#cce0ff] p-3 text-sm outline-none"
               value={profile.description}
-              onChange={(event) =>
-                setProfile((current) =>
-                  current ? { ...current, description: event.target.value } : current,
-                )
-              }
+              onChange={(event) => setProfile((current) => (current ? { ...current, description: event.target.value } : current))}
               placeholder="Kort företagsbeskrivning"
             />
             <button className="cta-btn w-full px-4 py-3 text-sm">Spara inställningar</button>
@@ -526,18 +546,16 @@ export default function CompanyPage() {
 
           <div className="glass-card p-4">
             <p className="text-sm text-[#2f5074]">
-              Nuvarande nivå: <strong>{profile.tier}</strong>
+              Nuvarande niva: <strong>{profile.tier}</strong>
             </p>
             <button className="secondary-btn mt-3 w-full px-4 py-3 text-sm" onClick={handleTierToggle}>
-              {profile.tier === "free"
-                ? "Uppgradera till Premium (demo)"
-                : "Byt tillbaka till Free"}
+              {profile.tier === "free" ? "Uppgradera till Premium (demo)" : "Byt tillbaka till Free"}
             </button>
           </div>
 
           <button
             className="w-full rounded-xl border border-[#ffcfcf] bg-[#ffe8e8] px-4 py-3 text-sm font-semibold text-[#b42323]"
-            onClick={handleLogout}
+            onClick={logout}
             type="button"
           >
             Logga ut
@@ -556,10 +574,8 @@ export default function CompanyPage() {
           ].map((item) => (
             <button
               key={item.key}
-              className={`rounded-xl px-2 py-2 text-xs font-medium ${
-                tab === item.key
-                  ? "bg-[#1474ff] text-white"
-                  : "bg-white text-[#406286] border border-[#d7e8ff]"
+              className={`min-h-[42px] whitespace-normal break-words rounded-xl px-1 py-2 text-[11px] leading-tight font-medium ${
+                tab === item.key ? "bg-[#1474ff] text-white" : "bg-white text-[#406286] border border-[#d7e8ff]"
               }`}
               onClick={() => setTab(item.key as CompanyTab)}
             >
@@ -571,3 +587,4 @@ export default function CompanyPage() {
     </div>
   );
 }
+

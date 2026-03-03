@@ -1,4 +1,4 @@
-import { OnboardingStep } from "@/lib/types";
+﻿import { OnboardingStep } from "@/lib/types";
 
 export type RecommendationLanguage = "en" | "sv";
 
@@ -31,34 +31,7 @@ export const CITY_RECOMMENDATIONS = [
   "Kristianstad",
 ];
 
-export const CITY_RECOMMENDATIONS_EN = [
-  "Stockholm",
-  "Gothenburg",
-  "Malmo",
-  "Uppsala",
-  "Vasteras",
-  "Orebro",
-  "Linkoping",
-  "Helsingborg",
-  "Jonkoping",
-  "Norrkoping",
-  "Lund",
-  "Umea",
-  "Gavle",
-  "Boras",
-  "Sodertalje",
-  "Karlstad",
-  "Vaxjo",
-  "Halmstad",
-  "Sundsvall",
-  "Lulea",
-  "Eskilstuna",
-  "Trollhattan",
-  "Skovde",
-  "Falun",
-  "Kalmar",
-  "Kristianstad",
-];
+export const CITY_RECOMMENDATIONS_EN = [...CITY_RECOMMENDATIONS];
 
 export const ROLE_RECOMMENDATIONS = [
   "Cafébiträde",
@@ -147,49 +120,59 @@ export const ROLE_RECOMMENDATIONS_EN = [
 ];
 
 export const INTEREST_RECOMMENDATIONS = [
-  "Butik",
-  "Kaffe och café",
-  "Servering",
-  "Event",
   "Sport",
-  "Barnomsorg",
-  "E-handel",
-  "Teknik",
-  "Sociala medier",
-  "Fotografi",
-  "Design",
+  "Fotboll",
   "Musik",
   "Gaming",
-  "Djur",
+  "Träning",
+  "Dans",
+  "Film och serier",
+  "Resor",
+  "Mode",
+  "Teknikprylar",
+  "Skapande",
   "Friluftsliv",
-  "Logistik",
-  "Hotell och restaurang",
-  "Utbildning",
-  "Hälsa och välmående",
-  "Lokalsamhälle",
+  "Foto",
+  "Läsning",
+  "Sociala medier",
+  "Bilar och motor",
+  "Podcasts",
+  "Språk",
+  "Natur",
+  "Basket",
+  "Gym",
+  "Konst",
+  "Matlagning",
+  "Bakning",
+  "Volontärarbete",
 ];
 
 export const INTEREST_RECOMMENDATIONS_EN = [
-  "Retail",
-  "Coffee and cafes",
-  "Food service",
-  "Events",
   "Sports",
-  "Childcare",
-  "E-commerce",
-  "Technology",
-  "Social media",
-  "Photography",
-  "Design",
+  "Football",
   "Music",
   "Gaming",
-  "Animals",
+  "Fitness",
+  "Dance",
+  "Movies and series",
+  "Travel",
+  "Fashion",
+  "Tech gadgets",
+  "Creative projects",
   "Outdoors",
-  "Logistics",
-  "Hospitality",
-  "Education",
-  "Health and wellness",
-  "Local community",
+  "Photography",
+  "Reading",
+  "Social media",
+  "Cars and motors",
+  "Podcasts",
+  "Languages",
+  "Nature",
+  "Basketball",
+  "Gym",
+  "Art",
+  "Cooking",
+  "Baking",
+  "Volunteering",
 ];
 
 export const SKILL_RECOMMENDATIONS = [
@@ -209,7 +192,7 @@ export const SKILL_RECOMMENDATIONS = [
   "Publicering i sociala medier",
   "Bildredigering",
   "Videoredigering",
-  "Grundläggande Excel",
+  "Excel grund",
   "Google Docs",
   "Canva",
   "Engelska i tal",
@@ -219,7 +202,7 @@ export const SKILL_RECOMMENDATIONS = [
   "Grundläggande programmering",
   "HTML/CSS",
   "Barnpassning",
-  "Grundläggande läxhjälp",
+  "Läxhjälp",
   "Städrutiner",
 ];
 
@@ -319,7 +302,7 @@ export const EXPERIENCE_RECOMMENDATIONS_EN = [
 export function recommendationSet(language: RecommendationLanguage) {
   if (language === "en") {
     return {
-      cities: CITY_RECOMMENDATIONS,
+      cities: CITY_RECOMMENDATIONS_EN,
       roles: ROLE_RECOMMENDATIONS_EN,
       interests: INTEREST_RECOMMENDATIONS_EN,
       skills: SKILL_RECOMMENDATIONS_EN,
@@ -350,7 +333,7 @@ export function recommendationsForStep(
   language: RecommendationLanguage = "sv",
 ): string[] {
   const set = recommendationSet(language);
-  if (step === "city") return CITY_RECOMMENDATIONS;
+  if (step === "city") return set.cities;
   if (step === "targetRole") return set.roles;
   if (step === "interests") return set.interests;
   if (step === "skills") return set.skills;
@@ -358,3 +341,4 @@ export function recommendationsForStep(
   if (step === "experience") return set.experience;
   return [];
 }
+
