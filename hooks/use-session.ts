@@ -1,59 +1,113 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  clearSession,
-  readSession,
-  roleHome,
-  SESSION_CHANGED_EVENT,
-} from "@/lib/client-session";
-import { Role, SessionUser } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/supabase";
+import type { Profile } from "@/lib/types";
 
 interface UseSessionResult {
-  user: SessionUser | null;
+  user: User | null;
+  profile: Profile | null;
   loading: boolean;
-  logout: () => void;
+  error: string | null;
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-export function useSession(requiredRole?: Role): UseSessionResult {
-  const router = useRouter();
+export function useSession(): UseSessionResult {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(false);
+
+  const refresh = async () => {
+    if (isMountedRef.current) {
+      setLoading(true);
+      setError(null);
+    }
+
+    try {
+      const nextUser = await getCurrentUser();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setUser(nextUser);
+
+      if (!nextUser) {
+        setProfile(null);
+        return;
+      }
+
+      const nextProfile = await getUserProfile(nextUser.id);
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setProfile(nextProfile);
+    } catch (sessionError) {
+      console.error("Failed to synchronize the Supabase session in the client.", sessionError);
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setUser(null);
+      setProfile(null);
+      setError(
+        sessionError instanceof Error
+          ? sessionError.message
+          : "Unable to load the Supabase session.",
+      );
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
-    const syncSession = () => {
-      const session = readSession();
-      setUser(session);
-      setLoading(false);
-    };
+    isMountedRef.current = true;
+    const supabase = getSupabaseClient();
+    void refresh();
 
-    syncSession();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void refresh();
+    });
 
-    const onChange = () => syncSession();
-    window.addEventListener("storage", onChange);
-    window.addEventListener(SESSION_CHANGED_EVENT, onChange);
     return () => {
-      window.removeEventListener("storage", onChange);
-      window.removeEventListener(SESSION_CHANGED_EVENT, onChange);
+      isMountedRef.current = false;
+      subscription.unsubscribe();
     };
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.replace("/auth");
-      return;
-    }
-    if (requiredRole && user.role !== requiredRole) {
-      router.replace(roleHome(user.role));
-    }
-  }, [loading, requiredRole, router, user]);
+  const logout = async () => {
+    try {
+      await signOut();
 
-  const logout = useCallback(() => {
-    clearSession();
-    router.replace("/auth");
-  }, [router]);
+      if (!isMountedRef.current) {
+        return;
+      }
 
-  return { user, loading, logout };
+      setUser(null);
+      setProfile(null);
+      setError(null);
+    } catch (logoutError) {
+      console.error("Failed to sign out from Supabase.", logoutError);
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setError(logoutError instanceof Error ? logoutError.message : "Unable to sign out.");
+    }
+  };
+
+  return { user, profile, loading, error, refresh, logout };
 }
