@@ -59,6 +59,10 @@ function isActiveJob(job: JobPost): boolean {
   return true;
 }
 
+function isMissingColumnError(error: { message?: string } | null, column: string): boolean {
+  return Boolean(error?.message?.includes(`Could not find the '${column}' column`));
+}
+
 async function assertCompanyUser(): Promise<string> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
@@ -72,57 +76,60 @@ async function assertCompanyUser(): Promise<string> {
 
 async function insertJobRow(payload: Record<string, unknown>) {
   const supabase = getSupabaseClient();
-  const attempts = [
-    { ...payload, is_active: true },
-    { ...payload, active: true },
-  ];
+  const primaryPayload = { ...payload, is_active: true };
+  const { data, error } = await supabase.from("jobs").insert(primaryPayload).select("*").single();
 
-  let lastError: Error | null = null;
-
-  for (const candidate of attempts) {
-    const { data, error } = await supabase.from("jobs").insert(candidate).select("*").single();
-
-    if (!error && data) {
-      return normalizeJob(data as Record<string, unknown>);
-    }
-
-    if (error) {
-      lastError = new Error(error.message);
-      console.error("Failed to insert job row.", error);
-    }
+  if (!error && data) {
+    return normalizeJob(data as Record<string, unknown>);
   }
 
-  throw lastError ?? new Error("Unable to create job.");
+  if (!isMissingColumnError(error, "is_active")) {
+    console.error("Failed to insert job row.", error);
+    throw new Error(error?.message ?? "Unable to create job.");
+  }
+
+  const fallbackPayload = { ...payload };
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("jobs")
+    .insert(fallbackPayload)
+    .select("*")
+    .single();
+
+  if (fallbackError || !fallbackData) {
+    console.error("Failed to insert job row.", fallbackError);
+    throw new Error(fallbackError?.message ?? "Unable to create job.");
+  }
+
+  return normalizeJob(fallbackData as Record<string, unknown>);
 }
 
 async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
   const supabase = getSupabaseClient();
-  const attempts = [
-    updates,
-    "is_active" in updates ? { ...updates, active: updates.is_active } : updates,
-  ];
+  const { data, error } = await supabase.from("jobs").update(updates).eq("id", jobId).select("*").single();
 
-  let lastError: Error | null = null;
+  if (!error && data) {
+    return normalizeJob(data as Record<string, unknown>);
+  }
 
-  for (const candidate of attempts) {
-    const { data, error } = await supabase
+  if ("is_active" in updates && isMissingColumnError(error, "is_active")) {
+    const fallbackUpdates = Object.fromEntries(Object.entries(updates).filter(([key]) => key !== "is_active"));
+    const { data: fallbackData, error: fallbackError } = await supabase
       .from("jobs")
-      .update(candidate)
+      .update(fallbackUpdates)
       .eq("id", jobId)
       .select("*")
       .single();
 
-    if (!error && data) {
-      return normalizeJob(data as Record<string, unknown>);
+    if (!fallbackError && fallbackData) {
+      return normalizeJob(fallbackData as Record<string, unknown>);
     }
 
-    if (error) {
-      lastError = new Error(error.message);
-      console.error("Failed to update job row.", error);
-    }
+    console.error("Failed to update job row.", fallbackError);
+    throw new Error(fallbackError?.message ?? "Unable to update job.");
   }
 
-  throw lastError ?? new Error("Unable to update job.");
+  console.error("Failed to update job row.", error);
+  throw new Error(error?.message ?? "Unable to update job.");
 }
 
 export async function getJobs(includeInactive = false): Promise<JobPost[]> {
