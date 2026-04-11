@@ -35,8 +35,11 @@ Mobile-first web app for youth (ages 12-20 in Sweden) and companies offering par
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
+
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` before starting the app.
 
 Open `http://localhost:3000`.
 

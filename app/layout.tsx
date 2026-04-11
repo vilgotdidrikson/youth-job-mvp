@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Outfit, Space_Grotesk } from "next/font/google";
+import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -29,6 +30,7 @@ export default function RootLayout({
         className={`${outfit.variable} ${spaceGrotesk.variable} antialiased`}
       >
         {children}
+        <MobileNav />
       </body>
     </html>
   );
