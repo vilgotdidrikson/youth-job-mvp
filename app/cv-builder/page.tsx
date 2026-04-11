@@ -6,13 +6,17 @@ import { useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
+import { getJobs } from "@/lib/jobs";
 import {
-  generateCvFromInterview,
-  getAiInterviewQuestions,
-  getJobs,
-  getYouthCvProfile,
-  upsertYouthCvProfile,
-} from "@/lib/app-data";
+  addOnboardingMessage,
+  buildGeneratedCvData,
+  completeOnboardingSession,
+  getOnboardingMessages,
+  getOnboardingQuestionPrompts,
+  getOrCreateOnboardingSession,
+  getYouthProfile,
+  saveGeneratedCvToProfile,
+} from "@/lib/onboarding";
 
 interface ChatTurn {
   id: string;
@@ -39,8 +43,10 @@ export default function CvBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [sessionId, setSessionId] = useState("");
+  const [error, setError] = useState("");
 
-  const questions = useMemo(() => getAiInterviewQuestions(), []);
+  const questions = useMemo(() => getOnboardingQuestionPrompts(), []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,31 +56,56 @@ export default function CvBuilderPage() {
 
     if (!loading && user && profile?.role === "youth") {
       void (async () => {
-        const existing = await getYouthCvProfile(user.id);
-        const jobs = await getJobs();
-        setAvailableRoles([...new Set(jobs.map((job) => job.title))].slice(0, 12));
+        try {
+          const [existingProfile, jobs, session] = await Promise.all([
+            getYouthProfile(user.id),
+            getJobs(),
+            getOrCreateOnboardingSession(),
+          ]);
 
-        if (existing) {
-          setFullName(existing.full_name);
-          setAge(existing.age ? String(existing.age) : "");
-          setCity(existing.city);
-          setSkills(existing.skills);
-          setTargetRoles(existing.target_roles);
-          setInterests(existing.interests);
-          setWorkingTime(existing.working_time);
-          setExperience(existing.experience);
-        } else {
-          setFullName(user.email?.split("@")[0] ?? "");
+          setSessionId(session.id);
+          setAvailableRoles([...new Set(jobs.map((job) => job.title))].slice(0, 12));
+
+          if (existingProfile) {
+            setFullName((existingProfile.full_name as string) || user.email?.split("@")[0] || "");
+            setAge(existingProfile.age ? String(existingProfile.age) : "");
+            setCity((existingProfile.city as string) || "");
+            setSkills((existingProfile.strengths as string[]) || (existingProfile.skills as string[]) || []);
+            setTargetRoles((existingProfile.desired_roles as string[]) || []);
+            setInterests((existingProfile.merits as string[]) || (existingProfile.interests as string[]) || []);
+            setWorkingTime(
+              (existingProfile.employment_preferences as string[]) || (existingProfile.working_time as string[]) || [],
+            );
+            setExperience(
+              (existingProfile.experience as string) ||
+                ((existingProfile.work_experience as string[]) || []).join(", "),
+            );
+          } else {
+            setFullName(user.email?.split("@")[0] ?? "");
+          }
+
+          const existingMessages = await getOnboardingMessages(session.id);
+
+          if (!existingMessages.length) {
+            await addOnboardingMessage(session.id, "assistant", questions[0]);
+            setTurns([{ id: "q-0", role: "assistant", text: questions[0] }]);
+            setAnswers([]);
+            return;
+          }
+
+          setTurns(
+            existingMessages.map((message) => ({
+              id: message.id,
+              role: message.sender,
+              text: message.message_text,
+            })),
+          );
+          setAnswers(existingMessages.filter((message) => message.sender === "user").map((message) => message.message_text));
+        } catch (loadError) {
+          console.error("Failed to initialize onboarding flow.", loadError);
+          setError(loadError instanceof Error ? loadError.message : "Unable to load onboarding.");
         }
       })();
-
-      setTurns([
-        {
-          id: "q-0",
-          role: "assistant",
-          text: questions[0],
-        },
-      ]);
     }
   }, [loading, profile?.role, questions, router, user]);
 
@@ -83,21 +114,22 @@ export default function CvBuilderPage() {
       ? {
           home: "Startsida",
           title: "AI CV-chat",
-          subtitle: "Svara kort på frågorna. Vi bygger CV + ansökan automatiskt.",
+          subtitle: "Svara kort pÃ¥ frÃ¥gorna. Vi bygger CV + ansÃ¶kan automatiskt.",
           loading: "Laddar...",
-          youthOnly: "Detta steg gäller ungdomskonton.",
+          youthOnly: "Detta steg gÃ¤ller ungdomskonton.",
           send: "Skicka",
           skills: "Kompetenser",
           city: "Stad",
           fullName: "Namn",
-          age: "Ålder",
+          age: "Ã…lder",
           targetRoles: "Intressanta jobb",
           interests: "Intressen",
-          workingTime: "När kan du jobba",
+          workingTime: "NÃ¤r kan du jobba",
           experience: "Erfarenhet",
-          save: "Spara CV och fortsätt",
+          save: "Spara CV och fortsÃ¤tt",
           saved: "CV sparat i din profil.",
-          openProfile: "Öppna profil",
+          openProfile: "Ã–ppna profil",
+          failed: "Kunde inte ladda onboarding-flÃ¶det.",
         }
       : {
           home: "Home",
@@ -117,32 +149,41 @@ export default function CvBuilderPage() {
           save: "Save CV and continue",
           saved: "CV saved to your profile.",
           openProfile: "Open profile",
+          failed: "Unable to load onboarding.",
         };
 
   const currentQuestion = questions[answers.length];
   const chatDone = answers.length >= questions.length;
 
-  const onSubmitAnswer = (event: FormEvent) => {
+  const onSubmitAnswer = async (event: FormEvent) => {
     event.preventDefault();
     const answer = input.trim();
-    if (!answer || chatDone) return;
+    if (!answer || chatDone || !sessionId) return;
 
-    const nextAnswers = [...answers, answer];
-    setAnswers(nextAnswers);
-    setTurns((prev) => [
-      ...prev,
-      { id: `u-${nextAnswers.length}`, role: "user", text: answer },
-      ...(nextAnswers.length < questions.length
-        ? [{ id: `q-${nextAnswers.length}`, role: "assistant" as const, text: questions[nextAnswers.length] }]
-        : []),
-    ]);
-    setInput("");
+    try {
+      await addOnboardingMessage(sessionId, "user", answer);
+      const nextAnswers = [...answers, answer];
+      const nextTurns: ChatTurn[] = [...turns, { id: `u-${nextAnswers.length}`, role: "user", text: answer }];
 
-    if (nextAnswers.length >= 2 && skills.length === 0) {
-      setSkills(["Teamwork", "Service", "Fast learner"]);
-    }
-    if (nextAnswers.length >= 3 && !experience) {
-      setExperience(nextAnswers[2]);
+      if (nextAnswers.length < questions.length) {
+        const nextQuestion = questions[nextAnswers.length];
+        await addOnboardingMessage(sessionId, "assistant", nextQuestion);
+        nextTurns.push({ id: `q-${nextAnswers.length}`, role: "assistant", text: nextQuestion });
+      }
+
+      setAnswers(nextAnswers);
+      setTurns(nextTurns);
+      setInput("");
+
+      if (nextAnswers.length >= 2 && skills.length === 0) {
+        setSkills(["Teamwork", "Service", "Fast learner"]);
+      }
+      if (nextAnswers.length >= 3 && !experience) {
+        setExperience(nextAnswers[2]);
+      }
+    } catch (messageError) {
+      console.error("Failed to save onboarding message.", messageError);
+      setError(messageError instanceof Error ? messageError.message : "Unable to save onboarding.");
     }
   };
 
@@ -151,25 +192,35 @@ export default function CvBuilderPage() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
-
     setSaving(true);
-    const payload = generateCvFromInterview({
-      userId: user.id,
-      fullName,
-      age: age ? Number(age) : null,
-      city,
-      targetRoles,
-      skills,
-      interests,
-      workingTime,
-      experience,
-      answers,
-    });
 
-    await upsertYouthCvProfile(payload);
-    setSaving(false);
-    setSavedMsg(t.saved);
+    try {
+      await saveGeneratedCvToProfile(
+        buildGeneratedCvData({
+          fullName,
+          age,
+          city,
+          skills,
+          targetRoles,
+          interests,
+          workingTime,
+          experience,
+          answers,
+        }),
+      );
+
+      if (sessionId) {
+        await completeOnboardingSession(sessionId);
+      }
+
+      setSavedMsg(t.saved);
+      setError("");
+    } catch (saveError) {
+      console.error("Failed to save generated CV data.", saveError);
+      setError(saveError instanceof Error ? saveError.message : "Unable to save onboarding.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading || !user) {
@@ -222,7 +273,7 @@ export default function CvBuilderPage() {
           ))}
 
           {!chatDone && currentQuestion && (
-            <form className="mt-2 flex gap-2" onSubmit={onSubmitAnswer}>
+            <form className="mt-2 flex gap-2" onSubmit={(event) => void onSubmitAnswer(event)}>
               <input
                 className="h-11 flex-1 rounded-xl border border-[#cfe2ff] bg-white px-3 text-sm outline-none focus:border-[#1474ff]"
                 value={input}
@@ -321,6 +372,8 @@ export default function CvBuilderPage() {
           value={experience}
           onChange={(event) => setExperience(event.target.value)}
         />
+
+        {error && <p className="rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error || t.failed}</p>}
 
         <button type="button" className="cta-btn min-h-12 w-full px-4 py-3 text-sm" onClick={() => void handleSave()}>
           {saving ? "..." : t.save}

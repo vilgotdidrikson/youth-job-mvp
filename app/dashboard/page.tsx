@@ -85,7 +85,7 @@ export default function DashboardPage() {
       ? [
           { label: t.postJobs, onClick: () => router.push("/company") },
           { label: t.reviewApplicants, onClick: () => router.push("/company") },
-          { label: t.editProfile, onClick: () => router.push("/profile") },
+          { label: t.editProfile, onClick: () => router.push("/company") },
           { label: t.refresh, onClick: () => void refresh() },
         ]
       : [
