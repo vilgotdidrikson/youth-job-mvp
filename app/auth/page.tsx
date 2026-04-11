@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
@@ -32,12 +33,15 @@ export default function AuthPage() {
     language === "sv"
       ? {
           failed: "Autentiseringen misslyckades.",
-          title: "WorkSpot Inloggning",
+          title: "WorkSpot Access",
+          home: "Startsida",
           signupHeading: "Skapa ditt konto",
           loginHeading: "Välkommen tillbaka",
-          signupSub: "Registrera dig med Supabase och skapa rätt profil direkt.",
-          loginSub: "Logga in med ditt Supabase-konto.",
+          signupSub: "Skapa konto på mobilen och välj rätt profiltyp direkt.",
+          loginSub: "Logga in och fortsätt där du slutade.",
+          email: "E-post",
           password: "Lösenord",
+          chooseRole: "Välj kontotyp",
           youth: "Ungdom",
           company: "Företag",
           wait: "Vänta...",
@@ -48,15 +52,19 @@ export default function AuthPage() {
           emailConfirm:
             "Kontot skapades. Om e-postbekräftelse är aktiverad i Supabase, bekräfta din e-post och logga sedan in.",
           loadingSession: "Kontrollerar befintlig session...",
+          powered: "Supabase Auth är aktiverat",
         }
       : {
           failed: "Authentication failed.",
           title: "WorkSpot Access",
+          home: "Home",
           signupHeading: "Create your account",
           loginHeading: "Welcome back",
-          signupSub: "Register with Supabase and create the correct profile immediately.",
-          loginSub: "Sign in with your Supabase account.",
+          signupSub: "Create your account on mobile and pick your profile type instantly.",
+          loginSub: "Sign in and continue where you left off.",
+          email: "Email",
           password: "Password",
+          chooseRole: "Choose account type",
           youth: "Youth",
           company: "Company",
           wait: "Please wait...",
@@ -67,6 +75,7 @@ export default function AuthPage() {
           emailConfirm:
             "Account created. If email confirmation is enabled in Supabase, confirm your email and then sign in.",
           loadingSession: "Checking existing session...",
+          powered: "Supabase Auth is enabled",
         };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -100,52 +109,66 @@ export default function AuthPage() {
 
   if (sessionLoading) {
     return (
-      <div className="mobile-shell flex flex-col justify-center">
-        <div className="mb-3 flex justify-end">
+      <main className="mobile-shell flex flex-col justify-center">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <Link href="/" className="secondary-btn px-3 py-2 text-xs">
+            {t.home}
+          </Link>
           <LanguageToggle language={language} onToggle={toggleLanguage} />
         </div>
         <div className="glass-card p-6 text-sm text-[#2d4f72]">{t.loadingSession}</div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="mobile-shell flex flex-col justify-center">
-      <div className="mb-3 flex justify-end">
+    <main className="mobile-shell flex flex-col justify-center pb-8">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <Link href="/" className="secondary-btn px-3 py-2 text-xs">
+          {t.home}
+        </Link>
         <LanguageToggle language={language} onToggle={toggleLanguage} />
       </div>
-      <div className="glass-card p-5">
+
+      <div className="glass-card p-5 sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#4c6887]">
           {t.title}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-[#132742]">
+        <h1 className="mt-2 text-2xl font-semibold leading-tight text-[#132742]">
           {mode === "signup" ? t.signupHeading : t.loginHeading}
         </h1>
         <p className="mt-2 text-sm text-[#3f5f82]">{mode === "signup" ? t.signupSub : t.loginSub}</p>
+        <p className="mt-3 inline-flex rounded-full bg-[#e8f1ff] px-3 py-1 text-xs font-medium text-[#285182]">
+          {t.powered}
+        </p>
 
-        <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
+        <form className="mt-5 space-y-3.5" onSubmit={handleSubmit}>
           <input
-            className="w-full rounded-2xl border border-[#cce0ff] bg-white px-4 py-3 text-sm outline-none focus:border-[#1474ff]"
-            placeholder="Email"
+            className="h-12 w-full rounded-2xl border border-[#cce0ff] bg-white px-4 text-sm outline-none focus:border-[#1474ff]"
+            placeholder={t.email}
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
             required
           />
           <input
-            className="w-full rounded-2xl border border-[#cce0ff] bg-white px-4 py-3 text-sm outline-none focus:border-[#1474ff]"
+            className="h-12 w-full rounded-2xl border border-[#cce0ff] bg-white px-4 text-sm outline-none focus:border-[#1474ff]"
             placeholder={t.password}
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             required
           />
 
           {mode === "signup" && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.chooseRole}</p>
+              <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className={`rounded-2xl border px-3 py-2 text-sm font-medium ${
+                className={`min-h-11 rounded-2xl border px-3 py-2 text-sm font-medium ${
                   role === "youth"
                     ? "border-[#1474ff] bg-[#e7f1ff] text-[#11437a]"
                     : "border-[#cce0ff] bg-white text-[#47688e]"
@@ -156,7 +179,7 @@ export default function AuthPage() {
               </button>
               <button
                 type="button"
-                className={`rounded-2xl border px-3 py-2 text-sm font-medium ${
+                className={`min-h-11 rounded-2xl border px-3 py-2 text-sm font-medium ${
                   role === "company"
                     ? "border-[#1474ff] bg-[#e7f1ff] text-[#11437a]"
                     : "border-[#cce0ff] bg-white text-[#47688e]"
@@ -166,24 +189,25 @@ export default function AuthPage() {
                 {t.company}
               </button>
             </div>
+            </div>
           )}
 
           {error && <p className="rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error}</p>}
           {message && <p className="rounded-xl bg-[#e8f5ec] px-3 py-2 text-sm text-[#1f6845]">{message}</p>}
 
-          <button type="submit" className="cta-btn w-full px-4 py-3 text-sm" disabled={loading}>
+          <button type="submit" className="cta-btn min-h-12 w-full px-4 py-3 text-sm" disabled={loading}>
             {loading ? t.wait : mode === "signup" ? t.createAccount : t.signIn}
           </button>
         </form>
 
         <button
           type="button"
-          className="mt-4 text-sm font-medium text-[#2b5f98]"
+          className="mt-4 min-h-10 text-sm font-medium text-[#2b5f98]"
           onClick={() => setMode((current) => (current === "signup" ? "login" : "signup"))}
         >
           {mode === "signup" ? t.alreadyHave : t.needAccount}
         </button>
       </div>
-    </div>
+    </main>
   );
 }
