@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JobSwipeDeck } from "@/components/job-swipe-deck";
 import { LanguageToggle } from "@/components/language-toggle";
+import { getSwipeJobs } from "@/lib/feeds";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import { getJobs, saveYouthSwipe } from "@/lib/app-data";
+import { swipeJob } from "@/lib/matching";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 export default function SwipePage() {
@@ -16,13 +17,21 @@ export default function SwipePage() {
   const { user, profile, loading } = useSession();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!loading && user && profile?.role === "youth") {
       void (async () => {
-        const data = await getJobs();
-        setJobs(data);
-        setJobsLoaded(true);
+        try {
+          const data = await getSwipeJobs();
+          setJobs(data);
+          setError("");
+        } catch (loadError) {
+          console.error("Failed to load swipe jobs.", loadError);
+          setError(loadError instanceof Error ? loadError.message : "Unable to load jobs.");
+        } finally {
+          setJobsLoaded(true);
+        }
       })();
     }
   }, [loading, profile?.role, user]);
@@ -38,16 +47,17 @@ export default function SwipePage() {
       ? {
           home: "Startsida",
           title: "Swipe jobb",
-          subtitle: "Svep höger för intresserad, vänster för hoppa över.",
+          subtitle: "Svep hÃ¶ger fÃ¶r intresserad, vÃ¤nster fÃ¶r hoppa Ã¶ver.",
           loading: "Laddar session...",
-          onlyYouthTitle: "Denna vy är för ungdomskonton",
-          onlyYouthSubtitle: "Byt till ungdomsprofil för att matcha jobb med swipe.",
+          onlyYouthTitle: "Denna vy Ã¤r fÃ¶r ungdomskonton",
+          onlyYouthSubtitle: "Byt till ungdomsprofil fÃ¶r att matcha jobb med swipe.",
           interested: "Intresserad",
-          skip: "Hoppa över",
-          swipeHint: "Tips: dra kortet åt höger eller vänster, eller använd knapparna.",
+          skip: "Hoppa Ã¶ver",
+          swipeHint: "Tips: dra kortet Ã¥t hÃ¶ger eller vÃ¤nster, eller anvÃ¤nd knapparna.",
           doneTitle: "Alla jobb granskade",
-          doneSubtitle: "Bra jobbat! Kom tillbaka senare för nya annonser.",
+          doneSubtitle: "Bra jobbat! Kom tillbaka senare fÃ¶r nya annonser.",
           syncing: "Synkar jobb...",
+          failed: "Kunde inte ladda jobbflÃ¶det.",
         }
       : {
           home: "Home",
@@ -62,11 +72,12 @@ export default function SwipePage() {
           doneTitle: "All jobs reviewed",
           doneSubtitle: "Nice work! Return later for new postings.",
           syncing: "Syncing jobs...",
+          failed: "Unable to load the job feed.",
         };
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
-    if (!user) return;
-    await saveYouthSwipe(user.id, job, decision);
+    await swipeJob(job.id, decision);
+    setJobs((current) => current.filter((item) => item.id !== job.id));
   };
 
   if (loading || !user) {
@@ -103,6 +114,8 @@ export default function SwipePage() {
           <h2 className="text-lg font-semibold text-[#132742]">{t.onlyYouthTitle}</h2>
           <p className="mt-2 text-sm text-[#3f5f82]">{t.onlyYouthSubtitle}</p>
         </div>
+      ) : error ? (
+        <div className="glass-card p-5 text-sm text-[#9e3a2d]">{error || t.failed}</div>
       ) : !jobsLoaded ? (
         <div className="glass-card p-5 text-sm text-[#3f5f82]">{t.syncing}</div>
       ) : (

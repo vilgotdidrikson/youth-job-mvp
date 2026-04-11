@@ -6,19 +6,16 @@ import { useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import {
-  companyRespondToCandidate,
-  createJob,
-  getCompanyCandidateFeed,
-  getCompanyJobs,
-} from "@/lib/app-data";
-import type { JobPost } from "@/lib/types";
+import { getCandidatesForJob, getCompanyJobs } from "@/lib/feeds";
+import { createJob } from "@/lib/jobs";
+import { reviewCandidate } from "@/lib/matching";
+import type { CandidateFeedItem, JobPost, SwipeDecision } from "@/lib/types";
 
 interface JobForm {
   title: string;
   city: string;
   pay: string;
-  job_type: JobPost["job_type"];
+  job_type: NonNullable<JobPost["job_type"]>;
   description: string;
 }
 
@@ -37,8 +34,9 @@ export default function CompanyPage() {
 
   const [form, setForm] = useState<JobForm>(initialForm);
   const [jobs, setJobs] = useState<JobPost[]>([]);
-  const [feed, setFeed] = useState<Array<{ youthUserId: string; job: JobPost }>>([]);
+  const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const t =
     language === "sv"
@@ -78,10 +76,16 @@ export default function CompanyPage() {
         };
 
   const refreshData = async () => {
-    if (!user) return;
-    const [jobsData, feedData] = await Promise.all([getCompanyJobs(user.id), getCompanyCandidateFeed(user.id)]);
-    setJobs(jobsData);
-    setFeed(feedData);
+    try {
+      const jobsData = await getCompanyJobs();
+      const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id)));
+      setJobs(jobsData);
+      setFeed(candidateGroups.flat());
+      setError("");
+    } catch (loadError) {
+      console.error("Failed to refresh company data.", loadError);
+      setError(loadError instanceof Error ? loadError.message : "Unable to load company data.");
+    }
   };
 
   useEffect(() => {
@@ -97,32 +101,36 @@ export default function CompanyPage() {
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user) return;
 
     setBusy(true);
-    await createJob({
-      company_user_id: user.id,
-      company_name: user.email ?? "Company",
-      title: form.title,
-      city: form.city,
-      pay: form.pay,
-      job_type: form.job_type,
-      description: form.description,
-    });
-    setForm(initialForm);
-    await refreshData();
-    setBusy(false);
+    try {
+      await createJob({
+        company_name: user?.email ?? "Company",
+        title: form.title,
+        city: form.city,
+        pay: form.pay,
+        job_type: form.job_type,
+        description: form.description,
+        category: form.job_type,
+      });
+      setForm(initialForm);
+      await refreshData();
+    } catch (createError) {
+      console.error("Failed to create job.", createError);
+      setError(createError instanceof Error ? createError.message : "Unable to create job.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleResponse = async (youthUserId: string, job: JobPost, interested: boolean) => {
-    if (!user) return;
-    await companyRespondToCandidate({
-      companyUserId: user.id,
-      youthUserId,
-      job,
-      interested,
-    });
-    await refreshData();
+    try {
+      await reviewCandidate(job.id, youthUserId, interested ? ("interested" as SwipeDecision) : "skip");
+      await refreshData();
+    } catch (reviewError) {
+      console.error("Failed to review candidate.", reviewError);
+      setError(reviewError instanceof Error ? reviewError.message : "Unable to review candidate.");
+    }
   };
 
   if (loading || !user) {
@@ -162,6 +170,7 @@ export default function CompanyPage() {
       </section>
 
       <section className="mt-3 glass-card p-4">
+        {error && <p className="mb-3 rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error}</p>}
         <form className="space-y-2.5" onSubmit={handleCreate}>
           <input
             className="h-11 w-full rounded-xl border border-[#cfe2ff] px-3 text-sm"
@@ -189,7 +198,12 @@ export default function CompanyPage() {
           <select
             className="h-11 w-full rounded-xl border border-[#cfe2ff] px-3 text-sm"
             value={form.job_type}
-            onChange={(event) => setForm((prev) => ({ ...prev, job_type: event.target.value as JobPost["job_type"] }))}
+            onChange={(event) =>
+              setForm((prev) => ({
+                ...prev,
+                job_type: event.target.value as NonNullable<JobPost["job_type"]>,
+              }))
+            }
           >
             <option value="part-time">Part-time</option>
             <option value="summer">Summer</option>
@@ -228,7 +242,10 @@ export default function CompanyPage() {
           {feed.map((item) => (
             <div key={`${item.youthUserId}-${item.job.id}`} className="rounded-xl border border-[#dbe8ff] bg-white p-3">
               <p className="text-sm font-semibold text-[#133e76]">{item.job.title}</p>
-              <p className="mt-1 text-xs text-[#3f5f82]">Candidate: {item.youthUserId.slice(0, 8)}...</p>
+              <p className="mt-1 text-xs text-[#3f5f82]">
+                Candidate: {item.profile?.full_name || `${item.youthUserId.slice(0, 8)}...`}
+              </p>
+              {item.profile?.city && <p className="mt-1 text-xs text-[#3f5f82]">{item.profile.city}</p>}
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
                   type="button"

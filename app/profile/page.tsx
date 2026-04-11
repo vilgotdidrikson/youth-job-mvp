@@ -11,7 +11,8 @@ import { StickyProfileCta } from "@/components/profile/sticky-profile-cta";
 import { SuggestionChip } from "@/components/profile/suggestion-chip";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import { getYouthCvProfile } from "@/lib/app-data";
+import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
+import type { YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
   name: string;
@@ -23,8 +24,6 @@ interface YouthProfileForm {
   workingTime: string[];
   experience: string;
 }
-
-const PROFILE_KEY = "workspot_youth_profile_v1";
 
 const initialForm: YouthProfileForm = {
   name: "",
@@ -91,29 +90,36 @@ const workingTimeSuggestions = [
   "Flexible",
 ];
 
-function readProfile(): YouthProfileForm {
-  if (typeof window === "undefined") return initialForm;
-
-  try {
-    const raw = window.localStorage.getItem(PROFILE_KEY);
-    if (!raw) return initialForm;
-    const parsed = JSON.parse(raw) as YouthProfileForm;
-    return {
-      ...initialForm,
-      ...parsed,
-      targetRoles: parsed.targetRoles ?? [],
-      skills: parsed.skills ?? [],
-      interests: parsed.interests ?? [],
-      workingTime: parsed.workingTime ?? [],
-    };
-  } catch {
-    return initialForm;
-  }
+function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-function saveProfile(form: YouthProfileForm) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(PROFILE_KEY, JSON.stringify(form));
+function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): YouthProfileForm {
+  if (!profile) {
+    return { ...initialForm, name: fallbackName };
+  }
+
+  const experienceList = normalizeStringArray(profile.work_experience);
+
+  return {
+    name: typeof profile.full_name === "string" && profile.full_name.trim() ? profile.full_name : fallbackName,
+    age: typeof profile.age === "number" ? String(profile.age) : "",
+    city: typeof profile.city === "string" ? profile.city : "",
+    targetRoles: normalizeStringArray(profile.desired_roles),
+    skills: normalizeStringArray(profile.strengths).length
+      ? normalizeStringArray(profile.strengths)
+      : normalizeStringArray(profile.skills),
+    interests: normalizeStringArray(profile.merits).length
+      ? normalizeStringArray(profile.merits)
+      : normalizeStringArray(profile.interests),
+    workingTime: normalizeStringArray(profile.employment_preferences).length
+      ? normalizeStringArray(profile.employment_preferences)
+      : normalizeStringArray(profile.working_time),
+    experience:
+      typeof profile.experience === "string" && profile.experience.trim()
+        ? profile.experience
+        : experienceList.join("\n"),
+  };
 }
 
 function hasContent(value: string) {
@@ -135,8 +141,9 @@ export default function ProfilePage() {
   const [showMoreSkills, setShowMoreSkills] = useState(false);
   const [openSection, setOpenSection] = useState<string>("targetRoles");
   const [loggingOut, setLoggingOut] = useState(false);
-  const [generatedCv, setGeneratedCv] = useState<string>("");
-  const [generatedApplication, setGeneratedApplication] = useState<string>("");
+  const [generatedCv, setGeneratedCv] = useState("");
+  const [generatedApplication, setGeneratedApplication] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -144,22 +151,28 @@ export default function ProfilePage() {
       return;
     }
 
-    if (!loading && user) {
-      const existing = readProfile();
-      setForm((prev) => ({
-        ...prev,
-        ...existing,
-        name: existing.name || user.email?.split("@")[0] || "",
-      }));
+    if (!loading && user && profile?.role === "youth") {
+      const fallbackName = user.email?.split("@")[0] ?? "";
 
       void (async () => {
-        const cv = await getYouthCvProfile(user.id);
-        if (!cv) return;
-        setGeneratedCv(cv.cv_text);
-        setGeneratedApplication(cv.application_text);
+        try {
+          const youthProfile = await getYouthProfile(user.id);
+          setForm(mapProfileToForm(youthProfile, fallbackName));
+          setGeneratedCv(typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text : "");
+          setGeneratedApplication(
+            typeof youthProfile?.cover_letter_template === "string" ? youthProfile.cover_letter_template : "",
+          );
+          setError("");
+        } catch (loadError) {
+          console.error("Failed to load youth profile.", loadError);
+          setForm({ ...initialForm, name: fallbackName });
+          setGeneratedCv("");
+          setGeneratedApplication("");
+          setError(loadError instanceof Error ? loadError.message : "Unable to load your profile.");
+        }
       })();
     }
-  }, [loading, router, user]);
+  }, [loading, profile?.role, router, user]);
 
   const t =
     language === "sv"
@@ -288,7 +301,9 @@ export default function ProfilePage() {
 
   const addCustomValue = (field: "targetRoles" | "skills" | "interests", value: string, clear: () => void) => {
     const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
 
     setForm((prev) => {
       if (prev[field].some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
@@ -307,10 +322,23 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaving(true);
-    saveProfile(form);
-    await new Promise((resolve) => setTimeout(resolve, 280));
-    setSaving(false);
-    setSavedNote(t.saved);
+    try {
+      const updatedProfile = await saveYouthProfileDraft(form);
+      setGeneratedCv(typeof updatedProfile.cv_text === "string" ? updatedProfile.cv_text : generatedCv);
+      setGeneratedApplication(
+        typeof updatedProfile.cover_letter_template === "string"
+          ? updatedProfile.cover_letter_template
+          : generatedApplication,
+      );
+      setSavedNote(t.saved);
+      setError("");
+    } catch (saveError) {
+      console.error("Failed to save youth profile.", saveError);
+      setError(saveError instanceof Error ? saveError.message : "Unable to save your profile.");
+      setSavedNote("");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -362,12 +390,7 @@ export default function ProfilePage() {
         <LanguageToggle language={language} onToggle={toggleLanguage} />
       </div>
 
-      <ProfileProgressCard
-        completion={completion}
-        statusText={statusText}
-        title={t.title}
-        subtitle={t.subtitle}
-      />
+      <ProfileProgressCard completion={completion} statusText={statusText} title={t.title} subtitle={t.subtitle} />
 
       <section className="mt-3 glass-card p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.aiTitle}</p>
@@ -377,12 +400,14 @@ export default function ProfilePage() {
         </Link>
       </section>
 
+      {error && <p className="mt-3 rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">{error}</p>}
+
       {(generatedCv || generatedApplication) && (
         <section className="mt-3 glass-card space-y-3 p-4">
           {generatedCv && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.cvPreview}</p>
-              <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-[#f7fbff] p-3 text-xs text-[#2f4663] whitespace-pre-wrap">
+              <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-[#f7fbff] p-3 text-xs whitespace-pre-wrap text-[#2f4663]">
                 {generatedCv}
               </pre>
             </div>
@@ -390,8 +415,10 @@ export default function ProfilePage() {
 
           {generatedApplication && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.applicationPreview}</p>
-              <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-[#f7fbff] p-3 text-xs text-[#2f4663] whitespace-pre-wrap">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">
+                {t.applicationPreview}
+              </p>
+              <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-[#f7fbff] p-3 text-xs whitespace-pre-wrap text-[#2f4663]">
                 {generatedApplication}
               </pre>
             </div>
@@ -643,11 +670,7 @@ export default function ProfilePage() {
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.selected}</p>
               <div className="profile-chip-wrap">
                 {form.interests.map((interest) => (
-                  <SelectedChip
-                    key={interest}
-                    label={interest}
-                    onRemove={() => removeSelection("interests", interest)}
-                  />
+                  <SelectedChip key={interest} label={interest} onRemove={() => removeSelection("interests", interest)} />
                 ))}
               </div>
             </div>

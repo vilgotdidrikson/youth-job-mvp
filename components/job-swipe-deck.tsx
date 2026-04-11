@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
@@ -15,26 +16,6 @@ interface JobSwipeDeckProps {
   swipeHint: string;
 }
 
-const STORAGE_KEY = "workspot_swipe_decisions";
-
-function readDecisions(): Record<string, Decision> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, Decision>;
-    return parsed ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function writeDecisions(next: Record<string, Decision>) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-}
-
 export function JobSwipeDeck({
   jobs,
   onDecision,
@@ -44,22 +25,16 @@ export function JobSwipeDeck({
   skipLabel,
   swipeHint,
 }: JobSwipeDeckProps) {
-  const [decisions, setDecisions] = useState<Record<string, Decision>>(() => readDecisions());
+  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef<number | null>(null);
 
   const remainingJobs = useMemo(() => jobs.filter((job) => !decisions[job.id]), [decisions, jobs]);
-
   const currentJob: JobPost | undefined = remainingJobs[0];
 
   const applyDecision = async (job: JobPost, decision: Decision) => {
-    setDecisions((prev) => {
-      const next = { ...prev, [job.id]: decision };
-      writeDecisions(next);
-      return next;
-    });
-
+    setDecisions((prev) => ({ ...prev, [job.id]: decision }));
     await onDecision(job, decision);
   };
 
@@ -112,8 +87,12 @@ export function JobSwipeDeck({
         <h2 className="text-xl font-semibold text-[#132742]">{emptyTitle}</h2>
         <p className="mt-2 text-sm text-[#3f5f82]">{emptySubtitle}</p>
         <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-          <p className="rounded-xl bg-[#e8f5ec] px-3 py-2 text-[#1f6845]">{interestedLabel}: {interestedCount}</p>
-          <p className="rounded-xl bg-[#fff1ea] px-3 py-2 text-[#9e4e2d]">{skipLabel}: {skippedCount}</p>
+          <p className="rounded-xl bg-[#e8f5ec] px-3 py-2 text-[#1f6845]">
+            {interestedLabel}: {interestedCount}
+          </p>
+          <p className="rounded-xl bg-[#fff1ea] px-3 py-2 text-[#9e4e2d]">
+            {skipLabel}: {skippedCount}
+          </p>
         </div>
       </div>
     );
@@ -145,26 +124,39 @@ export function JobSwipeDeck({
         />
 
         <div className="relative z-10 flex min-h-[390px] flex-col">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4c6887]">
-          {currentJob.company_name ?? "Company"}
-        </p>
-        <h2 className="mt-2 text-[1.9rem] font-semibold leading-tight text-[#132742]">{currentJob.title}</h2>
-        <p className="mt-1 text-sm text-[#3f5f82]">
-          {currentJob.city} • {currentJob.job_type} • {currentJob.pay}
-        </p>
-        <p className="mt-4 text-base text-[#2f4663]">{currentJob.description}</p>
+          {currentJob.image_url && (
+            <Image
+              src={currentJob.image_url}
+              alt={currentJob.title}
+              width={640}
+              height={320}
+              className="mb-4 h-40 w-full rounded-2xl object-cover"
+            />
+          )}
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(currentJob.tags ?? []).map((tag: string) => (
-            <span key={tag} className="chip">
-              {tag}
-            </span>
-          ))}
-        </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4c6887]">
+            {currentJob.company_name ?? "Company"}
+          </p>
+          <h2 className="mt-2 text-[1.9rem] font-semibold leading-tight text-[#132742]">
+            {currentJob.title}
+          </h2>
+          <p className="mt-1 text-sm text-[#3f5f82]">
+            {currentJob.city} • {currentJob.job_type} • {currentJob.pay}
+          </p>
+          <p className="mt-4 text-base text-[#2f4663]">{currentJob.description}</p>
 
-        <div className="mt-auto pt-4 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#5a7492]">
-          {dragX > 40 ? interestedLabel : dragX < -40 ? skipLabel : "Swipe"}
-        </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(currentJob.tags ?? []).map((tag: string) => (
+              <span key={tag} className="chip">
+                {tag}
+              </span>
+            ))}
+            {currentJob.category && <span className="chip">{currentJob.category}</span>}
+          </div>
+
+          <div className="mt-auto pt-4 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#5a7492]">
+            {dragX > 40 ? interestedLabel : dragX < -40 ? skipLabel : "Swipe"}
+          </div>
         </div>
       </div>
 
@@ -188,8 +180,12 @@ export function JobSwipeDeck({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs text-[#3f5f82]">
-        <p className="rounded-xl bg-[#e8f5ec] px-3 py-2">{interestedLabel}: {interestedCount}</p>
-        <p className="rounded-xl bg-[#fff1ea] px-3 py-2">{skipLabel}: {skippedCount}</p>
+        <p className="rounded-xl bg-[#e8f5ec] px-3 py-2">
+          {interestedLabel}: {interestedCount}
+        </p>
+        <p className="rounded-xl bg-[#fff1ea] px-3 py-2">
+          {skipLabel}: {skippedCount}
+        </p>
       </div>
     </div>
   );

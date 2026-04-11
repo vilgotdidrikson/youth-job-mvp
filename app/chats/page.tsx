@@ -5,41 +5,55 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
-import { getConversationsForUser, getJobs, getMessages, sendMessage } from "@/lib/app-data";
-import type { ChatMessage, Conversation, JobPost } from "@/lib/types";
+import { getMessages, sendMessage } from "@/lib/chat";
+import { getMyConversations } from "@/lib/feeds";
+import { getJobs } from "@/lib/jobs";
+import type { ChatMessage, ConversationSummary, JobPost } from "@/lib/types";
 
 export default function ChatsPage() {
   const { language, toggleLanguage } = useLanguage();
   const { user, loading } = useSession();
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
 
     void (async () => {
-      const [convData, jobsData] = await Promise.all([getConversationsForUser(user.id), getJobs()]);
-      setConversations(convData);
-      setJobs(jobsData);
-      if (convData[0]) {
-        setSelectedConversationId(convData[0].id);
+      try {
+        const [convData, jobsData] = await Promise.all([getMyConversations(), getJobs()]);
+        setConversations(convData);
+        setJobs(jobsData);
+        setError("");
+
+        if (convData[0]) {
+          setSelectedConversationId(convData[0].id);
+        }
+      } catch (loadError) {
+        console.error("Failed to load conversations.", loadError);
+        setError(loadError instanceof Error ? loadError.message : "Unable to load conversations.");
       }
     })();
   }, [user]);
 
   useEffect(() => {
     if (!selectedConversationId) {
-      setMessages([]);
       return;
     }
 
     void (async () => {
-      const data = await getMessages(selectedConversationId);
-      setMessages(data);
+      try {
+        const data = await getMessages(selectedConversationId);
+        setMessages(data);
+      } catch (messageError) {
+        console.error("Failed to load conversation messages.", messageError);
+        setError(messageError instanceof Error ? messageError.message : "Unable to load messages.");
+      }
     })();
   }, [selectedConversationId]);
 
@@ -48,11 +62,12 @@ export default function ChatsPage() {
       ? {
           home: "Startsida",
           title: "Matcher & chattar",
-          subtitle: "När båda är intresserade startas en konversation här.",
+          subtitle: "NÃ¤r bÃ¥da Ã¤r intresserade startas en konversation hÃ¤r.",
           loading: "Laddar...",
-          empty: "Inga matcher ännu. Swipea och vänta på svar från företag.",
+          empty: "Inga matcher Ã¤nnu. Swipea och vÃ¤nta pÃ¥ svar frÃ¥n fÃ¶retag.",
           messagePlaceholder: "Skriv meddelande...",
           send: "Skicka",
+          failed: "Kunde inte ladda chattarna.",
         }
       : {
           home: "Home",
@@ -62,32 +77,35 @@ export default function ChatsPage() {
           empty: "No matches yet. Keep swiping and wait for company replies.",
           messagePlaceholder: "Write a message...",
           send: "Send",
+          failed: "Unable to load chats.",
         };
 
   const selectedConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === selectedConversationId),
     [conversations, selectedConversationId],
   );
+  const visibleMessages = selectedConversationId ? messages : [];
 
-  const selectedJob = selectedConversation
+  const selectedJob = selectedConversation?.job_id
     ? jobs.find((job) => job.id === selectedConversation.job_id)
     : undefined;
 
   const handleSend = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user || !selectedConversationId || !draft.trim()) return;
+    if (!selectedConversationId || !draft.trim()) return;
 
     const body = draft.trim();
     setDraft("");
 
-    await sendMessage({
-      conversationId: selectedConversationId,
-      senderUserId: user.id,
-      body,
-    });
-
-    const data = await getMessages(selectedConversationId);
-    setMessages(data);
+    try {
+      await sendMessage(selectedConversationId, body);
+      const data = await getMessages(selectedConversationId);
+      setMessages(data);
+    } catch (sendError) {
+      console.error("Failed to send message.", sendError);
+      setError(sendError instanceof Error ? sendError.message : "Unable to send message.");
+      setDraft(body);
+    }
   };
 
   if (loading || !user) {
@@ -112,14 +130,18 @@ export default function ChatsPage() {
         <p className="mt-2 text-sm text-[#3f5f82]">{t.subtitle}</p>
       </div>
 
-      {conversations.length === 0 ? (
+      {error ? (
+        <div className="mt-3 glass-card p-5 text-sm text-[#9e3a2d]">{error || t.failed}</div>
+      ) : conversations.length === 0 ? (
         <div className="mt-3 glass-card p-5 text-sm text-[#3f5f82]">{t.empty}</div>
       ) : (
         <>
           <div className="mt-3 flex gap-2 overflow-auto pb-1">
             {conversations.map((conversation) => {
               const active = conversation.id === selectedConversationId;
-              const job = jobs.find((item) => item.id === conversation.job_id);
+              const job = conversation.job_id
+                ? jobs.find((item) => item.id === conversation.job_id)
+                : undefined;
 
               return (
                 <button
@@ -130,7 +152,7 @@ export default function ChatsPage() {
                   }`}
                   onClick={() => setSelectedConversationId(conversation.id)}
                 >
-                  {job?.title ?? "Job"}
+                  {job?.title ?? "Conversation"}
                 </button>
               );
             })}
@@ -142,7 +164,7 @@ export default function ChatsPage() {
             </p>
 
             <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl bg-[#f7fbff] p-3">
-              {messages.map((message) => (
+              {visibleMessages.map((message) => (
                 <div
                   key={message.id}
                   className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
@@ -151,7 +173,7 @@ export default function ChatsPage() {
                       : "bg-white text-[#2e4f75]"
                   }`}
                 >
-                  {message.body}
+                  {message.text ?? message.body}
                 </div>
               ))}
             </div>
