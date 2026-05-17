@@ -1,30 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef6ff;
+  --bg: #f5f5f5;
   --surface: #ffffff;
-  --foreground: #132238;
-  --muted: #5b6f84;
-  --brand: #1474ff;
-  --brand-soft: #d8e9ff;
-  --mint: #38d6b4;
-  --peach: #ff7e66;
+  --border: #e8e8e8;
+  --text-primary: #111111;
+  --text-secondary: #737373;
+  --text-tertiary: #a3a3a3;
+  --accent: #111111;
+  --accent-green: #21d07a;
+  --accent-red: #fd5564;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-outfit);
   --font-mono: var(--font-space-grotesk);
 }
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 10% 15%, #d2f1ff 0%, transparent 40%),
-    radial-gradient(circle at 90% 10%, #ffe2e3 0%, transparent 38%),
-    linear-gradient(180deg, #f6fbff 0%, #eef6ff 60%, #e9f2ff 100%);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text-primary);
   font-family: var(--font-outfit), sans-serif;
 }
 
@@ -42,89 +38,101 @@ button,
   margin: 0 auto;
   max-width: 430px;
   min-height: 100vh;
-  padding: 1rem 1rem calc(5.75rem + env(safe-area-inset-bottom));
+  padding: 1rem 1rem calc(5.25rem + env(safe-area-inset-bottom));
 }
 
+/* Card — clean white, no glass */
+.card,
 .glass-card {
-  border: 1px solid #dce9ff;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--surface) 84%, #f7fbff);
-  box-shadow:
-    0 18px 40px -28px rgba(13, 56, 112, 0.45),
-    0 8px 18px -14px rgba(20, 116, 255, 0.35);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
+/* Primary action button */
 .cta-btn {
-  border-radius: 14px;
-  background: linear-gradient(135deg, #1474ff, #0a98ff);
-  color: #fff;
-  font-family: var(--font-space-grotesk), sans-serif;
-  font-weight: 600;
-  box-shadow: 0 10px 20px -14px rgba(20, 116, 255, 0.9);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: opacity 0.15s ease, transform 0.12s ease;
 }
 
 .cta-btn:active {
-  transform: translateY(1px) scale(0.995);
+  opacity: 0.85;
+  transform: scale(0.98);
 }
 
+.cta-btn:disabled {
+  opacity: 0.45;
+}
+
+/* Secondary / outlined button */
 .secondary-btn {
-  border: 1px solid #cfe1ff;
-  border-radius: 14px;
-  background: #f7fbff;
-  color: #133e76;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
   font-weight: 600;
+  transition: background 0.15s ease;
 }
 
+.secondary-btn:active {
+  background: #f0f0f0;
+}
+
+/* Tag chip */
 .chip {
   border-radius: 999px;
-  background: #ebf4ff;
-  color: #16406f;
-  font-size: 0.8rem;
+  background: #f0f0f0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
   padding: 0.2rem 0.65rem;
 }
 
+/* Bottom navigation */
 .bottom-nav {
   position: fixed;
-  left: 50%;
-  bottom: 0.6rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 60;
-  transform: translateX(-50%);
-  width: min(430px, calc(100vw - 1rem));
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.38rem;
-  border: 1px solid #dbe8ff;
-  border-radius: 18px;
-  background: color-mix(in srgb, #ffffff 92%, #e8f2ff);
-  box-shadow: 0 18px 34px -26px rgba(13, 56, 112, 0.55);
-  padding: 0.45rem;
-  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
+  padding-top: 0.35rem;
 }
 
 .bottom-nav-item {
+  flex: 1;
   min-height: 3rem;
-  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
-  color: #44648b;
-  font-size: 0.66rem;
+  gap: 0.15rem;
+  color: var(--text-tertiary);
+  font-size: 0.65rem;
   font-weight: 600;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .bottom-nav-item-active {
-  background: #e7f1ff;
-  color: #154982;
+  color: var(--text-primary);
 }
 
+/* Profile sections */
 .profile-section {
-  border: 1px solid #dbe8ff;
-  border-radius: 18px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
   padding: 0.9rem;
 }
 
@@ -141,12 +149,12 @@ button,
 
 .profile-status-chip {
   border-radius: 999px;
-  border: 1px solid #d7e5ff;
-  background: #f6f9ff;
+  border: 1px solid var(--border);
+  background: #f5f5f5;
   padding: 0.2rem 0.55rem;
   font-size: 0.69rem;
   font-weight: 700;
-  color: #5e7390;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -171,30 +179,29 @@ button,
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  transition: transform 0.14s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.14s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .profile-chip:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .profile-chip-suggestion {
-  border: 1px solid #ccdefa;
-  background: #f8fbff;
-  color: #315d8b;
+  border: 1px solid var(--border);
+  background: #fafafa;
+  color: var(--text-secondary);
 }
 
 .profile-chip-active {
-  border-color: #8fc5ff;
-  background: #e7f2ff;
-  color: #124a82;
-  box-shadow: inset 0 0 0 1px #d3e9ff;
+  border-color: #111;
+  background: #f0f0f0;
+  color: var(--text-primary);
 }
 
 .profile-chip-selected {
-  border: 1px solid #9cc9ff;
-  background: linear-gradient(180deg, #e8f2ff 0%, #dfeeff 100%);
-  color: #124679;
+  border: 1.5px solid #111111;
+  background: #111111;
+  color: #ffffff;
 }
 
 .sticky-profile-cta {
@@ -202,29 +209,96 @@ button,
   left: 50%;
   transform: translateX(-50%);
   width: min(430px, calc(100vw - 1rem));
-  bottom: 5.15rem;
+  bottom: 4.5rem;
   z-index: 55;
-  border: 1px solid #dbe8ff;
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 0.7rem;
-  background: color-mix(in srgb, #ffffff 93%, #eaf3ff);
-  box-shadow: 0 14px 28px -24px rgba(13, 56, 112, 0.55);
-  backdrop-filter: blur(8px);
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Swipe card overlays */
+.swipe-overlay-yes {
+  background: var(--accent-green);
+}
+
+.swipe-overlay-no {
+  background: var(--accent-red);
+}
+
+/* Swipe action buttons */
+.swipe-btn-skip {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--accent-red);
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.swipe-btn-interested {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--accent-green);
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.swipe-btn-skip:active,
+.swipe-btn-interested:active {
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .tab-fade {
-  animation: fade-in-up 0.3s ease;
+  animation: fade-in-up 0.25s ease;
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Input fields */
+.input-field {
+  height: 3rem;
+  width: 100%;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  padding: 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: #111111;
+}
+
+.input-field::placeholder {
+  color: var(--text-tertiary);
 }
 
 @media (min-width: 768px) {

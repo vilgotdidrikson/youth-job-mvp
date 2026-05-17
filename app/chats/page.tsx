@@ -1,196 +1,331 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { LanguageToggle } from "@/components/language-toggle";
-import { useLanguage } from "@/hooks/use-language";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSession } from "@/hooks/use-session";
-import { getMessages, sendMessage } from "@/lib/chat";
-import { getMyConversations } from "@/lib/feeds";
-import { getJobs } from "@/lib/jobs";
-import type { ChatMessage, ConversationSummary, JobPost } from "@/lib/types";
+import { getSupabaseClient } from "@/lib/supabase";
+import { getMessages, getMyConversations, sendMessage } from "@/lib/chat";
+import type { ChatMessage, ConversationSummary } from "@/lib/types";
+
+interface ConvDisplay {
+  conv: ConversationSummary;
+  otherName: string;
+  jobTitle?: string;
+}
 
 export default function ChatsPage() {
-  const { language, toggleLanguage } = useLanguage();
-  const { user, loading } = useSession();
-
-  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<string>("");
+  const { user, profile, loading } = useSession();
+  const [convDisplays, setConvDisplays] = useState<ConvDisplay[]>([]);
+  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [jobs, setJobs] = useState<JobPost[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
+    void loadConversations();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile?.role]);
 
-    void (async () => {
-      try {
-        const [convData, jobsData] = await Promise.all([getMyConversations(), getJobs()]);
-        setConversations(convData);
-        setJobs(jobsData);
-        setError("");
+  const loadConversations = async () => {
+    try {
+      const supabase = getSupabaseClient();
+      const convs = await getMyConversations();
+      const isCompany = profile?.role === "company";
 
-        if (convData[0]) {
-          setSelectedConversationId(convData[0].id);
+      let nameMap: Record<string, string> = {};
+
+      if (isCompany) {
+        const ids = [...new Set(convs.map((c) => c.youth_user_id))];
+        if (ids.length > 0) {
+          const { data } = await supabase
+            .from("youth_profiles")
+            .select("user_id, full_name")
+            .in("user_id", ids);
+          (data ?? []).forEach((p: Record<string, unknown>) => {
+            nameMap[String(p.user_id)] = String(p.full_name ?? "Kandidat");
+          });
         }
-      } catch (loadError) {
-        console.error("Failed to load conversations.", loadError);
-        setError(loadError instanceof Error ? loadError.message : "Unable to load conversations.");
+      } else {
+        const ids = [...new Set(convs.map((c) => c.company_user_id))];
+        if (ids.length > 0) {
+          const { data } = await supabase
+            .from("company_profiles")
+            .select("user_id, company_name")
+            .in("user_id", ids);
+          (data ?? []).forEach((p: Record<string, unknown>) => {
+            nameMap[String(p.user_id)] = String(p.company_name ?? "Företag");
+          });
+        }
       }
-    })();
-  }, [user]);
+
+      const jobIds = [...new Set(convs.map((c) => c.job_id).filter(Boolean) as string[])];
+      let jobTitleMap: Record<string, string> = {};
+      if (jobIds.length > 0) {
+        const { data } = await supabase
+          .from("jobs")
+          .select("id, title")
+          .in("id", jobIds);
+        (data ?? []).forEach((j: Record<string, unknown>) => {
+          jobTitleMap[String(j.id)] = String(j.title ?? "");
+        });
+      }
+
+      setConvDisplays(
+        convs.map((conv) => ({
+          conv,
+          otherName: isCompany
+            ? (nameMap[conv.youth_user_id] ?? "Kandidat")
+            : (nameMap[conv.company_user_id] ?? "Företag"),
+          jobTitle: conv.job_id ? jobTitleMap[conv.job_id] : undefined,
+        })),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunde inte ladda konversationer.");
+    }
+  };
 
   useEffect(() => {
-    if (!selectedConversationId) {
-      return;
-    }
-
+    if (!selectedConvId) return;
     void (async () => {
       try {
-        const data = await getMessages(selectedConversationId);
-        setMessages(data);
-      } catch (messageError) {
-        console.error("Failed to load conversation messages.", messageError);
-        setError(messageError instanceof Error ? messageError.message : "Unable to load messages.");
+        setMessages(await getMessages(selectedConvId));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Kunde inte ladda meddelanden.");
       }
     })();
-  }, [selectedConversationId]);
+  }, [selectedConvId]);
 
-  const t =
-    language === "sv"
-      ? {
-          home: "Startsida",
-          title: "Matcher & chattar",
-          subtitle: "NÃ¤r bÃ¥da Ã¤r intresserade startas en konversation hÃ¤r.",
-          loading: "Laddar...",
-          empty: "Inga matcher Ã¤nnu. Swipea och vÃ¤nta pÃ¥ svar frÃ¥n fÃ¶retag.",
-          messagePlaceholder: "Skriv meddelande...",
-          send: "Skicka",
-          failed: "Kunde inte ladda chattarna.",
-        }
-      : {
-          home: "Home",
-          title: "Matches & chats",
-          subtitle: "When both sides are interested, the conversation starts here.",
-          loading: "Loading...",
-          empty: "No matches yet. Keep swiping and wait for company replies.",
-          messagePlaceholder: "Write a message...",
-          send: "Send",
-          failed: "Unable to load chats.",
-        };
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const selectedConversation = useMemo(
-    () => conversations.find((conversation) => conversation.id === selectedConversationId),
-    [conversations, selectedConversationId],
-  );
-  const visibleMessages = selectedConversationId ? messages : [];
-
-  const selectedJob = selectedConversation?.job_id
-    ? jobs.find((job) => job.id === selectedConversation.job_id)
-    : undefined;
-
-  const handleSend = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!selectedConversationId || !draft.trim()) return;
-
-    const body = draft.trim();
+  const handleSend = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedConvId || !draft.trim()) return;
+    const text = draft.trim();
     setDraft("");
-
     try {
-      await sendMessage(selectedConversationId, body);
-      const data = await getMessages(selectedConversationId);
-      setMessages(data);
-    } catch (sendError) {
-      console.error("Failed to send message.", sendError);
-      setError(sendError instanceof Error ? sendError.message : "Unable to send message.");
-      setDraft(body);
+      await sendMessage(selectedConvId, text);
+      setMessages(await getMessages(selectedConvId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunde inte skicka meddelande.");
+      setDraft(text);
     }
   };
 
   if (loading || !user) {
     return (
-      <main className="mobile-shell flex flex-col justify-center">
-        <div className="glass-card p-6 text-sm text-[#2d4f72]">{t.loading}</div>
+      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
       </main>
     );
   }
 
-  return (
-    <main className="mobile-shell pb-8">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link href="/" className="secondary-btn px-3 py-2 text-xs">
-          {t.home}
-        </Link>
-        <LanguageToggle language={language} onToggle={toggleLanguage} />
-      </div>
+  const selectedDisplay = selectedConvId
+    ? convDisplays.find((d) => d.conv.id === selectedConvId)
+    : null;
 
-      <div className="glass-card p-4">
-        <h1 className="text-2xl font-semibold text-[#132742]">{t.title}</h1>
-        <p className="mt-2 text-sm text-[#3f5f82]">{t.subtitle}</p>
-      </div>
+  /* ── Chat detail view ───────────────────────────────────── */
+  if (selectedConvId && selectedDisplay) {
+    const initials = selectedDisplay.otherName
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
 
-      {error ? (
-        <div className="mt-3 glass-card p-5 text-sm text-[#9e3a2d]">{error || t.failed}</div>
-      ) : conversations.length === 0 ? (
-        <div className="mt-3 glass-card p-5 text-sm text-[#3f5f82]">{t.empty}</div>
-      ) : (
-        <>
-          <div className="mt-3 flex gap-2 overflow-auto pb-1">
-            {conversations.map((conversation) => {
-              const active = conversation.id === selectedConversationId;
-              const job = conversation.job_id
-                ? jobs.find((item) => item.id === conversation.job_id)
-                : undefined;
-
-              return (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  className={`rounded-xl border px-3 py-2 text-xs ${
-                    active ? "border-[#88bcff] bg-[#e7f1ff] text-[#13497f]" : "border-[#cfe2ff] bg-white text-[#47688e]"
-                  }`}
-                  onClick={() => setSelectedConversationId(conversation.id)}
-                >
-                  {job?.title ?? "Conversation"}
-                </button>
-              );
-            })}
+    return (
+      <main
+        className="mobile-shell"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            paddingTop: "0.5rem",
+            paddingBottom: "0.85rem",
+            borderBottom: "1.5px solid #f0f0f0",
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => { setSelectedConvId(null); setMessages([]); setError(""); }}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              padding: "0.25rem 0.35rem", borderRadius: 8, fontSize: "1.1rem", color: "#111",
+            }}
+          >
+            ←
+          </button>
+          <div
+            style={{
+              width: 38, height: 38, borderRadius: "50%",
+              background: "#111", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.78rem", fontWeight: 700, flexShrink: 0,
+            }}
+          >
+            {initials || "?"}
           </div>
-
-          <section className="mt-3 glass-card flex min-h-[360px] flex-col p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">
-              {selectedJob?.title ?? "Conversation"}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 700, fontSize: "0.97rem", color: "#111", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {selectedDisplay.otherName}
             </p>
+            {selectedDisplay.jobTitle && (
+              <p style={{ fontSize: "0.76rem", color: "#737373", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {selectedDisplay.jobTitle}
+              </p>
+            )}
+          </div>
+        </div>
 
-            <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl bg-[#f7fbff] p-3">
-              {visibleMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
-                    message.sender_user_id === user.id
-                      ? "ml-auto bg-[#e7f1ff] text-[#13497f]"
-                      : "bg-white text-[#2e4f75]"
-                  }`}
-                >
-                  {message.text ?? message.body}
-                </div>
-              ))}
+        {error && (
+          <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 1rem", fontSize: "0.82rem", color: "#c0392b", margin: "0.5rem 0", flexShrink: 0 }}>
+            {error}
+          </div>
+        )}
+
+        {/* Messages */}
+        <div
+          style={{
+            flex: 1, overflowY: "auto",
+            display: "flex", flexDirection: "column", gap: "0.45rem",
+            padding: "0.75rem 0 0.5rem",
+          }}
+        >
+          {messages.length === 0 && (
+            <p style={{ textAlign: "center", color: "#a3a3a3", fontSize: "0.85rem", padding: "2rem 0" }}>
+              Inga meddelanden ännu. Säg hej! 👋
+            </p>
+          )}
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              style={{
+                maxWidth: "80%",
+                padding: "0.55rem 0.9rem",
+                borderRadius: 16,
+                fontSize: "0.9rem",
+                lineHeight: 1.45,
+                alignSelf: msg.sender_user_id === user.id ? "flex-end" : "flex-start",
+                background: msg.sender_user_id === user.id ? "#111111" : "#ffffff",
+                color: msg.sender_user_id === user.id ? "#ffffff" : "#111111",
+                border: msg.sender_user_id === user.id ? "none" : "1.5px solid #e8e8e8",
+              }}
+            >
+              {msg.message_text}
             </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
 
-            <form className="mt-3 flex gap-2" onSubmit={handleSend}>
-              <input
-                className="h-11 flex-1 rounded-xl border border-[#cfe2ff] px-3 text-sm"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder={t.messagePlaceholder}
-              />
-              <button type="submit" className="cta-btn min-h-11 px-4 text-sm">
-                {t.send}
+        {/* Send form */}
+        <form
+          style={{ display: "flex", gap: "0.5rem", paddingTop: "0.5rem", flexShrink: 0 }}
+          onSubmit={handleSend}
+        >
+          <input
+            className="input-field"
+            style={{ flex: 1 }}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Skriv ett meddelande..."
+          />
+          <button
+            type="submit"
+            className="cta-btn"
+            style={{ padding: "0 1rem", height: 48, flexShrink: 0 }}
+          >
+            Skicka
+          </button>
+        </form>
+      </main>
+    );
+  }
+
+  /* ── Inbox list view ───────────────────────────────────── */
+  return (
+    <main className="mobile-shell">
+      <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
+          WorkSpot
+        </p>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: "0.2rem 0 0" }}>
+          Matchningar
+        </h1>
+        <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
+          När båda är intresserade öppnas en chatt här.
+        </p>
+      </div>
+
+      {error && (
+        <div style={{ borderRadius: 12, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
+          {error}
+        </div>
+      )}
+
+      {convDisplays.length === 0 ? (
+        <div style={{ textAlign: "center", paddingTop: "3rem" }}>
+          <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🤝</p>
+          <p style={{ fontWeight: 700, fontSize: "1.1rem", color: "#111111", marginBottom: "0.4rem" }}>Inga matchningar ännu</p>
+          <p style={{ fontSize: "0.85rem", color: "#737373" }}>Fortsätt swipa — matchningar låser upp chatt.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {convDisplays.map(({ conv, otherName, jobTitle }) => {
+            const initials = otherName
+              .split(" ")
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            return (
+              <button
+                key={conv.id}
+                type="button"
+                onClick={() => setSelectedConvId(conv.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.85rem",
+                  padding: "0.9rem 1rem",
+                  borderRadius: 14,
+                  background: "#fff",
+                  border: "1.5px solid #e8e8e8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  width: "100%",
+                  transition: "border-color 0.15s ease",
+                }}
+              >
+                <div
+                  style={{
+                    width: 44, height: 44, borderRadius: "50%",
+                    background: "#111111", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.85rem", fontWeight: 700, flexShrink: 0,
+                  }}
+                >
+                  {initials || "?"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: "0.95rem", color: "#111", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {otherName}
+                  </p>
+                  {jobTitle && (
+                    <p style={{ fontSize: "0.8rem", color: "#737373", margin: "0.1rem 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {jobTitle}
+                    </p>
+                  )}
+                </div>
+                <span style={{ color: "#c0c0c0", fontSize: "1.25rem", flexShrink: 0, lineHeight: 1 }}>›</span>
               </button>
-            </form>
-          </section>
-        </>
+            );
+          })}
+        </div>
       )}
     </main>
   );

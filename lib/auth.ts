@@ -46,7 +46,7 @@ export async function signUp(
     throw new Error(error.message);
   }
 
-  if (!data.user) {
+  if (!data.user?.id) {
     const unexpectedError = new Error("Supabase did not return a user during sign up.");
     console.error(unexpectedError.message);
     throw unexpectedError;
@@ -126,6 +126,10 @@ export async function getCurrentUser(): Promise<User | null> {
     throw new Error(error.message);
   }
 
+  if (!data.user?.id) {
+    return null;
+  }
+
   return data.user;
 }
 
@@ -141,16 +145,12 @@ export async function getUserProfile(userId?: string): Promise<Profile | null> {
     .from("profiles")
     .select("id, role")
     .eq("id", targetUserId)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === "PGRST116") {
-      return null;
-    }
-
     console.error("Failed to load the current user's profile row.", error);
     throw new Error(error.message);
   }
 
-  return data;
+  return data ?? null;
 }

@@ -9,11 +9,25 @@ export interface Profile {
   role: Role;
 }
 
+export type YouthDocumentType = "grades" | "recommendation" | "certificate" | "other";
+
+export interface YouthDocument {
+  name: string;
+  url: string;
+  type: YouthDocumentType;
+}
+
 export interface YouthProfile {
   user_id: string;
   full_name?: string | null;
   age?: number | null;
   city?: string | null;
+  target_roles?: string[] | null;
+  skills?: string[] | null;
+  interests?: string[] | null;
+  working_time?: string[] | null;
+  experience?: string | null;
+  application_text?: string | null;
   merits?: string[] | null;
   strengths?: string[] | null;
   work_experience?: string[] | null;
@@ -26,10 +40,7 @@ export interface YouthProfile {
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
-  skills?: string[] | null;
-  interests?: string[] | null;
-  working_time?: string[] | null;
-  experience?: string | null;
+  documents?: YouthDocument[] | null;
   updated_at?: string | null;
   [key: string]: unknown;
 }
@@ -45,21 +56,21 @@ export interface CompanyProfile {
 
 export interface JobPost {
   id: string;
-  company_user_id: string;
-  company_name?: string | null;
   title: string;
-  city?: string | null;
-  job_type?: string | null;
-  pay?: string | null;
-  description?: string | null;
-  tags?: string[] | null;
-  image_url?: string | null;
-  category?: string | null;
-  is_active?: boolean | null;
-  active?: boolean | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  [key: string]: unknown;
+  description: string;
+  city: string;
+  salary_per_hour: string;
+  employment_type: string;
+  category: string;
+  requirements: string;
+  benefits: string;
+  company_name: string;
+  company_user_id: string;
+  image_url: string;
+  is_active: boolean;
+  created_at: string;
+  min_age?: number | null;
+  max_age?: number | null;
 }
 
 export interface JobInterest {
@@ -97,8 +108,10 @@ export interface MatchRecord {
 
 export interface Conversation {
   id: string;
+  match_id?: string | null;
   youth_user_id: string;
   company_user_id: string;
+  job_id?: string | null;
   last_message_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -113,10 +126,8 @@ export interface ConversationSummary extends Conversation {
 export interface ChatMessage {
   id: string;
   conversation_id: string;
-  sender_user_id?: string | null;
-  sender?: string | null;
-  text?: string | null;
-  body?: string | null;
+  sender_user_id: string;
+  message_text: string;
   created_at?: string | null;
   [key: string]: unknown;
 }
@@ -162,8 +173,5 @@ export interface SaveYouthProfileInput {
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
-  skills?: string[] | null;
-  interests?: string[] | null;
-  working_time?: string[] | null;
-  experience?: string | null;
+  documents?: YouthDocument[] | null;
 }

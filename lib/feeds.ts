@@ -3,6 +3,7 @@
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getMyConversations as getChatConversations } from "@/lib/chat";
 import { getCompanyJobs as getOwnedCompanyJobs, getJobs } from "@/lib/jobs";
+import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { CandidateFeedItem, JobInterest, JobPost, YouthProfile } from "@/lib/types";
 
@@ -15,10 +16,18 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
     return 0;
   }
 
-  const desiredRoles = normalizeStringArray(profile.desired_roles);
-  const desiredLocations = normalizeStringArray(profile.desired_locations);
-  const preferences = normalizeStringArray(profile.employment_preferences);
-  const haystack = `${job.title} ${job.category ?? ""} ${job.description ?? ""}`.toLowerCase();
+  const desiredRoles = normalizeStringArray(profile.target_roles ?? profile.desired_roles);
+  const preferences = normalizeStringArray(profile.working_time ?? profile.employment_preferences);
+  const haystack = [
+    job.title,
+    job.description,
+    job.employment_type,
+    job.category,
+    job.requirements,
+    job.benefits,
+  ]
+    .join(" ")
+    .toLowerCase();
 
   let score = 0;
 
@@ -28,11 +37,17 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
     }
   }
 
-  if (job.city && desiredLocations.some((location) => location.toLowerCase() === job.city?.toLowerCase())) {
+  if (profile.city && profile.city.toLowerCase() === job.city.toLowerCase()) {
     score += 2;
   }
 
-  if (job.job_type && preferences.some((preference) => preference.toLowerCase().includes(job.job_type!.toLowerCase()))) {
+  const employmentTypes = job.employment_type
+    .toLowerCase()
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  if (employmentTypes.some((empType) => preferences.some((p) => p.toLowerCase().includes(empType)))) {
     score += 1;
   }
 
@@ -49,26 +64,34 @@ export async function getSwipeJobs(): Promise<JobPost[]> {
 
   const supabase = getSupabaseClient();
   const [{ data: interestRows, error: interestError }, youthProfileResult, jobs] = await Promise.all([
-    supabase.from("job_interests").select("job_id").eq("youth_user_id", user.id),
+    supabase.from("swipe_actions").select("job_id").eq("youth_user_id", user.id),
     supabase.from("youth_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     getJobs(false),
   ]);
 
   if (interestError) {
-    console.error("Failed to fetch existing job interests.", interestError);
-    throw new Error(interestError.message);
+    logSupabaseError("swipe_actions.select.mine", interestError, { userId: user.id });
+    throw new Error(getSupabaseErrorMessage(interestError, "Unable to fetch existing swipe actions."));
   }
 
   if (youthProfileResult.error) {
-    console.error("Failed to fetch youth profile for feed ranking.", youthProfileResult.error);
-    throw new Error(youthProfileResult.error.message);
+    logSupabaseError("youth_cv_profiles.select.mine", youthProfileResult.error, { userId: user.id });
+    throw new Error(getSupabaseErrorMessage(youthProfileResult.error, "Unable to fetch youth profile."));
   }
 
   const swipedJobIds = new Set((interestRows ?? []).map((row) => String(row.job_id)));
   const youthProfile = (youthProfileResult.data ?? null) as YouthProfile | null;
 
   return jobs
-    .filter((job) => !swipedJobIds.has(job.id))
+    .filter((job) => {
+      if (swipedJobIds.has(job.id)) return false;
+      const age = youthProfile?.age;
+      if (typeof age === "number") {
+        if (typeof job.min_age === "number" && age < job.min_age) return false;
+        if (typeof job.max_age === "number" && age > job.max_age) return false;
+      }
+      return true;
+    })
     .sort((a, b) => scoreJobForYouth(b, youthProfile) - scoreJobForYouth(a, youthProfile));
 }
 
@@ -84,30 +107,33 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
   const [jobResult, interestsResult, reviewsResult] = await Promise.all([
     supabase.from("jobs").select("*").eq("id", jobId).maybeSingle(),
     supabase
-      .from("job_interests")
+      .from("swipe_actions")
       .select("*")
       .eq("job_id", jobId)
       .eq("decision", "interested"),
     supabase
-      .from("candidate_reviews")
+      .from("company_interest_actions")
       .select("youth_user_id")
       .eq("job_id", jobId)
       .eq("company_user_id", user.id),
   ]);
 
   if (jobResult.error) {
-    console.error("Failed to fetch job for candidate feed.", jobResult.error);
-    throw new Error(jobResult.error.message);
+    logSupabaseError("jobs.select.by_id", jobResult.error, { jobId });
+    throw new Error(getSupabaseErrorMessage(jobResult.error, "Unable to fetch job."));
   }
 
   if (interestsResult.error) {
-    console.error("Failed to fetch interested youth.", interestsResult.error);
-    throw new Error(interestsResult.error.message);
+    logSupabaseError("swipe_actions.select.interested_for_job", interestsResult.error, { jobId });
+    throw new Error(getSupabaseErrorMessage(interestsResult.error, "Unable to fetch interested youth."));
   }
 
   if (reviewsResult.error) {
-    console.error("Failed to fetch existing candidate reviews.", reviewsResult.error);
-    throw new Error(reviewsResult.error.message);
+    logSupabaseError("company_interest_actions.select.reviewed_for_job", reviewsResult.error, {
+      jobId,
+      companyUserId: user.id,
+    });
+    throw new Error(getSupabaseErrorMessage(reviewsResult.error, "Unable to fetch company interest actions."));
   }
 
   const job = jobResult.data as JobPost | null;
@@ -135,8 +161,10 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     .in("user_id", interestedIds);
 
   if (youthProfileError) {
-    console.error("Failed to fetch youth profiles for candidate feed.", youthProfileError);
-    throw new Error(youthProfileError.message);
+    logSupabaseError("youth_cv_profiles.select.by_ids", youthProfileError, {
+      userCount: interestedIds.length,
+    });
+    throw new Error(getSupabaseErrorMessage(youthProfileError, "Unable to fetch youth profiles."));
   }
 
   const profileMap = new Map<string, YouthProfile>();

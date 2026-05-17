@@ -40,7 +40,7 @@ async function requireYouthUser() {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
-  if (!user || profile?.role !== "youth") {
+  if (!user?.id || profile?.role !== "youth") {
     throw new Error("This action requires a youth account.");
   }
 
@@ -106,14 +106,7 @@ export async function getOnboardingMessages(sessionId: string): Promise<Onboardi
     id: String(row.id ?? ""),
     session_id: String(row.session_id ?? sessionId),
     sender: (row.sender === "assistant" ? "assistant" : "user") as MessageSender,
-    message_text:
-      typeof row.message_text === "string"
-        ? row.message_text
-        : typeof row.text === "string"
-          ? row.text
-          : typeof row.body === "string"
-            ? row.body
-            : "",
+    message_text: typeof row.message_text === "string" ? row.message_text : "",
   }));
 }
 
@@ -123,26 +116,16 @@ export async function addOnboardingMessage(
   messageText: string,
 ): Promise<void> {
   const supabase = getSupabaseClient();
-  const attempts = [
-    { session_id: sessionId, sender, message_text: messageText },
-    { session_id: sessionId, sender, text: messageText },
-    { session_id: sessionId, sender, body: messageText },
-  ];
+  const { error } = await supabase.from("ai_onboarding_messages").insert({
+    session_id: sessionId,
+    sender,
+    message_text: messageText,
+  });
 
-  let lastError: Error | null = null;
-
-  for (const payload of attempts) {
-    const { error } = await supabase.from("ai_onboarding_messages").insert(payload);
-
-    if (!error) {
-      return;
-    }
-
-    lastError = new Error(error.message);
+  if (error) {
     console.error("Failed to add onboarding message.", error);
+    throw new Error(error.message);
   }
-
-  throw lastError ?? new Error("Unable to save onboarding message.");
 }
 
 export async function completeOnboardingSession(sessionId: string): Promise<void> {
@@ -224,14 +207,10 @@ export async function saveYouthProfileDraft(input: {
     city: input.city || null,
     merits: input.interests,
     strengths: input.skills,
-    work_experience: input.experience ? [input.experience] : [],
+    work_experience: splitListFromText(input.experience),
     desired_roles: input.targetRoles,
     desired_locations: input.city ? [input.city] : [],
     employment_preferences: input.workingTime,
-    skills: input.skills,
-    interests: input.interests,
-    working_time: input.workingTime,
-    experience: input.experience || null,
   });
 }
 
@@ -301,13 +280,40 @@ export function buildGeneratedCvData(input: {
     cover_letter_template: coverLetterTemplate,
     onboarding_completed: true,
     cv_generated: true,
-    skills: input.skills,
-    interests: input.interests,
-    working_time: input.workingTime,
-    experience: input.experience || null,
   };
 }
 
 export async function saveGeneratedCvToProfile(profileData: SaveYouthProfileInput): Promise<YouthProfile> {
   return persistYouthProfile(profileData);
+}
+
+export async function completeYouthOnboarding(input: {
+  full_name: string;
+  age: string;
+  city: string;
+  desired_roles: string[];
+  strengths: string;
+  work_experience: string;
+  education: string;
+  languages: string;
+  employment_preferences: string[];
+  cv_text?: string;
+  documents?: import("./types").YouthDocument[];
+}): Promise<void> {
+  await persistYouthProfile({
+    full_name: input.full_name || null,
+    age: input.age ? Number(input.age) : null,
+    city: input.city || null,
+    desired_roles: input.desired_roles,
+    strengths: splitListFromText(input.strengths),
+    work_experience: splitListFromText(input.work_experience),
+    education: splitListFromText(input.education),
+    languages: splitListFromText(input.languages),
+    employment_preferences: input.employment_preferences,
+    desired_locations: input.city ? [input.city] : [],
+    cv_text: input.cv_text ?? null,
+    documents: input.documents ?? [],
+    onboarding_completed: true,
+    cv_generated: (input.cv_text ?? "").trim().length > 0,
+  });
 }
