@@ -3,6 +3,7 @@
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getOrCreateConversation } from "@/lib/chat";
 import { getJobById } from "@/lib/jobs";
+import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { CandidateReview, JobInterest, MatchRecord, SwipeDecision } from "@/lib/types";
 
@@ -10,7 +11,7 @@ async function getAuthenticatedUser(requiredRole?: "youth" | "company") {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
-  if (!user) {
+  if (!user?.id) {
     throw new Error("You must be signed in.");
   }
 
@@ -24,43 +25,46 @@ async function getAuthenticatedUser(requiredRole?: "youth" | "company") {
 async function upsertJobInterestRecord(payload: JobInterest) {
   const supabase = getSupabaseClient();
   const { data: existing, error: existingError } = await supabase
-    .from("job_interests")
+    .from("swipe_actions")
     .select("id")
     .eq("youth_user_id", payload.youth_user_id)
     .eq("job_id", payload.job_id)
     .maybeSingle();
 
   if (existingError) {
-    console.error("Failed to query existing job interest.", existingError);
-    throw new Error(existingError.message);
+    logSupabaseError("swipe_actions.select.existing", existingError, payload);
+    throw new Error(getSupabaseErrorMessage(existingError, "Unable to load existing swipe action."));
   }
 
   if (existing?.id) {
     const { error } = await supabase
-      .from("job_interests")
-      .update({ decision: payload.decision, updated_at: new Date().toISOString() })
+      .from("swipe_actions")
+      .update({ decision: payload.decision })
       .eq("id", existing.id);
 
     if (error) {
-      console.error("Failed to update job interest.", error);
-      throw new Error(error.message);
+      logSupabaseError("swipe_actions.update", error, {
+        id: existing.id,
+        decision: payload.decision,
+      });
+      throw new Error(getSupabaseErrorMessage(error, "Unable to update swipe action."));
     }
 
     return;
   }
 
-  const { error } = await supabase.from("job_interests").insert(payload);
+  const { error } = await supabase.from("swipe_actions").insert(payload);
 
   if (error) {
-    console.error("Failed to create job interest.", error);
-    throw new Error(error.message);
+    logSupabaseError("swipe_actions.insert", error, payload);
+    throw new Error(getSupabaseErrorMessage(error, "Unable to create swipe action."));
   }
 }
 
 async function upsertCandidateReviewRecord(payload: CandidateReview) {
   const supabase = getSupabaseClient();
   const { data: existing, error: existingError } = await supabase
-    .from("candidate_reviews")
+    .from("company_interest_actions")
     .select("id")
     .eq("company_user_id", payload.company_user_id)
     .eq("youth_user_id", payload.youth_user_id)
@@ -68,36 +72,39 @@ async function upsertCandidateReviewRecord(payload: CandidateReview) {
     .maybeSingle();
 
   if (existingError) {
-    console.error("Failed to query existing candidate review.", existingError);
-    throw new Error(existingError.message);
+    logSupabaseError("company_interest_actions.select.existing", existingError, payload);
+    throw new Error(getSupabaseErrorMessage(existingError, "Unable to load existing company interest action."));
   }
 
   if (existing?.id) {
     const { error } = await supabase
-      .from("candidate_reviews")
-      .update({ decision: payload.decision, updated_at: new Date().toISOString() })
+      .from("company_interest_actions")
+      .update({ decision: payload.decision })
       .eq("id", existing.id);
 
     if (error) {
-      console.error("Failed to update candidate review.", error);
-      throw new Error(error.message);
+      logSupabaseError("company_interest_actions.update", error, {
+        id: existing.id,
+        decision: payload.decision,
+      });
+      throw new Error(getSupabaseErrorMessage(error, "Unable to update company interest action."));
     }
 
     return;
   }
 
-  const { error } = await supabase.from("candidate_reviews").insert(payload);
+  const { error } = await supabase.from("company_interest_actions").insert(payload);
 
   if (error) {
-    console.error("Failed to create candidate review.", error);
-    throw new Error(error.message);
+    logSupabaseError("company_interest_actions.insert", error, payload);
+    throw new Error(getSupabaseErrorMessage(error, "Unable to create company interest action."));
   }
 }
 
 async function getInterestMatch(jobId: string, youthUserId: string) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
-    .from("job_interests")
+    .from("swipe_actions")
     .select("*")
     .eq("job_id", jobId)
     .eq("youth_user_id", youthUserId)
@@ -105,35 +112,16 @@ async function getInterestMatch(jobId: string, youthUserId: string) {
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to load job interest.", error);
-    throw new Error(error.message);
+    logSupabaseError("swipe_actions.select.interested", error, { jobId, youthUserId });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to load swipe action."));
   }
 
   return data;
 }
 
-async function getReviewMatch(jobId: string, youthUserId: string, companyUserId: string) {
+async function getExistingMatch(jobId: string, youthUserId: string, companyUserId: string): Promise<MatchRecord | null> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
-    .from("candidate_reviews")
-    .select("*")
-    .eq("job_id", jobId)
-    .eq("youth_user_id", youthUserId)
-    .eq("company_user_id", companyUserId)
-    .eq("decision", "interested")
-    .maybeSingle();
-
-  if (error) {
-    console.error("Failed to load candidate review.", error);
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-async function ensureMatch(jobId: string, youthUserId: string, companyUserId: string): Promise<MatchRecord> {
-  const supabase = getSupabaseClient();
-  const { data: existing, error: existingError } = await supabase
     .from("matches")
     .select("*")
     .eq("job_id", jobId)
@@ -141,29 +129,33 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
     .eq("company_user_id", companyUserId)
     .maybeSingle();
 
-  if (existingError) {
-    console.error("Failed to query existing match.", existingError);
-    throw new Error(existingError.message);
+  if (error) {
+    logSupabaseError("matches.select.existing", error, {
+      jobId,
+      youthUserId,
+      companyUserId,
+    });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to load existing match."));
   }
 
-  const conversation = await getOrCreateConversation(youthUserId, companyUserId);
+  return (data ?? null) as MatchRecord | null;
+}
+
+async function ensureMatch(jobId: string, youthUserId: string, companyUserId: string): Promise<MatchRecord> {
+  const supabase = getSupabaseClient();
+  const existing = await getExistingMatch(jobId, youthUserId, companyUserId);
 
   if (existing) {
-    if (!existing.conversation_id) {
-      const { error } = await supabase
-        .from("matches")
-        .update({ conversation_id: conversation.id, status: "matched" })
-        .eq("id", existing.id);
-
-      if (error) {
-        console.error("Failed to update existing match.", error);
-        throw new Error(error.message);
-      }
-    }
+    const conversation = await getOrCreateConversation({
+      match_id: existing.id,
+      youth_user_id: youthUserId,
+      company_user_id: companyUserId,
+      job_id: jobId,
+    });
 
     return {
       ...(existing as MatchRecord),
-      conversation_id: existing.conversation_id ?? conversation.id,
+      conversation_id: conversation.id,
     };
   }
 
@@ -173,18 +165,32 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
       job_id: jobId,
       youth_user_id: youthUserId,
       company_user_id: companyUserId,
-      conversation_id: conversation.id,
       status: "matched",
     })
     .select("*")
     .single();
 
   if (error) {
-    console.error("Failed to create match.", error);
-    throw new Error(error.message);
+    logSupabaseError("matches.insert", error, {
+      jobId,
+      youthUserId,
+      companyUserId,
+    });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to create match."));
   }
 
-  return data as MatchRecord;
+  const match = data as MatchRecord;
+  const conversation = await getOrCreateConversation({
+    match_id: match.id,
+    youth_user_id: youthUserId,
+    company_user_id: companyUserId,
+    job_id: jobId,
+  });
+
+  return {
+    ...match,
+    conversation_id: conversation.id,
+  };
 }
 
 export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
@@ -206,8 +212,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     return null;
   }
 
-  const review = await getReviewMatch(jobId, user.id, job.company_user_id);
-  return review ? ensureMatch(jobId, user.id, job.company_user_id) : null;
+  return getExistingMatch(jobId, user.id, job.company_user_id);
 }
 
 export async function reviewCandidate(
@@ -253,8 +258,11 @@ export async function getMyMatches(): Promise<MatchRecord[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Failed to fetch matches.", error);
-    throw new Error(error.message);
+    logSupabaseError("matches.select.mine", error, {
+      userId: user.id,
+      role: profile?.role ?? "youth",
+    });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to fetch matches."));
   }
 
   return (data ?? []) as MatchRecord[];

@@ -23,22 +23,35 @@ export function JobSwipeDeck({
   emptySubtitle,
   interestedLabel,
   skipLabel,
-  swipeHint,
 }: JobSwipeDeckProps) {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
   const startXRef = useRef<number | null>(null);
+  const flyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const remainingJobs = useMemo(() => jobs.filter((job) => !decisions[job.id]), [decisions, jobs]);
   const currentJob: JobPost | undefined = remainingJobs[0];
 
-  const applyDecision = async (job: JobPost, decision: Decision) => {
+  const commitDecision = async (job: JobPost, decision: Decision) => {
+    setFlyDir(null);
+    setDragX(0);
     setDecisions((prev) => ({ ...prev, [job.id]: decision }));
     await onDecision(job, decision);
   };
 
+  const triggerDecision = (job: JobPost, decision: Decision) => {
+    if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
+    setFlyDir(decision === "interested" ? "right" : "left");
+    setIsDragging(false);
+    setDragX(0);
+    startXRef.current = null;
+    flyTimerRef.current = setTimeout(() => void commitDecision(job, decision), 280);
+  };
+
   const onPointerDown = (x: number) => {
+    if (flyDir) return;
     startXRef.current = x;
     setIsDragging(true);
   };
@@ -57,135 +70,257 @@ export function JobSwipeDeck({
     }
 
     if (dragX > 90) {
-      void applyDecision(currentJob, "interested");
-      setDragX(0);
+      triggerDecision(currentJob, "interested");
+    } else if (dragX < -90) {
+      triggerDecision(currentJob, "skip");
+    } else {
       setIsDragging(false);
-      startXRef.current = null;
-      return;
-    }
-
-    if (dragX < -90) {
-      void applyDecision(currentJob, "skip");
       setDragX(0);
-      setIsDragging(false);
       startXRef.current = null;
-      return;
     }
-
-    setIsDragging(false);
-    setDragX(0);
-    startXRef.current = null;
   };
 
-  const interestedCount = Object.values(decisions).filter((value) => value === "interested").length;
-  const skippedCount = Object.values(decisions).filter((value) => value === "skip").length;
-  const overlayOpacity = Math.min(Math.abs(dragX) / 110, 1);
+  const interestedCount = Object.values(decisions).filter((v) => v === "interested").length;
+  const flyTranslateX = flyDir === "right" ? 600 : flyDir === "left" ? -600 : dragX;
+  const flyRotate = flyDir === "right" ? 18 : flyDir === "left" ? -18 : dragX * 0.03;
+  const overlayOpacity = Math.min(Math.abs(dragX) / 100, 1);
+  const isLiking = dragX > 20 || flyDir === "right";
+  const isSkipping = dragX < -20 || flyDir === "left";
 
   if (!currentJob) {
     return (
-      <div className="glass-card p-5 text-center">
-        <h2 className="text-xl font-semibold text-[#132742]">{emptyTitle}</h2>
-        <p className="mt-2 text-sm text-[#3f5f82]">{emptySubtitle}</p>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-          <p className="rounded-xl bg-[#e8f5ec] px-3 py-2 text-[#1f6845]">
-            {interestedLabel}: {interestedCount}
-          </p>
-          <p className="rounded-xl bg-[#fff1ea] px-3 py-2 text-[#9e4e2d]">
-            {skipLabel}: {skippedCount}
-          </p>
-        </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 420,
+          gap: "0.75rem",
+          padding: "2rem",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "2.5rem" }}>🎉</div>
+        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#111111", margin: 0 }}>
+          {emptyTitle}
+        </h2>
+        <p style={{ fontSize: "0.9rem", color: "#737373", margin: 0 }}>{emptySubtitle}</p>
+        {interestedCount > 0 && (
+          <div
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.6rem 1.2rem",
+              borderRadius: 999,
+              background: "#f0faf5",
+              border: "1px solid #b9e5d7",
+              fontSize: "0.85rem",
+              color: "#226a54",
+              fontWeight: 600,
+            }}
+          >
+            {interestedCount} {interestedCount === 1 ? "match" : "matches"} sent
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div style={{ position: "relative", userSelect: "none" }}>
+      {/* Main swipe card */}
       <div
-        className="glass-card relative min-h-[440px] overflow-hidden p-6"
-        onPointerDown={(event) => onPointerDown(event.clientX)}
-        onPointerMove={(event) => onPointerMove(event.clientX)}
+        style={{
+          position: "relative",
+          zIndex: 1,
+          background: "#fff",
+          border: "1px solid #e8e8e8",
+          borderRadius: 20,
+          overflow: "hidden",
+          minHeight: 480,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+          transform: `translateX(${flyTranslateX}px) rotate(${flyRotate}deg)`,
+          transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)",
+          touchAction: "pan-y",
+          cursor: isDragging ? "grabbing" : "grab",
+        }}
+        onPointerDown={(e) => onPointerDown(e.clientX)}
+        onPointerMove={(e) => onPointerMove(e.clientX)}
         onPointerUp={onPointerEnd}
         onPointerCancel={onPointerEnd}
-        style={{
-          transform: `translateX(${dragX}px) rotate(${dragX * 0.035}deg)`,
-          transition: isDragging ? "none" : "transform 0.24s ease",
-          touchAction: "pan-y",
-        }}
       >
-        <div
-          className="pointer-events-none absolute inset-0 rounded-[20px] bg-[#e8f5ec]"
-          style={{ opacity: dragX > 0 ? overlayOpacity * 0.62 : 0 }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 rounded-[20px] bg-[#fff1ea]"
-          style={{ opacity: dragX < 0 ? overlayOpacity * 0.62 : 0 }}
-          aria-hidden
-        />
-
-        <div className="relative z-10 flex min-h-[390px] flex-col">
-          {currentJob.image_url && (
+        {/* Job image */}
+        {currentJob.image_url ? (
+          <div style={{ height: 200, overflow: "hidden", position: "relative" }}>
             <Image
               src={currentJob.image_url}
               alt={currentJob.title}
-              width={640}
-              height={320}
-              className="mb-4 h-40 w-full rounded-2xl object-cover"
+              fill
+              style={{ objectFit: "cover" }}
             />
+          </div>
+        ) : (
+          <div
+            style={{
+              height: 160,
+              background: "#f5f5f5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "3rem",
+            }}
+          >
+            💼
+          </div>
+        )}
+
+        {/* Swipe direction indicators */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            padding: "6px 14px",
+            borderRadius: 8,
+            border: "3px solid #21d07a",
+            color: "#21d07a",
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            letterSpacing: "0.05em",
+            opacity: isLiking ? overlayOpacity : 0,
+            transform: `rotate(-15deg)`,
+            transition: "opacity 0.1s ease",
+            pointerEvents: "none",
+          }}
+        >
+          YES
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            padding: "6px 14px",
+            borderRadius: 8,
+            border: "3px solid #fd5564",
+            color: "#fd5564",
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            letterSpacing: "0.05em",
+            opacity: isSkipping ? overlayOpacity : 0,
+            transform: `rotate(15deg)`,
+            transition: "opacity 0.1s ease",
+            pointerEvents: "none",
+          }}
+        >
+          NOPE
+        </div>
+
+        {/* Card content */}
+        <div style={{ padding: "1.1rem 1.25rem 1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem" }}>
+            <div>
+              <p
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: "#a3a3a3",
+                  margin: 0,
+                }}
+              >
+                {currentJob.company_name || "Company"}
+              </p>
+              <h2
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 800,
+                  letterSpacing: "-0.03em",
+                  color: "#111111",
+                  margin: "0.2rem 0 0",
+                  lineHeight: 1.15,
+                }}
+              >
+                {currentJob.title}
+              </h2>
+            </div>
+          </div>
+
+          <p
+            style={{
+              marginTop: "0.4rem",
+              fontSize: "0.85rem",
+              color: "#737373",
+              display: "flex",
+              gap: "0.35rem",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            {currentJob.city && (
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <span style={{ fontSize: "0.8rem" }}>📍</span> {currentJob.city}
+              </span>
+            )}
+            {currentJob.city && (currentJob.employment_type || currentJob.salary_per_hour) && (
+              <span style={{ color: "#e8e8e8" }}>·</span>
+            )}
+            {currentJob.employment_type && <span>{currentJob.employment_type}</span>}
+            {currentJob.employment_type && currentJob.salary_per_hour && (
+              <span style={{ color: "#e8e8e8" }}>·</span>
+            )}
+            {currentJob.salary_per_hour && (
+              <span style={{ fontWeight: 600, color: "#111111" }}>{currentJob.salary_per_hour}</span>
+            )}
+          </p>
+
+          {currentJob.description && (
+            <p
+              style={{
+                marginTop: "0.75rem",
+                fontSize: "0.9rem",
+                color: "#4a4a4a",
+                lineHeight: 1.55,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {currentJob.description}
+            </p>
           )}
 
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4c6887]">
-            {currentJob.company_name ?? "Company"}
-          </p>
-          <h2 className="mt-2 text-[1.9rem] font-semibold leading-tight text-[#132742]">
-            {currentJob.title}
-          </h2>
-          <p className="mt-1 text-sm text-[#3f5f82]">
-            {currentJob.city} • {currentJob.job_type} • {currentJob.pay}
-          </p>
-          <p className="mt-4 text-base text-[#2f4663]">{currentJob.description}</p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(currentJob.tags ?? []).map((tag: string) => (
-              <span key={tag} className="chip">
-                {tag}
-              </span>
-            ))}
-            {currentJob.category && <span className="chip">{currentJob.category}</span>}
-          </div>
-
-          <div className="mt-auto pt-4 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#5a7492]">
-            {dragX > 40 ? interestedLabel : dragX < -40 ? skipLabel : "Swipe"}
-          </div>
+          {currentJob.category && (
+            <span
+              className="chip"
+              style={{ display: "inline-block", marginTop: "0.75rem" }}
+            >
+              {currentJob.category}
+            </span>
+          )}
         </div>
       </div>
 
-      <p className="text-center text-xs text-[#58708b]">{swipeHint}</p>
-
-      <div className="grid grid-cols-2 gap-3">
+      {/* Action buttons */}
+      <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
         <button
           type="button"
-          className="secondary-btn min-h-12 px-4 py-3 text-sm"
-          onClick={() => void applyDecision(currentJob, "skip")}
+          className="secondary-btn"
+          style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
+          onClick={() => triggerDecision(currentJob, "skip")}
         >
           {skipLabel}
         </button>
         <button
           type="button"
-          className="cta-btn min-h-12 px-4 py-3 text-sm"
-          onClick={() => void applyDecision(currentJob, "interested")}
+          className="cta-btn"
+          style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
+          onClick={() => triggerDecision(currentJob, "interested")}
         >
           {interestedLabel}
         </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-xs text-[#3f5f82]">
-        <p className="rounded-xl bg-[#e8f5ec] px-3 py-2">
-          {interestedLabel}: {interestedCount}
-        </p>
-        <p className="rounded-xl bg-[#fff1ea] px-3 py-2">
-          {skipLabel}: {skippedCount}
-        </p>
       </div>
     </div>
   );

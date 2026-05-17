@@ -14,20 +14,19 @@ export function ProfileProgressCard({
   subtitle,
 }: ProfileProgressCardProps) {
   return (
-    <section className="glass-card overflow-hidden">
-      <div className="bg-gradient-to-br from-[#d9ecff] via-[#edf4ff] to-[#ffe9e0] p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#44658d]">Profile Builder</p>
-        <h1 className="mt-2 text-2xl font-semibold text-[#132742]">{title}</h1>
-        <p className="mt-2 text-sm text-[#35597f]">{subtitle}</p>
+    <section className="card" style={{ padding: "1.25rem", marginBottom: "0.25rem" }}>
+      <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>Profile</p>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: "0.2rem 0 0", lineHeight: 1.15 }}>{title}</h1>
+      <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>{subtitle}</p>
 
-        <div className="mt-4 flex items-center justify-between text-xs font-semibold text-[#2d5587]">
+      <div style={{ marginTop: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", fontWeight: 600, color: "#4a4a4a", marginBottom: "0.4rem" }}>
           <span>{statusText}</span>
           <span>{completion}%</span>
         </div>
-        <div className="mt-1 h-2.5 rounded-full bg-white/75">
+        <div style={{ height: 6, borderRadius: 999, background: "#f0f0f0", overflow: "hidden" }}>
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#1474ff] to-[#0a98ff] transition-all duration-300"
-            style={{ width: `${completion}%` }}
+            style={{ width: `${completion}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.3s ease" }}
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}

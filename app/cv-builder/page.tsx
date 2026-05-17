@@ -70,16 +70,11 @@ export default function CvBuilderPage() {
             setFullName((existingProfile.full_name as string) || user.email?.split("@")[0] || "");
             setAge(existingProfile.age ? String(existingProfile.age) : "");
             setCity((existingProfile.city as string) || "");
-            setSkills((existingProfile.strengths as string[]) || (existingProfile.skills as string[]) || []);
+            setSkills((existingProfile.strengths as string[]) || []);
             setTargetRoles((existingProfile.desired_roles as string[]) || []);
-            setInterests((existingProfile.merits as string[]) || (existingProfile.interests as string[]) || []);
-            setWorkingTime(
-              (existingProfile.employment_preferences as string[]) || (existingProfile.working_time as string[]) || [],
-            );
-            setExperience(
-              (existingProfile.experience as string) ||
-                ((existingProfile.work_experience as string[]) || []).join(", "),
-            );
+            setInterests((existingProfile.merits as string[]) || []);
+            setWorkingTime((existingProfile.employment_preferences as string[]) || []);
+            setExperience(((existingProfile.work_experience as string[]) || []).join(", "));
           } else {
             setFullName(user.email?.split("@")[0] ?? "");
           }

@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LanguageToggle } from "@/components/language-toggle";
-import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { language, toggleLanguage } = useLanguage();
   const { user, profile, loading, error, logout, refresh } = useSession();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -18,61 +14,6 @@ export default function DashboardPage() {
       router.replace("/auth");
     }
   }, [loading, router, user]);
-
-  const t =
-    language === "sv"
-      ? {
-          home: "Startsida",
-          title: "Din dashboard",
-          subtitle: "Mobil vy för att hantera konto och rolldata från Supabase.",
-          loading: "Laddar session...",
-          noProfile:
-            "Ingen profil hittades i tabellen profiles för den inloggade användaren.",
-          userId: "Användar-ID",
-          email: "E-post",
-          role: "Roll",
-          youth: "Ungdomskonto aktivt. Du kan söka och följa jobbmatchningar.",
-          company: "Företagskonto aktivt. Du kan hantera kandidater och roller.",
-          roleChip: "Kontotyp",
-          signedIn: "Inloggad",
-          account: "Kontoinformation",
-          refresh: "Ladda om data",
-          logout: "Logga ut",
-          logoutBusy: "Loggar ut...",
-          authError: "Kunde inte läsa sessionen från Supabase.",
-          quickActions: "Snabbval",
-          findJobs: "Upptäck jobb",
-          chats: "Chattar",
-          editProfile: "Redigera profil",
-          postJobs: "Skapa annons",
-          reviewApplicants: "Granska kandidater",
-        }
-      : {
-          home: "Home",
-          title: "Your dashboard",
-          subtitle: "Mobile view to manage account and role data loaded from Supabase.",
-          loading: "Loading session...",
-          noProfile:
-            "No profile row was found in the profiles table for the signed-in user.",
-          userId: "User ID",
-          email: "Email",
-          role: "Role",
-          youth: "Youth account active. You can browse and track job matches.",
-          company: "Company account active. You can manage candidates and roles.",
-          roleChip: "Account type",
-          signedIn: "Signed in",
-          account: "Account details",
-          refresh: "Refresh data",
-          logout: "Sign out",
-          logoutBusy: "Signing out...",
-          authError: "Unable to read the Supabase session.",
-          quickActions: "Quick actions",
-          findJobs: "Discover jobs",
-          chats: "Chats",
-          editProfile: "Edit profile",
-          postJobs: "Post a role",
-          reviewApplicants: "Review applicants",
-        };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -83,125 +24,148 @@ export default function DashboardPage() {
   const quickActions =
     profile?.role === "company"
       ? [
-          { label: t.postJobs, onClick: () => router.push("/company") },
-          { label: t.reviewApplicants, onClick: () => router.push("/company") },
-          { label: t.editProfile, onClick: () => router.push("/company") },
-          { label: t.refresh, onClick: () => void refresh() },
+          { label: "Lägg upp en roll", onClick: () => router.push("/company") },
+          { label: "Granska ansökningar", onClick: () => router.push("/company") },
+          { label: "Redigera profil", onClick: () => router.push("/company") },
         ]
       : [
-          { label: t.findJobs, onClick: () => router.push("/swipe") },
-          { label: t.editProfile, onClick: () => router.push("/cv-builder") },
-          { label: t.refresh, onClick: () => void refresh() },
-          { label: t.chats, onClick: () => router.push("/chats") },
+          { label: "Hitta jobb", onClick: () => router.push("/swipe") },
+          { label: "Redigera profil", onClick: () => router.push("/profile") },
+          { label: "Mina chattar", onClick: () => router.push("/chats") },
         ];
 
   if (loading) {
     return (
-      <main className="mobile-shell flex flex-col justify-center">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <Link href="/" className="secondary-btn px-3 py-2 text-xs">
-            {t.home}
-          </Link>
-          <LanguageToggle language={language} onToggle={toggleLanguage} />
-        </div>
-        <div className="glass-card p-6 text-sm text-[#2d4f72]">{t.loading}</div>
+      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
       </main>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <main className="mobile-shell pb-8">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link href="/" className="secondary-btn px-3 py-2 text-xs">
-          {t.home}
-        </Link>
-        <LanguageToggle language={language} onToggle={toggleLanguage} />
+    <main className="mobile-shell">
+      {/* Header */}
+      <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
+          WorkSpot
+        </p>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: "0.2rem 0 0", lineHeight: 1.15 }}>
+          {profile?.role === "company" ? "Företagskonto" : "Ditt konto"}
+        </h1>
+        <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
+          {user.email}
+        </p>
       </div>
 
-      <div className="glass-card space-y-4 p-5 sm:p-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#4c6887]">
-            {t.title}
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-[#132742]">
-            {profile?.role === "company" ? "Company" : "Youth"}
-          </h1>
-          <p className="mt-2 text-sm text-[#3f5f82]">{t.subtitle}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="chip">{t.signedIn}</span>
-            <span className="chip">
-              {t.roleChip}: {profile?.role ?? "-"}
-            </span>
+      {(error || !profile) && (
+        <div
+          style={{
+            borderRadius: 12,
+            background: "#fff1f0",
+            border: "1px solid #ffd6d3",
+            padding: "0.75rem 1rem",
+            fontSize: "0.85rem",
+            color: "#c0392b",
+            marginBottom: "1rem",
+          }}
+        >
+          {error || "Profil hittades inte. Försök uppdatera."}
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <section style={{ marginBottom: "1.25rem" }}>
+        <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.6rem" }}>
+          Snabbval
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className="secondary-btn"
+              style={{ padding: "0.875rem 1rem", fontSize: "0.9rem", textAlign: "left", width: "100%" }}
+              onClick={action.onClick}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Account info */}
+      <section
+        className="card"
+        style={{ padding: "1rem", marginBottom: "1rem" }}
+      >
+        <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.75rem" }}>
+          Kontodetaljer
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.88rem" }}>
+            <span style={{ color: "#737373" }}>E-post</span>
+            <span style={{ color: "#111111", fontWeight: 500 }}>{user.email}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.88rem" }}>
+            <span style={{ color: "#737373" }}>Kontotyp</span>
+            <span style={{ color: "#111111", fontWeight: 500, textTransform: "capitalize" }}>{profile?.role ?? "—"}</span>
           </div>
         </div>
+      </section>
 
-        {(error || !profile) && (
-          <p className="rounded-xl bg-[#ffe7e5] px-3 py-2 text-sm text-[#9e3a2d]">
-            {error || t.noProfile}
-          </p>
-        )}
-
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">
-            {t.quickActions}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className="secondary-btn min-h-11 px-3 py-2 text-xs"
-                onClick={action.onClick}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
+      {/* Role message */}
+      {profile?.role === "youth" && (
+        <div
+          style={{
+            borderRadius: 12,
+            background: "#f0faf5",
+            border: "1px solid #b9e5d7",
+            padding: "0.75rem 1rem",
+            fontSize: "0.85rem",
+            color: "#226a54",
+            marginBottom: "1rem",
+          }}
+        >
+          Ungdomskonto aktivt — swipa och följ dina jobbmatchningar.
         </div>
-
-        <div className="space-y-3 rounded-2xl bg-[#f6fbff] p-4 text-sm text-[#264b73]">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4c6887]">{t.account}</p>
-          <p>
-            <span className="font-semibold">{t.email}:</span> {user.email}
-          </p>
-          <p className="break-all">
-            <span className="font-semibold">{t.userId}:</span> {user.id}
-          </p>
-          <p>
-            <span className="font-semibold">{t.role}:</span> {profile?.role ?? t.authError}
-          </p>
+      )}
+      {profile?.role === "company" && (
+        <div
+          style={{
+            borderRadius: 12,
+            background: "#f5f5f5",
+            border: "1px solid #e8e8e8",
+            padding: "0.75rem 1rem",
+            fontSize: "0.85rem",
+            color: "#4a4a4a",
+            marginBottom: "1rem",
+          }}
+        >
+          Företagskonto aktivt — hantera roller och granska kandidater.
         </div>
+      )}
 
-        {profile?.role === "youth" && (
-          <p className="rounded-2xl bg-[#ebf7f2] px-4 py-3 text-sm text-[#1d5b4e]">{t.youth}</p>
-        )}
-        {profile?.role === "company" && (
-          <p className="rounded-2xl bg-[#eef3ff] px-4 py-3 text-sm text-[#274c84]">
-            {t.company}
-          </p>
-        )}
-
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            className="secondary-btn min-h-12 px-4 py-3 text-sm"
-            onClick={() => void refresh()}
-          >
-            {t.refresh}
-          </button>
-          <button
-            type="button"
-            className="cta-btn min-h-12 px-4 py-3 text-sm"
-            onClick={() => void handleLogout()}
-            disabled={loggingOut}
-          >
-            {loggingOut ? t.logoutBusy : t.logout}
-          </button>
-        </div>
+      {/* Sign out */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+        <button
+          type="button"
+          className="secondary-btn"
+          style={{ padding: "0.875rem", fontSize: "0.9rem" }}
+          onClick={() => void refresh()}
+        >
+          Uppdatera
+        </button>
+        <button
+          type="button"
+          className="cta-btn"
+          style={{ padding: "0.875rem", fontSize: "0.9rem" }}
+          onClick={() => void handleLogout()}
+          disabled={loggingOut}
+        >
+          {loggingOut ? "Loggar ut..." : "Logga ut"}
+        </button>
       </div>
     </main>
   );
