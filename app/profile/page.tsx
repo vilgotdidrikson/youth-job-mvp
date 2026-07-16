@@ -18,6 +18,7 @@ interface YouthProfileForm {
   city: string;
   targetRoles: string[];
   skills: string[];
+  interests: string[];
   workingTime: string[];
   experience: string;
 }
@@ -28,6 +29,7 @@ const initialForm: YouthProfileForm = {
   city: "",
   targetRoles: [],
   skills: [],
+  interests: [],
   workingTime: [],
   experience: "",
 };
@@ -88,6 +90,7 @@ function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): Y
     city: typeof profile.city === "string" ? profile.city : "",
     targetRoles: normalizeStringArray(profile.desired_roles),
     skills: normalizeStringArray(profile.strengths),
+    interests: normalizeStringArray(profile.merits),
     workingTime: normalizeStringArray(profile.employment_preferences),
     experience: experienceList.join("\n"),
   };
