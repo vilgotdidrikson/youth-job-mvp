@@ -14,6 +14,16 @@ const JOB_OPTIONS = [
 ];
 
 const TIME_OPTIONS = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
+const STRENGTH_TIPS = ["Ansvarstagande", "Social", "Noggrann", "Kreativ", "Bra på att samarbeta"];
+const EXPERIENCE_TIPS = ["Barnvakt", "Praktik", "Hjälpt till hemma", "Idrottsledare", "Föreningsarbete"];
+const LANGUAGE_TIPS = [
+  { label: "Svenska", flag: "🇸🇪" },
+  { label: "Engelska", flag: "🇬🇧" },
+  { label: "Arabiska", flag: "🇸🇦" },
+  { label: "Spanska", flag: "🇪🇸" },
+  { label: "Finska", flag: "🇫🇮" },
+  { label: "Somaliska", flag: "🇸🇴" },
+];
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -36,7 +46,7 @@ const STEPS: StepConfig[] = [
     field: "full_name",
     question: "Vad heter du?",
     type: "text",
-    placeholder: "Ditt fullständiga namn",
+    placeholder: "Ditt namn",
   },
   {
     field: "age",
@@ -58,7 +68,7 @@ const STEPS: StepConfig[] = [
   },
   {
     field: "strengths",
-    question: "Beskriv dina styrkor med några ord.",
+    question: "Vilka är dina bästa egenskaper?",
     type: "text",
     placeholder: "T.ex. pålitlig, snabblärd, social",
     optional: true,
@@ -254,6 +264,9 @@ export default function OnboardingPage() {
     languages: "",
     employment_preferences: [],
   });
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [customRole, setCustomRole] = useState("");
   const [showCvStep, setShowCvStep] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
   const [cvText, setCvText] = useState("");
@@ -277,6 +290,7 @@ export default function OnboardingPage() {
   if (showCvStep) {
     return (
       <main
+        className="youth-onboarding"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -370,6 +384,7 @@ export default function OnboardingPage() {
   if (showDocStep) {
     return (
       <main
+        className="youth-onboarding"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -545,6 +560,18 @@ export default function OnboardingPage() {
     });
   }
 
+  function addCustomRole() {
+    const value = customRole.trim();
+    if (!value) return;
+    setAnswers((prev) => ({
+      ...prev,
+      desired_roles: prev.desired_roles.includes(value)
+        ? prev.desired_roles
+        : [...prev.desired_roles, value],
+    }));
+    setCustomRole("");
+  }
+
   async function handleNext() {
     if (!isLast) {
       setStep((s) => s + 1);
@@ -610,6 +637,7 @@ export default function OnboardingPage() {
   if (loading || !user) {
     return (
       <main
+        className="youth-onboarding"
         style={{
           display: "flex",
           minHeight: "100vh",
@@ -628,6 +656,7 @@ export default function OnboardingPage() {
 
   return (
     <main
+      className="youth-onboarding"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -679,9 +708,10 @@ export default function OnboardingPage() {
           }}
         >
           <p
+            className="onboarding-question-title"
             style={{
               margin: 0,
-              fontSize: "1.1rem",
+              fontSize: "1.55rem",
               fontWeight: 700,
               color: "#111111",
               lineHeight: 1.5,
@@ -695,9 +725,52 @@ export default function OnboardingPage() {
 
       {/* Input area */}
       <div style={{ flex: 1 }}>
-        {current.type === "chips" ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            {current.chips!.map((chip) => {
+        {current.field === "full_name" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFirstName(value);
+                setAnswers((prev) => ({ ...prev, full_name: `${value} ${lastName}`.trim() }));
+              }}
+              placeholder="Namn"
+              autoComplete="given-name"
+              autoFocus
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+            />
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => {
+                const value = e.target.value;
+                setLastName(value);
+                setAnswers((prev) => ({ ...prev, full_name: `${firstName} ${value}`.trim() }));
+              }}
+              placeholder="Efternamn"
+              autoComplete="family-name"
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+            />
+          </div>
+        ) : current.type === "chips" ? (
+          <div>
+            {current.field === "desired_roles" && (
+              <div style={{ display: "flex", gap: "0.55rem", marginBottom: "1rem" }}>
+                <input
+                  type="text"
+                  value={customRole}
+                  onChange={(e) => setCustomRole(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomRole(); } }}
+                  placeholder="Skriv ett yrke eller en jobbidé"
+                  style={{ flex: 1, minWidth: 0, height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "0.9rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+                />
+                <button type="button" onClick={addCustomRole} style={{ padding: "0 .9rem", border: "none", borderRadius: 10, background: "#111111", color: "#ffffff", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Lägg till</button>
+              </div>
+            )}
+            {current.field === "desired_roles" && <p style={{ margin: "0 0 0.65rem", color: "#737373", fontSize: "0.8rem", fontWeight: 600 }}>Tips på jobb</p>}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {[...new Set([...current.chips!, ...currentChipsValue])].map((chip) => {
               const selected = (answers[current.field] as string[]).includes(chip);
               return (
                 <button
@@ -721,6 +794,7 @@ export default function OnboardingPage() {
                 </button>
               );
             })}
+            </div>
           </div>
         ) : current.type === "textarea" ? (
           <textarea
@@ -766,6 +840,48 @@ export default function OnboardingPage() {
               background: "#ffffff",
             }}
           />
+        )}
+
+        {current.field === "strengths" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
+            {STRENGTH_TIPS.map((tip) => {
+              const selected = currentTextValue.toLowerCase().includes(tip.toLowerCase());
+              return <button key={tip} type="button" onClick={() => {
+                const nextValue = selected
+                  ? currentTextValue.replace(new RegExp(`,?\\s*${tip}`, "i"), "").replace(/^,\s*/, "")
+                  : [currentTextValue, tip].filter(Boolean).join(", ");
+                handleTextChange(nextValue);
+              }} style={{ padding: "0.5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111111" : "#ffffff", color: selected ? "#ffffff" : "#111111", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{tip}</button>;
+            })}
+          </div>
+        )}
+
+        {current.field === "work_experience" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
+            {EXPERIENCE_TIPS.map((tip) => {
+              const selected = currentTextValue.toLowerCase().includes(tip.toLowerCase());
+              return <button key={tip} type="button" onClick={() => {
+                const nextValue = selected
+                  ? currentTextValue.replace(new RegExp(`,?\\s*${tip}`, "i"), "").replace(/^,\s*/, "")
+                  : [currentTextValue, tip].filter(Boolean).join(", ");
+                handleTextChange(nextValue);
+              }} style={{ padding: "0.5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111111" : "#ffffff", color: selected ? "#ffffff" : "#111111", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{tip}</button>;
+            })}
+          </div>
+        )}
+
+        {current.field === "languages" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
+            {LANGUAGE_TIPS.map(({ label, flag }) => {
+              const selected = currentTextValue.toLowerCase().includes(label.toLowerCase());
+              return <button key={label} type="button" onClick={() => {
+                const nextValue = selected
+                  ? currentTextValue.replace(new RegExp(`,?\\s*${label}`, "i"), "").replace(/^,\s*/, "")
+                  : [currentTextValue, label].filter(Boolean).join(", ");
+                handleTextChange(nextValue);
+              }} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111111" : "#ffffff", color: selected ? "#ffffff" : "#111111", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}><span aria-hidden="true">{flag}</span>{label}</button>;
+            })}
+          </div>
         )}
 
         {error && (

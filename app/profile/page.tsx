@@ -346,7 +346,7 @@ const { user, profile, loading, logout } = useSession();
       <main className="mobile-shell pb-20">
         {/* Header */}
         <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>WorkSpot</p>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>Employo</p>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0" }}>
             {companyName || "Företagsprofil"}
           </h1>

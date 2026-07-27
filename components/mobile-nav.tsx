@@ -88,6 +88,9 @@ export function MobileNav() {
       aria-label="Primary navigation"
       style={{ maxWidth: 430, left: "50%", transform: "translateX(-50%)" }}
     >
+      <Link href="/dashboard" className="desktop-nav-logo" aria-label="Employo kontoöversikt">
+        <span>E</span> employo
+      </Link>
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(item.href + "/");
         return (
@@ -105,4 +108,3 @@ export function MobileNav() {
     </nav>
   );
 }
-

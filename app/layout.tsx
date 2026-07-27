@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "WorkSpot Youth Jobs",
+  title: "Employo Youth Jobs",
   description:
     "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
 };
@@ -36,4 +36,3 @@ export default function RootLayout({
     </html>
   );
 }
-

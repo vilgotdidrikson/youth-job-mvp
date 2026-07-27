@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
+import { useLanguage } from "@/hooks/use-language";
 import { signIn, signUp } from "@/lib/auth";
 import type { Role } from "@/lib/types";
 
@@ -11,9 +12,11 @@ type Mode = "landing" | "login" | "signup";
 export default function AuthPage() {
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
+  const { language, toggleLanguage } = useLanguage();
   const [mode, setMode] = useState<Mode>("landing");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<Role>("youth");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -29,6 +32,12 @@ export default function AuthPage() {
     event.preventDefault();
     setError("");
     setMessage("");
+
+    if (mode === "signup" && password !== confirmPassword) {
+      setError("Lösenorden matchar inte. Kontrollera och försök igen.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -78,313 +87,68 @@ export default function AuthPage() {
 
   /* Landing screen */
   if (mode === "landing") {
+    const english = language === "en";
     return (
-      <main
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          flexDirection: "column",
-          background: "#ffffff",
-          maxWidth: 430,
-          margin: "0 auto",
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 2rem",
-            paddingTop: "20vh",
-          }}
-        >
-          <div
-            style={{
-              width: 68,
-              height: 68,
-              borderRadius: 20,
-              background: "#111111",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <span style={{ color: "#fff", fontSize: "1.9rem", fontWeight: 800, lineHeight: 1 }}>W</span>
+      <main className="landing-page">
+        <nav className="landing-nav" aria-label="Huvudnavigation">
+          <div className="landing-nav-actions">
+            <button type="button" className="landing-login" onClick={() => setMode("login")}>{english ? "Log in" : "Logga in"}</button>
+            <button type="button" className="landing-language" onClick={toggleLanguage} aria-label={english ? "Change language" : "Byt språk"}>
+              <span className="landing-language-icon" aria-hidden="true">◎</span>
+              {english ? "Language" : "Språk"}<span aria-hidden="true">{english ? "SV" : "EN"}</span>
+            </button>
+          </div>
+          <span className="landing-logo"><span className="landing-logo-mark">E</span><span>employo</span></span>
+        </nav>
+
+        <section className="landing-hero">
+          <div className="landing-copy">
+            <h1>{english ? "Find a job that" : "Hitta ett jobb som"}<br /><em>{english ? "fits you." : "passar dig."}</em></h1>
+            <p className="landing-description">{english ? "Employo makes it easy for young people to find their next job – and for businesses to find the right person." : "Employo gör det enkelt för unga att hitta sitt nästa jobb – och för företag att hitta rätt person."}</p>
+            <div className="landing-cta-group">
+              <button type="button" className="landing-primary-cta" onClick={() => setMode("signup")}>{english ? "Get started" : "Kom igång"}<span aria-hidden="true">↗</span></button>
+              <button type="button" className="landing-text-cta" onClick={() => setMode("signup")}>{english ? "For businesses" : "För företag"}<span aria-hidden="true">→</span></button>
+            </div>
           </div>
 
-          <h1
-            style={{
-              fontSize: "2.2rem",
-              fontWeight: 800,
-              letterSpacing: "-0.04em",
-              color: "#111111",
-              textAlign: "center",
-              lineHeight: 1.05,
-              margin: 0,
-            }}
-          >
-            WorkSpot
-          </h1>
-          <p
-            style={{
-              marginTop: "0.75rem",
-              fontSize: "1.05rem",
-              color: "#737373",
-              textAlign: "center",
-              lineHeight: 1.55,
-            }}
-          >
-            Ungdomsjobb.<br />Swipa. Matcha. Jobba.
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            padding: "0 1.5rem",
-            paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 0px) + 1.5rem)",
-          }}
-        >
-          <button
-            type="button"
-            className="cta-btn"
-            style={{ padding: "1rem", fontSize: "1rem", width: "100%" }}
-            onClick={() => setMode("signup")}
-          >
-            Skapa konto
-          </button>
-          <button
-            type="button"
-            className="secondary-btn"
-            style={{ padding: "1rem", fontSize: "1rem", width: "100%" }}
-            onClick={() => setMode("login")}
-          >
-            Logga in
-          </button>
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: "0.75rem",
-              color: "#a3a3a3",
-              marginTop: "0.25rem",
-            }}
-          >
-            För åldrar 12–20 och svenska företag
-          </p>
-        </div>
+          <div className="landing-visual" aria-label={english ? "A job match example" : "Exempel på jobbmatchning"}>
+            <div className="landing-sun" /><div className="landing-orbit landing-orbit-one" /><div className="landing-orbit landing-orbit-two" />
+            <div className="landing-job-card">
+              <div className="landing-card-topline"><span>{english ? "New job near you" : "Nytt jobb nära dig"}</span><span aria-hidden="true">♡</span></div>
+              <div className="landing-card-image"><div className="landing-cup"><i /><b /></div><span className="landing-card-sparkle">✦</span></div>
+              <div className="landing-card-content"><p>{english ? "Café team member" : "Cafémedarbetare"}</p><span>Kvarterscafét · Stockholm</span><div className="landing-card-tags"><small>{english ? "Part time" : "Deltid"}</small><small>{english ? "From age 16" : "Från 16 år"}</small></div></div>
+            </div>
+            <div className="landing-match-pill"><span>✦</span>{english ? "98% match" : "98% match"}</div><div className="landing-face landing-face-one">☺</div><div className="landing-face landing-face-two">✦</div>
+          </div>
+        </section>
+        <footer className="landing-footer"><span>© 2026 Employo</span><span>{english ? "A simpler path from curious to hired." : "En enklare väg från nyfiken till anställd."}</span></footer>
       </main>
     );
   }
 
-  /* Auth form (login / signup) */
+  const isSignup = mode === "signup";
   return (
-    <main
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        flexDirection: "column",
-        background: "#ffffff",
-        maxWidth: 430,
-        margin: "0 auto",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "1rem 1.25rem 0",
-          gap: "0.75rem",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            setMode("landing");
-            setError("");
-            setMessage("");
-          }}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: "50%",
-            border: "1.5px solid #e8e8e8",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.1rem",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}
-          aria-label="Tillbaka"
-        >
-          ←
-        </button>
-        <h1
-          style={{
-            fontSize: "1.2rem",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            color: "#111111",
-          }}
-        >
-          {mode === "signup" ? "Skapa konto" : "Välkommen tillbaka"}
-        </h1>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        style={{ flex: 1, display: "flex", flexDirection: "column", padding: "1.5rem 1.25rem" }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
-          <input
-            className="input-field"
-            placeholder="E-postadress"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-          <input
-            className="input-field"
-            placeholder="Lösenord"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            required
-          />
-
-          {mode === "signup" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <p
-                style={{
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                  color: "#737373",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Jag är…
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setRole("youth")}
-                  style={{
-                    padding: "0.75rem",
-                    borderRadius: 10,
-                    border: role === "youth" ? "2px solid #111111" : "1.5px solid #e8e8e8",
-                    background: role === "youth" ? "#111111" : "#fff",
-                    color: role === "youth" ? "#fff" : "#111111",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Jag söker jobb
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("company")}
-                  style={{
-                    padding: "0.75rem",
-                    borderRadius: 10,
-                    border: role === "company" ? "2px solid #111111" : "1.5px solid #e8e8e8",
-                    background: role === "company" ? "#111111" : "#fff",
-                    color: role === "company" ? "#fff" : "#111111",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Vi söker personal
-                </button>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <p
-              style={{
-                borderRadius: 10,
-                background: "#fff1f0",
-                border: "1px solid #ffd6d3",
-                padding: "0.65rem 0.85rem",
-                fontSize: "0.85rem",
-                color: "#c0392b",
-              }}
-            >
-              {error}
-            </p>
-          )}
-          {message && (
-            <p
-              style={{
-                borderRadius: 10,
-                background: "#f0faf5",
-                border: "1px solid #b9e5d7",
-                padding: "0.65rem 0.85rem",
-                fontSize: "0.85rem",
-                color: "#226a54",
-              }}
-            >
-              {message}
-            </p>
-          )}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))",
-            marginTop: "1.5rem",
-          }}
-        >
-          <button
-            type="submit"
-            className="cta-btn"
-            style={{ padding: "1rem", fontSize: "1rem", width: "100%" }}
-            disabled={loading}
-          >
-            {loading ? "Vänta..." : mode === "signup" ? "Skapa konto" : "Logga in"}
-          </button>
-
-          <button
-            type="button"
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "0.88rem",
-              fontWeight: 500,
-              color: "#737373",
-              cursor: "pointer",
-              textAlign: "center",
-              padding: "0.5rem",
-            }}
-            onClick={() => {
-              setMode(mode === "signup" ? "login" : "signup");
-              setError("");
-              setMessage("");
-            }}
-          >
-            {mode === "signup"
-              ? "Har du redan ett konto? Logga in"
-              : "Inget konto? Skapa ett"}
-          </button>
-        </div>
-      </form>
+    <main className="auth-page">
+      <nav className="auth-nav">
+        <button type="button" className="auth-back" onClick={() => { setMode("landing"); setError(""); setMessage(""); }} aria-label="Tillbaka">←</button>
+        <span className="landing-logo"><span className="landing-logo-mark">E</span><span>employo</span></span>
+      </nav>
+      <section className={`auth-layout auth-layout-form-only ${!isSignup ? "auth-layout-login" : ""}`}>
+        <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
+          <div className="auth-card-heading"><h2>{isSignup ? "Skapa konto" : "Logga in"}</h2><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
+          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Arbetsgivare</button></div></fieldset>}
+          <div className="auth-fields">
+            <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
+            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required /></label>
+            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required /></label>}
+          </div>
+          {error && <p className="auth-message auth-error">{error}</p>}
+          {message && <p className="auth-message auth-success">{message}</p>}
+          <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true">↗</span></button>
+          <button type="button" className="auth-switch" onClick={() => { setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
+        </form>
+      </section>
+      <footer className="auth-footer">© 2026 Employo <span>En enklare väg från nyfiken till anställd.</span></footer>
     </main>
   );
 }
