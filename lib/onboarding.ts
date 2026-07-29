@@ -214,6 +214,34 @@ export async function saveYouthProfileDraft(input: {
   });
 }
 
+export async function saveYouthAccountDetails(input: {
+  full_name: string;
+  date_of_birth: string;
+  city: string;
+  address: string;
+  postal_code: string;
+  additional_addresses: Array<{ city: string; address: string; postal_code: string }>;
+}): Promise<YouthProfile> {
+  const birthDate = new Date(`${input.date_of_birth}T00:00:00`);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const birthdayHasPassed =
+    today.getMonth() > birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+  if (!birthdayHasPassed) age -= 1;
+
+  return persistYouthProfile({
+    full_name: input.full_name.trim(),
+    date_of_birth: input.date_of_birth,
+    address: input.address.trim(),
+    city: input.city.trim(),
+    postal_code: input.postal_code.trim(),
+    additional_addresses: input.additional_addresses,
+    age: Number.isFinite(age) && age >= 0 ? age : null,
+    onboarding_completed: false,
+  });
+}
+
 export function buildGeneratedCvData(input: {
   fullName: string;
   age: string;
@@ -299,6 +327,9 @@ export async function completeYouthOnboarding(input: {
   employment_preferences: string[];
   cv_text?: string;
   documents?: import("./types").YouthDocument[];
+  certificates?: string;
+  extracurriculars?: string;
+  profile_image?: string;
 }): Promise<void> {
   await persistYouthProfile({
     full_name: input.full_name || null,
@@ -313,6 +344,9 @@ export async function completeYouthOnboarding(input: {
     desired_locations: input.city ? [input.city] : [],
     cv_text: input.cv_text ?? null,
     documents: input.documents ?? [],
+    certificates: input.certificates || null,
+    extracurriculars: input.extracurriculars || null,
+    profile_image_url: input.profile_image || null,
     onboarding_completed: true,
     cv_generated: (input.cv_text ?? "").trim().length > 0,
   });

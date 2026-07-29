@@ -107,30 +107,15 @@ export async function getCurrentUser(): Promise<User | null> {
   const supabase = getSupabaseClient();
   const {
     data: { session },
-    error: sessionError,
+    error,
   } = await supabase.auth.getSession();
 
-  if (sessionError) {
-    console.error("Failed to load the current Supabase session.", sessionError);
-    throw new Error(sessionError.message);
-  }
-
-  if (!session) {
-    return null;
-  }
-
-  const { data, error } = await supabase.auth.getUser();
-
   if (error) {
-    console.error("Failed to load the current Supabase user.", error);
+    console.error("Failed to load the current Supabase session.", error);
     throw new Error(error.message);
   }
 
-  if (!data.user?.id) {
-    return null;
-  }
-
-  return data.user;
+  return session?.user ?? null;
 }
 
 export async function getUserProfile(userId?: string): Promise<Profile | null> {

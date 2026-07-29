@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSession } from "@/hooks/use-session";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getMessages, getMyConversations, sendMessage } from "@/lib/chat";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface ConvDisplay {
   conv: ConversationSummary;
@@ -14,6 +16,8 @@ interface ConvDisplay {
 
 export default function ChatsPage() {
   const { user, profile, loading } = useSession();
+  const router = useRouter();
+  const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [convDisplays, setConvDisplays] = useState<ConvDisplay[]>([]);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -22,10 +26,10 @@ export default function ChatsPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || cvLoading || !cvCompleted) return;
     void loadConversations();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profile?.role]);
+  }, [user, profile?.role, cvCompleted, cvLoading]);
 
   const loadConversations = async () => {
     try {
@@ -33,7 +37,7 @@ export default function ChatsPage() {
       const convs = await getMyConversations();
       const isCompany = profile?.role === "company";
 
-      let nameMap: Record<string, string> = {};
+      const nameMap: Record<string, string> = {};
 
       if (isCompany) {
         const ids = [...new Set(convs.map((c) => c.youth_user_id))];
@@ -60,7 +64,7 @@ export default function ChatsPage() {
       }
 
       const jobIds = [...new Set(convs.map((c) => c.job_id).filter(Boolean) as string[])];
-      let jobTitleMap: Record<string, string> = {};
+      const jobTitleMap: Record<string, string> = {};
       if (jobIds.length > 0) {
         const { data } = await supabase
           .from("jobs")
@@ -114,10 +118,22 @@ export default function ChatsPage() {
     }
   };
 
-  if (loading || !user) {
+  if (loading || cvLoading || !user) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
+      </main>
+    );
+  }
+
+  if (profile?.role === "youth" && !cvCompleted) {
+    return (
+      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
+          <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "#111111", marginBottom: "0.4rem" }}>Slutför ditt CV först</p>
+          <p style={{ fontSize: "0.85rem", color: "#737373", lineHeight: 1.5 }}>Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.</p>
+          <button type="button" className="cta-btn" onClick={() => router.push("/youth/onboarding")} style={{ marginTop: "0.9rem", padding: "0.75rem 1rem" }}>Skapa mitt CV</button>
+        </div>
       </main>
     );
   }
@@ -253,7 +269,7 @@ export default function ChatsPage() {
     <main className="mobile-shell">
       <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
         <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-          WorkSpot
+          Employo
         </p>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: "0.2rem 0 0" }}>
           Matchningar

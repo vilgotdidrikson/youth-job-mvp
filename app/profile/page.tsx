@@ -18,6 +18,7 @@ interface YouthProfileForm {
   city: string;
   targetRoles: string[];
   skills: string[];
+  interests: string[];
   workingTime: string[];
   experience: string;
 }
@@ -28,6 +29,7 @@ const initialForm: YouthProfileForm = {
   city: "",
   targetRoles: [],
   skills: [],
+  interests: [],
   workingTime: [],
   experience: "",
 };
@@ -88,6 +90,7 @@ function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): Y
     city: typeof profile.city === "string" ? profile.city : "",
     targetRoles: normalizeStringArray(profile.desired_roles),
     skills: normalizeStringArray(profile.strengths),
+    interests: normalizeStringArray(profile.merits),
     workingTime: normalizeStringArray(profile.employment_preferences),
     experience: experienceList.join("\n"),
   };
@@ -124,7 +127,7 @@ const { user, profile, loading, logout } = useSession();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
       return;
     }
 
@@ -317,7 +320,7 @@ const { user, profile, loading, logout } = useSession();
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
-    router.replace("/auth");
+    router.replace("/login");
   };
 
   if (loading || !user) {
@@ -343,7 +346,7 @@ const { user, profile, loading, logout } = useSession();
       <main className="mobile-shell pb-20">
         {/* Header */}
         <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>WorkSpot</p>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>Employo</p>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0" }}>
             {companyName || "Företagsprofil"}
           </h1>

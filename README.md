@@ -1,4 +1,4 @@
-# WorkSpot Youth Jobs MVP
+# Employo Youth Jobs MVP
 
 Mobile-first web app for youth (ages 12-20 in Sweden) and companies offering part-time, temporary, and summer jobs.
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseErrorMessage } from "@/lib/supabase-errors";
 import type { Profile } from "@/lib/types";
 
 interface UseSessionResult {
@@ -21,63 +22,75 @@ export function useSession(): UseSessionResult {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(false);
+  const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
   const refresh = async () => {
-    if (isMountedRef.current) {
-      setLoading(true);
-      setError(null);
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
 
-    try {
-      const nextUser = await getCurrentUser();
-
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      setUser(nextUser);
-
-      if (!nextUser) {
-        setProfile(null);
-        return;
-      }
-
-      const nextProfile = await getUserProfile(nextUser.id);
-
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      setProfile(nextProfile);
-    } catch (sessionError) {
-      console.error("Failed to synchronize the Supabase session in the client.", sessionError);
-
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      setUser(null);
-      setProfile(null);
-      setError(
-        sessionError instanceof Error
-          ? sessionError.message
-          : "Unable to load the Supabase session.",
-      );
-    } finally {
+    const refreshTask = (async () => {
       if (isMountedRef.current) {
-        setLoading(false);
+        setLoading(true);
+        setError(null);
       }
-    }
+
+      try {
+        const nextUser = await getCurrentUser();
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        setUser(nextUser);
+
+        if (!nextUser) {
+          setProfile(null);
+          return;
+        }
+
+        const nextProfile = await getUserProfile(nextUser.id);
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        setProfile(nextProfile);
+      } catch (sessionError) {
+        console.error("Failed to synchronize the Supabase session in the client.", sessionError);
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        setUser(null);
+        setProfile(null);
+        setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));
+      } finally {
+        refreshPromiseRef.current = null;
+
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    refreshPromiseRef.current = refreshTask;
+    return refreshTask;
   };
 
   useEffect(() => {
     isMountedRef.current = true;
     const supabase = getSupabaseClient();
-    void refresh();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "INITIAL_SESSION") {
+        void refresh();
+        return;
+      }
+
       void refresh();
     });
 

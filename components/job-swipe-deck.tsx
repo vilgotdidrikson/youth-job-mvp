@@ -127,9 +127,10 @@ export function JobSwipeDeck({
   }
 
   return (
-    <div style={{ position: "relative", userSelect: "none" }}>
+    <div className="swipe-deck" style={{ position: "relative", userSelect: "none" }}>
       {/* Main swipe card */}
       <div
+        className="swipe-job-card"
         style={{
           position: "relative",
           zIndex: 1,
@@ -151,7 +152,7 @@ export function JobSwipeDeck({
       >
         {/* Job image */}
         {currentJob.image_url ? (
-          <div style={{ height: 200, overflow: "hidden", position: "relative" }}>
+          <div className="swipe-job-image" style={{ height: 200, overflow: "hidden", position: "relative" }}>
             <Image
               src={currentJob.image_url}
               alt={currentJob.title}
@@ -161,6 +162,7 @@ export function JobSwipeDeck({
           </div>
         ) : (
           <div
+            className="swipe-job-image"
             style={{
               height: 160,
               background: "#f5f5f5",

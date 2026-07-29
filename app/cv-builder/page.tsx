@@ -50,7 +50,7 @@ export default function CvBuilderPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
       return;
     }
 
