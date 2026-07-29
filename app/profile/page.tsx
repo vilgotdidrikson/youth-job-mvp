@@ -127,7 +127,7 @@ const { user, profile, loading, logout } = useSession();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
       return;
     }
 
@@ -320,7 +320,7 @@ const { user, profile, loading, logout } = useSession();
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
-    router.replace("/auth");
+    router.replace("/login");
   };
 
   if (loading || !user) {

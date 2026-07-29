@@ -75,7 +75,7 @@ export default function CompanyOnboardingPage() {
   const [jobDescription, setJobDescription] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/login");
     if (!loading && profile && profile.role !== "company") router.replace("/dashboard");
   }, [loading, user, profile, router]);
 

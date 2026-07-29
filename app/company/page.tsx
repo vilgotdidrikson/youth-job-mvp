@@ -103,7 +103,7 @@ export default function CompanyPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
       return;
     }
     if (!loading && user && profile?.role === "company") {

@@ -50,7 +50,7 @@ export default function Home() {
     <main className="landing-page">
       <nav className="landing-nav" aria-label="Huvudnavigation">
         <div className="landing-nav-actions">
-          <Link href="/auth" className="landing-login">{t.login}</Link>
+          <Link href="/login" className="landing-login">{t.login}</Link>
           <button type="button" className="landing-language" onClick={toggleLanguage}>
             <span className="landing-language-icon" aria-hidden="true">◎</span>
             {t.language}
@@ -69,10 +69,10 @@ export default function Home() {
           <h1>{t.title}<br /><em>{t.titleAccent}</em></h1>
           <p className="landing-description">{t.body}</p>
           <div className="landing-cta-group">
-            <Link href="/auth" className="landing-primary-cta">
+            <Link href="/signup" className="landing-primary-cta">
               {t.primary}<span aria-hidden="true">↗</span>
             </Link>
-            <Link href="/auth" className="landing-text-cta">{t.secondary}<span aria-hidden="true">→</span></Link>
+            <Link href="/signup" className="landing-text-cta">{t.secondary}<span aria-hidden="true">→</span></Link>
           </div>
           <p className="landing-note"><span aria-hidden="true">✦</span>{t.note}</p>
         </div>

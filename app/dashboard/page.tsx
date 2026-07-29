@@ -11,14 +11,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
     }
   }, [loading, router, user]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
-    router.replace("/auth");
+    router.replace("/login");
   };
 
   const quickActions =

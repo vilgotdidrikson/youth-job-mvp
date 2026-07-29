@@ -20,6 +20,13 @@ export interface YouthDocument {
 export interface YouthProfile {
   user_id: string;
   full_name?: string | null;
+  date_of_birth?: string | null;
+  address?: string | null;
+  postal_code?: string | null;
+  additional_addresses?: Array<{ city: string; address: string; postal_code: string }> | null;
+  certificates?: string | null;
+  extracurriculars?: string | null;
+  profile_image_url?: string | null;
   age?: number | null;
   city?: string | null;
   target_roles?: string[] | null;
@@ -159,6 +166,10 @@ export interface CandidateFeedItem {
 
 export interface SaveYouthProfileInput {
   full_name?: string | null;
+  date_of_birth?: string | null;
+  address?: string | null;
+  postal_code?: string | null;
+  additional_addresses?: Array<{ city: string; address: string; postal_code: string }> | null;
   age?: number | null;
   city?: string | null;
   merits?: string[] | null;
@@ -174,4 +185,7 @@ export interface SaveYouthProfileInput {
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
   documents?: YouthDocument[] | null;
+  certificates?: string | null;
+  extracurriculars?: string | null;
+  profile_image_url?: string | null;
 }

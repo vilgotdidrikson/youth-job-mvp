@@ -5,18 +5,20 @@ import { useRouter } from "next/navigation";
 import { JobSwipeDeck } from "@/components/job-swipe-deck";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useSession } from "@/hooks/use-session";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 export default function SwipePage() {
   const router = useRouter();
   const { user, profile, loading } = useSession();
+  const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!loading && user && profile?.role === "youth") {
+    if (!loading && !cvLoading && user && profile?.role === "youth") {
       void (async () => {
         try {
           const data = await getSwipeJobs();
@@ -29,11 +31,11 @@ export default function SwipePage() {
         }
       })();
     }
-  }, [loading, profile?.role, user]);
+  }, [cvLoading, loading, profile?.role, user]);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/auth");
+      router.replace("/login");
     }
   }, [loading, router, user]);
 
@@ -42,7 +44,7 @@ export default function SwipePage() {
     setJobs((current) => current.filter((item) => item.id !== job.id));
   };
 
-  if (loading || !user) {
+  if (loading || cvLoading || !user) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
@@ -91,15 +93,28 @@ export default function SwipePage() {
           Laddar jobb...
         </div>
       ) : (
-        <JobSwipeDeck
-          jobs={jobs}
-          onDecision={handleDecision}
-          emptyTitle="Inga fler jobb just nu"
-          emptySubtitle="Kolla tillbaka senare för nya annonser."
-          interestedLabel="Intresserad"
-          skipLabel="Hoppa"
-          swipeHint="Swipe or tap"
-        />
+        <div style={{ position: "relative" }}>
+          <div style={!cvCompleted ? { opacity: 0.38, pointerEvents: "none", filter: "grayscale(0.25)" } : undefined} aria-hidden={!cvCompleted}>
+            <JobSwipeDeck
+              jobs={jobs}
+              onDecision={handleDecision}
+              emptyTitle="Inga fler jobb just nu"
+              emptySubtitle="Kolla tillbaka senare för nya annonser."
+              interestedLabel="Intresserad"
+              skipLabel="Hoppa"
+              swipeHint="Swipe or tap"
+            />
+          </div>
+          {!cvCompleted && (
+            <div style={{ position: "absolute", inset: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.25rem", background: "rgba(255,255,255,0.16)", borderRadius: 20 }}>
+              <div style={{ maxWidth: "20rem", padding: "1.15rem", borderRadius: 16, background: "rgba(255,255,255,0.94)", boxShadow: "0 8px 28px rgba(0,0,0,0.14)", textAlign: "center" }}>
+                <p style={{ margin: "0 0 0.45rem", fontSize: "1.1rem", fontWeight: 700, color: "#111111" }}>Slutför ditt CV först</p>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "#555555", lineHeight: 1.5 }}>Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.</p>
+                <button type="button" className="cta-btn" onClick={() => router.push("/youth/onboarding")} style={{ width: "100%", marginTop: "1rem", padding: "0.75rem 1rem" }}>Fortsätt till CV-flödet</button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </main>
   );

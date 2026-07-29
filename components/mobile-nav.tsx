@@ -71,9 +71,11 @@ export function MobileNav() {
 
   /* Hide nav on auth / landing / onboarding pages */
   if (
-    pathname === "/auth" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
     pathname === "/" ||
     pathname.startsWith("/youth/onboarding") ||
+    pathname.startsWith("/youth/get-started") ||
     pathname.startsWith("/company/onboarding")
   ) {
     return null;
