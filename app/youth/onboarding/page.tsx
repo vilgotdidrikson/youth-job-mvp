@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { completeYouthOnboarding, getYouthProfile, saveYouthAccountDetails } from "@/lib/onboarding";
@@ -19,7 +19,7 @@ const LANGUAGE_TIPS = [
 const BIRTH_DAYS = Array.from({ length: 31 }, (_, index) => String(index + 1));
 const BIRTH_MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 const BIRTH_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().getFullYear() - 10 - index));
-const WORK_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().getFullYear() - index));
+const WORK_YEARS = Array.from({ length: 110 }, (_, index) => String(2036 - index));
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -31,6 +31,7 @@ const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
 interface StepConfig {
   field: keyof Answers;
   question: string;
+  description?: string;
   type: "text" | "number" | "date" | "textarea" | "chips" | "image";
   placeholder?: string;
   chips?: string[];
@@ -51,6 +52,7 @@ interface WorkExperience {
   employment_type: string;
   start_date: string;
   end_date: string;
+  is_current: boolean;
   description: string;
   pdf_url: string;
 }
@@ -61,10 +63,7 @@ interface EducationEntry {
   subject: string;
   start_date: string;
   end_date: string;
-  grade: string;
-  activities: string;
   description: string;
-  pdf_url: string;
 }
 
 interface CertificateEntry {
@@ -75,11 +74,19 @@ interface CertificateEntry {
   expiry_date: string;
   credential_url: string;
   description: string;
+  pdf_url: string;
 }
 
-const emptyWorkExperience = (): WorkExperience => ({ title: "", company: "", location: "", location_type: "", employment_type: "", start_date: "", end_date: "", description: "", pdf_url: "" });
-const emptyEducation = (): EducationEntry => ({ school: "", degree: "", subject: "", start_date: "", end_date: "", grade: "", activities: "", description: "", pdf_url: "" });
-const emptyCertificate = (): CertificateEntry => ({ name: "", issuer: "", category: "", issue_date: "", expiry_date: "", credential_url: "", description: "" });
+interface OtherEntry {
+  title: string;
+  type: "write" | "link" | "pdf";
+  value: string;
+  file?: YouthDocument;
+}
+
+const emptyWorkExperience = (): WorkExperience => ({ title: "", company: "", location: "", location_type: "", employment_type: "", start_date: "", end_date: "", is_current: false, description: "", pdf_url: "" });
+const emptyEducation = (): EducationEntry => ({ school: "", degree: "", subject: "", start_date: "", end_date: "", description: "" });
+const emptyCertificate = (): CertificateEntry => ({ name: "", issuer: "", category: "", issue_date: "", expiry_date: "", credential_url: "", description: "", pdf_url: "" });
 
 const STEPS: StepConfig[] = [
   {
@@ -106,6 +113,13 @@ const STEPS: StepConfig[] = [
     optional: true,
   },
   {
+    field: "languages",
+    question: "Vilka språk kan du?",
+    type: "text",
+    placeholder: "Skriv ett språk",
+    optional: true,
+  },
+  {
     field: "work_experience",
     question: "Har du jobbat eller hjälpt till med något förut?",
     type: "textarea",
@@ -114,7 +128,8 @@ const STEPS: StepConfig[] = [
   },
   {
     field: "education",
-    question: "Vilken skola går eller har du gått på?",
+    question: "Utbildning",
+    description: "Lägg till dina utbildningar. Det kan exempelvis vara en skola, en onlinekurs eller liknande.",
     type: "text",
     placeholder: "T.ex. Norra gymnasium, grundskolan",
     optional: true,
@@ -127,23 +142,10 @@ const STEPS: StepConfig[] = [
     optional: true,
   },
   {
-    field: "languages",
-    question: "Vilka språk kan du?",
-    type: "text",
-    placeholder: "T.ex. svenska, engelska, arabiska",
-    optional: true,
-  },
-  {
     field: "extracurriculars",
-    question: "Annat – aktiviteter utanför skolan",
+    question: "Andra bemärkelser eller tillägg",
+    description: "Här kan du till exempel berätta om en fritidsaktivitet, länka ett LinkedIn konto eller bifoga en pdf med dina betyg.",
     type: "textarea",
-    placeholder: "T.ex. föreningsliv, idrott, musik eller volontärarbete",
-    optional: true,
-  },
-  {
-    field: "profile_image",
-    question: "Lägg till en profilbild",
-    type: "image",
     optional: true,
   },
 ];
@@ -300,6 +302,30 @@ function buildCvText(a: Answers): string {
   return parts.join("\n");
 }
 
+function buildStructuredCvFallback(a: Answers): string {
+  const sections: string[] = [];
+  const addSection = (heading: string, content: string) => {
+    const value = content.trim();
+    if (value) sections.push(`${heading}\n${value}`);
+  };
+  const firstName = a.full_name.trim().split(/\s+/)[0] || "";
+  const profile = [
+    firstName && a.city ? `Jag heter ${firstName} och bor i ${a.city}.` : a.city ? `Jag bor i ${a.city}.` : "",
+    a.desired_roles.length ? `Jag söker jobb inom ${a.desired_roles.join(", ").toLowerCase()}.` : "",
+    a.strengths.trim() ? `Mina styrkor är ${a.strengths.trim()}.` : "",
+  ].filter(Boolean).join(" ");
+
+  if (a.full_name.trim()) sections.push(a.full_name.trim().toUpperCase());
+  addSection("PROFIL", profile);
+  addSection("ARBETSLIVSERFARENHET", a.work_experience);
+  addSection("UTBILDNING", a.education);
+  addSection("CERTIFIKAT OCH MERITER", [a.certificates, a.extracurriculars].filter(Boolean).join("\n\n"));
+  addSection("SPRÅK", a.languages);
+  addSection("TILLGÄNGLIGHET", a.employment_preferences.join(", "));
+
+  return sections.join("\n\n");
+}
+
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -332,6 +358,24 @@ export default function OnboardingPage() {
   const [savedEducations, setSavedEducations] = useState<boolean[]>([false]);
   const [certificates, setCertificates] = useState<CertificateEntry[]>([emptyCertificate()]);
   const [savedCertificates, setSavedCertificates] = useState<boolean[]>([false]);
+  const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [strengthInput, setStrengthInput] = useState("");
+  const [languageInput, setLanguageInput] = useState("");
+  const [otherType, setOtherType] = useState<"" | "write" | "link" | "pdf">("");
+  const [otherTitle, setOtherTitle] = useState("");
+  const [otherLink, setOtherLink] = useState("");
+  const [otherPdf, setOtherPdf] = useState<YouthDocument | null>(null);
+  const [otherEntries, setOtherEntries] = useState<OtherEntry[]>([]);
+  const [cropSource, setCropSource] = useState("");
+  const [cropDimensions, setCropDimensions] = useState({ width: 0, height: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const cropDragRef = useRef<{ x: number; y: number; offsetX: number; offsetY: number } | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const [showCvStep, setShowCvStep] = useState(false);
   const [showAccountCreated, setShowAccountCreated] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
@@ -379,6 +423,14 @@ export default function OnboardingPage() {
     };
   }, [loading, profile?.role, user]);
 
+  useEffect(() => {
+    if (!cameraOpen || !cameraStreamRef.current || !cameraVideoRef.current) return;
+    cameraVideoRef.current.srcObject = cameraStreamRef.current;
+    void cameraVideoRef.current.play().catch(() => {
+      setCameraError("Kamerabilden kunde inte startas. Försök igen och kontrollera kameratillståndet.");
+    });
+  }, [cameraOpen]);
+
   const current = STEPS[step];
   const isChips = current.type === "chips";
   const isLast = step === STEPS.length - 1;
@@ -417,6 +469,8 @@ export default function OnboardingPage() {
           padding: "0 1.25rem",
         }}
       >
+        {cameraOpen && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 20, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></div>}
+        {cropSource && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 21, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></div>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
             Ditt CV är klart!
@@ -475,29 +529,13 @@ export default function OnboardingPage() {
           >
             {saving ? "Sparar..." : "Nästa →"}
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCvStep(false)}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              fontSize: "0.875rem",
-              background: "none",
-              border: "none",
-              color: "#a3a3a3",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            ← Tillbaka till frågorna
-          </button>
         </div>
       </main>
     );
   }
 
   /* ── Document upload step (optional) ──────────────────── */
-  if (showDocStep) {
+  if (showDocStep && !cropSource) {
     return (
       <main
         className="youth-onboarding"
@@ -511,6 +549,8 @@ export default function OnboardingPage() {
           padding: "0 1.25rem",
         }}
       >
+        {cameraOpen && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 20, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></div>}
+        {cropSource && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 21, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></div>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <div
             style={{
@@ -522,14 +562,24 @@ export default function OnboardingPage() {
             }}
           >
             <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111111", lineHeight: 1.5 }}>
-              Vill du bifoga dokument? (valfritt)
+              Lägg till en profilbild (valfritt)
             </p>
           </div>
           <p style={{ fontSize: "0.85rem", color: "#737373", marginTop: "0.75rem", lineHeight: 1.55 }}>
-            T.ex. betyg, rekommendationsbrev eller intyg. Dessa visas för företag som ser din profil.
+            Välj en bild eller ta en ny med kameran. Du kan sedan beskära den till din profilbild.
           </p>
         </div>
 
+        <div style={{ display: "grid", gap: ".75rem", marginBottom: "1rem" }}>
+          <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
+            {answers.profile_image ? <img src={answers.profile_image} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
+            <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>
+            <button type="button" onClick={() => void openCamera()} disabled={docUploading} style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>Ta bild</button>
+          </div>
+        </div>
+        <div style={{ display: "none" }} aria-hidden="true">
         {/* Type selector + file picker */}
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginBottom: "1rem" }}>
           <select
@@ -616,9 +666,11 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        </div>
         {error && (
           <p style={{ fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>{error}</p>
         )}
+        {cameraError && <p style={{ fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>{cameraError}</p>}
 
         <div style={{ paddingBottom: "3rem", paddingTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "auto" }}>
           <button
@@ -655,7 +707,7 @@ export default function OnboardingPage() {
               fontFamily: "inherit",
             }}
           >
-            ← Tillbaka till CV
+            Hoppa över
           </button>
         </div>
       </main>
@@ -665,6 +717,35 @@ export default function OnboardingPage() {
   function handleTextChange(val: string) {
     setAnswers((prev) => ({ ...prev, [current.field]: val }));
   }
+
+  function setSelectedValues(field: "strengths" | "languages", values: string[]) {
+    const value = values.join(", ");
+    if (field === "strengths") setSelectedStrengths(values);
+    else setSelectedLanguages(values);
+    setAnswers((previous) => ({ ...previous, [field]: value }));
+  }
+
+  function toggleSelectedValue(field: "strengths" | "languages", value: string) {
+    const selected = field === "strengths" ? selectedStrengths : selectedLanguages;
+    setSelectedValues(field, selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
+  }
+
+  function saveCustomValue(field: "strengths" | "languages") {
+    const value = (field === "strengths" ? strengthInput : languageInput).trim();
+    if (!value) return;
+    const selected = field === "strengths" ? selectedStrengths : selectedLanguages;
+    setSelectedValues(field, selected.includes(value) ? selected : [...selected, value]);
+    if (field === "strengths") setStrengthInput("");
+    else setLanguageInput("");
+  }
+
+  const isCompleteMonth = (value: string) => /^\d{4}-\d{2}$/.test(value);
+  const workExperienceIsComplete = (experience: WorkExperience) =>
+    Boolean(experience.title.trim() && experience.company.trim() && experience.location.trim() && experience.location_type && experience.employment_type && isCompleteMonth(experience.start_date) && (experience.is_current || isCompleteMonth(experience.end_date)) && experience.description.trim());
+  const educationIsComplete = (education: EducationEntry) =>
+    Boolean(education.school.trim() && education.degree.trim() && education.subject.trim() && isCompleteMonth(education.start_date) && isCompleteMonth(education.end_date) && education.description.trim());
+  const certificateIsComplete = (certificate: CertificateEntry) =>
+    Boolean(certificate.name.trim() && certificate.issuer.trim() && certificate.category && certificate.issue_date && certificate.expiry_date && certificate.credential_url.trim() && certificate.description.trim());
 
   function updateBirthDate(part: "day" | "month" | "year", value: string) {
     setBirthDateParts((previous) => {
@@ -683,20 +764,19 @@ export default function OnboardingPage() {
       .filter((experience) => Object.values(experience).some(Boolean))
       .map((experience) => [
         [experience.title, experience.company].filter(Boolean).join(" · "),
-        [experience.start_date, experience.end_date].filter(Boolean).join(" – "),
+        [experience.start_date, experience.is_current ? "Nuvarande" : experience.end_date].filter(Boolean).join(" – "),
         [experience.location, experience.location_type].filter(Boolean).join(" · "),
         experience.description,
-        experience.pdf_url,
       ].filter(Boolean).join("\n"))
       .join("\n\n");
   }
 
   function formatEducations() {
     return educations.filter((education) => Object.values(education).some(Boolean)).map((education) => [
-      [education.school, education.degree].filter(Boolean).join(" · "),
+      [education.degree, education.school].filter(Boolean).join(" · "),
       education.subject,
       [education.start_date, education.end_date].filter(Boolean).join(" – "),
-      [education.grade, education.activities, education.description, education.pdf_url].filter(Boolean).join(" · "),
+      education.description,
     ].filter(Boolean).join("\n")).join("\n\n");
   }
 
@@ -707,6 +787,7 @@ export default function OnboardingPage() {
       [certificate.issue_date, certificate.expiry_date].filter(Boolean).join(" – "),
       certificate.credential_url,
       certificate.description,
+      certificate.pdf_url,
     ].filter(Boolean).join("\n")).join("\n\n");
   }
 
@@ -767,28 +848,29 @@ export default function OnboardingPage() {
       }
       return;
     }
-    if (step === 4) {
-      const missingRequiredExperience = workExperiences.some((experience) => !experience.title.trim() || !experience.start_date.split("-")[0]);
+    if (current.field === "work_experience") {
+      const missingRequiredExperience = workExperiences.some((experience, index) => !workExperienceIsComplete(experience) || !savedWorkExperiences[index]);
       if (missingRequiredExperience) {
-        setError("Fyll i Titel och Startår för varje arbetserfarenhet innan du går vidare.");
+        setError("Fyll i alla fält och spara varje arbetserfarenhet innan du går vidare.");
         return;
       }
     }
-    if (step === 5) {
-      const missingSchool = educations.some((education) => !education.school.trim());
-      if (missingSchool) {
-        setError("Fyll i Skola för varje utbildning innan du går vidare.");
+    if (current.field === "education") {
+      const missingEducation = educations.some((education, index) => !educationIsComplete(education) || !savedEducations[index]);
+      if (missingEducation) {
+        setError("Fyll i alla fält och spara varje utbildning innan du går vidare.");
         return;
       }
     }
-    if (step === 6) {
-      const missingCertificate = certificates.some((certificate) => !certificate.name.trim() || !certificate.issuer.trim());
+    if (current.field === "certificates") {
+      const missingCertificate = certificates.some((certificate, index) => !certificateIsComplete(certificate) || !savedCertificates[index]);
       if (missingCertificate) {
-        setError("Fyll i Namn och Utfärdande organisation för varje certifikat innan du går vidare.");
+        setError("Fyll i alla fält och spara varje certifikat innan du går vidare.");
         return;
       }
     }
     if (!isLast) {
+      setError("");
       setStep((s) => s + 1);
       return;
     }
@@ -796,12 +878,19 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     let generated = "";
-    const answersForCv = { ...answers, work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates() };
+    const answersForCv = { ...answers, extracurriculars: formatOtherEntries(), work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates() };
+    const cvPayload = {
+      ...answersForCv,
+      work_experiences: workExperiences.map(({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description }) => ({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description })),
+      educations: educations.map(({ school, degree, subject, start_date, end_date, description }) => ({ school, degree, subject, start_date, end_date, description })),
+      certificate_entries: certificates.map(({ name, issuer, category, issue_date, expiry_date, credential_url, description }) => ({ name, issuer, category, issue_date, expiry_date, credential_url, description })),
+      other_entries: otherEntries.map(({ title, type, value }) => ({ title, type, value })),
+    };
     try {
       const res = await fetch("/api/youth/cv/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answersForCv),
+        body: JSON.stringify(cvPayload),
       });
       if (res.ok) {
         const data = (await res.json()) as { cv: string };
@@ -810,7 +899,7 @@ export default function OnboardingPage() {
     } catch {
       // silently fall through to local template
     }
-    if (!generated) generated = buildCvText(answersForCv);
+    if (!generated) generated = buildStructuredCvFallback(answersForCv);
     setAnswers(answersForCv);
     setSaving(false);
     setCvText(generated);
@@ -839,30 +928,150 @@ export default function OnboardingPage() {
     }
   }
 
-  async function handleProfileImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleProfileImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError("");
+    const source = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => setCropDimensions({ width: image.naturalWidth, height: image.naturalHeight });
+    image.src = source;
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+    setCropSource(source);
+    e.target.value = "";
+  }
+
+  async function openCamera() {
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      cameraStreamRef.current = stream;
+      setCameraOpen(true);
+      window.setTimeout(() => {
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
+          void cameraVideoRef.current.play();
+        }
+      }, 0);
+    } catch {
+      setCameraError("Kameran kunde inte öppnas. Kontrollera att du har gett webbläsaren kameratillstånd.");
+    }
+  }
+
+  function closeCamera() {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    setCameraOpen(false);
+  }
+
+  function takeCameraPhoto() {
+    const video = cameraVideoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d")?.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const source = URL.createObjectURL(blob);
+      setCropDimensions({ width: video.videoWidth, height: video.videoHeight });
+      setCropZoom(1);
+      setCropOffset({ x: 0, y: 0 });
+      setCropSource(source);
+      closeCamera();
+    }, "image/jpeg", 0.92);
+  }
+
+  function startCropDrag(event: React.PointerEvent<HTMLDivElement>) {
+    cropDragRef.current = { x: event.clientX, y: event.clientY, offsetX: cropOffset.x, offsetY: cropOffset.y };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveCropDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = cropDragRef.current;
+    if (!drag) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setCropOffset({
+      x: Math.max(-1, Math.min(1, drag.offsetX + (event.clientX - drag.x) / (bounds.width / 2))),
+      y: Math.max(-1, Math.min(1, drag.offsetY + (event.clientY - drag.y) / (bounds.height / 2))),
+    });
+  }
+
+  function endCropDrag() {
+    cropDragRef.current = null;
+  }
+
+  function formatOtherEntries() {
+    return otherEntries.map((entry) => [entry.title, entry.value || entry.file?.url].filter(Boolean).join(" · ")).join("\n\n");
+  }
+
+  function saveOtherEntry() {
+    const value = otherType === "write" ? answers.extracurriculars.trim() : otherType === "link" ? otherLink.trim() : otherPdf?.url ?? "";
+    if (!otherType || !otherTitle.trim() || !value) {
+      setError("Välj ett sätt att lägga till innehåll och fyll i titel samt innehåll.");
+      return;
+    }
+    setOtherEntries((previous) => [...previous, { title: otherTitle.trim(), type: otherType, value, file: otherPdf ?? undefined }]);
+    setAnswers((previous) => ({ ...previous, extracurriculars: "" }));
+    setOtherTitle("");
+    setOtherLink("");
+    setOtherPdf(null);
+    setOtherType("");
+    setError("");
+  }
+
+  async function saveCroppedProfileImage() {
+    if (!cropSource || !cropDimensions.width || !cropDimensions.height) return;
+    const cropSize = 280;
+    const outputSize = 512;
+    const baseScale = Math.max(cropSize / cropDimensions.width, cropSize / cropDimensions.height);
+    const imageWidth = cropDimensions.width * baseScale * cropZoom;
+    const imageHeight = cropDimensions.height * baseScale * cropZoom;
+    const maxX = Math.max(0, (imageWidth - cropSize) / 2);
+    const maxY = Math.max(0, (imageHeight - cropSize) / 2);
+    const left = (cropSize - imageWidth) / 2 + cropOffset.x * maxX;
+    const top = (cropSize - imageHeight) / 2 + cropOffset.y * maxY;
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("Kunde inte läsa bilden."));
+      image.src = cropSource;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.beginPath();
+    context.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+    context.clip();
+    const factor = outputSize / cropSize;
+    context.drawImage(image, left * factor, top * factor, imageWidth * factor, imageHeight * factor);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) return;
     setDocUploading(true);
     setError("");
     try {
-      const url = await uploadYouthDocument(file);
+      const url = await uploadYouthDocument(new File([blob], "profilbild.png", { type: "image/png" }));
       setAnswers((previous) => ({ ...previous, profile_image: url }));
+      URL.revokeObjectURL(cropSource);
+      setCropSource("");
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp profilbilden.");
     } finally {
       setDocUploading(false);
-      e.target.value = "";
     }
   }
 
-  async function handleEducationPdfSelect(index: number, e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleOtherPdfSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setDocUploading(true);
     setError("");
     try {
       const url = await uploadYouthDocument(file);
-      setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, pdf_url: url } : item));
+      setOtherPdf({ name: file.name, url, type: "other" });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp PDF-filen.");
     } finally {
@@ -871,14 +1080,14 @@ export default function OnboardingPage() {
     }
   }
 
-  async function handleExperiencePdfSelect(index: number, e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCertificatePdfSelect(index: number, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setDocUploading(true);
     setError("");
     try {
       const url = await uploadYouthDocument(file);
-      setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, pdf_url: url } : item));
+      setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, pdf_url: url } : item));
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp PDF-filen.");
     } finally {
@@ -891,7 +1100,7 @@ export default function OnboardingPage() {
     setSaving(true);
     setError("");
     try {
-      await completeYouthOnboarding({ ...answers, work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates(), cv_text: cvText, documents });
+      await completeYouthOnboarding({ ...answers, extracurriculars: formatOtherEntries(), work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates(), cv_text: cvText, documents: [...documents, ...otherEntries.flatMap((entry) => entry.file ? [entry.file] : [])] });
       router.replace("/swipe");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
@@ -918,6 +1127,13 @@ export default function OnboardingPage() {
 
   const currentTextValue = isChips ? "" : (answers[current.field] as string);
   const currentChipsValue = isChips ? (answers[current.field] as string[]) : [];
+  const selectionField = current.field === "strengths" || current.field === "languages" ? current.field : null;
+  const cropSize = 280;
+  const cropBaseScale = cropDimensions.width && cropDimensions.height ? Math.max(cropSize / cropDimensions.width, cropSize / cropDimensions.height) : 1;
+  const cropImageWidth = cropDimensions.width * cropBaseScale * cropZoom;
+  const cropImageHeight = cropDimensions.height * cropBaseScale * cropZoom;
+  const cropImageLeft = (cropSize - cropImageWidth) / 2 + cropOffset.x * Math.max(0, (cropImageWidth - cropSize) / 2);
+  const cropImageTop = (cropSize - cropImageHeight) / 2 + cropOffset.y * Math.max(0, (cropImageHeight - cropSize) / 2);
 
   return (
     <main
@@ -932,6 +1148,28 @@ export default function OnboardingPage() {
         padding: "0 1.25rem",
       }}
     >
+      <style>{'label:has(input[type="file"][accept*=".pdf"]) { color: #a3a3a3 !important; font-size: .85rem !important; font-weight: 400 !important; }'}</style>
+      {cropSource && (
+        <div role="dialog" aria-modal="true" aria-label="Beskär profilbild" style={{ position: "fixed", zIndex: 10, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0, 0, 0, .62)" }}>
+          <div style={{ width: "min(100%, 25rem)", display: "grid", gap: "1rem", padding: "1.25rem", borderRadius: 16, background: "#fff" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.15rem", color: "#111" }}>Beskär din profilbild</h2>
+              <p style={{ margin: ".35rem 0 0", color: "#737373", fontSize: ".82rem", lineHeight: 1.45 }}>Cirkeln visar den bild som kommer att användas i din profil.</p>
+            </div>
+            <div onPointerDown={startCropDrag} onPointerMove={moveCropDrag} onPointerUp={endCropDrag} onPointerCancel={endCropDrag} style={{ width: cropSize, height: cropSize, maxWidth: "100%", justifySelf: "center", position: "relative", overflow: "hidden", background: "#e8e8e8", cursor: "grab", touchAction: "none" }}>
+              <img src={cropSource} alt="Förhandsgranskning för beskärning" style={{ position: "absolute", width: cropImageWidth, height: cropImageHeight, maxWidth: "none", left: cropImageLeft, top: cropImageTop, userSelect: "none", pointerEvents: "none" }} />
+              <div aria-hidden="true" style={{ position: "absolute", inset: 10, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.46)", pointerEvents: "none" }} />
+            </div>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step="0.01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label>
+            <div style={{ display: "flex", gap: ".65rem" }}>
+              <button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Avbryt</button>
+              <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>{docUploading ? "Sparar..." : "Använd bild"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Progress bar */}
       <div style={{ paddingTop: "3rem", paddingBottom: "2.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
@@ -941,7 +1179,7 @@ export default function OnboardingPage() {
           {step > 0 && (
             <button
               type="button"
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => { setError(""); setStep((s) => s - 1); }}
               style={{ fontSize: "0.8rem", color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
               ← Tillbaka
@@ -1042,12 +1280,16 @@ export default function OnboardingPage() {
             <button type="button" onClick={() => setAdditionalAddresses((previous) => [...previous, { city: "", address: "", postal_code: "" }])} style={{ justifySelf: "start", marginTop: "0.25rem", padding: "0.65rem 0.9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till en ytterligare adress</button>
           </div>
         ) : current.type === "image" ? (
-          <label style={{ display: "flex", minHeight: "12rem", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", cursor: docUploading ? "wait" : "pointer" }}>
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => void handleProfileImageSelect(e)} disabled={docUploading} style={{ display: "none" }} />
-            {answers.profile_image ? <img src={answers.profile_image} alt="Profilbild" style={{ width: "7rem", height: "7rem", borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: "2rem" }}>👤</span>}
-            <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>{docUploading ? "Laddar upp..." : answers.profile_image ? "Byt profilbild" : "Välj profilbild"}</span>
-            <span style={{ fontSize: "0.75rem" }}>Valfritt · JPG, PNG eller WebP</span>
-          </label>
+          <div style={{ display: "grid", gap: ".75rem" }}>
+            <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
+              {answers.profile_image ? <img src={answers.profile_image} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
+              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>
+              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Ta bild</label>
+            </div>
+            <p style={{ margin: 0, color: "#737373", fontSize: ".75rem", textAlign: "center" }}>När du har valt en bild kan du beskära den till profilbilden.</p>
+          </div>
         ) : current.type === "chips" ? (
           <div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -1090,16 +1332,16 @@ export default function OnboardingPage() {
                     <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[experience.start_date, experience.end_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
                     {experience.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{experience.description}</p>}
                     <p style={{ margin: 0, color: "#737373", fontSize: "0.8rem" }}>{[experience.location, experience.location_type].filter(Boolean).join(" · ") || "Plats ej angiven"}</p>
-                    {experience.pdf_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem", fontWeight: 600 }}>PDF bifogad</p>}
                   </>
                 ) : <>
                 <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Arbetserfarenhet {index + 1}</p>
                 {workExperiences.length > 1 && <button type="button" onClick={() => { setWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); setSavedWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); }} aria-label={`Ta bort arbetserfarenhet ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel *" : field === "company" ? "Företag" : "Plats"}<input type="text" value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>)}
+                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel" : field === "company" ? "Arbetsgivare" : "Plats"}<input type="text" value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>)}
                 <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Platstyp<select value={experience.location_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, location_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.location_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="På plats">På plats</option><option value="Hybrid">Hybrid</option><option value="Distans">Distans</option></select></label>
                 <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Anställningstyp<select value={experience.employment_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, employment_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.employment_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Deltid">Deltid</option><option value="Heltid">Heltid</option><option value="Sommarjobb">Sommarjobb</option><option value="Praktik">Praktik</option><option value="Extraarbete">Extraarbete</option></select></label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
-                  {(["start_date", "end_date"] as const).map((dateField) => {
+                <label style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "#737373", fontSize: ".8rem", cursor: "pointer" }}><input type="checkbox" checked={experience.is_current} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, is_current: e.target.checked, end_date: e.target.checked ? "" : item.end_date } : item))} /> Detta är min nuvarande arbetsplats</label>
+                <div style={{ display: "grid", gridTemplateColumns: experience.is_current ? "1fr" : "1fr 1fr", gap: "0.6rem" }}>
+                  {((experience.is_current ? ["start_date"] : ["start_date", "end_date"]) as Array<"start_date" | "end_date">).map((dateField) => {
                     const [year = "", month = ""] = experience[dateField].split("-");
                     return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}>
                       <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum"}</span>
@@ -1111,8 +1353,7 @@ export default function OnboardingPage() {
                   })}
                 </div>
                 <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Beskrivning<textarea value={experience.description} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Jag hjälpte kunder och fyllde på varor" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", resize: "vertical", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>
-                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleExperiencePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />📎 {experience.pdf_url ? "PDF bifogad – byt fil" : "Lägg till PDF"}</label>
-                <button type="button" onClick={() => { if (!experience.title.trim() || !experience.start_date.split("-")[0]) { setError("Titel och år måste fyllas i för att spara erfarenheten."); return; } setError(""); setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: "0.55rem 0.8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>Spara erfarenhet</button>
+                <button type="button" onClick={() => { if (!workExperienceIsComplete(experience)) { setError("Fyll i alla fält för att spara erfarenheten."); return; } setError(""); setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: "0.55rem 0.8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>Spara erfarenhet</button>
                 </>}
               </div>
             ))}
@@ -1120,25 +1361,22 @@ export default function OnboardingPage() {
           </div>
         ) : current.field === "education" ? (
           <div style={{ display: "grid", gap: "0.9rem" }}>
+            <p style={{ margin: 0, color: "#737373", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
             {educations.map((education, index) => (
               <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
                 {savedEducations[index] ? <>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}><div><p style={{ margin: 0, color: "#111", fontSize: "1.05rem", fontWeight: 700 }}>{education.school || "Utbildning"}</p><p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.82rem" }}>{[education.degree, education.subject].filter(Boolean).join(" · ") || "Examen ej angiven"}</p></div><button type="button" onClick={() => setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "#49636a", font: "inherit", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>Redigera</button></div>
                   <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[education.start_date, education.end_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
-                  {[education.grade, education.activities, education.description].filter(Boolean).map((value) => <p key={value} style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{value}</p>)}
-                  {education.pdf_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem", fontWeight: 600 }}>PDF bifogad</p>}
+                  {education.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{education.description}</p>}
                 </> : <>
                   <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Utbildning {index + 1}</p>
                   {educations.length > 1 && <button type="button" onClick={() => { setEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort utbildning ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Skola *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="T.ex. Kungsholmens gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Examen<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="T.ex. Samhällsvetenskapsprogrammet" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Ämnesområde<input type="text" value={education.subject} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, subject: e.target.value } : item))} placeholder="T.ex. Ekonomi" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>{(["start_date", "end_date"] as const).map((dateField) => { const [year = "", month = ""] = education[dateField].split("-"); return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}><span>{dateField === "start_date" ? "Startdatum" : "Slutdatum"}</span><div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}><select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select><select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select></div></div>; })}</div>
-                  <input type="text" value={education.grade} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, grade: e.target.value } : item))} placeholder="Betyg" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} />
-                  <textarea value={education.activities} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, activities: e.target.value } : item))} placeholder="Aktiviteter och föreningar" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />
-                  <textarea value={education.description} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="Beskrivning" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleEducationPdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />📎 {education.pdf_url ? "PDF bifogad – byt fil" : "Lägg till PDF"}</label>
-                  <button type="button" onClick={() => { if (!education.school.trim()) { setError("Skola måste fyllas i för att spara utbildningen."); return; } setError(""); setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ width: "100%", padding: ".85rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Spara utbildning</button>
+                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Typ av utbildning *<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="Skola" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Plats för undervisning *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="Kungsholmens Gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Ämnesområde *<input type="text" value={education.subject} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, subject: e.target.value } : item))} placeholder="T.ex. Ekonomi" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <div style={{ display: "grid", gap: ".3rem" }}><span style={{ color: "#737373", fontSize: ".72rem", fontWeight: 600 }}>Tid *</span><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>{(["start_date", "end_date"] as const).map((dateField) => { const [year = "", month = ""] = education[dateField].split("-"); return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}><span>{dateField === "start_date" ? "Startdatum" : "Slutdatum (eller förväntat)"}</span><div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}><select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select><select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select></div></div>; })}</div></div>
+                  <textarea value={education.description} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="Beskrivning *" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />
+                  <button type="button" onClick={() => { if (!educationIsComplete(education)) { setError("Fyll i alla fält för att spara utbildningen."); return; } setError(""); setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ width: "100%", padding: ".85rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Spara utbildning</button>
                 </>}
               </div>
             ))}
@@ -1153,18 +1391,59 @@ export default function OnboardingPage() {
                   <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[certificate.issue_date, certificate.expiry_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
                   {certificate.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{certificate.description}</p>}
                   {certificate.credential_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem" }}>{certificate.credential_url}</p>}
+                  {certificate.pdf_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem", fontWeight: 600 }}>PDF-intyg bifogat</p>}
                 </> : <>
                   <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Certifikat {index + 1}</p>
                   {certificates.length > 1 && <button type="button" onClick={() => { setCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort certifikat ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
                   {(["name", "issuer"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "name" ? "Namn *" : "Utfärdande organisation *"}<input type="text" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "name" ? "T.ex. HLR-certifikat" : "T.ex. Röda Korset"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>)}
                   <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Typ<select value={certificate.category} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, category: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: certificate.category ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Certifikat">Certifikat</option><option value="Stipendium">Stipendium</option><option value="Licens">Licens</option><option value="Annat">Annat</option></select></label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>{(["issue_date", "expiry_date"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "issue_date" ? "Utfärdandedatum" : "Giltig till"}<input type="month" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} style={{ width: "100%", height: "3rem", boxSizing: "border-box", padding: "0 .5rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label>)}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>{(["issue_date", "expiry_date"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "issue_date" ? "Utfärdandedatum *" : "Giltig till *"}<input type="month" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} style={{ width: "100%", height: "3rem", boxSizing: "border-box", padding: "0 .5rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label>)}</div>
+                  <div style={{ display: "grid", gap: ".55rem" }}><p style={{ margin: 0, color: "#a3a3a3", fontSize: ".72rem", fontWeight: 700 }}>Bifoga ett intyg</p><label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "#a3a3a3", boxSizing: "border-box", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label><label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#a3a3a3", fontSize: ".85rem", fontWeight: 400, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />Bifoga fil som intyg</label></div>
                   <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Beskrivning<textarea value={certificate.description} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Vad certifikatet eller stipendiet gällde" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".7rem 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit", resize: "vertical" }} /></label>
-                  <button type="button" onClick={() => { if (!certificate.name.trim() || !certificate.issuer.trim()) { setError("Namn och utfärdande organisation måste fyllas i."); return; } setError(""); setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: ".55rem .8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: ".8rem", fontWeight: 700, cursor: "pointer" }}>Spara certifikat</button>
+                  {false && (
+                  <label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />📎 {certificate.pdf_url ? "PDF-intyg bifogat – byt fil" : "Bifoga PDF-intyg (valfritt)"}</label>
+                  )}
+                  <button type="button" onClick={() => { if (!certificateIsComplete(certificate)) { setError("Fyll i alla fält för att spara certifikatet."); return; } setError(""); setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: ".55rem .8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: ".8rem", fontWeight: 700, cursor: "pointer" }}>Spara certifikat</button>
                 </>}
               </div>
             ))}
             <button type="button" onClick={() => { setCertificates((previous) => [...previous, emptyCertificate()]); setSavedCertificates((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: ".65rem .9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#fff", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till certifikat eller stipendium</button>
+          </div>
+        ) : selectionField ? (
+          <div style={{ display: "grid", gap: ".8rem" }}>
+            <div style={{ display: "flex", gap: ".5rem" }}>
+              <input
+                type="text"
+                value={selectionField === "strengths" ? strengthInput : languageInput}
+                onChange={(e) => selectionField === "strengths" ? setStrengthInput(e.target.value) : setLanguageInput(e.target.value)}
+                placeholder={current.placeholder}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveCustomValue(selectionField); } }}
+                autoFocus
+                style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }}
+              />
+              <button type="button" onClick={() => saveCustomValue(selectionField)} style={{ padding: "0 1rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>Spara</button>
+            </div>
+            <p style={{ margin: 0, color: "#737373", fontSize: ".78rem" }}>Skriv en egen och tryck på Spara, eller välj bland förslagen.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem" }}>
+              {[...new Set([...(selectionField === "strengths" ? STRENGTH_TIPS : LANGUAGE_TIPS.map((item) => item.label)), ...(selectionField === "strengths" ? selectedStrengths : selectedLanguages)])].map((value) => {
+                const selected = (selectionField === "strengths" ? selectedStrengths : selectedLanguages).includes(value);
+                const flag = selectionField === "languages" ? LANGUAGE_TIPS.find((item) => item.label === value)?.flag : undefined;
+                return <button key={value} type="button" onClick={() => toggleSelectedValue(selectionField, value)} style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", padding: ".5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111" : "#fff", color: selected ? "#fff" : "#111", font: "inherit", fontSize: ".8rem", fontWeight: 600, cursor: "pointer" }}>{flag && <span aria-hidden="true">{flag}</span>}{value}</button>;
+              })}
+            </div>
+          </div>
+        ) : current.field === "extracurriculars" ? (
+          <div style={{ display: "grid", gap: ".8rem" }}>
+            <p style={{ margin: 0, color: "#737373", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
+            {otherEntries.map((entry, index) => <div key={`${entry.title}-${index}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".7rem", padding: ".85rem", border: "1.5px solid #e8e8e8", borderRadius: 12 }}><div><strong style={{ color: "#111", fontSize: ".9rem" }}>{entry.title}</strong><p style={{ margin: ".2rem 0 0", color: "#737373", fontSize: ".78rem" }}>{entry.type === "write" ? entry.value : entry.type === "link" ? "Länk bifogad" : "PDF bifogad"}</p></div><button type="button" onClick={() => setOtherEntries((previous) => previous.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Ta bort ${entry.title}`} style={{ border: 0, background: "none", color: "#737373", fontSize: "1.2rem", cursor: "pointer" }}>×</button></div>)}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: ".5rem" }}>
+              {([ ["write", "Skriva"], ["link", "Bifoga länk"], ["pdf", "Bifoga PDF"] ] as const).map(([type, label]) => <button key={type} type="button" onClick={() => { setError(""); setOtherType(type); }} style={{ minHeight: "3.1rem", padding: ".55rem", borderRadius: 10, border: otherType === type ? "none" : "1.5px solid #e8e8e8", background: otherType === type ? "#111" : "#fff", color: otherType === type ? "#fff" : "#111", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: "pointer" }}>{label}</button>)}
+            </div>
+            {otherType && <input type="text" value={otherTitle} onChange={(e) => setOtherTitle(e.target.value)} placeholder="Titel" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit" }} />}
+            {otherType === "write" && <textarea value={answers.extracurriculars} onChange={(e) => handleTextChange(e.target.value)} placeholder="Skriv ditt tillägg här" rows={4} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 12, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />}
+            {otherType === "link" && <input type="url" value={otherLink} onChange={(e) => setOtherLink(e.target.value)} placeholder="https://linkedin.com/in/..." style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit" }} />}
+            {otherType === "pdf" && <label style={{ display: "grid", placeItems: "center", gap: ".4rem", minHeight: "8rem", padding: "1rem", border: "1.5px dashed #d1d1d1", borderRadius: 12, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} style={{ display: "none" }} />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
+            <button type="button" onClick={saveOtherEntry} style={{ justifySelf: "start", padding: ".65rem .9rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>Spara tillägg</button>
           </div>
         ) : current.type === "textarea" ? (
           <textarea
@@ -1212,35 +1491,6 @@ export default function OnboardingPage() {
           />
         )}
 
-        {current.field === "strengths" && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
-            {STRENGTH_TIPS.map((tip) => {
-              const selected = currentTextValue.toLowerCase().includes(tip.toLowerCase());
-              return <button key={tip} type="button" onClick={() => {
-                const nextValue = selected
-                  ? currentTextValue.replace(new RegExp(`,?\\s*${tip}`, "i"), "").replace(/^,\s*/, "")
-                  : [currentTextValue, tip].filter(Boolean).join(", ");
-                handleTextChange(nextValue);
-              }} style={{ padding: "0.5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111111" : "#ffffff", color: selected ? "#ffffff" : "#111111", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{tip}</button>;
-            })}
-          </div>
-        )}
-
-
-        {current.field === "languages" && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.8rem" }}>
-            {LANGUAGE_TIPS.map(({ label, flag }) => {
-              const selected = currentTextValue.toLowerCase().includes(label.toLowerCase());
-              return <button key={label} type="button" onClick={() => {
-                const nextValue = selected
-                  ? currentTextValue.replace(new RegExp(`,?\\s*${label}`, "i"), "").replace(/^,\s*/, "")
-                  : [currentTextValue, label].filter(Boolean).join(", ");
-                handleTextChange(nextValue);
-              }} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111111" : "#ffffff", color: selected ? "#ffffff" : "#111111", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}><span aria-hidden="true">{flag}</span>{label}</button>;
-            })}
-          </div>
-        )}
-
         {error && (
           <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</p>
         )}
@@ -1269,10 +1519,11 @@ export default function OnboardingPage() {
           {saving ? "Genererar CV..." : isLast ? "Se mitt CV \u2192" : "N\u00e4sta"}
         </button>
 
-        {current.optional && (
+        {current.optional && !isLast && (
           <button
             type="button"
             onClick={() => {
+              setError("");
               if (isLast) void handleNext();
               else setStep((s) => s + 1);
             }}
