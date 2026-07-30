@@ -36,8 +36,14 @@ export async function uploadJobImage(file: File): Promise<string> {
   return data.publicUrl;
 }
 
-const MAX_PDF_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB (after compression)
+const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+const SUPPORTED_DOCUMENT_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+]);
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -78,12 +84,12 @@ export async function uploadYouthDocument(file: File): Promise<string> {
     if (fileToUpload.size > MAX_IMAGE_BYTES) {
       throw new Error("Bilden är för stor (max 2 MB efter komprimering).");
     }
-  } else if (file.type === "application/pdf") {
-    if (file.size > MAX_PDF_BYTES) {
-      throw new Error("PDF-filen är för stor (max 5 MB).");
+  } else if (SUPPORTED_DOCUMENT_TYPES.has(file.type)) {
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      throw new Error("Dokumentet är för stort (max 5 MB).");
     }
   } else {
-    throw new Error("Filtypen stöds inte. Välj ett PDF-, JPG- eller PNG-dokument.");
+    throw new Error("Filtypen stöds inte. Välj ett PDF-, Word-, text-, JPG- eller PNG-dokument.");
   }
 
   const supabase = getSupabaseClient();
