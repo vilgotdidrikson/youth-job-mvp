@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { completeYouthOnboarding, getYouthProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { uploadYouthDocument } from "@/lib/storage";
+import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
 
 const STRENGTH_TIPS = ["Ansvarstagande", "Social", "Noggrann", "Kreativ", "Bra på att samarbeta"];
@@ -441,15 +442,12 @@ export default function OnboardingPage() {
 
   if (showAccountCreated) {
     return (
-      <main className="mobile-shell" style={{ display: "flex", minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-        <p style={{ margin: 0, color: "#737373", fontSize: "0.9rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Välkommen till Employo</p>
-        <h1 style={{ margin: "0.6rem 0", color: "#111", fontSize: "2.55rem", letterSpacing: "-0.04em" }}>Kontot är skapat!</h1>
-        <p style={{ maxWidth: "25rem", margin: "0 0 1.8rem", color: "#555", fontSize: "1.08rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
-        <div style={{ maxWidth: "25rem", border: "1px solid #f0c989", borderRadius: 14, background: "#fff8e8", color: "#705000", padding: "1.1rem 1.2rem", fontSize: "1rem", lineHeight: 1.5, marginBottom: "1.2rem" }}>
-          Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.
-        </div>
-        <button type="button" className="cta-btn" onClick={() => { setShowAccountCreated(false); setStep(3); }} style={{ width: "min(100%, 25rem)", padding: "1.1rem", fontSize: "1.1rem" }}>Fortsätt skapa mitt CV</button>
-        <button type="button" className="secondary-btn" onClick={() => router.push("/dashboard")} style={{ width: "min(100%, 25rem)", marginTop: "0.75rem", padding: "1.1rem", fontSize: "1.05rem" }}>Gå till mitt konto</button>
+      <main className="mobile-shell" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+        <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
+        <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
+        <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
+        <button type="button" className="cta-btn" onClick={() => { setShowAccountCreated(false); setStep(3); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
+        <button type="button" className="secondary-btn" onClick={() => router.push("/dashboard")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
       </main>
     );
   }
@@ -1173,7 +1171,7 @@ export default function OnboardingPage() {
       {/* Progress bar */}
       <div style={{ paddingTop: "3rem", paddingBottom: "2.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-          <span style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 600, letterSpacing: "0.05em" }}>
+          <span style={{ fontSize: "0.95rem", color: "#737373", fontWeight: 700, letterSpacing: "0.05em" }}>
             {flowStep} / {flowTotal}
           </span>
           {step > 0 && (
@@ -1186,11 +1184,11 @@ export default function OnboardingPage() {
             </button>
           )}
         </div>
-        <div style={{ height: 3, borderRadius: 2, background: "#f0f0f0" }}>
+        <div style={{ height: 8, borderRadius: 999, background: "#f0f0f0" }}>
           <div
             style={{
-              height: 3,
-              borderRadius: 2,
+              height: 8,
+              borderRadius: 999,
               background: "#111111",
               width: `${progress}%`,
               transition: "width 0.3s ease",
@@ -1266,15 +1264,15 @@ export default function OnboardingPage() {
           <div style={{ display: "grid", gap: "0.75rem" }}>
             <div style={{ display: "grid", gap: "0.75rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
               <p style={{ margin: "0 0 -0.2rem", color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Adress 1</p>
-              <input type="text" value={answers.city} onChange={(e) => setAnswers((previous) => ({ ...previous, city: e.target.value }))} placeholder="Stad" autoComplete="address-level2" autoFocus style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
-              <input type="text" value={answers.address} onChange={(e) => setAnswers((previous) => ({ ...previous, address: e.target.value }))} placeholder="Adress" autoComplete="street-address" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
+              <input type="text" value={answers.city} onChange={(e) => setAnswers((previous) => ({ ...previous, city: e.target.value }))} placeholder="Stad" autoComplete="address-level2" list="youth-city-suggestions" autoFocus style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
+              <input type="text" value={answers.address} onChange={(e) => setAnswers((previous) => ({ ...previous, address: e.target.value }))} placeholder="Adress" autoComplete="street-address" list="youth-address-suggestions" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
               <input type="text" inputMode="numeric" value={answers.postal_code} onChange={(e) => setAnswers((previous) => ({ ...previous, postal_code: e.target.value }))} placeholder="Postnummer" autoComplete="postal-code" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
             </div>
             {additionalAddresses.map((item, index) => (
               <div key={index} style={{ position: "relative", display: "grid", gap: "0.75rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
                 <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Adress {index + 2}</p>
                 <button type="button" onClick={() => setAdditionalAddresses((previous) => previous.filter((_, addressIndex) => addressIndex !== index))} aria-label={`Ta bort adress ${index + 2}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>
-                {(["city", "address", "postal_code"] as const).map((field) => <input key={field} type="text" inputMode={field === "postal_code" ? "numeric" : undefined} value={item[field]} onChange={(e) => setAdditionalAddresses((previous) => previous.map((address, addressIndex) => addressIndex === index ? { ...address, [field]: e.target.value } : address))} placeholder={field === "city" ? "Stad" : field === "address" ? "Adress" : "Postnummer"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />)}
+                {(["city", "address", "postal_code"] as const).map((field) => <input key={field} type="text" inputMode={field === "postal_code" ? "numeric" : undefined} list={field === "city" ? "youth-city-suggestions" : field === "address" ? "youth-address-suggestions" : undefined} value={item[field]} onChange={(e) => setAdditionalAddresses((previous) => previous.map((address, addressIndex) => addressIndex === index ? { ...address, [field]: e.target.value } : address))} placeholder={field === "city" ? "Stad" : field === "address" ? "Adress" : "Postnummer"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />)}
               </div>
             ))}
             <button type="button" onClick={() => setAdditionalAddresses((previous) => [...previous, { city: "", address: "", postal_code: "" }])} style={{ justifySelf: "start", marginTop: "0.25rem", padding: "0.65rem 0.9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till en ytterligare adress</button>

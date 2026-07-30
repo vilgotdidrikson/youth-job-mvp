@@ -64,6 +64,7 @@ create policy "youth profiles own row"
 create table public.company_profiles (
   user_id      uuid primary key references auth.users(id) on delete cascade,
   company_name text not null default '',
+  administrator text not null default '',
   description  text not null default '',
   city         text not null default '',
   updated_at   timestamptz not null default now()

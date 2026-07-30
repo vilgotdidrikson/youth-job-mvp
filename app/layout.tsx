@@ -1,17 +1,6 @@
 ﻿import type { Metadata } from "next";
-import { Outfit, Space_Grotesk } from "next/font/google";
 import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Employo Youth Jobs",
@@ -28,7 +17,7 @@ export default function RootLayout({
     <html lang="sv" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${outfit.variable} ${spaceGrotesk.variable} antialiased`}
+        className="antialiased"
       >
         {children}
         <MobileNav />

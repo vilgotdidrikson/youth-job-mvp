@@ -55,6 +55,7 @@ export interface YouthProfile {
 export interface CompanyProfile {
   user_id: string;
   company_name?: string | null;
+  administrator?: string | null;
   description?: string | null;
   city?: string | null;
   updated_at?: string | null;
