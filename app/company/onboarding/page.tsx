@@ -6,6 +6,7 @@ import { useSession } from "@/hooks/use-session";
 import { getSupabaseClient } from "@/lib/supabase";
 import { createJob } from "@/lib/jobs";
 import { uploadJobImage } from "@/lib/storage";
+import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 
 const JOB_CATEGORIES = [
   "Café/restaurang",
@@ -23,7 +24,6 @@ const JOB_CATEGORIES = [
 ];
 
 const TIME_OPTIONS = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
-const EMPLOYEE_COUNTS = ["1–10", "11–50", "51–200", "200+"];
 const COMMON_ROLES = ["Utvecklare", "Säljare", "Marknadsförare", "Kundservice"];
 const HIRING_PRIORITIES = ["Erfarenhet", "Personlighet", "Tekniska kunskaper", "Kulturpassning", "Ledarskap"];
 const INDUSTRY_TIPS = ["IT", "Bygg", "Restaurang", "Vård", "E-handel", "Butik", "Transport", "Ekonomi"];
@@ -45,11 +45,11 @@ export default function CompanyOnboardingPage() {
 
   // Company profile form
   const [companyName, setCompanyName] = useState("");
+  const [administrator, setAdministrator] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [industry, setIndustry] = useState("");
-  const [employeeCount, setEmployeeCount] = useState("");
   const [commonRoles, setCommonRoles] = useState<string[]>([]);
   const [customRole, setCustomRole] = useState("");
   const [hiringPriorities, setHiringPriorities] = useState<string[]>([]);
@@ -75,13 +75,40 @@ export default function CompanyOnboardingPage() {
   const [jobDescription, setJobDescription] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-    if (!loading && profile && profile.role !== "company") router.replace("/dashboard");
+    if (!loading && !user) {
+      router.replace("/login");
+      return;
+    }
+    if (!loading && profile && profile.role !== "company") {
+      router.replace("/dashboard");
+      return;
+    }
+    if (!loading && user && profile?.role === "company") {
+      let active = true;
+      void getSupabaseClient()
+        .from("company_profiles")
+        .select("company_name, industry, administrator")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!active || !data) return;
+          if (data.company_name?.trim() && data.industry?.trim() && data.administrator?.trim()) {
+            router.replace("/company");
+            return;
+          }
+          setCompanyName(data.company_name ?? "");
+          setIndustry(data.industry ?? "");
+          setAdministrator(data.administrator ?? "");
+        });
+      return () => { active = false; };
+    }
   }, [loading, user, profile, router]);
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
     if (!companyName.trim()) { setError("Ange företagets namn."); return; }
+    if (!industry.trim()) { setError("Ange företagets bransch."); return; }
+    if (!administrator.trim()) { setError("Ange administratörens namn."); return; }
     setBusy(true);
     setError("");
     try {
@@ -90,20 +117,8 @@ export default function CompanyOnboardingPage() {
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
-          city: city.trim(),
-          address: address.trim(),
-          description: description.trim(),
           industry: industry.trim(),
-          employee_count: employeeCount,
-          common_roles: commonRoles,
-          hiring_priorities: hiringPriorities,
-          logo_url: logoUrl,
-          website_url: websiteUrl.trim(),
-          linkedin_url: linkedinUrl.trim(),
-          instagram_url: instagramUrl.trim(),
-          facebook_url: facebookUrl.trim(),
-          tiktok_url: tiktokUrl.trim(),
-          x_url: xUrl.trim(),
+          administrator: administrator.trim(),
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user!.id);
@@ -185,22 +200,22 @@ export default function CompanyOnboardingPage() {
   const profileQuestions = [
     "Vad heter ditt företag?",
     "Vilken bransch verkar ni inom?",
-    "Hur många anställda har ni?",
-    "Vilka roller rekryterar ni oftast?",
-    "Var finns tjänsterna?",
-    "Vad är viktigast när ni anställer?",
-    "Beskriv företaget med några ord",
-    "Komplettera er profil (valfritt)",
+    "Vem är administratör?",
   ];
 
   return (
     <main className="mobile-shell company-onboarding">
+      <datalist id="company-name-suggestions">{COMPANY_NAME_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      <datalist id="address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       {/* ── STEP 1: Company profile ── */}
       {step === "profil" && (
         <form onSubmit={(e) => {
           e.preventDefault();
-          if (profileQuestion < 7) {
+          if (profileQuestion < 2) {
             if (profileQuestion === 0 && !companyName.trim()) { setError("Ange företagets namn."); return; }
+            if (profileQuestion === 1 && !industry.trim()) { setError("Ange företagets bransch."); return; }
             setError("");
             setProfileQuestion((current) => current + 1);
             return;
@@ -211,9 +226,9 @@ export default function CompanyOnboardingPage() {
             <h1 style={{ fontSize: "1.9rem", fontWeight: 800, letterSpacing: "-0.04em", color: "#111", margin: 0 }}>
               {profileQuestions[profileQuestion]}
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 8</p>
+            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 3</p>
             <div style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
-              <div style={{ width: `${((profileQuestion + 1) / 8) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
+              <div style={{ width: `${((profileQuestion + 1) / 3) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
             </div>
           </div>
 
@@ -228,6 +243,7 @@ export default function CompanyOnboardingPage() {
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. Bergströms Bageri AB"
+              list="company-name-suggestions"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
@@ -243,9 +259,17 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
 
-            {profileQuestion === 2 && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>{EMPLOYEE_COUNTS.map((count) => <button key={count} type="button" onClick={() => setEmployeeCount(count)} style={{ padding: "0.9rem", borderRadius: 10, border: employeeCount === count ? "2px solid #111" : "1.5px solid #e8e8e8", background: employeeCount === count ? "#111" : "#fff", color: employeeCount === count ? "#fff" : "#111", fontWeight: 700, cursor: "pointer" }}>{count}</button>)}</div>}
+            {profileQuestion === 2 && <><label style={labelStyle}>Administratör *</label><input
+              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+              style={{ marginBottom: "0.85rem" }}
+              placeholder="För- och efternamn"
+              value={administrator}
+              onChange={(e) => setAdministrator(e.target.value)}
+              required
+              autoFocus
+            /></>}
             {profileQuestion === 3 && <div><div style={{ display: "flex", gap: "0.5rem" }}><input className="input-field" placeholder="Skriv en roll" value={customRole} onChange={(e) => setCustomRole(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const value = customRole.trim(); if (value) { setCommonRoles((items) => items.includes(value) ? items : [...items, value]); setCustomRole(""); } } }} /><button type="button" className="secondary-btn" style={{ padding: "0 .9rem" }} onClick={() => { const value = customRole.trim(); if (value) { setCommonRoles((items) => items.includes(value) ? items : [...items, value]); setCustomRole(""); } }}>Lägg till</button></div><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{[...new Set([...COMMON_ROLES, ...commonRoles])].map((role) => chipBtn(role, commonRoles.includes(role), () => setCommonRoles((items) => toggleItem(items, role))))}</div></div>}
-            {profileQuestion === 4 && <div><label style={labelStyle}>Stad</label><input className="input-field" placeholder="Stad" value={city} onChange={(e) => setCity(e.target.value)} autoFocus /><label style={{ ...labelStyle, marginTop: "1rem" }}>Adress</label><input className="input-field" placeholder="T.ex. Storgatan 12" value={address} onChange={(e) => setAddress(e.target.value)} /></div>}
+            {profileQuestion === 4 && <div><label style={labelStyle}>Stad</label><input className="input-field" placeholder="Stad" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} autoFocus /><label style={{ ...labelStyle, marginTop: "1rem" }}>Adress</label><input className="input-field" placeholder="T.ex. Storgatan 12" list="address-suggestions" value={address} onChange={(e) => setAddress(e.target.value)} /></div>}
             {profileQuestion === 5 && <div><div style={{ display: "flex", gap: "0.5rem" }}><input className="input-field" placeholder="Skriv en egen prioritering" value={customPriority} onChange={(e) => setCustomPriority(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } } }} autoFocus /><button type="button" className="secondary-btn" style={{ padding: "0 .9rem" }} onClick={() => { const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } }}>Lägg till</button></div><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{[...new Set([...HIRING_PRIORITIES, ...hiringPriorities])].map((priority) => chipBtn(priority, hiringPriorities.includes(priority), () => setHiringPriorities((items) => toggleItem(items, priority))))}</div></div>}
             {profileQuestion === 6 && <><label style={labelStyle}>Beskrivning</label><textarea
               rows={3}
@@ -261,8 +285,7 @@ export default function CompanyOnboardingPage() {
 
           <div style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
             {profileQuestion > 0 && <button type="button" className="secondary-btn" style={{ padding: "0.9rem" }} onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
-            {profileQuestion === 7 && <button type="submit" className="secondary-btn" style={{ padding: "0.9rem", whiteSpace: "nowrap" }} disabled={busy || uploadingLogo}>Hoppa över</button>}
-            <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : uploadingLogo ? "Laddar upp..." : profileQuestion === 7 ? "Spara och fortsätt →" : "Nästa →"}</button>
+            <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 2 ? "Spara och fortsätt →" : "Nästa →"}</button>
           </div>
         </form>
       )}
@@ -275,10 +298,10 @@ export default function CompanyOnboardingPage() {
               Employo
             </p>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0.4rem" }}>
-              Klart! 🎉
+              Kontot är skapat! 🎉
             </h1>
             <p style={{ fontSize: "0.9rem", color: "#737373", margin: 0 }}>
-              Nu kan du skapa din första jobbannons.
+              Vill du skapa din första jobbannons nu eller gå in på ditt konto?
             </p>
           </div>
 
@@ -302,7 +325,7 @@ export default function CompanyOnboardingPage() {
               style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem" }}
               onClick={() => router.replace("/company")}
             >
-              Gör det senare
+              Gå till mitt konto
             </button>
           </div>
         </div>
@@ -335,6 +358,7 @@ export default function CompanyOnboardingPage() {
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. Butikssäljare, Sommarjobbare på café"
+              list="job-title-suggestions"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               required
@@ -346,6 +370,7 @@ export default function CompanyOnboardingPage() {
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. Stockholm"
+              list="city-suggestions"
               value={jobCity}
               onChange={(e) => setJobCity(e.target.value)}
               required

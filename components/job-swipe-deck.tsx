@@ -4,6 +4,13 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
+function bulletItems(value: string): string[] {
+  return value
+    .split(/[,\n]+/)
+    .map((item) => item.trim().replace(/^[-•]\s*/, ""))
+    .filter(Boolean);
+}
+
 type Decision = SwipeDecision;
 
 interface JobSwipeDeckProps {
@@ -151,10 +158,10 @@ export function JobSwipeDeck({
         onPointerCancel={onPointerEnd}
       >
         {/* Job image */}
-        {currentJob.image_url ? (
+        {(currentJob.image_url ? currentJob.image_url.split(",")[0] : "") ? (
           <div className="swipe-job-image" style={{ height: 200, overflow: "hidden", position: "relative" }}>
             <Image
-              src={currentJob.image_url}
+              src={currentJob.image_url.split(",")[0]}
               alt={currentJob.title}
               fill
               style={{ objectFit: "cover" }}
@@ -292,6 +299,27 @@ export function JobSwipeDeck({
             >
               {currentJob.description}
             </p>
+          )}
+
+          {(currentJob.benefits || currentJob.requirements) && (
+            <div style={{ display: "grid", gap: "0.8rem", marginTop: "1rem" }}>
+              {currentJob.benefits && (
+                <div>
+                  <p style={{ margin: "0 0 0.35rem", color: "#111", fontSize: "0.78rem", fontWeight: 800 }}>Förmåner</p>
+                  <ul style={{ margin: 0, paddingLeft: "1.15rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.5 }}>
+                    {bulletItems(currentJob.benefits).map((benefit) => <li key={benefit}>{benefit}</li>)}
+                  </ul>
+                </div>
+              )}
+              {currentJob.requirements && (
+                <div>
+                  <p style={{ margin: "0 0 0.35rem", color: "#111", fontSize: "0.78rem", fontWeight: 800 }}>Krav</p>
+                  <ul style={{ margin: 0, paddingLeft: "1.15rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.5 }}>
+                    {bulletItems(currentJob.requirements).map((requirement) => <li key={requirement}>{requirement}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
 
           {currentJob.category && (

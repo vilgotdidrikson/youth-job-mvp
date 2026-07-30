@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 
 const youthItems = [
@@ -18,7 +18,25 @@ const youthItems = [
 
 const companyItems = [
   {
-    href: "/company",
+    href: "/company?view=swipe",
+    label: "Swipe",
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/company?view=annonser",
+    label: "Mina annonser",
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h5" />
+      </svg>
+    ),
+  },
+  {
+    href: "/company?view=kandidater",
     label: "Kandidater",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
@@ -51,22 +69,11 @@ const sharedItems = [
       </svg>
     ),
   },
-  {
-    href: "/dashboard",
-    label: "Konto",
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-      </svg>
-    ),
-  },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { profile } = useSession();
 
   /* Hide nav on auth / landing / onboarding pages */
@@ -90,11 +97,13 @@ export function MobileNav() {
       aria-label="Primary navigation"
       style={{ maxWidth: 430, left: "50%", transform: "translateX(-50%)" }}
     >
-      <Link href="/dashboard" className="desktop-nav-logo" aria-label="Employo kontoöversikt">
+      <Link href="/swipe" className="desktop-nav-logo" aria-label="Employo hitta jobb">
         <span>E</span> employo
       </Link>
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const [itemPath, itemQuery] = item.href.split("?");
+        const requestedView = new URLSearchParams(itemQuery ?? "").get("view");
+        const active = pathname === itemPath && (!requestedView || searchParams.get("view") === requestedView);
         return (
           <Link
             key={item.href}
