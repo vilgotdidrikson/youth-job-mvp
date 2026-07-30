@@ -21,6 +21,8 @@ const BIRTH_DAYS = Array.from({ length: 31 }, (_, index) => String(index + 1));
 const BIRTH_MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 const BIRTH_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().getFullYear() - 10 - index));
 const WORK_YEARS = Array.from({ length: 110 }, (_, index) => String(2036 - index));
+const ACCOUNT_DETAILS_STEP_COUNT = 3;
+const FIRST_CV_STEP = ACCOUNT_DETAILS_STEP_COUNT;
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -379,6 +381,7 @@ export default function OnboardingPage() {
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [showCvStep, setShowCvStep] = useState(false);
   const [showAccountCreated, setShowAccountCreated] = useState(false);
+  const [accountDetailsSaved, setAccountDetailsSaved] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
   const [cvText, setCvText] = useState("");
   const [documents, setDocuments] = useState<YouthDocument[]>([]);
@@ -414,7 +417,8 @@ export default function OnboardingPage() {
         age: savedProfile.age ? String(savedProfile.age) : "",
       }));
       setAdditionalAddresses(Array.isArray(savedProfile.additional_addresses) ? savedProfile.additional_addresses : []);
-      setStep(3);
+      setAccountDetailsSaved(true);
+      setStep(FIRST_CV_STEP);
     }).catch(() => {
       // Keep the account-details flow available if the saved profile cannot be read.
     });
@@ -435,9 +439,9 @@ export default function OnboardingPage() {
   const current = STEPS[step];
   const isChips = current.type === "chips";
   const isLast = step === STEPS.length - 1;
-  const isAccountDetailsFlow = step < 3;
-  const flowStep = isAccountDetailsFlow ? step + 1 : step - 2;
-  const flowTotal = isAccountDetailsFlow ? 3 : STEPS.length - 3;
+  const isAccountDetailsFlow = step < ACCOUNT_DETAILS_STEP_COUNT;
+  const flowStep = isAccountDetailsFlow ? step + 1 : step - ACCOUNT_DETAILS_STEP_COUNT + 1;
+  const flowTotal = isAccountDetailsFlow ? ACCOUNT_DETAILS_STEP_COUNT : STEPS.length - ACCOUNT_DETAILS_STEP_COUNT;
   const progress = (flowStep / flowTotal) * 100;
 
   if (showAccountCreated) {
@@ -446,7 +450,7 @@ export default function OnboardingPage() {
         <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
         <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
         <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
-        <button type="button" className="cta-btn" onClick={() => { setShowAccountCreated(false); setStep(3); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
+        <button type="button" className="cta-btn" onClick={() => { setError(""); setShowAccountCreated(false); setStep(FIRST_CV_STEP); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
         <button type="button" className="secondary-btn" onClick={() => router.push("/dashboard")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
       </main>
     );
@@ -838,6 +842,7 @@ export default function OnboardingPage() {
           additional_addresses: additionalAddresses,
         });
         setAnswers((prev) => ({ ...prev, age: savedAccount.age ? String(savedAccount.age) : "" }));
+        setAccountDetailsSaved(true);
         setShowAccountCreated(true);
       } catch (saveError) {
         setError(saveError instanceof Error ? saveError.message : "Kunde inte spara dina uppgifter.");
@@ -1147,6 +1152,18 @@ export default function OnboardingPage() {
       }}
     >
       <style>{'label:has(input[type="file"][accept*=".pdf"]) { color: #a3a3a3 !important; font-size: .85rem !important; font-weight: 400 !important; }'}</style>
+      <datalist id="youth-job-title-suggestions">
+        {JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
+      </datalist>
+      <datalist id="youth-company-name-suggestions">
+        {COMPANY_NAME_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
+      </datalist>
+      <datalist id="youth-city-suggestions">
+        {CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
+      </datalist>
+      <datalist id="youth-address-suggestions">
+        {ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
+      </datalist>
       {cropSource && (
         <div role="dialog" aria-modal="true" aria-label="Beskär profilbild" style={{ position: "fixed", zIndex: 10, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0, 0, 0, .62)" }}>
           <div style={{ width: "min(100%, 25rem)", display: "grid", gap: "1rem", padding: "1.25rem", borderRadius: 16, background: "#fff" }}>
@@ -1174,7 +1191,7 @@ export default function OnboardingPage() {
           <span style={{ fontSize: "0.95rem", color: "#737373", fontWeight: 700, letterSpacing: "0.05em" }}>
             {flowStep} / {flowTotal}
           </span>
-          {step > 0 && (
+          {step > (accountDetailsSaved ? FIRST_CV_STEP : 0) && (
             <button
               type="button"
               onClick={() => { setError(""); setStep((s) => s - 1); }}
@@ -1334,7 +1351,7 @@ export default function OnboardingPage() {
                 ) : <>
                 <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Arbetserfarenhet {index + 1}</p>
                 {workExperiences.length > 1 && <button type="button" onClick={() => { setWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); setSavedWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); }} aria-label={`Ta bort arbetserfarenhet ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel" : field === "company" ? "Arbetsgivare" : "Plats"}<input type="text" value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>)}
+                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel" : field === "company" ? "Arbetsgivare" : "Plats"}<input type="text" list={field === "title" ? "youth-job-title-suggestions" : field === "company" ? "youth-company-name-suggestions" : "youth-city-suggestions"} value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>)}
                 <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Platstyp<select value={experience.location_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, location_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.location_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="På plats">På plats</option><option value="Hybrid">Hybrid</option><option value="Distans">Distans</option></select></label>
                 <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Anställningstyp<select value={experience.employment_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, employment_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.employment_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Deltid">Deltid</option><option value="Heltid">Heltid</option><option value="Sommarjobb">Sommarjobb</option><option value="Praktik">Praktik</option><option value="Extraarbete">Extraarbete</option></select></label>
                 <label style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "#737373", fontSize: ".8rem", cursor: "pointer" }}><input type="checkbox" checked={experience.is_current} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, is_current: e.target.checked, end_date: e.target.checked ? "" : item.end_date } : item))} /> Detta är min nuvarande arbetsplats</label>
