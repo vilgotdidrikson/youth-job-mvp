@@ -8,7 +8,21 @@ import { uploadYouthDocument } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
 
-const STRENGTH_TIPS = ["Ansvarstagande", "Social", "Noggrann", "Kreativ", "Bra på att samarbeta"];
+const STRENGTH_TIPS = [
+  "Ansvarstagande",
+  "Social",
+  "Noggrann",
+  "Kreativ",
+  "Bra på att samarbeta",
+  "Initiativtagande",
+  "Snabblärd",
+  "Serviceinriktad",
+  "Strukturerad",
+  "Flexibel",
+  "Positiv",
+  "Lösningsorienterad",
+  "Engagerad",
+];
 const LANGUAGE_TIPS = [
   { label: "Svenska", flag: "🇸🇪" },
   { label: "Engelska", flag: "🇬🇧" },
@@ -17,12 +31,54 @@ const LANGUAGE_TIPS = [
   { label: "Finska", flag: "🇫🇮" },
   { label: "Somaliska", flag: "🇸🇴" },
 ];
+const CUSTOM_LANGUAGE_FLAGS: Record<string, string> = {
+  chinese: "🇨🇳",
+  mandarin: "🇨🇳",
+  cantonese: "🇭🇰",
+  japanese: "🇯🇵",
+  korean: "🇰🇷",
+  portuguese: "🇵🇹",
+  italian: "🇮🇹",
+  russian: "🇷🇺",
+  hindi: "🇮🇳",
+  bengali: "🇧🇩",
+  romanian: "🇷🇴",
+  thai: "🇹🇭",
+  vietnamese: "🇻🇳",
+};
+
+function getLanguageFlag(language: string): string {
+  const normalized = language.trim().toLocaleLowerCase();
+  return LANGUAGE_TIPS.find((item) => item.label.toLocaleLowerCase() === normalized)?.flag
+    ?? CUSTOM_LANGUAGE_FLAGS[normalized]
+    ?? "🌐";
+}
 const BIRTH_DAYS = Array.from({ length: 31 }, (_, index) => String(index + 1));
 const BIRTH_MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 const BIRTH_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().getFullYear() - 10 - index));
-const WORK_YEARS = Array.from({ length: 110 }, (_, index) => String(2036 - index));
+const WORK_YEARS = Array.from({ length: 100 }, (_, index) => String(2026 - index));
 const ACCOUNT_DETAILS_STEP_COUNT = 3;
 const FIRST_CV_STEP = ACCOUNT_DETAILS_STEP_COUNT;
+
+function hasAccountDetails(profile: {
+  full_name?: string | null;
+  date_of_birth?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+} | null): boolean {
+  return Boolean(
+    profile?.full_name?.trim() &&
+    profile.date_of_birth &&
+    profile.address?.trim() &&
+    profile.city?.trim() &&
+    profile.postal_code?.trim(),
+  );
+}
+
+export default function OnboardingPage() {
+  return <YouthOnboardingFlow flow="account" />;
+}
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -330,10 +386,10 @@ function buildStructuredCvFallback(a: Answers): string {
 }
 
 
-export default function OnboardingPage() {
+export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
   const router = useRouter();
   const { user, profile, loading } = useSession();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => flow === "cv" ? FIRST_CV_STEP : 0);
   const [answers, setAnswers] = useState<Answers>({
     full_name: "",
     date_of_birth: "",
@@ -382,6 +438,8 @@ export default function OnboardingPage() {
   const [showCvStep, setShowCvStep] = useState(false);
   const [showAccountCreated, setShowAccountCreated] = useState(false);
   const [accountDetailsSaved, setAccountDetailsSaved] = useState(false);
+  const [accountDetailsLoaded, setAccountDetailsLoaded] = useState(false);
+  const [redirectingBetweenFlows, setRedirectingBetweenFlows] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
   const [cvText, setCvText] = useState("");
   const [documents, setDocuments] = useState<YouthDocument[]>([]);
@@ -392,41 +450,58 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
-    if (!loading && user && profile?.role === "company") router.replace("/dashboard");
+    if (!loading && user && profile?.role === "company") router.replace("/company?view=swipe");
   }, [loading, user, profile, router]);
 
   useEffect(() => {
     if (loading || !user || profile?.role !== "youth") return;
 
     let active = true;
-    void getYouthProfile(user.id).then((savedProfile) => {
-      if (!active || !savedProfile?.full_name || !savedProfile.date_of_birth || !savedProfile.address || !savedProfile.city || !savedProfile.postal_code) return;
+    void (async () => {
+      try {
+        const savedProfile = await getYouthProfile(user.id);
+        if (!active) return;
 
-      const nameParts = savedProfile.full_name.trim().split(/\s+/);
-      setFirstName(nameParts[0] ?? "");
-      setLastName(nameParts.slice(1).join(" "));
-      const [year = "", month = "", day = ""] = (savedProfile.date_of_birth ?? "").split("-");
-      setBirthDateParts({ day: String(Number(day) || ""), month: String(Number(month) || ""), year });
-      setAnswers((previous) => ({
-        ...previous,
-        full_name: savedProfile.full_name ?? "",
-        date_of_birth: savedProfile.date_of_birth ?? "",
-        address: savedProfile.address ?? "",
-        city: savedProfile.city ?? "",
-        postal_code: savedProfile.postal_code ?? "",
-        age: savedProfile.age ? String(savedProfile.age) : "",
-      }));
-      setAdditionalAddresses(Array.isArray(savedProfile.additional_addresses) ? savedProfile.additional_addresses : []);
-      setAccountDetailsSaved(true);
-      setStep(FIRST_CV_STEP);
-    }).catch(() => {
-      // Keep the account-details flow available if the saved profile cannot be read.
-    });
+        if (flow === "account") {
+          if (savedProfile && hasAccountDetails(savedProfile)) {
+            setRedirectingBetweenFlows(true);
+            router.replace("/youth/cv");
+          }
+          return;
+        }
+
+        // The CV page is always CV-only. It may hydrate saved account details,
+        // but it must never send a user back to the name/address/birthdate flow.
+        if (savedProfile) {
+          const nameParts = savedProfile.full_name?.trim().split(/\s+/) ?? [];
+          setFirstName(nameParts[0] ?? "");
+          setLastName(nameParts.slice(1).join(" "));
+          const [year = "", month = "", day = ""] = (savedProfile.date_of_birth ?? "").split("-");
+          setBirthDateParts({ day: String(Number(day) || ""), month: String(Number(month) || ""), year });
+          setAnswers((previous) => ({
+            ...previous,
+            full_name: savedProfile.full_name ?? "",
+            date_of_birth: savedProfile.date_of_birth ?? "",
+            address: savedProfile.address ?? "",
+            city: savedProfile.city ?? "",
+            postal_code: savedProfile.postal_code ?? "",
+            age: savedProfile.age ? String(savedProfile.age) : "",
+          }));
+          setAdditionalAddresses(Array.isArray(savedProfile.additional_addresses) ? savedProfile.additional_addresses : []);
+          setAccountDetailsSaved(hasAccountDetails(savedProfile));
+        }
+        setStep(FIRST_CV_STEP);
+      } catch {
+        // Keep the account-details flow available if the saved profile cannot be read.
+      } finally {
+        if (active) setAccountDetailsLoaded(true);
+      }
+    })();
 
     return () => {
       active = false;
     };
-  }, [loading, profile?.role, user]);
+  }, [flow, loading, profile?.role, router, user]);
 
   useEffect(() => {
     if (!cameraOpen || !cameraStreamRef.current || !cameraVideoRef.current) return;
@@ -450,8 +525,18 @@ export default function OnboardingPage() {
         <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
         <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
         <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
-        <button type="button" className="cta-btn" onClick={() => { setError(""); setShowAccountCreated(false); setStep(FIRST_CV_STEP); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
-        <button type="button" className="secondary-btn" onClick={() => router.push("/dashboard")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
+        <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
+        <button type="button" className="secondary-btn" onClick={() => router.push("/swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Upptäck jobb</button>
+      </main>
+    );
+  }
+
+  // Do not briefly show the first flow to a returning user while their account
+  // details are being loaded.
+  if (!loading && user && profile?.role === "youth" && (!accountDetailsLoaded || redirectingBetweenFlows)) {
+    return (
+      <main className="youth-onboarding" style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
+        <p style={{ color: "#737373" }}>Laddar...</p>
       </main>
     );
   }
@@ -564,7 +649,7 @@ export default function OnboardingPage() {
             }}
           >
             <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111111", lineHeight: 1.5 }}>
-              Lägg till en profilbild (valfritt)
+              Visa vem du är! En profilbild ger arbetsgivare ett bättre första intryck (valfritt)
             </p>
           </div>
           <p style={{ fontSize: "0.85rem", color: "#737373", marginTop: "0.75rem", lineHeight: 1.55 }}>
@@ -742,10 +827,26 @@ export default function OnboardingPage() {
   }
 
   const isCompleteMonth = (value: string) => /^\d{4}-\d{2}$/.test(value);
+  const hasValidDateRange = (startDate: string, endDate: string) =>
+    !isCompleteMonth(startDate) || !isCompleteMonth(endDate) || startDate <= endDate;
+  const canSelectDatePart = (
+    field: "start_date" | "end_date",
+    part: "month" | "year",
+    value: string,
+    startDate: string,
+    endDate: string,
+  ) => {
+    const currentDate = field === "start_date" ? startDate : endDate;
+    const [currentYear = "", currentMonth = ""] = currentDate.split("-");
+    const nextDate = `${part === "year" ? value : currentYear}-${part === "month" ? value : currentMonth}`;
+    return field === "start_date"
+      ? hasValidDateRange(nextDate, endDate)
+      : hasValidDateRange(startDate, nextDate);
+  };
   const workExperienceIsComplete = (experience: WorkExperience) =>
-    Boolean(experience.title.trim() && experience.company.trim() && experience.location.trim() && experience.location_type && experience.employment_type && isCompleteMonth(experience.start_date) && (experience.is_current || isCompleteMonth(experience.end_date)) && experience.description.trim());
+    Boolean(experience.title.trim() && experience.company.trim() && experience.location.trim() && experience.location_type && experience.employment_type && isCompleteMonth(experience.start_date) && (experience.is_current || isCompleteMonth(experience.end_date)) && (experience.is_current || hasValidDateRange(experience.start_date, experience.end_date)) && experience.description.trim());
   const educationIsComplete = (education: EducationEntry) =>
-    Boolean(education.school.trim() && education.degree.trim() && education.subject.trim() && isCompleteMonth(education.start_date) && isCompleteMonth(education.end_date) && education.description.trim());
+    Boolean(education.school.trim() && education.degree.trim() && education.subject.trim() && isCompleteMonth(education.start_date) && isCompleteMonth(education.end_date) && hasValidDateRange(education.start_date, education.end_date) && education.description.trim());
   const certificateIsComplete = (certificate: CertificateEntry) =>
     Boolean(certificate.name.trim() && certificate.issuer.trim() && certificate.category && certificate.issue_date && certificate.expiry_date && certificate.credential_url.trim() && certificate.description.trim());
 
@@ -799,12 +900,36 @@ export default function OnboardingPage() {
       const [currentYear = "", currentMonth = ""] = item[field].split("-");
       const year = part === "year" ? value : currentYear;
       const month = part === "month" ? value : currentMonth;
-      return { ...item, [field]: year || month ? `${year}-${month}` : "" };
+      const nextDate = year || month ? `${year}-${month}` : "";
+      const next = { ...item, [field]: nextDate };
+      if (!hasValidDateRange(next.start_date, next.end_date)) {
+        setError("Slutdatum kan inte vara före startdatum.");
+        return item;
+      }
+      setError("");
+      return next;
     }));
   }
 
   function updateExperienceDate(index: number, field: "start_date" | "end_date", part: "month" | "year", value: string) {
     setWorkExperiences((previous) => previous.map((item, itemIndex) => {
+      if (itemIndex !== index) return item;
+      const [currentYear = "", currentMonth = ""] = item[field].split("-");
+      const year = part === "year" ? value : currentYear;
+      const month = part === "month" ? value : currentMonth;
+      const nextDate = year || month ? `${year}-${month}` : "";
+      const next = { ...item, [field]: nextDate };
+      if (!hasValidDateRange(next.start_date, next.end_date)) {
+        setError("Slutdatum kan inte vara före startdatum.");
+        return item;
+      }
+      setError("");
+      return next;
+    }));
+  }
+
+  function updateCertificateDate(index: number, field: "issue_date" | "expiry_date", part: "month" | "year", value: string) {
+    setCertificates((previous) => previous.map((item, itemIndex) => {
       if (itemIndex !== index) return item;
       const [currentYear = "", currentMonth = ""] = item[field].split("-");
       const year = part === "year" ? value : currentYear;
@@ -1218,26 +1343,22 @@ export default function OnboardingPage() {
       <div style={{ marginBottom: "2rem" }}>
         <div
           style={{
-            display: "inline-block",
-            background: "#f5f5f5",
-            borderRadius: "4px 16px 16px 16px",
-            padding: "1rem 1.25rem",
-            maxWidth: "88%",
+            display: current.type === "image" ? "block" : "inline-block",
+            background: current.type === "image" ? "transparent" : "#f5f5f5",
+            borderRadius: current.type === "image" ? 0 : "4px 16px 16px 16px",
+            padding: current.type === "image" ? 0 : "1rem 1.25rem",
+            maxWidth: current.type === "image" ? "100%" : "88%",
           }}
         >
-          <p
-            className="onboarding-question-title"
-            style={{
-              margin: 0,
-              fontSize: "1.55rem",
-              fontWeight: 700,
-              color: "#111111",
-              lineHeight: 1.5,
-              whiteSpace: "pre-line",
-            }}
-          >
-            {current.question}
-          </p>
+          {current.type === "image" ? (
+            <h1 style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "#111111", lineHeight: 1.35, letterSpacing: "-0.03em" }}>
+              {current.question}
+            </h1>
+          ) : (
+            <p className="onboarding-question-title" style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "#111111", lineHeight: 1.5, whiteSpace: "pre-line" }}>
+              {current.question}
+            </p>
+          )}
         </div>
       </div>
 
@@ -1361,8 +1482,8 @@ export default function OnboardingPage() {
                     return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}>
                       <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum"}</span>
                       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "0.4rem", marginTop: "0.3rem" }}>
-                        <select value={month} onChange={(e) => updateExperienceDate(index, dateField, "month", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} månad`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select>
-                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select>
+                        <select value={month} onChange={(e) => updateExperienceDate(index, dateField, "month", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} månad`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const value = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, experience.start_date, experience.end_date)}>{monthName}</option>; })}</select>
+                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, experience.start_date, experience.end_date)}>{workYear}</option>)}</select>
                       </div>
                     </div>;
                   })}
@@ -1386,10 +1507,33 @@ export default function OnboardingPage() {
                 </> : <>
                   <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Utbildning {index + 1}</p>
                   {educations.length > 1 && <button type="button" onClick={() => { setEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort utbildning ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Typ av utbildning *<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="Skola" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Plats för undervisning *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="Kungsholmens Gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Examen *<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="T.ex. gymnasium, universitet eller yrkesutbildning" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Skola *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="Kungsholmens Gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
                   <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Ämnesområde *<input type="text" value={education.subject} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, subject: e.target.value } : item))} placeholder="T.ex. Ekonomi" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <div style={{ display: "grid", gap: ".3rem" }}><span style={{ color: "#737373", fontSize: ".72rem", fontWeight: 600 }}>Tid *</span><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>{(["start_date", "end_date"] as const).map((dateField) => { const [year = "", month = ""] = education[dateField].split("-"); return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}><span>{dateField === "start_date" ? "Startdatum" : "Slutdatum (eller förväntat)"}</span><div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}><select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select><select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select></div></div>; })}</div></div>
+                  <div style={{ display: "grid", gap: ".3rem" }}>
+                    <span style={{ color: "#737373", fontSize: ".72rem", fontWeight: 600 }}>Tid *</span>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+                      {(["start_date", "end_date"] as const).map((dateField) => {
+                        const [year = "", month = ""] = education[dateField].split("-");
+                        return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}>
+                          <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum (eller förväntat)"}</span>
+                          <div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}>
+                            <select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}>
+                              <option value="">Månad</option>
+                              {BIRTH_MONTHS.map((monthName, monthIndex) => {
+                                const value = String(monthIndex + 1).padStart(2, "0");
+                                return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, education.start_date, education.end_date)}>{monthName}</option>;
+                              })}
+                            </select>
+                            <select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}>
+                              <option value="">År</option>
+                              {WORK_YEARS.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, education.start_date, education.end_date)}>{workYear}</option>)}
+                            </select>
+                          </div>
+                        </div>;
+                      })}
+                    </div>
+                  </div>
                   <textarea value={education.description} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="Beskrivning *" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />
                   <button type="button" onClick={() => { if (!educationIsComplete(education)) { setError("Fyll i alla fält för att spara utbildningen."); return; } setError(""); setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ width: "100%", padding: ".85rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Spara utbildning</button>
                 </>}
@@ -1412,7 +1556,18 @@ export default function OnboardingPage() {
                   {certificates.length > 1 && <button type="button" onClick={() => { setCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort certifikat ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
                   {(["name", "issuer"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "name" ? "Namn *" : "Utfärdande organisation *"}<input type="text" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "name" ? "T.ex. HLR-certifikat" : "T.ex. Röda Korset"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>)}
                   <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Typ<select value={certificate.category} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, category: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: certificate.category ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Certifikat">Certifikat</option><option value="Stipendium">Stipendium</option><option value="Licens">Licens</option><option value="Annat">Annat</option></select></label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>{(["issue_date", "expiry_date"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "issue_date" ? "Utfärdandedatum *" : "Giltig till *"}<input type="month" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} style={{ width: "100%", height: "3rem", boxSizing: "border-box", padding: "0 .5rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label>)}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>
+                    {(["issue_date", "expiry_date"] as const).map((field) => {
+                      const [year = "", month = ""] = certificate[field].split("-");
+                      return <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>
+                        {field === "issue_date" ? "Utfärdandedatum *" : "Giltig till *"}
+                        <div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem" }}>
+                          <select value={month} onChange={(e) => updateCertificateDate(index, field, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select>
+                          <select value={year} onChange={(e) => updateCertificateDate(index, field, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select>
+                        </div>
+                      </label>;
+                    })}
+                  </div>
                   <div style={{ display: "grid", gap: ".55rem" }}><p style={{ margin: 0, color: "#a3a3a3", fontSize: ".72rem", fontWeight: 700 }}>Bifoga ett intyg</p><label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "#a3a3a3", boxSizing: "border-box", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label><label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#a3a3a3", fontSize: ".85rem", fontWeight: 400, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />Bifoga fil som intyg</label></div>
                   <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Beskrivning<textarea value={certificate.description} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Vad certifikatet eller stipendiet gällde" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".7rem 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit", resize: "vertical" }} /></label>
                   {false && (
@@ -1426,7 +1581,7 @@ export default function OnboardingPage() {
           </div>
         ) : selectionField ? (
           <div style={{ display: "grid", gap: ".8rem" }}>
-            <div style={{ display: "flex", gap: ".5rem" }}>
+            <div style={{ display: "flex", width: selectionField === "strengths" ? "min(100%, 24rem)" : "100%", gap: ".5rem", order: selectionField === "strengths" ? 3 : undefined }}>
               <input
                 type="text"
                 value={selectionField === "strengths" ? strengthInput : languageInput}
@@ -1436,13 +1591,13 @@ export default function OnboardingPage() {
                 autoFocus
                 style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }}
               />
-              <button type="button" onClick={() => saveCustomValue(selectionField)} style={{ padding: "0 1rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>Spara</button>
+              <button type="button" onClick={() => saveCustomValue(selectionField)} aria-label="Lägg till" style={{ minWidth: "3rem", padding: "0 0.9rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: "1.35rem", fontWeight: 500, cursor: "pointer" }}>+</button>
             </div>
-            <p style={{ margin: 0, color: "#737373", fontSize: ".78rem" }}>Skriv en egen och tryck på Spara, eller välj bland förslagen.</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem" }}>
+            <p style={{ margin: 0, color: "#737373", fontSize: ".78rem", order: selectionField === "strengths" ? 2 : undefined }}>Skriv en egen och tryck på +, eller välj bland förslagen.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", order: selectionField === "strengths" ? 1 : undefined }}>
               {[...new Set([...(selectionField === "strengths" ? STRENGTH_TIPS : LANGUAGE_TIPS.map((item) => item.label)), ...(selectionField === "strengths" ? selectedStrengths : selectedLanguages)])].map((value) => {
                 const selected = (selectionField === "strengths" ? selectedStrengths : selectedLanguages).includes(value);
-                const flag = selectionField === "languages" ? LANGUAGE_TIPS.find((item) => item.label === value)?.flag : undefined;
+                const flag = selectionField === "languages" ? getLanguageFlag(value) : undefined;
                 return <button key={value} type="button" onClick={() => toggleSelectedValue(selectionField, value)} style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", padding: ".5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111" : "#fff", color: selected ? "#fff" : "#111", font: "inherit", fontSize: ".8rem", fontWeight: 600, cursor: "pointer" }}>{flag && <span aria-hidden="true">{flag}</span>}{value}</button>;
               })}
             </div>

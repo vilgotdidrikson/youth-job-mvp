@@ -110,7 +110,7 @@ export default function SwipePage() {
               <div style={{ maxWidth: "20rem", padding: "1.15rem", borderRadius: 16, background: "rgba(255,255,255,0.94)", boxShadow: "0 8px 28px rgba(0,0,0,0.14)", textAlign: "center" }}>
                 <p style={{ margin: "0 0 0.45rem", fontSize: "1.1rem", fontWeight: 700, color: "#111111" }}>Slutför ditt CV först</p>
                 <p style={{ margin: 0, fontSize: "0.85rem", color: "#555555", lineHeight: 1.5 }}>Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.</p>
-                <button type="button" className="cta-btn" onClick={() => router.push("/youth/onboarding")} style={{ width: "100%", marginTop: "1rem", padding: "0.75rem 1rem" }}>Fortsätt till CV-flödet</button>
+                <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "100%", marginTop: "1rem", padding: "0.75rem 1rem" }}>Fortsätt till CV-flödet</button>
               </div>
             </div>
           )}

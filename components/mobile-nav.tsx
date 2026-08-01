@@ -82,6 +82,7 @@ export function MobileNav() {
     pathname === "/signup" ||
     pathname === "/" ||
     pathname.startsWith("/youth/onboarding") ||
+    pathname.startsWith("/youth/cv") ||
     pathname.startsWith("/youth/get-started") ||
     pathname.startsWith("/company/onboarding")
   ) {

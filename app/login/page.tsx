@@ -11,7 +11,7 @@ type Mode = "login" | "signup";
 export default function LoginPage({ initialMode = "login" }: { initialMode?: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: sessionLoading } = useSession();
+  const { user, profile, loading: sessionLoading } = useSession();
   const isRedirectingAfterSignup = useRef(false);
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
@@ -23,10 +23,10 @@ export default function LoginPage({ initialMode = "login" }: { initialMode?: Mod
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!sessionLoading && user && !isRedirectingAfterSignup.current) {
-      router.replace("/dashboard");
+    if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
+      router.replace(profile.role === "company" ? "/company?view=swipe" : "/swipe");
     }
-  }, [router, sessionLoading, user]);
+  }, [profile, router, sessionLoading, user]);
 
   useEffect(() => {
     if (searchParams.get("role") === "company") {
@@ -60,7 +60,7 @@ export default function LoginPage({ initialMode = "login" }: { initialMode?: Mod
       }
       const session = await signIn(email, password);
       const signedInProfile = await getUserProfile(session.user.id);
-      router.replace(signedInProfile?.role === "company" ? "/company/onboarding" : "/dashboard");
+      router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : "/swipe");
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
