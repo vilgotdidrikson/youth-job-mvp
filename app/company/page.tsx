@@ -32,19 +32,6 @@ function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
 }
 
-const SOCIAL_NETWORKS = [
-  { key: "linkedin_url", label: "LinkedIn", mark: "in", color: "#0a66c2" },
-  { key: "instagram_url", label: "Instagram", mark: "◎", color: "#c13584" },
-  { key: "facebook_url", label: "Facebook", mark: "f", color: "#1877f2" },
-  { key: "tiktok_url", label: "TikTok", mark: "♪", color: "#111" },
-  { key: "x_url", label: "X", mark: "𝕏", color: "#111" },
-] as const;
-
-function socialHref(value: unknown): string {
-  const href = String(value ?? "").trim();
-  return href ? (/^https?:\/\//i.test(href) ? href : `https://${href}`) : "";
-}
-
 const MOCK_CANDIDATES: CandidateFeedItem[] = [
   {
     youthUserId: "mock-youth-elin",
@@ -79,11 +66,13 @@ interface JobForm {
   city: string;
   address: string;
   postalCode: string;
+  positions: string;
   category: string;
   timePrefs: string[];
   minAge: string;
   maxAge: string;
-  pay: string;
+  salaryFrom: string;
+  salaryTo: string;
   description: string;
   benefits: string;
   requirements: string;
@@ -94,11 +83,13 @@ const EMPTY_FORM: JobForm = {
   city: "",
   address: "",
   postalCode: "",
+  positions: "1",
   category: "",
   timePrefs: [],
   minAge: "",
   maxAge: "",
-  pay: "",
+  salaryFrom: "",
+  salaryTo: "",
   description: "",
   benefits: "",
   requirements: "",
@@ -127,6 +118,7 @@ export default function CompanyPage() {
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
   const [customRequirement, setCustomRequirement] = useState("");
+  const [showExactAddress, setShowExactAddress] = useState(false);
   const [candidateDragX, setCandidateDragX] = useState(0);
   const [candidateIsDragging, setCandidateIsDragging] = useState(false);
   const [candidateFlyDir, setCandidateFlyDir] = useState<"left" | "right" | null>(null);
@@ -263,7 +255,7 @@ export default function CompanyPage() {
     e.preventDefault();
     if (!form.category) { setError("Välj typ av jobb."); return; }
     if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return; }
-    if (!form.city.trim() || !form.address.trim() || !form.postalCode.trim()) { setError("Fyll i stad, adress och postnummer."); return; }
+    if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
     setBusy(true);
     setError("");
     try {
@@ -276,7 +268,7 @@ export default function CompanyPage() {
         category: form.category,
         employment_type: "",
         description: form.description,
-        salary_per_hour: form.pay,
+        salary_per_hour: form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/tim` : "",
         requirements: form.requirements,
         benefits: form.benefits,
         company_name: companyProfile?.company_name || user?.email || "Företag",
@@ -569,104 +561,58 @@ export default function CompanyPage() {
 
       {/* ── NY ANNONS TAB ── */}
       {tab === "skapa" && (
-        <form className="card" style={{ padding: "1.25rem" }} onSubmit={(e) => void handleCreateJob(e)}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.9fr) minmax(0, 1.1fr)", gap: "1.25rem", alignItems: "stretch", padding: "0.35rem", marginBottom: "1.5rem", border: "1px solid #e8e8e8", borderRadius: 18, background: "#fafafa" }}>
-            <label style={{ minHeight: 230, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.55rem", overflow: "hidden", border: "1.5px dashed #cfd8d0", borderRadius: 14, padding: "0.75rem", textAlign: "center", cursor: "pointer", background: "#fff" }}>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp"
-                multiple
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  setJobImageFiles(files);
-                  setJobImagePreviews(files.map((file) => URL.createObjectURL(file)));
-                }}
-              />
-              {jobImagePreviews.length > 0 ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.35rem", width: "100%", height: "100%" }}>
-                  {jobImagePreviews.map((preview, index) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: 9 }} />
-                  ))}
+        <form className="job-builder" onSubmit={(e) => void handleCreateJob(e)}>
+          {(() => {
+            const checks = [
+              { label: "Titel och beskrivning", done: Boolean(form.title.trim() && form.description.trim()) },
+              { label: "Plats", done: Boolean(form.city.trim()) },
+              { label: "Omslagsbild", done: jobImageFiles.length > 0 },
+              { label: "Lön", done: Boolean(form.salaryFrom || form.salaryTo) },
+            ];
+            const percent = Math.round((checks.filter((check) => check.done).length / checks.length) * 100);
+            const salary = form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/tim` : "Lön ej angiven";
+            return <>
+              <header className="job-builder-heading">
+                <div><p>Ny annons</p><h1>Skapa en annons som får fler swipes</h1></div>
+                <div className="job-builder-progress" aria-label={`${percent}% klart`}>
+                  <div><strong>{percent}% klart</strong><span>En komplett annons syns bättre i flödet.</span></div>
+                  <div className="job-builder-progress-track"><i style={{ width: `${percent}%` }} /></div>
+                  <ul>{checks.map((check) => <li key={check.label} className={check.done ? "is-done" : ""}><span>{check.done ? "✓" : "○"}</span>{check.label}</li>)}</ul>
                 </div>
-              ) : (
-                <><span style={{ fontSize: "2.2rem" }}>🖼️</span><strong style={{ color: "#111", fontSize: "0.95rem" }}>Lägg till bilder</strong><span style={{ color: "#737373", fontSize: "0.78rem" }}>En eller flera · JPG, PNG eller WEBP</span></>
-              )}
-            </label>
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", padding: "1.5rem 1rem 1rem 0.25rem" }}>
-              <label style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#737373", display: "block", marginBottom: "0.45rem" }}>Jobbtitel *</label>
-              <input className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-base" style={{ height: 54, marginBottom: "0.55rem", background: "#fff" }} placeholder="T.ex. Butikssäljare" list="company-job-title-suggestions" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required />
-              <p style={{ margin: 0, color: "#737373", fontSize: "1.15rem", fontWeight: 600 }}>{companyProfile?.company_name || user?.email || "Ditt företag"}</p>
-              <button type="button" onClick={() => void handleAiGenerate()} disabled={generatingAi} style={{ alignSelf: "flex-start", marginTop: "1rem", padding: "0.6rem 0.8rem", border: "1px solid #e8c98d", borderRadius: 10, color: "#755315", background: "#fff8e8", fontSize: "0.78rem", fontWeight: 700, cursor: generatingAi ? "wait" : "pointer" }}>
-                {generatingAi ? "AI skriver..." : "Låt AI skapa min annons"}
-              </button>
-              <div style={{ display: "flex", gap: "0.45rem", marginTop: "0.85rem" }}>
-                {SOCIAL_NETWORKS.map((network) => {
-                  const href = socialHref(companyProfile?.[network.key]);
-                  if (!href) return null;
-                  return <a key={network.key} href={href} target="_blank" rel="noreferrer" aria-label={network.label} title={network.label} style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", color: "#fff", background: network.color, textDecoration: "none", fontSize: network.key === "linkedin_url" ? "0.72rem" : "0.95rem", fontWeight: 800 }}>{network.mark}</a>;
-                })}
+              </header>
+              <div className="job-builder-layout">
+                <div className="job-builder-form">
+                  <section className="card job-builder-section">
+                    <h2>Grunduppgifter</h2><p className="job-builder-help">Det här är det första kandidaten ser.</p>
+                    <div className="job-builder-fields two-columns">
+                      <label>Jobbtitel *<input className="input-field" placeholder="T.ex. Butikssäljare" list="company-job-title-suggestions" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required /></label>
+                      <label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label>
+                      <label>Antal tjänster<input className="input-field" type="number" min="1" value={form.positions} onChange={(e) => setForm((p) => ({ ...p, positions: e.target.value }))} /></label>
+                    </div>
+                    <button type="button" className="job-builder-toggle" aria-expanded={showExactAddress} onClick={() => setShowExactAddress((visible) => !visible)}>{showExactAddress ? "− Dölj exakt adress" : "+ Lägg till exakt adress (valfritt)"}</button>
+                    {showExactAddress && <div className="job-builder-fields two-columns job-builder-address"><label>Adress<input className="input-field" placeholder="Gatuadress" list="company-address-suggestions" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} /></label><label>Postnummer<input className="input-field" placeholder="123 45" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} /></label></div>}
+                  </section>
+                  <section className="card job-builder-section">
+                    <h2>Omfattning och lön</h2>
+                    <label className="job-builder-label">Typ av jobb *</label><div className="job-builder-chips">{JOB_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.category === type} onClick={() => setForm((p) => ({ ...p, category: p.category === type ? "" : type }))} className={`chip ${form.category === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div>
+                    <div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/tim</em></div>
+                    <p className="job-builder-tip">✦ Annonser med lön får fler swipes.</p>
+                  </section>
+                  <section className="card job-builder-section">
+                    <div className="job-builder-section-title"><div><h2>Om jobbet</h2><p className="job-builder-help">Berätta vad kandidaten faktiskt får göra.</p></div><button type="button" onClick={() => void handleAiGenerate()} disabled={generatingAi} className="job-builder-ai">{generatingAi ? "AI skriver..." : "✦ Låt AI skapa min annons"}</button></div>
+                    <textarea rows={7} className="job-builder-textarea" placeholder="Beskriv jobbet och arbetsuppgifterna..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
+                    <div className="job-builder-tags">
+                      <div><h3>Förmåner <span>(valfritt)</span></h3><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</div>
+                      <div><h3>Krav <span>(valfritt)</span></h3><div className="job-builder-chips">{REQUIREMENT_TIPS.map((tip) => { const selected = textListItems(form.requirements).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)}>+</button></div>{showCustomRequirement && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customRequirement.trim()) { setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); } }}>Lägg till</button></div>}</div>
+                    </div>
+                  </section>
+                  <section className="card job-builder-section"><h2>Omslagsbild</h2><p className="job-builder-help">En bild gör att annonsen sticker ut i flödet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); setJobImageFiles(files); setJobImagePreviews(files.map((file) => URL.createObjectURL(file))); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP</span></>}</label></section>
+                </div>
+                <aside className="job-builder-preview"><p>Så här ser annonsen ut</p><div className="job-preview-card"><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}<b>{salary}</b></div><div className="job-preview-content"><h2>{form.title || "Din jobbtitel"}</h2><p>{companyProfile?.company_name || user?.email || "Ditt företag"}</p><div><span>⌖ {form.city || "Stad"}</span>{form.category && <span>{form.category}</span>}</div></div></div><small>Förhandsvisningen uppdateras medan du skriver.</small></aside>
               </div>
-            </div>
-          </div>
-
-          <div className="job-creation-details" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "1.5rem", minHeight: 520 }}>
-            <div>
-              <h3 style={{ margin: "0 0 0.8rem", color: "#111", fontSize: "1.15rem", fontWeight: 800 }}>Om jobbet</h3>
-              <textarea
-                rows={7}
-                className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
-                style={{ marginBottom: "1.2rem", resize: "vertical" }}
-                placeholder="Beskriv jobbet och arbetsuppgifterna..."
-                value={form.description}
-                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                required
-              />
-              <h3 style={{ margin: "0 0 0.8rem", color: "#111", fontSize: "1rem", fontWeight: 800 }}>Adress</h3>
-              <div style={{ display: "grid", gap: "0.65rem" }}>
-                <input className="input-field" placeholder="Stad" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required />
-                <input className="input-field" placeholder="Adress" list="company-address-suggestions" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} required />
-                <input className="input-field" placeholder="Postnummer" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} required />
-              </div>
-            </div>
-
-            <div>
-              <h3 style={{ margin: "0 0 0.8rem", color: "#111", fontSize: "1rem", fontWeight: 800 }}>Typ av jobb</h3>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "1.5rem" }}>
-                {JOB_TYPES.map((type) => (
-                  <button key={type} type="button" aria-pressed={form.category === type} onClick={() => setForm((p) => ({ ...p, category: p.category === type ? "" : type }))} className="chip" style={{ border: form.category === type ? "1.5px solid #111" : "1px solid #e8e8e8", background: form.category === type ? "#111" : "#f5f5f5", color: form.category === type ? "#fff" : "#555", cursor: "pointer" }}>{type}</button>
-                ))}
-              </div>
-
-              <h3 style={{ margin: "0 0 0.65rem", color: "#111", fontSize: "1rem", fontWeight: 800 }}>Förmåner <span style={{ color: "#a3a3a3", fontSize: "0.75rem", fontWeight: 500 }}>(valfritt)</span></h3>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.65rem" }}>
-                {BENEFIT_TIPS.map((tip) => {
-                  const selected = form.benefits.split(",").map((item) => item.trim()).includes(tip);
-                  return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className="chip" style={{ border: selected ? "1.5px solid #111" : "1px solid #e8e8e8", background: selected ? "#111" : "#f5f5f5", color: selected ? "#fff" : "#555", cursor: "pointer" }}>{tip}</button>;
-                })}
-                <button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)} style={{ border: "1px solid #e8e8e8", background: "#fff", color: "#555", cursor: "pointer", fontWeight: 800 }} aria-label="Lägg till egen förmån">+</button>
-              </div>
-              {showCustomBenefit && <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.75rem" }}><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" style={{ padding: "0 0.8rem", whiteSpace: "nowrap" }} onClick={() => { if (!customBenefit.trim()) return; setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); }}>Lägg till</button></div>}
-              {textListItems(form.benefits).length > 0 && <ul style={{ margin: "0 0 1.5rem", paddingLeft: "1.2rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.55 }}>{textListItems(form.benefits).map((benefit) => <li key={benefit}>{benefit}</li>)}</ul>}
-
-              <h3 style={{ margin: "0 0 0.65rem", color: "#111", fontSize: "1rem", fontWeight: 800 }}>Krav <span style={{ color: "#a3a3a3", fontSize: "0.75rem", fontWeight: 500 }}>(valfritt)</span></h3>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.65rem" }}>
-                {REQUIREMENT_TIPS.map((tip) => {
-                  const selected = form.requirements.split(",").map((item) => item.trim()).includes(tip);
-                  return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className="chip" style={{ border: selected ? "1.5px solid #111" : "1px solid #e8e8e8", background: selected ? "#111" : "#f5f5f5", color: selected ? "#fff" : "#555", cursor: "pointer" }}>{tip}</button>;
-                })}
-                <button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)} style={{ border: "1px solid #e8e8e8", background: "#fff", color: "#555", cursor: "pointer", fontWeight: 800 }} aria-label="Lägg till eget krav">+</button>
-              </div>
-              {showCustomRequirement && <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.75rem" }}><input className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" style={{ padding: "0 0.8rem", whiteSpace: "nowrap" }} onClick={() => { if (!customRequirement.trim()) return; setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); }}>Lägg till</button></div>}
-              {textListItems(form.requirements).length > 0 && <ul style={{ margin: 0, paddingLeft: "1.2rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.55 }}>{textListItems(form.requirements).map((requirement) => <li key={requirement}>{requirement}</li>)}</ul>}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.6rem", marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid #e8e8e8" }}>
-            {draftSaved && <span style={{ marginRight: "auto", color: "#26734d", fontSize: "0.8rem", fontWeight: 600 }}>Utkast sparat</span>}
-            <button type="button" className="secondary-btn" onClick={handleSaveDraft} style={{ padding: "0.8rem 1.2rem", fontSize: "0.9rem" }}>Spara</button>
-            <button type="submit" className="cta-btn" disabled={busy} style={{ padding: "0.8rem 1.2rem", fontSize: "0.9rem" }}>{busy ? "Publicerar..." : "Publicera"}</button>
-          </div>
+              <div className="job-builder-actions">{draftSaved && <span>Utkast sparat</span>}<button type="button" className="secondary-btn" onClick={handleSaveDraft}>Spara utkast</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></div>
+            </>;
+          })()}
         </form>
       )}
 

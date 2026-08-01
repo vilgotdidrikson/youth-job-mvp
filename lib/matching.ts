@@ -195,6 +195,20 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
 
 export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
   const { user } = await getAuthenticatedUser("youth");
+  const { data: youthProfile, error: profileError } = await getSupabaseClient()
+    .from("youth_profiles")
+    .select("cv_text")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(getSupabaseErrorMessage(profileError, "Unable to verify CV completion."));
+  }
+
+  if (!youthProfile?.cv_text?.trim()) {
+    throw new Error("Complete your CV before swiping jobs.");
+  }
+
   const job = await getJobById(jobId);
 
   if (!job) {

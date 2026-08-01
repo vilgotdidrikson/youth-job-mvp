@@ -132,7 +132,7 @@ export default function ChatsPage() {
         <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
           <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "#111111", marginBottom: "0.4rem" }}>Slutför ditt CV först</p>
           <p style={{ fontSize: "0.85rem", color: "#737373", lineHeight: 1.5 }}>Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.</p>
-          <button type="button" className="cta-btn" onClick={() => router.push("/youth/onboarding")} style={{ marginTop: "0.9rem", padding: "0.75rem 1rem" }}>Skapa mitt CV</button>
+          <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ marginTop: "0.9rem", padding: "0.75rem 1rem" }}>Skapa mitt CV</button>
         </div>
       </main>
     );

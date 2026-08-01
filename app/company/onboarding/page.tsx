@@ -80,7 +80,7 @@ export default function CompanyOnboardingPage() {
       return;
     }
     if (!loading && profile && profile.role !== "company") {
-      router.replace("/dashboard");
+      router.replace("/swipe");
       return;
     }
     if (!loading && user && profile?.role === "company") {
@@ -93,7 +93,7 @@ export default function CompanyOnboardingPage() {
         .then(({ data }) => {
           if (!active || !data) return;
           if (data.company_name?.trim() && data.industry?.trim() && data.administrator?.trim()) {
-            router.replace("/company");
+            router.replace("/company?view=swipe");
             return;
           }
           setCompanyName(data.company_name ?? "");
@@ -152,7 +152,7 @@ export default function CompanyOnboardingPage() {
         min_age: jobMinAge ? parseInt(jobMinAge, 10) : null,
         max_age: jobMaxAge ? parseInt(jobMaxAge, 10) : null,
       });
-      router.replace("/company");
+      router.replace("/company?view=swipe");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
       setBusy(false);
@@ -204,7 +204,7 @@ export default function CompanyOnboardingPage() {
   ];
 
   return (
-    <main className="mobile-shell company-onboarding">
+    <main className={`mobile-shell company-onboarding ${step === "profil" ? "company-profile-onboarding" : ""}`}>
       <datalist id="company-name-suggestions">{COMPANY_NAME_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
@@ -238,9 +238,9 @@ export default function CompanyOnboardingPage() {
             </div>
           )}
 
-          <div className="card" style={{ padding: "1.25rem" }}>
+          <div className="card profile-question-card" style={{ padding: "1.25rem" }}>
             {profileQuestion === 0 && <><label style={labelStyle}>Företagsnamn *</label><input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+              className="h-14 w-full rounded-xl border border-[#e8e8e8] px-4 text-base"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. Bergströms Bageri AB"
               list="company-name-suggestions"
@@ -283,7 +283,7 @@ export default function CompanyOnboardingPage() {
             {profileQuestion === 7 && <div><p style={{ margin: "0 0 1rem", color: "#63777b", fontSize: "0.9rem", lineHeight: 1.5 }}>En komplett profil hjälper kandidater att lära känna ert företag.</p><label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", padding: "1.5rem", border: "1.5px dashed #d7dfd6", borderRadius: 12, cursor: uploadingLogo ? "wait" : "pointer", color: "#63777b", background: "rgba(255,255,255,.55)" }}><input type="file" accept="image/png,image/jpeg" style={{ display: "none" }} disabled={uploadingLogo} onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; setLogoName(file.name); setUploadingLogo(true); setError(""); void uploadJobImage(file).then(setLogoUrl).catch((uploadError) => setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp logotypen.")).finally(() => setUploadingLogo(false)); }} />{logoUrl ? <img src={logoUrl} alt="Företagslogotyp" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 10 }} /> : <span style={{ fontSize: "1.7rem" }}>↑</span>}<strong>{uploadingLogo ? "Laddar upp..." : logoName || "Lägg till logotyp"}</strong><span style={{ fontSize: "0.78rem" }}>PNG eller JPG · valfritt</span></label><div style={{ display: "grid", gap: "0.7rem", marginTop: "1rem" }}><input className="input-field" type="url" placeholder="Webbplats" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} /><input className="input-field" type="url" placeholder="LinkedIn" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Instagram" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Facebook" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} /><input className="input-field" type="url" placeholder="TikTok" value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} /><input className="input-field" type="url" placeholder="X" value={xUrl} onChange={(e) => setXUrl(e.target.value)} /></div></div>}
           </div>
 
-          <div style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
+          <div className="profile-actions" style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem" }}>
             {profileQuestion > 0 && <button type="button" className="secondary-btn" style={{ padding: "0.9rem" }} onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
             <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 2 ? "Spara och fortsätt →" : "Nästa →"}</button>
           </div>
@@ -292,42 +292,12 @@ export default function CompanyOnboardingPage() {
 
       {/* ── STEP 2: Choice ── */}
       {step === "val" && (
-        <div>
-          <div style={{ marginBottom: "1.75rem", paddingTop: "0.5rem" }}>
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              Employo
-            </p>
-            <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0.4rem" }}>
-              Kontot är skapat! 🎉
-            </h1>
-            <p style={{ fontSize: "0.9rem", color: "#737373", margin: 0 }}>
-              Vill du skapa din första jobbannons nu eller gå in på ditt konto?
-            </p>
-          </div>
-
-          <div className="card" style={{ padding: "1.5rem" }}>
-            <p style={{ fontSize: "0.9rem", color: "#555", lineHeight: 1.55, marginBottom: "1.25rem" }}>
-              En jobbannons hjälper unga att hitta just ditt jobb. Du ställer in matchningskraven
-              – stad, åldersintervall, jobtyp och arbetstider – så visas din annons för rätt
-              kandidater.
-            </p>
-            <button
-              type="button"
-              className="cta-btn"
-              style={{ width: "100%", padding: "0.9rem", fontSize: "0.95rem", marginBottom: "0.6rem" }}
-              onClick={() => { setError(""); setStep("annons"); }}
-            >
-              Skapa annons nu
-            </button>
-            <button
-              type="button"
-              className="secondary-btn"
-              style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem" }}
-              onClick={() => router.replace("/company")}
-            >
-              Gå till mitt konto
-            </button>
-          </div>
+        <div style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+          <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
+          <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat! 🎉</h1>
+          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
+          <button type="button" className="cta-btn" onClick={() => { setError(""); setStep("annons"); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
+          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
         </div>
       )}
 
