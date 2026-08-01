@@ -697,7 +697,7 @@ export default function OnboardingPage() {
           </button>
           <button
             type="button"
-            onClick={() => { setShowDocStep(false); setShowCvStep(true); }}
+            onClick={() => router.replace("/swipe")}
             style={{
               width: "100%",
               padding: "0.75rem",
