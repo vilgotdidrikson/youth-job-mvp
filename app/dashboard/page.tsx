@@ -3,17 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
+import { getYouthProfile } from "@/lib/onboarding";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, loading, error, logout, refresh } = useSession();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [youthProfile, setYouthProfile] = useState<any>(null);
+  const [loadingYouthProfile, setLoadingYouthProfile] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, router, user]);
+
+  useEffect(() => {
+    if (!loading && user && profile?.role === "youth") {
+      setLoadingYouthProfile(true);
+      getYouthProfile(user.id)
+        .then((profile) => setYouthProfile(profile))
+        .catch(() => setYouthProfile(null))
+        .finally(() => setLoadingYouthProfile(false));
+    }
+  }, [loading, user, profile?.role]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -29,6 +42,7 @@ export default function DashboardPage() {
           { label: "Redigera profil", onClick: () => router.push("/company") },
         ]
       : [
+          ...(youthProfile?.full_name && !youthProfile?.onboarding_completed ? [{ label: "Slutför mitt CV", onClick: () => router.push("/youth/onboarding") }] : []),
           { label: "Hitta jobb", onClick: () => router.push("/swipe") },
           { label: "Redigera profil", onClick: () => router.push("/profile") },
           { label: "Mina chattar", onClick: () => router.push("/chats") },
