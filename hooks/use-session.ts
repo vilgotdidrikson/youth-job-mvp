@@ -81,23 +81,39 @@ export function useSession(): UseSessionResult {
 
   useEffect(() => {
     isMountedRef.current = true;
-    const supabase = getSupabaseClient();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "INITIAL_SESSION") {
+    try {
+      const supabase = getSupabaseClient();
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(() => {
         void refresh();
-        return;
-      }
+      });
 
       void refresh();
-    });
 
-    return () => {
-      isMountedRef.current = false;
-      subscription.unsubscribe();
-    };
+      const timeoutId = setTimeout(() => {
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+      }, 5000);
+
+      return () => {
+        isMountedRef.current = false;
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
+    } catch (error) {
+      console.error("Failed to initialize Supabase client:", error);
+      if (isMountedRef.current) {
+        setError(error instanceof Error ? error.message : "Failed to initialize Supabase");
+        setLoading(false);
+      }
+      return () => {
+        isMountedRef.current = false;
+      };
+    }
   }, []);
 
   const logout = async () => {

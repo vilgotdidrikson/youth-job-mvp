@@ -13,7 +13,6 @@ const copy = {
     titleAccent: "börjar här.",
     primary: "Kom igång",
     secondary: "För företag",
-    note: "Kostnadsfritt att skapa konto",
     builtFor: "Byggt för vägen från nyfiken till anställd",
     proof: [
       ["En profil", "Samla styrkor, erfarenheter och mål på ett ställe."],
