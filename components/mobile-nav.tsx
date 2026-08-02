@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 
@@ -85,6 +86,32 @@ export function MobileNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { profile } = useSession();
+  const [isHidden, setIsHidden] = useState(false);
+  const previousScrollY = useRef(0);
+
+  useEffect(() => {
+    previousScrollY.current = window.scrollY;
+    let frameId: number | null = null;
+
+    const updateVisibility = () => {
+      frameId = null;
+      const currentScrollY = window.scrollY;
+      const isScrollingDown = currentScrollY > previousScrollY.current;
+
+      setIsHidden(currentScrollY > 24 && isScrollingDown);
+      previousScrollY.current = currentScrollY;
+    };
+
+    const handleScroll = () => {
+      if (frameId === null) frameId = window.requestAnimationFrame(updateVisibility);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
+  }, []);
 
   /* Hide nav on auth / landing / onboarding pages */
   if (
@@ -104,8 +131,9 @@ export function MobileNav() {
 
   return (
     <nav
-      className="bottom-nav"
+      className={`bottom-nav${isHidden ? " bottom-nav-is-hidden" : ""}`}
       aria-label="Primary navigation"
+      onFocusCapture={() => setIsHidden(false)}
     >
       <Link href="/swipe" className="desktop-nav-logo" aria-label="Employo hitta jobb">
         <span>E</span> employo

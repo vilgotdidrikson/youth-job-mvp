@@ -364,7 +364,11 @@ button,
   background: var(--surface);
   padding: 0 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
   padding-top: 0.35rem;
+  transform: translateY(0);
+  transition: transform .25s ease;
 }
+
+.bottom-nav-is-hidden { transform: translateY(110%); }
 
 .bottom-nav-item {
   flex: 1;
@@ -402,16 +406,20 @@ button,
 .job-map-pin::after { content: ""; position: absolute; bottom: -.28rem; left: 50%; width: .45rem; height: .45rem; border-radius: 0 0 .12rem; background: inherit; transform: translateX(-50%) rotate(45deg); }
 .job-map-pin span { position: relative; z-index: 1; font-size: 1.1rem; font-weight: 800; transform: rotate(45deg); }
 .job-map-marker:hover .job-map-pin, .job-map-marker.is-expanded .job-map-pin { background: #0e63d8; box-shadow: 0 .55rem 1.25rem rgba(13,86,181,.4); transform: translateX(-50%) rotate(-45deg) scale(1.08); }
-.job-map-card { position: absolute; z-index: 3; bottom: 2.95rem; left: 50%; width: min(16.4rem, 76vw); padding: .9rem; border: 1px solid rgba(255,255,255,.88); border-radius: 1.05rem; color: #122b33; background: rgba(255,255,255,.97); box-shadow: 0 .9rem 2rem rgba(21,52,61,.24); opacity: 0; pointer-events: none; transform: translate(-50%, .7rem) scale(.94); transform-origin: center bottom; transition: opacity .23s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
-.job-map-card::after { content: ""; position: absolute; bottom: -.38rem; left: 50%; width: .75rem; height: .75rem; background: #fff; transform: translateX(-50%) rotate(45deg); }
-.job-map-marker.is-expanded .job-map-card { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.job-map-cluster-cards { position: absolute; z-index: 3; bottom: 2.95rem; left: 50%; display: flex; align-items: stretch; opacity: 0; pointer-events: none; transform: translate(-50%, .7rem) scale(.94); transform-origin: center bottom; transition: opacity .23s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
+.job-map-cluster-cards::after { content: ""; position: absolute; bottom: -.38rem; left: 50%; width: .75rem; height: .75rem; background: #fff; transform: translateX(-50%) rotate(45deg); }
+.job-map-marker.is-expanded .job-map-cluster-cards { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.job-map-card-list { display: flex; align-items: stretch; gap: .5rem; }
+.job-map-card { position: relative; z-index: 1; flex: 0 0 var(--job-map-card-width); min-width: 0; height: 10rem; box-sizing: border-box; display: flex; flex-direction: column; padding: .9rem; border: 1px solid rgba(255,255,255,.88); border-radius: 1.05rem; color: #122b33; background: rgba(255,255,255,.97); box-shadow: 0 .9rem 2rem rgba(21,52,61,.24); }
 .job-map-company { overflow: hidden; margin: 0 .9rem .18rem 0; color: #668087; font-size: .68rem; font-weight: 800; letter-spacing: .02em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .job-map-card h2 { overflow: hidden; margin: 0; color: #112e38; font-size: 1.05rem; font-weight: 800; letter-spacing: -.035em; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
 .job-map-meta { display: flex; flex-wrap: wrap; gap: .3rem .6rem; margin-top: .55rem; color: #557178; font-size: .71rem; font-weight: 700; }
 .job-map-meta span + span::before { content: "·"; margin-right: .6rem; color: #a3b3b6; }
-.job-map-cta { width: 100%; min-height: 2.35rem; margin-top: .75rem; border: 0; border-radius: .7rem; color: #fff; background: #1677f2; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+.job-map-cta { width: 100%; min-height: 2.35rem; flex-shrink: 0; margin-top: auto; border: 0; border-radius: .7rem; color: #fff; background: #1677f2; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; transition: background .2s ease, transform .2s ease; }
 .job-map-cta:hover { background: #0e63d8; transform: translateY(-1px); }
-.job-map-close { position: absolute; z-index: 1; top: .55rem; right: .55rem; display: grid; width: 1.35rem; height: 1.35rem; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #61757b; background: #eef3f4; font-size: 1rem; line-height: 1; cursor: pointer; }
+.job-map-close { position: absolute; z-index: 3; top: .55rem; right: .55rem; display: grid; width: 1.35rem; height: 1.35rem; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #61757b; background: #eef3f4; font-size: 1rem; line-height: 1; cursor: pointer; }
+.job-map-cluster-arrow { position: absolute; z-index: 3; top: 50%; display: grid; width: 2rem; height: 2rem; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.92); border-radius: 50%; color: #16343d; background: #fff; box-shadow: 0 .35rem .9rem rgba(21,52,61,.2); font-size: 1.45rem; line-height: 1; cursor: pointer; transform: translateY(-50%); }
+.job-map-cluster-previous { left: -1rem; }.job-map-cluster-next { right: -1rem; }
 .job-map-token-message, .map-page-loading { min-height: 100%; display: grid; place-content: center; padding: 2rem; color: #587178; text-align: center; }
 .job-map-status, .map-page-loading-overlay { position: absolute; z-index: 4; top: 50%; left: 50%; padding: .75rem 1rem; border: 1px solid rgba(255,255,255,.8); border-radius: .8rem; color: #526d74; background: rgba(255,255,255,.94); box-shadow: 0 .5rem 1.5rem rgba(22,52,61,.14); font-size: .8rem; font-weight: 700; transform: translate(-50%, -50%); }
 .job-map-status-error { width: min(24rem, calc(100vw - 2rem)); color: #9f332a; text-align: center; }
@@ -644,6 +652,7 @@ button,
   .mobile-shell.pb-20 { padding-bottom: 3rem; }
   .card, .glass-card, .profile-section { border-color: rgba(211, 222, 210, .9); background: rgba(255, 253, 249, .86); box-shadow: 0 1rem 2.5rem rgba(43, 79, 79, .07); }
   .bottom-nav { top: 1.4rem; right: auto; bottom: auto; left: 50%; width: min(88rem, calc(100vw - 4rem)); max-width: none !important; min-height: 4.25rem; transform: translateX(-50%) !important; justify-content: flex-end; gap: .25rem; border: 1px solid #d9ded4; border-radius: 999px; background: rgba(255, 253, 249, .9); padding: .45rem .6rem; box-shadow: 0 .5rem 1.5rem rgba(43, 79, 79, .06); backdrop-filter: blur(12px); }
+  .bottom-nav.bottom-nav-is-hidden { transform: translate(-50%, -150%) !important; }
   .map-page-footer { right: 0; bottom: 0; left: 0; max-width: none; margin: 0; padding-right: max(2rem, calc((100vw - 88rem) / 2)); padding-left: max(2rem, calc((100vw - 88rem) / 2)); }
   .map-page-error, .map-empty-state { bottom: 5.6rem; }
   .job-map-canvas .mapboxgl-ctrl-bottom-right { bottom: 6.2rem; }
