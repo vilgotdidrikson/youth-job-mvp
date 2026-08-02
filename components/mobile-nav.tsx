@@ -14,6 +14,16 @@ const youthItems = [
       </svg>
     ),
   },
+  {
+    href: "/kartan",
+    label: "Kartan",
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="m9 18-6 3V5l6-3 6 3 6-3v16l-6 3-6-3Z" />
+        <path d="M9 2v16M15 5v16" />
+      </svg>
+    ),
+  },
 ];
 
 const companyItems = [
@@ -96,7 +106,6 @@ export function MobileNav() {
     <nav
       className="bottom-nav"
       aria-label="Primary navigation"
-      style={{ maxWidth: 430, left: "50%", transform: "translateX(-50%)" }}
     >
       <Link href="/swipe" className="desktop-nav-logo" aria-label="Employo hitta jobb">
         <span>E</span> employo

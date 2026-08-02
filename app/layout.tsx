@@ -1,5 +1,7 @@
 ﻿import type { Metadata } from "next";
+import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
+import { SessionProvider } from "@/hooks/use-session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,8 +21,12 @@ export default function RootLayout({
         suppressHydrationWarning
         className="antialiased"
       >
-        {children}
-        <MobileNav />
+        <SessionProvider>
+          {children}
+          <Suspense fallback={null}>
+            <MobileNav />
+          </Suspense>
+        </SessionProvider>
       </body>
     </html>
   );

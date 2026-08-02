@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
@@ -267,9 +268,9 @@ export function JobSwipeDeck({
               alignItems: "center",
             }}
           >
-            {currentJob.city && (
+            {(currentJob.address || currentJob.city) && (
               <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <span style={{ fontSize: "0.8rem" }}>📍</span> {currentJob.city}
+                <span style={{ fontSize: "0.8rem" }}>📍</span> {[currentJob.address, currentJob.postal_code, currentJob.city].filter(Boolean).join(", ")}
               </span>
             )}
             {currentJob.city && (currentJob.employment_type || currentJob.salary_per_hour) && (
@@ -301,27 +302,6 @@ export function JobSwipeDeck({
             </p>
           )}
 
-          {(currentJob.benefits || currentJob.requirements) && (
-            <div style={{ display: "grid", gap: "0.8rem", marginTop: "1rem" }}>
-              {currentJob.benefits && (
-                <div>
-                  <p style={{ margin: "0 0 0.35rem", color: "#111", fontSize: "0.78rem", fontWeight: 800 }}>Förmåner</p>
-                  <ul style={{ margin: 0, paddingLeft: "1.15rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.5 }}>
-                    {bulletItems(currentJob.benefits).map((benefit) => <li key={benefit}>{benefit}</li>)}
-                  </ul>
-                </div>
-              )}
-              {currentJob.requirements && (
-                <div>
-                  <p style={{ margin: "0 0 0.35rem", color: "#111", fontSize: "0.78rem", fontWeight: 800 }}>Krav</p>
-                  <ul style={{ margin: 0, paddingLeft: "1.15rem", color: "#4a4a4a", fontSize: "0.84rem", lineHeight: 1.5 }}>
-                    {bulletItems(currentJob.requirements).map((requirement) => <li key={requirement}>{requirement}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
           {currentJob.category && (
             <span
               className="chip"
@@ -329,7 +309,15 @@ export function JobSwipeDeck({
             >
               {currentJob.category}
             </span>
-          )}
+            )}
+          <Link
+            href={`/jobb/${encodeURIComponent(currentJob.id)}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            style={{ display: "inline-block", marginTop: "0.9rem", color: "#49636a", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}
+          >
+            Läs hela annonsen →
+          </Link>
         </div>
       </div>
 

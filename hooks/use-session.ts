@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -16,7 +16,9 @@ interface UseSessionResult {
   logout: () => Promise<void>;
 }
 
-export function useSession(): UseSessionResult {
+const SessionContext = createContext<UseSessionResult | null>(null);
+
+export function SessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -138,5 +140,19 @@ export function useSession(): UseSessionResult {
     }
   };
 
-  return { user, profile, loading, error, refresh, logout };
+  return createElement(
+    SessionContext.Provider,
+    { value: { user, profile, loading, error, refresh, logout } },
+    children,
+  );
+}
+
+export function useSession(): UseSessionResult {
+  const session = useContext(SessionContext);
+
+  if (!session) {
+    throw new Error("useSession must be used inside SessionProvider.");
+  }
+
+  return session;
 }
