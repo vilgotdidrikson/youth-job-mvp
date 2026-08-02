@@ -3,12 +3,17 @@
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
 
 const JOB_TABLE_FIELDS = [
   "title",
   "description",
   "city",
+  "address",
+  "postal_code",
+  "longitude",
+  "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
@@ -27,6 +32,10 @@ const JOB_CREATE_INPUT_FIELDS = [
   "title",
   "description",
   "city",
+  "address",
+  "postal_code",
+  "longitude",
+  "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
@@ -47,6 +56,10 @@ export interface CreateJobInput {
   title: string;
   description: string;
   city: string;
+  address?: string | null;
+  postal_code?: string | null;
+  longitude?: number | null;
+  latitude?: number | null;
   salary_per_hour: string;
   employment_type: string;
   category?: string | null;
@@ -66,6 +79,10 @@ interface JobInsertPayload {
   title: string;
   description: string;
   city: string;
+  address: string;
+  postal_code: string;
+  longitude: number | null;
+  latitude: number | null;
   salary_per_hour: string;
   employment_type: string;
   category: string;
@@ -89,6 +106,17 @@ function normalizeJobString(value: unknown): string {
   }
 
   return "";
+}
+
+function validCoordinates(longitude: unknown, latitude: unknown): longitude is number {
+  return typeof longitude === "number"
+    && Number.isFinite(longitude)
+    && typeof latitude === "number"
+    && Number.isFinite(latitude)
+    && longitude >= -180
+    && longitude <= 180
+    && latitude >= -90
+    && latitude <= 90;
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -182,6 +210,10 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     title: normalizeJobString(row.title),
     description: normalizeJobString(row.description),
     city: normalizeJobString(row.city),
+    address: normalizeJobString(row.address),
+    postal_code: normalizeJobString(row.postal_code),
+    longitude: typeof row.longitude === "number" ? row.longitude : null,
+    latitude: typeof row.latitude === "number" ? row.latitude : null,
     salary_per_hour: normalizeJobString(row.salary_per_hour),
     employment_type: normalizeJobString(row.employment_type),
     category: normalizeJobString(row.category),
@@ -217,6 +249,10 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     title: updates.title,
     description: updates.description,
     city: updates.city,
+    address: updates.address,
+    postal_code: updates.postal_code,
+    longitude: updates.longitude,
+    latitude: updates.latitude,
     salary_per_hour: updates.salary_per_hour,
     employment_type: updates.employment_type,
     category: updates.category,
@@ -289,12 +325,32 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
 export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   assertAllowedJobCreateInput(toRecord(jobData));
 
+  const hasAddress = Boolean(jobData.address?.trim());
+  const hasCoordinates = validCoordinates(jobData.longitude, jobData.latitude);
+  if (!hasAddress && !hasCoordinates) {
+    throw new Error("Ange en arbetsplatsadress eller giltiga koordinater.");
+  }
+  if ((jobData.longitude != null || jobData.latitude != null) && !hasCoordinates) {
+    throw new Error("Koordinater måste innehålla både giltig longitud och latitud.");
+  }
+
   const companyUser = await assertCompanyUser();
+  const coordinates = hasCoordinates
+    ? { longitude: jobData.longitude, latitude: jobData.latitude }
+    : await geocodeJobLocation({
+      address: jobData.address,
+      postalCode: jobData.postal_code,
+      city: jobData.city,
+    });
 
   const payload: JobInsertPayload = {
     title: jobData.title,
     description: jobData.description,
     city: jobData.city,
+    address: jobData.address?.trim() ?? "",
+    postal_code: jobData.postal_code?.trim() ?? "",
+    longitude: coordinates?.longitude ?? null,
+    latitude: coordinates?.latitude ?? null,
     salary_per_hour: jobData.salary_per_hour,
     employment_type: jobData.employment_type,
     category: jobData.category ?? jobData.employment_type,
@@ -329,6 +385,21 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
   }
 
   const payload = buildJobUpdatePayload(updates);
+
+  const hasExplicitCoordinates = updates.longitude !== undefined || updates.latitude !== undefined;
+  if (hasExplicitCoordinates && !validCoordinates(updates.longitude, updates.latitude)) {
+    throw new Error("Koordinater måste innehålla både giltig longitud och latitud.");
+  }
+
+  if (!hasExplicitCoordinates && (updates.address !== undefined || updates.postal_code !== undefined || updates.city !== undefined)) {
+    const coordinates = await geocodeJobLocation({
+      address: updates.address ?? existing.address,
+      postalCode: updates.postal_code ?? existing.postal_code,
+      city: updates.city ?? existing.city,
+    });
+    payload.longitude = coordinates?.longitude ?? null;
+    payload.latitude = coordinates?.latitude ?? null;
+  }
 
   if (!Object.keys(payload).length) {
     return existing;

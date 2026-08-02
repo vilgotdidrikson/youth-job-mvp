@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { JobSwipeDeck } from "@/components/job-swipe-deck";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useSession } from "@/hooks/use-session";
@@ -9,8 +9,9 @@ import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
-export default function SwipePage() {
+function SwipePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, profile, loading } = useSession();
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -22,7 +23,8 @@ export default function SwipePage() {
       void (async () => {
         try {
           const data = await getSwipeJobs();
-          setJobs(data);
+          const requestedJobId = searchParams.get("job");
+          setJobs(requestedJobId ? [...data].sort((a, b) => (a.id === requestedJobId ? -1 : b.id === requestedJobId ? 1 : 0)) : data);
           setError("");
         } catch (loadError) {
           setError(loadError instanceof Error ? loadError.message : "Unable to load jobs.");
@@ -31,7 +33,7 @@ export default function SwipePage() {
         }
       })();
     }
-  }, [cvLoading, loading, profile?.role, user]);
+  }, [cvLoading, loading, profile?.role, searchParams, user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -118,4 +120,8 @@ export default function SwipePage() {
       )}
     </main>
   );
+}
+
+export default function SwipePage() {
+  return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar...</p></main>}><SwipePageContent /></Suspense>;
 }

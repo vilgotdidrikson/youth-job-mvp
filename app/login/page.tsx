@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
@@ -8,7 +8,7 @@ import type { Role } from "@/lib/types";
 
 type Mode = "login" | "signup";
 
-export default function LoginPage({ initialMode = "login" }: { initialMode?: Mode }) {
+function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading: sessionLoading } = useSession();
@@ -117,4 +117,8 @@ export default function LoginPage({ initialMode = "login" }: { initialMode?: Mod
       <footer className="auth-footer">© 2026 Employo <span>En enklare väg från nyfiken till anställd.</span></footer>
     </main>
   );
+}
+
+export default function LoginPage({ initialMode = "login" }: { initialMode?: Mode }) {
+  return <Suspense fallback={null}><LoginPageContent initialMode={initialMode} /></Suspense>;
 }

@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -66,13 +67,12 @@ interface JobForm {
   city: string;
   address: string;
   postalCode: string;
-  positions: string;
   category: string;
-  timePrefs: string[];
   minAge: string;
   maxAge: string;
   salaryFrom: string;
   salaryTo: string;
+  salaryType: "timlön" | "månadslön" | "fast lön";
   description: string;
   benefits: string;
   requirements: string;
@@ -83,19 +83,18 @@ const EMPTY_FORM: JobForm = {
   city: "",
   address: "",
   postalCode: "",
-  positions: "1",
   category: "",
-  timePrefs: [],
   minAge: "",
   maxAge: "",
   salaryFrom: "",
   salaryTo: "",
+  salaryType: "timlön",
   description: "",
   benefits: "",
   requirements: "",
 };
 
-export default function CompanyPage() {
+function CompanyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading } = useSession();
@@ -118,7 +117,6 @@ export default function CompanyPage() {
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
   const [customRequirement, setCustomRequirement] = useState("");
-  const [showExactAddress, setShowExactAddress] = useState(false);
   const [candidateDragX, setCandidateDragX] = useState(0);
   const [candidateIsDragging, setCandidateIsDragging] = useState(false);
   const [candidateFlyDir, setCandidateFlyDir] = useState<"left" | "right" | null>(null);
@@ -256,6 +254,8 @@ export default function CompanyPage() {
     if (!form.category) { setError("Välj typ av jobb."); return; }
     if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return; }
     if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
+    if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return; }
+    if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return; }
     setBusy(true);
     setError("");
     try {
@@ -265,10 +265,12 @@ export default function CompanyPage() {
       await createJob({
         title: form.title,
         city: form.city,
+        address: form.address,
+        postal_code: form.postalCode,
         category: form.category,
-        employment_type: "",
+        employment_type: form.category,
         description: form.description,
-        salary_per_hour: form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/tim` : "",
+        salary_per_hour: form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/${form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period"}` : "",
         requirements: form.requirements,
         benefits: form.benefits,
         company_name: companyProfile?.company_name || user?.email || "Företag",
@@ -565,12 +567,13 @@ export default function CompanyPage() {
           {(() => {
             const checks = [
               { label: "Titel och beskrivning", done: Boolean(form.title.trim() && form.description.trim()) },
-              { label: "Plats", done: Boolean(form.city.trim()) },
+              { label: "Plats", done: Boolean(form.city.trim() && form.address.trim() && form.postalCode.trim()) },
               { label: "Omslagsbild", done: jobImageFiles.length > 0 },
               { label: "Lön", done: Boolean(form.salaryFrom || form.salaryTo) },
             ];
             const percent = Math.round((checks.filter((check) => check.done).length / checks.length) * 100);
-            const salary = form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/tim` : "Lön ej angiven";
+            const salaryPeriod = form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period";
+            const salary = form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/${salaryPeriod}` : "Lön ej angiven";
             return <>
               <header className="job-builder-heading">
                 <div><p>Ny annons</p><h1>Skapa en annons som får fler swipes</h1></div>
@@ -583,32 +586,24 @@ export default function CompanyPage() {
               <div className="job-builder-layout">
                 <div className="job-builder-form">
                   <section className="card job-builder-section">
-                    <h2>Grunduppgifter</h2><p className="job-builder-help">Det här är det första kandidaten ser.</p>
-                    <div className="job-builder-fields two-columns">
-                      <label>Jobbtitel *<input className="input-field" placeholder="T.ex. Butikssäljare" list="company-job-title-suggestions" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required /></label>
-                      <label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label>
-                      <label>Antal tjänster<input className="input-field" type="number" min="1" value={form.positions} onChange={(e) => setForm((p) => ({ ...p, positions: e.target.value }))} /></label>
-                    </div>
-                    <button type="button" className="job-builder-toggle" aria-expanded={showExactAddress} onClick={() => setShowExactAddress((visible) => !visible)}>{showExactAddress ? "− Dölj exakt adress" : "+ Lägg till exakt adress (valfritt)"}</button>
-                    {showExactAddress && <div className="job-builder-fields two-columns job-builder-address"><label>Adress<input className="input-field" placeholder="Gatuadress" list="company-address-suggestions" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} /></label><label>Postnummer<input className="input-field" placeholder="123 45" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} /></label></div>}
-                  </section>
-                  <section className="card job-builder-section">
-                    <h2>Omfattning och lön</h2>
-                    <label className="job-builder-label">Typ av jobb *</label><div className="job-builder-chips">{JOB_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.category === type} onClick={() => setForm((p) => ({ ...p, category: p.category === type ? "" : type }))} className={`chip ${form.category === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div>
-                    <div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/tim</em></div>
-                    <p className="job-builder-tip">✦ Annonser med lön får fler swipes.</p>
-                  </section>
-                  <section className="card job-builder-section">
                     <div className="job-builder-section-title"><div><h2>Om jobbet</h2><p className="job-builder-help">Berätta vad kandidaten faktiskt får göra.</p></div><button type="button" onClick={() => void handleAiGenerate()} disabled={generatingAi} className="job-builder-ai">{generatingAi ? "AI skriver..." : "✦ Låt AI skapa min annons"}</button></div>
-                    <textarea rows={7} className="job-builder-textarea" placeholder="Beskriv jobbet och arbetsuppgifterna..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
+                    <label className="job-builder-title-field">Arbetstitel *<input className="input-field" placeholder="T.ex. Butikssäljare" list="company-job-title-suggestions" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required /></label>
+                    <textarea rows={7} className="job-builder-textarea job-builder-description" placeholder="Beskriv jobbet och arbetsuppgifterna..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
+                    <label className="job-builder-label" style={{ marginTop: "1rem" }}>Typ av jobb *</label><div className="job-builder-chips">{JOB_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.category === type} onClick={() => setForm((p) => ({ ...p, category: p.category === type ? "" : type }))} className={`chip ${form.category === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div>
+                  </section>
+                  <section className="card job-builder-section">
+                    <h2>Krav och förmåner</h2><p className="job-builder-help">Gör det tydligt vad jobbet kräver och erbjuder.</p>
+                    <div className="job-builder-age"><span>Åldersspann <em>(valfritt)</em></span><div><label>Ålder från<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 16" value={form.minAge} onChange={(e) => setForm((p) => ({ ...p, minAge: e.target.value }))} /></label><b>—</b><label>Ålder till<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 19" value={form.maxAge} onChange={(e) => setForm((p) => ({ ...p, maxAge: e.target.value }))} /></label></div></div>
                     <div className="job-builder-tags">
                       <div><h3>Förmåner <span>(valfritt)</span></h3><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</div>
                       <div><h3>Krav <span>(valfritt)</span></h3><div className="job-builder-chips">{REQUIREMENT_TIPS.map((tip) => { const selected = textListItems(form.requirements).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)}>+</button></div>{showCustomRequirement && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customRequirement.trim()) { setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); } }}>Lägg till</button></div>}</div>
                     </div>
                   </section>
+                  <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2><div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/{form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period"}</em></div></section>
+                  <section className="card job-builder-section"><h2>Adress</h2><p className="job-builder-help">Den fullständiga adressen används för att placera jobbet på kartan.</p><div className="job-builder-fields two-columns"><label>Gatuadress *<input className="input-field" placeholder="T.ex. Storgatan 12" list="company-address-suggestions" autoComplete="street-address" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} required /></label><label>Postnummer *<input className="input-field" placeholder="123 45" autoComplete="postal-code" inputMode="numeric" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} required /></label><label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label></div></section>
                   <section className="card job-builder-section"><h2>Omslagsbild</h2><p className="job-builder-help">En bild gör att annonsen sticker ut i flödet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); setJobImageFiles(files); setJobImagePreviews(files.map((file) => URL.createObjectURL(file))); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP</span></>}</label></section>
                 </div>
-                <aside className="job-builder-preview"><p>Så här ser annonsen ut</p><div className="job-preview-card"><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}<b>{salary}</b></div><div className="job-preview-content"><h2>{form.title || "Din jobbtitel"}</h2><p>{companyProfile?.company_name || user?.email || "Ditt företag"}</p><div><span>⌖ {form.city || "Stad"}</span>{form.category && <span>{form.category}</span>}</div></div></div><small>Förhandsvisningen uppdateras medan du skriver.</small></aside>
+                <aside className="job-builder-preview"><p>Så här ser annonsen ut</p><article className="job-preview-detail"><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}</div><div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyProfile?.company_name || user?.email || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Tider</h3><p>{form.category || "Välj deltid, heltid eller annan jobbtyp"}</p></section></div><div className="job-preview-facts"><section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...textListItems(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{textListItems(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Adress</h3><p>{[form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Adress"}</p></section></div></div></article><small>Förhandsvisningen uppdateras medan du skriver.</small></aside>
               </div>
               <div className="job-builder-actions">{draftSaved && <span>Utkast sparat</span>}<button type="button" className="secondary-btn" onClick={handleSaveDraft}>Spara utkast</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></div>
             </>;
@@ -631,9 +626,9 @@ export default function CompanyPage() {
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 return (
-                  <div key={job.id} className="card" style={{ padding: "1rem 1.1rem" }}>
+                  <Link key={job.id} href={`/jobb/${job.id}`} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
                     <p style={{ fontWeight: 700, fontSize: "1rem", color: "#111", marginBottom: "0.25rem" }}>{job.title}</p>
-                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[job.city, job.category, agePart].filter(Boolean).join(" · ")}</p>
+                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[[job.address, job.postal_code, job.city].filter(Boolean).join(", "), job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
@@ -642,7 +637,8 @@ export default function CompanyPage() {
                     <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: job.is_active ? "#e8faf0" : "#f5f5f5", color: job.is_active ? "#1a7f4b" : "#a3a3a3" }}>
                       {job.is_active ? "Aktiv" : "Inaktiv"}
                     </div>
-                  </div>
+                    <span className="job-list-card-link">Visa hela annonsen →</span>
+                  </Link>
                 );
               })}
             </div>
@@ -674,4 +670,8 @@ export default function CompanyPage() {
       )}
     </main>
   );
+}
+
+export default function CompanyPage() {
+  return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar...</p></main>}><CompanyPageContent /></Suspense>;
 }

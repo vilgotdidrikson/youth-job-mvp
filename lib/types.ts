@@ -67,6 +67,10 @@ export interface JobPost {
   title: string;
   description: string;
   city: string;
+  address?: string | null;
+  postal_code?: string | null;
+  longitude?: number | null;
+  latitude?: number | null;
   salary_per_hour: string;
   employment_type: string;
   category: string;
