@@ -193,24 +193,29 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
 
 export async function saveYouthProfileDraft(input: {
   name: string;
-  age: string;
+  dateOfBirth: string;
+  address: string;
+  postalCode: string;
   city: string;
-  targetRoles: string[];
   skills: string[];
-  interests: string[];
-  workingTime: string[];
   experience: string;
+  education: string;
+  languages: string;
+  certificates: string;
+  extracurriculars: string;
 }): Promise<YouthProfile> {
   return persistYouthProfile({
     full_name: input.name || null,
-    age: input.age ? Number(input.age) : null,
+    date_of_birth: input.dateOfBirth || null,
+    address: input.address || null,
+    postal_code: input.postalCode || null,
     city: input.city || null,
-    merits: input.interests,
     strengths: input.skills,
     work_experience: splitListFromText(input.experience),
-    desired_roles: input.targetRoles,
-    desired_locations: input.city ? [input.city] : [],
-    employment_preferences: input.workingTime,
+    education: splitListFromText(input.education),
+    languages: splitListFromText(input.languages),
+    certificates: input.certificates || null,
+    extracurriculars: input.extracurriculars || null,
   });
 }
 
