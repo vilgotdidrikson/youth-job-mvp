@@ -197,7 +197,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
   const { user } = await getAuthenticatedUser("youth");
   const { data: youthProfile, error: profileError } = await getSupabaseClient()
     .from("youth_profiles")
-    .select("cv_text")
+    .select("cv_text, documents")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -205,7 +205,10 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error(getSupabaseErrorMessage(profileError, "Unable to verify CV completion."));
   }
 
-  if (!youthProfile?.cv_text?.trim()) {
+  const hasUploadedCv = Array.isArray(youthProfile?.documents)
+    && youthProfile.documents.some((document) => document && typeof document === "object" && (document as { type?: unknown }).type === "cv");
+
+  if (!youthProfile?.cv_text?.trim() && !hasUploadedCv) {
     throw new Error("Complete your CV before swiping jobs.");
   }
 

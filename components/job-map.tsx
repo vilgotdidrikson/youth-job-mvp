@@ -53,6 +53,11 @@ function addressKey(job: JobPost): string | null {
   return address ? [address, job.postal_code, job.city].filter(Boolean).join("|").toLocaleLowerCase("sv-SE") : null;
 }
 
+function cityKey(job: JobPost): string | null {
+  const city = job.city?.trim().toLocaleLowerCase("sv-SE");
+  return city || null;
+}
+
 function clusterNearbyJobs(jobs: LocatedJob[]): JobCluster[] {
   const groups: LocatedJob[][] = [];
 
@@ -61,10 +66,14 @@ function clusterNearbyJobs(jobs: LocatedJob[]): JobCluster[] {
     const matchingGroup = groups.find((group) => group.some((candidate) => {
       const candidateAddress = addressKey(candidate.job);
       const sameAddress = itemAddress !== null && itemAddress === candidateAddress;
+      const sameFallbackCity = !item.hasPreciseCoordinates
+        && !candidate.hasPreciseCoordinates
+        && cityKey(item.job) !== null
+        && cityKey(item.job) === cityKey(candidate.job);
       const nearbyPreciseLocations = item.hasPreciseCoordinates
         && candidate.hasPreciseCoordinates
         && distanceInMeters(item.coordinates, candidate.coordinates) <= 75;
-      return sameAddress || nearbyPreciseLocations;
+      return sameAddress || sameFallbackCity || nearbyPreciseLocations;
     }));
 
     if (matchingGroup) matchingGroup.push(item);

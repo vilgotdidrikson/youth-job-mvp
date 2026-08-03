@@ -143,7 +143,8 @@ button,
 .landing-bold-actions { display: flex; justify-content: center; gap: .65rem; margin-top: 2.6rem; }
 .landing-bold-primary, .landing-bold-secondary { min-height: 3.25rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 1.7rem; border-radius: 999px; font-size: .92rem; font-weight: 700; text-decoration: none; }
 .landing-bold-primary { color: #fff; background: var(--landing-ink); }
-.landing-bold-secondary { border: 1px solid rgba(22,52,61,.22); color: var(--landing-ink); }
+.landing-bold-secondary { border: 1px solid var(--landing-ink); color: var(--landing-ink); background: transparent; transition: background .2s ease, color .2s ease, transform .2s ease; }
+.landing-bold-secondary:hover { color: #fff; background: var(--landing-ink); transform: translateY(-1px); }
 .landing-bold-note { margin: .9rem 0 0; color: #839397; font-size: .75rem; }
 .landing-bold-purpose { padding: 2rem 1.5rem 4.5rem; text-align: center; }
 .landing-bold-purpose > p { margin: 0 0 1.4rem; color: #849599; font-size: .67rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }

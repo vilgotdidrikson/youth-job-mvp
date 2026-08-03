@@ -100,7 +100,13 @@ export default function Home() {
         <h1>{t.title}<br /><em>{t.titleAccent}</em></h1>
         <div className="landing-bold-actions">
           <Link href="/signup" className="landing-bold-primary">{t.primary}</Link>
-          <Link href="/signup?role=company" className="landing-bold-secondary">{t.secondary}</Link>
+          <Link
+            href="/signup?role=company"
+            className="landing-bold-secondary"
+            style={{ border: "1.5px solid #d65f85", background: "#ffffff" }}
+          >
+            {t.secondary}
+          </Link>
         </div>
         <p className="landing-bold-note">{t.note}</p>
       </section>

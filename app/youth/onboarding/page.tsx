@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
-import { completeYouthOnboarding, getYouthProfile, saveYouthAccountDetails } from "@/lib/onboarding";
+import { completeYouthOnboarding, getYouthProfile, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
+import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { uploadYouthDocument } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
@@ -84,6 +85,8 @@ const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
   recommendation: "Rekommendationsbrev",
   certificate: "Intyg",
+  cv: "Eget CV",
+  generated_cv: "Employo-CV",
   other: "Övrigt",
 };
 
@@ -441,6 +444,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
   const [accountDetailsLoaded, setAccountDetailsLoaded] = useState(false);
   const [redirectingBetweenFlows, setRedirectingBetweenFlows] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
+  const [showCvMethodChoice, setShowCvMethodChoice] = useState(flow === "cv");
   const [cvText, setCvText] = useState("");
   const [documents, setDocuments] = useState<YouthDocument[]>([]);
   const [docType, setDocType] = useState<YouthDocumentType>("grades");
@@ -488,6 +492,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
             age: savedProfile.age ? String(savedProfile.age) : "",
           }));
           setAdditionalAddresses(Array.isArray(savedProfile.additional_addresses) ? savedProfile.additional_addresses : []);
+          setDocuments(Array.isArray(savedProfile.documents) ? savedProfile.documents : []);
           setAccountDetailsSaved(hasAccountDetails(savedProfile));
         }
         setStep(FIRST_CV_STEP);
@@ -542,6 +547,31 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
   }
 
   /* ── CV preview / edit step ─────────────────────── */
+  if (flow === "cv" && showCvMethodChoice) {
+    return (
+      <main className="youth-onboarding" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: 430, margin: "0 auto", padding: "2rem 1.25rem", background: "var(--color-canvas)" }}>
+        <div style={{ marginTop: "auto", marginBottom: "auto" }}>
+          <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Ditt CV</p>
+          <h1 style={{ margin: ".45rem 0 0", color: "var(--text-primary)", fontSize: "2.2rem", letterSpacing: "-.06em", lineHeight: 1 }}>Hur vill du skapa ditt CV?</h1>
+          <p style={{ margin: "1rem 0 1.6rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
+
+          <div style={{ display: "grid", gap: ".75rem" }}>
+            <button type="button" onClick={() => setShowCvMethodChoice(false)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: 0, borderRadius: 16, color: "var(--color-on-brand)", background: "var(--accent)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
+              <strong style={{ fontSize: "1rem" }}>Skapa CV i Employo</strong>
+              <span style={{ fontSize: ".82rem", opacity: .9 }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
+            </button>
+            <label style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
+              <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} style={{ display: "none" }} />
+              <strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
+              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Klart direkt - du behöver inte svara på fler frågor.</span>
+            </label>
+          </div>
+          {error && <p style={{ margin: "1rem 0 0", color: "var(--color-danger)", fontSize: ".85rem" }}>{error}</p>}
+        </div>
+      </main>
+    );
+  }
+
   if (showCvStep) {
     return (
       <main
@@ -590,6 +620,25 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
             background: "#fafafa",
           }}
         />
+
+        <section style={{ display: "grid", gap: ".65rem", marginTop: "1rem", padding: "1rem", border: "1px solid var(--border)", borderRadius: 12, background: "var(--color-surface-soft)" }}>
+          <div>
+            <h2 style={{ margin: 0, color: "var(--text-primary)", fontSize: "0.95rem" }}>CV som PDF</h2>
+            <p style={{ margin: ".25rem 0 0", color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.45 }}>Ladda ner ditt Employo-CV som PDF eller bifoga ett eget CV.</p>
+          </div>
+          <button type="button" onClick={() => void handleGeneratedCvPdf()} disabled={docUploading || !cvText.trim()} className="cta-btn" style={{ minHeight: "2.8rem", border: 0, borderRadius: 10, cursor: docUploading ? "wait" : "pointer" }}>
+            {docUploading ? "Skapar PDF..." : "Ladda ner Employo-CV som PDF"}
+          </button>
+          <label style={{ display: "grid", placeItems: "center", minHeight: "2.8rem", padding: ".65rem 1rem", border: "1px solid var(--color-brand)", borderRadius: 10, color: "var(--accent)", background: "var(--surface)", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>
+            <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleExistingCvSelect(event)} disabled={docUploading} style={{ display: "none" }} />
+            Bifoga eget CV som PDF
+          </label>
+          {documents.filter((document) => document.type === "cv" || document.type === "generated_cv").map((document) => (
+            <a key={document.url} href={document.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", fontSize: ".8rem", fontWeight: 700 }}>
+              {DOC_TYPE_LABELS[document.type]}: {document.name}
+            </a>
+          ))}
+        </section>
 
         {error && (
           <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</p>
@@ -1040,6 +1089,72 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
     setShowDocStep(true);
   }
 
+  async function handleUploadedCvFinish(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setError("Välj en PDF-fil för ditt CV.");
+      return;
+    }
+
+    setDocUploading(true);
+    setError("");
+    try {
+      const url = await uploadYouthDocument(file);
+      await saveUploadedCvToProfile({ name: file.name, url, type: "cv" });
+      router.replace("/swipe");
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Kunde inte spara ditt CV.");
+    } finally {
+      setDocUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  async function handleExistingCvSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setError("Välj en PDF-fil för ditt CV.");
+      return;
+    }
+
+    setDocUploading(true);
+    setError("");
+    try {
+      const url = await uploadYouthDocument(file);
+      setDocuments((previous) => [
+        ...previous.filter((document) => document.type !== "cv"),
+        { name: file.name, url, type: "cv" },
+      ]);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp ditt CV.");
+    } finally {
+      setDocUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  async function handleGeneratedCvPdf() {
+    if (!cvText.trim()) return;
+
+    setDocUploading(true);
+    setError("");
+    try {
+      const file = await createCvPdfFile(cvText, answers.full_name);
+      const url = await uploadYouthDocument(file);
+      setDocuments((previous) => [
+        ...previous.filter((document) => document.type !== "generated_cv"),
+        { name: file.name, url, type: "generated_cv" },
+      ]);
+      downloadPdfFile(file);
+    } catch (pdfError) {
+      setError(pdfError instanceof Error ? pdfError.message : "Kunde inte skapa PDF-filen.");
+    } finally {
+      setDocUploading(false);
+    }
+  }
+
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1228,7 +1343,27 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
     setSaving(true);
     setError("");
     try {
-      await completeYouthOnboarding({ ...answers, extracurriculars: formatOtherEntries(), work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates(), cv_text: cvText, documents: [...documents, ...otherEntries.flatMap((entry) => entry.file ? [entry.file] : [])] });
+      // Every Employo-created CV is saved as both editable text and a PDF.
+      // This makes the PDF available from the profile without requiring a
+      // separate download action during onboarding.
+      const pdfFile = await createCvPdfFile(cvText, answers.full_name);
+      const pdfUrl = await uploadYouthDocument(pdfFile);
+      const generatedCvDocument: YouthDocument = { name: pdfFile.name, url: pdfUrl, type: "generated_cv" };
+      const otherDocuments = otherEntries.flatMap((entry) => entry.file ? [entry.file] : []);
+
+      await completeYouthOnboarding({
+        ...answers,
+        extracurriculars: formatOtherEntries(),
+        work_experience: formatWorkExperiences(),
+        education: formatEducations(),
+        certificates: formatCertificates(),
+        cv_text: cvText,
+        documents: [
+          ...documents.filter((document) => document.type !== "generated_cv"),
+          ...otherDocuments,
+          generatedCvDocument,
+        ],
+      });
       router.replace("/swipe");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
@@ -1316,7 +1451,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
           <span style={{ fontSize: "0.95rem", color: "#737373", fontWeight: 700, letterSpacing: "0.05em" }}>
             {flowStep} / {flowTotal}
           </span>
-          {step > (accountDetailsSaved ? FIRST_CV_STEP : 0) && (
+          {((isAccountDetailsFlow && !accountDetailsSaved && step > 0) || (!isAccountDetailsFlow && step > FIRST_CV_STEP)) && (
             <button
               type="button"
               onClick={() => { setError(""); setStep((s) => s - 1); }}
