@@ -1,0 +1,47 @@
+/*
+ * Employo colour system
+ *
+ * This is the single source of truth for the UI palette. Adjust a token here
+ * to update the shared look of the app without hunting down colour values.
+ */
+:root {
+  --color-canvas: #fffafb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fff0f4;
+  --color-surface-rose: #f9dce5;
+  --color-surface-rose-strong: #fbd8e2;
+  --color-border: #f0d9e0;
+
+  --color-text: #633f4b;
+  --color-text-rgb: 99, 63, 75;
+  --color-text-muted: #896a76;
+  --color-text-subtle: #a57b88;
+
+  --color-brand: #dc6f8d;
+  --color-brand-strong: #ec7598;
+  --color-brand-hover: #d96886;
+  --color-brand-soft: #f7c2ce;
+  --color-on-brand: #ffffff;
+  --color-cream: #ffe0c9;
+
+  --color-success: #21855d;
+  --color-success-soft: #eef9f3;
+  --color-success-border: #b9e5d7;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fff1f0;
+  --color-danger-border: #ffd6d3;
+
+  /* Existing component aliases, kept while the app is gradually refactored. */
+  --bg: var(--color-canvas);
+  --surface: var(--color-surface);
+  --border: var(--color-border);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-muted);
+  --text-tertiary: var(--color-text-subtle);
+  --accent: var(--color-brand);
+  --accent-green: var(--color-success);
+  --accent-red: var(--color-danger);
+  --landing-ink: var(--color-text);
+  --landing-blue: var(--color-brand-strong);
+  --landing-paper: var(--color-canvas);
+}
