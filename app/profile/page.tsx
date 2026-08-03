@@ -3,75 +3,39 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ProfileProgressCard } from "@/components/profile/profile-progress-card";
-import { ProfileSectionCard } from "@/components/profile/profile-section-card";
-import { SelectedChip } from "@/components/profile/selected-chip";
-import { StickyProfileCta } from "@/components/profile/sticky-profile-cta";
-import { SuggestionChip } from "@/components/profile/suggestion-chip";
+import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
+import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
 import { useSession } from "@/hooks/use-session";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import type { YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
   name: string;
-  age: string;
+  dateOfBirth: string;
+  address: string;
+  postalCode: string;
   city: string;
-  targetRoles: string[];
   skills: string[];
-  interests: string[];
-  workingTime: string[];
   experience: string;
+  education: string;
+  languages: string;
+  certificates: string;
+  extracurriculars: string;
 }
 
 const initialForm: YouthProfileForm = {
   name: "",
-  age: "",
+  dateOfBirth: "",
+  address: "",
+  postalCode: "",
   city: "",
-  targetRoles: [],
   skills: [],
-  interests: [],
-  workingTime: [],
   experience: "",
+  education: "",
+  languages: "",
+  certificates: "",
+  extracurriculars: "",
 };
-
-const roleSuggestions = [
-  "Café",
-  "Butik",
-  "Barnomsorg",
-  "Idrott",
-  "Event",
-  "Lager",
-  "Leverans",
-  "Restaurang",
-  "Kundtjänst",
-  "Administration",
-  "Handledare",
-  "Sociala medier",
-];
-
-const skillSuggestions = [
-  "Lagarbete",
-  "Service",
-  "Kommunikation",
-  "Pålitlig",
-  "Snabblärd",
-  "Problemlösning",
-  "Försäljning",
-  "Kassaarbete",
-  "Svenska",
-  "Engelska",
-  "Canva",
-  "Microsoft 365",
-];
-
-const workingTimeSuggestions = [
-  "Vardagseftermiddagar",
-  "Vardagskvällar",
-  "Helger",
-  "Sommarlov",
-  "Skollov",
-  "Flexibel",
-];
 
 function normalizeStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
@@ -86,13 +50,16 @@ function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): Y
 
   return {
     name: typeof profile.full_name === "string" && profile.full_name.trim() ? profile.full_name : fallbackName,
-    age: typeof profile.age === "number" ? String(profile.age) : "",
+    dateOfBirth: typeof profile.date_of_birth === "string" ? profile.date_of_birth : "",
+    address: typeof profile.address === "string" ? profile.address : "",
+    postalCode: typeof profile.postal_code === "string" ? profile.postal_code : "",
     city: typeof profile.city === "string" ? profile.city : "",
-    targetRoles: normalizeStringArray(profile.desired_roles),
     skills: normalizeStringArray(profile.strengths),
-    interests: normalizeStringArray(profile.merits),
-    workingTime: normalizeStringArray(profile.employment_preferences),
     experience: experienceList.join("\n"),
+    education: normalizeStringArray(profile.education).join("\n"),
+    languages: normalizeStringArray(profile.languages).join(", "),
+    certificates: typeof profile.certificates === "string" ? profile.certificates : "",
+    extracurriculars: typeof profile.extracurriculars === "string" ? profile.extracurriculars : "",
   };
 }
 
@@ -107,16 +74,12 @@ const { user, profile, loading, logout } = useSession();
   const [form, setForm] = useState<YouthProfileForm>(initialForm);
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState("");
-  const [customRole, setCustomRole] = useState("");
-  const [customSkill, setCustomSkill] = useState("");
-  const [showMoreRoles, setShowMoreRoles] = useState(false);
-  const [showMoreSkills, setShowMoreSkills] = useState(false);
-  const [openSection, setOpenSection] = useState<string>("targetRoles");
   const [loggingOut, setLoggingOut] = useState(false);
   const [generatedCv, setGeneratedCv] = useState("");
   const [editingCv, setEditingCv] = useState(false);
   const [cvEditText, setCvEditText] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [error, setError] = useState("");
 
   // ── company profile state ──────────────────────────────────
@@ -175,36 +138,13 @@ const { user, profile, loading, logout } = useSession();
     }
   }, [loading, profile?.role, router, user]);
 
-  const t = {
-    personalTitle: "Grunduppgifter",
-    personalHelp: "Snabba detaljer som förbättrar dina matchningar.",
-    name: "Namn",
-    age: "Ålder",
-    city: "Stad",
-    targetRolesTitle: "Vilka jobb är du intresserad av?",
-    targetRolesHelp: "Välj flera. Tryck för att lägga till.",
-    skillsTitle: "Vad är du bra på?",
-    skillsHelp: "Kompetenser hjälper oss hitta bättre matchningar.",
-    workingTimeTitle: "När kan du jobba?",
-    workingTimeHelp: "Välj tider som passar ditt schema.",
-    experienceTitle: "Erfarenhet",
-    experienceHelp: "Ingen erfarenhet än? Lägg till skol-, frivillig- eller hobbyprojekt.",
-    addRole: "Lägg till roll",
-    addSkill: "Lägg till kompetens",
-    seeMoreRoles: "Visa fler roller",
-    showFewerRoles: "Visa färre roller",
-    seeMoreSkills: "Visa fler kompetenser",
-    showFewerSkills: "Visa färre kompetenser",
-    selected: "Valda",
-  };
-
   const completedSections = useMemo(() => {
     return {
-      personal: hasContent(form.name) && hasContent(form.age) && hasContent(form.city),
-      targetRoles: form.targetRoles.length > 0,
+      personal: hasContent(form.name) && hasContent(form.dateOfBirth) && hasContent(form.address),
       skills: form.skills.length > 0,
-      workingTime: form.workingTime.length > 0,
       experience: hasContent(form.experience),
+      education: hasContent(form.education),
+      extras: hasContent(form.languages) || hasContent(form.certificates) || hasContent(form.extracurriculars),
     };
   }, [form]);
 
@@ -215,46 +155,6 @@ const { user, profile, loading, logout } = useSession();
   }, [completedSections]);
 
   const hasCv = generatedCv.trim().length > 0;
-
-  const toggleSelection = (field: "targetRoles" | "skills" | "workingTime", value: string) => {
-    setForm((prev) => {
-      const active = prev[field].includes(value);
-      return {
-        ...prev,
-        [field]: active ? prev[field].filter((item) => item !== value) : [...prev[field], value],
-      };
-    });
-    setSavedNote("");
-  };
-
-  const removeSelection = (field: "targetRoles" | "skills" | "workingTime", value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: prev[field].filter((item) => item !== value),
-    }));
-    setSavedNote("");
-  };
-
-  const addCustomValue = (field: "targetRoles" | "skills", value: string, clear: () => void) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return;
-    }
-
-    setForm((prev) => {
-      if (prev[field].some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [field]: [...prev[field], trimmed],
-      };
-    });
-
-    clear();
-    setSavedNote("");
-  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -451,142 +351,48 @@ const { user, profile, loading, logout } = useSession();
     );
   }
 
-  const roleList = showMoreRoles ? roleSuggestions : roleSuggestions.slice(0, 8);
-  const skillList = showMoreSkills ? skillSuggestions : skillSuggestions.slice(0, 8);
-
   const profileSections = (
-    <>
-      <ProfileSectionCard
-        id="section-target-roles"
-        title={t.targetRolesTitle}
-        helperText={t.targetRolesHelp}
-        completed={completedSections.targetRoles}
-        open={openSection === "targetRoles"}
-        onToggle={() => setOpenSection((c) => (c === "targetRoles" ? "" : "targetRoles"))}
-      >
-        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-          {roleList.map((role) => (
-            <SuggestionChip key={role} label={role} selected={form.targetRoles.includes(role)} onClick={() => toggleSelection("targetRoles", role)} />
-          ))}
-        </div>
-        <button type="button" style={{ marginTop: "1rem", fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => setShowMoreRoles((c) => !c)}>
-          {showMoreRoles ? t.showFewerRoles : t.seeMoreRoles}
-        </button>
-        <div className="mt-4 flex gap-2">
-          <input value={customRole} onChange={(e) => setCustomRole(e.target.value)} placeholder={t.addRole} className="input-field" style={{ fontSize: "0.9rem" }} />
-          <button type="button" className="secondary-btn min-h-11 px-4 text-xs" style={{ fontWeight: 600 }} onClick={() => addCustomValue("targetRoles", customRole, () => setCustomRole(""))}>Lägg till</button>
-        </div>
-        {form.targetRoles.length > 0 && (
-          <div className="mt-4">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-              {form.targetRoles.map((role) => <SelectedChip key={role} label={role} onRemove={() => removeSelection("targetRoles", role)} />)}
-            </div>
-          </div>
-        )}
-      </ProfileSectionCard>
-
-      <ProfileSectionCard
-        id="section-personal"
-        title={t.personalTitle}
-        helperText={t.personalHelp}
-        completed={completedSections.personal}
-        open={openSection === "personal"}
-        onToggle={() => setOpenSection((c) => (c === "personal" ? "" : "personal"))}
-      >
-        <div className="space-y-3">
-          <input value={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setSavedNote(""); }} placeholder={t.name} className="input-field" style={{ fontSize: "0.9rem" }} />
-          <div className="grid grid-cols-2 gap-3">
-            <input value={form.age} onChange={(e) => { setForm((p) => ({ ...p, age: e.target.value })); setSavedNote(""); }} inputMode="numeric" placeholder={t.age} className="input-field" style={{ fontSize: "0.9rem" }} />
-            <input value={form.city} onChange={(e) => { setForm((p) => ({ ...p, city: e.target.value })); setSavedNote(""); }} placeholder={t.city} className="input-field" style={{ fontSize: "0.9rem" }} />
-          </div>
-        </div>
-      </ProfileSectionCard>
-
-      <ProfileSectionCard
-        id="section-skills"
-        title={t.skillsTitle}
-        helperText={t.skillsHelp}
-        completed={completedSections.skills}
-        open={openSection === "skills"}
-        onToggle={() => setOpenSection((c) => (c === "skills" ? "" : "skills"))}
-      >
-        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-          {skillList.map((skill) => (
-            <SuggestionChip key={skill} label={skill} selected={form.skills.includes(skill)} onClick={() => toggleSelection("skills", skill)} />
-          ))}
-        </div>
-        <button type="button" style={{ marginTop: "1rem", fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => setShowMoreSkills((c) => !c)}>
-          {showMoreSkills ? t.showFewerSkills : t.seeMoreSkills}
-        </button>
-        <div className="mt-4 flex gap-2">
-          <input value={customSkill} onChange={(e) => setCustomSkill(e.target.value)} placeholder={t.addSkill} className="input-field" style={{ fontSize: "0.9rem" }} />
-          <button type="button" className="secondary-btn min-h-11 px-4 text-xs" style={{ fontWeight: 600 }} onClick={() => addCustomValue("skills", customSkill, () => setCustomSkill(""))}>Lägg till</button>
-        </div>
-        {form.skills.length > 0 && (
-          <div className="mt-4">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-              {form.skills.map((skill) => <SelectedChip key={skill} label={skill} onRemove={() => removeSelection("skills", skill)} />)}
-            </div>
-          </div>
-        )}
-      </ProfileSectionCard>
-
-      <ProfileSectionCard
-        id="section-working-time"
-        title={t.workingTimeTitle}
-        helperText={t.workingTimeHelp}
-        completed={completedSections.workingTime}
-        open={openSection === "workingTime"}
-        onToggle={() => setOpenSection((c) => (c === "workingTime" ? "" : "workingTime"))}
-      >
-        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-          {workingTimeSuggestions.map((slot) => (
-            <SuggestionChip key={slot} label={slot} selected={form.workingTime.includes(slot)} onClick={() => toggleSelection("workingTime", slot)} />
-          ))}
-        </div>
-        {form.workingTime.length > 0 && (
-          <div className="mt-4">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
-              {form.workingTime.map((slot) => <SelectedChip key={slot} label={slot} onRemove={() => removeSelection("workingTime", slot)} />)}
-            </div>
-          </div>
-        )}
-      </ProfileSectionCard>
-
-      <ProfileSectionCard
-        id="section-experience"
-        title={t.experienceTitle}
-        helperText={t.experienceHelp}
-        completed={completedSections.experience}
-        open={openSection === "experience"}
-        onToggle={() => setOpenSection((c) => (c === "experience" ? "" : "experience"))}
-      >
-        <textarea
-          value={form.experience}
-          onChange={(e) => { setForm((p) => ({ ...p, experience: e.target.value })); setSavedNote(""); }}
-          rows={5}
-          placeholder="Skolprojekt, frivilligarbete, idrottslag, hobbyprojekt..."
-          className="input-field"
-          style={{ height: "auto", paddingTop: "0.75rem", paddingBottom: "0.75rem", fontSize: "0.9rem", minHeight: "8rem", fontFamily: "inherit" }}
-        />
-      </ProfileSectionCard>
-    </>
+    <div className="minimal-profile-sections">
+      <MinimalProfileSection id="work-experience" eyebrow="01 — Erfarenhet" title="Erfarenhet" description="Jobb, hjälp hemma, volontärarbete eller annat du har gjort.">
+        <ExperienceCard title="Erfarenhet"><label className="minimal-profile-textarea"><span className="sr-only">Arbetslivserfarenhet</span><textarea value={form.experience} onChange={(e) => { setForm((p) => ({ ...p, experience: e.target.value })); setSavedNote(""); }} rows={6} placeholder="T.ex. barnvaktade för grannar, hjälpte i en butik..." /></label></ExperienceCard>
+      </MinimalProfileSection>
+      <MinimalProfileSection id="education" eyebrow="02 — Utbildning" title="Utbildning" description="Skola, kurs eller annan utbildning som du har lagt till.">
+        <label className="minimal-profile-textarea"><span className="sr-only">Utbildning</span><textarea value={form.education} onChange={(e) => { setForm((p) => ({ ...p, education: e.target.value })); setSavedNote(""); }} rows={5} placeholder="T.ex. Norra gymnasium, grundskolan" /></label>
+      </MinimalProfileSection>
+      <MinimalProfileSection id="certificates" eyebrow="03 — Meriter" title="Licenser & certifikat" description="Certifikat, licenser och behörigheter du har fått.">
+        <label className="minimal-profile-textarea"><span className="sr-only">Licenser och certifikat</span><textarea value={form.certificates} onChange={(e) => { setForm((p) => ({ ...p, certificates: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. HLR-certifikat eller körkort" /></label>
+      </MinimalProfileSection>
+      <MinimalProfileSection id="awards" eyebrow="04 — Meriter" title="Utmärkelser & priser" description="Stipendier, fritidsmeriter och andra saker du är stolt över.">
+        <label className="minimal-profile-textarea"><span className="sr-only">Utmärkelser och priser</span><textarea value={form.extracurriculars} onChange={(e) => { setForm((p) => ({ ...p, extracurriculars: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. stipendium, tävling eller föreningsuppdrag" /></label>
+      </MinimalProfileSection>
+      <MinimalProfileSection id="languages" eyebrow="05 — Språk" title="Språk" description="Språk du kan använda i skolan, på jobbet eller i vardagen.">
+        <label className="minimal-profile-textarea"><span className="sr-only">Språk</span><textarea value={form.languages} onChange={(e) => { setForm((p) => ({ ...p, languages: e.target.value })); setSavedNote(""); }} rows={2} placeholder="T.ex. svenska, engelska" /></label>
+      </MinimalProfileSection>
+    </div>
   );
 
   return (
-    <main className="mobile-shell pb-20">
-      <div style={{ marginBottom: "2rem", paddingTop: "0.5rem" }}>
-        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0, marginBottom: "0.5rem" }}>Jobbprofil</p>
-        <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.04em", color: "#111111", margin: 0, lineHeight: 1.1 }}>
-          Profil
-        </h1>
-        <p style={{ marginTop: "0.6rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
-          {hasCv ? "Din CV och profilinformation hjälper dig få bättre matchningar." : "Kompletta profiler får fler och bättre jobberbjudanden."}
-        </p>
-      </div>
+    <main className="mobile-shell pb-20 profile-page network-profile-page">
+      <ProfileHeader name={form.name} location={form.city} completion={completion} onEdit={() => setShowProfileEditor(true)} />
+
+      {showProfileEditor && (
+        <div className="network-profile-modal-backdrop" role="presentation" onMouseDown={() => setShowProfileEditor(false)}>
+          <section className="network-profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div><h2 id="profile-editor-title">Redigera profil</h2><button type="button" aria-label="Stäng" onClick={() => setShowProfileEditor(false)}>×</button></div>
+            <p>Uppgifterna som tidigare visades under Om dig.</p>
+            <div className="minimal-profile-fields">
+              <label><span>Namn</span><input value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} /></label>
+              <label><span>Födelsedatum</span><input type="date" value={form.dateOfBirth} onChange={(e) => setForm((current) => ({ ...current, dateOfBirth: e.target.value }))} /></label>
+              <label><span>Adress</span><input value={form.address} onChange={(e) => setForm((current) => ({ ...current, address: e.target.value }))} /></label>
+              <label><span>Postnummer</span><input value={form.postalCode} onChange={(e) => setForm((current) => ({ ...current, postalCode: e.target.value }))} /></label>
+              <label><span>Ort</span><input value={form.city} onChange={(e) => setForm((current) => ({ ...current, city: e.target.value }))} /></label>
+            </div>
+            <footer><button type="button" onClick={() => setShowProfileEditor(false)}>Avbryt</button><button type="button" onClick={() => { void handleSave(); setShowProfileEditor(false); }} disabled={saving}>{saving ? "Sparar..." : "Spara"}</button></footer>
+          </section>
+        </div>
+      )}
+
+      <div className="network-profile-layout"><div className="network-profile-main">
 
       {error && (
         <p style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
@@ -684,12 +490,10 @@ const { user, profile, loading, logout } = useSession();
       ) : (
         /* ── NO CV YET ─────────────────────────────── */
         <>
-          <ProfileProgressCard
-            completion={completion}
-            statusText={completion >= 70 ? "Redo att ansöka" : "Bra start, fortsätt"}
-            title="Bygg din jobbprofil"
-            subtitle="Kompletta profiler får bättre matchningar."
-          />
+          <section className="minimal-profile-status" aria-label="Profilens status">
+            <span>{completion}%</span>
+            <div><strong>{completion >= 70 ? "Nästan där." : "Börja med det viktigaste."}</strong><p>Varje detalj hjälper rätt arbetsgivare att hitta dig.</p></div>
+          </section>
 
           <section className="card" style={{ padding: "1.25rem", marginTop: "1rem", background: "#fffaf5", borderColor: "#f5e8e0" }}>
             <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
@@ -713,15 +517,18 @@ const { user, profile, loading, logout } = useSession();
             </p>
           )}
 
-          <StickyProfileCta
-            completion={completion}
-            saving={saving}
-            onSave={() => void handleSave()}
-            primaryLabel="Spara och fortsätt"
-            helperLabel="Dina val hjälper oss hitta bättre matchningar."
-          />
+          <div className="minimal-profile-save">
+            <p>Dina ändringar sparas när du fortsätter.</p>
+            <button type="button" className="cta-btn" onClick={() => void handleSave()} disabled={saving}>{saving ? "Sparar..." : "Spara ändringar"}</button>
+          </div>
         </>
       )}
+
+      </div><aside className="network-profile-sidebar">
+        <SidebarCard title="Profilöversikt"><p>Håll din profil uppdaterad så att fler arbetsgivare kan hitta dig.</p><div className="network-sidebar-meter"><span style={{ width: `${completion}%` }} /></div><strong>{completion}% komplett</strong></SidebarCard>
+        <SidebarCard title="Kontaktuppgifter"><dl><div><dt>Ort</dt><dd>{form.city || "Lägg till ort"}</dd></div><div><dt>E-post</dt><dd>{user.email}</dd></div></dl></SidebarCard>
+        <SidebarCard title="Dina styrkor"><SkillList skills={form.skills} /></SidebarCard>
+      </aside></div>
 
       <button
         type="button"
