@@ -9,7 +9,7 @@ export interface Profile {
   role: Role;
 }
 
-export type YouthDocumentType = "grades" | "recommendation" | "certificate" | "other";
+export type YouthDocumentType = "grades" | "recommendation" | "certificate" | "cv" | "generated_cv" | "other";
 
 export interface YouthDocument {
   name: string;
@@ -47,6 +47,7 @@ export interface YouthProfile {
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
+  cv_uploaded?: boolean | null;
   documents?: YouthDocument[] | null;
   updated_at?: string | null;
   [key: string]: unknown;
@@ -189,6 +190,7 @@ export interface SaveYouthProfileInput {
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
+  cv_uploaded?: boolean | null;
   documents?: YouthDocument[] | null;
   certificates?: string | null;
   extracurriculars?: string | null;

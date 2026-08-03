@@ -320,6 +320,21 @@ export async function saveGeneratedCvToProfile(profileData: SaveYouthProfileInpu
   return persistYouthProfile(profileData);
 }
 
+export async function saveUploadedCvToProfile(document: import("./types").YouthDocument): Promise<YouthProfile> {
+  const existing = await getYouthProfile();
+  const documents = [
+    ...((existing?.documents ?? []).filter((item) => item.type !== "cv")),
+    document,
+  ];
+
+  return persistYouthProfile({
+    documents,
+    cv_uploaded: true,
+    onboarding_completed: true,
+    cv_generated: false,
+  });
+}
+
 export async function completeYouthOnboarding(input: {
   full_name: string;
   age: string;
@@ -331,6 +346,7 @@ export async function completeYouthOnboarding(input: {
   languages: string;
   employment_preferences: string[];
   cv_text?: string;
+  cv_uploaded?: boolean;
   documents?: import("./types").YouthDocument[];
   certificates?: string;
   extracurriculars?: string;
@@ -354,5 +370,6 @@ export async function completeYouthOnboarding(input: {
     profile_image_url: input.profile_image || null,
     onboarding_completed: true,
     cv_generated: (input.cv_text ?? "").trim().length > 0,
+    cv_uploaded: input.cv_uploaded ?? false,
   });
 }

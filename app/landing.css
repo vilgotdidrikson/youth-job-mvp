@@ -1,9 +1,10 @@
 .landing-page.landing-bold {
-  --landing-ink: #16343d;
-  --landing-blue: #73aab9;
-  --landing-paper: #f7f4ed;
+  --landing-ink: var(--color-text);
+  --landing-salmon: var(--color-brand-strong);
+  --landing-paper: var(--color-canvas);
   min-height: 100svh;
-  overflow: visible;
+  max-width: 100%;
+  overflow-x: clip;
   padding: 0;
   color: var(--landing-ink);
   background: var(--landing-paper);
@@ -49,12 +50,12 @@
 .landing-bold-login,
 .landing-bold-primary {
   color: #fff;
-  background: var(--landing-ink);
+  background: var(--color-brand);
 }
 
 .landing-bold-language,
 .landing-bold-secondary {
-  border: 1px solid rgba(22, 52, 61, .22);
+  border: 1px solid rgb(var(--color-text-rgb) / .2);
   color: var(--landing-ink);
   background: transparent;
 }
@@ -65,7 +66,7 @@
 }
 
 .landing-bold-language span {
-  color: #789095;
+  color: var(--color-text-subtle);
   font-size: .64rem;
 }
 
@@ -80,7 +81,7 @@
 
 .landing-bold-eyebrow {
   margin: 0 0 1.8rem;
-  color: #6e858b;
+  color: var(--color-text-muted);
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .14em;
@@ -97,7 +98,7 @@
 }
 
 .landing-bold-hero h1 em {
-  color: var(--landing-blue);
+  color: var(--landing-salmon);
   font-style: normal;
 }
 
@@ -115,7 +116,7 @@
 
 .landing-bold-note {
   margin: .9rem 0 0;
-  color: #839397;
+  color: var(--color-text-subtle);
   font-size: .75rem;
 }
 
@@ -127,7 +128,7 @@
 .landing-bold-purpose > p,
 .landing-bold-roles > p {
   margin: 0 0 1.4rem;
-  color: #849599;
+  color: var(--color-text-subtle);
   font-size: .67rem;
   font-weight: 800;
   letter-spacing: .13em;
@@ -148,7 +149,7 @@
   width: .28rem;
   height: .28rem;
   border-radius: 50%;
-  background: var(--landing-blue);
+  background: var(--landing-salmon);
 }
 
 .landing-bold-scroll {
@@ -163,13 +164,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: clamp(4rem, 7vw, 6rem) max(1.5rem, calc((100vw - 70rem) / 2));
-  color: #fff;
-  background: var(--landing-ink);
+  color: var(--landing-ink);
+  background: var(--color-surface-rose);
 }
 
 .landing-bold-proof article {
   padding: 1rem clamp(1.2rem, 3vw, 2.8rem);
-  border-right: 1px solid rgba(255, 255, 255, .15);
+  border-right: 1px solid rgb(var(--color-text-rgb) / .12);
 }
 
 .landing-bold-proof article:last-child {
@@ -178,7 +179,7 @@
 
 .landing-bold-proof article > span,
 .landing-bold-step-grid article > span {
-  color: #8fb7c2;
+  color: var(--color-brand);
   font-size: .72rem;
   font-weight: 800;
 }
@@ -193,7 +194,7 @@
 .landing-bold-proof p {
   max-width: 18rem;
   margin: 0;
-  color: rgba(255, 255, 255, .62);
+  color: rgb(var(--color-text-rgb) / .72);
   font-size: .92rem;
   line-height: 1.6;
 }
@@ -227,7 +228,7 @@
 .landing-bold-step-grid p {
   max-width: 16rem;
   margin: 0 auto;
-  color: #708489;
+  color: var(--color-text-muted);
   font-size: .9rem;
   line-height: 1.65;
 }
@@ -250,9 +251,9 @@
   position: relative;
   min-height: 9rem;
   padding: 1.25rem;
-  border: 1px solid rgba(22, 52, 61, .09);
+  border: 1px solid rgb(var(--color-text-rgb) / .1);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .landing-bold-roles h3 {
@@ -261,7 +262,7 @@
 }
 
 .landing-bold-roles article span {
-  color: #819195;
+  color: var(--color-text-subtle);
   font-size: .78rem;
 }
 
@@ -269,7 +270,7 @@
   position: absolute;
   right: 1.1rem;
   bottom: 1rem;
-  color: var(--landing-blue);
+  color: var(--landing-salmon);
   font-size: 1.2rem;
 }
 
@@ -280,7 +281,7 @@
 }
 
 .landing-bold-manifesto {
-  background: #e9eee5;
+  background: var(--color-surface-soft);
 }
 
 .landing-bold-manifesto p,
@@ -297,19 +298,19 @@
   display: block;
   max-width: 40rem;
   margin: 1.8rem auto 0;
-  color: #62777c;
+  color: var(--color-text-muted);
   font-size: 1rem;
   line-height: 1.65;
 }
 
 .landing-bold-employer {
-  background: var(--landing-blue);
+  background: var(--color-surface-rose-strong);
 }
 
 .landing-bold-employer p {
   max-width: 34rem;
   margin: 1.2rem auto 2rem;
-  color: rgba(22, 52, 61, .7);
+  color: rgb(var(--color-text-rgb) / .72);
   line-height: 1.6;
 }
 
@@ -321,7 +322,7 @@
   padding: 0 1.15rem 0 1.5rem;
   border-radius: 999px;
   color: #fff;
-  background: var(--landing-ink);
+  background: var(--color-brand-hover);
   font-size: .9rem;
   font-weight: 700;
   text-decoration: none;
@@ -334,7 +335,7 @@
   height: 1.8rem;
   border-radius: 50%;
   color: var(--landing-ink);
-  background: #f3b66d;
+  background: var(--color-cream);
 }
 
 .landing-bold-footer {
@@ -342,7 +343,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 2rem clamp(1.25rem, 4vw, 3.5rem);
-  color: #829397;
+  color: var(--color-text-subtle);
   font-size: .72rem;
 }
 
@@ -353,7 +354,7 @@
   .landing-bold-proof,
   .landing-bold-step-grid,
   .landing-bold-roles > div { grid-template-columns: 1fr; }
-  .landing-bold-proof article { padding: 2rem .5rem; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.15); text-align: center; }
+  .landing-bold-proof article { padding: 2rem .5rem; border-right: 0; border-bottom: 1px solid rgb(var(--color-text-rgb) / .12); text-align: center; }
   .landing-bold-proof article:last-child { border-bottom: 0; }
   .landing-bold-proof p { margin: 0 auto; }
   .landing-bold-step-grid { gap: 2.8rem; }

@@ -1,17 +1,6 @@
 @import "mapbox-gl/dist/mapbox-gl.css";
 @import "tailwindcss";
-
-:root {
-  --bg: #f5f5f5;
-  --surface: #ffffff;
-  --border: #e8e8e8;
-  --text-primary: #111111;
-  --text-secondary: #737373;
-  --text-tertiary: #a3a3a3;
-  --accent: #111111;
-  --accent-green: #21d07a;
-  --accent-red: #fd5564;
-}
+@import "./styles/theme.css";
 
 @theme inline {
   --font-sans: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
@@ -27,6 +16,12 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 button,
@@ -148,7 +143,8 @@ button,
 .landing-bold-actions { display: flex; justify-content: center; gap: .65rem; margin-top: 2.6rem; }
 .landing-bold-primary, .landing-bold-secondary { min-height: 3.25rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 1.7rem; border-radius: 999px; font-size: .92rem; font-weight: 700; text-decoration: none; }
 .landing-bold-primary { color: #fff; background: var(--landing-ink); }
-.landing-bold-secondary { border: 1px solid rgba(22,52,61,.22); color: var(--landing-ink); }
+.landing-bold-secondary { border: 1px solid var(--landing-ink); color: var(--landing-ink); background: transparent; transition: background .2s ease, color .2s ease, transform .2s ease; }
+.landing-bold-secondary:hover { color: #fff; background: var(--landing-ink); transform: translateY(-1px); }
 .landing-bold-note { margin: .9rem 0 0; color: #839397; font-size: .75rem; }
 .landing-bold-purpose { padding: 2rem 1.5rem 4.5rem; text-align: center; }
 .landing-bold-purpose > p { margin: 0 0 1.4rem; color: #849599; font-size: .67rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
@@ -754,6 +750,66 @@ button,
 
 @media (max-width: 430px) { .job-builder-section-title { flex-direction: column; }.job-builder-ai { width: 100%; }.job-builder-actions button { padding: 0 .7rem; font-size: .8rem; } }
 
+/* Shared theme overrides. Route-specific CSS can still use the aliases in theme.css. */
+.auth-page {
+  --auth-ink: var(--color-text);
+  background: var(--color-canvas);
+}
+
+.auth-intro h1 em {
+  color: var(--color-brand-strong);
+}
+
+.auth-input:focus {
+  border-color: var(--color-brand-strong);
+  box-shadow: 0 0 0 3px rgb(var(--color-text-rgb) / .1);
+}
+
+.auth-role button.auth-role-selected,
+.auth-submit,
+.auth-back,
+.map-back-link {
+  background: var(--color-brand);
+}
+
+.auth-submit span {
+  color: var(--color-text);
+  background: var(--color-cream);
+}
+
+.auth-input,
+.auth-role button {
+  border-color: var(--color-border);
+}
+
+.auth-error,
+.map-page-error {
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.auth-success,
+.job-detail-applied {
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.job-map-pin,
+.job-map-cta,
+.map-count,
+.job-map-token-message > span {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.job-map-pin:hover,
+.job-map-marker.is-expanded .job-map-pin,
+.job-map-cta:hover {
+  background: var(--color-brand-hover);
+}
+
 @media (min-width: 768px) {
   .mobile-shell {
     padding-top: 1.4rem;
@@ -764,28 +820,28 @@ button,
 .desktop-nav-logo { display: none; }
 
 @media (min-width: 721px) {
-  body { background: #f7f4ed; }
+  body { background: var(--color-canvas); }
   .mobile-shell { width: min(100%, 88rem); max-width: none; min-height: 100svh; padding: 7.25rem clamp(2rem, 6vw, 6.5rem) 3rem; }
   .mobile-shell.pb-20 { padding-bottom: 3rem; }
   .card, .glass-card, .profile-section { border-color: rgba(211, 222, 210, .9); background: rgba(255, 253, 249, .86); box-shadow: 0 1rem 2.5rem rgba(43, 79, 79, .07); }
-  .bottom-nav { top: 1.4rem; right: auto; bottom: auto; left: 50%; width: min(88rem, calc(100vw - 4rem)); max-width: none !important; min-height: 4.25rem; transform: translateX(-50%) !important; justify-content: flex-end; gap: .25rem; border: 1px solid #d9ded4; border-radius: 999px; background: rgba(255, 253, 249, .9); padding: .45rem .6rem; box-shadow: 0 .5rem 1.5rem rgba(43, 79, 79, .06); backdrop-filter: blur(12px); }
+  .bottom-nav { top: 1.4rem; right: auto; bottom: auto; left: 50%; width: min(88rem, calc(100vw - 4rem)); max-width: none !important; min-height: 4.25rem; transform: translateX(-50%) !important; justify-content: flex-end; gap: .25rem; border: 1px solid var(--color-border); border-radius: 999px; background: rgb(255 255 255 / .9); padding: .45rem .6rem; box-shadow: 0 .5rem 1.5rem rgb(var(--color-text-rgb) / .06); backdrop-filter: blur(12px); }
   .bottom-nav.bottom-nav-is-hidden { transform: translate(-50%, -150%) !important; }
   .map-page-footer { right: 0; bottom: 0; left: 0; max-width: none; margin: 0; padding-right: max(2rem, calc((100vw - 88rem) / 2)); padding-left: max(2rem, calc((100vw - 88rem) / 2)); }
   .map-page-error, .map-empty-state { bottom: 5.6rem; }
   .job-map-canvas .mapboxgl-ctrl-bottom-right { bottom: 6.2rem; }
-  .desktop-nav-logo { display: flex; align-items: center; gap: .55rem; margin-right: auto; padding: 0 1rem; color: #16343d; font-size: 1.2rem; font-weight: 800; letter-spacing: -.055em; text-decoration: none; }
-  .desktop-nav-logo span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: .55rem .55rem .55rem .12rem; color: #fff; background: #16343d; font-size: .9rem; }
+  .desktop-nav-logo { display: flex; align-items: center; gap: .55rem; margin-right: auto; padding: 0 1rem; color: var(--color-text); font-size: 1.2rem; font-weight: 800; letter-spacing: -.055em; text-decoration: none; }
+  .desktop-nav-logo span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: .55rem .55rem .55rem .12rem; color: var(--color-on-brand); background: var(--color-brand); font-size: .9rem; }
   .bottom-nav-item { flex: 0 0 auto; min-height: 3.2rem; flex-direction: row; gap: .48rem; padding: 0 1rem; border-radius: 999px; font-size: .9rem; }
-  .bottom-nav-item:hover, .bottom-nav-item-active { color: #16343d; background: #e6efeb; }
+  .bottom-nav-item:hover, .bottom-nav-item-active { color: var(--color-text); background: var(--color-surface-soft); }
   .bottom-nav-item span { font-size: .85rem !important; margin-top: 0 !important; }
   .sticky-profile-cta { width: min(40rem, calc(100vw - 4rem)); bottom: 2rem; }
-  .input-field { max-width: 42rem; border-color: #d7dfd6; background: rgba(255, 255, 255, .85); }
+  .input-field { max-width: 42rem; border-color: var(--color-border); background: rgb(255 255 255 / .85); }
   .swipe-deck { width: min(100%, 38rem); margin-left: auto; margin-right: auto; }
   .swipe-job-card { min-height: 39rem !important; }
   .swipe-job-image { height: 16.5rem !important; }
-  .youth-onboarding { width: min(100%, 88rem) !important; max-width: none !important; margin: 0 auto !important; padding: 7.25rem clamp(2rem, 6vw, 6.5rem) 3rem !important; color: #16343d; background: #f7f4ed !important; }
+  .youth-onboarding { width: min(100%, 88rem) !important; max-width: none !important; margin: 0 auto !important; padding: 7.25rem clamp(2rem, 6vw, 6.5rem) 3rem !important; color: var(--color-text); background: var(--color-canvas) !important; }
   .youth-onboarding > * { width: min(100%, 48rem); margin-left: auto !important; margin-right: auto !important; }
-  .youth-onboarding textarea { border-color: #d7dfd6 !important; background: rgba(255, 253, 249, .9) !important; box-shadow: 0 1rem 2.5rem rgba(43, 79, 79, .07); }
+  .youth-onboarding textarea { border-color: var(--color-border) !important; background: rgb(255 255 255 / .9) !important; box-shadow: 0 1rem 2.5rem rgb(var(--color-text-rgb) / .07); }
   .company-onboarding > form, .company-onboarding > div { width: min(100%, 48rem); margin-left: auto; margin-right: auto; }
   .company-onboarding > form { min-height: calc(100svh - 10.25rem); }
   .company-onboarding .card { padding: 2rem !important; border-radius: 1.25rem; }
