@@ -505,22 +505,22 @@ const { user, profile, loading, logout } = useSession();
         open={openSection === "targetRoles"}
         onToggle={() => setOpenSection((c) => (c === "targetRoles" ? "" : "targetRoles"))}
       >
-        <div className="profile-chip-wrap">
+        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
           {roleList.map((role) => (
             <SuggestionChip key={role} label={role} selected={form.targetRoles.includes(role)} onClick={() => toggleSelection("targetRoles", role)} />
           ))}
         </div>
-        <button type="button" style={{ marginTop: "0.75rem", fontSize: "0.78rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer" }} onClick={() => setShowMoreRoles((c) => !c)}>
+        <button type="button" style={{ marginTop: "1rem", fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => setShowMoreRoles((c) => !c)}>
           {showMoreRoles ? t.showFewerRoles : t.seeMoreRoles}
         </button>
-        <div className="mt-3 flex gap-2">
-          <input value={customRole} onChange={(e) => setCustomRole(e.target.value)} placeholder={t.addRole} className="input-field" />
-          <button type="button" className="secondary-btn min-h-11 px-3 text-xs" onClick={() => addCustomValue("targetRoles", customRole, () => setCustomRole(""))}>+</button>
+        <div className="mt-4 flex gap-2">
+          <input value={customRole} onChange={(e) => setCustomRole(e.target.value)} placeholder={t.addRole} className="input-field" style={{ fontSize: "0.9rem" }} />
+          <button type="button" className="secondary-btn min-h-11 px-4 text-xs" style={{ fontWeight: 600 }} onClick={() => addCustomValue("targetRoles", customRole, () => setCustomRole(""))}>Lägg till</button>
         </div>
         {form.targetRoles.length > 0 && (
-          <div className="mt-3">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.5rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap">
+          <div className="mt-4">
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
+            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
               {form.targetRoles.map((role) => <SelectedChip key={role} label={role} onRemove={() => removeSelection("targetRoles", role)} />)}
             </div>
           </div>
@@ -535,11 +535,11 @@ const { user, profile, loading, logout } = useSession();
         open={openSection === "personal"}
         onToggle={() => setOpenSection((c) => (c === "personal" ? "" : "personal"))}
       >
-        <div className="space-y-2.5">
-          <input value={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setSavedNote(""); }} placeholder={t.name} className="input-field" />
-          <div className="grid grid-cols-2 gap-2">
-            <input value={form.age} onChange={(e) => { setForm((p) => ({ ...p, age: e.target.value })); setSavedNote(""); }} inputMode="numeric" placeholder={t.age} className="input-field" />
-            <input value={form.city} onChange={(e) => { setForm((p) => ({ ...p, city: e.target.value })); setSavedNote(""); }} placeholder={t.city} className="input-field" />
+        <div className="space-y-3">
+          <input value={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setSavedNote(""); }} placeholder={t.name} className="input-field" style={{ fontSize: "0.9rem" }} />
+          <div className="grid grid-cols-2 gap-3">
+            <input value={form.age} onChange={(e) => { setForm((p) => ({ ...p, age: e.target.value })); setSavedNote(""); }} inputMode="numeric" placeholder={t.age} className="input-field" style={{ fontSize: "0.9rem" }} />
+            <input value={form.city} onChange={(e) => { setForm((p) => ({ ...p, city: e.target.value })); setSavedNote(""); }} placeholder={t.city} className="input-field" style={{ fontSize: "0.9rem" }} />
           </div>
         </div>
       </ProfileSectionCard>
@@ -552,22 +552,22 @@ const { user, profile, loading, logout } = useSession();
         open={openSection === "skills"}
         onToggle={() => setOpenSection((c) => (c === "skills" ? "" : "skills"))}
       >
-        <div className="profile-chip-wrap">
+        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
           {skillList.map((skill) => (
             <SuggestionChip key={skill} label={skill} selected={form.skills.includes(skill)} onClick={() => toggleSelection("skills", skill)} />
           ))}
         </div>
-        <button type="button" style={{ marginTop: "0.75rem", fontSize: "0.78rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer" }} onClick={() => setShowMoreSkills((c) => !c)}>
+        <button type="button" style={{ marginTop: "1rem", fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => setShowMoreSkills((c) => !c)}>
           {showMoreSkills ? t.showFewerSkills : t.seeMoreSkills}
         </button>
-        <div className="mt-3 flex gap-2">
-          <input value={customSkill} onChange={(e) => setCustomSkill(e.target.value)} placeholder={t.addSkill} className="input-field" />
-          <button type="button" className="secondary-btn min-h-11 px-3 text-xs" onClick={() => addCustomValue("skills", customSkill, () => setCustomSkill(""))}>+</button>
+        <div className="mt-4 flex gap-2">
+          <input value={customSkill} onChange={(e) => setCustomSkill(e.target.value)} placeholder={t.addSkill} className="input-field" style={{ fontSize: "0.9rem" }} />
+          <button type="button" className="secondary-btn min-h-11 px-4 text-xs" style={{ fontWeight: 600 }} onClick={() => addCustomValue("skills", customSkill, () => setCustomSkill(""))}>Lägg till</button>
         </div>
         {form.skills.length > 0 && (
-          <div className="mt-3">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.5rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap">
+          <div className="mt-4">
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
+            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
               {form.skills.map((skill) => <SelectedChip key={skill} label={skill} onRemove={() => removeSelection("skills", skill)} />)}
             </div>
           </div>
@@ -582,15 +582,15 @@ const { user, profile, loading, logout } = useSession();
         open={openSection === "workingTime"}
         onToggle={() => setOpenSection((c) => (c === "workingTime" ? "" : "workingTime"))}
       >
-        <div className="profile-chip-wrap">
+        <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
           {workingTimeSuggestions.map((slot) => (
             <SuggestionChip key={slot} label={slot} selected={form.workingTime.includes(slot)} onClick={() => toggleSelection("workingTime", slot)} />
           ))}
         </div>
         {form.workingTime.length > 0 && (
-          <div className="mt-3">
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.5rem" }}>{t.selected}</p>
-            <div className="profile-chip-wrap">
+          <div className="mt-4">
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", marginBottom: "0.75rem" }}>{t.selected}</p>
+            <div className="profile-chip-wrap" style={{ gap: "0.5rem" }}>
               {form.workingTime.map((slot) => <SelectedChip key={slot} label={slot} onRemove={() => removeSelection("workingTime", slot)} />)}
             </div>
           </div>
@@ -608,10 +608,10 @@ const { user, profile, loading, logout } = useSession();
         <textarea
           value={form.experience}
           onChange={(e) => { setForm((p) => ({ ...p, experience: e.target.value })); setSavedNote(""); }}
-          rows={4}
+          rows={5}
           placeholder="Skolprojekt, frivilligarbete, idrottslag, hobbyprojekt..."
           className="input-field"
-          style={{ height: "auto", paddingTop: "0.6rem", paddingBottom: "0.6rem" }}
+          style={{ height: "auto", paddingTop: "0.75rem", paddingBottom: "0.75rem", fontSize: "0.9rem", minHeight: "8rem", fontFamily: "inherit" }}
         />
       </ProfileSectionCard>
     </>
@@ -619,12 +619,13 @@ const { user, profile, loading, logout } = useSession();
 
   return (
     <main className="mobile-shell pb-20">
-      <div style={{ marginBottom: "1rem", paddingTop: "0.5rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: 0 }}>
+      <div style={{ marginBottom: "2rem", paddingTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0, marginBottom: "0.5rem" }}>Jobbprofil</p>
+        <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.04em", color: "#111111", margin: 0, lineHeight: 1.1 }}>
           Profil
         </h1>
-        <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
-          {hasCv ? "Ditt CV och profilinformation." : "Kompletta profiler får bättre matchningar."}
+        <p style={{ marginTop: "0.6rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
+          {hasCv ? "Din CV och profilinformation hjälper dig få bättre matchningar." : "Kompletta profiler får fler och bättre jobberbjudanden."}
         </p>
       </div>
 
@@ -648,7 +649,7 @@ const { user, profile, loading, logout } = useSession();
                 <button
                   type="button"
                   onClick={() => { setCvEditText(generatedCv); setEditingCv(true); }}
-                  style={{ fontSize: "0.78rem", fontWeight: 600, color: "#111111", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111111", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap", marginLeft: "1rem" }}
                 >
                   Redigera
                 </button>
@@ -661,23 +662,25 @@ const { user, profile, loading, logout } = useSession();
                   onChange={(e) => setCvEditText(e.target.value)}
                   rows={14}
                   style={{
-                    width: "100%", boxSizing: "border-box", borderRadius: 8,
-                    border: "1.5px solid #e8e8e8", padding: "0.75rem",
-                    fontSize: "0.82rem", fontFamily: "monospace",
-                    resize: "vertical", color: "#111111", lineHeight: 1.6, outline: "none",
+                    width: "100%", boxSizing: "border-box", borderRadius: 10,
+                    border: "1.5px solid #e8e8e8", padding: "1rem",
+                    fontSize: "0.9rem", fontFamily: "inherit",
+                    resize: "vertical", color: "#111111", lineHeight: 1.6, outline: "none", transition: "border-color 0.15s ease",
                   }}
+                  onFocus={(e) => e.target.style.borderColor = "#111111"}
+                  onBlur={(e) => e.target.style.borderColor = "#e8e8e8"}
                 />
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-                  <button type="button" onClick={() => void handleSaveCv()} disabled={saving} className="cta-btn" style={{ flex: 1, padding: "0.75rem", fontSize: "0.9rem" }}>
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                  <button type="button" onClick={() => void handleSaveCv()} disabled={saving} className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 700 }}>
                     {saving ? "Sparar..." : "Spara CV"}
                   </button>
-                  <button type="button" onClick={() => setEditingCv(false)} className="secondary-btn" style={{ flex: 1, padding: "0.75rem", fontSize: "0.9rem" }}>
+                  <button type="button" onClick={() => setEditingCv(false)} className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 600 }}>
                     Avbryt
                   </button>
                 </div>
               </>
             ) : (
-              <pre style={{ margin: 0, borderRadius: 8, background: "#f5f5f5", border: "1px solid #e8e8e8", padding: "0.75rem", fontSize: "0.8rem", whiteSpace: "pre-wrap", color: "#4a4a4a", lineHeight: 1.6, maxHeight: "18rem", overflowY: "auto" }}>
+              <pre style={{ margin: 0, borderRadius: 10, background: "#f9f9f9", border: "1px solid #e8e8e8", padding: "1rem", fontSize: "0.85rem", whiteSpace: "pre-wrap", color: "#333333", lineHeight: 1.7, maxHeight: "20rem", overflowY: "auto", fontFamily: "inherit" }}>
                 {generatedCv}
               </pre>
             )}
@@ -713,30 +716,30 @@ const { user, profile, loading, logout } = useSession();
             <button
               type="button"
               className="secondary-btn"
-              style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", marginBottom: "0.75rem" }}
+              style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "1rem", fontWeight: 600 }}
               onClick={() => setEditingProfile(true)}
             >
               Redigera profilinformation
             </button>
           ) : (
             <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0.5rem 0" }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 1.5rem 0", paddingBottom: "1rem", borderBottom: "1px solid #e8e8e8" }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
                   Profilinformation
                 </p>
-                <button type="button" onClick={() => setEditingProfile(false)} style={{ fontSize: "0.78rem", color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <button type="button" onClick={() => setEditingProfile(false)} style={{ fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                   Avbryt
                 </button>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {profileSections}
               </div>
               {savedNote && (
-                <p style={{ borderRadius: 10, background: "#f0faf5", border: "1px solid #b9e5d7", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#226a54", margin: "0.75rem 0" }}>
-                  {savedNote}
+                <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", margin: "1rem 0", fontWeight: 500 }}>
+                  ✓ {savedNote}
                 </p>
               )}
-              <button type="button" className="cta-btn" style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", marginTop: "0.75rem" }} onClick={() => void handleSave()} disabled={saving}>
+              <button type="button" className="cta-btn" style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginTop: "1.5rem", fontWeight: 700 }} onClick={() => void handleSave()} disabled={saving}>
                 {saving ? "Sparar..." : "Spara profilinformation"}
               </button>
             </>
@@ -752,25 +755,25 @@ const { user, profile, loading, logout } = useSession();
             subtitle="Kompletta profiler får bättre matchningar."
           />
 
-          <section className="card" style={{ padding: "1rem", marginTop: "0.75rem" }}>
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3" }}>
+          <section className="card" style={{ padding: "1.25rem", marginTop: "1rem", background: "#fffaf5", borderColor: "#f5e8e0" }}>
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
               AI CV-byggare
             </p>
-            <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
-              Generera ditt CV automatiskt via en kort chattintervju.
+            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
+              Generera ditt CV automatiskt via en kort chattintervju. Det tar bara några minuter!
             </p>
-            <Link href="/cv-builder" className="cta-btn" style={{ marginTop: "0.75rem", display: "inline-block", padding: "0.65rem 1rem", fontSize: "0.88rem" }}>
+            <Link href="/cv-builder" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
               Starta AI-chatt
             </Link>
           </section>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-5 space-y-4">
             {profileSections}
           </div>
 
           {savedNote && (
-            <p style={{ borderRadius: 10, background: "#f0faf5", border: "1px solid #b9e5d7", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#226a54", marginTop: "0.75rem" }}>
-              {savedNote}
+            <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", marginTop: "1rem", fontWeight: 500 }}>
+              ✓ {savedNote}
             </p>
           )}
 
@@ -787,11 +790,11 @@ const { user, profile, loading, logout } = useSession();
       <button
         type="button"
         className="secondary-btn"
-        style={{ marginTop: "1rem", width: "100%", padding: "0.875rem", fontSize: "0.88rem", marginBottom: "2rem" }}
+        style={{ marginTop: "2rem", width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "2rem", fontWeight: 600 }}
         onClick={() => void handleLogout()}
         disabled={loggingOut}
       >
-        {loggingOut ? "..." : "Logga ut"}
+        {loggingOut ? "Loggar ut..." : "Logga ut"}
       </button>
     </main>
   );
