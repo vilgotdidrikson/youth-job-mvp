@@ -110,20 +110,20 @@ export function JobSwipeDeck({
         }}
       >
         <div style={{ fontSize: "2.5rem" }}>🎉</div>
-        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#111111", margin: 0 }}>
+        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
           {emptyTitle}
         </h2>
-        <p style={{ fontSize: "0.9rem", color: "#737373", margin: 0 }}>{emptySubtitle}</p>
+        <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: 0 }}>{emptySubtitle}</p>
         {interestedCount > 0 && (
           <div
             style={{
               marginTop: "0.5rem",
               padding: "0.6rem 1.2rem",
               borderRadius: 999,
-              background: "#f0faf5",
-              border: "1px solid #b9e5d7",
+              background: "var(--color-success-soft)",
+              border: "1px solid var(--color-success-border)",
               fontSize: "0.85rem",
-              color: "#226a54",
+              color: "var(--color-success)",
               fontWeight: 600,
             }}
           >
@@ -142,8 +142,8 @@ export function JobSwipeDeck({
         style={{
           position: "relative",
           zIndex: 1,
-          background: "#fff",
-          border: "1px solid #e8e8e8",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: 20,
           overflow: "hidden",
           minHeight: 480,
@@ -173,7 +173,7 @@ export function JobSwipeDeck({
             className="swipe-job-image"
             style={{
               height: 160,
-              background: "#f5f5f5",
+              background: "var(--color-surface-soft)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -192,8 +192,8 @@ export function JobSwipeDeck({
             left: 16,
             padding: "6px 14px",
             borderRadius: 8,
-            border: "3px solid #21d07a",
-            color: "#21d07a",
+            border: "3px solid var(--accent-green)",
+            color: "var(--accent-green)",
             fontWeight: 800,
             fontSize: "1.1rem",
             letterSpacing: "0.05em",
@@ -212,8 +212,8 @@ export function JobSwipeDeck({
             right: 16,
             padding: "6px 14px",
             borderRadius: 8,
-            border: "3px solid #fd5564",
-            color: "#fd5564",
+            border: "3px solid var(--accent-red)",
+            color: "var(--accent-red)",
             fontWeight: 800,
             fontSize: "1.1rem",
             letterSpacing: "0.05em",
@@ -236,7 +236,7 @@ export function JobSwipeDeck({
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
-                  color: "#a3a3a3",
+                  color: "var(--text-tertiary)",
                   margin: 0,
                 }}
               >
@@ -247,7 +247,7 @@ export function JobSwipeDeck({
                   fontSize: "1.5rem",
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
-                  color: "#111111",
+                  color: "var(--text-primary)",
                   margin: "0.2rem 0 0",
                   lineHeight: 1.15,
                 }}
@@ -261,7 +261,7 @@ export function JobSwipeDeck({
             style={{
               marginTop: "0.4rem",
               fontSize: "0.85rem",
-              color: "#737373",
+              color: "var(--text-secondary)",
               display: "flex",
               gap: "0.35rem",
               flexWrap: "wrap",
@@ -281,7 +281,7 @@ export function JobSwipeDeck({
               <span style={{ color: "#e8e8e8" }}>·</span>
             )}
             {currentJob.salary_per_hour && (
-              <span style={{ fontWeight: 600, color: "#111111" }}>{currentJob.salary_per_hour}</span>
+              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{currentJob.salary_per_hour}</span>
             )}
           </p>
 
@@ -290,7 +290,7 @@ export function JobSwipeDeck({
               style={{
                 marginTop: "0.75rem",
                 fontSize: "0.9rem",
-                color: "#4a4a4a",
+                color: "var(--text-primary)",
                 lineHeight: 1.55,
                 display: "-webkit-box",
                 WebkitLineClamp: 3,
@@ -314,7 +314,7 @@ export function JobSwipeDeck({
             href={`/jobb/${encodeURIComponent(currentJob.id)}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
-            style={{ display: "inline-block", marginTop: "0.9rem", color: "#49636a", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}
+            style={{ display: "inline-block", marginTop: "0.9rem", color: "var(--accent)", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}
           >
             Läs hela annonsen →
           </Link>

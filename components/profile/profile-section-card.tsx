@@ -31,8 +31,8 @@ export function ProfileSectionCard({
         onClick={onToggle}
       >
         <div>
-          <h2 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111111", margin: 0 }}>{title}</h2>
-          <p style={{ marginTop: "0.2rem", fontSize: "0.82rem", color: "#737373", margin: "0.2rem 0 0" }}>{helperText}</p>
+          <h2 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>{title}</h2>
+          <p style={{ marginTop: "0.2rem", fontSize: "0.82rem", color: "var(--text-secondary)", margin: "0.2rem 0 0" }}>{helperText}</p>
         </div>
         <span className={`profile-status-chip ${completed ? "profile-status-complete" : ""}`}>
           {completed ? "Done" : "In progress"}
@@ -40,7 +40,7 @@ export function ProfileSectionCard({
       </button>
 
       {open && (
-        <div id={id} className="mt-3 border-t pt-3" style={{ borderColor: "#e8e8e8" }}>
+        <div id={id} className="mt-3 border-t pt-3" style={{ borderColor: "var(--border)" }}>
           {children}
         </div>
       )}

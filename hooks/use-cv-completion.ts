@@ -14,10 +14,12 @@ export function useCvCompletion(userId?: string, isYouth = false) {
       try {
         const { data } = await getSupabaseClient()
           .from("youth_profiles")
-          .select("cv_text")
+          .select("cv_text, documents")
           .eq("user_id", userId)
           .maybeSingle();
-        if (active) setResult({ userId, completed: Boolean(data?.cv_text?.trim()) });
+        const hasUploadedCv = Array.isArray(data?.documents)
+          && data.documents.some((document) => document && typeof document === "object" && (document as { type?: unknown }).type === "cv");
+        if (active) setResult({ userId, completed: Boolean(data?.cv_text?.trim() || hasUploadedCv) });
       } catch {
         if (active) setResult({ userId, completed: false });
       }

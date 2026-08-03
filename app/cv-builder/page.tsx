@@ -7,6 +7,8 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
 import { getJobs } from "@/lib/jobs";
+import { createCvPdfFile } from "@/lib/cv-pdf";
+import { uploadYouthDocument } from "@/lib/storage";
 import {
   addOnboardingMessage,
   buildGeneratedCvData,
@@ -190,19 +192,28 @@ export default function CvBuilderPage() {
     setSaving(true);
 
     try {
-      await saveGeneratedCvToProfile(
-        buildGeneratedCvData({
-          fullName,
-          age,
-          city,
-          skills,
-          targetRoles,
-          interests,
-          workingTime,
-          experience,
-          answers,
-        }),
-      );
+      const generatedProfile = buildGeneratedCvData({
+        fullName,
+        age,
+        city,
+        skills,
+        targetRoles,
+        interests,
+        workingTime,
+        experience,
+        answers,
+      });
+      const pdfFile = await createCvPdfFile(generatedProfile.cv_text ?? "", fullName);
+      const pdfUrl = await uploadYouthDocument(pdfFile);
+      const existingProfile = await getYouthProfile(user?.id);
+
+      await saveGeneratedCvToProfile({
+        ...generatedProfile,
+        documents: [
+          ...((existingProfile?.documents ?? []).filter((document) => document.type !== "generated_cv")),
+          { name: pdfFile.name, url: pdfUrl, type: "generated_cv" },
+        ],
+      });
 
       if (sessionId) {
         await completeOnboardingSession(sessionId);

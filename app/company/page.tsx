@@ -17,6 +17,8 @@ const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
   recommendation: "Rekommendationsbrev",
   certificate: "Intyg",
+  cv: "Eget CV",
+  generated_cv: "Employo-CV",
   other: "Övrigt",
 };
 

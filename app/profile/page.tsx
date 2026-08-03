@@ -9,8 +9,10 @@ import { SelectedChip } from "@/components/profile/selected-chip";
 import { StickyProfileCta } from "@/components/profile/sticky-profile-cta";
 import { SuggestionChip } from "@/components/profile/suggestion-chip";
 import { useSession } from "@/hooks/use-session";
+import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
-import type { YouthProfile } from "@/lib/types";
+import { uploadYouthDocument } from "@/lib/storage";
+import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
   name: string;
@@ -114,6 +116,7 @@ const { user, profile, loading, logout } = useSession();
   const [openSection, setOpenSection] = useState<string>("targetRoles");
   const [loggingOut, setLoggingOut] = useState(false);
   const [generatedCv, setGeneratedCv] = useState("");
+  const [cvDocuments, setCvDocuments] = useState<YouthDocument[]>([]);
   const [editingCv, setEditingCv] = useState(false);
   const [cvEditText, setCvEditText] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
@@ -163,12 +166,14 @@ const { user, profile, loading, logout } = useSession();
           const cv = typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text : "";
           setGeneratedCv(cv);
           setCvEditText(cv);
+          setCvDocuments(Array.isArray(youthProfile?.documents) ? youthProfile.documents : []);
           setError("");
         } catch (loadError) {
           console.error("Failed to load youth profile.", loadError);
           setForm({ ...initialForm, name: fallbackName });
           setGeneratedCv("");
           setCvEditText("");
+          setCvDocuments([]);
           setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda din profil.");
         }
       })();
@@ -214,7 +219,10 @@ const { user, profile, loading, logout } = useSession();
     return Math.round((completeCount / entries.length) * 100);
   }, [completedSections]);
 
-  const hasCv = generatedCv.trim().length > 0;
+  const generatedCvDocument = cvDocuments.find((document) => document.type === "generated_cv");
+  const uploadedCvDocument = cvDocuments.find((document) => document.type === "cv");
+  const hasGeneratedCv = generatedCv.trim().length > 0;
+  const hasCv = hasGeneratedCv || Boolean(uploadedCvDocument);
 
   const toggleSelection = (field: "targetRoles" | "skills" | "workingTime", value: string) => {
     setForm((prev) => {
@@ -276,17 +284,50 @@ const { user, profile, loading, logout } = useSession();
     if (!user?.id) return;
     setSaving(true);
     try {
+      const pdfFile = await createCvPdfFile(cvEditText, form.name);
+      const pdfUrl = await uploadYouthDocument(pdfFile);
+      const updatedDocuments = [
+        ...cvDocuments.filter((document) => document.type !== "generated_cv"),
+        { name: pdfFile.name, url: pdfUrl, type: "generated_cv" as const },
+      ];
       const supabase = (await import("@/lib/supabase")).getSupabaseClient();
       const { error: cvError } = await supabase
         .from("youth_profiles")
-        .update({ cv_text: cvEditText })
+        .update({ cv_text: cvEditText, cv_generated: true, documents: updatedDocuments })
         .eq("user_id", user.id);
       if (cvError) throw new Error(cvError.message);
       setGeneratedCv(cvEditText);
+      setCvDocuments(updatedDocuments);
       setEditingCv(false);
       setError("");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara CV.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreatePdfForExistingCv = async () => {
+    if (!user?.id || !generatedCv.trim()) return;
+    setSaving(true);
+    try {
+      const pdfFile = await createCvPdfFile(generatedCv, form.name);
+      const pdfUrl = await uploadYouthDocument(pdfFile);
+      const updatedDocuments = [
+        ...cvDocuments.filter((document) => document.type !== "generated_cv"),
+        { name: pdfFile.name, url: pdfUrl, type: "generated_cv" as const },
+      ];
+      const supabase = (await import("@/lib/supabase")).getSupabaseClient();
+      const { error: cvError } = await supabase
+        .from("youth_profiles")
+        .update({ documents: updatedDocuments, cv_generated: true })
+        .eq("user_id", user.id);
+      if (cvError) throw new Error(cvError.message);
+      setCvDocuments(updatedDocuments);
+      downloadPdfFile(pdfFile);
+      setError("");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte skapa PDF-versionen av ditt CV.");
     } finally {
       setSaving(false);
     }
@@ -598,14 +639,12 @@ const { user, profile, loading, logout } = useSession();
         /* ── CV EXISTS ─────────────────────────────── */
         <>
           {/* CV preview / editor */}
-          <section className="card" style={{ padding: "1.25rem", marginBottom: "1rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <div>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0, marginBottom: "0.3rem" }}>
-                  Ditt CV
-                </p>
-                <p style={{ fontSize: "0.85rem", color: "#737373", margin: 0 }}>Ditt automatiskt genererade CV från din profil.</p>
-              </div>
+          {hasGeneratedCv ? (
+          <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
+                Ditt CV
+              </p>
               {!editingCv && (
                 <button
                   type="button"
@@ -645,7 +684,32 @@ const { user, profile, loading, logout } = useSession();
                 {generatedCv}
               </pre>
             )}
+            <div style={{ marginTop: "0.75rem" }}>
+              {generatedCvDocument ? (
+                <a href={generatedCvDocument.url} target="_blank" rel="noreferrer" className="secondary-btn" style={{ display: "block", padding: "0.7rem", textAlign: "center", fontSize: "0.85rem" }}>
+                  {"\u00d6ppna CV som PDF"}
+                </a>
+              ) : (
+                <button type="button" onClick={() => void handleCreatePdfForExistingCv()} disabled={saving} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>
+                  {saving ? "Skapar PDF..." : "Spara CV som PDF"}
+                </button>
+              )}
+            </div>
           </section>
+          ) : (
+            <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
+                Ditt CV
+              </p>
+              <p style={{ margin: "0.45rem 0 0", fontSize: "0.95rem", fontWeight: 700, color: "#111111" }}>Eget CV uppladdat</p>
+              <p style={{ margin: "0.35rem 0 0.8rem", fontSize: "0.84rem", lineHeight: 1.5, color: "#737373" }}>{"Ditt CV \u00e4r klart och du kan nu matchas med jobb."}</p>
+              {uploadedCvDocument && (
+                <a href={uploadedCvDocument.url} target="_blank" rel="noreferrer" className="cta-btn" style={{ display: "block", padding: "0.7rem", textAlign: "center", fontSize: "0.85rem" }}>
+                  {"\u00d6ppna uppladdat CV (PDF)"}
+                </a>
+              )}
+            </section>
+          )}
 
           {/* Edit profile toggle */}
           {!editingProfile ? (
