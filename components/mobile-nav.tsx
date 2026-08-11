@@ -118,6 +118,9 @@ export function MobileNav() {
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/" ||
+    pathname === "/pricing" ||
+    pathname === "/features" ||
+    pathname === "/velaris-preview" ||
     pathname.startsWith("/youth/onboarding") ||
     pathname.startsWith("/youth/cv") ||
     pathname.startsWith("/youth/get-started") ||

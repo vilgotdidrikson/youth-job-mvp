@@ -1,118 +1,153 @@
 "use client";
 
 import Link from "next/link";
-import { useLanguage } from "@/hooks/use-language";
+import { MarketingNav } from "@/components/marketing-nav";
+import Velaris from "@/components/ui/velaris";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { InfiniteMovingCards, type InfiniteMovingCardItem } from "@/components/ui/infinite-moving-cards";
+import { Reveal } from "@/components/ui/reveal";
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
+import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
 import "./landing.css";
 
+const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
+
+interface StatItem {
+  value: number;
+  decimals: number;
+  suffix: string;
+  label: string;
+  note: string;
+}
+
+const stats: StatItem[] = [
+  {
+    value: 24.9,
+    decimals: 1,
+    suffix: "%",
+    label: "ungdomsarbetslöshet i Sverige",
+    note: "juni 2026 · EU-snitt: 15,4 %",
+  },
+  {
+    value: 206500,
+    decimals: 0,
+    suffix: "",
+    label: "unga (15–24 år) utan jobb",
+    note: "maj 2026",
+  },
+];
+
+const steps: TimelineStep[] = [
+  {
+    number: "01",
+    title: "Skapa konto & CV",
+    body: "Registrera dig och få hjälp av AI att bygga ett vasst CV på minuter.",
+  },
+  {
+    number: "02",
+    title: "Swipea och hitta jobb",
+    body: "Bläddra bland jobb nära dig, swipea och visa intresse för roller som passar.",
+  },
+  {
+    number: "03",
+    title: "Du har fått jobbet",
+    body: "Matcha, chatta med företaget och landa din första anställning.",
+  },
+];
+
+const platformItems: PlatformItem[] = [
+  {
+    id: "ai",
+    icon: "✦",
+    title: "AI som känner dig",
+    body: "Vår AI hjälper dig skriva CV, formulera ett personligt brev och förbereda dig inför intervjuer.",
+  },
+  {
+    id: "match",
+    icon: "◎",
+    title: "Matchning åt båda håll",
+    body: "Både du och företaget väljer vem ni vill prata med – ingen ansökan försvinner i tystnad.",
+  },
+  {
+    id: "chat",
+    icon: "◈",
+    title: "Trygg chatt",
+    body: "Prata direkt i appen. Du delar aldrig mer än du själv vill, när du själv vill.",
+  },
+  {
+    id: "map",
+    icon: "⌖",
+    title: "Jobb nära dig",
+    body: "Se lediga roller på kartan och upptäck möjligheter i ditt eget område.",
+  },
+  {
+    id: "everywhere",
+    icon: "▤",
+    title: "Fungerar överallt",
+    body: "Sköt hela din jobbsökning från mobilen, webben eller var du än är.",
+  },
+];
+
+const features: InfiniteMovingCardItem[] = [
+  { icon: "◎", title: "Profil", body: "Samla styrkor, erfarenheter och mål på ett ställe." },
+  { icon: "▤", title: "AI-CV-byggare", body: "Få hjälp att formulera ett vasst CV på minuter." },
+  { icon: "✦", title: "Matchning", body: "Visa intresse, företag väljer tillbaka." },
+  { icon: "◈", title: "Chatt", body: "När det blir en match öppnas chatten direkt." },
+  { icon: "⌖", title: "Jobbkarta", body: "Hitta jobb nära dig." },
+  { icon: "◆", title: "Notiser", body: "Se profilvisningar, intressen och matchningar i realtid." },
+];
+
 const copy = {
-  sv: {
-    login: "Logga in",
-    language: "Språk",
-    eyebrow: "Jobb för unga, på ditt sätt",
-    title: "Ditt första jobb",
-    titleAccent: "börjar här.",
-    primary: "Kom igång",
-    secondary: "För företag",
-    note: "Gratis att skapa ett konto",
-    builtFor: "Byggt för vägen från nyfiken till anställd",
-    proof: [
-      ["En profil", "Samla styrkor, erfarenheter och mål på ett ställe."],
-      ["Ömsesidigt intresse", "Både kandidaten och företaget väljer vem de vill prata med."],
-      ["Direkt kontakt", "När det blir en match öppnas chatten."],
-    ],
-    howTitle: "Tre steg. Inget krångel.",
-    steps: [
-      ["01", "Berätta vem du är", "Skapa en profil och få stöd att formulera ditt CV."],
-      ["02", "Hitta rätt jobb", "Upptäck roller utifrån vad du söker och var du finns."],
-      ["03", "Matcha och prata", "Visa intresse. Vid en match kan ni chatta direkt."],
-    ],
-    rolesLabel: "Exempel på roller du kan upptäcka",
-    roles: [
-      ["Café", "Service & tempo"],
-      ["Butik", "Kunder & försäljning"],
-      ["Lager", "Logistik & teamwork"],
-      ["Kundservice", "Kommunikation & hjälp"],
-    ],
-    manifesto: "Potential syns inte alltid i ett tomt CV.",
-    manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
-    employerTitle: "Letar du efter nästa talang?",
-    employerBody: "Skapa en tydlig annons, upptäck kandidater och starta samtalet när intresset är ömsesidigt.",
-    employerCta: "Kom igång som företag",
-    footer: "En enklare väg från nyfiken till anställd.",
-  },
-  en: {
-    login: "Log in",
-    language: "Language",
-    eyebrow: "Youth jobs, on your terms",
-    title: "Your first job",
-    titleAccent: "starts here.",
-    primary: "Get started",
-    secondary: "For employers",
-    note: "Free to create an account",
-    builtFor: "Built for the path from curious to hired",
-    proof: [
-      ["One profile", "Bring strengths, experience and goals together in one place."],
-      ["Mutual interest", "Candidates and employers both choose who they want to meet."],
-      ["Direct contact", "When there is a match, the chat opens."],
-    ],
-    howTitle: "Three steps. No fuss.",
-    steps: [
-      ["01", "Tell us who you are", "Create a profile and get help shaping your CV."],
-      ["02", "Find the right role", "Discover roles based on what you want and where you are."],
-      ["03", "Match and talk", "Show interest. When it is mutual, you can chat directly."],
-    ],
-    rolesLabel: "Examples of roles you can discover",
-    roles: [
-      ["Café", "Service & pace"],
-      ["Retail", "Customers & sales"],
-      ["Warehouse", "Logistics & teamwork"],
-      ["Customer service", "Communication & support"],
-    ],
-    manifesto: "Potential does not always show in an empty CV.",
-    manifestoSub: "That is why Employo helps young people show who they are—and employers see beyond past experience.",
-    employerTitle: "Looking for your next talent?",
-    employerBody: "Create a clear listing, discover candidates and start the conversation when interest is mutual.",
-    employerCta: "Get started as an employer",
-    footer: "A simpler path from curious to hired.",
-  },
+  eyebrow: "Jobb för unga, på ditt sätt",
+  title: "Ditt första jobb",
+  titleAccent: "börjar här.",
+  primary: "Kom igång",
+  secondary: "För företag",
+  builtFor: "Byggt för vägen från nyfiken till anställd",
+  statsHeading: "Ett verkligt problem",
+  statsSource: "Källa: SCB / Ekonomifakta",
+  featuresHeading: "Allt du behöver, på ett ställe",
+  platformTitleStart: "En plattform, ",
+  platformTitleAccent: "hela vägen",
+  platformSub: "Employo är byggt för att bära dig från första ansökan till första lönechecken.",
+  howTitle: "Tre steg. Inget krångel.",
+  manifesto: "Potential syns inte alltid i ett tomt CV.",
+  manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
+  footer: "En enklare väg från nyfiken till anställd.",
 };
 
 export default function Home() {
-  const { language, toggleLanguage } = useLanguage();
-  const t = copy[language];
-
   return (
     <main className="landing-page landing-bold">
-      <nav className="landing-bold-nav" aria-label="Huvudnavigation">
-        <Link className="landing-logo" href="/" aria-label="Employo startsida">
-          <span className="landing-logo-mark">E</span><span>employo</span>
-        </Link>
-        <div className="landing-bold-nav-actions">
-          <Link href="/login" className="landing-bold-login">{t.login}</Link>
-          <button type="button" className="landing-bold-language" onClick={toggleLanguage}>
-            {t.language}<span>{language === "sv" ? "EN" : "SV"}</span>
-          </button>
-        </div>
-      </nav>
+      <Velaris
+        className="fixed inset-0 -z-10"
+        height="100vh"
+        bg="#ffffff"
+        colors={LANDING_BG_COLORS}
+      />
+
+      <MarketingNav />
 
       <section className="landing-bold-hero">
-        <p className="landing-bold-eyebrow">{t.eyebrow}</p>
-        <h1>{t.title}<br /><em>{t.titleAccent}</em></h1>
+        <p className="landing-bold-eyebrow">{copy.eyebrow}</p>
+        <h1>{copy.title}<br /><em>{copy.titleAccent}</em></h1>
         <div className="landing-bold-actions">
-          <Link href="/signup" className="landing-bold-primary">{t.primary}</Link>
           <Link
             href="/signup?role=company"
             className="landing-bold-secondary"
             style={{ border: "1.5px solid #d65f85", background: "#ffffff" }}
           >
-            {t.secondary}
+            {copy.secondary}
+          </Link>
+          <Link href="/signup" className="landing-bold-primary">
+            {copy.primary}<span aria-hidden="true">→</span>
           </Link>
         </div>
-        <p className="landing-bold-note">{t.note}</p>
       </section>
 
       <section className="landing-bold-purpose">
-        <p>{t.builtFor}</p>
+        <p>{copy.builtFor}</p>
         <div>
           <span>Profil</span><i />
           <span>Matchning</span><i />
@@ -121,52 +156,74 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="landing-proof" className="landing-bold-proof">
-        {t.proof.map(([title, body], index) => (
-          <article key={title}>
-            <span>0{index + 1}</span>
-            <h2>{title}</h2>
-            <p>{body}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="landing-bold-how">
-        <h2>{t.howTitle}</h2>
-        <div className="landing-bold-step-grid">
-          {t.steps.map(([number, title, body]) => (
-            <article key={number}>
-              <span>{number}</span>
-              <h3>{title}</h3>
-              <p>{body}</p>
+      <section className="landing-bold-stats">
+        <div className="landing-bold-stats-heading">
+          <span className="landing-bold-stats-kicker">
+            <i aria-hidden="true" />
+            Statistik
+          </span>
+          <h2>
+            <TextGenerateEffect words={copy.statsHeading} />
+          </h2>
+        </div>
+        <div className="landing-bold-stats-grid">
+          {stats.map((stat) => (
+            <article key={stat.label}>
+              <NumberTicker
+                value={stat.value}
+                decimals={stat.decimals}
+                suffix={stat.suffix}
+                className="landing-bold-stat-value"
+              />
+              <p>{stat.label}</p>
+              <span className="landing-bold-stat-note">{stat.note}</span>
             </article>
           ))}
         </div>
+        <p className="landing-bold-stats-source">{copy.statsSource}</p>
       </section>
 
-      <section className="landing-bold-roles">
-        <p>{t.rolesLabel}</p>
-        <div>
-          {t.roles.map(([title, subtitle]) => (
-            <article key={title}><h3>{title}</h3><span>{subtitle}</span><b aria-hidden="true">↗</b></article>
-          ))}
+      <section className="landing-bold-features">
+        <h2>{copy.featuresHeading}</h2>
+        <InfiniteMovingCards items={features} speed="normal" />
+      </section>
+
+      <section className="landing-bold-platform">
+        <div className="landing-bold-platform-intro">
+          <h2>
+            {copy.platformTitleStart}
+            <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
+          </h2>
+          <p>{copy.platformSub}</p>
         </div>
+        <PlatformShowcase items={platformItems} />
+      </section>
+
+      <section className="landing-bold-how">
+        <h2>{copy.howTitle}</h2>
+        <VerticalTimeline steps={steps} />
       </section>
 
       <section className="landing-bold-manifesto">
-        <p>{t.manifesto}</p>
-        <span>{t.manifestoSub}</span>
-      </section>
-
-      <section className="landing-bold-employer">
-        <h2>{t.employerTitle}</h2>
-        <p>{t.employerBody}</p>
-        <Link href="/signup?role=company">{t.employerCta}<span aria-hidden="true">↗</span></Link>
+        <Reveal>
+          <p>{copy.manifesto}</p>
+          <span>{copy.manifestoSub}</span>
+        </Reveal>
       </section>
 
       <footer className="landing-bold-footer">
-        <span>© 2026 Employo</span>
-        <span>{t.footer}</span>
+        <div className="landing-bold-footer-brand">
+          <span className="landing-logo">
+            <span className="landing-logo-mark">E</span>employo
+          </span>
+          <p>{copy.footer}</p>
+        </div>
+        <nav className="landing-bold-footer-links" aria-label="Sidfotsnavigation">
+          <Link href="/features">Funktioner</Link>
+          <Link href="/pricing">Priser</Link>
+          <Link href="/login">Logga in</Link>
+        </nav>
+        <span className="landing-bold-footer-copy">© 2026 Employo</span>
       </footer>
     </main>
   );
