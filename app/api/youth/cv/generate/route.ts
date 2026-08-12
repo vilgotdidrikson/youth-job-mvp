@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderStructuredCv, structuredCvFromForm } from "@/lib/structured-cv";
 
+export const runtime = "nodejs";
+
 interface CvInput {
   full_name?: string; age?: string; city?: string; desired_roles?: string[]; strengths?: string; languages?: string; employment_preferences?: string[];
   phone?: string; email?: string; linkedin?: string; portfolio?: string; profile_details?: string; target_job?: string; projects_text?: string; skills_text?: string;
@@ -13,6 +15,32 @@ interface CvInput {
 
 const present = (value?: string) => value?.trim() ?? "";
 const formatList = (items: string[]) => items.filter(Boolean).map((item) => `- ${item}`).join("\n");
+
+async function generateProfileSummary(facts: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey || !facts.trim()) return "";
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: process.env.GROQ_CV_MODEL ?? "llama-3.3-70b-versatile",
+      temperature: 0.2,
+      max_tokens: 140,
+      messages: [{
+        role: "system",
+        content: "Skriv en kort svensk CV-profil på 2-3 meningar utifrån enbart angivna fakta. Hitta aldrig på erfarenhet, utbildning, färdigheter, resultat eller kontaktuppgifter. Om underlaget är för tunt, returnera en tom sträng.",
+      }, {
+        role: "user",
+        content: facts,
+      }],
+    }),
+  });
+
+  if (!response.ok) return "";
+  const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  return payload.choices?.[0]?.message?.content?.trim() ?? "";
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as CvInput;
@@ -40,6 +68,12 @@ export async function POST(req: NextRequest) {
     merits.length && `Övriga meriter:\n${formatList(merits)}`,
   ].filter(Boolean).join("\n\n");
 
-  void facts;
+  try {
+    const profileSummary = await generateProfileSummary(facts);
+    if (profileSummary) structured.profile.sourceNotes = [profileSummary];
+  } catch {
+    // The deterministic structured CV remains available if Groq is unavailable.
+  }
+
   return NextResponse.json({ cv: renderStructuredCv(structured), structured });
 }

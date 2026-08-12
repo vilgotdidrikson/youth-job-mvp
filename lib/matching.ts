@@ -8,7 +8,9 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import type { CandidateReview, JobInterest, MatchRecord, SwipeDecision } from "@/lib/types";
 
-async function getAuthenticatedUser(requiredRole?: "youth" | "company") {
+export type MatchStatus = "matched" | "in_contact" | "interview" | "hired" | "rejected" | "cancelled";
+
+async function getAuthenticatedUser(requiredRole?: "youth" | "company" | "private") {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
@@ -235,7 +237,10 @@ export async function reviewCandidate(
   youthUserId: string,
   direction: SwipeDecision,
 ): Promise<MatchRecord | null> {
-  const { user } = await getAuthenticatedUser("company");
+  const { user, profile } = await getAuthenticatedUser();
+  if (profile?.role !== "company" && profile?.role !== "private") {
+    throw new Error("This action requires a task owner account.");
+  }
   const job = await getJobById(jobId);
 
   if (!job) {
@@ -265,7 +270,7 @@ export async function reviewCandidate(
 export async function getMyMatches(): Promise<MatchRecord[]> {
   const { user, profile } = await getAuthenticatedUser();
   const supabase = getSupabaseClient();
-  const column = profile?.role === "company" ? "company_user_id" : "youth_user_id";
+  const column = profile?.role === "company" || profile?.role === "private" ? "company_user_id" : "youth_user_id";
   const { data, error } = await supabase
     .from("matches")
     .select("*")
@@ -281,4 +286,25 @@ export async function getMyMatches(): Promise<MatchRecord[]> {
   }
 
   return (data ?? []) as MatchRecord[];
+}
+
+export async function updateMatchStatus(matchId: string, status: MatchStatus): Promise<MatchRecord> {
+  const { user, profile } = await getAuthenticatedUser();
+  if (profile?.role !== "company" && profile?.role !== "private") {
+    throw new Error("Only task owners can update candidate status.");
+  }
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", matchId)
+    .eq("company_user_id", user.id)
+    .select("*")
+    .single();
+  if (error || !data) {
+    logSupabaseError("matches.update.status", error ?? new Error("No match returned."), { matchId, status });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to update candidate status."));
+  }
+  return data as MatchRecord;
 }

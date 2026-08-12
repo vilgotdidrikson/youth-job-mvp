@@ -11,7 +11,7 @@ import { SuggestionChip } from "@/components/profile/suggestion-chip";
 import { useSession } from "@/hooks/use-session";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
-import { uploadYouthDocument } from "@/lib/storage";
+import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -330,6 +330,14 @@ const { user, profile, loading, logout } = useSession();
       setError(saveError instanceof Error ? saveError.message : "Kunde inte skapa PDF-versionen av ditt CV.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openYouthDocument = async (path: string) => {
+    try {
+      window.open(await getYouthDocumentSignedUrl(path), "_blank", "noopener,noreferrer");
+    } catch (openError) {
+      setError(openError instanceof Error ? openError.message : "Kunde inte öppna dokumentet.");
     }
   };
 
@@ -686,9 +694,7 @@ const { user, profile, loading, logout } = useSession();
             )}
             <div style={{ marginTop: "0.75rem" }}>
               {generatedCvDocument ? (
-                <a href={generatedCvDocument.url} target="_blank" rel="noreferrer" className="secondary-btn" style={{ display: "block", padding: "0.7rem", textAlign: "center", fontSize: "0.85rem" }}>
-                  {"\u00d6ppna CV som PDF"}
-                </a>
+                <button type="button" onClick={() => void openYouthDocument(generatedCvDocument.url)} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna CV som PDF"}</button>
               ) : (
                 <button type="button" onClick={() => void handleCreatePdfForExistingCv()} disabled={saving} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>
                   {saving ? "Skapar PDF..." : "Spara CV som PDF"}
@@ -704,9 +710,7 @@ const { user, profile, loading, logout } = useSession();
               <p style={{ margin: "0.45rem 0 0", fontSize: "0.95rem", fontWeight: 700, color: "#111111" }}>Eget CV uppladdat</p>
               <p style={{ margin: "0.35rem 0 0.8rem", fontSize: "0.84rem", lineHeight: 1.5, color: "#737373" }}>{"Ditt CV \u00e4r klart och du kan nu matchas med jobb."}</p>
               {uploadedCvDocument && (
-                <a href={uploadedCvDocument.url} target="_blank" rel="noreferrer" className="cta-btn" style={{ display: "block", padding: "0.7rem", textAlign: "center", fontSize: "0.85rem" }}>
-                  {"\u00d6ppna uppladdat CV (PDF)"}
-                </a>
+                <button type="button" onClick={() => void openYouthDocument(uploadedCvDocument.url)} className="cta-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna uppladdat CV (PDF)"}</button>
               )}
             </section>
           )}

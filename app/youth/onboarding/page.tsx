@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { completeYouthOnboarding, getYouthProfile, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { createCvPdfFile } from "@/lib/cv-pdf";
-import { uploadYouthDocument } from "@/lib/storage";
+import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
 import { structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
@@ -449,6 +449,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const cropDragRef = useRef<{ x: number; y: number; offsetX: number; offsetY: number } | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [profileImagePreview, setProfileImagePreview] = useState("");
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [showCvStep, setShowCvStep] = useState(false);
@@ -504,7 +505,11 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             city: savedProfile.city ?? "",
             postal_code: savedProfile.postal_code ?? "",
             age: savedProfile.age ? String(savedProfile.age) : "",
+            profile_image: savedProfile.profile_image_url ?? "",
           }));
+          if (savedProfile.profile_image_url) {
+            void getYouthDocumentSignedUrl(savedProfile.profile_image_url).then(setProfileImagePreview).catch(() => setProfileImagePreview(""));
+          }
           setAdditionalAddresses(Array.isArray(savedProfile.additional_addresses) ? savedProfile.additional_addresses : []);
           setDocuments(Array.isArray(savedProfile.documents) ? savedProfile.documents : []);
           setAccountDetailsSaved(hasAccountDetails(savedProfile));
@@ -775,7 +780,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
 
         <div style={{ display: "grid", gap: ".75rem", marginBottom: "1rem" }}>
           <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
-            {answers.profile_image ? <img src={answers.profile_image} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
+            {profileImagePreview ? <img src={profileImagePreview} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
             <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>
@@ -1348,8 +1353,9 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     setDocUploading(true);
     setError("");
     try {
-      const url = await uploadYouthDocument(new File([blob], "profilbild.png", { type: "image/png" }));
-      setAnswers((previous) => ({ ...previous, profile_image: url }));
+      const path = await uploadYouthDocument(new File([blob], "profilbild.png", { type: "image/png" }));
+      setAnswers((previous) => ({ ...previous, profile_image: path }));
+      setProfileImagePreview(await getYouthDocumentSignedUrl(path));
       URL.revokeObjectURL(cropSource);
       setCropSource("");
     } catch (uploadError) {
@@ -1619,7 +1625,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         ) : current.type === "image" ? (
           <div style={{ display: "grid", gap: ".75rem" }}>
             <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
-              {answers.profile_image ? <img src={answers.profile_image} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
+              {profileImagePreview ? <img src={profileImagePreview} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
               <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>

@@ -24,7 +24,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   useEffect(() => {
     if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
-      router.replace(profile.role === "company" ? "/company?view=swipe" : "/swipe");
+      router.replace(profile.role === "company" ? "/company?view=swipe" : profile.role === "private" ? "/private" : "/swipe");
     }
   }, [profile, router, sessionLoading, user]);
 
@@ -51,7 +51,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         const result = await signUp(email, password, role);
         if (result.session) {
           isRedirectingAfterSignup.current = true;
-          router.replace(role === "youth" ? "/youth/onboarding" : "/company/onboarding");
+          router.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
           return;
         }
         setMessage("Konto skapat. Kolla din e-post för att bekräfta, logga sedan in.");
@@ -60,7 +60,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       }
       const session = await signIn(email, password);
       const signedInProfile = await getUserProfile(session.user.id);
-      router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : "/swipe");
+      router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : signedInProfile?.role === "private" ? "/private" : "/swipe");
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
@@ -101,7 +101,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true">←</span><span>Tillbaka</span></button>
           <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
           <div className="auth-card-heading"><h2>{isSignup ? "Skapa konto" : "Logga in"}</h2><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
-          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Arbetsgivare</button></div></fieldset>}
+          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button><button type="button" className={role === "private" ? "auth-role-selected" : ""} onClick={() => setRole("private")}>Privatperson</button></div></fieldset>}
           <div className="auth-fields">
             <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
             <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required /></label>

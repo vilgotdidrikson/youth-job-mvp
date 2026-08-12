@@ -99,8 +99,8 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
-  if (!user || profile?.role !== "company") {
-    throw new Error("Candidate review is only available for company accounts.");
+  if (!user || (profile?.role !== "company" && profile?.role !== "private")) {
+    throw new Error("Candidate review is only available for task owners.");
   }
 
   const supabase = getSupabaseClient();
@@ -156,9 +156,7 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
   }
 
   const { data: youthProfiles, error: youthProfileError } = await supabase
-    .from("youth_profiles")
-    .select("*")
-    .in("user_id", interestedIds);
+    .rpc("get_company_candidates", { p_job_id: jobId });
 
   if (youthProfileError) {
     logSupabaseError("youth_cv_profiles.select.by_ids", youthProfileError, {

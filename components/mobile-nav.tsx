@@ -60,6 +60,18 @@ const companyItems = [
   },
 ];
 
+const privateItems = [
+  {
+    href: "/private",
+    label: "Mina uppdrag",
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 4h14v16H5z" /><path d="M8 8h8M8 12h8M8 16h5" />
+      </svg>
+    ),
+  },
+];
+
 const sharedItems = [
   {
     href: "/chats",
@@ -126,7 +138,7 @@ export function MobileNav() {
     return null;
   }
 
-  const firstItem = profile?.role === "company" ? companyItems : youthItems;
+  const firstItem = profile?.role === "company" ? companyItems : profile?.role === "private" ? privateItems : youthItems;
   const items = [...firstItem, ...sharedItems];
 
   return (

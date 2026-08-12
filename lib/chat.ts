@@ -5,6 +5,12 @@ import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors
 import { getSupabaseClient } from "@/lib/supabase";
 import type { ChatMessage, Conversation, ConversationSummary } from "@/lib/types";
 
+export interface ConversationContact {
+  conversation_id: string;
+  other_name: string;
+  job_title: string | null;
+}
+
 interface ConversationSeed {
   match_id: string;
   youth_user_id: string;
@@ -118,6 +124,18 @@ export async function getMessages(conversationId: string): Promise<ChatMessage[]
   return (data ?? []).map((row) => normalizeMessage(row as Record<string, unknown>));
 }
 
+export function subscribeToConversationMessages(conversationId: string, onMessage: (message: ChatMessage) => void) {
+  const supabase = getSupabaseClient();
+  const channel = supabase
+    .channel(`conversation:${conversationId}`)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+      onMessage(normalizeMessage(payload.new as Record<string, unknown>));
+    })
+    .subscribe();
+
+  return () => { void supabase.removeChannel(channel); };
+}
+
 export async function sendMessage(conversationId: string, messageText: string): Promise<void> {
   const user = await getCurrentUser();
 
@@ -171,6 +189,23 @@ export async function getMyConversations(userId?: string): Promise<ConversationS
       ...conversation,
       job_id: conversation.job_id ?? null,
       match_id: conversation.match_id ?? null,
+    };
+  });
+}
+
+export async function getMyConversationContacts(): Promise<ConversationContact[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("get_my_conversation_contacts");
+  if (error) {
+    logSupabaseError("conversations.contacts", error);
+    throw new Error(getSupabaseErrorMessage(error, "Unable to load conversation contacts."));
+  }
+  return (data ?? []).map((item) => {
+    const row = item as Record<string, unknown>;
+    return {
+      conversation_id: String(row.conversation_id ?? ""),
+      other_name: typeof row.other_name === "string" ? row.other_name : "Kontakt",
+      job_title: typeof row.job_title === "string" ? row.job_title : null,
     };
   });
 }
