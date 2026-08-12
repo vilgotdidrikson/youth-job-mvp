@@ -765,6 +765,9 @@ const { user, profile, loading, logout } = useSession();
             <Link href="/cv-builder" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
               Starta AI-chatt
             </Link>
+            <Link href="/voice-cv" className="secondary-btn" style={{ marginTop: ".6rem", display: "block", padding: ".75rem 1.25rem", fontSize: ".9rem", fontWeight: 700, textAlign: "center" }}>
+              Prata med AI och skapa CV
+            </Link>
           </section>
 
           <div className="mt-5 space-y-4">
