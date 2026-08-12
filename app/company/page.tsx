@@ -6,21 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
-import { createJob } from "@/lib/jobs";
-import { getMessages, getMyConversations, sendMessage } from "@/lib/chat";
+import { createJob, deleteJob, updateJob } from "@/lib/jobs";
+import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
-import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType } from "@/lib/types";
-
-const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
-  grades: "Betyg",
-  recommendation: "Rekommendationsbrev",
-  certificate: "Intyg",
-  cv: "Eget CV",
-  generated_cv: "Employo-CV",
-  other: "Övrigt",
-};
+import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision } from "@/lib/types";
 
 const JOB_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
 const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
@@ -34,33 +25,6 @@ function toggleTextList(value: string, item: string): string {
 function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
 }
-
-const MOCK_CANDIDATES: CandidateFeedItem[] = [
-  {
-    youthUserId: "mock-youth-elin",
-    profile: { user_id: "mock-youth-elin", full_name: "Elin Andersson", age: 17, city: "Stockholm", desired_roles: ["Butik", "Kundservice"], employment_preferences: ["Deltid", "Sommarjobb"], strengths: ["Social", "Ansvarsfull"], cv_text: "Jag är en social och nyfiken person som tycker om att möta människor och lära mig nya saker." },
-    job: { id: "mock-job-butik", title: "Butikssäljare", description: "Hjälp kunder och skapa en bra butiksupplevelse.", city: "Stockholm", salary_per_hour: "", employment_type: "Deltid", category: "Butik", requirements: "Social, Ansvarsfull", benefits: "Introduktion, Personalrabatt", company_name: "", company_user_id: "mock-company", image_url: "", is_active: true, created_at: new Date().toISOString() },
-  },
-  {
-    youthUserId: "mock-youth-noah",
-    profile: { user_id: "mock-youth-noah", full_name: "Noah Berg", age: 18, city: "Göteborg", desired_roles: ["Café/restaurang"], employment_preferences: ["Helgjobb", "Extra vid behov"], strengths: ["Noggrann", "Kan samarbeta"], cv_text: "Jag gillar ett högt tempo och trivs bäst när jag får samarbeta med andra." },
-    job: { id: "mock-job-cafe", title: "Cafémedarbetare", description: "Bli en del av vårt team i caféet.", city: "Göteborg", salary_per_hour: "", employment_type: "Helgjobb", category: "Café/restaurang", requirements: "Noggrann, Kan samarbeta", benefits: "Flexibla tider, Måltid ingår", company_name: "", company_user_id: "mock-company", image_url: "", is_active: true, created_at: new Date().toISOString() },
-  },
-];
-
-const MOCK_CONVERSATIONS: ConversationSummary[] = MOCK_CANDIDATES.map((candidate, index) => ({
-  id: `mock-conversation-${index + 1}`,
-  youth_user_id: candidate.youthUserId,
-  company_user_id: "mock-company",
-  job_id: candidate.job.id,
-  last_message_at: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-}));
-
-const MOCK_MESSAGES: ChatMessage[] = [
-  { id: "mock-message-1", conversation_id: "mock-conversation-1", sender_user_id: "mock-youth-elin", message_text: "Hej! Jag är väldigt intresserad av tjänsten.", created_at: new Date().toISOString() },
-  { id: "mock-message-2", conversation_id: "mock-conversation-1", sender_user_id: "mock-company", message_text: "Hej Elin! Vad roligt att höra. Berätta gärna lite om dig själv.", created_at: new Date().toISOString() },
-];
 
 type Tab = "kandidater" | "swipe" | "skapa" | "annonser";
 
@@ -107,6 +71,7 @@ function CompanyPageContent() {
   const [feedIndex, setFeedIndex] = useState(0);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [busy, setBusy] = useState(false);
+  const [jobActionId, setJobActionId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
@@ -166,7 +131,9 @@ function CompanyPageContent() {
 
   useEffect(() => {
     if (!user || profile?.role !== "company") return;
-    void getMyConversations().then((items) => setConversations(items.length > 0 ? items : MOCK_CONVERSATIONS)).catch(() => setConversations(MOCK_CONVERSATIONS));
+    void getMyConversations()
+      .then(setConversations)
+      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda konversationer."));
   }, [profile?.role, user]);
 
   useEffect(() => {
@@ -174,11 +141,17 @@ function CompanyPageContent() {
       setChatMessages([]);
       return;
     }
-    if (activeConversationId.startsWith("mock-")) {
-      setChatMessages(MOCK_MESSAGES.filter((message) => message.conversation_id === activeConversationId));
-      return;
-    }
-    void getMessages(activeConversationId).then(setChatMessages).catch(() => setChatMessages([]));
+    void getMessages(activeConversationId)
+      .then(setChatMessages)
+      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda meddelanden."));
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    return subscribeToConversationMessages(activeConversationId, (message) => {
+      setChatMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+      void getMyConversations().then(setConversations).catch(() => undefined);
+    });
   }, [activeConversationId]);
 
   const sendCompanyMessage = async (event: FormEvent) => {
@@ -186,12 +159,13 @@ function CompanyPageContent() {
     if (!activeConversationId || !chatDraft.trim()) return;
     const text = chatDraft.trim();
     setChatDraft("");
-    if (activeConversationId.startsWith("mock-")) {
-      setChatMessages((items) => [...items, { id: `mock-message-${Date.now()}`, conversation_id: activeConversationId, sender_user_id: user?.id ?? "mock-company", message_text: text, created_at: new Date().toISOString() }]);
-      return;
+    try {
+      await sendMessage(activeConversationId, text);
+      setChatMessages(await getMessages(activeConversationId));
+    } catch (sendError) {
+      setChatDraft(text);
+      setError(sendError instanceof Error ? sendError.message : "Kunde inte skicka meddelandet.");
     }
-    await sendMessage(activeConversationId, text);
-    setChatMessages(await getMessages(activeConversationId));
   };
 
   const triggerCandidateDecision = (decision: SwipeDecision) => {
@@ -229,12 +203,6 @@ function CompanyPageContent() {
   const handleDecision = async (decision: SwipeDecision) => {
     const item = candidateFeed[feedIndex];
     if (!item) return;
-    if (item.youthUserId.startsWith("mock-")) {
-      setCandidateFlyDir(null);
-      setCandidateDragX(0);
-      setFeedIndex((i) => i + 1);
-      return;
-    }
     try {
       const result: MatchRecord | null = await reviewCandidate(item.job.id, item.youthUserId, decision);
       setCandidateFlyDir(null);
@@ -292,6 +260,33 @@ function CompanyPageContent() {
     }
   };
 
+  const handleJobStatus = async (job: JobPost, status: "active" | "paused" | "closed") => {
+    setJobActionId(job.id);
+    setError("");
+    try {
+      await updateJob(job.id, { status });
+      if (user) await loadData(user.id);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Kunde inte uppdatera annonsen.");
+    } finally {
+      setJobActionId(null);
+    }
+  };
+
+  const handleDeleteJob = async (job: JobPost) => {
+    if (!window.confirm(`Ta bort annonsen "${job.title}"?`)) return;
+    setJobActionId(job.id);
+    setError("");
+    try {
+      await deleteJob(job.id);
+      if (user) await loadData(user.id);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Kunde inte ta bort annonsen.");
+    } finally {
+      setJobActionId(null);
+    }
+  };
+
   const handleSaveDraft = () => {
     window.localStorage.setItem("employo-job-draft", JSON.stringify(form));
     setDraftSaved(true);
@@ -345,7 +340,7 @@ function CompanyPageContent() {
     );
   }
 
-  const candidateFeed = feed.length > 0 ? feed : MOCK_CANDIDATES;
+  const candidateFeed = feed;
   const currentCandidate = candidateFeed[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
@@ -494,27 +489,6 @@ function CompanyPageContent() {
                   )}
                 </div>
               )}
-              {(currentCandidate.profile?.documents as { name: string; url: string; type: YouthDocumentType }[] | null | undefined)?.length ? (
-                <div style={{ marginBottom: "0.75rem" }}>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.4rem" }}>Bilagor</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    {(currentCandidate.profile!.documents as { name: string; url: string; type: YouthDocumentType }[]).map((doc) => (
-                      <a
-                        key={doc.url}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "#f5f5f5", borderRadius: 8, padding: "0.5rem 0.75rem", textDecoration: "none" }}
-                      >
-                        <span style={{ fontSize: "0.9rem" }}>📎</span>
-                        <span style={{ fontSize: "0.82rem", color: "#111111", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.name}</span>
-                        <span style={{ fontSize: "0.7rem", color: "#a3a3a3", flexShrink: 0 }}>{DOC_TYPE_LABELS[doc.type]}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
                 <button type="button" className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} onPointerDown={(e) => e.stopPropagation()} onClick={() => triggerCandidateDecision("skip")}>
                   Hoppa över
@@ -627,8 +601,11 @@ function CompanyPageContent() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
+                const status = job.status ?? (job.is_active ? "active" : "paused");
+                const isWorking = jobActionId === job.id;
                 return (
-                  <Link key={job.id} href={`/jobb/${job.id}`} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
+                  <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
+                    <Link href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
                     <p style={{ fontWeight: 700, fontSize: "1rem", color: "#111", marginBottom: "0.25rem" }}>{job.title}</p>
                     <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[[job.address, job.postal_code, job.city].filter(Boolean).join(", "), job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
@@ -636,11 +613,18 @@ function CompanyPageContent() {
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
                       </div>
                     )}
-                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: job.is_active ? "#e8faf0" : "#f5f5f5", color: job.is_active ? "#1a7f4b" : "#a3a3a3" }}>
-                      {job.is_active ? "Aktiv" : "Inaktiv"}
+                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: status === "active" ? "#e8faf0" : "#f5f5f5", color: status === "active" ? "#1a7f4b" : "#a3a3a3" }}>
+                      {status === "active" ? "Aktiv" : status === "paused" ? "Pausad" : "Stängd"}
                     </div>
                     <span className="job-list-card-link">Visa hela annonsen →</span>
-                  </Link>
+                    </Link>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
+                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
+                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
+                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "closed")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
+                      <button type="button" disabled={isWorking} onClick={() => void handleDeleteJob(job)} style={{ padding: ".5rem .7rem", border: 0, color: "#b42318", background: "transparent", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: isWorking ? "wait" : "pointer" }}>{isWorking ? "Sparar..." : "Ta bort"}</button>
+                    </div>
+                  </article>
                 );
               })}
             </div>
