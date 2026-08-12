@@ -5,6 +5,7 @@ import { getOrCreateConversation } from "@/lib/chat";
 import { getJobById } from "@/lib/jobs";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { hasCompletedCv } from "@/lib/cv-completion";
 import type { CandidateReview, JobInterest, MatchRecord, SwipeDecision } from "@/lib/types";
 
 async function getAuthenticatedUser(requiredRole?: "youth" | "company") {
@@ -197,7 +198,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
   const { user } = await getAuthenticatedUser("youth");
   const { data: youthProfile, error: profileError } = await getSupabaseClient()
     .from("youth_profiles")
-    .select("cv_text, documents")
+    .select("cv_text, cv_generated, cv_uploaded, documents")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -205,10 +206,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error(getSupabaseErrorMessage(profileError, "Unable to verify CV completion."));
   }
 
-  const hasUploadedCv = Array.isArray(youthProfile?.documents)
-    && youthProfile.documents.some((document) => document && typeof document === "object" && (document as { type?: unknown }).type === "cv");
-
-  if (!youthProfile?.cv_text?.trim() && !hasUploadedCv) {
+  if (!hasCompletedCv(youthProfile)) {
     throw new Error("Complete your CV before swiping jobs.");
   }
 

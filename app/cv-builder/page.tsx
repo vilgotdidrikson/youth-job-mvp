@@ -111,22 +111,22 @@ export default function CvBuilderPage() {
       ? {
           home: "Startsida",
           title: "AI CV-chat",
-          subtitle: "Svara kort pÃ¥ frÃ¥gorna. Vi bygger CV + ansÃ¶kan automatiskt.",
+          subtitle: "Svara kort på frågorna. Vi bygger CV + ansökan automatiskt.",
           loading: "Laddar...",
-          youthOnly: "Detta steg gÃ¤ller ungdomskonton.",
+          youthOnly: "Detta steg gäller ungdomskonton.",
           send: "Skicka",
           skills: "Kompetenser",
           city: "Stad",
           fullName: "Namn",
-          age: "Ã…lder",
+          age: "Ålder",
           targetRoles: "Intressanta jobb",
           interests: "Intressen",
-          workingTime: "NÃ¤r kan du jobba",
+          workingTime: "När kan du jobba",
           experience: "Erfarenhet",
-          save: "Spara CV och fortsÃ¤tt",
+          save: "Spara CV och fortsätt",
           saved: "CV sparat i din profil.",
-          openProfile: "Ã–ppna profil",
-          failed: "Kunde inte ladda onboarding-flÃ¶det.",
+          openProfile: "Öppna profil",
+          failed: "Kunde inte ladda onboarding-flödet.",
         }
       : {
           home: "Home",
@@ -172,9 +172,6 @@ export default function CvBuilderPage() {
       setTurns(nextTurns);
       setInput("");
 
-      if (nextAnswers.length >= 2 && skills.length === 0) {
-        setSkills(["Teamwork", "Service", "Fast learner"]);
-      }
       if (nextAnswers.length >= 3 && !experience) {
         setExperience(nextAnswers[2]);
       }

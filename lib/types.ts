@@ -44,6 +44,7 @@ export interface YouthProfile {
   desired_locations?: string[] | null;
   employment_preferences?: string[] | null;
   cv_text?: string | null;
+  cv_structured?: import("./structured-cv").StructuredCvData | null;
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
@@ -187,6 +188,7 @@ export interface SaveYouthProfileInput {
   desired_locations?: string[] | null;
   employment_preferences?: string[] | null;
   cv_text?: string | null;
+  cv_structured?: import("./structured-cv").StructuredCvData | null;
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;

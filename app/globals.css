@@ -249,6 +249,9 @@ button,
   padding: 1rem 1rem calc(5.25rem + env(safe-area-inset-bottom));
 }
 
+.mobile-shell.voice-cv-page { position: relative; padding-top: calc(env(safe-area-inset-top) + 4.75rem); }
+.voice-cv-back { position: absolute; z-index: 70; top: calc(env(safe-area-inset-top) + 1rem); left: 1.25rem; display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--text-primary); background: var(--surface); box-shadow: 0 .25rem .8rem rgba(0,0,0,.08); font: inherit; font-size: 1.35rem; cursor: pointer; }
+
 @media (max-width: 520px) {
   .job-creation-details {
     grid-template-columns: 1fr !important;
@@ -822,6 +825,8 @@ button,
 @media (min-width: 721px) {
   body { background: var(--color-canvas); }
   .mobile-shell { width: min(100%, 88rem); max-width: none; min-height: 100svh; padding: 7.25rem clamp(2rem, 6vw, 6.5rem) 3rem; }
+  .mobile-shell.voice-cv-page { padding-top: 8.75rem; }
+  .voice-cv-back { position: fixed; top: 7.1rem; left: max(2rem, calc((100vw - 88rem) / 2)); }
   .mobile-shell.pb-20 { padding-bottom: 3rem; }
   .card, .glass-card, .profile-section { border-color: rgba(211, 222, 210, .9); background: rgba(255, 253, 249, .86); box-shadow: 0 1rem 2.5rem rgba(43, 79, 79, .07); }
   .bottom-nav { top: 1.4rem; right: auto; bottom: auto; left: 50%; width: min(88rem, calc(100vw - 4rem)); max-width: none !important; min-height: 4.25rem; transform: translateX(-50%) !important; justify-content: flex-end; gap: .25rem; border: 1px solid var(--color-border); border-radius: 999px; background: rgb(255 255 255 / .9); padding: .45rem .6rem; box-shadow: 0 .5rem 1.5rem rgb(var(--color-text-rgb) / .06); backdrop-filter: blur(12px); }

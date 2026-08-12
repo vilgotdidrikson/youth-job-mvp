@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { completeYouthOnboarding, getYouthProfile, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
-import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
+import { createCvPdfFile } from "@/lib/cv-pdf";
 import { uploadYouthDocument } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
+import { structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 
 const STRENGTH_TIPS = [
   "Ansvarstagande",
@@ -60,6 +62,7 @@ const BIRTH_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().
 const WORK_YEARS = Array.from({ length: 100 }, (_, index) => String(2026 - index));
 const ACCOUNT_DETAILS_STEP_COUNT = 3;
 const FIRST_CV_STEP = ACCOUNT_DETAILS_STEP_COUNT;
+const CV_DRAFT_STORAGE_KEY = "employo-written-cv-draft-v1";
 
 function hasAccountDetails(profile: {
   full_name?: string | null;
@@ -72,8 +75,7 @@ function hasAccountDetails(profile: {
     profile?.full_name?.trim() &&
     profile.date_of_birth &&
     profile.address?.trim() &&
-    profile.city?.trim() &&
-    profile.postal_code?.trim(),
+    profile.city?.trim(),
   );
 }
 
@@ -197,16 +199,24 @@ const STEPS: StepConfig[] = [
     optional: true,
   },
   {
+    field: "skills_text",
+    question: "Vilka konkreta kompetenser och verktyg kan du använda?",
+    description: "Skriv bara sådant du faktiskt har använt.",
+    type: "textarea",
+    placeholder: "T.ex. React, Excel, kassasystem eller bildredigering",
+    optional: true,
+  },
+  {
     field: "certificates",
     question: "Har du certifikat, stipendier eller licenser?",
     type: "textarea",
-    placeholder: "T.ex. HLR-certifikat, stipendium eller https://linkedin.com/in/...",
+    placeholder: "T.ex. HLR-certifikat eller stipendium",
     optional: true,
   },
   {
     field: "extracurriculars",
     question: "Andra bemärkelser eller tillägg",
-    description: "Här kan du till exempel berätta om en fritidsaktivitet, länka ett LinkedIn konto eller bifoga en pdf med dina betyg.",
+    description: "Här kan du till exempel berätta om en fritidsaktivitet eller bifoga en pdf med dina betyg.",
     type: "textarea",
     optional: true,
   },
@@ -228,6 +238,7 @@ interface Answers {
   education: string;
   languages: string;
   employment_preferences: string[];
+  skills_text: string;
 }
 
 function buildCvText(a: Answers): string {
@@ -389,10 +400,11 @@ function buildStructuredCvFallback(a: Answers): string {
 }
 
 
-export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
+export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = false }: { flow: "account" | "cv"; cvBuilder?: boolean; voiceFinalize?: boolean }) {
   const router = useRouter();
   const { user, profile, loading } = useSession();
-  const [step, setStep] = useState(() => flow === "cv" ? FIRST_CV_STEP : 0);
+  const cvDraftStorageKey = `${CV_DRAFT_STORAGE_KEY}:${user?.id ?? "anonymous"}`;
+  const [step, setStep] = useState(() => voiceFinalize ? STEPS.length - 1 : flow === "cv" ? FIRST_CV_STEP : 0);
   const [answers, setAnswers] = useState<Answers>({
     full_name: "",
     date_of_birth: "",
@@ -409,6 +421,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
     education: "",
     languages: "",
     employment_preferences: [],
+    skills_text: "",
   });
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -444,8 +457,9 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
   const [accountDetailsLoaded, setAccountDetailsLoaded] = useState(false);
   const [redirectingBetweenFlows, setRedirectingBetweenFlows] = useState(false);
   const [showDocStep, setShowDocStep] = useState(false);
-  const [showCvMethodChoice, setShowCvMethodChoice] = useState(flow === "cv");
+  const [showCvMethodChoice] = useState(flow === "cv" && !cvBuilder);
   const [cvText, setCvText] = useState("");
+  const [structuredCv, setStructuredCv] = useState<StructuredCvData | null>(null);
   const [documents, setDocuments] = useState<YouthDocument[]>([]);
   const [docType, setDocType] = useState<YouthDocumentType>("grades");
   const [docUploading, setDocUploading] = useState(false);
@@ -495,7 +509,55 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
           setDocuments(Array.isArray(savedProfile.documents) ? savedProfile.documents : []);
           setAccountDetailsSaved(hasAccountDetails(savedProfile));
         }
-        setStep(FIRST_CV_STEP);
+        if (voiceFinalize) {
+          try {
+            const savedVoiceAnswers = JSON.parse(sessionStorage.getItem("employo-voice-cv-answers") ?? "{}") as Partial<Pick<Answers, "strengths" | "languages" | "work_experience" | "education" | "certificates">>;
+            setAnswers((previous) => ({ ...previous, ...savedVoiceAnswers }));
+            const savedStructuredCv = JSON.parse(sessionStorage.getItem("employo-voice-cv-structured") ?? "null") as StructuredCvData | null;
+            if (savedStructuredCv) setStructuredCv(savedStructuredCv);
+          } catch {
+            // The final optional step is still available if the temporary voice data is unavailable.
+          }
+        }
+        let restoredDraft = false;
+        if (cvBuilder && !voiceFinalize) {
+          try {
+            const draft = JSON.parse(sessionStorage.getItem(cvDraftStorageKey) ?? "null") as {
+              step?: number;
+              answers?: Answers;
+              workExperiences?: WorkExperience[];
+              savedWorkExperiences?: boolean[];
+              educations?: EducationEntry[];
+              savedEducations?: boolean[];
+              certificates?: CertificateEntry[];
+              savedCertificates?: boolean[];
+              selectedStrengths?: string[];
+              selectedLanguages?: string[];
+              otherEntries?: OtherEntry[];
+              showCvStep?: boolean;
+              cvText?: string;
+            } | null;
+            if (draft?.answers && typeof draft.step === "number" && draft.step >= FIRST_CV_STEP && draft.step < STEPS.length) {
+              setAnswers((previous) => ({ ...previous, ...draft.answers }));
+              setStep(draft.step);
+              if (draft.workExperiences?.length) setWorkExperiences(draft.workExperiences);
+              if (draft.savedWorkExperiences?.length) setSavedWorkExperiences(draft.savedWorkExperiences);
+              if (draft.educations?.length) setEducations(draft.educations);
+              if (draft.savedEducations?.length) setSavedEducations(draft.savedEducations);
+              if (draft.certificates?.length) setCertificates(draft.certificates);
+              if (draft.savedCertificates?.length) setSavedCertificates(draft.savedCertificates);
+              setSelectedStrengths(draft.selectedStrengths ?? []);
+              setSelectedLanguages(draft.selectedLanguages ?? []);
+              setOtherEntries(draft.otherEntries ?? []);
+              setShowCvStep(Boolean(draft.showCvStep));
+              setCvText(draft.cvText ?? "");
+              restoredDraft = true;
+            }
+          } catch {
+            sessionStorage.removeItem(cvDraftStorageKey);
+          }
+        }
+        if (!restoredDraft) setStep(voiceFinalize ? STEPS.length - 1 : FIRST_CV_STEP);
       } catch {
         // Keep the account-details flow available if the saved profile cannot be read.
       } finally {
@@ -506,7 +568,26 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
     return () => {
       active = false;
     };
-  }, [flow, loading, profile?.role, router, user]);
+  }, [cvBuilder, cvDraftStorageKey, flow, loading, profile?.role, router, user, voiceFinalize]);
+
+  useEffect(() => {
+    if (flow !== "cv" || !cvBuilder || voiceFinalize || !accountDetailsLoaded) return;
+    sessionStorage.setItem(cvDraftStorageKey, JSON.stringify({
+      step,
+      answers,
+      workExperiences,
+      savedWorkExperiences,
+      educations,
+      savedEducations,
+      certificates,
+      savedCertificates,
+      selectedStrengths,
+      selectedLanguages,
+      otherEntries,
+      showCvStep,
+      cvText,
+    }));
+  }, [accountDetailsLoaded, answers, certificates, cvBuilder, cvDraftStorageKey, cvText, educations, flow, otherEntries, savedCertificates, savedEducations, savedWorkExperiences, selectedLanguages, selectedStrengths, showCvStep, step, voiceFinalize, workExperiences]);
 
   useEffect(() => {
     if (!cameraOpen || !cameraStreamRef.current || !cameraVideoRef.current) return;
@@ -556,10 +637,15 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
           <p style={{ margin: "1rem 0 1.6rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
 
           <div style={{ display: "grid", gap: ".75rem" }}>
-            <button type="button" onClick={() => setShowCvMethodChoice(false)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: 0, borderRadius: 16, color: "var(--color-on-brand)", background: "var(--accent)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
+            <button type="button" onClick={() => router.push("/youth/cv/create")} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: 0, borderRadius: 16, color: "var(--color-on-brand)", background: "var(--accent)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
               <strong style={{ fontSize: "1rem" }}>Skapa CV i Employo</strong>
               <span style={{ fontSize: ".82rem", opacity: .9 }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
+            <Link href="/voice-cv" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
+              <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "#ec4899", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
+              <strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
+              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
+            </Link>
             <label style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
               <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} style={{ display: "none" }} />
               <strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
@@ -621,25 +707,6 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
           }}
         />
 
-        <section style={{ display: "grid", gap: ".65rem", marginTop: "1rem", padding: "1rem", border: "1px solid var(--border)", borderRadius: 12, background: "var(--color-surface-soft)" }}>
-          <div>
-            <h2 style={{ margin: 0, color: "var(--text-primary)", fontSize: "0.95rem" }}>CV som PDF</h2>
-            <p style={{ margin: ".25rem 0 0", color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.45 }}>Ladda ner ditt Employo-CV som PDF eller bifoga ett eget CV.</p>
-          </div>
-          <button type="button" onClick={() => void handleGeneratedCvPdf()} disabled={docUploading || !cvText.trim()} className="cta-btn" style={{ minHeight: "2.8rem", border: 0, borderRadius: 10, cursor: docUploading ? "wait" : "pointer" }}>
-            {docUploading ? "Skapar PDF..." : "Ladda ner Employo-CV som PDF"}
-          </button>
-          <label style={{ display: "grid", placeItems: "center", minHeight: "2.8rem", padding: ".65rem 1rem", border: "1px solid var(--color-brand)", borderRadius: 10, color: "var(--accent)", background: "var(--surface)", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>
-            <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleExistingCvSelect(event)} disabled={docUploading} style={{ display: "none" }} />
-            Bifoga eget CV som PDF
-          </label>
-          {documents.filter((document) => document.type === "cv" || document.type === "generated_cv").map((document) => (
-            <a key={document.url} href={document.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", fontSize: ".8rem", fontWeight: 700 }}>
-              {DOC_TYPE_LABELS[document.type]}: {document.name}
-            </a>
-          ))}
-        </section>
-
         {error && (
           <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</p>
         )}
@@ -663,7 +730,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
               opacity: saving ? 0.6 : 1,
             }}
           >
-            {saving ? "Sparar..." : "Nästa →"}
+            {saving ? "Sparar CV och PDF..." : "Spara mitt CV"}
           </button>
         </div>
       </main>
@@ -1017,7 +1084,9 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
         });
         setAnswers((prev) => ({ ...prev, age: savedAccount.age ? String(savedAccount.age) : "" }));
         setAccountDetailsSaved(true);
-        setShowAccountCreated(true);
+        // The identity steps are a one-way gate. Continue directly to the CV
+        // method choice so browser history cannot return to those questions.
+        router.replace("/youth/cv");
       } catch (saveError) {
         setError(saveError instanceof Error ? saveError.message : "Kunde inte spara dina uppgifter.");
       } finally {
@@ -1051,11 +1120,35 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
       setStep((s) => s + 1);
       return;
     }
-    // Last question answered → generate CV via Groq (falls back to local template if no key)
+    const formattedWorkExperience = formatWorkExperiences();
+    const formattedEducation = formatEducations();
+    const formattedCertificates = formatCertificates();
+    const coreAreas = [
+      { field: "strengths" as const, label: "egenskaper", value: answers.strengths.trim() },
+      { field: "languages" as const, label: "språk", value: answers.languages.trim() },
+      { field: "work_experience" as const, label: "erfarenhet", value: formattedWorkExperience || answers.work_experience.trim() },
+      { field: "education" as const, label: "utbildning", value: formattedEducation || answers.education.trim() },
+      { field: "certificates" as const, label: "certifikat eller licenser", value: formattedCertificates || answers.certificates.trim() },
+    ];
+    const answeredAreaCount = coreAreas.filter((area) => area.value).length;
+    if (answeredAreaCount < 3) {
+      const firstMissingArea = coreAreas.find((area) => !area.value);
+      const missingLabels = coreAreas.filter((area) => !area.value).map((area) => area.label).join(", ");
+      if (firstMissingArea) setStep(STEPS.findIndex((candidate) => candidate.field === firstMissingArea.field));
+      setError(`Svara på minst 3 av de 5 CV-områdena innan CV:t skapas. Du har svarat på ${answeredAreaCount}. Komplettera till exempel: ${missingLabels}.`);
+      return;
+    }
+    // Generate the CV only after the frontend has enough real information.
     setSaving(true);
     setError("");
     let generated = "";
-    const answersForCv = { ...answers, extracurriculars: formatOtherEntries(), work_experience: formatWorkExperiences(), education: formatEducations(), certificates: formatCertificates() };
+    const answersForCv = {
+      ...answers,
+      extracurriculars: formatOtherEntries(),
+      work_experience: formattedWorkExperience || answers.work_experience,
+      education: formattedEducation || answers.education,
+      certificates: formattedCertificates || answers.certificates,
+    };
     const cvPayload = {
       ...answersForCv,
       work_experiences: workExperiences.map(({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description }) => ({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description })),
@@ -1070,13 +1163,17 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
         body: JSON.stringify(cvPayload),
       });
       if (res.ok) {
-        const data = (await res.json()) as { cv: string };
+        const data = (await res.json()) as { cv: string; structured?: StructuredCvData };
         generated = data.cv;
+        if (data.structured) setStructuredCv(data.structured);
       }
     } catch {
       // silently fall through to local template
     }
-    if (!generated) generated = buildStructuredCvFallback(answersForCv);
+    if (!generated) {
+      generated = buildStructuredCvFallback(answersForCv);
+      setStructuredCv(structuredCvFromForm(cvPayload));
+    }
     setAnswers(answersForCv);
     setSaving(false);
     setCvText(generated);
@@ -1084,9 +1181,7 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
   }
 
   async function handleSaveCv() {
-    // CV collected — proceed to optional document upload step
-    setShowCvStep(false);
-    setShowDocStep(true);
+    await handleSaveWithDocs();
   }
 
   async function handleUploadedCvFinish(event: React.ChangeEvent<HTMLInputElement>) {
@@ -1102,56 +1197,13 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
     try {
       const url = await uploadYouthDocument(file);
       await saveUploadedCvToProfile({ name: file.name, url, type: "cv" });
+      sessionStorage.removeItem(cvDraftStorageKey);
       router.replace("/swipe");
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Kunde inte spara ditt CV.");
     } finally {
       setDocUploading(false);
       event.target.value = "";
-    }
-  }
-
-  async function handleExistingCvSelect(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Välj en PDF-fil för ditt CV.");
-      return;
-    }
-
-    setDocUploading(true);
-    setError("");
-    try {
-      const url = await uploadYouthDocument(file);
-      setDocuments((previous) => [
-        ...previous.filter((document) => document.type !== "cv"),
-        { name: file.name, url, type: "cv" },
-      ]);
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp ditt CV.");
-    } finally {
-      setDocUploading(false);
-      event.target.value = "";
-    }
-  }
-
-  async function handleGeneratedCvPdf() {
-    if (!cvText.trim()) return;
-
-    setDocUploading(true);
-    setError("");
-    try {
-      const file = await createCvPdfFile(cvText, answers.full_name);
-      const url = await uploadYouthDocument(file);
-      setDocuments((previous) => [
-        ...previous.filter((document) => document.type !== "generated_cv"),
-        { name: file.name, url, type: "generated_cv" },
-      ]);
-      downloadPdfFile(file);
-    } catch (pdfError) {
-      setError(pdfError instanceof Error ? pdfError.message : "Kunde inte skapa PDF-filen.");
-    } finally {
-      setDocUploading(false);
     }
   }
 
@@ -1354,16 +1406,24 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
       await completeYouthOnboarding({
         ...answers,
         extracurriculars: formatOtherEntries(),
-        work_experience: formatWorkExperiences(),
-        education: formatEducations(),
-        certificates: formatCertificates(),
+        work_experience: formatWorkExperiences() || answers.work_experience,
+        education: formatEducations() || answers.education,
+        certificates: formatCertificates() || answers.certificates,
         cv_text: cvText,
+        cv_structured: structuredCv ?? structuredCvFromForm({
+          ...answers,
+          work_experiences: workExperiences,
+          educations,
+          certificate_entries: certificates,
+          other_entries: otherEntries,
+        }),
         documents: [
           ...documents.filter((document) => document.type !== "generated_cv"),
           ...otherDocuments,
           generatedCvDocument,
         ],
       });
+      sessionStorage.removeItem(cvDraftStorageKey);
       router.replace("/swipe");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
@@ -1451,13 +1511,19 @@ export function YouthOnboardingFlow({ flow }: { flow: "account" | "cv" }) {
           <span style={{ fontSize: "0.95rem", color: "#737373", fontWeight: 700, letterSpacing: "0.05em" }}>
             {flowStep} / {flowTotal}
           </span>
-          {((isAccountDetailsFlow && !accountDetailsSaved && step > 0) || (!isAccountDetailsFlow && step > FIRST_CV_STEP)) && (
+          {((isAccountDetailsFlow && !accountDetailsSaved && step > 0) || (!voiceFinalize && !isAccountDetailsFlow && (step > FIRST_CV_STEP || cvBuilder))) && (
             <button
               type="button"
-              onClick={() => { setError(""); setStep((s) => s - 1); }}
-              style={{ fontSize: "0.8rem", color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              onClick={() => {
+                setError("");
+                if (!isAccountDetailsFlow && step === FIRST_CV_STEP) router.push("/youth/cv");
+                else setStep((currentStep) => currentStep - 1);
+              }}
+              aria-label={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
+              title={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
+              style={{ minWidth: step === FIRST_CV_STEP ? 32 : undefined, minHeight: step === FIRST_CV_STEP ? 32 : undefined, fontSize: "0.8rem", color: "#737373", background: "none", border: "none", cursor: "pointer", padding: step === FIRST_CV_STEP ? 0 : undefined }}
             >
-              ← Tillbaka
+              {step === FIRST_CV_STEP ? "←" : "← Tillbaka"}
             </button>
           )}
         </div>

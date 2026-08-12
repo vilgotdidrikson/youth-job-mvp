@@ -9,13 +9,18 @@ import type {
   SaveYouthProfileInput,
   YouthProfile,
 } from "@/lib/types";
+import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 
 const ONBOARDING_QUESTIONS = [
-  "Tell us a bit about yourself and what kind of work feels interesting.",
-  "What strengths or skills do you already have?",
-  "Do you have any school, hobby, volunteer, or work experience?",
-  "Where would you like to work and when are you available?",
-  "What kind of roles do you want to apply for first?",
+  "Berätta kort om dig själv och vilken typ av jobb du söker.",
+  "Vilka styrkor har du, och kan du ge ett konkret exempel?",
+  "Berätta om jobb, praktik, volontärarbete eller annat ansvar du har haft.",
+  "Vilken utbildning går eller har du gått, och finns relevanta kurser eller skolprojekt?",
+  "Har du gjort något eget projekt, UF-företag eller föreningsprojekt som visar vad du kan?",
+  "Vilka konkreta kompetenser eller verktyg har du faktiskt använt?",
+  "Har du certifikat, stipendier, priser, ledarskap eller andra meriter?",
+  "Vilka språk kan du, på vilken nivå, och kan du tala, skriva och förstå dem?",
+  "Finns det idrott, föreningsliv, hobbyer eller annat ansvar som stärker ditt CV?",
 ] as const;
 
 function splitListFromText(value: string): string[] {
@@ -258,40 +263,31 @@ export function buildGeneratedCvData(input: {
   experience: string;
   answers: string[];
 }): SaveYouthProfileInput {
-  const intro = input.answers[0] || "Motivated youth candidate ready for a first role.";
-  const strengths = input.answers[1] || input.skills.join(", ");
-  const experienceSummary = input.answers[2] || input.experience || "School, hobby, or volunteer experience.";
-  const availability = input.answers[3] || input.workingTime.join(", ");
-  const roleGoal = input.answers[4] || input.targetRoles.join(", ");
-
-  const cvText = [
-    input.fullName || "Youth candidate",
-    input.city,
-    "",
-    "Profile",
-    intro,
-    "",
-    "Strengths",
-    strengths || "Service, teamwork, and motivation.",
-    "",
-    "Experience",
-    experienceSummary,
-    "",
-    "Availability",
-    availability || "Flexible availability.",
-    "",
-    "Preferred roles",
-    roleGoal || "Part-time and summer jobs.",
-  ]
-    .filter((line) => line !== undefined)
-    .join("\n");
+  const structured = structuredCvFromForm({
+    full_name: input.fullName,
+    city: input.city,
+    desired_roles: input.targetRoles,
+    profile_details: input.answers[0],
+    strengths: [input.answers[1], ...input.skills].filter(Boolean).join(", "),
+    work_experience: input.answers[2] || input.experience,
+    education: input.answers[3],
+    projects_text: input.answers[4],
+    skills_text: [input.answers[5], ...input.skills].filter(Boolean).join(", "),
+    certificates: input.answers[6],
+    languages: input.answers[7],
+    extracurriculars: input.answers[8] || input.interests.join(", "),
+  });
+  const legacy = structuredCvToLegacy(structured);
+  const cvText = renderStructuredCv(structured);
+  const intro = input.answers[0] || "";
+  const roleGoal = input.targetRoles.join(", ");
 
   const coverLetterTemplate = [
     "Hej!",
     "",
     `Jag heter ${input.fullName || "ung kandidat"} och är intresserad av ${roleGoal || "att börja jobba"}.`,
     intro,
-    strengths || "Jag lär mig snabbt och gillar att ta ansvar.",
+    input.answers[1] || input.skills.join(", "),
     "",
     "Vänliga hälsningar,",
     input.fullName || "",
@@ -302,14 +298,15 @@ export function buildGeneratedCvData(input: {
     age: input.age ? Number(input.age) : null,
     city: input.city || null,
     merits: input.interests,
-    strengths: input.skills,
-    work_experience: splitListFromText(input.experience),
-    education: [],
-    languages: [],
+    strengths: legacy.strengths,
+    work_experience: legacy.workExperience,
+    education: legacy.education,
+    languages: legacy.languages,
     desired_roles: input.targetRoles,
     desired_locations: input.city ? [input.city] : [],
     employment_preferences: input.workingTime,
     cv_text: cvText,
+    cv_structured: structured,
     cover_letter_template: coverLetterTemplate,
     onboarding_completed: true,
     cv_generated: true,
@@ -318,6 +315,22 @@ export function buildGeneratedCvData(input: {
 
 export async function saveGeneratedCvToProfile(profileData: SaveYouthProfileInput): Promise<YouthProfile> {
   return persistYouthProfile(profileData);
+}
+
+export async function saveVoiceCvToProfile(input: StructuredCvData): Promise<YouthProfile> {
+  const legacy = structuredCvToLegacy(input);
+  const cvText = renderStructuredCv(input);
+  return persistYouthProfile({
+    strengths: legacy.strengths,
+    languages: legacy.languages,
+    work_experience: legacy.workExperience,
+    education: legacy.education,
+    certificates: legacy.certificates.join("\n") || null,
+    extracurriculars: legacy.extracurriculars.join("\n") || null,
+    cv_structured: input,
+    cv_text: cvText || "CV skapat genom röstintervju.",
+    cv_generated: true,
+  });
 }
 
 export async function saveUploadedCvToProfile(document: import("./types").YouthDocument): Promise<YouthProfile> {
@@ -346,6 +359,7 @@ export async function completeYouthOnboarding(input: {
   languages: string;
   employment_preferences: string[];
   cv_text?: string;
+  cv_structured?: StructuredCvData;
   cv_uploaded?: boolean;
   documents?: import("./types").YouthDocument[];
   certificates?: string;
@@ -364,6 +378,7 @@ export async function completeYouthOnboarding(input: {
     employment_preferences: input.employment_preferences,
     desired_locations: input.city ? [input.city] : [],
     cv_text: input.cv_text ?? null,
+    cv_structured: input.cv_structured ?? null,
     documents: input.documents ?? [],
     certificates: input.certificates || null,
     extracurriculars: input.extracurriculars || null,

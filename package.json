@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:cv": "node scripts/test-cv-scenarios.mjs",
+    "test:voice": "node scripts/test-voice-interview.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

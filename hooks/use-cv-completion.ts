@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { hasCompletedCv } from "@/lib/cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function useCvCompletion(userId?: string, isYouth = false) {
@@ -14,12 +15,10 @@ export function useCvCompletion(userId?: string, isYouth = false) {
       try {
         const { data } = await getSupabaseClient()
           .from("youth_profiles")
-          .select("cv_text, documents")
+          .select("cv_text, documents, cv_generated, cv_uploaded")
           .eq("user_id", userId)
           .maybeSingle();
-        const hasUploadedCv = Array.isArray(data?.documents)
-          && data.documents.some((document) => document && typeof document === "object" && (document as { type?: unknown }).type === "cv");
-        if (active) setResult({ userId, completed: Boolean(data?.cv_text?.trim() || hasUploadedCv) });
+        if (active) setResult({ userId, completed: hasCompletedCv(data) });
       } catch {
         if (active) setResult({ userId, completed: false });
       }
