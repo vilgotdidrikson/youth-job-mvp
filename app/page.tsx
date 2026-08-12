@@ -4,11 +4,11 @@ import Link from "next/link";
 import { MarketingNav } from "@/components/marketing-nav";
 import Velaris from "@/components/ui/velaris";
 import { NumberTicker } from "@/components/ui/number-ticker";
-import { InfiniteMovingCards, type InfiniteMovingCardItem } from "@/components/ui/infinite-moving-cards";
 import { Reveal } from "@/components/ui/reveal";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
 import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
+import { AiVisual, MatchVisual, ChatVisual, MapVisual, EverywhereVisual } from "@/components/ui/platform-visuals";
 import "./landing.css";
 
 const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
@@ -62,40 +62,36 @@ const platformItems: PlatformItem[] = [
     icon: "✦",
     title: "AI som känner dig",
     body: "Vår AI hjälper dig skriva CV, formulera ett personligt brev och förbereda dig inför intervjuer.",
+    visual: <AiVisual />,
   },
   {
     id: "match",
     icon: "◎",
     title: "Matchning åt båda håll",
     body: "Både du och företaget väljer vem ni vill prata med – ingen ansökan försvinner i tystnad.",
+    visual: <MatchVisual />,
   },
   {
     id: "chat",
     icon: "◈",
     title: "Trygg chatt",
     body: "Prata direkt i appen. Du delar aldrig mer än du själv vill, när du själv vill.",
+    visual: <ChatVisual />,
   },
   {
     id: "map",
     icon: "⌖",
     title: "Jobb nära dig",
     body: "Se lediga roller på kartan och upptäck möjligheter i ditt eget område.",
+    visual: <MapVisual />,
   },
   {
     id: "everywhere",
     icon: "▤",
     title: "Fungerar överallt",
     body: "Sköt hela din jobbsökning från mobilen, webben eller var du än är.",
+    visual: <EverywhereVisual />,
   },
-];
-
-const features: InfiniteMovingCardItem[] = [
-  { icon: "◎", title: "Profil", body: "Samla styrkor, erfarenheter och mål på ett ställe." },
-  { icon: "▤", title: "AI-CV-byggare", body: "Få hjälp att formulera ett vasst CV på minuter." },
-  { icon: "✦", title: "Matchning", body: "Visa intresse, företag väljer tillbaka." },
-  { icon: "◈", title: "Chatt", body: "När det blir en match öppnas chatten direkt." },
-  { icon: "⌖", title: "Jobbkarta", body: "Hitta jobb nära dig." },
-  { icon: "◆", title: "Notiser", body: "Se profilvisningar, intressen och matchningar i realtid." },
 ];
 
 const copy = {
@@ -107,10 +103,9 @@ const copy = {
   builtFor: "Byggt för vägen från nyfiken till anställd",
   statsHeading: "Ett verkligt problem",
   statsSource: "Källa: SCB / Ekonomifakta",
-  featuresHeading: "Allt du behöver, på ett ställe",
   platformTitleStart: "En plattform, ",
   platformTitleAccent: "hela vägen",
-  platformSub: "Employo är byggt för att bära dig från första ansökan till första lönechecken.",
+  platformSub: "Employo är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
   howTitle: "Tre steg. Inget krångel.",
   manifesto: "Potential syns inte alltid i ett tomt CV.",
   manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
@@ -158,10 +153,6 @@ export default function Home() {
 
       <section className="landing-bold-stats">
         <div className="landing-bold-stats-heading">
-          <span className="landing-bold-stats-kicker">
-            <i aria-hidden="true" />
-            Statistik
-          </span>
           <h2>
             <TextGenerateEffect words={copy.statsHeading} />
           </h2>
@@ -183,20 +174,17 @@ export default function Home() {
         <p className="landing-bold-stats-source">{copy.statsSource}</p>
       </section>
 
-      <section className="landing-bold-features">
-        <h2>{copy.featuresHeading}</h2>
-        <InfiniteMovingCards items={features} speed="normal" />
-      </section>
-
       <section className="landing-bold-platform">
-        <div className="landing-bold-platform-intro">
-          <h2>
-            {copy.platformTitleStart}
-            <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
-          </h2>
-          <p>{copy.platformSub}</p>
-        </div>
-        <PlatformShowcase items={platformItems} />
+        <PlatformShowcase
+          items={platformItems}
+          heading={
+            <>
+              {copy.platformTitleStart}
+              <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
+            </>
+          }
+          subheading={copy.platformSub}
+        />
       </section>
 
       <section className="landing-bold-how">
