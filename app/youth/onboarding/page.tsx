@@ -721,7 +721,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               padding: "1rem",
               borderRadius: 12,
               border: "none",
-              background: "#111111",
+              background: "var(--color-brand)",
               color: "#ffffff",
               fontSize: "1rem",
               fontWeight: 700,
@@ -1460,14 +1460,14 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
 
   return (
     <main
-      className="youth-onboarding"
+      className="youth-onboarding youth-onboarding-pink"
       style={{
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
         maxWidth: 430,
         margin: "0 auto",
-        background: "#ffffff",
+        background: "var(--color-canvas)",
         padding: "0 1.25rem",
       }}
     >
@@ -1527,12 +1527,13 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             </button>
           )}
         </div>
-        <div style={{ height: 8, borderRadius: 999, background: "#f0f0f0" }}>
+        <div className="onboarding-progress-track" style={{ height: 8, borderRadius: 999, background: "#f0f0f0" }}>
           <div
+            className="onboarding-progress-value"
             style={{
               height: 8,
               borderRadius: 999,
-              background: "#111111",
+              background: "var(--color-brand)",
               width: `${progress}%`,
               transition: "width 0.3s ease",
             }}
@@ -1543,20 +1544,21 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       {/* Question bubble */}
       <div style={{ marginBottom: "2rem" }}>
         <div
+          className="onboarding-question-bubble"
           style={{
             display: current.type === "image" ? "block" : "inline-block",
-            background: current.type === "image" ? "transparent" : "#f5f5f5",
+            background: current.type === "image" ? "transparent" : "var(--color-surface-rose)",
             borderRadius: current.type === "image" ? 0 : "4px 16px 16px 16px",
             padding: current.type === "image" ? 0 : "1rem 1.25rem",
             maxWidth: current.type === "image" ? "100%" : "88%",
           }}
         >
           {current.type === "image" ? (
-            <h1 style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "#111111", lineHeight: 1.35, letterSpacing: "-0.03em" }}>
+            <h1 style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "var(--color-text)", lineHeight: 1.35, letterSpacing: "-0.03em" }}>
               {current.question}
             </h1>
           ) : (
-            <p className="onboarding-question-title" style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "#111111", lineHeight: 1.5, whiteSpace: "pre-line" }}>
+            <p className="onboarding-question-title" style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "var(--color-text)", lineHeight: 1.5, whiteSpace: "pre-line" }}>
               {current.question}
             </p>
           )}
@@ -1790,16 +1792,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                 placeholder={current.placeholder}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveCustomValue(selectionField); } }}
                 autoFocus
-                style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }}
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "var(--color-surface)" }}
               />
-              <button type="button" onClick={() => saveCustomValue(selectionField)} aria-label="Lägg till" style={{ minWidth: "3rem", padding: "0 0.9rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: "1.35rem", fontWeight: 500, cursor: "pointer" }}>+</button>
+              <button type="button" onClick={() => saveCustomValue(selectionField)} aria-label="Lägg till" style={{ minWidth: "3rem", padding: "0 0.9rem", border: 0, borderRadius: 10, color: "var(--color-on-brand)", background: "var(--color-brand)", font: "inherit", fontSize: "1.35rem", fontWeight: 500, cursor: "pointer" }}>+</button>
             </div>
             <p style={{ margin: 0, color: "#737373", fontSize: ".78rem", order: selectionField === "strengths" ? 2 : undefined }}>Skriv en egen och tryck på +, eller välj bland förslagen.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", order: selectionField === "strengths" ? 1 : undefined }}>
               {[...new Set([...(selectionField === "strengths" ? STRENGTH_TIPS : LANGUAGE_TIPS.map((item) => item.label)), ...(selectionField === "strengths" ? selectedStrengths : selectedLanguages)])].map((value) => {
                 const selected = (selectionField === "strengths" ? selectedStrengths : selectedLanguages).includes(value);
                 const flag = selectionField === "languages" ? getLanguageFlag(value) : undefined;
-                return <button key={value} type="button" onClick={() => toggleSelectedValue(selectionField, value)} style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", padding: ".5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid #e8e8e8", background: selected ? "#111" : "#fff", color: selected ? "#fff" : "#111", font: "inherit", fontSize: ".8rem", fontWeight: 600, cursor: "pointer" }}>{flag && <span aria-hidden="true">{flag}</span>}{value}</button>;
+                return <button key={value} type="button" onClick={() => toggleSelectedValue(selectionField, value)} style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", padding: ".5rem .8rem", borderRadius: 999, border: selected ? "none" : "1.5px solid var(--color-border)", background: selected ? "var(--color-brand)" : "var(--color-surface)", color: selected ? "var(--color-on-brand)" : "var(--color-text)", font: "inherit", fontSize: ".8rem", fontWeight: 600, cursor: "pointer" }}>{flag && <span aria-hidden="true">{flag}</span>}{value}</button>;
               })}
             </div>
           </div>
@@ -1870,6 +1872,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       {/* Navigation */}
       <div style={{ paddingBottom: "3rem", paddingTop: "2rem" }}>
         <button
+          className="onboarding-primary-action"
           type="button"
           onClick={() => void handleNext()}
           disabled={saving}
@@ -1878,8 +1881,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             padding: "1rem",
             borderRadius: 12,
             border: "none",
-            background: "#111111",
-            color: "#ffffff",
+            background: "var(--color-brand)",
+            color: "var(--color-on-brand)",
             fontSize: "1rem",
             fontWeight: 700,
             cursor: saving ? "not-allowed" : "pointer",

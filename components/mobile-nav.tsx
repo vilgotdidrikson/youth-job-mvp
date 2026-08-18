@@ -29,15 +29,6 @@ const youthItems = [
 
 const companyItems = [
   {
-    href: "/company?view=swipe",
-    label: "Swipe",
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    ),
-  },
-  {
     href: "/company?view=annonser",
     label: "Mina annonser",
     icon: (active: boolean) => (
@@ -86,6 +77,7 @@ export function MobileNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { profile } = useSession();
+  const isDeveloperCompanyPreview = process.env.NODE_ENV === "development" && typeof window !== "undefined" && window.sessionStorage.getItem("employo-dev-company-preview") === "1";
   const [isHidden, setIsHidden] = useState(false);
   const previousScrollY = useRef(0);
 
@@ -129,7 +121,7 @@ export function MobileNav() {
     return null;
   }
 
-  const firstItem = profile?.role === "company" ? companyItems : youthItems;
+  const firstItem = profile?.role === "company" || isDeveloperCompanyPreview ? companyItems : youthItems;
   const items = [...firstItem, ...sharedItems];
 
   return (
@@ -138,7 +130,7 @@ export function MobileNav() {
       aria-label="Primary navigation"
       onFocusCapture={() => setIsHidden(false)}
     >
-      <Link href="/swipe" className="desktop-nav-logo" aria-label="Employo hitta jobb">
+      <Link href={isDeveloperCompanyPreview ? "/company?view=kandidater" : "/swipe"} className="desktop-nav-logo" aria-label="Employo hitta jobb">
         <span>E</span> employo
       </Link>
       {items.map((item) => {
