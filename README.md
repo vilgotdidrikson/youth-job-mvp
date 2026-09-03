@@ -49,7 +49,7 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_public_token
 NEXT_PUBLIC_MAPBOX_STYLE_URL=mapbox://styles/your-user/your-style-id
 ```
 
-Apply `supabase/migrations/20260802_add_job_map_locations.sql` before publishing jobs with precise map locations.
+Apply `supabase/migrations/20260802_add_job_map_locations.sql` before publishing jobs with precise map locations. Apply `supabase/migrations/20260812_job_and_match_lifecycle.sql` before using job status or open-position controls.
 
 For production, add the same `NEXT_PUBLIC_...` variables in the hosting provider's environment-variable settings and redeploy. `.env.local` is only used by the local Next.js process and is intentionally not committed.
 

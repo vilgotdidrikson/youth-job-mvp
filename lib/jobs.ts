@@ -53,7 +53,7 @@ const JOB_CREATE_INPUT_FIELDS = [
 ] as const;
 
 const JOB_UPDATE_INPUT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "is_active", "status"] as const;
-const JOB_INSERT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "company_user_id", "is_active"] as const;
+const JOB_INSERT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "company_user_id", "is_active", "status"] as const;
 const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at"] as const;
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
 
