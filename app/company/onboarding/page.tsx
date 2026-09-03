@@ -302,8 +302,8 @@ export default function CompanyOnboardingPage() {
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat! 🎉</h1>
           <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
-          <button type="button" className="cta-btn" onClick={() => { setError(""); setJobAddress((current) => current || address); setStep("annons"); }} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
-          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
+          <button type="button" className="cta-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
+          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=kandidater")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
         </div>
       )}
 

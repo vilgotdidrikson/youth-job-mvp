@@ -121,6 +121,7 @@ function CompanyPageContent() {
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
   const [customRequirement, setCustomRequirement] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const loadData = async (userId: string) => {
     try {
@@ -151,7 +152,7 @@ function CompanyPageContent() {
 
   useEffect(() => {
     const requestedView = searchParams.get("view");
-    if (requestedView === "kandidater" || requestedView === "annonser") {
+    if (requestedView === "kandidater" || requestedView === "skapa" || requestedView === "annonser") {
       setTab(requestedView);
     }
   }, [searchParams]);
@@ -602,7 +603,7 @@ function CompanyPageContent() {
 
       {/* ── NY ANNONS TAB ── */}
       {tab === "skapa" && (
-        <form className="job-builder" onSubmit={(e) => void handleCreateJob(e)}>
+        <form className="job-builder job-builder-onboarding" onSubmit={(e) => void handleCreateJob(e)}>
           {(() => {
             const checks = [
               { label: "Titel och beskrivning", done: Boolean(form.title.trim() && form.description.trim()) },
@@ -615,12 +616,7 @@ function CompanyPageContent() {
             const salary = form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/${salaryPeriod}` : "Lön ej angiven";
             return <>
               <header className="job-builder-heading">
-                <div><p>Ny annons</p><h1>Skapa en annons som får fler swipes</h1></div>
-                <div className="job-builder-progress" aria-label={`${percent}% klart`}>
-                  <div><strong>{percent}% klart</strong><span>En komplett annons syns bättre i flödet.</span></div>
-                  <div className="job-builder-progress-track"><i style={{ width: `${percent}%` }} /></div>
-                  <ul>{checks.map((check) => <li key={check.label} className={check.done ? "is-done" : ""}><span>{check.done ? "✓" : "○"}</span>{check.label}</li>)}</ul>
-                </div>
+                <div><p>Employo</p><h1>Skapa jobbannons</h1><span>Fyll i kriterierna - de används för att matcha rätt ungdomar till ditt jobb.</span></div>
               </header>
               <div className="job-builder-layout">
                 <div className="job-builder-form">
@@ -642,9 +638,9 @@ function CompanyPageContent() {
                   <section className="card job-builder-section"><h2>Adress</h2><p className="job-builder-help">Den fullständiga adressen används för att placera jobbet på kartan.</p><div className="job-builder-fields two-columns"><label>Gatuadress *<input className="input-field" placeholder="T.ex. Storgatan 12" list="company-address-suggestions" autoComplete="street-address" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} required /></label><label>Postnummer *<input className="input-field" placeholder="123 45" autoComplete="postal-code" inputMode="numeric" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} required /></label><label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label></div></section>
                   <section className="card job-builder-section"><h2>Omslagsbild</h2><p className="job-builder-help">En bild gör att annonsen sticker ut i flödet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); setJobImageFiles(files); setJobImagePreviews(files.map((file) => URL.createObjectURL(file))); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP</span></>}</label></section>
                 </div>
-                <aside className="job-builder-preview"><p>Så här ser annonsen ut</p><article className="job-preview-detail"><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}</div><div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyProfile?.company_name || user?.email || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Tider</h3><p>{form.category || "Välj deltid, heltid eller annan jobbtyp"}</p></section></div><div className="job-preview-facts"><section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...textListItems(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{textListItems(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Adress</h3><p>{[form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Adress"}</p></section></div></div></article><small>Förhandsvisningen uppdateras medan du skriver.</small></aside>
+                <aside className={`job-builder-preview${previewOpen ? " is-open" : ""}`} style={previewOpen ? { position: "fixed", zIndex: 100, inset: 0, display: "grid", alignContent: "center", justifyItems: "center", padding: "1rem", maxWidth: "none", maxHeight: "none", margin: 0, overflowY: "auto", background: "transparent" } : undefined} role="dialog" aria-modal="true" aria-label="Förhandsvisning av annons" onClick={(event) => { if (event.target === event.currentTarget) setPreviewOpen(false); }}><article className="job-preview-detail" style={{ position: "relative" }}><button type="button" className="job-builder-preview-close" style={{ position: "absolute", top: ".65rem", right: ".65rem", zIndex: 1 }} onClick={() => setPreviewOpen(false)} aria-label="Stäng förhandsvisning">×</button><p className="job-preview-caption">Så här ser annonsen ut</p><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}</div><div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyProfile?.company_name || user?.email || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Tider</h3><p>{form.category || "Välj deltid, heltid eller annan jobbtyp"}</p></section></div><div className="job-preview-facts"><section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...textListItems(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{textListItems(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Adress</h3><p>{[form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Adress"}</p></section></div></div><small className="job-preview-note">Förhandsvisningen uppdateras medan du skriver.</small></article></aside>
               </div>
-              <div className="job-builder-actions">{draftSaved && <span>Utkast sparat</span>}<button type="button" className="secondary-btn" onClick={handleSaveDraft}>Spara utkast</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></div>
+              <div className="job-builder-actions">{draftSaved && <span>Utkast sparat</span>}<button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="button" className="secondary-btn" onClick={handleSaveDraft}>Spara utkast</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></div>
             </>;
           })()}
         </form>
