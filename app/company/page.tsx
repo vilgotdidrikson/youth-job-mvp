@@ -6,10 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
-import { createJob } from "@/lib/jobs";
+import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
+import { createJob, deleteJob, updateJob } from "@/lib/jobs";
+import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
-import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, YouthDocumentType } from "@/lib/types";
+import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType } from "@/lib/types";
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -101,16 +103,16 @@ function CompanyPageContent() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
-  // Kept while the former candidate workspace is phased out below.
-  const [feedIndex] = useState(0);
-  const [candidateDragX] = useState(0);
-  const [candidateIsDragging] = useState(false);
-  const [candidateFlyDir] = useState<"left" | "right" | null>(null);
-  const [conversations] = useState<ConversationSummary[]>([]);
+  const [feedIndex, setFeedIndex] = useState(0);
+  const [candidateDragX, setCandidateDragX] = useState(0);
+  const [candidateIsDragging, setCandidateIsDragging] = useState(false);
+  const [candidateFlyDir, setCandidateFlyDir] = useState<"left" | "right" | null>(null);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [chatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatDraft, setChatDraft] = useState("");
   const candidateStartXRef = useRef<number | null>(null);
+  const candidateFlyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [jobImageFiles, setJobImageFiles] = useState<File[]>([]);
   const [jobImagePreviews, setJobImagePreviews] = useState<string[]>([]);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -372,11 +374,6 @@ function CompanyPageContent() {
   const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
   const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
   const selectedCandidate = candidateFeed.find((candidate) => candidate.youthUserId === selectedCandidateId) ?? candidateFeed[0] ?? null;
-  const triggerCandidateDecision = (_decision: "interested" | "skip") => undefined;
-  const onCandidatePointerDown = (x: number) => { candidateStartXRef.current = x; };
-  const onCandidatePointerMove = (_x: number) => undefined;
-  const onCandidatePointerEnd = () => { candidateStartXRef.current = null; };
-  const sendCompanyMessage = async (event: FormEvent) => { event.preventDefault(); };
 
   return (
     <main className="mobile-shell">
@@ -595,7 +592,7 @@ function CompanyPageContent() {
                 <p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.75rem" }}>Skriv ett meddelande</p>
               </div>
               <div style={{ flex: 1, minHeight: 350, overflowY: "auto", padding: "1rem" }}>
-                {chatMessages.length === 0 ? <p style={{ color: "#737373", fontSize: "0.85rem", textAlign: "center" }}>Inga meddelanden ännu.</p> : chatMessages.map((message) => <div key={message.id} style={{ display: "flex", justifyContent: message.sender_user_id === user.id ? "flex-end" : "flex-start", marginBottom: "0.5rem" }}><span style={{ maxWidth: "78%", padding: "0.6rem 0.75rem", borderRadius: 12, background: message.sender_user_id === user.id ? "#111" : "#f1f1f1", color: message.sender_user_id === user.id ? "#fff" : "#111", fontSize: "0.84rem", lineHeight: 1.4 }}>{message.message_text}</span></div>)}
+                {chatMessages.length === 0 ? <p style={{ color: "#737373", fontSize: "0.85rem", textAlign: "center" }}>Inga meddelanden ännu.</p> : chatMessages.map((message) => <div key={message.id} style={{ display: "flex", justifyContent: message.sender_user_id === user?.id ? "flex-end" : "flex-start", marginBottom: "0.5rem" }}><span style={{ maxWidth: "78%", padding: "0.6rem 0.75rem", borderRadius: 12, background: message.sender_user_id === user?.id ? "#111" : "#f1f1f1", color: message.sender_user_id === user?.id ? "#fff" : "#111", fontSize: "0.84rem", lineHeight: 1.4 }}>{message.message_text}</span></div>)}
               </div>
               <form onSubmit={(event) => void sendCompanyMessage(event)} style={{ display: "flex", gap: "0.45rem", padding: "0.75rem", borderTop: "1px solid #e8e8e8" }}><input className="input-field" value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Skriv ett meddelande..." /><button type="submit" className="cta-btn" style={{ padding: "0 0.9rem" }}>Skicka</button></form>
             </> : <div style={{ display: "grid", placeItems: "center", flex: 1, minHeight: 450, padding: "2rem", textAlign: "center" }}><p style={{ margin: 0, color: "#737373", fontSize: "0.9rem" }}>Välj en kandidat med en aktiv chatt.</p></div>}

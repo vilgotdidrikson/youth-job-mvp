@@ -200,7 +200,7 @@ export async function getMyConversationContacts(): Promise<ConversationContact[]
     logSupabaseError("conversations.contacts", error);
     throw new Error(getSupabaseErrorMessage(error, "Unable to load conversation contacts."));
   }
-  return (data ?? []).map((item) => {
+  return ((data ?? []) as unknown[]).map((item) => {
     const row = item as Record<string, unknown>;
     return {
       conversation_id: String(row.conversation_id ?? ""),
