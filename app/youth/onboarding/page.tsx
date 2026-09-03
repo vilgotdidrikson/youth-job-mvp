@@ -34,6 +34,20 @@ const LANGUAGE_TIPS = [
   { label: "Finska", flag: "🇫🇮" },
   { label: "Somaliska", flag: "🇸🇴" },
 ];
+const SKILL_TIPS = [
+  { label: "Excel", mark: "X", color: "#217346" },
+  { label: "Word", mark: "W", color: "#2B579A" },
+  { label: "PowerPoint", mark: "P", color: "#B7472A" },
+  { label: "React", mark: "⚛", color: "#087EA4" },
+  { label: "Canva", mark: "C", color: "#00A9B5" },
+  { label: "Figma", mark: "F", color: "#A259FF" },
+  { label: "Photoshop", mark: "Ps", color: "#1473E6" },
+  { label: "Teams", mark: "T", color: "#6264A7" },
+  { label: "Slack", mark: "S", color: "#4A154B" },
+  { label: "Instagram", mark: "◎", color: "#D62976" },
+  { label: "TikTok", mark: "♪", color: "#111111" },
+  { label: "Google Drive", mark: "D", color: "#4285F4" },
+];
 const CUSTOM_LANGUAGE_FLAGS: Record<string, string> = {
   chinese: "🇨🇳",
   mandarin: "🇨🇳",
@@ -637,16 +651,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           <p style={{ margin: "1rem 0 1.6rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
 
           <div style={{ display: "grid", gap: ".75rem" }}>
-            <button type="button" onClick={() => router.push("/youth/cv/create")} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: 0, borderRadius: 16, color: "var(--color-on-brand)", background: "var(--accent)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
+            <button type="button" className="cv-method-card" onClick={() => router.push("/youth/cv/create")} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
               <strong style={{ fontSize: "1rem" }}>Skapa CV i Employo</strong>
-              <span style={{ fontSize: ".82rem", opacity: .9 }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
+              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
-            <Link href="/voice-cv" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
+            <Link href="/voice-cv" className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
               <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "#ec4899", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
               <strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
             </Link>
-            <label style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
+            <label className="cv-method-card" style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
               <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} style={{ display: "none" }} />
               <strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Klart direkt - du behöver inte svara på fler frågor.</span>
@@ -1061,6 +1075,14 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         ...prev,
         [current.field]: arr.includes(chip) ? arr.filter((c) => c !== chip) : [...arr, chip],
       };
+    });
+  }
+
+  function toggleSkill(skill: string) {
+    setAnswers((previous) => {
+      const skills = previous.skills_text.split(",").map((item) => item.trim()).filter(Boolean);
+      const nextSkills = skills.includes(skill) ? skills.filter((item) => item !== skill) : [...skills, skill];
+      return { ...previous, skills_text: nextSkills.join(", ") };
     });
   }
 
@@ -1817,6 +1839,24 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             {otherType === "link" && <input type="url" value={otherLink} onChange={(e) => setOtherLink(e.target.value)} placeholder="https://linkedin.com/in/..." style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit" }} />}
             {otherType === "pdf" && <label style={{ display: "grid", placeItems: "center", gap: ".4rem", minHeight: "8rem", padding: "1rem", border: "1.5px dashed #d1d1d1", borderRadius: 12, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} style={{ display: "none" }} />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
             <button type="button" onClick={saveOtherEntry} style={{ justifySelf: "start", padding: ".65rem .9rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>Spara tillägg</button>
+          </div>
+        ) : current.field === "skills_text" ? (
+          <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="skill-logo-options" aria-label="Vanliga kompetenser och verktyg">
+              {SKILL_TIPS.map((skill) => {
+                const selected = answers.skills_text.split(",").map((item) => item.trim()).includes(skill.label);
+                return (
+                  <button key={skill.label} type="button" className={`skill-logo-option${selected ? " skill-logo-option-selected" : ""}`} onClick={() => toggleSkill(skill.label)} aria-pressed={selected}>
+                    <span className="skill-logo-mark" aria-hidden="true" style={{ background: skill.color }}>{skill.mark}</span>
+                    <span>{skill.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <label style={{ display: "grid", gap: ".4rem", color: "#737373", fontSize: ".8rem", fontWeight: 600 }}>
+              Andra kompetenser
+              <textarea value={currentTextValue} onChange={(e) => handleTextChange(e.target.value)} placeholder="T.ex. kassasystem eller bildredigering" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 12, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", resize: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
+            </label>
           </div>
         ) : current.type === "textarea" ? (
           <textarea

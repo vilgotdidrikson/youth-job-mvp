@@ -375,6 +375,30 @@ button,
   opacity: 0.45;
 }
 
+.cv-method-card {
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.cv-method-card:hover {
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface)) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 14%, transparent);
+  transform: translateY(-2px);
+}
+
+.cv-method-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.skill-logo-options { display: flex; flex-wrap: wrap; gap: .55rem; }
+.skill-logo-option { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.7rem; padding: .5rem .75rem; border: 1.5px solid #e8e8e8; border-radius: 10px; color: #111; background: #fff; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
+.skill-logo-mark { display: inline-grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 4px; color: #fff; font-size: .75rem; font-weight: 800; line-height: 1; }
+.skill-logo-option:hover { border-color: var(--accent); box-shadow: 0 3px 10px rgb(0 0 0 / .08); transform: translateY(-1px); }
+.skill-logo-option-selected { border-color: #111; color: #fff; background: #111; }
+.skill-logo-option-selected:hover { border-color: #111; background: #111; }
+.skill-logo-option:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 30%, transparent); outline-offset: 2px; }
+
 /* Secondary / outlined button */
 .secondary-btn {
   border: 1.5px solid var(--border);
