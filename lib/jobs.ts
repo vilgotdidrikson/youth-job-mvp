@@ -22,7 +22,10 @@ const JOB_TABLE_FIELDS = [
   "company_name",
   "company_user_id",
   "image_url",
+  "job_kind",
   "is_active",
+  "status",
+  "open_positions",
   "created_at",
   "min_age",
   "max_age",
@@ -43,11 +46,13 @@ const JOB_CREATE_INPUT_FIELDS = [
   "benefits",
   "company_name",
   "image_url",
+  "job_kind",
+  "open_positions",
   "min_age",
   "max_age",
 ] as const;
 
-const JOB_UPDATE_INPUT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "is_active"] as const;
+const JOB_UPDATE_INPUT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "is_active", "status"] as const;
 const JOB_INSERT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "company_user_id", "is_active"] as const;
 const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at"] as const;
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
@@ -67,12 +72,15 @@ export interface CreateJobInput {
   benefits?: string | null;
   company_name?: string | null;
   image_url?: string | null;
+  job_kind?: "employment" | "private_task";
+  open_positions?: number | null;
   min_age?: number | null;
   max_age?: number | null;
 }
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {
   is_active?: boolean;
+  status?: "active" | "paused" | "closed";
 }
 
 interface JobInsertPayload {
@@ -91,7 +99,10 @@ interface JobInsertPayload {
   company_name: string;
   company_user_id: string;
   image_url: string;
+  job_kind: "employment" | "private_task";
   is_active: boolean;
+  status: "active" | "paused" | "closed";
+  open_positions: number;
   min_age?: number | null;
   max_age?: number | null;
 }
@@ -222,7 +233,10 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     company_name: normalizeJobString(row.company_name),
     company_user_id: String(row.company_user_id ?? ""),
     image_url: normalizeJobString(row.image_url),
+    job_kind: row.job_kind === "private_task" ? "private_task" : "employment",
     is_active: typeof row.is_active === "boolean" ? row.is_active : true,
+    status: row.status === "paused" || row.status === "closed" ? row.status : "active",
+    open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
     created_at: normalizeJobString(row.created_at),
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
@@ -237,8 +251,8 @@ async function assertCompanyUser(): Promise<{ id: string; email: string | null }
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
-  if (!user?.id || profile?.role !== "company") {
-    throw new Error("Only company accounts can manage jobs.");
+  if (!user?.id || (profile?.role !== "company" && profile?.role !== "private")) {
+    throw new Error("Only company and private accounts can manage jobs.");
   }
 
   return { id: user.id, email: user.email ?? null };
@@ -260,7 +274,10 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     benefits: updates.benefits,
     company_name: updates.company_name,
     image_url: updates.image_url,
+    job_kind: updates.job_kind,
     is_active: updates.is_active,
+    status: updates.status,
+    open_positions: updates.open_positions,
     min_age: updates.min_age,
     max_age: updates.max_age,
   });
@@ -359,7 +376,10 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     company_name: jobData.company_name ?? companyUser.email ?? "Company",
     company_user_id: companyUser.id,
     image_url: jobData.image_url ?? "",
+    job_kind: jobData.job_kind ?? "employment",
     is_active: true,
+    status: "active",
+    open_positions: jobData.open_positions ?? 1,
   };
 
   // Only include age fields when they have a value so inserts work before

@@ -22,7 +22,9 @@ async function insertRoleProfile(userId: string, role: Role) {
   const { error } =
     role === "youth"
       ? await supabase.from("youth_profiles").insert({ user_id: userId })
-      : await supabase.from("company_profiles").insert({ user_id: userId });
+      : role === "company"
+        ? await supabase.from("company_profiles").insert({ user_id: userId })
+        : await supabase.from("private_profiles").insert({ user_id: userId });
 
   if (error) {
     console.error(`Failed to insert ${role}_profiles row during signup.`, error);

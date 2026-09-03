@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
-import { createJob } from "@/lib/jobs";
-import { getMessages, getMyConversations, sendMessage } from "@/lib/chat";
+import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
+import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
@@ -48,21 +48,7 @@ const MOCK_CANDIDATES: CandidateFeedItem[] = [
   },
 ];
 
-const MOCK_CONVERSATIONS: ConversationSummary[] = MOCK_CANDIDATES.map((candidate, index) => ({
-  id: `mock-conversation-${index + 1}`,
-  youth_user_id: candidate.youthUserId,
-  company_user_id: "mock-company",
-  job_id: candidate.job.id,
-  last_message_at: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-}));
-
-const MOCK_MESSAGES: ChatMessage[] = [
-  { id: "mock-message-1", conversation_id: "mock-conversation-1", sender_user_id: "mock-youth-elin", message_text: "Hej! Jag är väldigt intresserad av tjänsten.", created_at: new Date().toISOString() },
-  { id: "mock-message-2", conversation_id: "mock-conversation-1", sender_user_id: "mock-company", message_text: "Hej Elin! Vad roligt att höra. Berätta gärna lite om dig själv.", created_at: new Date().toISOString() },
-];
-
-type Tab = "kandidater" | "swipe" | "skapa" | "annonser";
+type Tab = "kandidater" | "skapa" | "annonser";
 
 interface JobForm {
   title: string;
@@ -100,25 +86,24 @@ function CompanyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading } = useSession();
+  const isDeveloperPreview = process.env.NODE_ENV === "development" && (
+    searchParams.get("devCompany") === "1" ||
+    (typeof window !== "undefined" && window.sessionStorage.getItem("employo-dev-company-preview") === "1")
+  );
+  const hasCompanyAccess = profile?.role === "company" || isDeveloperPreview;
 
   const [tab, setTab] = useState<Tab>("kandidater");
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
-  const [feedIndex, setFeedIndex] = useState(0);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [busy, setBusy] = useState(false);
+  const [jobActionId, setJobActionId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
-  const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [jobImageFiles, setJobImageFiles] = useState<File[]>([]);
-  const [jobImagePreviews, setJobImagePreviews] = useState<string[]>([]);
-  const [draftSaved, setDraftSaved] = useState(false);
-  const [generatingAi, setGeneratingAi] = useState(false);
-  const [showCustomBenefit, setShowCustomBenefit] = useState(false);
-  const [showCustomRequirement, setShowCustomRequirement] = useState(false);
-  const [customBenefit, setCustomBenefit] = useState("");
-  const [customRequirement, setCustomRequirement] = useState("");
+  const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
+  const [feedIndex, setFeedIndex] = useState(0);
   const [candidateDragX, setCandidateDragX] = useState(0);
   const [candidateIsDragging, setCandidateIsDragging] = useState(false);
   const [candidateFlyDir, setCandidateFlyDir] = useState<"left" | "right" | null>(null);
@@ -128,6 +113,14 @@ function CompanyPageContent() {
   const [chatDraft, setChatDraft] = useState("");
   const candidateStartXRef = useRef<number | null>(null);
   const candidateFlyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [jobImageFiles, setJobImageFiles] = useState<File[]>([]);
+  const [jobImagePreviews, setJobImagePreviews] = useState<string[]>([]);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [generatingAi, setGeneratingAi] = useState(false);
+  const [showCustomBenefit, setShowCustomBenefit] = useState(false);
+  const [showCustomRequirement, setShowCustomRequirement] = useState(false);
+  const [customBenefit, setCustomBenefit] = useState("");
+  const [customRequirement, setCustomRequirement] = useState("");
 
   const loadData = async (userId: string) => {
     try {
@@ -139,7 +132,6 @@ function CompanyPageContent() {
       const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id)));
       setJobs(jobsData);
       setFeed(candidateGroups.flat());
-      setFeedIndex(0);
       if (cp) setCompanyProfile(cp as CompanyProfile);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte ladda data.");
@@ -147,7 +139,7 @@ function CompanyPageContent() {
   };
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isDeveloperPreview) {
       router.replace("/login");
       return;
     }
@@ -155,18 +147,20 @@ function CompanyPageContent() {
       void loadData(user.id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, user, profile?.role]);
+  }, [isDeveloperPreview, loading, user, profile?.role]);
 
   useEffect(() => {
     const requestedView = searchParams.get("view");
-    if (requestedView === "kandidater" || requestedView === "annonser" || requestedView === "swipe") {
+    if (requestedView === "kandidater" || requestedView === "annonser") {
       setTab(requestedView);
     }
   }, [searchParams]);
 
   useEffect(() => {
     if (!user || profile?.role !== "company") return;
-    void getMyConversations().then((items) => setConversations(items.length > 0 ? items : MOCK_CONVERSATIONS)).catch(() => setConversations(MOCK_CONVERSATIONS));
+    void getMyConversations()
+      .then(setConversations)
+      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda konversationer."));
   }, [profile?.role, user]);
 
   useEffect(() => {
@@ -174,11 +168,17 @@ function CompanyPageContent() {
       setChatMessages([]);
       return;
     }
-    if (activeConversationId.startsWith("mock-")) {
-      setChatMessages(MOCK_MESSAGES.filter((message) => message.conversation_id === activeConversationId));
-      return;
-    }
-    void getMessages(activeConversationId).then(setChatMessages).catch(() => setChatMessages([]));
+    void getMessages(activeConversationId)
+      .then(setChatMessages)
+      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda meddelanden."));
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    return subscribeToConversationMessages(activeConversationId, (message) => {
+      setChatMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+      void getMyConversations().then(setConversations).catch(() => undefined);
+    });
   }, [activeConversationId]);
 
   const sendCompanyMessage = async (event: FormEvent) => {
@@ -186,12 +186,13 @@ function CompanyPageContent() {
     if (!activeConversationId || !chatDraft.trim()) return;
     const text = chatDraft.trim();
     setChatDraft("");
-    if (activeConversationId.startsWith("mock-")) {
-      setChatMessages((items) => [...items, { id: `mock-message-${Date.now()}`, conversation_id: activeConversationId, sender_user_id: user?.id ?? "mock-company", message_text: text, created_at: new Date().toISOString() }]);
-      return;
+    try {
+      await sendMessage(activeConversationId, text);
+      setChatMessages(await getMessages(activeConversationId));
+    } catch (sendError) {
+      setChatDraft(text);
+      setError(sendError instanceof Error ? sendError.message : "Kunde inte skicka meddelandet.");
     }
-    await sendMessage(activeConversationId, text);
-    setChatMessages(await getMessages(activeConversationId));
   };
 
   const triggerCandidateDecision = (decision: SwipeDecision) => {
@@ -229,12 +230,6 @@ function CompanyPageContent() {
   const handleDecision = async (decision: SwipeDecision) => {
     const item = candidateFeed[feedIndex];
     if (!item) return;
-    if (item.youthUserId.startsWith("mock-")) {
-      setCandidateFlyDir(null);
-      setCandidateDragX(0);
-      setFeedIndex((i) => i + 1);
-      return;
-    }
     try {
       const result: MatchRecord | null = await reviewCandidate(item.job.id, item.youthUserId, decision);
       setCandidateFlyDir(null);
@@ -292,6 +287,33 @@ function CompanyPageContent() {
     }
   };
 
+  const handleJobStatus = async (job: JobPost, status: "active" | "paused" | "closed") => {
+    setJobActionId(job.id);
+    setError("");
+    try {
+      await updateJob(job.id, { status });
+      if (user) await loadData(user.id);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Kunde inte uppdatera annonsen.");
+    } finally {
+      setJobActionId(null);
+    }
+  };
+
+  const handleDeleteJob = async (job: JobPost) => {
+    if (!window.confirm(`Ta bort annonsen "${job.title}"?`)) return;
+    setJobActionId(job.id);
+    setError("");
+    try {
+      await deleteJob(job.id);
+      if (user) await loadData(user.id);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Kunde inte ta bort annonsen.");
+    } finally {
+      setJobActionId(null);
+    }
+  };
+
   const handleSaveDraft = () => {
     window.localStorage.setItem("employo-job-draft", JSON.stringify(form));
     setDraftSaved(true);
@@ -327,7 +349,7 @@ function CompanyPageContent() {
     }
   };
 
-  if (loading || !user) {
+  if (loading || (!user && !isDeveloperPreview)) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
@@ -335,7 +357,7 @@ function CompanyPageContent() {
     );
   }
 
-  if (profile?.role !== "company") {
+  if (!hasCompanyAccess) {
     return (
       <main className="mobile-shell" style={{ paddingTop: "2rem" }}>
         <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
@@ -345,12 +367,13 @@ function CompanyPageContent() {
     );
   }
 
-  const candidateFeed = feed.length > 0 ? feed : MOCK_CANDIDATES;
+  const candidateFeed = feed.length > 0 ? feed : isDeveloperPreview ? MOCK_CANDIDATES : [];
   const currentCandidate = candidateFeed[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
   const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
   const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
+  const selectedCandidate = candidateFeed.find((candidate) => candidate.youthUserId === selectedCandidateId) ?? candidateFeed[0] ?? null;
 
   return (
     <main className="mobile-shell">
@@ -419,7 +442,7 @@ function CompanyPageContent() {
       )}
 
       {/* ── KANDIDATER TAB ── */}
-      {tab === "swipe" && (
+      {false && (
         <div>
           {candidateFeed.length === 0 ? (
             <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
@@ -494,27 +517,6 @@ function CompanyPageContent() {
                   )}
                 </div>
               )}
-              {(currentCandidate.profile?.documents as { name: string; url: string; type: YouthDocumentType }[] | null | undefined)?.length ? (
-                <div style={{ marginBottom: "0.75rem" }}>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.4rem" }}>Bilagor</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    {(currentCandidate.profile!.documents as { name: string; url: string; type: YouthDocumentType }[]).map((doc) => (
-                      <a
-                        key={doc.url}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "#f5f5f5", borderRadius: 8, padding: "0.5rem 0.75rem", textDecoration: "none" }}
-                      >
-                        <span style={{ fontSize: "0.9rem" }}>📎</span>
-                        <span style={{ fontSize: "0.82rem", color: "#111111", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.name}</span>
-                        <span style={{ fontSize: "0.7rem", color: "#a3a3a3", flexShrink: 0 }}>{DOC_TYPE_LABELS[doc.type]}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
                 <button type="button" className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} onPointerDown={(e) => e.stopPropagation()} onClick={() => triggerCandidateDecision("skip")}>
                   Hoppa över
@@ -535,6 +537,41 @@ function CompanyPageContent() {
       )}
 
       {tab === "kandidater" && (
+        <section className="company-applicants" aria-label="Sökande kandidater">
+          <header className="company-applicants-heading">
+            <p>Ansökningar</p>
+            <h1>Kandidater som har sökt era jobb</h1>
+            <span>{candidateFeed.length} sökande</span>
+          </header>
+          {candidateFeed.length === 0 ? (
+            <div className="card company-applicants-empty"><h2>Inga ansökningar ännu</h2><p>När någon söker en av era annonser visas deras profil här.</p></div>
+          ) : (
+            <div className="company-applicants-layout">
+              <div className="company-applicant-list">
+                {candidateFeed.map((candidate) => {
+                  const profile = candidate.profile;
+                  const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId;
+                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} onClick={() => setSelectedCandidateId(candidate.youthUserId)}>
+                    <span className="company-applicant-avatar">{(profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</span>
+                    <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small></span>
+                    <span aria-hidden="true">›</span>
+                  </button>;
+                })}
+              </div>
+              {selectedCandidate && <article className="company-candidate-profile card">
+                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Ansökt till {selectedCandidate.job.title}</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Sverige"}</span></div></header>
+                <section><h3>Om kandidaten</h3><p>{selectedCandidate.profile?.cv_text || "Kandidaten har ännu inte lagt till någon presentation."}</p></section>
+                <section><h3>Styrkor</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).length ? (selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).map((skill) => <span key={skill}>{skill}</span>) : <span>Inga styrkor angivna</span>}</div></section>
+                <section><h3>Söker jobb inom</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.desired_roles ?? []).length ? selectedCandidate.profile!.desired_roles!.map((role) => <span key={role}>{role}</span>) : <span>Inga roller angivna</span>}</div></section>
+                <section><h3>Tillgänglighet</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.employment_preferences ?? []).length ? selectedCandidate.profile!.employment_preferences!.map((preference) => <span key={preference}>{preference}</span>) : <span>Inte angiven</span>}</div></section>
+                <section><h3>Språk</h3><p>{selectedCandidate.profile?.languages?.join(" · ") || "Inte angivet"}</p></section>
+              </article>}
+            </div>
+          )}
+        </section>
+      )}
+
+      {false && (
         <div className="company-candidate-workspace" style={{ display: "grid", gridTemplateColumns: "minmax(150px, 0.8fr) minmax(0, 1.6fr)", gap: "0.75rem", minHeight: 520 }}>
           <aside className="card" style={{ padding: "0.65rem", overflowY: "auto", minHeight: 0 }}>
             <p style={{ margin: "0.3rem 0.7rem 0.75rem", color: "#737373", fontSize: "0.72rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>Kandidater</p>
@@ -555,7 +592,7 @@ function CompanyPageContent() {
                 <p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.75rem" }}>Skriv ett meddelande</p>
               </div>
               <div style={{ flex: 1, minHeight: 350, overflowY: "auto", padding: "1rem" }}>
-                {chatMessages.length === 0 ? <p style={{ color: "#737373", fontSize: "0.85rem", textAlign: "center" }}>Inga meddelanden ännu.</p> : chatMessages.map((message) => <div key={message.id} style={{ display: "flex", justifyContent: message.sender_user_id === user.id ? "flex-end" : "flex-start", marginBottom: "0.5rem" }}><span style={{ maxWidth: "78%", padding: "0.6rem 0.75rem", borderRadius: 12, background: message.sender_user_id === user.id ? "#111" : "#f1f1f1", color: message.sender_user_id === user.id ? "#fff" : "#111", fontSize: "0.84rem", lineHeight: 1.4 }}>{message.message_text}</span></div>)}
+                {chatMessages.length === 0 ? <p style={{ color: "#737373", fontSize: "0.85rem", textAlign: "center" }}>Inga meddelanden ännu.</p> : chatMessages.map((message) => <div key={message.id} style={{ display: "flex", justifyContent: message.sender_user_id === user?.id ? "flex-end" : "flex-start", marginBottom: "0.5rem" }}><span style={{ maxWidth: "78%", padding: "0.6rem 0.75rem", borderRadius: 12, background: message.sender_user_id === user?.id ? "#111" : "#f1f1f1", color: message.sender_user_id === user?.id ? "#fff" : "#111", fontSize: "0.84rem", lineHeight: 1.4 }}>{message.message_text}</span></div>)}
               </div>
               <form onSubmit={(event) => void sendCompanyMessage(event)} style={{ display: "flex", gap: "0.45rem", padding: "0.75rem", borderTop: "1px solid #e8e8e8" }}><input className="input-field" value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Skriv ett meddelande..." /><button type="submit" className="cta-btn" style={{ padding: "0 0.9rem" }}>Skicka</button></form>
             </> : <div style={{ display: "grid", placeItems: "center", flex: 1, minHeight: 450, padding: "2rem", textAlign: "center" }}><p style={{ margin: 0, color: "#737373", fontSize: "0.9rem" }}>Välj en kandidat med en aktiv chatt.</p></div>}
@@ -627,8 +664,11 @@ function CompanyPageContent() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
+                const status = job.status ?? (job.is_active ? "active" : "paused");
+                const isWorking = jobActionId === job.id;
                 return (
-                  <Link key={job.id} href={`/jobb/${job.id}`} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
+                  <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
+                    <Link href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
                     <p style={{ fontWeight: 700, fontSize: "1rem", color: "#111", marginBottom: "0.25rem" }}>{job.title}</p>
                     <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[[job.address, job.postal_code, job.city].filter(Boolean).join(", "), job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
@@ -636,11 +676,18 @@ function CompanyPageContent() {
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
                       </div>
                     )}
-                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: job.is_active ? "#e8faf0" : "#f5f5f5", color: job.is_active ? "#1a7f4b" : "#a3a3a3" }}>
-                      {job.is_active ? "Aktiv" : "Inaktiv"}
+                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: status === "active" ? "#e8faf0" : "#f5f5f5", color: status === "active" ? "#1a7f4b" : "#a3a3a3" }}>
+                      {status === "active" ? "Aktiv" : status === "paused" ? "Pausad" : "Stängd"}
                     </div>
                     <span className="job-list-card-link">Visa hela annonsen →</span>
-                  </Link>
+                    </Link>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
+                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
+                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
+                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "closed")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
+                      <button type="button" disabled={isWorking} onClick={() => void handleDeleteJob(job)} style={{ padding: ".5rem .7rem", border: 0, color: "#b42318", background: "transparent", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: isWorking ? "wait" : "pointer" }}>{isWorking ? "Sparar..." : "Ta bort"}</button>
+                    </div>
+                  </article>
                 );
               })}
             </div>

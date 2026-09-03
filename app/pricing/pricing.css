@@ -71,6 +71,20 @@
   border: 1px solid var(--color-border);
   border-radius: 1.5rem;
   background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color .35s ease, background-color .35s ease, box-shadow .35s ease, transform .35s ease;
+}
+
+.pricing-card:focus-visible {
+  outline: 3px solid rgb(var(--color-text-rgb) / .28);
+  outline-offset: 3px;
+}
+
+.pricing-card-selected {
+  border: 2px solid var(--color-brand);
+  background: var(--color-surface-soft);
+  box-shadow: 0 1rem 2.5rem rgb(var(--color-text-rgb) / .16);
+  transform: translateY(-.25rem);
 }
 
 .pricing-card-highlighted {
@@ -185,6 +199,17 @@
   margin: .6rem 0 1.5rem;
   color: var(--color-text-muted);
   font-size: .92rem;
+}
+
+/* Keep the footer below the initial pricing view on short desktop layouts. */
+.pricing-page > .landing-bold-footer {
+  margin-top: clamp(4rem, 10vh, 8rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-card {
+    transition: none;
+  }
 }
 
 @media (max-width: 900px) {

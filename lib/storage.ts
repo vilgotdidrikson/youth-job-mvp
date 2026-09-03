@@ -104,8 +104,20 @@ export async function uploadYouthDocument(file: File): Promise<string> {
     throw new Error(uploadError.message);
   }
 
-  const { data } = supabase.storage.from("youth-documents").getPublicUrl(filePath);
-  if (!data.publicUrl) throw new Error("Kunde inte hämta URL för det uppladdade dokumentet.");
+  return filePath;
+}
 
-  return data.publicUrl;
+export async function getYouthDocumentSignedUrl(path: string): Promise<string> {
+  if (!path || /^https?:\/\//i.test(path)) return path;
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.storage
+    .from("youth-documents")
+    .createSignedUrl(path, 60 * 10);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? "Kunde inte öppna dokumentet.");
+  }
+
+  return data.signedUrl;
 }

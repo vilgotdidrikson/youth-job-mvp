@@ -1,4 +1,4 @@
-export type Role = "youth" | "company";
+export type Role = "youth" | "company" | "private";
 
 export type SwipeDecision = "interested" | "skip";
 
@@ -81,7 +81,10 @@ export interface JobPost {
   company_name: string;
   company_user_id: string;
   image_url: string;
+  job_kind?: "employment" | "private_task";
   is_active: boolean;
+  status?: "active" | "paused" | "closed";
+  open_positions?: number;
   created_at: string;
   min_age?: number | null;
   max_age?: number | null;

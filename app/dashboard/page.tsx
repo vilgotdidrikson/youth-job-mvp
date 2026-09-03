@@ -19,6 +19,10 @@ export default function DashboardRedirectPage() {
       router.replace("/company?view=swipe");
       return;
     }
+    if (profile?.role === "private") {
+      router.replace("/private");
+      return;
+    }
     if (profile?.role === "youth") {
       router.replace("/swipe");
     }

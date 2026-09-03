@@ -3,8 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSession } from "@/hooks/use-session";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
-import { getSupabaseClient } from "@/lib/supabase";
-import { getMessages, getMyConversations, sendMessage } from "@/lib/chat";
+import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
+import { getMyMatches } from "@/lib/matching";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -12,7 +12,10 @@ interface ConvDisplay {
   conv: ConversationSummary;
   otherName: string;
   jobTitle?: string;
+  status: string;
 }
+
+const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt", interview: "Intervju", hired: "Anställd", rejected: "Avvisad", cancelled: "Avslutad" };
 
 export default function ChatsPage() {
   const { user, profile, loading } = useSession();
@@ -33,55 +36,16 @@ export default function ChatsPage() {
 
   const loadConversations = async () => {
     try {
-      const supabase = getSupabaseClient();
-      const convs = await getMyConversations();
-      const isCompany = profile?.role === "company";
-
-      const nameMap: Record<string, string> = {};
-
-      if (isCompany) {
-        const ids = [...new Set(convs.map((c) => c.youth_user_id))];
-        if (ids.length > 0) {
-          const { data } = await supabase
-            .from("youth_profiles")
-            .select("user_id, full_name")
-            .in("user_id", ids);
-          (data ?? []).forEach((p: Record<string, unknown>) => {
-            nameMap[String(p.user_id)] = String(p.full_name ?? "Kandidat");
-          });
-        }
-      } else {
-        const ids = [...new Set(convs.map((c) => c.company_user_id))];
-        if (ids.length > 0) {
-          const { data } = await supabase
-            .from("company_profiles")
-            .select("user_id, company_name")
-            .in("user_id", ids);
-          (data ?? []).forEach((p: Record<string, unknown>) => {
-            nameMap[String(p.user_id)] = String(p.company_name ?? "Företag");
-          });
-        }
-      }
-
-      const jobIds = [...new Set(convs.map((c) => c.job_id).filter(Boolean) as string[])];
-      const jobTitleMap: Record<string, string> = {};
-      if (jobIds.length > 0) {
-        const { data } = await supabase
-          .from("jobs")
-          .select("id, title")
-          .in("id", jobIds);
-        (data ?? []).forEach((j: Record<string, unknown>) => {
-          jobTitleMap[String(j.id)] = String(j.title ?? "");
-        });
-      }
+      const [convs, contacts, matches] = await Promise.all([getMyConversations(), getMyConversationContacts(), getMyMatches()]);
+      const contactMap = new Map(contacts.map((contact) => [contact.conversation_id, contact]));
+      const matchStatusMap = new Map(matches.map((match) => [match.id, match.status ?? "matched"]));
 
       setConvDisplays(
         convs.map((conv) => ({
           conv,
-          otherName: isCompany
-            ? (nameMap[conv.youth_user_id] ?? "Kandidat")
-            : (nameMap[conv.company_user_id] ?? "Företag"),
-          jobTitle: conv.job_id ? jobTitleMap[conv.job_id] : undefined,
+          otherName: contactMap.get(conv.id)?.other_name ?? "Kontakt",
+          jobTitle: contactMap.get(conv.id)?.job_title ?? undefined,
+          status: conv.match_id ? matchStatusMap.get(conv.match_id) ?? "matched" : "matched",
         })),
       );
     } catch (err) {
@@ -98,6 +62,15 @@ export default function ChatsPage() {
         setError(err instanceof Error ? err.message : "Kunde inte ladda meddelanden.");
       }
     })();
+  }, [selectedConvId]);
+
+  useEffect(() => {
+    if (!selectedConvId) return;
+    return subscribeToConversationMessages(selectedConvId, (message) => {
+      setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+      void loadConversations();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConvId]);
 
   useEffect(() => {
@@ -197,6 +170,7 @@ export default function ChatsPage() {
                 {selectedDisplay.jobTitle}
               </p>
             )}
+            <p style={{ fontSize: "0.72rem", color: "#1a7f4b", margin: "0.12rem 0 0", fontWeight: 700 }}>{statusLabels[selectedDisplay.status] ?? selectedDisplay.status}</p>
           </div>
         </div>
 
@@ -336,6 +310,7 @@ export default function ChatsPage() {
                       {jobTitle}
                     </p>
                   )}
+                  <span style={{ display: "inline-block", marginTop: ".25rem", fontSize: ".7rem", color: "#1a7f4b", fontWeight: 700 }}>{statusLabels[convDisplays.find((item) => item.conv.id === conv.id)?.status ?? "matched"] ?? "Matchad"}</span>
                 </div>
                 <span style={{ color: "#c0c0c0", fontSize: "1.25rem", flexShrink: 0, lineHeight: 1 }}>›</span>
               </button>
