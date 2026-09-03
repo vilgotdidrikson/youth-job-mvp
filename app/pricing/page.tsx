@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   enterprisePlan,
   pricingAudiences,
+  pricingHeadlines,
   pricingPlans,
   type PricingAudience,
 } from "@/lib/pricing-data";
@@ -14,14 +15,20 @@ import "./pricing.css";
 
 export default function PricingPage() {
   const [audience, setAudience] = useState<PricingAudience>("youth");
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const plans = pricingPlans[audience];
+
+  const selectAudience = (nextAudience: PricingAudience) => {
+    setAudience(nextAudience);
+    setSelectedPlanId(null);
+  };
 
   return (
     <main className="pricing-page">
       <MarketingNav />
 
       <section className="pricing-hero">
-        <h1>En plan för dig som söker jobb.</h1>
+        <h1>{pricingHeadlines[audience]}</h1>
 
         <div className="pricing-switch" role="tablist" aria-label="Kundtyp">
           {pricingAudiences.map((option) => (
@@ -31,7 +38,7 @@ export default function PricingPage() {
               role="tab"
               aria-selected={audience === option.id}
               className={audience === option.id ? "pricing-switch-selected" : ""}
-              onClick={() => setAudience(option.id)}
+              onClick={() => selectAudience(option.id)}
             >
               {option.label}
             </button>
@@ -39,11 +46,21 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className={`pricing-grid pricing-grid-${plans.length}`}>
+      <section className={`pricing-grid pricing-grid-${plans.length}`} role="radiogroup" aria-label="Välj prisplan">
         {plans.map((plan) => (
           <article
             key={plan.id}
-            className={plan.highlighted ? "pricing-card pricing-card-highlighted" : "pricing-card"}
+            className={`pricing-card${plan.highlighted ? " pricing-card-highlighted" : ""}${selectedPlanId === plan.id ? " pricing-card-selected" : ""}`}
+            role="radio"
+            aria-checked={selectedPlanId === plan.id}
+            tabIndex={0}
+            onClick={() => setSelectedPlanId(plan.id)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setSelectedPlanId(plan.id);
+              }
+            }}
           >
             {plan.badge && <span className="pricing-badge">{plan.badge}</span>}
             <h2>{plan.name}</h2>

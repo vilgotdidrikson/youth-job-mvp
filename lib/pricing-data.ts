@@ -15,8 +15,14 @@ export interface PricingPlan {
 export const pricingAudiences: { id: PricingAudience; label: string }[] = [
   { id: "youth", label: "Ungdomar" },
   { id: "company", label: "Företag" },
-  { id: "individual", label: "Privatpersoner" },
+  { id: "individual", label: "Engångsköp" },
 ];
+
+export const pricingHeadlines: Record<PricingAudience, string> = {
+  youth: "Din väg till första jobbet börjar här.",
+  company: "Rekrytera unga talanger på ert sätt.",
+  individual: "Hitta rätt hjälp för det som behöver göras.",
+};
 
 export const pricingPlans: Record<PricingAudience, PricingPlan[]> = {
   youth: [
@@ -119,7 +125,7 @@ export const pricingPlans: Record<PricingAudience, PricingPlan[]> = {
       priceSuffix: "/annons",
       features: [
         "Publicera engångsjobb",
-        "Annons aktiv i 7 dagar",
+        "Annons aktiv i 30 dagar",
         "Ta emot svar från ungdomar",
       ],
       cta: "Skapa annons",

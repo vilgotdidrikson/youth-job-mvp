@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { MarketingNav } from "@/components/marketing-nav";
 import Velaris from "@/components/ui/velaris";
 import { NumberTicker } from "@/components/ui/number-ticker";
@@ -95,12 +96,8 @@ const platformItems: PlatformItem[] = [
 ];
 
 const copy = {
-  eyebrow: "Jobb för unga, på ditt sätt",
-  title: "Ditt första jobb",
-  titleAccent: "börjar här.",
   primary: "Kom igång",
   secondary: "För företag",
-  builtFor: "Byggt för vägen från nyfiken till anställd",
   statsHeading: "Ett verkligt problem",
   statsSource: "Källa: SCB / Ekonomifakta",
   platformTitleStart: "En plattform, ",
@@ -111,6 +108,62 @@ const copy = {
   manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
   footer: "En enklare väg från nyfiken till anställd.",
 };
+
+const heroHeadlines = [
+  { title: "Ditt första jobb", accent: "börjar här." },
+  { title: "En enklare väg till rätt", accent: "rekrytering." },
+];
+
+function AnimatedHeroHeadline() {
+  const [headlineIndex, setHeadlineIndex] = useState(0);
+  const [visibleText, setVisibleText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const headline = heroHeadlines[headlineIndex];
+  const fullHeadline = `${headline.title}\n${headline.accent}`;
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const delay = reducedMotion ? 0 : isDeleting ? 38 : 55;
+    const timer = setTimeout(() => {
+      if (reducedMotion) {
+        setVisibleText(fullHeadline);
+        return;
+      }
+
+      if (!isDeleting && visibleText.length < fullHeadline.length) {
+        setVisibleText(fullHeadline.slice(0, visibleText.length + 1));
+        return;
+      }
+
+      if (!isDeleting) {
+        setIsDeleting(true);
+        return;
+      }
+
+      if (visibleText.length > 0) {
+        setVisibleText(fullHeadline.slice(0, visibleText.length - 1));
+        return;
+      }
+
+      setHeadlineIndex((current) => (current + 1) % heroHeadlines.length);
+      setIsDeleting(false);
+    }, visibleText.length === fullHeadline.length && !isDeleting ? 1700 : delay);
+
+    return () => clearTimeout(timer);
+  }, [fullHeadline, isDeleting, visibleText]);
+
+  const visibleTitle = visibleText.slice(0, headline.title.length);
+  const visibleAccent = visibleText.slice(headline.title.length + 1);
+  const isWritingAccent = visibleText.length > headline.title.length;
+
+  return (
+    <h1 aria-label={`${headline.title} ${headline.accent}`}>
+      <span>{visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</span>
+      <br />
+      <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</em>
+    </h1>
+  );
+}
 
 export default function Home() {
   return (
@@ -125,8 +178,7 @@ export default function Home() {
       <MarketingNav />
 
       <section className="landing-bold-hero">
-        <p className="landing-bold-eyebrow">{copy.eyebrow}</p>
-        <h1>{copy.title}<br /><em>{copy.titleAccent}</em></h1>
+        <AnimatedHeroHeadline />
         <div className="landing-bold-actions">
           <Link
             href="/signup?role=company"
@@ -139,16 +191,11 @@ export default function Home() {
             {copy.primary}<span aria-hidden="true">→</span>
           </Link>
         </div>
-      </section>
-
-      <section className="landing-bold-purpose">
-        <p>{copy.builtFor}</p>
-        <div>
-          <span>Profil</span><i />
-          <span>Matchning</span><i />
-          <span>Chatt</span><i />
-          <span>Möjlighet</span><span className="landing-bold-scroll" aria-hidden="true">↓</span>
-        </div>
+        {process.env.NODE_ENV === "development" && (
+          <Link href="/company?devCompany=1" className="landing-dev-company-shortcut" onClick={() => window.sessionStorage.setItem("employo-dev-company-preview", "1")}>
+            Öppna företagsvyn ↗
+          </Link>
+        )}
       </section>
 
       <section className="landing-bold-stats">
