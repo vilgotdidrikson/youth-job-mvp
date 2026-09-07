@@ -1,0 +1,84 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { createRequire, Module } from "node:module";
+import ts from "typescript";
+
+// Compile only the shared pure modules and writer; no server or paid calls for default tests.
+const require = createRequire(import.meta.url);
+Module._extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(readFileSync(filename, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename);
+const { createEmptyStructuredCv, appendInterviewAnswer, renderStructuredCv, structuredCvToLegacy } = require("../lib/structured-cv.ts");
+const { selectNextQuestion, remainingQuestions, INTERVIEW_QUESTIONS, INTERVIEW_INSTRUCTIONS, interviewDecisionSchema } = require("../lib/voice-interview.ts");
+const { writeCv, cvWritingInput, matchesCvSchema, CV_WRITING_SCHEMA } = require("../lib/cv-generation.ts");
+const state = { currentArea: "workExperience", answerCounts: { workExperience: 1 }, askedQuestionIds: ["profile_strength", "work_overview"], coveredQuestionIds: ["work_employer_role", "work_tasks", "work_period", "education_overview", "education_program", "languages_overview", "languages_abilities"], skippedAreas: [] };
+assert(!remainingQuestions(state).some((question) => state.coveredQuestionIds.includes(question.id)));
+assert.notEqual(selectNextQuestion(state, "work_tasks")?.id, "work_tasks", "Already answered facts cannot be asked again");
+assert.notEqual(selectNextQuestion(state)?.id, "education_overview", "Cross-area answers skip openings");
+assert(!remainingQuestions({ ...state, skippedAreas: ["workExperience"] }).some((question) => question.area === "workExperience"));
+assert.equal(selectNextQuestion({ ...state, askedQuestionIds: Array(16).fill("x") }), null);
+assert.equal(selectNextQuestion(state, "complete"), null);
+assert.equal(selectNextQuestion({ ...state, coveredQuestionIds: INTERVIEW_QUESTIONS.map((q) => q.id) }), null);
+assert(!matchesCvSchema({ summary: "incomplete" }));
+const emptyForSchema = (schema) => schema.type === "string" ? "" : schema.type === "array" ? [] : Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => [key, emptyForSchema(value)]));
+assert(matchesCvSchema(emptyForSchema(CV_WRITING_SCHEMA)));
+const cv = createEmptyStructuredCv({ name: "Testperson" });
+cv.profile.summary = "Noggrann elev med erfarenhet av kassa och varuplock.";
+cv.profile.sourceNotes = ["asså typ jag vet inte du vet"];
+assert(!renderStructuredCv(cv).includes("asså"), "Raw evidence must not leak into the written profile");
+cv.workExperience = [{ employer: "Testbutiken", role: "Sommarjobb", responsibilities: ["Hanterade kassan."], tools: [], projects: [], achievements: [], learnings: [], sourceNotes: [] }];
+assert(structuredCvToLegacy(cv).workExperience[0].includes("Testbutiken"), "Written facts survive profile conversion");
+const misplaced = appendInterviewAnswer(createEmptyStructuredCv(), "workExperience", "Jag har inte jobbat. Jag går i skolan.");
+assert.equal(cvWritingInput(misplaced, [{ answer: "Jag har inte jobbat. Jag går i skolan." }]).source.workExperience.length, 0);
+assert.equal(misplaced.workExperience.length, 1, "Raw evidence is retained independently");
+console.log("PASS: coverage, skipped areas, turn budget, schema, raw-note isolation, profile conversion");
+
+if (process.argv.includes("--live")) {
+  const { default: OpenAI } = await import("openai");
+  const client = new OpenAI({ timeout: 30_000, maxRetries: 0 });
+  const answer = "Asså jag är noggrann, på mitt sommarjobb på ICA i Malmö juni till augusti 2025 jobbade jag i kassan och fyllde på hyllor. Sen praktiserade jag två veckor på Café Sol i april 2026 där jag diskade och serverade fika. Jag går ekonomiprogrammet på Testgymnasiet i Malmö sedan 2024 och tar examen 2027. Svenska är mitt modersmål och jag pratar och skriver bra engelska. Inga certifikat. Jag söker extrajobb i butik. Jag har aldrig jobbat som chef.";
+  let source = createEmptyStructuredCv({ name: "Alex Test", city: "Malmö" });
+  source = appendInterviewAnswer(source, "profile", answer);
+  const conversation = [{ question: "Berätta om dig själv", answer }];
+  const started = Date.now();
+  const written = await writeCv(source, AbortSignal.timeout(60_000), conversation);
+  assert.equal(written.workExperience.length, 2, "Separate employers must remain separate");
+  assert(written.workExperience.some((item) => /ICA/i.test(item.employer)));
+  assert(written.workExperience.some((item) => /Café Sol/i.test(item.employer)));
+  assert.equal(written.certifications.length, 0, "A negative answer is not a certificate");
+  assert.equal(written.languages.length, 2);
+  const rendered = renderStructuredCv(written);
+  assert(!/asså|chef|tyska|ökade.*procent/i.test(rendered), "No filler or invented merits");
+  assert(/kass/i.test(rendered) && /2027/.test(rendered));
+  mkdirSync("tmp/voice-quality", { recursive: true });
+  writeFileSync("tmp/voice-quality/sample-cv.txt", rendered);
+  console.log(`PASS live CV: two employers, education, languages, no invented merits (${Date.now() - started} ms)`);
+  const decision = await client.responses.create({ model: process.env.OPENAI_VOICE_INTERVIEW_MODEL ?? "gpt-4o-mini", store: false, instructions: INTERVIEW_INSTRUCTIONS,
+    input: JSON.stringify({ source, conversation, questions: INTERVIEW_QUESTIONS, allowed: INTERVIEW_QUESTIONS.map((q) => q.id) }),
+    text: { format: { type: "json_schema", name: "coverage_test", strict: true, schema: interviewDecisionSchema(INTERVIEW_QUESTIONS.map((question) => question.id)) } }, max_output_tokens: 1200, temperature: 0 });
+  const result = JSON.parse(decision.output_text);
+  for (const id of ["work_employer_role", "work_tasks", "work_period", "education_overview", "education_program", "languages_overview", "merits_overview"]) assert(result.coverage[id], `Missing cross-area coverage: ${id}`);
+  assert(!result.coverage[result.next_question_id], "Next question already answered");
+  console.log(`PASS live interview: cross-area facts recognized; next=${result.next_question_id}`);
+  const beginnerAnswer = "Jag har aldrig haft ett jobb eller praktik. Jag går teknikprogrammet på Testgymnasiet. I ett skolprojekt byggde jag en webbplats med HTML och CSS och gjorde layouten. Jag sa fel tidigare, jag kan inte React. Inga certifikat. Svenska är mitt modersmål. Jag är lagkapten i fotbollslaget, men jag har aldrig varit tränare.";
+  let beginner = createEmptyStructuredCv({ name: "Kim Test" });
+  beginner = appendInterviewAnswer(beginner, "workExperience", beginnerAnswer);
+  const firstCv = await writeCv(beginner, AbortSignal.timeout(60_000), [{ question: "Erfarenhet?", answer: beginnerAnswer }]);
+  writeFileSync("tmp/voice-quality/first-job-cv.json", JSON.stringify(firstCv, null, 2));
+  assert.equal(firstCv.workExperience.length, 0);
+  assert(firstCv.projects.length > 0 && firstCv.otherExperience.length > 0);
+  assert(firstCv.skills.some((skill) => skill.name === "HTML") && firstCv.skills.some((skill) => skill.name === "CSS"));
+  assert(firstCv.education.every((item) => item.projects.length === 0 && !/webbplats|HTML|CSS/i.test(item.description)));
+  assert.equal(firstCv.certifications.length, 0);
+  assert(!/React|tränare|chef/i.test(renderStructuredCv(firstCv)));
+  assert(!/teknik och design|kommunikation|matcher|träningar/i.test(renderStructuredCv(firstCv)), "Do not embellish education or captain duties");
+  writeFileSync("tmp/voice-quality/first-job-cv.txt", renderStructuredCv(firstCv));
+  console.log("PASS live first job: school project and team captain retained; corrections respected");
+  const speechStarted = Date.now();
+  const speech = await client.audio.speech.create({ model: "gpt-4o-mini-tts", voice: "marin", input: INTERVIEW_QUESTIONS[0].text, instructions: "Tala svenska med naturligt svenskt uttal. Varm och tydlig samtalston. Jämnt, ledigt tempo.", response_format: "mp3", speed: 1.05 });
+  const bytes = Buffer.from(await speech.arrayBuffer());
+  assert(bytes.length > 1000);
+  writeFileSync("tmp/voice-quality/question.mp3", bytes);
+  const { toFile } = await import("openai/uploads");
+  const heard = await client.audio.transcriptions.create({ file: await toFile(bytes, "question.mp3", { type: "audio/mpeg" }), model: "gpt-4o-mini-transcribe", language: "sv" });
+  assert(/egenskaper/i.test(heard.text));
+  console.log(`PASS live Swedish speech round trip (${Date.now() - speechStarted} ms, ${bytes.length} bytes)`);
+}

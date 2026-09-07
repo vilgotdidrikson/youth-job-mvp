@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { requireApiUser } from "@/lib/api-auth";
 
 const groq = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -21,6 +22,8 @@ function fallback(title: string, industry: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireApiUser(req, "job-generate");
+  if ("response" in auth) return auth.response;
   const body = (await req.json()) as JobInput;
   const title = body.title?.trim() ?? "";
   const industry = body.industry?.trim() ?? "";

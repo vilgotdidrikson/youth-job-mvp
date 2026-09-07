@@ -8,28 +8,14 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-async function rollbackProfileInsert(userId: string) {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from("profiles").delete().eq("id", userId);
-
-  if (error) {
-    console.error("Failed to roll back profiles insert after signup error.", error);
-  }
-}
-
 async function insertRoleProfile(userId: string, role: Role) {
   const supabase = getSupabaseClient();
-  const { error } =
-    role === "youth"
-      ? await supabase.from("youth_profiles").insert({ user_id: userId })
-      : role === "company"
-        ? await supabase.from("company_profiles").insert({ user_id: userId })
-        : await supabase.from("private_profiles").insert({ user_id: userId });
-
-  if (error) {
-    console.error(`Failed to insert ${role}_profiles row during signup.`, error);
-    throw new Error(error.message);
-  }
+  const { error } = role === "youth"
+    ? await supabase.from("youth_profiles").insert({ user_id: userId })
+    : role === "company"
+      ? await supabase.from("company_profiles").insert({ user_id: userId })
+      : await supabase.from("private_profiles").insert({ user_id: userId });
+  if (error) throw new Error(error.message);
 }
 
 export async function signUp(
@@ -54,21 +40,13 @@ export async function signUp(
     throw unexpectedError;
   }
 
-  const { error: profileError } = await supabase.from("profiles").insert({
-    id: data.user.id,
-    role,
-  });
-
-  if (profileError) {
-    console.error("Failed to insert profiles row during signup.", profileError);
-    throw new Error(profileError.message);
-  }
-
+  const { error: profileError } = await supabase.from("profiles").insert({ id: data.user.id, role });
+  if (profileError) throw new Error(profileError.message);
   try {
     await insertRoleProfile(data.user.id, role);
-  } catch (error) {
-    await rollbackProfileInsert(data.user.id);
-    throw error;
+  } catch (profileInsertError) {
+    await supabase.from("profiles").delete().eq("id", data.user.id);
+    throw profileInsertError;
   }
 
   return { user: data.user, session: data.session };

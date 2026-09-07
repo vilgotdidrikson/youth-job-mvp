@@ -17,12 +17,16 @@ function SwipePageContent() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [city, setCity] = useState("");
+  const [category, setCategory] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
 
   useEffect(() => {
     if (!loading && !cvLoading && user && profile?.role === "youth") {
       void (async () => {
         try {
-          const data = await getSwipeJobs();
+          const data = await getSwipeJobs({ query, city, category, employmentType });
           const requestedJobId = searchParams.get("job");
           setJobs(requestedJobId ? [...data].sort((a, b) => (a.id === requestedJobId ? -1 : b.id === requestedJobId ? 1 : 0)) : data);
           setError("");
@@ -33,7 +37,7 @@ function SwipePageContent() {
         }
       })();
     }
-  }, [cvLoading, loading, profile?.role, searchParams, user]);
+  }, [category, city, cvLoading, employmentType, loading, profile?.role, query, searchParams, user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -63,6 +67,7 @@ function SwipePageContent() {
         <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
           Swipa höger för att ansöka, vänster för att hoppa.
         </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".75rem" }}><input className="input-field" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Sök jobb eller företag" /><input className="input-field" value={city} onChange={(event) => setCity(event.target.value)} placeholder="Ort" /><input className="input-field" value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Kategori" /><input className="input-field" value={employmentType} onChange={(event) => setEmploymentType(event.target.value)} placeholder="Anställningsform" /></div>
       </div>
 
       {profile?.role !== "youth" ? (

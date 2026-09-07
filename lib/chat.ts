@@ -40,18 +40,6 @@ function normalizeMessage(row: Record<string, unknown>): ChatMessage {
   };
 }
 
-async function updateConversationTimestamp(conversationId: string) {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase
-    .from("conversations")
-    .update({ last_message_at: new Date().toISOString() })
-    .eq("id", conversationId);
-
-  if (error) {
-    logSupabaseError("conversations.update.last_message_at", error, { conversationId });
-    throw new Error(getSupabaseErrorMessage(error, "Unable to update conversation timestamp."));
-  }
-}
 
 async function ensureMatchedConversation(conversationId: string) {
   const supabase = getSupabaseClient();
@@ -161,7 +149,6 @@ export async function sendMessage(conversationId: string, messageText: string): 
     throw new Error(getSupabaseErrorMessage(error, "Unable to send message."));
   }
 
-  await updateConversationTimestamp(conversationId);
 }
 
 export async function getMyConversations(userId?: string): Promise<ConversationSummary[]> {

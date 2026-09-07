@@ -7,9 +7,10 @@ import { useSession } from "@/hooks/use-session";
 import { completeYouthOnboarding, getYouthProfile, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { createCvPdfFile } from "@/lib/cv-pdf";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
+import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
-import { structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
+import { structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 
 const STRENGTH_TIPS = [
   "Ansvarstagande",
@@ -388,31 +389,6 @@ function buildCvText(a: Answers): string {
 
   return parts.join("\n");
 }
-
-function buildStructuredCvFallback(a: Answers): string {
-  const sections: string[] = [];
-  const addSection = (heading: string, content: string) => {
-    const value = content.trim();
-    if (value) sections.push(`${heading}\n${value}`);
-  };
-  const firstName = a.full_name.trim().split(/\s+/)[0] || "";
-  const profile = [
-    firstName && a.city ? `Jag heter ${firstName} och bor i ${a.city}.` : a.city ? `Jag bor i ${a.city}.` : "",
-    a.desired_roles.length ? `Jag söker jobb inom ${a.desired_roles.join(", ").toLowerCase()}.` : "",
-    a.strengths.trim() ? `Mina styrkor är ${a.strengths.trim()}.` : "",
-  ].filter(Boolean).join(" ");
-
-  if (a.full_name.trim()) sections.push(a.full_name.trim().toUpperCase());
-  addSection("PROFIL", profile);
-  addSection("ARBETSLIVSERFARENHET", a.work_experience);
-  addSection("UTBILDNING", a.education);
-  addSection("CERTIFIKAT OCH MERITER", [a.certificates, a.extracurriculars].filter(Boolean).join("\n\n"));
-  addSection("SPRÅK", a.languages);
-  addSection("TILLGÄNGLIGHET", a.employment_preferences.join(", "));
-
-  return sections.join("\n\n");
-}
-
 
 export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = false }: { flow: "account" | "cv"; cvBuilder?: boolean; voiceFinalize?: boolean }) {
   const router = useRouter();
@@ -1158,7 +1134,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       { field: "certificates" as const, label: "certifikat eller licenser", value: formattedCertificates || answers.certificates.trim() },
     ];
     const answeredAreaCount = coreAreas.filter((area) => area.value).length;
-    if (answeredAreaCount < 3) {
+    if (answeredAreaCount < 3 && !voiceFinalize) {
       const firstMissingArea = coreAreas.find((area) => !area.value);
       const missingLabels = coreAreas.filter((area) => !area.value).map((area) => area.label).join(", ");
       if (firstMissingArea) setStep(STEPS.findIndex((candidate) => candidate.field === firstMissingArea.field));
@@ -1176,8 +1152,13 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       education: formattedEducation || answers.education,
       certificates: formattedCertificates || answers.certificates,
     };
+    let voiceConversation: unknown[] = [];
+    if (voiceFinalize) {
+      try { voiceConversation = JSON.parse(sessionStorage.getItem("employo-voice-cv-conversation") ?? "[]"); } catch { /* The structured source still retains the original notes. */ }
+    }
     const cvPayload = {
       ...answersForCv,
+      ...(voiceFinalize && structuredCv ? { structured: structuredCv, conversation: voiceConversation } : {}),
       work_experiences: workExperiences.map(({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description }) => ({ title, company, location, location_type, employment_type, start_date, end_date, is_current, description })),
       educations: educations.map(({ school, degree, subject, start_date, end_date, description }) => ({ school, degree, subject, start_date, end_date, description })),
       certificate_entries: certificates.map(({ name, issuer, category, issue_date, expiry_date, credential_url, description }) => ({ name, issuer, category, issue_date, expiry_date, credential_url, description })),
@@ -1186,20 +1167,20 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     try {
       const res = await fetch("/api/youth/cv/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
         body: JSON.stringify(cvPayload),
       });
+      const data = (await res.json()) as { cv: string; structured?: StructuredCvData; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Kunde inte bearbeta CV:t. Försök igen.");
+      if (!data.cv?.trim() || !data.structured) throw new Error("CV:t kunde inte färdigställas. Dina svar finns kvar, försök igen.");
       if (res.ok) {
-        const data = (await res.json()) as { cv: string; structured?: StructuredCvData };
         generated = data.cv;
         if (data.structured) setStructuredCv(data.structured);
       }
-    } catch {
-      // silently fall through to local template
-    }
-    if (!generated) {
-      generated = buildStructuredCvFallback(answersForCv);
-      setStructuredCv(structuredCvFromForm(cvPayload));
+    } catch (generationError) {
+      setError(generationError instanceof Error ? generationError.message : "Kunde inte bearbeta CV:t. Försök igen.");
+      setSaving(false);
+      return;
     }
     setAnswers(answersForCv);
     setSaving(false);
@@ -1430,6 +1411,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       const pdfUrl = await uploadYouthDocument(pdfFile);
       const generatedCvDocument: YouthDocument = { name: pdfFile.name, url: pdfUrl, type: "generated_cv" };
       const otherDocuments = otherEntries.flatMap((entry) => entry.file ? [entry.file] : []);
+      const writtenFields = structuredCv ? structuredCvToLegacy(structuredCv) : null;
 
       await completeYouthOnboarding({
         ...answers,
@@ -1437,6 +1419,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         work_experience: formatWorkExperiences() || answers.work_experience,
         education: formatEducations() || answers.education,
         certificates: formatCertificates() || answers.certificates,
+        ...(writtenFields ? { strengths: writtenFields.strengths.join(", "), languages: writtenFields.languages.join(", "), work_experience: writtenFields.workExperience.join("\n"), education: writtenFields.education.join("\n"), certificates: writtenFields.certificates.join("\n"), extracurriculars: writtenFields.extracurriculars.join("\n") } : {}),
         cv_text: cvText,
         cv_structured: structuredCv ?? structuredCvFromForm({
           ...answers,
@@ -1452,6 +1435,9 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         ],
       });
       sessionStorage.removeItem(cvDraftStorageKey);
+      if (voiceFinalize) {
+        for (const key of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(key);
+      }
       router.replace("/swipe");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");

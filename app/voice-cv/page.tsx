@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
-import { getYouthProfile, saveVoiceCvToProfile } from "@/lib/onboarding";
+import { getYouthProfile } from "@/lib/onboarding";
 import { createEmptyStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
 import type { CvInterviewArea } from "@/lib/cv-interview";
+import { INTERVIEW_QUESTIONS, type InterviewTurn } from "@/lib/voice-interview";
+import { authenticatedAudioUrl, authenticatedHeaders } from "@/lib/api-client";
 
 const VOICE_CV_STORAGE_KEY = "employo-voice-cv-answers";
 const VOICE_CV_STRUCTURED_KEY = "employo-voice-cv-structured";
@@ -17,6 +19,7 @@ interface VoiceInterviewState {
   answerCounts: Partial<Record<CvInterviewArea, number>>;
   askedQuestionIds: string[];
   lastQuestion?: string;
+  conversation?: InterviewTurn[];
   structuredCv: StructuredCvData;
 }
 const VOICE_BUTTON_COLOR = "#ec4899";
@@ -30,7 +33,7 @@ export default function VoiceCvPage() {
   const responseAudio = useRef<HTMLAudioElement | null>(null);
   const finishResponseAudio = useRef<(() => void) | null>(null);
   const answers = useRef<VoiceAnswers>({});
-  const interviewState = useRef<VoiceInterviewState>({ currentArea: "personalInfo", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() });
+  const interviewState = useRef<VoiceInterviewState>({ currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() });
   const endingCall = useRef(false);
   const pausingCall = useRef(false);
   const discardNextRecording = useRef(false);
@@ -41,6 +44,9 @@ export default function VoiceCvPage() {
   const [status, setStatus] = useState<"idle" | "connecting" | "speaking" | "recording" | "processing" | "paused" | "complete">("idle");
   const [question, setQuestion] = useState("");
   const [error, setError] = useState("");
+  const [lastTranscript, setLastTranscript] = useState("");
+  const [longerPauses, setLongerPauses] = useState(false);
+  const silenceDelay = useRef(1100);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -85,11 +91,10 @@ export default function VoiceCvPage() {
     microphone.current?.getTracks().forEach((track) => track.stop());
     microphone.current = null;
     responseAudio.current?.pause();
-    window.speechSynthesis.cancel();
     finishResponseAudio.current?.();
     responseAudio.current = null;
     answers.current = {};
-    interviewState.current = { currentArea: "personalInfo", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() };
+    interviewState.current = { currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() };
     retryTurn.current = null;
     setQuestion("");
     setStatus((current) => current === "complete" ? current : "idle");
@@ -102,65 +107,62 @@ export default function VoiceCvPage() {
     if (recorder.current?.state === "recording") recorder.current.stop();
     microphone.current?.getTracks().forEach((track) => track.stop());
     responseAudio.current?.pause();
-    window.speechSynthesis.cancel();
     finishResponseAudio.current?.();
   }, []);
 
-  const playResponse = async (text: string, audioBase64?: string) => {
+  const playResponse = async (audioUrl?: string) => {
     setStatus("speaking");
-    if (!audioBase64) {
-      await new Promise<void>((resolve) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "sv-SE";
-        utterance.rate = 1.04;
-        const finish = () => { finishResponseAudio.current = null; resolve(); };
-        finishResponseAudio.current = finish;
-        utterance.onend = finish;
-        utterance.onerror = finish;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-      });
-      return;
-    }
-    const audio = new Audio(`data:audio/mpeg;base64,${audioBase64}`);
+    if (!audioUrl) throw new Error("Frågan visas ovan. Tryck på Fortsätt för att svara.");
+    // Keep one playback element throughout the conversation.
+    const audio = responseAudio.current ?? new Audio();
     responseAudio.current?.pause();
+    const securedAudioUrl = await authenticatedAudioUrl(audioUrl);
+    if (audio.getAttribute("src") !== securedAudioUrl) audio.src = securedAudioUrl;
+    audio.preload = "auto";
     responseAudio.current = audio;
-    await new Promise<void>((resolve) => {
-      const finish = () => { finishResponseAudio.current = null; resolve(); };
+    await new Promise<void>((resolve, reject) => {
+      const timer = window.setTimeout(() => fail(), 45_000);
+      const finish = () => { window.clearTimeout(timer); audio.onended = null; audio.onerror = null; finishResponseAudio.current = null; resolve(); };
+      const fail = () => { window.clearTimeout(timer); audio.pause(); audio.onended = null; audio.onerror = null; finishResponseAudio.current = null; reject(new Error("Ljudet kunde inte spelas. Läs frågan ovan och tryck på Fortsätt.")); };
       finishResponseAudio.current = finish;
       audio.onended = finish;
-      audio.onerror = finish;
-      void audio.play().catch(finish);
+      audio.onerror = fail;
+      void audio.play().catch(fail);
     });
   };
 
   const submitTurn = async (formData: FormData) => {
     retryTurn.current = formData;
+    setError("");
     setStatus("processing");
     const controller = new AbortController();
     requestController.current?.abort();
     requestController.current = controller;
     try {
-      const response = await fetch("/api/voice/turn", { method: "POST", body: formData, signal: controller.signal });
-      const result = await response.json() as { answers?: VoiceAnswers; state?: VoiceInterviewState; structured?: StructuredCvData; complete?: boolean; nextQuestion?: string; audioBase64?: string; error?: string };
+      const response = await fetch("/api/voice/turn", { method: "POST", headers: await authenticatedHeaders(), body: formData, signal: controller.signal });
+      const result = await response.json() as { answers?: VoiceAnswers; state?: VoiceInterviewState; structured?: StructuredCvData; complete?: boolean; nextQuestion?: string; audioUrl?: string; transcript?: string; error?: string };
       if (!response.ok || !result.answers || !result.state || !result.nextQuestion) throw new Error(result.error ?? "Kunde inte behandla ditt svar.");
       answers.current = result.answers;
       interviewState.current = result.state;
+      if (result.transcript) setLastTranscript(result.transcript);
       const nextQuestion = result.nextQuestion ?? "";
       setQuestion(nextQuestion);
       saveDraft(nextQuestion);
       if (result.complete) {
-        await saveVoiceCvToProfile(result.structured ?? result.state.structuredCv);
         sessionStorage.setItem(VOICE_CV_STORAGE_KEY, JSON.stringify(result.answers));
         sessionStorage.setItem(VOICE_CV_STRUCTURED_KEY, JSON.stringify(result.structured ?? result.state.structuredCv));
+        sessionStorage.setItem("employo-voice-cv-conversation", JSON.stringify(result.state.conversation ?? []));
         sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
         retryTurn.current = null;
-        await playResponse(nextQuestion, result.audioBase64);
+        microphone.current?.getTracks().forEach((track) => track.stop());
+        microphone.current = null;
+        // Completion is also visible; audio failure must not restart a finished interview.
+        await playResponse(result.audioUrl).catch(() => {});
         if (!endingCall.current) setStatus("complete");
         return;
       }
       retryTurn.current = null;
-      await playResponse(nextQuestion, result.audioBase64);
+      await playResponse(result.audioUrl);
       if (!endingCall.current && !pausingCall.current) startRecording();
     } catch (turnError) {
       if (controller.signal.aborted) return;
@@ -173,11 +175,16 @@ export default function VoiceCvPage() {
 
   const startCall = async () => {
     if (!user) return;
-    setError(""); setQuestion(""); setStatus("connecting"); endingCall.current = false; pausingCall.current = false; answers.current = {};
+    setError(""); setLastTranscript(""); setQuestion(""); setStatus("connecting"); endingCall.current = false; pausingCall.current = false; answers.current = {};
+    const welcomeAudio = new Audio(await authenticatedAudioUrl(`/api/voice/speech?id=${INTERVIEW_QUESTIONS[0].id}&v=2`));
+    welcomeAudio.preload = "auto";
+    welcomeAudio.load();
+    responseAudio.current = welcomeAudio;
     try {
       const youthProfile = await getYouthProfile(user.id);
       const initialCv = createEmptyStructuredCv({ name: youthProfile?.full_name ?? undefined, city: youthProfile?.city ?? undefined });
-      interviewState.current = { currentArea: "personalInfo", answerCounts: {}, askedQuestionIds: [], structuredCv: initialCv };
+      initialCv.profile.targetRoles = youthProfile?.desired_roles ?? [];
+      interviewState.current = { currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: initialCv };
       microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       const formData = new FormData();
       formData.set("start", "true");
@@ -193,7 +200,8 @@ export default function VoiceCvPage() {
     if (!microphone.current) return;
     setError("");
     recordedChunks.current = [];
-    const currentRecorder = new MediaRecorder(microphone.current);
+    const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) => MediaRecorder.isTypeSupported(type));
+    const currentRecorder = new MediaRecorder(microphone.current, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: 32000 });
     recorder.current = currentRecorder;
     currentRecorder.ondataavailable = (event) => { if (event.data.size) recordedChunks.current.push(event.data); };
     currentRecorder.onstop = () => {
@@ -204,7 +212,7 @@ export default function VoiceCvPage() {
       const recording = new Blob(recordedChunks.current, { type: currentRecorder.mimeType || "audio/webm" });
       if (!recording.size) { setError("Ingen inspelning kunde tas emot."); setStatus("idle"); return; }
       const formData = new FormData();
-      formData.set("audio", recording, "answer.webm");
+      formData.set("audio", recording, currentRecorder.mimeType.includes("mp4") ? "answer.m4a" : "answer.webm");
       formData.set("answers", JSON.stringify(answers.current));
       formData.set("state", JSON.stringify(interviewState.current));
       void submitTurn(formData);
@@ -212,6 +220,7 @@ export default function VoiceCvPage() {
     currentRecorder.start();
     setStatus("recording");
     const context = new AudioContext();
+    void context.resume();
     const source = context.createMediaStreamSource(microphone.current);
     const analyser = context.createAnalyser();
     analyser.fftSize = 1024;
@@ -220,8 +229,18 @@ export default function VoiceCvPage() {
     const samples = new Uint8Array(analyser.fftSize);
     let heardSpeech = false;
     let silentSince: number | null = null;
+    const startedAt = Date.now();
     silenceMonitor.current = window.setInterval(() => {
       analyser.getByteTimeDomainData(samples);
+      if (!heardSpeech && Date.now() - startedAt >= 20_000) {
+        pausingCall.current = true;
+        currentRecorder.stop();
+        microphone.current?.getTracks().forEach((track) => track.stop());
+        microphone.current = null;
+        setStatus("paused");
+        return;
+      }
+      if (Date.now() - startedAt >= 90_000) { currentRecorder.stop(); return; }
       const level = samples.reduce((total, sample) => total + Math.abs(sample - 128), 0) / samples.length / 128;
       if (level > 0.018) {
         heardSpeech = true;
@@ -231,7 +250,7 @@ export default function VoiceCvPage() {
       if (!heardSpeech) return;
       const now = Date.now();
       silentSince ??= now;
-      if (now - silentSince >= 1800 && currentRecorder.state === "recording") currentRecorder.stop();
+      if (now - silentSince >= silenceDelay.current && currentRecorder.state === "recording") currentRecorder.stop();
     }, 100);
   };
 
@@ -241,8 +260,7 @@ export default function VoiceCvPage() {
 
   const skipQuestion = async () => {
     setError("");
-    discardNextRecording.current = true;
-    if (recorder.current?.state === "recording") recorder.current.stop();
+    if (recorder.current?.state === "recording") { discardNextRecording.current = true; recorder.current.stop(); }
     try {
       if (!microphone.current) microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       pausingCall.current = false;
@@ -273,12 +291,9 @@ export default function VoiceCvPage() {
     setError("");
     endingCall.current = false;
     pausingCall.current = false;
-    if (retryTurn.current) {
-      await submitTurn(retryTurn.current);
-      return;
-    }
     try {
       microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      if (retryTurn.current) { await submitTurn(retryTurn.current); return; }
       startRecording();
     } catch (callError) {
       setError(callError instanceof Error ? callError.message : "Mikrofonen kunde inte startas.");
@@ -291,6 +306,15 @@ export default function VoiceCvPage() {
     stopCall();
     setError("");
     setStatus("idle");
+  };
+
+  const finishInterview = async () => {
+    if (recorder.current?.state === "recording") { discardNextRecording.current = true; recorder.current.stop(); }
+    pausingCall.current = false;
+    const form = new FormData();
+    form.set("finish", "true");
+    form.set("state", JSON.stringify(interviewState.current));
+    await submitTurn(form);
   };
 
   const goBack = () => {
@@ -308,10 +332,14 @@ export default function VoiceCvPage() {
       <p style={{ margin: "-.5rem 0 0", color: "var(--text-secondary)", fontSize: ".9rem", lineHeight: 1.55 }}>AI:n frågar, du svarar. Samtalet går vidare när du har pratat klart.</p>
       <div style={{ display: "grid", width: "5.5rem", height: "5.5rem", margin: ".4rem auto", placeItems: "center", borderRadius: "50%", color: "var(--color-on-brand)", background: status === "recording" ? VOICE_BUTTON_COLOR : "var(--color-surface-soft)", fontSize: "1.6rem" }} aria-hidden="true">{status === "recording" ? "●" : "◌"}</div>
       {question && <p style={{ margin: 0, color: "var(--text-primary)", fontSize: ".95rem", lineHeight: 1.5 }}>{question}</p>}
-      <p aria-live="polite" style={{ minHeight: "1.4rem", margin: 0, color: "var(--text-secondary)", fontSize: ".85rem" }}>{status === "connecting" ? "AI:n förbereder första frågan..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "AI:n lyssnar på ditt svar..." : status === "processing" ? "AI:n bearbetar ditt svar..." : status === "paused" ? error ? "Svaret sparades inte. Försök igen utan att börja om." : "Samtalet är pausat." : status === "complete" ? "Samtalet är klart." : "Tryck på Starta så börjar AI:n."}</p>
+      {lastTranscript && <details style={{ textAlign: "left", color: "var(--text-secondary)", fontSize: ".82rem" }}><summary>Det här hörde vi senast</summary><p>{lastTranscript}</p></details>}
+      {status !== "complete" && <label style={{ fontSize: ".8rem", color: "var(--text-secondary)" }}><input type="checkbox" checked={longerPauses} onChange={(event) => { setLongerPauses(event.target.checked); silenceDelay.current = event.target.checked ? 2200 : 1100; }} /> Ge mig mer betänketid mellan meningarna</label>}
+      <p aria-live="polite" style={{ minHeight: "1.4rem", margin: 0, color: "var(--text-secondary)", fontSize: ".85rem" }}>{status === "connecting" ? "AI:n förbereder första frågan..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "AI:n lyssnar på ditt svar..." : status === "processing" ? "AI:n bearbetar ditt svar..." : status === "paused" ? "Samtalet är pausat. Dina tidigare svar finns kvar." : status === "complete" ? "Samtalet är klart." : "Tryck på Starta så börjar AI:n."}</p>
       {error && <p style={{ margin: 0, color: "var(--color-danger)", fontSize: ".84rem" }}>{error}</p>}
+      {status === "speaking" && <button type="button" onClick={() => { responseAudio.current?.pause(); finishResponseAudio.current?.(); }} style={{ border: 0, background: "transparent", color: "var(--text-secondary)", cursor: "pointer" }}>Hoppa över uppläsningen</button>}
       <button type="button" onClick={status === "idle" ? () => void startCall() : status === "recording" ? stopRecording : status === "paused" ? () => void resumeCall() : status === "complete" ? () => { stopCall(); router.push("/youth/cv/create?voice=finalize"); } : undefined} disabled={status === "connecting" || status === "speaking" || status === "processing"} className="cta-btn" style={{ minHeight: "3.35rem", borderColor: VOICE_BUTTON_COLOR, background: VOICE_BUTTON_COLOR, fontSize: "1rem", opacity: status === "connecting" || status === "speaking" || status === "processing" ? .65 : 1 }}>{status === "connecting" ? "AI:n förbereder..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "Jag har pratat klart" : status === "processing" ? "AI:n bearbetar..." : status === "paused" ? error ? "Försök igen" : "Fortsätt samtalet" : status === "complete" ? "Fortsätt" : "Starta"}</button>
-      {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} style={{ justifySelf: "center", padding: ".25rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Hoppa över frågan</button>}
+      {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} style={{ justifySelf: "center", padding: ".25rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Hoppa över området</button>}
+      {status === "paused" && (interviewState.current.conversation?.length ?? 0) > 0 && <button type="button" onClick={() => void finishInterview()} className="cta-btn">Gå vidare med mina sparade svar</button>}
       {status !== "idle" && status !== "complete" && <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>{(status === "recording" || status === "speaking") && <button type="button" onClick={pauseCall} style={{ padding: ".35rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Pausa</button>}<button type="button" onClick={abortCall} style={{ padding: ".35rem", border: 0, color: "var(--color-danger)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Avbryt samtalet</button></div>}
       <p style={{ margin: 0, color: "var(--text-tertiary)", fontSize: ".72rem", lineHeight: 1.45 }}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av Employo.</p>
     </section>

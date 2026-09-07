@@ -25,6 +25,7 @@ export interface CvWorkExperience {
 }
 
 export interface CvEducation {
+  description?: string;
   school?: string;
   program?: string;
   city?: string;
@@ -80,6 +81,7 @@ export interface CvOtherExperience {
 export interface StructuredCvData {
   personalInfo: CvPersonalInfo;
   profile: {
+    summary?: string;
     strengths: string[];
     traits: string[];
     interests: string[];
@@ -194,20 +196,20 @@ export function renderStructuredCv(cv: StructuredCvData): string {
   if (contact.length) output.push(contact.join(" | "));
   if (output.length) output.push("");
 
-  const profileFacts = [...cv.profile.sourceNotes, ...cv.profile.strengths, ...cv.profile.differentiators];
+  const profileFacts = cv.profile.summary !== undefined ? [cv.profile.summary] : [...cv.profile.sourceNotes, ...cv.profile.strengths, ...cv.profile.differentiators];
   section("PROFIL", [...new Set(profileFacts.map(clean).filter(Boolean))].slice(0, 3));
 
   section("ARBETSLIVSERFARENHET", cv.workExperience.flatMap((item) => {
-    const heading = compact([compact([item.role, item.employer]).join(" - "), compact([item.startDate, item.endDate || item.duration]).join(" - ")]).join(" | ");
+    const heading = compact([compact([item.role, item.employer]).join(" - "), compact([item.startDate, item.endDate]).join(" - "), item.duration]).join(" | ");
     return [heading, ...bullets([...item.responsibilities, ...item.projects, ...item.achievements, ...item.learnings], 4)].filter(Boolean);
   }));
 
   section("UTBILDNING", cv.education.flatMap((item) => {
-    const heading = compact([compact([item.program, item.school]).join(" - "), compact([item.startDate, item.endDate || item.expectedGraduation]).join(" - ")]).join(" | ");
-    return [heading, ...bullets([...item.courses, ...item.projects, ...item.achievements, ...item.sourceNotes], 3)].filter(Boolean);
+    const heading = compact([compact([item.program, item.school]).join(" - "), compact([item.startDate, item.endDate]).join(" - "), item.expectedGraduation ? `Planerad examen ${item.expectedGraduation}` : ""]).join(" | ");
+    return [heading, ...bullets([item.description ?? "", ...item.courses, ...item.projects, ...item.achievements, ...(item.description === undefined ? item.sourceNotes : [])], 3)].filter(Boolean);
   }));
 
-  section("PROJEKT", cv.projects.flatMap((item) => [compact([item.name, item.role]).join(" - "), ...bullets([item.description ?? "", ...item.contributions, ...item.results], 3)].filter(Boolean)));
+  section("PROJEKT", cv.projects.flatMap((item) => [compact([item.name, item.role]).join(" - "), ...bullets([...(item.contributions.length ? item.contributions : [item.description ?? ""]), ...item.results], 3)].filter(Boolean)));
   section("KOMPETENSER", bullets(cv.skills.map((skill) => skill.name), 10));
   section("CERTIFIKAT OCH MERITER", cv.certifications.flatMap((item) => [compact([item.name, item.issuer, item.year]).join(" | "), ...bullets(compact([item.reason]), 1)].filter(Boolean)));
   section("SPRÅK", bullets(cv.languages.map((language) => compact([language.name, language.level, language.abilities.join(", ")]).join(" - ")), 8));
@@ -263,10 +265,10 @@ export function appendInterviewAnswer(cv: StructuredCvData, area: keyof Omit<Str
 export function structuredCvToLegacy(cv: StructuredCvData) {
   return {
     strengths: [...cv.profile.strengths, ...cv.profile.sourceNotes],
-    workExperience: cv.workExperience.flatMap((item) => item.sourceNotes),
-    education: cv.education.flatMap((item) => item.sourceNotes),
-    languages: cv.languages.map((item) => item.name),
-    certificates: cv.certifications.flatMap((item) => item.sourceNotes),
-    extracurriculars: cv.otherExperience.flatMap((item) => item.sourceNotes),
+    workExperience: cv.workExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.role, item.employer, item.startDate, item.endDate, ...item.responsibilities]).join(" – ")]),
+    education: cv.education.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.program, item.school, item.startDate, item.endDate, item.description]).join(" – ")]),
+    languages: cv.languages.map((item) => compact([item.name, item.level]).join(" – ")),
+    certificates: cv.certifications.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.name, item.issuer, item.year]).join(" – ")]),
+    extracurriculars: cv.otherExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.title, item.organization, item.period, ...item.details]).join(" – ")]),
   };
 }

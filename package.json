@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:cv": "node scripts/test-cv-scenarios.mjs",
-    "test:voice": "node scripts/test-voice-interview.mjs"
+    "test:voice": "node scripts/test-voice-interview.mjs",
+    "test:cv-quality": "node scripts/test-cv-quality.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

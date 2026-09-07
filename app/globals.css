@@ -488,14 +488,21 @@ button,
 .job-map-canvas .mapboxgl-ctrl-group { overflow: hidden; border: 0; border-radius: .85rem; box-shadow: 0 .5rem 1.5rem rgba(22,52,61,.18); }
 .job-map-canvas .mapboxgl-ctrl button { width: 2.45rem; height: 2.45rem; }
 .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { z-index: 1 !important; }
-.job-map-marker { position: relative; width: 2.55rem; height: 2.85rem; cursor: pointer; }
-.job-map-pin { position: absolute; z-index: 2; bottom: 0; left: 50%; display: grid; width: 2.4rem; height: 2.4rem; place-items: center; padding: 0; border: 2px solid rgba(255,255,255,.96); border-radius: 50% 50% 50% .45rem; color: #fff; background: #1677f2; box-shadow: 0 .35rem .9rem rgba(13,86,181,.32); cursor: pointer; transform: translateX(-50%) rotate(-45deg) scale(1); transition: transform .24s cubic-bezier(.2,.8,.2,1), background .24s ease, box-shadow .24s ease; }
-.job-map-pin::after { content: ""; position: absolute; bottom: -.28rem; left: 50%; width: .45rem; height: .45rem; border-radius: 0 0 .12rem; background: inherit; transform: translateX(-50%) rotate(45deg); }
-.job-map-pin span { position: relative; z-index: 1; font-size: 1.1rem; font-weight: 800; transform: rotate(45deg); }
-.job-map-marker:hover .job-map-pin, .job-map-marker.is-expanded .job-map-pin { background: #0e63d8; box-shadow: 0 .55rem 1.25rem rgba(13,86,181,.4); transform: translateX(-50%) rotate(-45deg) scale(1.08); }
-.job-map-cluster-cards { position: absolute; z-index: 3; bottom: 2.95rem; left: 50%; display: flex; align-items: stretch; opacity: 0; pointer-events: none; transform: translate(-50%, .7rem) scale(.94); transform-origin: center bottom; transition: opacity .23s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
+.job-map-marker { position: relative; width: 1px; height: 1px; cursor: pointer; }
+/* Mapbox only positions this 1px element. Everything visual is deliberately
+   outside it, so expanding a card or changing pin styles can never move the
+   geographic anchor. The triangle's tip ends at the centre of the 1px anchor. */
+.job-map-pin { position: absolute; z-index: 2; bottom: calc(.62rem + .5px); left: 50%; display: grid; width: 2.4rem; height: 2.4rem; place-items: center; padding: 0; border: 2px solid rgba(255,255,255,.96); border-radius: 50%; color: #fff; background: #1677f2; box-shadow: 0 .35rem .9rem rgba(13,86,181,.32); cursor: pointer; transform: translateX(-50%); transition: background .24s ease, box-shadow .24s ease; }
+.job-map-pin::after { content: ""; position: absolute; bottom: -.62rem; left: 50%; width: 1rem; height: .62rem; background: inherit; clip-path: polygon(0 0, 100% 0, 50% 100%); transform: translateX(-50%); }
+.job-map-pin span { position: relative; z-index: 1; font-size: 1.1rem; font-weight: 800; }
+.job-map-marker:hover .job-map-pin, .job-map-marker.is-expanded .job-map-pin { background: #0e63d8; box-shadow: 0 .55rem 1.25rem rgba(13,86,181,.4); }
+.job-map-cluster-cards { position: absolute; z-index: 3; bottom: 3.25rem; left: 50%; display: flex; align-items: stretch; opacity: 0; pointer-events: none; transform: translate(-50%, .7rem) scale(.94); transform-origin: center bottom; transition: opacity .23s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
 .job-map-cluster-cards::after { content: ""; position: absolute; bottom: -.38rem; left: 50%; width: .75rem; height: .75rem; background: #fff; transform: translateX(-50%) rotate(45deg); }
 .job-map-marker.is-expanded .job-map-cluster-cards { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.job-map-popup .mapboxgl-popup-content { padding: 0; background: transparent; box-shadow: none; }
+.job-map-popup .mapboxgl-popup-tip { border-top-color: #fff; }
+.job-map-popup-content .job-map-cluster-cards { position: relative; bottom: auto; left: auto; opacity: 1; pointer-events: auto; transform: none; }
+.job-map-popup-content .job-map-cluster-cards::after { display: none; }
 .job-map-card-list { display: flex; align-items: stretch; gap: .5rem; }
 .job-map-card { position: relative; z-index: 1; flex: 0 0 var(--job-map-card-width); min-width: 0; height: 10rem; box-sizing: border-box; display: flex; flex-direction: column; padding: .9rem; border: 1px solid rgba(255,255,255,.88); border-radius: 1.05rem; color: #122b33; background: rgba(255,255,255,.97); box-shadow: 0 .9rem 2rem rgba(21,52,61,.24); }
 .job-map-company { overflow: hidden; margin: 0 .9rem .18rem 0; color: #668087; font-size: .68rem; font-weight: 800; letter-spacing: .02em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }

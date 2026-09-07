@@ -51,7 +51,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const nextProfile = await getUserProfile(nextUser.id);
+        let nextProfile = await getUserProfile(nextUser.id);
+        // The profile row is created immediately after signup. A short retry
+        // prevents a newly created company/private account from rendering as youth.
+        for (let attempt = 0; !nextProfile && attempt < 2; attempt += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 180));
+          nextProfile = await getUserProfile(nextUser.id);
+        }
 
         if (!isMountedRef.current) {
           return;
