@@ -196,6 +196,16 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
   return data as YouthProfile;
 }
 
+/**
+ * Collapses whitespace in a name so " Anna   Ek " and "Anna Ek" are stored
+ * identically, and a value made up only of whitespace becomes an empty string.
+ */
+export function normalizeFullName(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+export const MISSING_FULL_NAME_MESSAGE = "Skriv ditt fullständiga namn för att fortsätta.";
+
 export async function saveYouthProfileDraft(input: {
   name: string;
   dateOfBirth: string;
@@ -210,7 +220,7 @@ export async function saveYouthProfileDraft(input: {
   extracurriculars: string;
 }): Promise<YouthProfile> {
   return persistYouthProfile({
-    full_name: input.name || null,
+    full_name: normalizeFullName(input.name) || null,
     date_of_birth: input.dateOfBirth || null,
     address: input.address || null,
     postal_code: input.postalCode || null,
@@ -232,6 +242,11 @@ export async function saveYouthAccountDetails(input: {
   postal_code: string;
   additional_addresses: Array<{ city: string; address: string; postal_code: string }>;
 }): Promise<YouthProfile> {
+  // Validated here as well as in the form: the profile is written straight to
+  // Supabase, so this is the last gate before a nameless row is persisted.
+  const fullName = normalizeFullName(input.full_name);
+  if (!fullName) throw new Error(MISSING_FULL_NAME_MESSAGE);
+
   const birthDate = new Date(`${input.date_of_birth}T00:00:00`);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -241,7 +256,7 @@ export async function saveYouthAccountDetails(input: {
   if (!birthdayHasPassed) age -= 1;
 
   return persistYouthProfile({
-    full_name: input.full_name.trim(),
+    full_name: fullName,
     date_of_birth: input.date_of_birth,
     address: input.address.trim(),
     city: input.city.trim(),
@@ -366,8 +381,11 @@ export async function completeYouthOnboarding(input: {
   extracurriculars?: string;
   profile_image?: string;
 }): Promise<void> {
+  const fullName = normalizeFullName(input.full_name);
+  if (!fullName) throw new Error(MISSING_FULL_NAME_MESSAGE);
+
   await persistYouthProfile({
-    full_name: input.full_name || null,
+    full_name: fullName,
     age: input.age ? Number(input.age) : null,
     city: input.city || null,
     desired_roles: input.desired_roles,
