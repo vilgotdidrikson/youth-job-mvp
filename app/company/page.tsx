@@ -87,6 +87,9 @@ function CompanyPageContent() {
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
+  const [uploadedCvUrl, setUploadedCvUrl] = useState<string | null>(null);
+  const [uploadedCvError, setUploadedCvError] = useState("");
+  const [openingUploadedCv, setOpeningUploadedCv] = useState(false);
   const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
   const [feedIndex, setFeedIndex] = useState(0);
   const [candidateDragX, setCandidateDragX] = useState(0);
@@ -248,6 +251,26 @@ function CompanyPageContent() {
       setError(decisionError instanceof Error ? decisionError.message : "Kunde inte spara beslutet.");
     } finally {
       setCandidateActionKey(null);
+    }
+  };
+
+  const openUploadedCv = async (candidate: CandidateFeedItem) => {
+    setOpeningUploadedCv(true);
+    setUploadedCvError("");
+    setUploadedCvUrl(null);
+    try {
+      const response = await fetch("/api/company/candidate-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
+        body: JSON.stringify({ jobId: candidate.job.id, youthUserId: candidate.youthUserId }),
+      });
+      const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error || "Kunde inte öppna CV:t just nu.");
+      setUploadedCvUrl(result.url);
+    } catch (cvError) {
+      setUploadedCvError(cvError instanceof Error ? cvError.message : "Kunde inte öppna CV:t just nu.");
+    } finally {
+      setOpeningUploadedCv(false);
     }
   };
 
@@ -570,6 +593,7 @@ function CompanyPageContent() {
                 <section><h3>Söker jobb inom</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.desired_roles ?? []).length ? selectedCandidate.profile!.desired_roles!.map((role) => <span key={role}>{role}</span>) : <span>Inga roller angivna</span>}</div></section>
                 <section><h3>Tillgänglighet</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.employment_preferences ?? []).length ? selectedCandidate.profile!.employment_preferences!.map((preference) => <span key={preference}>{preference}</span>) : <span>Inte angiven</span>}</div></section>
                 <section><h3>Språk</h3><p>{selectedCandidate.profile?.languages?.join(" · ") || "Inte angivet"}</p></section>
+                <section aria-label="Uppladdat CV"><h3>Uppladdat CV</h3><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ padding: "0.7rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 {(() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
@@ -745,6 +769,7 @@ function CompanyPageContent() {
           </div>
         </div>
       )}
+      {uploadedCvUrl && selectedCandidate && <div onClick={() => setUploadedCvUrl(null)} role="dialog" aria-modal="true" aria-label="Uppladdat CV" style={{ position: "fixed", inset: 0, zIndex: 110, padding: "1rem", background: "rgba(0,0,0,0.55)", display: "grid", placeItems: "center" }}><div onClick={(event) => event.stopPropagation()} style={{ width: "min(100%, 1050px)", height: "min(88svh, 760px)", overflow: "hidden", borderRadius: 16, background: "#fff", display: "grid", gridTemplateColumns: "minmax(210px, .7fr) minmax(0, 2fr)" }}><aside style={{ padding: "1.25rem", overflowY: "auto", borderRight: "1px solid #e8e8e8" }}><button type="button" onClick={() => setUploadedCvUrl(null)} aria-label="Stäng CV" style={{ float: "right", border: 0, background: "transparent", fontSize: "1.25rem", cursor: "pointer" }}>×</button><p style={{ color: "#63777b", fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>Kandidat</p><h2 style={{ margin: "0 0 .35rem", color: "#111" }}>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><p style={{ color: "#63777b", margin: "0 0 1rem" }}>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Sverige"}</p><p style={{ fontSize: ".82rem", color: "#63777b" }}>Ansökt till</p><p style={{ marginTop: "-.4rem", fontWeight: 700 }}>{selectedCandidate.job.title}</p><p style={{ fontSize: ".82rem", color: "#63777b" }}>Söker jobb inom</p><p style={{ marginTop: "-.4rem" }}>{selectedCandidate.profile?.desired_roles?.join(" · ") || "Inte angivet"}</p><button type="button" className="secondary-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", marginTop: ".75rem", padding: ".65rem" }}>{openingUploadedCv ? "Hämtar..." : "Ladda om CV"}</button></aside><iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={uploadedCvUrl} style={{ width: "100%", height: "100%", border: 0, background: "#f5f5f5" }} /></div></div>}
     </main>
   );
 }
