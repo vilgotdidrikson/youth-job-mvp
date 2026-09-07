@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
-import { completeYouthOnboarding, getYouthProfile, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
+import { MISSING_FULL_NAME_MESSAGE, completeYouthOnboarding, getYouthProfile, normalizeFullName, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { createCvPdfFile } from "@/lib/cv-pdf";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
@@ -74,7 +74,17 @@ function getLanguageFlag(language: string): string {
 const BIRTH_DAYS = Array.from({ length: 31 }, (_, index) => String(index + 1));
 const BIRTH_MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 const BIRTH_YEARS = Array.from({ length: 100 }, (_, index) => String(new Date().getFullYear() - 10 - index));
-const WORK_YEARS = Array.from({ length: 100 }, (_, index) => String(2026 - index));
+const FUTURE_YEAR_COUNT = 10;
+const PAST_YEAR_COUNT = 90;
+
+// Built from the current date instead of a hard-coded year so pupils graduating
+// after this year can pick a correct end date, and so the list rolls over on its
+// own when the calendar year changes.
+function buildSelectableYears(reference: Date = new Date()): string[] {
+  const latestYear = reference.getFullYear() + FUTURE_YEAR_COUNT;
+  return Array.from({ length: FUTURE_YEAR_COUNT + PAST_YEAR_COUNT + 1 }, (_, index) => String(latestYear - index));
+}
+const MISSING_NAME_PARTS_MESSAGE = "Fyll i både förnamn och efternamn för att fortsätta.";
 const ACCOUNT_DETAILS_STEP_COUNT = 3;
 const FIRST_CV_STEP = ACCOUNT_DETAILS_STEP_COUNT;
 const CV_DRAFT_STORAGE_KEY = "employo-written-cv-draft-v1";
@@ -415,6 +425,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   });
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [nameError, setNameError] = useState("");
+  const workYears = useMemo(() => buildSelectableYears(), []);
   const [birthDateParts, setBirthDateParts] = useState({ day: "", month: "", year: "" });
   const [additionalAddresses, setAdditionalAddresses] = useState<AdditionalAddress[]>([]);
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([emptyWorkExperience()]);
@@ -941,16 +953,18 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const hasValidDateRange = (startDate: string, endDate: string) =>
     !isCompleteMonth(startDate) || !isCompleteMonth(endDate) || startDate <= endDate;
   const canSelectDatePart = (
-    field: "start_date" | "end_date",
+    field: "start_date" | "end_date" | "issue_date" | "expiry_date",
     part: "month" | "year",
     value: string,
     startDate: string,
     endDate: string,
   ) => {
-    const currentDate = field === "start_date" ? startDate : endDate;
+    // issue_date/expiry_date are the certificate equivalents of start/end.
+    const isRangeStart = field === "start_date" || field === "issue_date";
+    const currentDate = isRangeStart ? startDate : endDate;
     const [currentYear = "", currentMonth = ""] = currentDate.split("-");
     const nextDate = `${part === "year" ? value : currentYear}-${part === "month" ? value : currentMonth}`;
-    return field === "start_date"
+    return isRangeStart
       ? hasValidDateRange(nextDate, endDate)
       : hasValidDateRange(startDate, nextDate);
   };
@@ -959,7 +973,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const educationIsComplete = (education: EducationEntry) =>
     Boolean(education.school.trim() && education.degree.trim() && education.subject.trim() && isCompleteMonth(education.start_date) && isCompleteMonth(education.end_date) && hasValidDateRange(education.start_date, education.end_date) && education.description.trim());
   const certificateIsComplete = (certificate: CertificateEntry) =>
-    Boolean(certificate.name.trim() && certificate.issuer.trim() && certificate.category && certificate.issue_date && certificate.expiry_date && certificate.credential_url.trim() && certificate.description.trim());
+    Boolean(certificate.name.trim() && certificate.issuer.trim() && certificate.category && isCompleteMonth(certificate.issue_date) && isCompleteMonth(certificate.expiry_date) && hasValidDateRange(certificate.issue_date, certificate.expiry_date) && certificate.credential_url.trim() && certificate.description.trim());
 
   function updateBirthDate(part: "day" | "month" | "year", value: string) {
     setBirthDateParts((previous) => {
@@ -1045,7 +1059,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       const [currentYear = "", currentMonth = ""] = item[field].split("-");
       const year = part === "year" ? value : currentYear;
       const month = part === "month" ? value : currentMonth;
-      return { ...item, [field]: year || month ? `${year}-${month}` : "" };
+      const nextDate = year || month ? `${year}-${month}` : "";
+      const next = { ...item, [field]: nextDate };
+      // Mirrors the education and work-experience pickers: a certificate cannot
+      // stop being valid before it was issued.
+      if (!hasValidDateRange(next.issue_date, next.expiry_date)) {
+        setError("Giltig till kan inte vara före utfärdandedatum.");
+        return item;
+      }
+      setError("");
+      return next;
     }));
   }
 
@@ -1068,17 +1091,37 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   }
 
   async function handleNext() {
+    if (current.field === "full_name") {
+      // Both parts are checked separately. Validating only the joined string let
+      // a blank surname through, because "Anna" + "" still trims to a non-empty
+      // name, and a surname of only spaces collapsed to the same thing.
+      const normalizedFirstName = normalizeFullName(firstName);
+      const normalizedLastName = normalizeFullName(lastName);
+      if (!normalizedFirstName || !normalizedLastName) {
+        setNameError(MISSING_NAME_PARTS_MESSAGE);
+        return;
+      }
+      setNameError("");
+      setAnswers((previous) => ({ ...previous, full_name: `${normalizedFirstName} ${normalizedLastName}` }));
+    }
     if (step === 2) {
       const hasIncompleteAdditionalAddress = additionalAddresses.some((item) => !item.city.trim() || !item.address.trim() || !item.postal_code.trim());
-      if (!answers.full_name.trim() || !answers.date_of_birth || !answers.city.trim() || !answers.address.trim() || !answers.postal_code.trim() || hasIncompleteAdditionalAddress) {
-        setError("Fyll i ditt namn, födelsedatum, stad, adress och postnummer för att fortsätta.");
+      const normalizedName = normalizeFullName(answers.full_name);
+      if (!normalizedName) {
+        setNameError(MISSING_FULL_NAME_MESSAGE);
+        setStep(STEPS.findIndex((candidate) => candidate.field === "full_name"));
+        setError(MISSING_FULL_NAME_MESSAGE);
+        return;
+      }
+      if (!answers.date_of_birth || !answers.city.trim() || !answers.address.trim() || !answers.postal_code.trim() || hasIncompleteAdditionalAddress) {
+        setError("Fyll i födelsedatum, stad, adress och postnummer för att fortsätta.");
         return;
       }
       setSaving(true);
       setError("");
       try {
         const savedAccount = await saveYouthAccountDetails({
-          full_name: answers.full_name,
+          full_name: normalizedName,
           date_of_birth: answers.date_of_birth,
           city: answers.city,
           address: answers.address,
@@ -1582,6 +1625,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       {/* Input area */}
       <div style={{ flex: 1 }}>
         {current.field === "full_name" ? (
+          <div style={{ display: "grid", gap: "0.4rem" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <input
               type="text"
@@ -1589,12 +1633,15 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               onChange={(e) => {
                 const value = e.target.value;
                 setFirstName(value);
-                setAnswers((prev) => ({ ...prev, full_name: `${value} ${lastName}`.trim() }));
+                setNameError("");
+                setAnswers((prev) => ({ ...prev, full_name: normalizeFullName(`${value} ${lastName}`) }));
               }}
               placeholder="Namn"
               autoComplete="given-name"
+              aria-invalid={nameError && !normalizeFullName(firstName) ? true : undefined}
+              aria-describedby={nameError ? "youth-name-error" : undefined}
               autoFocus
-              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(firstName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
             />
             <input
               type="text"
@@ -1602,12 +1649,19 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               onChange={(e) => {
                 const value = e.target.value;
                 setLastName(value);
-                setAnswers((prev) => ({ ...prev, full_name: `${firstName} ${value}`.trim() }));
+                setNameError("");
+                setAnswers((prev) => ({ ...prev, full_name: normalizeFullName(`${firstName} ${value}`) }));
               }}
               placeholder="Efternamn"
               autoComplete="family-name"
-              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+              aria-invalid={nameError && !normalizeFullName(lastName) ? true : undefined}
+              aria-describedby={nameError ? "youth-name-error" : undefined}
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(lastName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
             />
+          </div>
+          {nameError && (
+            <p id="youth-name-error" role="alert" style={{ margin: 0, fontSize: "0.85rem", color: "#c0392b" }}>{nameError}</p>
+          )}
           </div>
         ) : current.field === "date_of_birth" ? (
           <div style={{ display: "grid", gridTemplateColumns: "0.8fr 1.4fr 1fr", gap: "0.55rem" }}>
@@ -1700,7 +1754,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                       <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum"}</span>
                       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "0.4rem", marginTop: "0.3rem" }}>
                         <select value={month} onChange={(e) => updateExperienceDate(index, dateField, "month", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} månad`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const value = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, experience.start_date, experience.end_date)}>{monthName}</option>; })}</select>
-                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, experience.start_date, experience.end_date)}>{workYear}</option>)}</select>
+                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, experience.start_date, experience.end_date)}>{workYear}</option>)}</select>
                       </div>
                     </div>;
                   })}
@@ -1744,7 +1798,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                             </select>
                             <select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}>
                               <option value="">År</option>
-                              {WORK_YEARS.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, education.start_date, education.end_date)}>{workYear}</option>)}
+                              {workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, education.start_date, education.end_date)}>{workYear}</option>)}
                             </select>
                           </div>
                         </div>;
@@ -1779,8 +1833,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                       return <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>
                         {field === "issue_date" ? "Utfärdandedatum *" : "Giltig till *"}
                         <div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem" }}>
-                          <select value={month} onChange={(e) => updateCertificateDate(index, field, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => <option key={monthName} value={String(monthIndex + 1).padStart(2, "0")}>{monthName}</option>)}</select>
-                          <select value={year} onChange={(e) => updateCertificateDate(index, field, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{WORK_YEARS.map((workYear) => <option key={workYear} value={workYear}>{workYear}</option>)}</select>
+                          <select value={month} onChange={(e) => updateCertificateDate(index, field, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const monthValue = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={monthValue} disabled={!canSelectDatePart(field, "month", monthValue, certificate.issue_date, certificate.expiry_date)}>{monthName}</option>; })}</select>
+                          <select value={year} onChange={(e) => updateCertificateDate(index, field, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(field, "year", workYear, certificate.issue_date, certificate.expiry_date)}>{workYear}</option>)}</select>
                         </div>
                       </label>;
                     })}
