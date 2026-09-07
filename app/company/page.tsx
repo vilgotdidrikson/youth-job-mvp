@@ -10,6 +10,7 @@ import { getMessages, getMyConversations, sendMessage, subscribeToConversationMe
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
+import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType } from "@/lib/types";
 
@@ -34,19 +35,6 @@ function toggleTextList(value: string, item: string): string {
 function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
 }
-
-const MOCK_CANDIDATES: CandidateFeedItem[] = [
-  {
-    youthUserId: "mock-youth-elin",
-    profile: { user_id: "mock-youth-elin", full_name: "Elin Andersson", age: 17, city: "Stockholm", desired_roles: ["Butik", "Kundservice"], employment_preferences: ["Deltid", "Sommarjobb"], strengths: ["Social", "Ansvarsfull"], cv_text: "Jag är en social och nyfiken person som tycker om att möta människor och lära mig nya saker." },
-    job: { id: "mock-job-butik", title: "Butikssäljare", description: "Hjälp kunder och skapa en bra butiksupplevelse.", city: "Stockholm", salary_per_hour: "", employment_type: "Deltid", category: "Butik", requirements: "Social, Ansvarsfull", benefits: "Introduktion, Personalrabatt", company_name: "", company_user_id: "mock-company", image_url: "", is_active: true, created_at: new Date().toISOString() },
-  },
-  {
-    youthUserId: "mock-youth-noah",
-    profile: { user_id: "mock-youth-noah", full_name: "Noah Berg", age: 18, city: "Göteborg", desired_roles: ["Café/restaurang"], employment_preferences: ["Helgjobb", "Extra vid behov"], strengths: ["Noggrann", "Kan samarbeta"], cv_text: "Jag gillar ett högt tempo och trivs bäst när jag får samarbeta med andra." },
-    job: { id: "mock-job-cafe", title: "Cafémedarbetare", description: "Bli en del av vårt team i caféet.", city: "Göteborg", salary_per_hour: "", employment_type: "Helgjobb", category: "Café/restaurang", requirements: "Noggrann, Kan samarbeta", benefits: "Flexibla tider, Måltid ingår", company_name: "", company_user_id: "mock-company", image_url: "", is_active: true, created_at: new Date().toISOString() },
-  },
-];
 
 type Tab = "kandidater" | "skapa" | "annonser";
 
@@ -86,11 +74,7 @@ function CompanyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading } = useSession();
-  const isDeveloperPreview = process.env.NODE_ENV === "development" && (
-    searchParams.get("devCompany") === "1" ||
-    (typeof window !== "undefined" && window.sessionStorage.getItem("employo-dev-company-preview") === "1")
-  );
-  const hasCompanyAccess = profile?.role === "company" || isDeveloperPreview;
+  const hasCompanyAccess = profile?.role === "company";
 
   const [tab, setTab] = useState<Tab>("kandidater");
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -140,7 +124,7 @@ function CompanyPageContent() {
   };
 
   useEffect(() => {
-    if (!loading && !user && !isDeveloperPreview) {
+    if (!loading && !user) {
       router.replace("/login");
       return;
     }
@@ -148,7 +132,7 @@ function CompanyPageContent() {
       void loadData(user.id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeveloperPreview, loading, user, profile?.role]);
+  }, [loading, user, profile?.role, router]);
 
   useEffect(() => {
     const requestedView = searchParams.get("view");
@@ -331,7 +315,7 @@ function CompanyPageContent() {
     try {
       const response = await fetch("/api/company/job/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
         body: JSON.stringify({ title: form.title, industry: companyProfile?.industry ?? "" }),
       });
       const data = (await response.json()) as { category?: string; description?: string; benefits?: string; requirements?: string; error?: string };
@@ -350,7 +334,7 @@ function CompanyPageContent() {
     }
   };
 
-  if (loading || (!user && !isDeveloperPreview)) {
+  if (loading || !user) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
@@ -368,7 +352,7 @@ function CompanyPageContent() {
     );
   }
 
-  const candidateFeed = feed.length > 0 ? feed : isDeveloperPreview ? MOCK_CANDIDATES : [];
+  const candidateFeed = feed;
   const currentCandidate = candidateFeed[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;

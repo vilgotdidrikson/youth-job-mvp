@@ -1,7 +1,6 @@
 "use client";
 
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
-import { getOrCreateConversation } from "@/lib/chat";
 import { getJobById } from "@/lib/jobs";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -146,54 +145,12 @@ async function getExistingMatch(jobId: string, youthUserId: string, companyUserI
 
 async function ensureMatch(jobId: string, youthUserId: string, companyUserId: string): Promise<MatchRecord> {
   const supabase = getSupabaseClient();
-  const existing = await getExistingMatch(jobId, youthUserId, companyUserId);
-
-  if (existing) {
-    const conversation = await getOrCreateConversation({
-      match_id: existing.id,
-      youth_user_id: youthUserId,
-      company_user_id: companyUserId,
-      job_id: jobId,
-    });
-
-    return {
-      ...(existing as MatchRecord),
-      conversation_id: conversation.id,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from("matches")
-    .insert({
-      job_id: jobId,
-      youth_user_id: youthUserId,
-      company_user_id: companyUserId,
-      status: "matched",
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    logSupabaseError("matches.insert", error, {
-      jobId,
-      youthUserId,
-      companyUserId,
-    });
-    throw new Error(getSupabaseErrorMessage(error, "Unable to create match."));
-  }
-
-  const match = data as MatchRecord;
-  const conversation = await getOrCreateConversation({
-    match_id: match.id,
-    youth_user_id: youthUserId,
-    company_user_id: companyUserId,
-    job_id: jobId,
-  });
-
-  return {
-    ...match,
-    conversation_id: conversation.id,
-  };
+  const { data, error } = await supabase.rpc("review_candidate_and_match", { p_job_id: jobId, p_youth_user_id: youthUserId, p_decision: "interested" }).single();
+  const result = data as { match_id?: string; conversation_id?: string } | null;
+  if (error || !result?.match_id) throw new Error(getSupabaseErrorMessage(error, "Unable to create match."));
+  const match = await getExistingMatch(jobId, youthUserId, companyUserId);
+  if (!match) throw new Error("Unable to load created match.");
+  return { ...match, conversation_id: result.conversation_id ?? null };
 }
 
 export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
@@ -251,20 +208,10 @@ export async function reviewCandidate(
     throw new Error("You can only review candidates for your own jobs.");
   }
 
-  await upsertCandidateReviewRecord({
-    company_user_id: user.id,
-    youth_user_id: youthUserId,
-    job_id: jobId,
-    decision: direction,
-    created_at: new Date().toISOString(),
-  });
-
-  if (direction !== "interested") {
-    return null;
-  }
-
-  const interest = await getInterestMatch(jobId, youthUserId);
-  return interest ? ensureMatch(jobId, youthUserId, user.id) : null;
+  if (direction === "interested") return ensureMatch(jobId, youthUserId, user.id);
+  const { error } = await getSupabaseClient().rpc("review_candidate_and_match", { p_job_id: jobId, p_youth_user_id: youthUserId, p_decision: direction });
+  if (error) throw new Error(getSupabaseErrorMessage(error, "Unable to save candidate decision."));
+  return null;
 }
 
 export async function getMyMatches(): Promise<MatchRecord[]> {

@@ -9,6 +9,7 @@ import { useSession } from "@/hooks/use-session";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
+import { authenticatedHeaders } from "@/lib/api-client";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -77,6 +78,7 @@ const { user, profile, loading, logout } = useSession();
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [generatedCv, setGeneratedCv] = useState("");
   const [cvDocuments, setCvDocuments] = useState<YouthDocument[]>([]);
   const [editingCv, setEditingCv] = useState(false);
@@ -272,6 +274,18 @@ const { user, profile, loading, logout } = useSession();
     router.replace("/login");
   };
 
+  const handleDeleteAccount = async () => {
+    const password = window.prompt("Skriv ditt lösenord för att permanent radera konto och uppladdade dokument.");
+    if (!password || !window.confirm("Är du säker? Detta kan inte ångras.")) return;
+    setDeletingAccount(true); setError("");
+    try {
+      const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ password }) });
+      if (!response.ok) throw new Error(((await response.json()) as { error?: string }).error ?? "Kunde inte radera kontot.");
+      await logout(); router.replace("/");
+    } catch (deleteError) { setError(deleteError instanceof Error ? deleteError.message : "Kunde inte radera kontot."); }
+    finally { setDeletingAccount(false); }
+  };
+
   if (loading || !user) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -385,8 +399,13 @@ const { user, profile, loading, logout } = useSession();
         >
           {loggingOut ? "Loggar ut..." : "Logga ut"}
         </button>
+        <button type="button" className="secondary-btn" style={{ width: "100%", padding: "0.875rem", marginTop: "0.75rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
       </main>
     );
+  }
+
+  if (profile?.role === "private") {
+    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
   }
 
   if (profile?.role !== "youth") {
@@ -610,6 +629,7 @@ const { user, profile, loading, logout } = useSession();
       >
         {loggingOut ? "Loggar ut..." : "Logga ut"}
       </button>
+      <button type="button" className="secondary-btn" style={{ marginTop: "0.75rem", width: "100%", padding: "1rem", fontSize: "0.9rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
     </main>
   );
 }

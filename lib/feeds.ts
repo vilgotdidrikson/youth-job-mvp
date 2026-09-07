@@ -54,7 +54,9 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
   return score;
 }
 
-export async function getSwipeJobs(): Promise<JobPost[]> {
+export interface DiscoveryFilters { query?: string; city?: string; category?: string; employmentType?: string; }
+
+export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobPost[]> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
@@ -85,6 +87,11 @@ export async function getSwipeJobs(): Promise<JobPost[]> {
   return jobs
     .filter((job) => {
       if (swipedJobIds.has(job.id)) return false;
+      const needle = filters.query?.trim().toLowerCase();
+      if (needle && ![job.title, job.description, job.company_name, job.category].join(" ").toLowerCase().includes(needle)) return false;
+      if (filters.city?.trim() && job.city.toLowerCase() !== filters.city.trim().toLowerCase()) return false;
+      if (filters.category?.trim() && job.category.toLowerCase() !== filters.category.trim().toLowerCase()) return false;
+      if (filters.employmentType?.trim() && !job.employment_type.toLowerCase().includes(filters.employmentType.trim().toLowerCase())) return false;
       const age = youthProfile?.age;
       if (typeof age === "number") {
         if (typeof job.min_age === "number" && age < job.min_age) return false;

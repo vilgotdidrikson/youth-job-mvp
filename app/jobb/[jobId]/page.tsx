@@ -37,7 +37,6 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     if (!user || profile?.role !== "youth") {
-      setAlreadyApplied(false);
       return;
     }
 

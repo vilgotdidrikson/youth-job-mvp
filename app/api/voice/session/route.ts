@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireApiUser } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,8 @@ const session = {
 };
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiUser(request, "voice-session");
+  if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "OPENAI_API_KEY saknas på servern." }, { status: 503 });
   const sdp = await request.text();
