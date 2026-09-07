@@ -82,6 +82,7 @@ function CompanyPageContent() {
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobActionId, setJobActionId] = useState<string | null>(null);
+  const [candidateActionKey, setCandidateActionKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -228,6 +229,25 @@ function CompanyPageContent() {
       setCandidateFlyDir(null);
       setCandidateDragX(0);
       setError(err instanceof Error ? err.message : "Kunde inte spara beslut.");
+    }
+  };
+
+  const handleApplicantDecision = async (candidate: CandidateFeedItem, decision: SwipeDecision) => {
+    const actionKey = `${candidate.job.id}:${candidate.youthUserId}`;
+    setCandidateActionKey(actionKey);
+    setError("");
+    try {
+      const result = await reviewCandidate(candidate.job.id, candidate.youthUserId, decision);
+      if (decision === "interested" && result?.conversation_id) {
+        setMatchedConvId(result.conversation_id);
+      }
+      setSelectedCandidateId(null);
+      if (user) await loadData(user.id);
+      setConversations(await getMyConversations());
+    } catch (decisionError) {
+      setError(decisionError instanceof Error ? decisionError.message : "Kunde inte spara beslutet.");
+    } finally {
+      setCandidateActionKey(null);
     }
   };
 
@@ -550,6 +570,34 @@ function CompanyPageContent() {
                 <section><h3>Söker jobb inom</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.desired_roles ?? []).length ? selectedCandidate.profile!.desired_roles!.map((role) => <span key={role}>{role}</span>) : <span>Inga roller angivna</span>}</div></section>
                 <section><h3>Tillgänglighet</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.employment_preferences ?? []).length ? selectedCandidate.profile!.employment_preferences!.map((preference) => <span key={preference}>{preference}</span>) : <span>Inte angiven</span>}</div></section>
                 <section><h3>Språk</h3><p>{selectedCandidate.profile?.languages?.join(" · ") || "Inte angivet"}</p></section>
+                {(() => {
+                  const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
+                  const isDeciding = candidateActionKey === actionKey;
+                  return <section aria-label="Beslut om ansökan" style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e8e8e8" }}>
+                    <button
+                      type="button"
+                      className="secondary-btn"
+                      disabled={isDeciding}
+                      onClick={() => {
+                        if (window.confirm(`Neka ${selectedCandidate.profile?.full_name || "den här kandidaten"} för ${selectedCandidate.job.title}?`)) {
+                          void handleApplicantDecision(selectedCandidate, "skip");
+                        }
+                      }}
+                      style={{ flex: 1, padding: "0.8rem" }}
+                    >
+                      {isDeciding ? "Sparar..." : "Neka"}
+                    </button>
+                    <button
+                      type="button"
+                      className="cta-btn"
+                      disabled={isDeciding}
+                      onClick={() => void handleApplicantDecision(selectedCandidate, "interested")}
+                      style={{ flex: 1, padding: "0.8rem" }}
+                    >
+                      {isDeciding ? "Sparar..." : "Acceptera"}
+                    </button>
+                  </section>;
+                })()}
               </article>}
             </div>
           )}
