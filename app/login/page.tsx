@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
 import type { Role } from "@/lib/types";
+import { getYouthFlowState } from "@/lib/youth-job-flow";
 
 type Mode = "login" | "signup";
 
@@ -24,7 +25,11 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   useEffect(() => {
     if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
-      router.replace(profile.role === "company" ? "/company?view=swipe" : profile.role === "private" ? "/private" : "/swipe");
+      if (profile.role === "youth") {
+        void getYouthFlowState(user.id).then((state) => router.replace(state.shortOnboardingCompleted ? "/swipe" : "/youth/onboarding"));
+        return;
+      }
+      router.replace(profile.role === "company" ? "/company?view=swipe" : "/private");
     }
   }, [profile, router, sessionLoading, user]);
 
@@ -60,7 +65,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       }
       const session = await signIn(email, password);
       const signedInProfile = await getUserProfile(session.user.id);
-      router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : signedInProfile?.role === "private" ? "/private" : "/swipe");
+      if (signedInProfile?.role === "youth") {
+        const state = await getYouthFlowState(session.user.id);
+        router.replace(state.shortOnboardingCompleted ? "/swipe" : "/youth/onboarding");
+      } else router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : "/private");
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ShortYouthOnboarding } from "@/components/short-youth-onboarding";
 import { useSession } from "@/hooks/use-session";
 import { MISSING_FULL_NAME_MESSAGE, completeYouthOnboarding, getYouthProfile, normalizeFullName, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { createCvPdfFile } from "@/lib/cv-pdf";
@@ -11,6 +12,7 @@ import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
 import { structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 
 const STRENGTH_TIPS = [
   "Ansvarstagande",
@@ -105,7 +107,7 @@ function hasAccountDetails(profile: {
 }
 
 export default function OnboardingPage() {
-  return <YouthOnboardingFlow flow="account" />;
+  return <ShortYouthOnboarding />;
 }
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
@@ -402,6 +404,11 @@ function buildCvText(a: Answers): string {
 
 export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = false }: { flow: "account" | "cv"; cvBuilder?: boolean; voiceFinalize?: boolean }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnJobId = searchParams.get("job");
+  const returnJobTitle = searchParams.get("title");
+  const returnPath = returnJobId && /^[0-9a-f-]{36}$/i.test(returnJobId) ? `/jobb/${returnJobId}` : "/swipe";
+  const cvQuery = returnJobId && /^[0-9a-f-]{36}$/i.test(returnJobId) ? `?job=${encodeURIComponent(returnJobId)}${returnJobTitle ? `&title=${encodeURIComponent(returnJobTitle)}` : ""}` : "";
   const { user, profile, loading } = useSession();
   const cvDraftStorageKey = `${CV_DRAFT_STORAGE_KEY}:${user?.id ?? "anonymous"}`;
   const [step, setStep] = useState(() => voiceFinalize ? STEPS.length - 1 : flow === "cv" ? FIRST_CV_STEP : 0);
@@ -644,11 +651,12 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           <p style={{ margin: "1rem 0 1.6rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
 
           <div style={{ display: "grid", gap: ".75rem" }}>
-            <button type="button" className="cv-method-card" onClick={() => router.push("/youth/cv/create")} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
+            {returnJobId && <div style={{ marginBottom: ".8rem", padding: ".75rem", borderRadius: 10, background: "#fff8eb", fontSize: ".85rem" }}>Ansökan gäller: <strong>{returnJobTitle || "valt jobb"}</strong><Link href={returnPath} style={{ display: "block", marginTop: ".45rem" }}>Tillbaka till jobbet</Link></div>}
+            <button type="button" className="cv-method-card" onClick={() => router.push(`/youth/cv/create${cvQuery}`)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
               <strong style={{ fontSize: "1rem" }}>Skapa CV i Employo</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
-            <Link href="/voice-cv" className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
+            <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
               <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "#ec4899", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
               <strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
@@ -1248,8 +1256,9 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     try {
       const url = await uploadYouthDocument(file);
       await saveUploadedCvToProfile({ name: file.name, url, type: "cv" });
+      await submitApplicationDraftsAfterCv();
       sessionStorage.removeItem(cvDraftStorageKey);
-      router.replace("/swipe");
+      router.replace(returnPath);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Kunde inte spara ditt CV.");
     } finally {
@@ -1477,11 +1486,12 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           generatedCvDocument,
         ],
       });
+      await submitApplicationDraftsAfterCv();
       sessionStorage.removeItem(cvDraftStorageKey);
       if (voiceFinalize) {
         for (const key of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(key);
       }
-      router.replace("/swipe");
+      router.replace(returnPath);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara profilen.");
       setSaving(false);

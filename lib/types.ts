@@ -47,6 +47,7 @@ export interface YouthProfile {
   cv_structured?: import("./structured-cv").StructuredCvData | null;
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
+  short_onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
   cv_uploaded?: boolean | null;
   documents?: YouthDocument[] | null;
@@ -194,6 +195,7 @@ export interface SaveYouthProfileInput {
   cv_structured?: import("./structured-cv").StructuredCvData | null;
   cover_letter_template?: string | null;
   onboarding_completed?: boolean | null;
+  short_onboarding_completed?: boolean | null;
   cv_generated?: boolean | null;
   cv_uploaded?: boolean | null;
   documents?: YouthDocument[] | null;

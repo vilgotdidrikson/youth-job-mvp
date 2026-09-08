@@ -146,7 +146,7 @@ export function JobSwipeDeck({
           border: "1px solid var(--border)",
           borderRadius: 20,
           overflow: "hidden",
-          minHeight: 480,
+          minHeight: 405,
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
           transform: `translateX(${flyTranslateX}px) rotate(${flyRotate}deg)`,
           transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)",
@@ -160,7 +160,7 @@ export function JobSwipeDeck({
       >
         {/* Job image */}
         {(currentJob.image_url ? currentJob.image_url.split(",")[0] : "") ? (
-          <div className="swipe-job-image" style={{ height: 200, overflow: "hidden", position: "relative" }}>
+          <div className="swipe-job-image" style={{ height: 145, overflow: "hidden", position: "relative" }}>
             <Image
               src={currentJob.image_url.split(",")[0]}
               alt={currentJob.title}
@@ -172,7 +172,7 @@ export function JobSwipeDeck({
           <div
             className="swipe-job-image"
             style={{
-              height: 160,
+              height: 125,
               background: "var(--color-surface-soft)",
               display: "flex",
               alignItems: "center",
@@ -227,7 +227,7 @@ export function JobSwipeDeck({
         </div>
 
         {/* Card content */}
-        <div style={{ padding: "1.1rem 1.25rem 1.5rem" }}>
+        <div style={{ padding: ".85rem 1rem 1rem" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem" }}>
             <div>
               <p
@@ -244,7 +244,7 @@ export function JobSwipeDeck({
               </p>
               <h2
                 style={{
-                  fontSize: "1.5rem",
+                  fontSize: "1.25rem",
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
                   color: "var(--text-primary)",
@@ -293,7 +293,7 @@ export function JobSwipeDeck({
                 color: "var(--text-primary)",
                 lineHeight: 1.55,
                 display: "-webkit-box",
-                WebkitLineClamp: 3,
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
               }}
@@ -305,7 +305,7 @@ export function JobSwipeDeck({
           {currentJob.category && (
             <span
               className="chip"
-              style={{ display: "inline-block", marginTop: "0.75rem" }}
+            style={{ display: "inline-block", marginTop: "0.55rem" }}
             >
               {currentJob.category}
             </span>
@@ -314,7 +314,7 @@ export function JobSwipeDeck({
             href={`/jobb/${encodeURIComponent(currentJob.id)}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
-            style={{ display: "inline-block", marginTop: "0.9rem", color: "var(--accent)", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}
+            style={{ display: "inline-block", marginTop: "0.65rem", color: "var(--accent)", fontSize: "0.78rem", fontWeight: 800, textDecoration: "none" }}
           >
             Läs hela annonsen →
           </Link>
@@ -322,11 +322,11 @@ export function JobSwipeDeck({
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+      <div style={{ display: "flex", gap: "0.65rem", marginTop: ".75rem" }}>
         <button
           type="button"
           className="secondary-btn"
-          style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
+          style={{ flex: 1, padding: "0.78rem", fontSize: "0.9rem" }}
           onClick={() => triggerDecision(currentJob, "skip")}
         >
           {skipLabel}
@@ -334,7 +334,7 @@ export function JobSwipeDeck({
         <button
           type="button"
           className="cta-btn"
-          style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
+          style={{ flex: 1, padding: "0.78rem", fontSize: "0.9rem" }}
           onClick={() => triggerDecision(currentJob, "interested")}
         >
           {interestedLabel}
