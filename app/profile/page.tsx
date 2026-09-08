@@ -10,6 +10,7 @@ import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
+import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -198,6 +199,7 @@ const { user, profile, loading, logout } = useSession();
         .update({ cv_text: cvEditText, cv_generated: true, documents: updatedDocuments })
         .eq("user_id", user.id);
       if (cvError) throw new Error(cvError.message);
+      await submitApplicationDraftsAfterCv();
       setGeneratedCv(cvEditText);
       setCvDocuments(updatedDocuments);
       setEditingCv(false);
@@ -466,6 +468,14 @@ const { user, profile, loading, logout } = useSession();
         <p style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
           {error}
         </p>
+      )}
+
+      {!hasCv && (
+        <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: "#f0c36d", background: "#fffaf0" }}>
+          <strong style={{ color: "#6a4a00" }}>CV saknas</strong>
+          <p style={{ margin: ".35rem 0 .75rem", color: "#6a4a00", fontSize: ".88rem" }}>Du kan utforska jobb, men behöver ett CV för att skicka en ansökan.</p>
+          <Link href="/youth/cv" className="cta-btn" style={{ display: "inline-block" }}>Skapa ditt CV</Link>
+        </section>
       )}
 
       {hasCv ? (

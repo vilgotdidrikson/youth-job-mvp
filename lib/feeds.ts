@@ -65,8 +65,9 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
   }
 
   const supabase = getSupabaseClient();
-  const [{ data: interestRows, error: interestError }, youthProfileResult, jobs] = await Promise.all([
+  const [{ data: interestRows, error: interestError }, { data: draftRows, error: draftError }, youthProfileResult, jobs] = await Promise.all([
     supabase.from("swipe_actions").select("job_id").eq("youth_user_id", user.id),
+    supabase.from("youth_application_drafts").select("job_id").eq("youth_user_id", user.id),
     supabase.from("youth_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     getJobs(false),
   ]);
@@ -76,12 +77,22 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
     throw new Error(getSupabaseErrorMessage(interestError, "Unable to fetch existing swipe actions."));
   }
 
+  if (draftError) {
+    logSupabaseError("youth_application_drafts.select.mine", draftError, { userId: user.id });
+    throw new Error(getSupabaseErrorMessage(draftError, "Unable to fetch saved applications."));
+  }
+
   if (youthProfileResult.error) {
     logSupabaseError("youth_cv_profiles.select.mine", youthProfileResult.error, { userId: user.id });
     throw new Error(getSupabaseErrorMessage(youthProfileResult.error, "Unable to fetch youth profile."));
   }
 
-  const swipedJobIds = new Set((interestRows ?? []).map((row) => String(row.job_id)));
+  // A pre-CV application is private, but it is still a completed choice in
+  // the discovery feed. Keep it out after reload without exposing it to a company.
+  const swipedJobIds = new Set([
+    ...(interestRows ?? []).map((row) => String(row.job_id)),
+    ...(draftRows ?? []).map((row) => String(row.job_id)),
+  ]);
   const youthProfile = (youthProfileResult.data ?? null) as YouthProfile | null;
 
   return jobs

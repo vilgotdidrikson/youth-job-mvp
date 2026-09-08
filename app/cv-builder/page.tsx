@@ -8,6 +8,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useSession } from "@/hooks/use-session";
 import { getJobs } from "@/lib/jobs";
 import { createCvPdfFile } from "@/lib/cv-pdf";
+import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 import { uploadYouthDocument } from "@/lib/storage";
 import {
   addOnboardingMessage,
@@ -211,6 +212,7 @@ export default function CvBuilderPage() {
           { name: pdfFile.name, url: pdfUrl, type: "generated_cv" },
         ],
       });
+      await submitApplicationDraftsAfterCv();
 
       if (sessionId) {
         await completeOnboardingSession(sessionId);
