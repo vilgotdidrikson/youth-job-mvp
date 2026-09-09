@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobSwipeDeck } from "@/components/job-swipe-deck";
 import { getSwipeJobs } from "@/lib/feeds";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
 import { getApplicationDraftCount, getSavedJobs, getYouthFlowState, saveApplicationDraft } from "@/lib/youth-job-flow";
@@ -23,7 +24,7 @@ function uniqueSorted(values: string[]) {
 function SwipePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
@@ -67,8 +68,6 @@ function SwipePageContent() {
     return () => { active = false; };
   }, [cvLoading, loading, profile?.role, searchParams, showingSaved, user]);
 
-  useEffect(() => { if (!loading && !user) router.replace("/login"); }, [loading, router, user]);
-
   useEffect(() => {
     if (!user || cvCompleted || profile?.role !== "youth") return;
     const storageKey = `employo-pre-cv-swipe-count:${user.id}`;
@@ -110,7 +109,8 @@ function SwipePageContent() {
     }
   };
 
-  if (loading || cvLoading || !user) return <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p></main>;
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
+  if (cvLoading) return <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p></main>;
 
   return <main className="mobile-shell">
     <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>

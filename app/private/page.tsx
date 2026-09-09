@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getCandidatesForJob } from "@/lib/feeds";
 import { createJob, getCompanyJobs, updateJob } from "@/lib/jobs";
 import { reviewCandidate } from "@/lib/matching";
@@ -14,7 +15,7 @@ const initialForm = { title: "", description: "", city: "", address: "", pay: ""
 
 export default function PrivateTasksPage() {
   const router = useRouter();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const [form, setForm] = useState(initialForm);
   const [tasks, setTasks] = useState<JobPost[]>([]);
   const [candidates, setCandidates] = useState<Record<string, CandidateFeedItem[]>>({});
@@ -29,7 +30,6 @@ export default function PrivateTasksPage() {
   };
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
     if (!loading && profile && profile.role !== "private") router.replace("/dashboard");
     if (!loading && user && profile?.role === "private") void load().catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda uppdrag."));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,7 +79,8 @@ export default function PrivateTasksPage() {
     }
   };
 
-  if (loading || !user || profile?.role !== "private") return <main className="mobile-shell"><p>Laddar...</p></main>;
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
+  if (profile?.role !== "private") return <main className="mobile-shell"><p>Hämtar innehåll...</p></main>;
 
   return <main className="mobile-shell" style={{ paddingBottom: "6rem" }}>
     <header style={{ padding: "0.75rem 0 1.25rem" }}><p style={{ margin: 0, color: "#737373", fontSize: ".82rem" }}>Privatperson</p><h1 style={{ margin: ".2rem 0", color: "#111", fontSize: "1.65rem" }}>Mina uppdrag</h1><p style={{ margin: 0, color: "#737373", fontSize: ".88rem" }}>Hitta hjälp för enstaka uppgifter och matcha tryggt.</p></header>

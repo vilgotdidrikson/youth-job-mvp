@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getSupabaseClient } from "@/lib/supabase";
 import { createJob } from "@/lib/jobs";
 import { uploadJobImage } from "@/lib/storage";
@@ -36,7 +37,7 @@ function toggleItem(arr: string[], item: string): string[] {
 
 export default function CompanyOnboardingPage() {
   const router = useRouter();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status, error: sessionError } = useRequireAuth();
 
   const [step, setStep] = useState<Step>("profil");
   const [profileQuestion, setProfileQuestion] = useState(0);
@@ -77,10 +78,6 @@ export default function CompanyOnboardingPage() {
   const [jobDescription, setJobDescription] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-      return;
-    }
     if (!loading && profile && profile.role !== "company") {
       router.replace("/swipe");
       return;
@@ -165,13 +162,7 @@ export default function CompanyOnboardingPage() {
     }
   };
 
-  if (loading || !user) {
-    return (
-      <main className="mobile-shell company-onboarding" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
-      </main>
-    );
-  }
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   const chipBtn = (label: string, selected: boolean, onClick: () => void) => (
     <button

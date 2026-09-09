@@ -5,7 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/hooks/use-language";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getJobs } from "@/lib/jobs";
 import { createCvPdfFile } from "@/lib/cv-pdf";
 import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
@@ -30,7 +31,7 @@ interface ChatTurn {
 export default function CvBuilderPage() {
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status, error: sessionError } = useRequireAuth();
 
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
@@ -52,11 +53,6 @@ export default function CvBuilderPage() {
   const questions = useMemo(() => getOnboardingQuestionPrompts(), []);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-      return;
-    }
-
     if (!loading && user && profile?.role === "youth") {
       void (async () => {
         try {
@@ -228,13 +224,7 @@ export default function CvBuilderPage() {
     }
   };
 
-  if (loading || !user) {
-    return (
-      <main className="mobile-shell flex flex-col justify-center">
-        <div className="glass-card p-6 text-sm text-[#2d4f72]">{t.loading}</div>
-      </main>
-    );
-  }
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   if (profile?.role !== "youth") {
     return (

@@ -14,6 +14,8 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const searchParams = useSearchParams();
   const { user, profile, loading: sessionLoading } = useSession();
   const isRedirectingAfterSignup = useRef(false);
+  const requestedRedirect = searchParams.get("redirect");
+  const safeRedirectTarget = requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//") ? requestedRedirect : null;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,12 +28,12 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   useEffect(() => {
     if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
       if (profile.role === "youth") {
-        void getYouthFlowState(user.id).then((state) => router.replace(state.shortOnboardingCompleted ? "/swipe" : "/youth/onboarding"));
+        void getYouthFlowState(user.id).then((state) => router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe"));
         return;
       }
-      router.replace(profile.role === "company" ? "/company?view=swipe" : "/private");
+      router.replace(safeRedirectTarget ?? (profile.role === "company" ? "/company?view=swipe" : "/private"));
     }
-  }, [profile, router, sessionLoading, user]);
+  }, [profile, router, safeRedirectTarget, sessionLoading, user]);
 
   useEffect(() => {
     if (searchParams.get("role") === "company") {
@@ -67,8 +69,8 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       const signedInProfile = await getUserProfile(session.user.id);
       if (signedInProfile?.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
-        router.replace(state.shortOnboardingCompleted ? "/swipe" : "/youth/onboarding");
-      } else router.replace(signedInProfile?.role === "company" ? "/company?view=swipe" : "/private");
+        router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
+      } else router.replace(safeRedirectTarget ?? (signedInProfile?.role === "company" ? "/company?view=swipe" : "/private"));
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {

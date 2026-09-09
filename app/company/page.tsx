@@ -3,7 +3,8 @@
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
@@ -76,7 +77,7 @@ const EMPTY_FORM: JobForm = {
 function CompanyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const hasCompanyAccess = profile?.role === "company";
 
   const [tab, setTab] = useState<Tab>("kandidater");
@@ -131,10 +132,6 @@ function CompanyPageContent() {
   };
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-      return;
-    }
     if (!loading && user && profile?.role === "company") {
       void loadData(user.id);
     }
@@ -381,13 +378,7 @@ function CompanyPageContent() {
     }
   };
 
-  if (loading || !user) {
-    return (
-      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
-      </main>
-    );
-  }
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   if (!hasCompanyAccess) {
     return (

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShortYouthOnboarding } from "@/components/short-youth-onboarding";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { MISSING_FULL_NAME_MESSAGE, completeYouthOnboarding, getYouthProfile, normalizeFullName, saveUploadedCvToProfile, saveYouthAccountDetails } from "@/lib/onboarding";
 import { createCvPdfFile } from "@/lib/cv-pdf";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
@@ -409,7 +410,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const returnJobTitle = searchParams.get("title");
   const returnPath = returnJobId && /^[0-9a-f-]{36}$/i.test(returnJobId) ? `/jobb/${returnJobId}` : "/swipe";
   const cvQuery = returnJobId && /^[0-9a-f-]{36}$/i.test(returnJobId) ? `?job=${encodeURIComponent(returnJobId)}${returnJobTitle ? `&title=${encodeURIComponent(returnJobTitle)}` : ""}` : "";
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status: authStatus, error: sessionError } = useRequireAuth();
   const cvDraftStorageKey = `${CV_DRAFT_STORAGE_KEY}:${user?.id ?? "anonymous"}`;
   const [step, setStep] = useState(() => voiceFinalize ? STEPS.length - 1 : flow === "cv" ? FIRST_CV_STEP : 0);
   const [answers, setAnswers] = useState<Answers>({
@@ -477,7 +478,6 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
     if (!loading && user && profile?.role === "company") router.replace("/company?view=swipe");
   }, [loading, user, profile, router]);
 
@@ -1498,22 +1498,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     }
   }
 
-  if (loading || !user) {
-    return (
-      <main
-        className="youth-onboarding"
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#ffffff",
-        }}
-      >
-        <p style={{ color: "#737373" }}>Laddar...</p>
-      </main>
-    );
-  }
+  if (authStatus !== "ready") return <AuthGateMessage status={authStatus} error={sessionError} />;
 
   const currentTextValue = isChips ? "" : (answers[current.field] as string);
   const currentChipsValue = isChips ? (answers[current.field] as string[]) : [];
