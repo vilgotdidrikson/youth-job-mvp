@@ -13,7 +13,6 @@ import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
 import { structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
-import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 
 const STRENGTH_TIPS = [
   "Ansvarstagande",
@@ -1256,7 +1255,6 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     try {
       const url = await uploadYouthDocument(file);
       await saveUploadedCvToProfile({ name: file.name, url, type: "cv" });
-      await submitApplicationDraftsAfterCv();
       sessionStorage.removeItem(cvDraftStorageKey);
       router.replace(returnPath);
     } catch (uploadError) {
@@ -1486,7 +1484,6 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           generatedCvDocument,
         ],
       });
-      await submitApplicationDraftsAfterCv();
       sessionStorage.removeItem(cvDraftStorageKey);
       if (voiceFinalize) {
         for (const key of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(key);

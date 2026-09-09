@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { YouthOnboardingFlow } from "@/app/youth/onboarding/page";
+import { YouthCvHub } from "@/components/youth-cv-hub";
 
 export default function YouthCvPage() {
   return (
     <Suspense fallback={<main className="mobile-shell"><p>Laddar...</p></main>}>
-      <YouthOnboardingFlow flow="cv" />
+      <YouthCvHub />
     </Suspense>
   );
 }

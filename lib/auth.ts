@@ -86,16 +86,18 @@ export async function signOut(): Promise<void> {
 export async function getCurrentUser(): Promise<User | null> {
   const supabase = getSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
   if (error) {
-    console.error("Failed to load the current Supabase session.", error);
-    throw new Error(error.message);
+    // A browser may retain a stale local session after a token was revoked.
+    // Treat it as signed out so UI state agrees with protected API routes.
+    await supabase.auth.signOut({ scope: "local" });
+    return null;
   }
 
-  return session?.user ?? null;
+  return user ?? null;
 }
 
 export async function getUserProfile(userId?: string): Promise<Profile | null> {
