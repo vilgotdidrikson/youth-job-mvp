@@ -2,19 +2,16 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 
 // Kept only to support old links. Dashboard is no longer part of either role's flow.
 export default function DashboardRedirectPage() {
   const router = useRouter();
-  const { user, profile, loading } = useSession();
+  const { profile, loading, status, error: sessionError } = useRequireAuth();
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      router.replace("/login");
-      return;
-    }
     if (profile?.role === "company") {
       router.replace("/company?view=swipe");
       return;
@@ -26,11 +23,13 @@ export default function DashboardRedirectPage() {
     if (profile?.role === "youth") {
       router.replace("/swipe");
     }
-  }, [loading, profile?.role, router, user]);
+  }, [loading, profile?.role, router]);
+
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   return (
     <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
+      <p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p>
     </main>
   );
 }

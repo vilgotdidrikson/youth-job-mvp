@@ -2,25 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { JobMap } from "@/components/job-map";
 import { getCityCoordinates, type Coordinates } from "@/lib/job-location";
 import { getSwipeJobs } from "@/lib/feeds";
 import { getSupabaseClient } from "@/lib/supabase";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import type { JobPost } from "@/lib/types";
 
 export default function MapPage() {
-  const router = useRouter();
-  const { user, profile, loading } = useSession();
+  const { user, profile, status, error: sessionError } = useRequireAuth();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [userCoordinates, setUserCoordinates] = useState<Coordinates | null>(null);
   const [error, setError] = useState("");
   const [jobsLoaded, setJobsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [loading, router, user]);
 
   useEffect(() => {
     if (!user || profile?.role !== "youth") return;
@@ -36,9 +31,7 @@ export default function MapPage() {
       .finally(() => setJobsLoaded(true));
   }, [profile?.role, user]);
 
-  if (loading || !user) {
-    return <main className="mobile-shell map-page-loading"><p>Laddar...</p></main>;
-  }
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   if (profile?.role !== "youth") {
     return (

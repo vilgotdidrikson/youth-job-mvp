@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getYouthProfile } from "@/lib/onboarding";
 import { createEmptyStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
 import type { CvInterviewArea } from "@/lib/cv-interview";
@@ -26,7 +27,7 @@ const VOICE_BUTTON_COLOR = "#ec4899";
 
 export default function VoiceCvPage() {
   const router = useRouter();
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, status: authStatus, error: sessionError } = useRequireAuth();
   const microphone = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
@@ -49,7 +50,6 @@ export default function VoiceCvPage() {
   const silenceDelay = useRef(1100);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
     if (!loading && user && profile && profile.role !== "youth") router.replace("/company?view=swipe");
   }, [loading, profile, router, user]);
 
@@ -323,7 +323,8 @@ export default function VoiceCvPage() {
     router.push("/youth/cv");
   };
 
-  if (loading || !user || !profile) return <main className="mobile-shell" style={{ display: "grid", placeItems: "center" }}><p>Laddar...</p></main>;
+  if (authStatus !== "ready") return <AuthGateMessage status={authStatus} error={sessionError} />;
+  if (!profile) return <main className="mobile-shell" style={{ display: "grid", placeItems: "center" }}><p>Hämtar innehåll...</p></main>;
   return <main className="mobile-shell voice-cv-page" style={{ minHeight: "100svh" }}>
     <button type="button" onClick={goBack} aria-label="Tillbaka till CV-val" title="Tillbaka till CV-val" className="voice-cv-back">←</button>
     <section className="card" style={{ display: "grid", gap: "1.1rem", padding: "1.35rem", textAlign: "center" }}>

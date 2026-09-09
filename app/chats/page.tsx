@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { getMyMatches } from "@/lib/matching";
@@ -18,7 +19,7 @@ interface ConvDisplay {
 const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt", interview: "Intervju", hired: "Anställd", rejected: "Avvisad", cancelled: "Avslutad" };
 
 export default function ChatsPage() {
-  const { user, profile, loading } = useSession();
+  const { user, profile, status, error: sessionError } = useRequireAuth();
   const router = useRouter();
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [convDisplays, setConvDisplays] = useState<ConvDisplay[]>([]);
@@ -91,10 +92,13 @@ export default function ChatsPage() {
     }
   };
 
-  if (loading || cvLoading || !user) {
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
+  if (!user) return null;
+
+  if (cvLoading) {
     return (
       <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
+        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p>
       </main>
     );
   }

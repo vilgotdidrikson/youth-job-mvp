@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
 import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
-import { useSession } from "@/hooks/use-session";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
@@ -73,7 +74,7 @@ function hasContent(value: string) {
 
 export default function ProfilePage() {
   const router = useRouter();
-const { user, profile, loading, logout } = useSession();
+const { user, profile, loading, logout, status, error: sessionError } = useRequireAuth();
 
   const [form, setForm] = useState<YouthProfileForm>(initialForm);
   const [saving, setSaving] = useState(false);
@@ -95,11 +96,6 @@ const { user, profile, loading, logout } = useSession();
   const [companyJobCount, setCompanyJobCount] = useState(0);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-      return;
-    }
-
     if (!loading && user && profile?.role === "company") {
       void (async () => {
         try {
@@ -288,13 +284,8 @@ const { user, profile, loading, logout } = useSession();
     finally { setDeletingAccount(false); }
   };
 
-  if (loading || !user) {
-    return (
-      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar din profil...</p>
-      </main>
-    );
-  }
+  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
+  if (!user) return null;
 
   if (profile?.role === "company") {
     const labelStyle: React.CSSProperties = {

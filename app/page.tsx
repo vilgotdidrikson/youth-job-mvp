@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MarketingNav } from "@/components/marketing-nav";
+import { useAppDestination } from "@/hooks/use-app-destination";
 import Velaris from "@/components/ui/velaris";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { Reveal } from "@/components/ui/reveal";
@@ -52,8 +53,8 @@ const steps: TimelineStep[] = [
   },
   {
     number: "03",
-    title: "Du har fått jobbet",
-    body: "Matcha, chatta med företaget och landa din första anställning.",
+    title: "Ni har matchat",
+    body: "Matcha, börja chatta med företaget och ta nästa steg mot en intervju.",
   },
 ];
 
@@ -166,6 +167,8 @@ function AnimatedHeroHeadline() {
 }
 
 export default function Home() {
+  const { isAuthenticated, destination } = useAppDestination();
+
   return (
     <main className="landing-page landing-bold">
       <Velaris
@@ -180,16 +183,24 @@ export default function Home() {
       <section className="landing-bold-hero">
         <AnimatedHeroHeadline />
         <div className="landing-bold-actions">
-          <Link
-            href="/signup?role=company"
-            className="landing-bold-secondary"
-            style={{ border: "1.5px solid #d65f85", background: "#ffffff" }}
-          >
-            {copy.secondary}
-          </Link>
-          <Link href="/signup" className="landing-bold-primary">
-            {copy.primary}<span aria-hidden="true">→</span>
-          </Link>
+          {isAuthenticated ? (
+            <Link href={destination ?? "/login"} className="landing-bold-primary">
+              Gå till appen<span aria-hidden="true">→</span>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/signup?role=company"
+                className="landing-bold-secondary"
+                style={{ border: "1.5px solid #d65f85", background: "#ffffff" }}
+              >
+                {copy.secondary}
+              </Link>
+              <Link href="/signup" className="landing-bold-primary">
+                {copy.primary}<span aria-hidden="true">→</span>
+              </Link>
+            </>
+          )}
         </div>
         {process.env.NODE_ENV === "development" && (
           <Link href="/company?devCompany=1" className="landing-dev-company-shortcut" onClick={() => window.sessionStorage.setItem("employo-dev-company-preview", "1")}>
