@@ -11,7 +11,6 @@ import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
-import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -195,7 +194,6 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         .update({ cv_text: cvEditText, cv_generated: true, documents: updatedDocuments })
         .eq("user_id", user.id);
       if (cvError) throw new Error(cvError.message);
-      await submitApplicationDraftsAfterCv();
       setGeneratedCv(cvEditText);
       setCvDocuments(updatedDocuments);
       setEditingCv(false);
@@ -461,6 +459,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         </p>
       )}
 
+      <section className="card" style={{ display: "grid", gap: ".55rem", padding: "1rem", marginBottom: "1rem" }} aria-label="CV-status">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem" }}>
+          <strong style={{ color: "#111" }}>CV-status</strong>
+          <span style={{ color: hasCv ? "#226a54" : "#6a4a00", fontSize: ".82rem", fontWeight: 700 }}>{hasCv ? "Klart" : "Inte klart"}</span>
+        </div>
+        <p style={{ margin: 0, color: "#737373", fontSize: ".85rem", lineHeight: 1.45 }}>{hasCv ? "Ditt CV kan ses av företag när du skickar en ansökan." : "Du kan utforska jobb, men behöver ett CV för att skicka en ansökan."}</p>
+        <Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn" style={{ display: "block", padding: ".7rem", textAlign: "center" }}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}</Link>
+      </section>
+
       {!hasCv && (
         <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: "#f0c36d", background: "#fffaf0" }}>
           <strong style={{ color: "#6a4a00" }}>CV saknas</strong>
@@ -585,16 +592,16 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
           <section className="card" style={{ padding: "1.25rem", marginTop: "1rem", background: "#fffaf5", borderColor: "#f5e8e0" }}>
             <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              AI CV-byggare
+              Skapa ditt CV
             </p>
             <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
-              Generera ditt CV automatiskt via en kort chattintervju. Det tar bara några minuter!
+              Svara på enkla frågor och granska sedan exakt vad företag kommer att se.
             </p>
-            <Link href="/cv-builder" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
-              Starta AI-chatt
+            <Link href="/youth/cv" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
+              Skapa med guidat formulär
             </Link>
             <Link href="/voice-cv" className="secondary-btn" style={{ marginTop: ".6rem", display: "block", padding: ".75rem 1.25rem", fontSize: ".9rem", fontWeight: 700, textAlign: "center" }}>
-              Prata med AI och skapa CV
+              Se fler sätt att skapa CV
             </Link>
           </section>
 

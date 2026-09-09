@@ -9,7 +9,6 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getJobs } from "@/lib/jobs";
 import { createCvPdfFile } from "@/lib/cv-pdf";
-import { submitApplicationDraftsAfterCv } from "@/lib/youth-job-flow";
 import { uploadYouthDocument } from "@/lib/storage";
 import {
   addOnboardingMessage,
@@ -208,7 +207,6 @@ export default function CvBuilderPage() {
           { name: pdfFile.name, url: pdfUrl, type: "generated_cv" },
         ],
       });
-      await submitApplicationDraftsAfterCv();
 
       if (sessionId) {
         await completeOnboardingSession(sessionId);
