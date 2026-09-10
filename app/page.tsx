@@ -202,75 +202,72 @@ export default function Home() {
             </>
           )}
         </div>
-        {process.env.NODE_ENV === "development" && (
-          <Link href="/company?devCompany=1" className="landing-dev-company-shortcut" onClick={() => window.sessionStorage.setItem("employo-dev-company-preview", "1")}>
-            Öppna företagsvyn ↗
-          </Link>
-        )}
       </section>
 
-      <section className="landing-bold-stats">
-        <div className="landing-bold-stats-heading">
-          <h2>
-            <TextGenerateEffect words={copy.statsHeading} />
-          </h2>
-        </div>
-        <div className="landing-bold-stats-grid">
-          {stats.map((stat) => (
-            <article key={stat.label}>
-              <NumberTicker
-                value={stat.value}
-                decimals={stat.decimals}
-                suffix={stat.suffix}
-                className="landing-bold-stat-value"
-              />
-              <p>{stat.label}</p>
-              <span className="landing-bold-stat-note">{stat.note}</span>
-            </article>
-          ))}
-        </div>
-        <p className="landing-bold-stats-source">{copy.statsSource}</p>
-      </section>
+      <div className="landing-bold-body">
+        <section className="landing-bold-stats">
+          <div className="landing-bold-stats-heading">
+            <h2>
+              <TextGenerateEffect words={copy.statsHeading} />
+            </h2>
+          </div>
+          <div className="landing-bold-stats-grid">
+            {stats.map((stat) => (
+              <article key={stat.label}>
+                <NumberTicker
+                  value={stat.value}
+                  decimals={stat.decimals}
+                  suffix={stat.suffix}
+                  className="landing-bold-stat-value"
+                />
+                <p>{stat.label}</p>
+                <span className="landing-bold-stat-note">{stat.note}</span>
+              </article>
+            ))}
+          </div>
+          <p className="landing-bold-stats-source">{copy.statsSource}</p>
+        </section>
 
-      <section className="landing-bold-platform">
-        <PlatformShowcase
-          items={platformItems}
-          heading={
-            <>
-              {copy.platformTitleStart}
-              <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
-            </>
-          }
-          subheading={copy.platformSub}
-        />
-      </section>
+        <section className="landing-bold-platform">
+          <PlatformShowcase
+            items={platformItems}
+            heading={
+              <>
+                {copy.platformTitleStart}
+                <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
+              </>
+            }
+            subheading={copy.platformSub}
+          />
+        </section>
 
-      <section className="landing-bold-how">
-        <h2>{copy.howTitle}</h2>
-        <VerticalTimeline steps={steps} />
-      </section>
+        <section className="landing-bold-how">
+          <h2>{copy.howTitle}</h2>
+          <VerticalTimeline steps={steps} />
+        </section>
 
-      <section className="landing-bold-manifesto">
-        <Reveal>
-          <p>{copy.manifesto}</p>
-          <span>{copy.manifestoSub}</span>
-        </Reveal>
-      </section>
+        <section className="landing-bold-manifesto">
+          <Reveal>
+            <p>{copy.manifesto}</p>
+            <span>{copy.manifestoSub}</span>
+          </Reveal>
+        </section>
 
-      <footer className="landing-bold-footer">
-        <div className="landing-bold-footer-brand">
-          <span className="landing-logo">
-            <span className="landing-logo-mark">E</span>employo
-          </span>
-          <p>{copy.footer}</p>
-        </div>
-        <nav className="landing-bold-footer-links" aria-label="Sidfotsnavigation">
-          <Link href="/features">Funktioner</Link>
-          <Link href="/pricing">Priser</Link>
-          <Link href="/login">Logga in</Link>
-        </nav>
-        <span className="landing-bold-footer-copy">© 2026 Employo</span>
-      </footer>
+        <footer className="landing-bold-footer">
+          <div className="landing-bold-footer-brand">
+            <span className="landing-logo">
+              <span className="landing-logo-mark">E</span>employo
+            </span>
+            <p>{copy.footer}</p>
+          </div>
+          <nav className="landing-bold-footer-links" aria-label="Sidfotsnavigation">
+            <Link href="/features">Funktioner</Link>
+            <Link href="/pricing">Priser</Link>
+            <Link href="/login">Logga in</Link>
+          </nav>
+          <span className="landing-bold-footer-copy">© 2026 Employo</span>
+        </footer>
+      </div>
     </main>
   );
 }
