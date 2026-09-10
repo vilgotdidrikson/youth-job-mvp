@@ -130,7 +130,6 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
       center: [STOCKHOLM.longitude, STOCKHOLM.latitude],
       zoom: 5.3,
       pitch: 0,
-      cooperativeGestures: true,
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     let styleLoaded = false;
