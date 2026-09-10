@@ -3,15 +3,15 @@
 @import "./styles/theme.css";
 
 @theme inline {
-  --font-sans: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -187,7 +187,7 @@ button,
 /* Authentication — shares the landing page's desktop language */
 .auth-page { --auth-ink: #16343d; min-height: 100svh; display: flex; flex-direction: column; padding: 2rem clamp(1.25rem, 5vw, 5.5rem) 1.8rem; color: var(--auth-ink); background: #f7f4ed; }
 .auth-nav { width: min(100%, 100rem); margin: 0 auto; display: flex; align-items: center; gap: 1rem; }.auth-back { display: grid; place-items: center; width: 2.65rem; height: 2.65rem; border: 1px solid #d9ded4; border-radius: 50%; color: var(--auth-ink); background: rgba(255,255,255,.5); font-size: 1.2rem; cursor: pointer; transition: transform .2s ease; }.auth-back:hover { transform: translateX(-2px); }
-.auth-layout { flex: 1; width: min(100%, 72rem); margin: 0 auto; display: grid; grid-template-columns: 1fr minmax(25rem, 29rem); align-items: center; gap: clamp(4rem, 12vw, 12rem); padding: 2rem 3vw; }.auth-intro { max-width: 31rem; }.auth-kicker { margin: 0 0 1rem; color: #69808a; font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }.auth-intro h1 { margin: 0; font-family: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif; font-size: clamp(3.2rem, 5.2vw, 5.5rem); font-weight: 500; letter-spacing: -.085em; line-height: .94; }.auth-intro h1 em { color: #73aab9; font-style: normal; }.auth-intro > p:last-child { max-width: 25rem; margin: 1.5rem 0 0; color: #536d74; font-size: 1.05rem; line-height: 1.6; }
+.auth-layout { flex: 1; width: min(100%, 72rem); margin: 0 auto; display: grid; grid-template-columns: 1fr minmax(25rem, 29rem); align-items: center; gap: clamp(4rem, 12vw, 12rem); padding: 2rem 3vw; }.auth-intro { max-width: 31rem; }.auth-kicker { margin: 0 0 1rem; color: #69808a; font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }.auth-intro h1 { margin: 0; font-size: clamp(3.2rem, 5.2vw, 5.5rem); font-weight: 500; letter-spacing: -.045em; line-height: .94; }.auth-intro h1 em { color: #73aab9; font-style: normal; }.auth-intro > p:last-child { max-width: 25rem; margin: 1.5rem 0 0; color: #536d74; font-size: 1.05rem; line-height: 1.6; }
 .auth-layout-form-only { grid-template-columns: minmax(32rem, 37rem); justify-content: center; }
 .auth-layout-login { grid-template-columns: minmax(34rem, 39rem); }
 .auth-layout-form-only .auth-card { padding: 2.65rem; }.auth-layout-form-only .auth-card-heading h2 { font-size: 1.85rem; }.auth-layout-form-only .auth-card-heading p { font-size: 1rem; margin-bottom: 1.9rem; }.auth-layout-form-only .auth-fields { gap: 1.25rem; }.auth-layout-form-only .auth-fields label, .auth-layout-form-only .auth-role legend { font-size: .82rem; }.auth-layout-form-only .auth-input { height: 3.5rem; font-size: 1rem; }.auth-layout-form-only .auth-role > div { gap: .75rem; }.auth-layout-form-only .auth-role button { min-height: 3.35rem; font-size: .88rem; }.auth-layout-form-only .auth-submit { min-height: 3.7rem; margin-top: 1.8rem; font-size: 1.05rem; }.auth-layout-form-only .auth-switch { margin-top: .9rem; font-size: .9rem; }
