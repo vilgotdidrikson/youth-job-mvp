@@ -90,6 +90,93 @@ function clusterNearbyJobs(jobs: LocatedJob[]): JobCluster[] {
   }));
 }
 
+// Warm, low-contrast palette applied on top of Mapbox's light basemap so the
+// canvas recedes and the job pins carry the colour. Matches the paper/ink feel
+// of the reference startup map without depending on a hosted custom style.
+const MAP_PALETTE = {
+  land: "#F7F4ED",
+  landSecondary: "#F1ECE1",
+  water: "#DFE6E6",
+  waterLabel: "#93A4A6",
+  park: "#E9EBDD",
+  building: "#EDE7DA",
+  road: "#FFFFFF",
+  roadCasing: "#E8E1D3",
+  boundary: "#DDD5C6",
+  label: "#6B6259",
+  labelHalo: "#F7F4ED",
+};
+
+function applyWarmMapTheme(map: mapboxgl.Map) {
+  const style = map.getStyle();
+
+  // Mapbox Standard styles expose no editable layers — their basemap is an
+  // import that is tuned through config properties instead. "faded" is the
+  // muted, low-contrast preset that lets the pins carry the colour.
+  if (style?.imports?.some((entry) => entry.id === "basemap")) {
+    try {
+      map.setConfigProperty("basemap", "theme", "faded");
+      map.setConfigProperty("basemap", "lightPreset", "day");
+      map.setConfigProperty("basemap", "showPointOfInterestLabels", false);
+      map.setConfigProperty("basemap", "showTransitLabels", false);
+      map.setConfigProperty("basemap", "show3dObjects", false);
+    } catch {
+      // An older Standard import may not expose every config key.
+    }
+    return;
+  }
+
+  const layers = style?.layers ?? [];
+  layers.forEach((layer) => {
+    const id = layer.id;
+    try {
+      if (/poi-label|transit-label|airport-label/.test(id)) {
+        map.setLayoutProperty(id, "visibility", "none");
+        return;
+      }
+      if (layer.type === "background") {
+        map.setPaintProperty(id, "background-color", MAP_PALETTE.land);
+      } else if (layer.type === "fill") {
+        if (/water/.test(id)) map.setPaintProperty(id, "fill-color", MAP_PALETTE.water);
+        else if (/park|grass|wood|forest|golf|pitch|sand|scrub/.test(id)) map.setPaintProperty(id, "fill-color", MAP_PALETTE.park);
+        else if (/building/.test(id)) map.setPaintProperty(id, "fill-color", MAP_PALETTE.building);
+        else map.setPaintProperty(id, "fill-color", MAP_PALETTE.landSecondary);
+      } else if (layer.type === "line") {
+        if (/water/.test(id)) map.setPaintProperty(id, "line-color", MAP_PALETTE.water);
+        else if (/admin|boundary/.test(id)) map.setPaintProperty(id, "line-color", MAP_PALETTE.boundary);
+        else if (/case|casing/.test(id)) map.setPaintProperty(id, "line-color", MAP_PALETTE.roadCasing);
+        else map.setPaintProperty(id, "line-color", MAP_PALETTE.road);
+      } else if (layer.type === "fill-extrusion") {
+        map.setPaintProperty(id, "fill-extrusion-color", MAP_PALETTE.building);
+      } else if (layer.type === "symbol") {
+        map.setPaintProperty(id, "text-color", /water|marine/.test(id) ? MAP_PALETTE.waterLabel : MAP_PALETTE.label);
+        map.setPaintProperty(id, "text-halo-color", MAP_PALETTE.labelHalo);
+        map.setPaintProperty(id, "text-halo-width", 1.3);
+      }
+    } catch {
+      // A layer without the paint property we assumed simply keeps its own.
+    }
+  });
+}
+
+function thumbnailUrl(job: JobPost): string {
+  return job.image_url?.split(",")[0]?.trim() ?? "";
+}
+
+function companyInitials(name: string | null | undefined): string {
+  return (name?.trim() || "Jobb")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toLocaleUpperCase("sv-SE");
+}
+
+function pinTileMarkup(job: JobPost): string {
+  const source = thumbnailUrl(job);
+  return `<span class="job-map-pin-tile"><span class="job-map-pin-initials">${escapeHtml(companyInitials(job.company_name))}</span>${source ? `<img src="${escapeHtml(source)}" alt="" loading="lazy" decoding="async" />` : ""}</span>`;
+}
+
 export function JobMap({ jobs, userCoordinates }: JobMapProps) {
   const router = useRouter();
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -140,6 +227,10 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
     map.once("style.load", () => {
       styleLoaded = true;
       window.clearTimeout(loadTimeout);
+      // Recolours whatever style is configured into the paper palette. Set
+      // NEXT_PUBLIC_MAPBOX_KEEP_STYLE_COLORS=true to keep a hand-made style's
+      // own colours instead.
+      if (process.env.NEXT_PUBLIC_MAPBOX_KEEP_STYLE_COLORS !== "true") applyWarmMapTheme(map);
       setMapReady(true);
       setMapError("");
     });
@@ -171,14 +262,23 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = jobClusters.map((cluster) => {
       const { id: clusterId, jobs: clusterJobs, coordinates } = cluster;
+      const isCluster = clusterJobs.length > 1;
+      const leadJob = clusterJobs[0].job;
       const markerElement = document.createElement("div");
-      markerElement.className = `job-map-marker${clusterJobs.length > 1 ? " is-cluster" : ""}`;
+      markerElement.className = `job-map-marker${isCluster ? " is-cluster" : ""}`;
       markerElement.dataset.clusterId = clusterId;
+      const pinLabel = isCluster
+        ? `${clusterJobs.length} jobbannonser på samma plats`
+        : `${leadJob.title}, ${leadJob.company_name || "Företag"}`;
+      const chipLabel = isCluster ? `${clusterJobs.length} jobb` : (leadJob.company_name || "Företag");
       markerElement.innerHTML = `
-        <button type="button" class="job-map-pin" aria-label="${clusterJobs.length > 1 ? `${clusterJobs.length} jobbannonser på samma plats` : `${escapeHtml(clusterJobs[0].job.title)}, ${escapeHtml(clusterJobs[0].job.company_name || "Företag")}`}" aria-expanded="false">
-          <span aria-hidden="true">${clusterJobs.length > 1 ? clusterJobs.length : "⌖"}</span>
+        <button type="button" class="job-map-pin" aria-label="${escapeHtml(pinLabel)}" aria-expanded="false">
+          ${isCluster ? `<span class="job-map-pin-count" aria-hidden="true">${clusterJobs.length}</span>` : pinTileMarkup(leadJob)}
         </button>
+        <span class="job-map-pin-chip" aria-hidden="true">${escapeHtml(chipLabel)}</span>
       `;
+      // A photo that fails to load uncovers the company initials underneath.
+      markerElement.querySelector("img")?.addEventListener("error", (event) => (event.currentTarget as HTMLImageElement).remove());
 
       const toggle = (event: Event) => {
         event.preventDefault();
@@ -191,13 +291,24 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
       });
 
       // Keep Mapbox's anchor independent from our expandable DOM UI. The
-      // element is a 1px coordinate anchor; CSS draws the pin and cards above
-      // it, with the pin tip ending exactly on this geographic point.
+      // element is a 1px coordinate anchor; CSS centres the circular pin on it
+      // and hangs the name chip below, so styling never moves the geo point.
       return new mapboxgl.Marker({ element: markerElement, anchor: "center" })
         .setLngLat([coordinates.longitude, coordinates.latitude])
         .addTo(map);
     });
   }, [jobClusters, mapReady]);
+
+  // Lift the open pin above its neighbours and keep aria-expanded truthful.
+  useEffect(() => {
+    markersRef.current.forEach((marker) => {
+      const element = marker.getElement();
+      const isActive = element.dataset.clusterId === activeClusterId;
+      element.classList.toggle("is-expanded", isActive);
+      element.style.zIndex = isActive ? "5" : "";
+      element.querySelector(".job-map-pin")?.setAttribute("aria-expanded", String(isActive));
+    });
+  }, [activeClusterId, jobClusters]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -215,7 +326,7 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
     const content = document.createElement("div");
     content.className = "job-map-popup-content";
     content.style.setProperty("--job-map-card-width", cardWidth);
-    content.innerHTML = `<section class="job-map-cluster-cards"><button type="button" class="job-map-close" aria-label="Stäng jobbannonserna">×</button>${cardStart > 0 ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-previous" aria-label="Visa tidigare annonser">‹</button>' : ""}<div class="job-map-card-list">${visibleJobs.map(({ job, coordinates: jobCoordinates }) => `<article class="job-map-card"><p class="job-map-company">${escapeHtml(job.company_name || "Företag")}</p><h2>${escapeHtml(job.title)}</h2><div class="job-map-meta"><span>${escapeHtml(job.salary_per_hour || "Lön enligt överenskommelse")}</span>${distanceBetween(userCoordinates, jobCoordinates) ? `<span>${distanceBetween(userCoordinates, jobCoordinates)}</span>` : ""}</div><button type="button" class="job-map-cta" data-job-id="${escapeHtml(job.id)}">Visa jobbet <span aria-hidden="true">→</span></button></article>`).join("")}</div>${cardStart < maxCardStart ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-next" aria-label="Visa fler annonser">›</button>' : ""}</section>`;
+    content.innerHTML = `<section class="job-map-cluster-cards"><button type="button" class="job-map-close" aria-label="Stäng jobbannonserna">×</button>${cardStart > 0 ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-previous" aria-label="Visa tidigare annonser">‹</button>' : ""}<div class="job-map-card-list">${visibleJobs.map(({ job, coordinates: jobCoordinates }) => `<article class="job-map-card"><header class="job-map-card-head">${pinTileMarkup(job)}<p class="job-map-company">${escapeHtml(job.company_name || "Företag")}</p></header><h2>${escapeHtml(job.title)}</h2><div class="job-map-meta"><span>${escapeHtml(job.salary_per_hour || "Lön enligt överenskommelse")}</span>${distanceBetween(userCoordinates, jobCoordinates) ? `<span>${distanceBetween(userCoordinates, jobCoordinates)}</span>` : ""}</div><button type="button" class="job-map-cta" data-job-id="${escapeHtml(job.id)}">Visa jobbet <span aria-hidden="true">→</span></button></article>`).join("")}</div>${cardStart < maxCardStart ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-next" aria-label="Visa fler annonser">›</button>' : ""}</section>`;
 
     const close = () => setActiveClusterId((current) => current === clusterId ? null : current);
     content.querySelector(".job-map-close")?.addEventListener("click", close);
@@ -223,7 +334,7 @@ export function JobMap({ jobs, userCoordinates }: JobMapProps) {
     content.querySelector(".job-map-cluster-next")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.min(maxCardStart, cardStart + 1) })));
     content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => router.push(`/jobb/${encodeURIComponent(button.dataset.jobId || "")}`)));
 
-    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -34] })
+    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -30] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .setDOMContent(content)
       .addTo(map);

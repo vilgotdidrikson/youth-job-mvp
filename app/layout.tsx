@@ -1,5 +1,5 @@
 ﻿import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
@@ -16,6 +16,15 @@ const inter = Inter({
   display: "swap",
 });
 
+// Display serif used for the map's counts and headings, mirroring the
+// editorial feel of the startup-map layout the map view is modelled on.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Employo Youth Jobs",
   description:
@@ -28,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="sv" suppressHydrationWarning className={inter.variable}>
+    <html lang="sv" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
       <body
         suppressHydrationWarning
         className="antialiased"
