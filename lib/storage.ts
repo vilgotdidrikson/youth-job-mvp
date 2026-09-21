@@ -7,11 +7,21 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-");
 }
 
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
+const SUPPORTED_JOB_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 export async function uploadJobImage(file: File): Promise<string> {
   const user = await getCurrentUser();
 
   if (!user) {
     throw new Error("You must be signed in to upload job images.");
+  }
+
+  if (!SUPPORTED_JOB_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Välj en JPG-, PNG- eller WebP-bild.");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("Bilden är för stor (max 2 MB).");
   }
 
   const supabase = getSupabaseClient();
@@ -36,7 +46,6 @@ export async function uploadJobImage(file: File): Promise<string> {
   return data.publicUrl;
 }
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB (after compression)
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024; // 5 MB
 const SUPPORTED_DOCUMENT_TYPES = new Set([
   "application/pdf",

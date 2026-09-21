@@ -13,7 +13,7 @@ import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
-import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType } from "@/lib/types";
+import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType, YouthProfile } from "@/lib/types";
 
 const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   grades: "Betyg",
@@ -36,6 +36,55 @@ function toggleTextList(value: string, item: string): string {
 
 function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function candidateDetailRows(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+    : [];
+}
+
+function candidateDetailText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function candidateDetailList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(candidateDetailText).filter(Boolean) : [];
+}
+
+function CandidateHistory({ profile }: { profile: YouthProfile | null }) {
+  const experiences = candidateDetailRows(profile?.work_experience_details);
+  const educations = candidateDetailRows(profile?.education_details);
+
+  return <>
+    <section>
+      <h3>Erfarenhet</h3>
+      {experiences.length > 0 ? experiences.map((item, index) => {
+        const heading = [candidateDetailText(item.role), candidateDetailText(item.employer)].filter(Boolean).join(" · ");
+        const period = [candidateDetailText(item.startDate), candidateDetailText(item.endDate)].filter(Boolean).join(" – ") || candidateDetailText(item.duration);
+        const details = candidateDetailList(item.responsibilities);
+        return <div key={`${heading}-${period}-${index}`} style={{ marginBottom: index < experiences.length - 1 ? ".8rem" : 0 }}>
+          {heading && <strong>{heading}</strong>}
+          {[candidateDetailText(item.location), period].filter(Boolean).length > 0 && <p style={{ margin: ".2rem 0", color: "#737373", fontSize: ".82rem" }}>{[candidateDetailText(item.location), period].filter(Boolean).join(" · ")}</p>}
+          {details.length > 0 && <p style={{ margin: ".25rem 0 0" }}>{details.join(" · ")}</p>}
+        </div>;
+      }) : profile?.work_experience?.length ? <p>{profile.work_experience.join(" · ")}</p> : <p>Ingen erfarenhet angiven</p>}
+    </section>
+    <section>
+      <h3>Utbildning</h3>
+      {educations.length > 0 ? educations.map((item, index) => {
+        const heading = [candidateDetailText(item.program), candidateDetailText(item.school)].filter(Boolean).join(" · ");
+        const period = [candidateDetailText(item.startDate), candidateDetailText(item.endDate)].filter(Boolean).join(" – ");
+        const graduation = candidateDetailText(item.expectedGraduation);
+        const details = [candidateDetailText(item.description), ...candidateDetailList(item.courses), ...candidateDetailList(item.projects), ...candidateDetailList(item.achievements)].filter(Boolean);
+        return <div key={`${heading}-${period}-${index}`} style={{ marginBottom: index < educations.length - 1 ? ".8rem" : 0 }}>
+          {heading && <strong>{heading}</strong>}
+          {[candidateDetailText(item.city), period, graduation ? `Planerad examen ${graduation}` : ""].filter(Boolean).length > 0 && <p style={{ margin: ".2rem 0", color: "#737373", fontSize: ".82rem" }}>{[candidateDetailText(item.city), period, graduation ? `Planerad examen ${graduation}` : ""].filter(Boolean).join(" · ")}</p>}
+          {details.length > 0 && <p style={{ margin: ".25rem 0 0" }}>{details.join(" · ")}</p>}
+        </div>;
+      }) : profile?.education?.length ? <p>{profile.education.join(" · ")}</p> : <p>Ingen utbildning angiven</p>}
+    </section>
+  </>;
 }
 
 type Tab = "kandidater" | "skapa" | "annonser";
@@ -584,6 +633,7 @@ function CompanyPageContent() {
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Ansökt till {selectedCandidate.job.title}</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Sverige"}</span></div></header>
                 <section><h3>Om kandidaten</h3><p>{selectedCandidate.profile?.cv_text || "Kandidaten har ännu inte lagt till någon presentation."}</p></section>
+                <CandidateHistory profile={selectedCandidate.profile} />
                 <section><h3>Styrkor</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).length ? (selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).map((skill) => <span key={skill}>{skill}</span>) : <span>Inga styrkor angivna</span>}</div></section>
                 <section><h3>Söker jobb inom</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.desired_roles ?? []).length ? selectedCandidate.profile!.desired_roles!.map((role) => <span key={role}>{role}</span>) : <span>Inga roller angivna</span>}</div></section>
                 <section><h3>Tillgänglighet</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.employment_preferences ?? []).length ? selectedCandidate.profile!.employment_preferences!.map((preference) => <span key={preference}>{preference}</span>) : <span>Inte angiven</span>}</div></section>

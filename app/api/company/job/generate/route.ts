@@ -22,7 +22,7 @@ function fallback(title: string, industry: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireApiUser(req, "job-generate");
+  const auth = await requireApiUser(req, "job-generate", ["company"]);
   if ("response" in auth) return auth.response;
   const body = (await req.json()) as JobInput;
   const title = body.title?.trim() ?? "";
