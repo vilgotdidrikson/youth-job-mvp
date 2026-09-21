@@ -16,6 +16,8 @@ interface ConvDisplay {
   status: string;
 }
 
+type ConversationState = "loading" | "empty" | "data" | "error";
+
 const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt", interview: "Intervju", hired: "Anställd", rejected: "Avvisad", cancelled: "Avslutad" };
 
 export default function ChatsPage() {
@@ -27,6 +29,7 @@ export default function ChatsPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
+  const [conversationState, setConversationState] = useState<ConversationState>("loading");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,22 +38,25 @@ export default function ChatsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile?.role, cvCompleted, cvLoading]);
 
-  const loadConversations = async () => {
+  const loadConversations = async (showLoading = true) => {
+    if (showLoading) setConversationState("loading");
+    setError("");
     try {
       const [convs, contacts, matches] = await Promise.all([getMyConversations(), getMyConversationContacts(), getMyMatches()]);
       const contactMap = new Map(contacts.map((contact) => [contact.conversation_id, contact]));
       const matchStatusMap = new Map(matches.map((match) => [match.id, match.status ?? "matched"]));
 
-      setConvDisplays(
-        convs.map((conv) => ({
+      const displays = convs.map((conv) => ({
           conv,
           otherName: contactMap.get(conv.id)?.other_name ?? "Kontakt",
           jobTitle: contactMap.get(conv.id)?.job_title ?? undefined,
           status: conv.match_id ? matchStatusMap.get(conv.match_id) ?? "matched" : "matched",
-        })),
-      );
+        }));
+      setConvDisplays(displays);
+      setConversationState(displays.length > 0 ? "data" : "empty");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte ladda konversationer.");
+      setConversationState("error");
     }
   };
 
@@ -69,7 +75,7 @@ export default function ChatsPage() {
     if (!selectedConvId) return;
     return subscribeToConversationMessages(selectedConvId, (message) => {
       setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
-      void loadConversations();
+      void loadConversations(false);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConvId]);
@@ -257,13 +263,22 @@ export default function ChatsPage() {
         </p>
       </div>
 
-      {error && (
+      {error && conversationState !== "error" && (
         <div style={{ borderRadius: 12, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
           {error}
         </div>
       )}
 
-      {convDisplays.length === 0 ? (
+      {conversationState === "loading" ? (
+        <div role="status" style={{ textAlign: "center", paddingTop: "3rem", color: "#737373" }}>
+          <p style={{ fontWeight: 700, fontSize: "1rem" }}>Laddar matchningar...</p>
+        </div>
+      ) : conversationState === "error" ? (
+        <div role="alert" style={{ textAlign: "center", paddingTop: "2rem" }}>
+          <p style={{ color: "#b42318", fontSize: "0.9rem" }}>{error || "Kunde inte ladda konversationer."}</p>
+          <button type="button" className="secondary-btn" onClick={() => void loadConversations()} style={{ marginTop: ".75rem" }}>Försök igen</button>
+        </div>
+      ) : conversationState === "empty" ? (
         <div style={{ textAlign: "center", paddingTop: "3rem" }}>
           <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🤝</p>
           <p style={{ fontWeight: 700, fontSize: "1.1rem", color: "#111111", marginBottom: "0.4rem" }}>Inga matchningar ännu</p>

@@ -8,7 +8,7 @@ export const maxDuration = 60;
 type CvInput = Parameters<typeof structuredCvFromForm>[0] & { structured?: StructuredCvData; conversation?: unknown[] };
 
 export async function POST(request: NextRequest) {
-  const auth = await requireApiUser(request, "cv-generate");
+  const auth = await requireApiUser(request, "cv-generate", ["youth"]);
   if ("response" in auth) return auth.response;
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "CV-bearbetningen är tillfälligt otillgänglig. Ditt underlag finns kvar, försök igen senare." }, { status: 503 });
   try {

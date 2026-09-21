@@ -47,7 +47,7 @@ const session = {
 };
 
 export async function POST(request: NextRequest) {
-  const auth = await requireApiUser(request, "voice-session");
+  const auth = await requireApiUser(request, "voice-session", ["youth"]);
   if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "OPENAI_API_KEY saknas på servern." }, { status: 503 });

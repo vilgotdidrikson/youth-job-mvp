@@ -31,7 +31,7 @@ function reply(state: InterviewState, next: ReturnType<typeof selectNextQuestion
   });
 }
 export async function POST(request: NextRequest) {
-  const auth = await requireApiUser(request, "voice-turn");
+  const auth = await requireApiUser(request, "voice-turn", ["youth"]);
   if ("response" in auth) return auth.response;
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Röstintervjun är inte tillgänglig just nu." }, { status: 503 });
   try {

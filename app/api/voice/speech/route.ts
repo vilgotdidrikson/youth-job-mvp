@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 // Bounded by the question bank; no personal speech or recordings enter this cache.
 const audioCache = new Map<string, Promise<ArrayBuffer>>();
 export async function GET(request: NextRequest) {
-  const auth = await requireApiUser(request, "voice-speech");
+  const auth = await requireApiUser(request, "voice-speech", ["youth"]);
   if ("response" in auth) return auth.response;
   const id = request.nextUrl.searchParams.get("id");
   const question = [...INTERVIEW_QUESTIONS, COMPLETE_QUESTION].find((item) => item.id === id);

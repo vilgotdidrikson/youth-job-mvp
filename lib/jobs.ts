@@ -336,7 +336,21 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
     throw new Error(getSupabaseErrorMessage(error, "Unable to fetch job."));
   }
 
-  return data ? normalizeJob(data as Record<string, unknown>) : null;
+  if (data) return normalizeJob(data as Record<string, unknown>);
+
+  // Inactive listings stay out of all discovery queries, but this narrowly
+  // scoped RPC lets an old direct link explain that the listing was paused or
+  // closed instead of pretending it never existed.
+  const { data: inactiveData, error: inactiveError } = await supabase
+    .rpc("get_job_direct_detail", { p_job_id: jobId })
+    .maybeSingle();
+
+  if (inactiveError) {
+    logSupabaseError("jobs.direct_detail.by_id", inactiveError, { jobId });
+    throw new Error(getSupabaseErrorMessage(inactiveError, "Unable to fetch job."));
+  }
+
+  return inactiveData ? normalizeJob(inactiveData as Record<string, unknown>) : null;
 }
 
 export async function createJob(jobData: CreateJobInput): Promise<JobPost> {

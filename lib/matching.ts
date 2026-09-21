@@ -175,12 +175,26 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error("Job not found.");
   }
 
-  await upsertJobInterestRecord({
-    youth_user_id: user.id,
-    job_id: jobId,
-    decision: direction,
-    created_at: new Date().toISOString(),
-  });
+  if (job.status !== "active" || job.is_active === false) {
+    throw new Error("Den här annonsen tar inte emot nya ansökningar.");
+  }
+
+  try {
+    await upsertJobInterestRecord({
+      youth_user_id: user.id,
+      job_id: jobId,
+      decision: direction,
+      created_at: new Date().toISOString(),
+    });
+  } catch (reason) {
+    // The listing can close after the initial read but before the write. RLS is
+    // the final guard; this second read translates that race into useful copy.
+    const latestJob = await getJobById(jobId).catch(() => null);
+    if (latestJob && (latestJob.status !== "active" || latestJob.is_active === false)) {
+      throw new Error("Den här annonsen tar inte emot nya ansökningar.");
+    }
+    throw reason;
+  }
 
   if (direction !== "interested") {
     return null;

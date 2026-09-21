@@ -10,8 +10,9 @@ const limits = {
 } as const;
 
 export type ProtectedEndpoint = keyof typeof limits;
+type ApiRole = "youth" | "company" | "private";
 
-export async function requireApiUser(request: NextRequest, endpoint: ProtectedEndpoint) {
+export async function requireApiUser(request: NextRequest, endpoint: ProtectedEndpoint, allowedRoles?: readonly ApiRole[]) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.nextUrl.searchParams.get("access_token");
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,6 +34,17 @@ export async function requireApiUser(request: NextRequest, endpoint: ProtectedEn
     accessToken: async () => token,
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
+
+  if (allowedRoles) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError || !profile || !allowedRoles.includes(profile.role as ApiRole)) {
+      return { response: Response.json({ error: "Du har inte behÃ¶righet att anvÃ¤nda den hÃ¤r funktionen." }, { status: 403 }) } as const;
+    }
+  }
 
   const { data: allowed, error: quotaError } = await supabase.rpc("consume_api_quota", { p_endpoint: endpoint, p_limit: limits[endpoint] });
   if (quotaError) return { response: Response.json({ error: "Kunde inte kontrollera tjänstegränsen." }, { status: 503 }) } as const;

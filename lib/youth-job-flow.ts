@@ -4,6 +4,7 @@ import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
 import { swipeJob } from "@/lib/matching";
+import { getJobById } from "@/lib/jobs";
 import type { JobPost } from "@/lib/types";
 
 export interface YouthFlowState {
@@ -57,11 +58,21 @@ export async function setJobSaved(jobId: string, saved: boolean): Promise<void> 
 
 export async function saveApplicationDraft(jobId: string): Promise<void> {
   const user = await requireYouth();
+  const job = await getJobById(jobId);
+  if (!job || job.status !== "active" || job.is_active === false) {
+    throw new Error("Den här annonsen tar inte emot nya ansökningar.");
+  }
   const { error } = await getSupabaseClient().from("youth_application_drafts").upsert(
     { youth_user_id: user.id, job_id: jobId, updated_at: new Date().toISOString() },
     { onConflict: "youth_user_id,job_id" },
   );
-  if (error) throw new Error(error.message);
+  if (error) {
+    const latestJob = await getJobById(jobId).catch(() => null);
+    if (latestJob && (latestJob.status !== "active" || latestJob.is_active === false)) {
+      throw new Error("Den här annonsen tar inte emot nya ansökningar.");
+    }
+    throw new Error(error.message);
+  }
 }
 
 export async function getApplicationDraftCount(): Promise<number> {
