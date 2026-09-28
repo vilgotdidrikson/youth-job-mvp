@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
@@ -115,6 +116,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           <div className="auth-fields">
             <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
             <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required /></label>
+            {!isSignup && <Link href="/forgot-password" className="auth-switch" style={{ display: "inline-block", textAlign: "left" }}>Glömt lösenord?</Link>}
             {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required /></label>}
           </div>
           {error && <p className="auth-message auth-error">{error}</p>}
