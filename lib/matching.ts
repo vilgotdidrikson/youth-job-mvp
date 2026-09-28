@@ -250,6 +250,9 @@ export async function getMyMatches(): Promise<MatchRecord[]> {
 }
 
 export async function updateMatchStatus(matchId: string, status: MatchStatus): Promise<MatchRecord> {
+  if (status === "hired") {
+    return markMatchHired(matchId);
+  }
   const { user, profile } = await getAuthenticatedUser();
   if (profile?.role !== "company" && profile?.role !== "private") {
     throw new Error("Only task owners can update candidate status.");
@@ -267,5 +270,27 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus): P
     logSupabaseError("matches.update.status", error ?? new Error("No match returned."), { matchId, status });
     throw new Error(getSupabaseErrorMessage(error, "Unable to update candidate status."));
   }
+  return data as MatchRecord;
+}
+
+/**
+ * Completes a hire through the database authorization boundary. The RPC derives
+ * company ownership from auth.uid() and validates the match plus conversation.
+ */
+export async function markMatchHired(matchId: string): Promise<MatchRecord> {
+  const { profile } = await getAuthenticatedUser("company");
+  if (profile?.role !== "company") {
+    throw new Error("Only the company that owns a match can mark a candidate as hired.");
+  }
+
+  const { data, error } = await getSupabaseClient()
+    .rpc("mark_match_hired", { p_match_id: matchId })
+    .single();
+
+  if (error || !data) {
+    logSupabaseError("matches.mark_hired", error ?? new Error("No match returned."), { matchId });
+    throw new Error(getSupabaseErrorMessage(error, "Unable to mark this candidate as hired."));
+  }
+
   return data as MatchRecord;
 }

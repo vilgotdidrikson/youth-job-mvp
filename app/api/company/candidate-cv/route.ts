@@ -34,17 +34,16 @@ export async function POST(request: NextRequest) {
 
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
   const companyUserId = userData.user.id;
-  const [{ data: account }, { data: job }, { data: application }, { data: match }, { data: youthProfile, error: profileError }] = await Promise.all([
+  const [{ data: account }, { data: job }, { data: match }, { data: youthProfile, error: profileError }] = await Promise.all([
     admin.from("profiles").select("role").eq("id", companyUserId).maybeSingle(),
     admin.from("jobs").select("id").eq("id", body.jobId).eq("company_user_id", companyUserId).maybeSingle(),
-    admin.from("swipe_actions").select("id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("decision", "interested").maybeSingle(),
     admin.from("matches").select("id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("company_user_id", companyUserId).maybeSingle(),
     admin.from("youth_profiles").select("documents").eq("user_id", body.youthUserId).maybeSingle(),
   ]);
 
   if (account?.role !== "company") return NextResponse.json({ error: "Endast företagskonton kan öppna kandidaters CV." }, { status: 403 });
-  // Authorization is evaluated entirely on the server for the same owned listing.
-  if (!job || (!application && !match)) return NextResponse.json({ error: "Du har inte behörighet att öppna den här kandidatens CV." }, { status: 403 });
+  // A PDF CV may contain private contact data; only a mutual match unlocks it.
+  if (!job || !match) return NextResponse.json({ error: "CV med kontaktuppgifter blir tillgängligt efter en matchning." }, { status: 403 });
   if (profileError) return NextResponse.json({ error: "Kunde inte hämta kandidatens CV just nu." }, { status: 502 });
 
   const path = uploadedCvPath(youthProfile?.documents, body.youthUserId);

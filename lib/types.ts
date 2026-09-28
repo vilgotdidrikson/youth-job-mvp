@@ -119,6 +119,8 @@ export interface MatchRecord {
   job_id: string;
   conversation_id?: string | null;
   status?: string | null;
+  hire_completed_at?: string | null;
+  hired_by_user_id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   [key: string]: unknown;
