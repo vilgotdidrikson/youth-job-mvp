@@ -95,7 +95,7 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
   ]);
   const youthProfile = (youthProfileResult.data ?? null) as YouthProfile | null;
 
-  return jobs
+  const filteredJobs = jobs
     .filter((job) => {
       if (swipedJobIds.has(job.id)) return false;
       const needle = filters.query?.trim().toLowerCase();
@@ -111,6 +111,13 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
       return true;
     })
     .sort((a, b) => scoreJobForYouth(b, youthProfile) - scoreJobForYouth(a, youthProfile));
+
+  // Keep the existing relevance order intact within both groups. A boost only
+  // moves its own active listing ahead of otherwise equally discovered jobs.
+  return [
+    ...filteredJobs.filter((job) => job.is_boosted === true),
+    ...filteredJobs.filter((job) => job.is_boosted !== true),
+  ];
 }
 
 export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedItem[]> {

@@ -92,6 +92,7 @@ export interface JobPost {
   status?: "active" | "paused" | "closed";
   publication_status?: "pending_verification" | "published";
   open_positions?: number;
+  is_boosted?: boolean;
   created_at: string;
   min_age?: number | null;
   max_age?: number | null;

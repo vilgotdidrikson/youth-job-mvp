@@ -51,3 +51,4 @@ Open `http://localhost:3000`.
 - AI endpoints require a valid Supabase session and use database-backed hourly quotas.
 - Youth documents are private Storage objects and are opened through signed URLs.
 - PDF download uses browser print flow (`Save as PDF`).
+- Premium backend test and manual service-role activation: [docs/premium-testing.md](docs/premium-testing.md).
