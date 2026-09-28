@@ -154,6 +154,20 @@ await readIsDenied("Youth B cannot read Youth A AI-onboarding", "youthB", "ai_on
 await readIsDenied("Company cannot read Youth A AI-onboarding", "companyA", "ai_onboarding_sessions", `id=eq.${ids.aiSession}`);
 await readIsDenied("Anonymous cannot read Youth A AI-onboarding", "anonymous", "ai_onboarding_sessions", `id=eq.${ids.aiSession}`);
 
+// Premium fixtures are optional while the backend is being introduced. When
+// supplied, they prove that only the owning company can see its fulfilment
+// records; youth accounts and other companies never receive order data.
+const premiumOrderId = process.env.RLS_TEST_PREMIUM_ORDER_ID;
+if (premiumOrderId) {
+  const ownPremium = await rest("companyA", `premium_orders?select=id&id=eq.${premiumOrderId}`);
+  check("Company A can read its own premium order", ownPremium.status === 200 && Array.isArray(ownPremium.body) && ownPremium.body.length === 1, `HTTP ${ownPremium.status}`);
+  await readIsDenied("Company B cannot read Company A premium order", "companyB", "premium_orders", `id=eq.${premiumOrderId}`);
+  await readIsDenied("Youth cannot read Company A premium order", "youthA", "premium_orders", `id=eq.${premiumOrderId}`);
+  await readIsDenied("Anonymous cannot read Company A premium order", "anonymous", "premium_orders", `id=eq.${premiumOrderId}`);
+} else {
+  console.log("SKIP: premium RLS fixture (set RLS_TEST_PREMIUM_ORDER_ID to enable)");
+}
+
 // Storage: public reads remain possible, but writes are company-owned.
 const objectName = `${ids.companyA}/${randomUUID()}.png`;
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL5mwAAAABJRU5ErkJggg==", "base64");
