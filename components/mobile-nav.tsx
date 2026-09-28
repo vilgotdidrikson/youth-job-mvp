@@ -113,6 +113,8 @@ export function MobileNav() {
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
     pathname === "/" ||
     pathname === "/pricing" ||
     pathname === "/features" ||
