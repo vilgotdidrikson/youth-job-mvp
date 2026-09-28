@@ -440,6 +440,7 @@ function CompanyPageContent() {
   }
 
   const candidateFeed = feed;
+  const verificationStatus = companyProfile?.verification_status ?? "pending";
   const currentCandidate = candidateFeed[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
@@ -452,6 +453,19 @@ function CompanyPageContent() {
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      {verificationStatus !== "verified" && (
+        <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: verificationStatus === "rejected" ? "#ffd6d3" : "#f0c36d", background: verificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }} role="status">
+          <strong style={{ color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
+            {verificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Företagsverifiering pågår"}
+          </strong>
+          <p style={{ margin: ".35rem 0 0", color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00", fontSize: ".86rem", lineHeight: 1.5 }}>
+            {verificationStatus === "rejected"
+              ? companyProfile?.verification_rejection_reason || "Kontrollera företagsuppgifterna och skicka in dem igen."
+              : "Du kan skapa och hantera annonser. De publiceras automatiskt när företaget har godkänts."}
+          </p>
+          <Link href="/profile" className="secondary-btn" style={{ display: "inline-block", marginTop: ".75rem", padding: ".55rem .8rem", fontSize: ".8rem" }}>Kontrollera företagsuppgifter</Link>
+        </section>
+      )}
       {/* Match banner */}
       {matchedConvId && (
         <div style={{ borderRadius: 14, background: "#e8faf0", border: "1.5px solid #b6e8cf", padding: "1rem 1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -764,6 +778,7 @@ function CompanyPageContent() {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 const status = job.status ?? (job.is_active ? "active" : "paused");
                 const isWorking = jobActionId === job.id;
+                const awaitingVerification = job.publication_status === "pending_verification";
                 return (
                   <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
                     <Link href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
@@ -774,8 +789,8 @@ function CompanyPageContent() {
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
                       </div>
                     )}
-                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: status === "active" ? "#e8faf0" : "#f5f5f5", color: status === "active" ? "#1a7f4b" : "#a3a3a3" }}>
-                      {status === "active" ? "Aktiv" : status === "paused" ? "Pausad" : "Stängd"}
+                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: awaitingVerification ? "#fff3d6" : status === "active" ? "#e8faf0" : "#f5f5f5", color: awaitingVerification ? "#6a4a00" : status === "active" ? "#1a7f4b" : "#a3a3a3" }}>
+                      {awaitingVerification ? "Inväntar verifiering" : status === "active" ? "Publicerad" : status === "paused" ? "Pausad" : "Stängd"}
                     </div>
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>

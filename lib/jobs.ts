@@ -236,6 +236,7 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     job_kind: row.job_kind === "private_task" ? "private_task" : "employment",
     is_active: typeof row.is_active === "boolean" ? row.is_active : true,
     status: row.status === "paused" || row.status === "closed" ? row.status : "active",
+    publication_status: row.publication_status === "pending_verification" ? "pending_verification" : "published",
     open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
     created_at: normalizeJobString(row.created_at),
     min_age: typeof row.min_age === "number" ? row.min_age : null,

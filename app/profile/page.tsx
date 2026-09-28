@@ -99,6 +99,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [companyName, setCompanyName] = useState("");
   const [companyCity, setCompanyCity] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
+  const [companyOrganizationNumber, setCompanyOrganizationNumber] = useState("");
+  const [companyVerificationStatus, setCompanyVerificationStatus] = useState<"pending" | "verified" | "rejected">("pending");
+  const [companyVerificationReason, setCompanyVerificationReason] = useState("");
   const [companyJobCount, setCompanyJobCount] = useState(0);
 
   useEffect(() => {
@@ -115,6 +118,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             setCompanyName((cpResult.data as Record<string, unknown>).company_name as string ?? "");
             setCompanyCity((cpResult.data as Record<string, unknown>).city as string ?? "");
             setCompanyDescription((cpResult.data as Record<string, unknown>).description as string ?? "");
+            setCompanyOrganizationNumber((cpResult.data as Record<string, unknown>).organization_number as string ?? "");
+            const verificationStatus = (cpResult.data as Record<string, unknown>).verification_status;
+            if (verificationStatus === "verified" || verificationStatus === "rejected") setCompanyVerificationStatus(verificationStatus);
+            setCompanyVerificationReason((cpResult.data as Record<string, unknown>).verification_rejection_reason as string ?? "");
           }
           setCompanyJobCount((jobsResult.data ?? []).length);
           setError("");
@@ -248,6 +255,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleSaveCompanyProfile = async () => {
     if (!user?.id) return;
+    if (companyOrganizationNumber && !/^\d{6}-?\d{4}$/.test(companyOrganizationNumber.trim())) {
+      setError("Ange ett giltigt organisationsnummer med 10 siffror.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -257,6 +268,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
+          organization_number: companyOrganizationNumber.trim() || null,
           city: companyCity.trim(),
           description: companyDescription.trim(),
           updated_at: new Date().toISOString(),
@@ -264,6 +276,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         .eq("user_id", user.id);
       if (dbError) throw new Error(dbError.message);
       setSavedNote("Profil sparad.");
+      if (companyVerificationStatus !== "verified") {
+        setCompanyVerificationStatus("pending");
+        setCompanyVerificationReason("");
+      }
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara.");
     } finally {
@@ -386,6 +402,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           </div>
         </div>
 
+        <div className="card" style={{ padding: "1rem 1.25rem", marginBottom: "0.75rem", background: companyVerificationStatus === "verified" ? "#e8faf0" : companyVerificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }}>
+          <strong style={{ color: companyVerificationStatus === "verified" ? "#1a7f4b" : companyVerificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
+            {companyVerificationStatus === "verified" ? "Verifierat företag" : companyVerificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Inväntar företagsverifiering"}
+          </strong>
+          <p style={{ margin: ".3rem 0 0", color: "#737373", fontSize: ".84rem", lineHeight: 1.5 }}>
+            {companyVerificationStatus === "verified" ? "Era aktiva annonser kan publiceras för ungdomar." : companyVerificationStatus === "rejected" ? companyVerificationReason || "Kontrollera uppgifterna nedan och spara igen." : "Ni kan skapa annonser under tiden. De publiceras efter godkänd verifiering."}
+          </p>
+        </div>
+
         {/* Edit form */}
         <div className="card" style={{ padding: "1.25rem", marginBottom: "0.75rem" }}>
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
@@ -406,6 +431,16 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             placeholder="T.ex. Stockholm"
             value={companyCity}
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
+          />
+
+          <label style={labelStyle}>Organisationsnummer</label>
+          <input
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="XXXXXX-XXXX"
+            inputMode="numeric"
+            value={companyOrganizationNumber}
+            onChange={(e) => { setCompanyOrganizationNumber(e.target.value.replace(/[^0-9-]/g, "")); setSavedNote(""); }}
           />
 
           <label style={labelStyle}>Beskrivning</label>
