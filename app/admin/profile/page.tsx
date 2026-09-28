@@ -53,10 +53,11 @@ export default function AdminProfilePage() {
   return <AdminShell title="Adminprofil" email={user?.email}>
     {error && <p className="admin-alert admin-alert-error" role="alert">{error}</p>}
     {message && <p className="admin-alert admin-alert-success" role="status">{message}</p>}
+    <section className="admin-profile-summary"><span>{(name || user?.email || "A").slice(0, 1).toUpperCase()}</span><div><small>Inloggat adminkonto</small><h2>{name || "Administratör"}</h2><p>{user?.email}</p></div><b>Aktiv behörighet</b></section>
     <div className="admin-profile-grid">
       <section className="admin-panel"><h2>Profil</h2><p>Namnet används bara i den interna adminmiljön. Behörigheten styrs fortfarande av databasen.</p><label className="admin-field"><span>Visningsnamn</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ditt namn" /></label><label className="admin-field"><span>E-postadress</span><input value={user?.email || ""} disabled /></label><button type="button" className="cta-btn" disabled={busy} onClick={() => void saveName()}>Spara profil</button></section>
       <section className="admin-panel"><h2>Byt lösenord</h2><p>Bekräfta alltid det nuvarande lösenordet.</p><label className="admin-field"><span>Nuvarande lösenord</span><input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} /></label><label className="admin-field"><span>Nytt lösenord</span><input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /></label><label className="admin-field"><span>Bekräfta nytt lösenord</span><input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} /></label><button type="button" className="secondary-btn" disabled={busy} onClick={() => void savePassword()}>Ändra lösenord</button></section>
     </div>
-    <button type="button" className="secondary-btn" style={{ marginTop: "1rem", color: "#b42318" }} onClick={() => void logout().then(() => router.replace("/login"))}>Logga ut från admin</button>
+    <button type="button" className="secondary-btn admin-logout" onClick={() => void logout().then(() => router.replace("/login"))}>Logga ut från admin</button>
   </AdminShell>;
 }
