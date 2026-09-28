@@ -37,13 +37,15 @@ export async function POST(request: NextRequest) {
   const [{ data: account }, { data: job }, { data: match }, { data: youthProfile, error: profileError }] = await Promise.all([
     admin.from("profiles").select("role").eq("id", companyUserId).maybeSingle(),
     admin.from("jobs").select("id").eq("id", body.jobId).eq("company_user_id", companyUserId).maybeSingle(),
-    admin.from("matches").select("id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("company_user_id", companyUserId).maybeSingle(),
+    admin.from("swipe_actions").select("job_id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("decision", "interested").maybeSingle(),
     admin.from("youth_profiles").select("documents").eq("user_id", body.youthUserId).maybeSingle(),
   ]);
 
   if (account?.role !== "company") return NextResponse.json({ error: "Endast företagskonton kan öppna kandidaters CV." }, { status: 403 });
-  // A PDF CV may contain private contact data; only a mutual match unlocks it.
-  if (!job || !match) return NextResponse.json({ error: "CV med kontaktuppgifter blir tillgängligt efter en matchning." }, { status: 403 });
+  // A company may inspect the full CV only after this youth has explicitly
+  // shown interest in one of that company's jobs. This lets the employer make
+  // an informed matching decision without exposing arbitrary youth CVs.
+  if (!job || !match) return NextResponse.json({ error: "CV:t är endast tillgängligt för kandidater som har visat intresse för den här annonsen." }, { status: 403 });
   if (profileError) return NextResponse.json({ error: "Kunde inte hämta kandidatens CV just nu." }, { status: 502 });
 
   const path = uploadedCvPath(youthProfile?.documents, body.youthUserId);
