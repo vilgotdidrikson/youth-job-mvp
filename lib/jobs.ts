@@ -237,6 +237,7 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     is_active: typeof row.is_active === "boolean" ? row.is_active : true,
     status: row.status === "paused" || row.status === "closed" ? row.status : "active",
     open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
+    is_boosted: row.is_boosted === true,
     created_at: normalizeJobString(row.created_at),
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
@@ -324,7 +325,28 @@ export async function getJobs(includeInactive = false): Promise<JobPost[]> {
   }
 
   const jobs = (data ?? []).map((row) => normalizeJob(row as Record<string, unknown>));
-  return includeInactive ? jobs : jobs.filter(isActiveJob);
+  if (!jobs.length) return jobs;
+
+  // Premium data remains private. This RPC returns only the presentation-safe
+  // derived flag for jobs the current RLS context could already read.
+  const { data: boostRows, error: boostError } = await supabase
+    .rpc("premium_effective_boosts", { p_job_ids: jobs.map((job) => job.id) });
+
+  if (boostError) {
+    logSupabaseError("premium.effective_boosts", boostError, { jobCount: jobs.length });
+    throw new Error(getSupabaseErrorMessage(boostError, "Unable to fetch premium job status."));
+  }
+
+  const premiumRows = Array.isArray(boostRows)
+    ? boostRows.filter((row): row is Record<string, unknown> => typeof row === "object" && row !== null)
+    : [];
+  const boostedIds = new Set(
+    premiumRows
+      .filter((row) => row.is_boosted === true)
+      .map((row) => String(row.job_id ?? "")),
+  );
+  const jobsWithPremium = jobs.map((job) => ({ ...job, is_boosted: boostedIds.has(job.id) }));
+  return includeInactive ? jobsWithPremium : jobsWithPremium.filter(isActiveJob);
 }
 
 export async function getJobById(jobId: string): Promise<JobPost | null> {

@@ -242,6 +242,22 @@ export function JobSwipeDeck({
               >
                 {currentJob.company_name || "Company"}
               </p>
+              {currentJob.is_boosted && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    marginTop: "0.35rem",
+                    padding: "0.18rem 0.45rem",
+                    borderRadius: 999,
+                    background: "var(--color-surface-soft)",
+                    color: "var(--text-secondary)",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  Framhävd annons
+                </span>
+              )}
               <h2
                 style={{
                   fontSize: "1.25rem",

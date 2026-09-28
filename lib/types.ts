@@ -86,6 +86,7 @@ export interface JobPost {
   is_active: boolean;
   status?: "active" | "paused" | "closed";
   open_positions?: number;
+  is_boosted?: boolean;
   created_at: string;
   min_age?: number | null;
   max_age?: number | null;
