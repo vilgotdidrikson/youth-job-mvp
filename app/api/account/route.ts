@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const STORAGE_PAGE_SIZE = 100;
 const STORAGE_DELETE_BATCH_SIZE = 100;
 
-type AdminClient = SupabaseClient<any, "public", any>;
+type AdminClient = SupabaseClient;
 
 async function listStorageFiles(admin: AdminClient, bucket: string, directory: string): Promise<string[]> {
   const files: string[] = [];
@@ -36,6 +36,28 @@ async function removeUserStorage(admin: AdminClient, bucket: string, userId: str
   }
 }
 
+async function getDeletionNotification(admin: AdminClient, userId: string) {
+  const [{ data: profile, error: profileError }, { data: conversations, error: conversationsError }] = await Promise.all([
+    admin.from("profiles").select("role").eq("id", userId).maybeSingle(),
+    admin.from("conversations").select("youth_user_id, company_user_id").or(`youth_user_id.eq.${userId},company_user_id.eq.${userId}`),
+  ]);
+  if (profileError) throw profileError;
+  if (conversationsError) throw conversationsError;
+
+  const recipientIds = [...new Set((conversations ?? []).map((conversation) =>
+    conversation.youth_user_id === userId ? conversation.company_user_id : conversation.youth_user_id,
+  ))];
+  const deletedAccountLabel = profile?.role === "company" ? "Ett företag" : "En användare";
+
+  return recipientIds.map((recipientId) => ({
+    user_id: recipientId,
+    type: "account_deleted",
+    title: "En chatt har stängts",
+    body: `${deletedAccountLabel} som du har chattat med har raderat sitt konto. Chatten och historiken har därför tagits bort.`,
+    href: "/notifications",
+  }));
+}
+
 export async function DELETE(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -51,6 +73,13 @@ export async function DELETE(request: NextRequest) {
   const { data: verified, error: passwordError } = await userClient.auth.signInWithPassword({ email: userData.user.email ?? "", password: body.password });
   if (passwordError || verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  let deletionNotifications: Awaited<ReturnType<typeof getDeletionNotification>> = [];
+  try {
+    deletionNotifications = await getDeletionNotification(admin, userData.user.id);
+  } catch (notificationLookupError) {
+    // Notification delivery is helpful, but must never block a user's right to delete their account.
+    console.error("Failed to resolve account-deletion notification recipients.", notificationLookupError);
+  }
   try {
     await removeUserStorage(admin, "youth-documents", userData.user.id);
     await removeUserStorage(admin, "job-images", userData.user.id);
@@ -60,5 +89,9 @@ export async function DELETE(request: NextRequest) {
   }
   const { error } = await admin.auth.admin.deleteUser(userData.user.id);
   if (error) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
+  if (deletionNotifications.length) {
+    const { error: notificationError } = await admin.from("notifications").insert(deletionNotifications);
+    if (notificationError) console.error("Failed to create account-deletion notifications.", notificationError);
+  }
   return new NextResponse(null, { status: 204 });
 }
