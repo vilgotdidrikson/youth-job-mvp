@@ -11,6 +11,7 @@ import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
+import { changePassword } from "@/lib/auth";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -87,6 +88,12 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [editingProfile, setEditingProfile] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [error, setError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // ── company profile state ──────────────────────────────────
   const [companyName, setCompanyName] = useState("");
@@ -266,13 +273,40 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await logout();
-    router.replace("/login");
+    setError("");
+    try {
+      await logout();
+      router.replace("/login");
+    } catch (logoutError) {
+      setError(logoutError instanceof Error ? logoutError.message : "Kunde inte logga ut.");
+      setLoggingOut(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    setPasswordMessage("");
+    if (!currentPassword) { setPasswordError("Ange ditt nuvarande lösenord."); return; }
+    if (newPassword.length < 8) { setPasswordError("Det nya lösenordet måste innehålla minst 8 tecken."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("De nya lösenorden matchar inte."); return; }
+
+    setChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Lösenordet har ändrats.");
+    } catch (changeError) {
+      setPasswordError(changeError instanceof Error ? changeError.message : "Kunde inte ändra lösenordet.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
-    const password = window.prompt("Skriv ditt lösenord för att permanent radera konto och uppladdade dokument.");
-    if (!password || !window.confirm("Är du säker? Detta kan inte ångras.")) return;
+    const password = window.prompt("Skriv ditt lösenord för att permanent radera kontot och all tillhörande data.");
+    if (!password || !window.confirm("Kontot, profilen, ansökningarna, chattarna och filerna raderas permanent. Personer du har chattat med får veta att chatten har stängts. Detta kan inte ångras. Vill du fortsätta?")) return;
     setDeletingAccount(true); setError("");
     try {
       const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ password }) });
@@ -284,6 +318,32 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (!user) return null;
+
+  const accountSecurityCard = (
+    <section className="card" style={{ padding: "1.25rem", marginTop: "0.75rem", marginBottom: "0.75rem" }} aria-labelledby="password-settings-title">
+      <h2 id="password-settings-title" style={{ margin: 0, fontSize: "1rem", color: "#111" }}>Byt lösenord</h2>
+      <p style={{ margin: ".35rem 0 1rem", color: "#737373", fontSize: ".85rem" }}>Bekräfta ditt nuvarande lösenord innan du väljer ett nytt.</p>
+      <div style={{ display: "grid", gap: ".75rem" }}>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nuvarande lösenord
+          <input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nytt lösenord
+          <input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Bekräfta nytt lösenord
+          <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+      </div>
+      {passwordError && <p role="alert" style={{ margin: ".75rem 0 0", color: "#b42318", fontSize: ".84rem" }}>{passwordError}</p>}
+      {passwordMessage && <p role="status" style={{ margin: ".75rem 0 0", color: "#226a54", fontSize: ".84rem" }}>{passwordMessage}</p>}
+      <button type="button" className="secondary-btn" style={{ width: "100%", padding: ".8rem", marginTop: "1rem" }} disabled={changingPassword} onClick={() => void handleChangePassword()}>
+        {changingPassword ? "Ändrar lösenord..." : "Ändra lösenord"}
+      </button>
+    </section>
+  );
 
   if (profile?.role === "company") {
     const labelStyle: React.CSSProperties = {
@@ -380,6 +440,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           <span style={{ color: "#a3a3a3" }}>→</span>
         </button>
 
+        {accountSecurityCard}
+
         {/* Logout */}
         <button
           type="button"
@@ -396,7 +458,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   }
 
   if (profile?.role === "private") {
-    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
+    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link>{accountSecurityCard}<button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
   }
 
   if (profile?.role !== "youth") {
@@ -627,6 +689,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         <SidebarCard title="Kontaktuppgifter"><dl><div><dt>Ort</dt><dd>{form.city || "Lägg till ort"}</dd></div><div><dt>E-post</dt><dd>{user.email}</dd></div></dl></SidebarCard>
         <SidebarCard title="Dina styrkor"><SkillList skills={form.skills} /></SidebarCard>
       </aside></div>
+
+      {accountSecurityCard}
 
       <button
         type="button"

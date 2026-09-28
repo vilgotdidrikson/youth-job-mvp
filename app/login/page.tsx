@@ -51,6 +51,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       setError("Lösenorden matchar inte. Kontrollera och försök igen.");
       return;
     }
+    if (mode === "signup" && password.length < 8) {
+      setError("Lösenordet måste innehålla minst 8 tecken.");
+      return;
+    }
 
     setLoading(true);
 
@@ -115,9 +119,9 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button><button type="button" className={role === "private" ? "auth-role-selected" : ""} onClick={() => setRole("private")}>Privatperson</button></div></fieldset>}
           <div className="auth-fields">
             <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
-            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required /></label>
+            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>
             {!isSignup && <Link href="/forgot-password" className="auth-switch" style={{ display: "inline-block", textAlign: "left" }}>Glömt lösenord?</Link>}
-            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required /></label>}
+            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
           </div>
           {error && <p className="auth-message auth-error">{error}</p>}
           {message && <p className="auth-message auth-success">{message}</p>}
