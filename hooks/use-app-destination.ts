@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "@/hooks/use-session";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
 
 /**
@@ -12,7 +13,17 @@ import { getYouthFlowState } from "@/lib/youth-job-flow";
 export function useAppDestination() {
   const { user, profile, loading } = useSession();
   const [youthDestination, setYouthDestination] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const isYouth = !loading && !!user && profile?.role === "youth";
+
+  useEffect(() => {
+    if (loading || !user) return;
+    let active = true;
+    void getSupabaseClient().rpc("is_admin_account").then(({ data, error }) => {
+      if (active) setIsAdmin(!error && data === true);
+    });
+    return () => { active = false; };
+  }, [loading, user]);
 
   useEffect(() => {
     if (!isYouth || !user) return;
@@ -26,9 +37,13 @@ export function useAppDestination() {
   }, [isYouth, user]);
 
   const isAuthenticated = !loading && !!user;
-  const destination = !isAuthenticated || !profile
+  const destination = !isAuthenticated
     ? null
-    : profile.role === "youth"
+    : isAdmin
+      ? "/admin"
+      : !profile
+        ? null
+        : profile.role === "youth"
       ? youthDestination
       : profile.role === "company"
         ? "/company?view=swipe"

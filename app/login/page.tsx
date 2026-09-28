@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
 
@@ -27,13 +28,24 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
+    if (sessionLoading || !user || isRedirectingAfterSignup.current) return;
+    let active = true;
+    void (async () => {
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!active) return;
+      if (!adminError && isAdmin === true) {
+        router.replace(safeRedirectTarget ?? "/admin");
+        return;
+      }
+      if (!profile) return;
       if (profile.role === "youth") {
-        void getYouthFlowState(user.id).then((state) => router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe"));
+        const state = await getYouthFlowState(user.id);
+        if (active) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
         return;
       }
       router.replace(safeRedirectTarget ?? (profile.role === "company" ? "/company?view=swipe" : "/private"));
-    }
+    })();
+    return () => { active = false; };
   }, [profile, router, safeRedirectTarget, sessionLoading, user]);
 
   useEffect(() => {
@@ -71,6 +83,11 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         return;
       }
       const session = await signIn(email, password);
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!adminError && isAdmin === true) {
+        router.replace(safeRedirectTarget ?? "/admin");
+        return;
+      }
       const signedInProfile = await getUserProfile(session.user.id);
       if (signedInProfile?.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
