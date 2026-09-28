@@ -1,5 +1,40 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+
+const STORAGE_PAGE_SIZE = 100;
+const STORAGE_DELETE_BATCH_SIZE = 100;
+
+type AdminClient = SupabaseClient<any, "public", any>;
+
+async function listStorageFiles(admin: AdminClient, bucket: string, directory: string): Promise<string[]> {
+  const files: string[] = [];
+
+  for (let offset = 0; ; offset += STORAGE_PAGE_SIZE) {
+    const { data: entries, error } = await admin.storage.from(bucket).list(directory, {
+      limit: STORAGE_PAGE_SIZE,
+      offset,
+    });
+    if (error) throw error;
+
+    for (const entry of entries ?? []) {
+      const path = `${directory}/${entry.name}`;
+      if (entry.id) files.push(path);
+      else files.push(...await listStorageFiles(admin, bucket, path));
+    }
+
+    if (!entries || entries.length < STORAGE_PAGE_SIZE) break;
+  }
+
+  return files;
+}
+
+async function removeUserStorage(admin: AdminClient, bucket: string, userId: string): Promise<void> {
+  const files = await listStorageFiles(admin, bucket, userId);
+  for (let index = 0; index < files.length; index += STORAGE_DELETE_BATCH_SIZE) {
+    const { error } = await admin.storage.from(bucket).remove(files.slice(index, index + STORAGE_DELETE_BATCH_SIZE));
+    if (error) throw error;
+  }
+}
 
 export async function DELETE(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -16,9 +51,13 @@ export async function DELETE(request: NextRequest) {
   const { data: verified, error: passwordError } = await userClient.auth.signInWithPassword({ email: userData.user.email ?? "", password: body.password });
   if (passwordError || verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
-  const prefix = `${userData.user.id}/`;
-  const { data: documents } = await admin.storage.from("youth-documents").list(userData.user.id, { limit: 1000 });
-  if (documents?.length) await admin.storage.from("youth-documents").remove(documents.map((file) => `${prefix}${file.name}`));
+  try {
+    await removeUserStorage(admin, "youth-documents", userData.user.id);
+    await removeUserStorage(admin, "job-images", userData.user.id);
+  } catch (storageError) {
+    console.error("Failed to remove account-owned storage objects.", storageError);
+    return NextResponse.json({ error: "Kunde inte radera uppladdade filer. Kontot har inte raderats." }, { status: 502 });
+  }
   const { error } = await admin.auth.admin.deleteUser(userData.user.id);
   if (error) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
   return new NextResponse(null, { status: 204 });
