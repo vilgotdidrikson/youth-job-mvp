@@ -8,7 +8,7 @@
 import { randomUUID } from "node:crypto";
 
 const required = [
-  "RLS_TEST_SUPABASE_URL", "RLS_TEST_ANON_KEY",
+  "RLS_TEST_APP_URL", "RLS_TEST_SUPABASE_URL", "RLS_TEST_ANON_KEY",
   "RLS_TEST_YOUTH_A_TOKEN", "RLS_TEST_YOUTH_B_TOKEN",
   "RLS_TEST_COMPANY_A_TOKEN", "RLS_TEST_COMPANY_B_TOKEN",
   "RLS_TEST_YOUTH_A_ID", "RLS_TEST_YOUTH_B_ID",
@@ -25,6 +25,7 @@ if (process.env.RLS_TEST_ALLOW_WRITES !== "true") {
 }
 
 const url = process.env.RLS_TEST_SUPABASE_URL.replace(/\/$/, "");
+const appUrl = process.env.RLS_TEST_APP_URL.replace(/\/$/, "");
 const anonKey = process.env.RLS_TEST_ANON_KEY;
 const ids = {
   youthA: process.env.RLS_TEST_YOUTH_A_ID,
@@ -69,6 +70,20 @@ async function storage(actor, path, options = {}) {
   return { status: response.status, body: await response.text() };
 }
 
+async function app(actor, path, body) {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  if (tokens[actor]) headers.set("Authorization", `Bearer ${tokens[actor]}`);
+  const response = await fetch(`${appUrl}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  let parsed = text;
+  try { parsed = text ? JSON.parse(text) : null; } catch { /* keep text */ }
+  return { status: response.status, body: parsed };
+}
+
 function check(name, passed, actual) {
   console.log(`${passed ? "PASS" : "FAIL"}: ${name} (${actual})`);
   if (!passed) failed += 1;
@@ -107,6 +122,64 @@ const closedSwipe = await createSwipe("youthA", ids.youthA, ids.closedJob);
 check("Youth A cannot apply to closed job", denied(closedSwipe), `HTTP ${closedSwipe.status}`);
 const spoofedSwipe = await createSwipe("youthB", ids.youthA, ids.activeJob);
 check("Youth B cannot apply as Youth A", denied(spoofedSwipe), `HTTP ${spoofedSwipe.status}`);
+
+const ownCandidates = await rest("companyA", "rpc/get_company_candidates", {
+  method: "POST",
+  body: JSON.stringify({ p_job_id: ids.activeJob }),
+});
+check(
+  "Company A can list interested candidates for its own job",
+  ownCandidates.status === 200 && Array.isArray(ownCandidates.body) && ownCandidates.body.some((candidate) => candidate.user_id === ids.youthA),
+  `HTTP ${ownCandidates.status}`,
+);
+const foreignCandidates = await rest("companyB", "rpc/get_company_candidates", {
+  method: "POST",
+  body: JSON.stringify({ p_job_id: ids.activeJob }),
+});
+check("Company B cannot list Company A candidates", denied(foreignCandidates), `HTTP ${foreignCandidates.status}`);
+const youthCandidates = await rest("youthA", "rpc/get_company_candidates", {
+  method: "POST",
+  body: JSON.stringify({ p_job_id: ids.activeJob }),
+});
+check("Youth cannot use the company candidate RPC", denied(youthCandidates), `HTTP ${youthCandidates.status}`);
+const anonymousCandidates = await rest("anonymous", "rpc/get_company_candidates", {
+  method: "POST",
+  body: JSON.stringify({ p_job_id: ids.activeJob }),
+});
+check("Anonymous visitor cannot use the company candidate RPC", denied(anonymousCandidates), `HTTP ${anonymousCandidates.status}`);
+
+// The Next.js CV proxy uses the service role only after authenticating the
+// caller and checking company verification, listing ownership and an explicit
+// interested swipe. A signed URL must never cross those boundaries.
+const ownCandidateCv = await app("companyA", "/api/company/candidate-cv", {
+  jobId: ids.activeJob,
+  youthUserId: ids.youthA,
+});
+check(
+  "Company A can open an interested candidate CV for its own job",
+  ownCandidateCv.status === 200 && typeof ownCandidateCv.body?.url === "string" && typeof ownCandidateCv.body?.expiresAt === "string",
+  `HTTP ${ownCandidateCv.status}`,
+);
+const foreignCandidateCv = await app("companyB", "/api/company/candidate-cv", {
+  jobId: ids.activeJob,
+  youthUserId: ids.youthA,
+});
+check("Company B cannot open Company A candidate CV", foreignCandidateCv.status === 403, `HTTP ${foreignCandidateCv.status}`);
+const youthCandidateCv = await app("youthA", "/api/company/candidate-cv", {
+  jobId: ids.activeJob,
+  youthUserId: ids.youthA,
+});
+check("Youth cannot use the company CV proxy", youthCandidateCv.status === 403, `HTTP ${youthCandidateCv.status}`);
+const anonymousCandidateCv = await app("anonymous", "/api/company/candidate-cv", {
+  jobId: ids.activeJob,
+  youthUserId: ids.youthA,
+});
+check("Anonymous visitor cannot use the company CV proxy", anonymousCandidateCv.status === 401, `HTTP ${anonymousCandidateCv.status}`);
+const noInterestCandidateCv = await app("companyA", "/api/company/candidate-cv", {
+  jobId: ids.activeJob,
+  youthUserId: ids.youthB,
+});
+check("Company A cannot open a CV without candidate interest", noInterestCandidateCv.status === 403, `HTTP ${noInterestCandidateCv.status}`);
 
 // Company review is allowed only for the company-owned job where that youth
 // actually has an interested swipe. The active fixture above provides that.

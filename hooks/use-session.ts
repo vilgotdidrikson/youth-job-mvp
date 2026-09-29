@@ -136,7 +136,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         const sessionUser = session?.user ?? null;
         const sameKnownUser = Boolean(sessionUser && userRef.current?.id === sessionUser.id);
-        if (sessionUser) updateUser(sessionUser);
+        if (sessionUser) {
+          if (!sameKnownUser) updateProfile(null);
+          updateUser(sessionUser);
+        }
 
         // A refreshed token or a repeated SIGNED_IN event when Safari resumes
         // should not make an already rendered app return to its loading gate.
