@@ -326,3 +326,33 @@ end;
 $$;
 revoke all on function public.review_company_verification(uuid, text, text) from public;
 grant execute on function public.review_company_verification(uuid, text, text) to authenticated;
+
+-- Explicit least-privilege grants. CREATE OR REPLACE can reset function ACLs
+-- on some deployment paths, so keep this after every function definition.
+alter policy "admins read own membership" on public.admin_users to authenticated;
+alter policy "swipe_actions verified company read own jobs" on public.swipe_actions to authenticated;
+alter policy "verified company reviews own jobs select" on public.company_interest_actions to authenticated;
+alter policy "verified company reviews own jobs insert" on public.company_interest_actions to authenticated;
+alter policy "verified company reviews own jobs update" on public.company_interest_actions to authenticated;
+alter policy "verified company reviews own jobs delete" on public.company_interest_actions to authenticated;
+
+revoke all on function public.is_admin_account(uuid) from public, anon, authenticated;
+revoke all on function public.is_company_account(uuid) from public, anon, authenticated;
+revoke all on function public.is_verified_company(uuid) from public, anon, authenticated;
+revoke all on function public.is_youth_account(uuid) from public, anon, authenticated;
+grant execute on function public.is_admin_account(uuid) to authenticated, service_role;
+grant execute on function public.is_company_account(uuid) to authenticated, service_role;
+grant execute on function public.is_verified_company(uuid) to authenticated, service_role;
+grant execute on function public.is_youth_account(uuid) to authenticated, service_role;
+
+revoke all on function public.get_company_candidates(uuid) from public, anon, authenticated;
+revoke all on function public.get_pending_company_verifications() from public, anon, authenticated;
+revoke all on function public.review_candidate_and_match(uuid, uuid, text) from public, anon, authenticated;
+revoke all on function public.review_company_verification(uuid, text, text) from public, anon, authenticated;
+grant execute on function public.get_company_candidates(uuid) to authenticated, service_role;
+grant execute on function public.get_pending_company_verifications() to authenticated, service_role;
+grant execute on function public.review_candidate_and_match(uuid, uuid, text) to authenticated, service_role;
+grant execute on function public.review_company_verification(uuid, text, text) to authenticated, service_role;
+
+revoke all on function public.get_job_direct_detail(uuid) from public, anon, authenticated;
+grant execute on function public.get_job_direct_detail(uuid) to anon, authenticated, service_role;
