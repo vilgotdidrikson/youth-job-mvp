@@ -50,7 +50,7 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <article
             key={plan.id}
-            className={`pricing-card${plan.highlighted ? " pricing-card-highlighted" : ""}${selectedPlanId === plan.id ? " pricing-card-selected" : ""}`}
+            className={`pricing-card${selectedPlanId === plan.id ? " pricing-card-selected" : ""}`}
             role="radio"
             aria-checked={selectedPlanId === plan.id}
             tabIndex={0}
@@ -62,7 +62,6 @@ export default function PricingPage() {
               }
             }}
           >
-            {plan.badge && <span className="pricing-badge">{plan.badge}</span>}
             <h2>{plan.name}</h2>
             <p className="pricing-price">
               {plan.price}
@@ -75,19 +74,12 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link
-              href={plan.ctaHref}
-              className={plan.highlighted ? "pricing-cta pricing-cta-highlighted" : "pricing-cta"}
-            >
+            <Link href={plan.ctaHref} className="pricing-cta">
               {plan.cta}
             </Link>
           </article>
         ))}
       </section>
-
-      {audience === "individual" && (
-        <p className="pricing-note">Boost är ett tillval till en aktiv annons, inte en prenumeration.</p>
-      )}
 
       {audience === "company" && (
         <section className="pricing-enterprise">
