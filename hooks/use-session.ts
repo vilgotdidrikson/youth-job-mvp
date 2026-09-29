@@ -96,7 +96,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(() => {
-        void refresh();
+        // Calling another Supabase API while this callback still holds the
+        // auth lock can deadlock the client. Run the refresh on the next tick.
+        window.setTimeout(() => {
+          void refresh();
+        }, 0);
       });
 
       void refresh();

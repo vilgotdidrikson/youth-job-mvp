@@ -91,10 +91,14 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         return;
       }
       const signedInProfile = await getUserProfile(session.user.id);
-      if (signedInProfile?.role === "youth") {
+      if (!signedInProfile) {
+        setError("Kontot saknar en användarprofil. Försök igen om en stund eller kontakta support.");
+        return;
+      }
+      if (signedInProfile.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
         router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
-      } else router.replace(safeRedirectTarget ?? (signedInProfile?.role === "company" ? "/company?view=swipe" : "/private"));
+      } else router.replace(safeRedirectTarget ?? (signedInProfile.role === "company" ? "/company?view=swipe" : "/private"));
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
