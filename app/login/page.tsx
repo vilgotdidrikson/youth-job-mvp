@@ -78,7 +78,9 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           router.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
           return;
         }
-        setMessage("Konto skapat. Kolla din e-post för att bekräfta, logga sedan in.");
+        // Email confirmation is disabled for this project. A missing session is
+        // therefore an unexpected fallback, but the account may still exist.
+        setMessage("Konto skapat. Logga in för att fortsätta.");
         setMode("login");
         return;
       }
