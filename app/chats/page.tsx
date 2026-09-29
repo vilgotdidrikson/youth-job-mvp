@@ -8,6 +8,7 @@ import { getMessages, getMyConversationContacts, getMyConversations, sendMessage
 import { getMyMatches, markMatchHired } from "@/lib/matching";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { ReportDialog } from "@/components/report-dialog";
 
 interface ConvDisplay {
   conv: ConversationSummary;
@@ -199,6 +200,7 @@ export default function ChatsPage() {
             )}
             <p style={{ fontSize: "0.72rem", color: "#1a7f4b", margin: "0.12rem 0 0", fontWeight: 700 }}>{statusLabels[selectedDisplay.status] ?? selectedDisplay.status}</p>
           </div>
+          <ReportDialog targetType="conversation" targetId={selectedConvId} label="Anmäl" />
         </div>
 
         {selectedDisplay.status === "hired" && (
