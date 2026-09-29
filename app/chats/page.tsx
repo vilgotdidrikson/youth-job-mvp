@@ -5,7 +5,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
-import { getMyMatches } from "@/lib/matching";
+import { getMyMatches, markMatchHired } from "@/lib/matching";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,7 @@ interface ConvDisplay {
   otherName: string;
   jobTitle?: string;
   status: string;
+  matchId?: string;
 }
 
 type ConversationState = "loading" | "empty" | "data" | "error";
@@ -30,12 +31,12 @@ export default function ChatsPage() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [conversationState, setConversationState] = useState<ConversationState>("loading");
+  const [hiringMatchId, setHiringMatchId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user || cvLoading || !cvCompleted) return;
     void loadConversations();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile?.role, cvCompleted, cvLoading]);
 
   const loadConversations = async (showLoading = true) => {
@@ -51,6 +52,7 @@ export default function ChatsPage() {
           otherName: contactMap.get(conv.id)?.other_name ?? "Kontakt",
           jobTitle: contactMap.get(conv.id)?.job_title ?? undefined,
           status: conv.match_id ? matchStatusMap.get(conv.match_id) ?? "matched" : "matched",
+          matchId: conv.match_id ?? undefined,
         }));
       setConvDisplays(displays);
       setConversationState(displays.length > 0 ? "data" : "empty");
@@ -77,7 +79,6 @@ export default function ChatsPage() {
       setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
       void loadConversations(false);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConvId]);
 
   useEffect(() => {
@@ -95,6 +96,22 @@ export default function ChatsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skicka meddelande.");
       setDraft(text);
+    }
+  };
+
+  const handleMarkHired = async (display: ConvDisplay) => {
+    if (!display.matchId || profile?.role !== "company") return;
+    if (!window.confirm(`Markera ${display.otherName} som anställd? Chatten och matchhistoriken sparas.`)) return;
+
+    setHiringMatchId(display.matchId);
+    setError("");
+    try {
+      await markMatchHired(display.matchId);
+      await loadConversations(false);
+    } catch (hireError) {
+      setError(hireError instanceof Error ? hireError.message : "Kunde inte markera rekryteringen som genomförd.");
+    } finally {
+      setHiringMatchId(null);
     }
   };
 
@@ -183,6 +200,24 @@ export default function ChatsPage() {
             <p style={{ fontSize: "0.72rem", color: "#1a7f4b", margin: "0.12rem 0 0", fontWeight: 700 }}>{statusLabels[selectedDisplay.status] ?? selectedDisplay.status}</p>
           </div>
         </div>
+
+        {selectedDisplay.status === "hired" && (
+          <div style={{ marginTop: "0.65rem", borderRadius: 10, background: "#e8faf0", padding: "0.65rem 0.8rem", color: "#176b40", fontSize: "0.82rem", fontWeight: 650 }}>
+            {profile?.role === "youth" ? "Företaget har markerat rekryteringen som genomförd." : "Rekryteringen är markerad som genomförd."}
+          </div>
+        )}
+
+        {profile?.role === "company" && selectedDisplay.status !== "hired" && selectedDisplay.matchId && (
+          <button
+            type="button"
+            className="secondary-btn"
+            disabled={hiringMatchId === selectedDisplay.matchId}
+            onClick={() => void handleMarkHired(selectedDisplay)}
+            style={{ width: "100%", marginTop: "0.65rem", padding: "0.65rem 0.8rem" }}
+          >
+            {hiringMatchId === selectedDisplay.matchId ? "Markerar..." : "Markera som anställd"}
+          </button>
+        )}
 
         {error && (
           <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 1rem", fontSize: "0.82rem", color: "#c0392b", margin: "0.5rem 0", flexShrink: 0 }}>

@@ -59,6 +59,11 @@ export interface CompanyProfile {
   user_id: string;
   company_name?: string | null;
   administrator?: string | null;
+  organization_number?: string | null;
+  verification_status?: "pending" | "verified" | "rejected" | null;
+  verification_submitted_at?: string | null;
+  verified_at?: string | null;
+  verification_rejection_reason?: string | null;
   description?: string | null;
   city?: string | null;
   updated_at?: string | null;
@@ -85,6 +90,7 @@ export interface JobPost {
   job_kind?: "employment" | "private_task";
   is_active: boolean;
   status?: "active" | "paused" | "closed";
+  publication_status?: "pending_verification" | "published";
   open_positions?: number;
   is_boosted?: boolean;
   created_at: string;
@@ -120,6 +126,8 @@ export interface MatchRecord {
   job_id: string;
   conversation_id?: string | null;
   status?: string | null;
+  hire_completed_at?: string | null;
+  hired_by_user_id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   [key: string]: unknown;

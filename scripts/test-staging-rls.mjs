@@ -14,7 +14,7 @@ const required = [
   "RLS_TEST_YOUTH_A_ID", "RLS_TEST_YOUTH_B_ID",
   "RLS_TEST_COMPANY_A_ID", "RLS_TEST_COMPANY_B_ID",
   "RLS_TEST_COMPANY_A_JOB_ID", "RLS_TEST_ACTIVE_JOB_ID", "RLS_TEST_PAUSED_JOB_ID", "RLS_TEST_CLOSED_JOB_ID",
-  "RLS_TEST_COMPANY_A_CONVERSATION_ID",
+  "RLS_TEST_COMPANY_A_CONVERSATION_ID", "RLS_TEST_HIRE_MATCH_ID", "RLS_TEST_HIRE_CONVERSATION_ID", "RLS_TEST_HIRE_MULTI_POSITION_JOB_ID",
   "RLS_TEST_YOUTH_A_AI_SESSION_ID", "RLS_TEST_YOUTH_A_DOCUMENT_PATH",
   "RLS_TEST_ALLOW_WRITES",
 ];
@@ -36,6 +36,9 @@ const ids = {
   pausedJob: process.env.RLS_TEST_PAUSED_JOB_ID,
   closedJob: process.env.RLS_TEST_CLOSED_JOB_ID,
   conversation: process.env.RLS_TEST_COMPANY_A_CONVERSATION_ID,
+  hireMatch: process.env.RLS_TEST_HIRE_MATCH_ID,
+  hireConversation: process.env.RLS_TEST_HIRE_CONVERSATION_ID,
+  hireMultiPositionJob: process.env.RLS_TEST_HIRE_MULTI_POSITION_JOB_ID,
   aiSession: process.env.RLS_TEST_YOUTH_A_AI_SESSION_ID,
   youthADocument: process.env.RLS_TEST_YOUTH_A_DOCUMENT_PATH,
 };
@@ -146,6 +149,30 @@ const spoofedMessage = await rest("companyB", "messages", {
   method: "POST", body: JSON.stringify({ conversation_id: ids.conversation, sender_user_id: ids.companyA, message_text: "RLS ATTACK" }),
 });
 check("Company B cannot spoof a sender or message in Company A conversation", denied(spoofedMessage), `HTTP ${spoofedMessage.status}`);
+
+// Hiring must use the server-side RPC: only the actual listing owner can
+// complete a legitimate match, and it must not remove chat history or close a
+// multi-position job. These fixtures are intentionally disposable because the
+// successful event is persistent.
+const hireMessagesBefore = await rest("companyA", `messages?select=id&conversation_id=eq.${ids.hireConversation}`);
+const foreignHire = await rest("companyB", "rpc/mark_match_hired", {
+  method: "POST", body: JSON.stringify({ p_match_id: ids.hireMatch }),
+});
+check("Company B cannot mark Company A match as hired", denied(foreignHire), `HTTP ${foreignHire.status}`);
+const youthHire = await rest("youthA", "rpc/mark_match_hired", {
+  method: "POST", body: JSON.stringify({ p_match_id: ids.hireMatch }),
+});
+check("Youth cannot mark themselves as hired", denied(youthHire), `HTTP ${youthHire.status}`);
+const completedHire = await rest("companyA", "rpc/mark_match_hired", {
+  method: "POST", body: JSON.stringify({ p_match_id: ids.hireMatch }),
+});
+const hiredMatch = Array.isArray(completedHire.body) ? completedHire.body[0] : null;
+check("Company A can mark its legitimate match as hired", completedHire.status === 200 && hiredMatch?.status === "hired" && hiredMatch?.hire_completed_at, `HTTP ${completedHire.status}`);
+const hireMessagesAfter = await rest("companyA", `messages?select=id&conversation_id=eq.${ids.hireConversation}`);
+check("Hire keeps conversation messages", hireMessagesBefore.status === 200 && hireMessagesAfter.status === 200 && Array.isArray(hireMessagesBefore.body) && Array.isArray(hireMessagesAfter.body) && hireMessagesBefore.body.length === hireMessagesAfter.body.length, `HTTP ${hireMessagesAfter.status}`);
+const multiPositionJob = await rest("companyA", `jobs?select=status,open_positions&id=eq.${ids.hireMultiPositionJob}`);
+const multiPositionRow = Array.isArray(multiPositionJob.body) ? multiPositionJob.body[0] : null;
+check("One hire does not auto-close a multi-position job", multiPositionJob.status === 200 && multiPositionRow?.open_positions > 1 && multiPositionRow?.status !== "closed", `HTTP ${multiPositionJob.status}`);
 
 // AI onboarding is youth-private raw data.
 const ownAi = await rest("youthA", `ai_onboarding_sessions?select=id&id=eq.${ids.aiSession}`);

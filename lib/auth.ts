@@ -73,6 +73,37 @@ export async function signIn(email: string, password: string): Promise<Session> 
   return data.session;
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;
+  const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), { redirectTo });
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new Error(error.message);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  if (newPassword.length < 8) throw new Error("Det nya lösenordet måste innehålla minst 8 tecken.");
+
+  const supabase = getSupabaseClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const user = userData.user;
+  if (userError || !user?.email) throw new Error("Din session är inte giltig. Logga in igen.");
+
+  const { data: verified, error: passwordError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (passwordError || verified.user?.id !== user.id) throw new Error("Ditt nuvarande lösenord stämmer inte.");
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+}
+
 export async function signOut(): Promise<void> {
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.signOut();

@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
 
@@ -26,13 +28,24 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!sessionLoading && user && profile && !isRedirectingAfterSignup.current) {
+    if (sessionLoading || !user || isRedirectingAfterSignup.current) return;
+    let active = true;
+    void (async () => {
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!active) return;
+      if (!adminError && isAdmin === true) {
+        router.replace(safeRedirectTarget ?? "/admin");
+        return;
+      }
+      if (!profile) return;
       if (profile.role === "youth") {
-        void getYouthFlowState(user.id).then((state) => router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe"));
+        const state = await getYouthFlowState(user.id);
+        if (active) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
         return;
       }
       router.replace(safeRedirectTarget ?? (profile.role === "company" ? "/company?view=swipe" : "/private"));
-    }
+    })();
+    return () => { active = false; };
   }, [profile, router, safeRedirectTarget, sessionLoading, user]);
 
   useEffect(() => {
@@ -48,6 +61,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
     if (mode === "signup" && password !== confirmPassword) {
       setError("Lösenorden matchar inte. Kontrollera och försök igen.");
+      return;
+    }
+    if (mode === "signup" && password.length < 8) {
+      setError("Lösenordet måste innehålla minst 8 tecken.");
       return;
     }
 
@@ -66,6 +83,11 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         return;
       }
       const session = await signIn(email, password);
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!adminError && isAdmin === true) {
+        router.replace(safeRedirectTarget ?? "/admin");
+        return;
+      }
       const signedInProfile = await getUserProfile(session.user.id);
       if (signedInProfile?.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
@@ -114,8 +136,9 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button><button type="button" className={role === "private" ? "auth-role-selected" : ""} onClick={() => setRole("private")}>Privatperson</button></div></fieldset>}
           <div className="auth-fields">
             <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
-            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required /></label>
-            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required /></label>}
+            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>
+            {!isSignup && <Link href="/forgot-password" className="auth-switch" style={{ display: "inline-block", textAlign: "left" }}>Glömt lösenord?</Link>}
+            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
           </div>
           {error && <p className="auth-message auth-error">{error}</p>}
           {message && <p className="auth-message auth-success">{message}</p>}

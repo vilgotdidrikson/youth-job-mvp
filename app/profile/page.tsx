@@ -11,6 +11,7 @@ import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
+import { changePassword } from "@/lib/auth";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -87,11 +88,20 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [editingProfile, setEditingProfile] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [error, setError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // ── company profile state ──────────────────────────────────
   const [companyName, setCompanyName] = useState("");
   const [companyCity, setCompanyCity] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
+  const [companyOrganizationNumber, setCompanyOrganizationNumber] = useState("");
+  const [companyVerificationStatus, setCompanyVerificationStatus] = useState<"pending" | "verified" | "rejected">("pending");
+  const [companyVerificationReason, setCompanyVerificationReason] = useState("");
   const [companyJobCount, setCompanyJobCount] = useState(0);
 
   useEffect(() => {
@@ -108,6 +118,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             setCompanyName((cpResult.data as Record<string, unknown>).company_name as string ?? "");
             setCompanyCity((cpResult.data as Record<string, unknown>).city as string ?? "");
             setCompanyDescription((cpResult.data as Record<string, unknown>).description as string ?? "");
+            setCompanyOrganizationNumber((cpResult.data as Record<string, unknown>).organization_number as string ?? "");
+            const verificationStatus = (cpResult.data as Record<string, unknown>).verification_status;
+            if (verificationStatus === "verified" || verificationStatus === "rejected") setCompanyVerificationStatus(verificationStatus);
+            setCompanyVerificationReason((cpResult.data as Record<string, unknown>).verification_rejection_reason as string ?? "");
           }
           setCompanyJobCount((jobsResult.data ?? []).length);
           setError("");
@@ -241,6 +255,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleSaveCompanyProfile = async () => {
     if (!user?.id) return;
+    if (companyOrganizationNumber && !/^\d{6}-?\d{4}$/.test(companyOrganizationNumber.trim())) {
+      setError("Ange ett giltigt organisationsnummer med 10 siffror.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -250,6 +268,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
+          organization_number: companyOrganizationNumber.trim() || null,
           city: companyCity.trim(),
           description: companyDescription.trim(),
           updated_at: new Date().toISOString(),
@@ -257,6 +276,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         .eq("user_id", user.id);
       if (dbError) throw new Error(dbError.message);
       setSavedNote("Profil sparad.");
+      if (companyVerificationStatus !== "verified") {
+        setCompanyVerificationStatus("pending");
+        setCompanyVerificationReason("");
+      }
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara.");
     } finally {
@@ -266,13 +289,40 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await logout();
-    router.replace("/login");
+    setError("");
+    try {
+      await logout();
+      router.replace("/login");
+    } catch (logoutError) {
+      setError(logoutError instanceof Error ? logoutError.message : "Kunde inte logga ut.");
+      setLoggingOut(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    setPasswordMessage("");
+    if (!currentPassword) { setPasswordError("Ange ditt nuvarande lösenord."); return; }
+    if (newPassword.length < 8) { setPasswordError("Det nya lösenordet måste innehålla minst 8 tecken."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("De nya lösenorden matchar inte."); return; }
+
+    setChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Lösenordet har ändrats.");
+    } catch (changeError) {
+      setPasswordError(changeError instanceof Error ? changeError.message : "Kunde inte ändra lösenordet.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
-    const password = window.prompt("Skriv ditt lösenord för att permanent radera konto och uppladdade dokument.");
-    if (!password || !window.confirm("Är du säker? Detta kan inte ångras.")) return;
+    const password = window.prompt("Skriv ditt lösenord för att permanent radera kontot och all tillhörande data.");
+    if (!password || !window.confirm("Kontot, profilen, ansökningarna, chattarna och filerna raderas permanent. Personer du har chattat med får veta att chatten har stängts. Detta kan inte ångras. Vill du fortsätta?")) return;
     setDeletingAccount(true); setError("");
     try {
       const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ password }) });
@@ -284,6 +334,32 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (!user) return null;
+
+  const accountSecurityCard = (
+    <section className="card" style={{ padding: "1.25rem", marginTop: "0.75rem", marginBottom: "0.75rem" }} aria-labelledby="password-settings-title">
+      <h2 id="password-settings-title" style={{ margin: 0, fontSize: "1rem", color: "#111" }}>Byt lösenord</h2>
+      <p style={{ margin: ".35rem 0 1rem", color: "#737373", fontSize: ".85rem" }}>Bekräfta ditt nuvarande lösenord innan du väljer ett nytt.</p>
+      <div style={{ display: "grid", gap: ".75rem" }}>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nuvarande lösenord
+          <input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nytt lösenord
+          <input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Bekräfta nytt lösenord
+          <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+      </div>
+      {passwordError && <p role="alert" style={{ margin: ".75rem 0 0", color: "#b42318", fontSize: ".84rem" }}>{passwordError}</p>}
+      {passwordMessage && <p role="status" style={{ margin: ".75rem 0 0", color: "#226a54", fontSize: ".84rem" }}>{passwordMessage}</p>}
+      <button type="button" className="secondary-btn" style={{ width: "100%", padding: ".8rem", marginTop: "1rem" }} disabled={changingPassword} onClick={() => void handleChangePassword()}>
+        {changingPassword ? "Ändrar lösenord..." : "Ändra lösenord"}
+      </button>
+    </section>
+  );
 
   if (profile?.role === "company") {
     const labelStyle: React.CSSProperties = {
@@ -326,6 +402,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           </div>
         </div>
 
+        <div className="card" style={{ padding: "1rem 1.25rem", marginBottom: "0.75rem", background: companyVerificationStatus === "verified" ? "#e8faf0" : companyVerificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }}>
+          <strong style={{ color: companyVerificationStatus === "verified" ? "#1a7f4b" : companyVerificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
+            {companyVerificationStatus === "verified" ? "Verifierat företag" : companyVerificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Inväntar företagsverifiering"}
+          </strong>
+          <p style={{ margin: ".3rem 0 0", color: "#737373", fontSize: ".84rem", lineHeight: 1.5 }}>
+            {companyVerificationStatus === "verified" ? "Era aktiva annonser kan publiceras för ungdomar." : companyVerificationStatus === "rejected" ? companyVerificationReason || "Kontrollera uppgifterna nedan och spara igen." : "Ni kan skapa annonser under tiden. De publiceras efter godkänd verifiering."}
+          </p>
+        </div>
+
         {/* Edit form */}
         <div className="card" style={{ padding: "1.25rem", marginBottom: "0.75rem" }}>
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
@@ -346,6 +431,16 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             placeholder="T.ex. Stockholm"
             value={companyCity}
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
+          />
+
+          <label style={labelStyle}>Organisationsnummer</label>
+          <input
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="XXXXXX-XXXX"
+            inputMode="numeric"
+            value={companyOrganizationNumber}
+            onChange={(e) => { setCompanyOrganizationNumber(e.target.value.replace(/[^0-9-]/g, "")); setSavedNote(""); }}
           />
 
           <label style={labelStyle}>Beskrivning</label>
@@ -380,6 +475,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           <span style={{ color: "#a3a3a3" }}>→</span>
         </button>
 
+        {accountSecurityCard}
+
         {/* Logout */}
         <button
           type="button"
@@ -396,7 +493,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   }
 
   if (profile?.role === "private") {
-    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
+    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link>{accountSecurityCard}<button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
   }
 
   if (profile?.role !== "youth") {
@@ -627,6 +724,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         <SidebarCard title="Kontaktuppgifter"><dl><div><dt>Ort</dt><dd>{form.city || "Lägg till ort"}</dd></div><div><dt>E-post</dt><dd>{user.email}</dd></div></dl></SidebarCard>
         <SidebarCard title="Dina styrkor"><SkillList skills={form.skills} /></SidebarCard>
       </aside></div>
+
+      {accountSecurityCard}
 
       <button
         type="button"
