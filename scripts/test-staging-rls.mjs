@@ -185,7 +185,10 @@ const ownCandidateCv = await app("companyA", "/api/company/candidate-cv", {
 });
 check(
   "Company A can open an interested candidate CV for its own job",
-  ownCandidateCv.status === 200 && typeof ownCandidateCv.body?.url === "string" && typeof ownCandidateCv.body?.expiresAt === "string",
+  ownCandidateCv.status === 200 && (
+    (ownCandidateCv.body?.kind === "pdf" && typeof ownCandidateCv.body?.url === "string" && typeof ownCandidateCv.body?.expiresAt === "string")
+    || (ownCandidateCv.body?.kind === "text" && typeof ownCandidateCv.body?.text === "string" && ownCandidateCv.body.text.length > 0)
+  ),
   `HTTP ${ownCandidateCv.status}`,
 );
 const foreignCandidateCv = await app("companyB", "/api/company/candidate-cv", {

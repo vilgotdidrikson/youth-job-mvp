@@ -75,7 +75,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         const result = await signUp(email, password, role);
         if (result.session) {
           isRedirectingAfterSignup.current = true;
-          router.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
+          // A full navigation lets the destination initialize from the newly
+          // persisted Supabase session. Client routing here can race the auth
+          // callback and leave the next page behind its loading gate.
+          window.location.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
           return;
         }
         // Email confirmation is disabled for this project. A missing session is

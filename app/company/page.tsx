@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
@@ -13,21 +14,16 @@ import { reviewCandidate } from "@/lib/matching";
 import { uploadJobImage } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
-import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision, YouthDocumentType, YouthProfile } from "@/lib/types";
-
-const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
-  grades: "Betyg",
-  recommendation: "Rekommendationsbrev",
-  certificate: "Intyg",
-  cv: "Eget CV",
-  generated_cv: "Employo-CV",
-  other: "Övrigt",
-};
+import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision } from "@/lib/types";
 
 const JOB_CATEGORIES = ["Café/restaurang", "Butik", "Barnomsorg", "Idrott", "Event", "Lager", "Leverans", "Kundtjänst", "Administration", "Handledare", "Sociala medier", "Övrigt"];
 const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
 const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
 const REQUIREMENT_TIPS = ["Social", "Ansvarsfull", "Noggrann", "Kan samarbeta", "Tidigare erfarenhet"];
+
+type CandidateCv =
+  | { kind: "pdf"; url: string; expiresAt: string }
+  | { kind: "text"; text: string };
 
 function toggleTextList(value: string, item: string): string {
   const items = value.split(",").map((entry) => entry.trim()).filter(Boolean);
@@ -36,55 +32,6 @@ function toggleTextList(value: string, item: string): string {
 
 function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
-}
-
-function candidateDetailRows(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-    : [];
-}
-
-function candidateDetailText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function candidateDetailList(value: unknown): string[] {
-  return Array.isArray(value) ? value.map(candidateDetailText).filter(Boolean) : [];
-}
-
-function CandidateHistory({ profile }: { profile: YouthProfile | null }) {
-  const experiences = candidateDetailRows(profile?.work_experience_details);
-  const educations = candidateDetailRows(profile?.education_details);
-
-  return <>
-    <section>
-      <h3>Erfarenhet</h3>
-      {experiences.length > 0 ? experiences.map((item, index) => {
-        const heading = [candidateDetailText(item.role), candidateDetailText(item.employer)].filter(Boolean).join(" · ");
-        const period = [candidateDetailText(item.startDate), candidateDetailText(item.endDate)].filter(Boolean).join(" – ") || candidateDetailText(item.duration);
-        const details = candidateDetailList(item.responsibilities);
-        return <div key={`${heading}-${period}-${index}`} style={{ marginBottom: index < experiences.length - 1 ? ".8rem" : 0 }}>
-          {heading && <strong>{heading}</strong>}
-          {[candidateDetailText(item.location), period].filter(Boolean).length > 0 && <p style={{ margin: ".2rem 0", color: "#737373", fontSize: ".82rem" }}>{[candidateDetailText(item.location), period].filter(Boolean).join(" · ")}</p>}
-          {details.length > 0 && <p style={{ margin: ".25rem 0 0" }}>{details.join(" · ")}</p>}
-        </div>;
-      }) : profile?.work_experience?.length ? <p>{profile.work_experience.join(" · ")}</p> : <p>Ingen erfarenhet angiven</p>}
-    </section>
-    <section>
-      <h3>Utbildning</h3>
-      {educations.length > 0 ? educations.map((item, index) => {
-        const heading = [candidateDetailText(item.program), candidateDetailText(item.school)].filter(Boolean).join(" · ");
-        const period = [candidateDetailText(item.startDate), candidateDetailText(item.endDate)].filter(Boolean).join(" – ");
-        const graduation = candidateDetailText(item.expectedGraduation);
-        const details = [candidateDetailText(item.description), ...candidateDetailList(item.courses), ...candidateDetailList(item.projects), ...candidateDetailList(item.achievements)].filter(Boolean);
-        return <div key={`${heading}-${period}-${index}`} style={{ marginBottom: index < educations.length - 1 ? ".8rem" : 0 }}>
-          {heading && <strong>{heading}</strong>}
-          {[candidateDetailText(item.city), period, graduation ? `Planerad examen ${graduation}` : ""].filter(Boolean).length > 0 && <p style={{ margin: ".2rem 0", color: "#737373", fontSize: ".82rem" }}>{[candidateDetailText(item.city), period, graduation ? `Planerad examen ${graduation}` : ""].filter(Boolean).join(" · ")}</p>}
-          {details.length > 0 && <p style={{ margin: ".25rem 0 0" }}>{details.join(" · ")}</p>}
-        </div>;
-      }) : profile?.education?.length ? <p>{profile.education.join(" · ")}</p> : <p>Ingen utbildning angiven</p>}
-    </section>
-  </>;
 }
 
 type Tab = "kandidater" | "skapa" | "annonser";
@@ -140,7 +87,7 @@ function CompanyPageContent() {
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [uploadedCvUrl, setUploadedCvUrl] = useState<string | null>(null);
+  const [candidateCv, setCandidateCv] = useState<CandidateCv | null>(null);
   const [uploadedCvError, setUploadedCvError] = useState("");
   const [openingUploadedCv, setOpeningUploadedCv] = useState(false);
   const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
@@ -156,6 +103,7 @@ function CompanyPageContent() {
   const candidateFlyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [jobImageFiles, setJobImageFiles] = useState<File[]>([]);
   const [jobImagePreviews, setJobImagePreviews] = useState<string[]>([]);
+  const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [draftSaved, setDraftSaved] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [showCustomBenefit, setShowCustomBenefit] = useState(false);
@@ -171,10 +119,19 @@ function CompanyPageContent() {
         getFeedCompanyJobs(),
         supabase.from("company_profiles").select("*").eq("user_id", userId).maybeSingle(),
       ]);
-      const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id)));
       setJobs(jobsData);
-      setFeed(candidateGroups.flat());
-      if (cp) setCompanyProfile(cp as CompanyProfile);
+      if (cp) {
+        const nextCompanyProfile = cp as CompanyProfile;
+        setCompanyProfile(nextCompanyProfile);
+        if (nextCompanyProfile.verification_status === "verified") {
+          const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id)));
+          setFeed(candidateGroups.flat());
+        } else {
+          // Unverified companies stay in their company workspace, but candidate
+          // data and review actions remain unavailable until approval.
+          setFeed([]);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte ladda data.");
     }
@@ -184,15 +141,16 @@ function CompanyPageContent() {
     if (!loading && user && profile?.role === "company") {
       void loadData(user.id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, profile?.role, router]);
 
   useEffect(() => {
     const requestedView = searchParams.get("view");
     if (requestedView === "kandidater" || requestedView === "skapa" || requestedView === "annonser") {
       setTab(requestedView);
+    } else if (requestedView === "swipe") {
+      setTab(companyProfile?.verification_status === "verified" ? "kandidater" : "skapa");
     }
-  }, [searchParams]);
+  }, [companyProfile?.verification_status, searchParams]);
 
   useEffect(() => {
     if (!user || profile?.role !== "company") return;
@@ -306,16 +264,22 @@ function CompanyPageContent() {
   const openUploadedCv = async (candidate: CandidateFeedItem) => {
     setOpeningUploadedCv(true);
     setUploadedCvError("");
-    setUploadedCvUrl(null);
+    setCandidateCv(null);
     try {
       const response = await fetch("/api/company/candidate-cv", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
         body: JSON.stringify({ jobId: candidate.job.id, youthUserId: candidate.youthUserId }),
       });
-      const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
-      if (!response.ok || !result.url) throw new Error(result.error || "Kunde inte öppna CV:t just nu.");
-      setUploadedCvUrl(result.url);
+      const result = await response.json().catch(() => ({})) as { kind?: unknown; url?: unknown; expiresAt?: unknown; text?: unknown; error?: string };
+      if (!response.ok || (result.kind !== "pdf" && result.kind !== "text")) throw new Error(result.error || "Kunde inte öppna CV:t just nu.");
+      if (result.kind === "pdf" && typeof result.url === "string" && typeof result.expiresAt === "string") {
+        setCandidateCv({ kind: "pdf", url: result.url, expiresAt: result.expiresAt });
+      } else if (result.kind === "text" && typeof result.text === "string") {
+        setCandidateCv({ kind: "text", text: result.text });
+      } else {
+        throw new Error("CV:t hade ett format som inte kunde visas.");
+      }
     } catch (cvError) {
       setUploadedCvError(cvError instanceof Error ? cvError.message : "Kunde inte öppna CV:t just nu.");
     } finally {
@@ -355,7 +319,7 @@ function CompanyPageContent() {
       });
       setForm(EMPTY_FORM);
       setJobImageFiles([]);
-      setJobImagePreviews([]);
+      setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
       setTab("annonser");
     } catch (err) {
@@ -425,6 +389,15 @@ function CompanyPageContent() {
     } finally {
       setGeneratingAi(false);
     }
+  };
+
+  const useCroppedJobImage = (file: File) => {
+    setJobImageFiles([file]);
+    setJobImagePreviews((previews) => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview));
+      return [URL.createObjectURL(file)];
+    });
+    setImageToCrop(null);
   };
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
@@ -645,14 +618,8 @@ function CompanyPageContent() {
                 })}
               </div>
               {selectedCandidate && <article className="company-candidate-profile card">
-                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Ansökt till {selectedCandidate.job.title}</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Sverige"}</span></div></header>
-                <section><h3>Om kandidaten</h3><p>{selectedCandidate.profile?.cv_text || "Kandidaten har ännu inte lagt till någon presentation."}</p></section>
-                <CandidateHistory profile={selectedCandidate.profile} />
-                <section><h3>Styrkor</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).length ? (selectedCandidate.profile?.strengths ?? selectedCandidate.profile?.skills ?? []).map((skill) => <span key={skill}>{skill}</span>) : <span>Inga styrkor angivna</span>}</div></section>
-                <section><h3>Söker jobb inom</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.desired_roles ?? []).length ? selectedCandidate.profile!.desired_roles!.map((role) => <span key={role}>{role}</span>) : <span>Inga roller angivna</span>}</div></section>
-                <section><h3>Tillgänglighet</h3><div className="company-candidate-tags">{(selectedCandidate.profile?.employment_preferences ?? []).length ? selectedCandidate.profile!.employment_preferences!.map((preference) => <span key={preference}>{preference}</span>) : <span>Inte angiven</span>}</div></section>
-                <section><h3>Språk</h3><p>{selectedCandidate.profile?.languages?.join(" · ") || "Inte angivet"}</p></section>
-                <section aria-label="Uppladdat CV"><h3>Uppladdat CV</h3><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ padding: "0.7rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
+                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
+                <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 {(() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
@@ -752,7 +719,7 @@ function CompanyPageContent() {
                   </section>
                   <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2><div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/{form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period"}</em></div></section>
                   <section className="card job-builder-section"><h2>Adress</h2><p className="job-builder-help">Den fullständiga adressen används för att placera jobbet på kartan.</p><div className="job-builder-fields two-columns"><label>Gatuadress *<input className="input-field" placeholder="T.ex. Storgatan 12" list="company-address-suggestions" autoComplete="street-address" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} required /></label><label>Postnummer *<input className="input-field" placeholder="123 45" autoComplete="postal-code" inputMode="numeric" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} required /></label><label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label></div></section>
-                  <section className="card job-builder-section"><h2>Omslagsbild</h2><p className="job-builder-help">En bild gör att annonsen sticker ut i flödet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); setJobImageFiles(files); setJobImagePreviews(files.map((file) => URL.createObjectURL(file))); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP</span></>}</label></section>
+                  <section className="card job-builder-section"><h2>Omslagsbild</h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 16:9</span></>}</label></section>
                 </div>
                 <aside className={`job-builder-preview${previewOpen ? " is-open" : ""}`} style={previewOpen ? { position: "fixed", zIndex: 100, inset: 0, display: "grid", alignContent: "center", justifyItems: "center", padding: "1rem", maxWidth: "none", maxHeight: "none", margin: 0, overflowY: "auto", background: "transparent" } : undefined} role="dialog" aria-modal="true" aria-label="Förhandsvisning av annons" onClick={(event) => { if (event.target === event.currentTarget) setPreviewOpen(false); }}><article className="job-preview-detail" style={{ position: "relative" }}><button type="button" className="job-builder-preview-close" style={{ position: "absolute", top: ".65rem", right: ".65rem", zIndex: 1 }} onClick={() => setPreviewOpen(false)} aria-label="Stäng förhandsvisning">×</button><p className="job-preview-caption">Så här ser annonsen ut</p><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <span>💼</span>}</div><div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyProfile?.company_name || user?.email || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Anställningsform</h3><p>{form.employmentType || "Välj deltid, heltid eller annan anställningsform"}</p></section></div><div className="job-preview-facts"><section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...textListItems(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{textListItems(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Adress</h3><p>{[form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Adress"}</p></section></div></div><small className="job-preview-note">Förhandsvisningen uppdateras medan du skriver.</small></article></aside>
               </div>
@@ -830,7 +797,8 @@ function CompanyPageContent() {
           </div>
         </div>
       )}
-      {uploadedCvUrl && selectedCandidate && <div onClick={() => setUploadedCvUrl(null)} role="dialog" aria-modal="true" aria-label="Uppladdat CV" style={{ position: "fixed", inset: 0, zIndex: 110, padding: "1rem", background: "rgba(0,0,0,0.55)", display: "grid", placeItems: "center" }}><div onClick={(event) => event.stopPropagation()} style={{ width: "min(100%, 1050px)", height: "min(88svh, 760px)", overflow: "hidden", borderRadius: 16, background: "#fff", display: "grid", gridTemplateColumns: "minmax(210px, .7fr) minmax(0, 2fr)" }}><aside style={{ padding: "1.25rem", overflowY: "auto", borderRight: "1px solid #e8e8e8" }}><button type="button" onClick={() => setUploadedCvUrl(null)} aria-label="Stäng CV" style={{ float: "right", border: 0, background: "transparent", fontSize: "1.25rem", cursor: "pointer" }}>×</button><p style={{ color: "#63777b", fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>Kandidat</p><h2 style={{ margin: "0 0 .35rem", color: "#111" }}>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><p style={{ color: "#63777b", margin: "0 0 1rem" }}>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Sverige"}</p><p style={{ fontSize: ".82rem", color: "#63777b" }}>Ansökt till</p><p style={{ marginTop: "-.4rem", fontWeight: 700 }}>{selectedCandidate.job.title}</p><p style={{ fontSize: ".82rem", color: "#63777b" }}>Söker jobb inom</p><p style={{ marginTop: "-.4rem" }}>{selectedCandidate.profile?.desired_roles?.join(" · ") || "Inte angivet"}</p><button type="button" className="secondary-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", marginTop: ".75rem", padding: ".65rem" }}>{openingUploadedCv ? "Hämtar..." : "Ladda om CV"}</button></aside><iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={uploadedCvUrl} style={{ width: "100%", height: "100%", border: 0, background: "#f5f5f5" }} /></div></div>}
+      {candidateCv && selectedCandidate && <div onClick={() => setCandidateCv(null)} role="dialog" aria-modal="true" aria-label="Kandidatens CV" className="candidate-cv-backdrop"><div onClick={(event) => event.stopPropagation()} className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></div>}
+      {imageToCrop && <ImageCropDialog file={imageToCrop} onCancel={() => setImageToCrop(null)} onConfirm={useCroppedJobImage} />}
     </main>
   );
 }
