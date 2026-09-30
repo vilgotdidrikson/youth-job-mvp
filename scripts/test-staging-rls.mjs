@@ -1,6 +1,6 @@
 /*
  * Direct staging RLS checks. This never uses the service-role key and never
- * targets production. It expects five pre-created staging accounts and the
+ * targets production. It expects four pre-created staging accounts and the
  * fixture IDs listed in scripts/rls-staging.env.example.
  *
  * Run: node --env-file=.env.rls scripts/test-staging-rls.mjs
@@ -9,8 +9,6 @@ import { randomUUID } from "node:crypto";
 
 const required = [
   "RLS_TEST_APP_URL", "RLS_TEST_SUPABASE_URL", "RLS_TEST_ANON_KEY",
-  "RLS_TEST_YOUTH_A_TOKEN", "RLS_TEST_YOUTH_B_TOKEN",
-  "RLS_TEST_COMPANY_A_TOKEN", "RLS_TEST_COMPANY_B_TOKEN",
   "RLS_TEST_YOUTH_A_ID", "RLS_TEST_YOUTH_B_ID",
   "RLS_TEST_COMPANY_A_ID", "RLS_TEST_COMPANY_B_ID",
   "RLS_TEST_COMPANY_A_JOB_ID", "RLS_TEST_ACTIVE_JOB_ID", "RLS_TEST_PAUSED_JOB_ID", "RLS_TEST_CLOSED_JOB_ID",
@@ -20,12 +18,31 @@ const required = [
 ];
 const missing = required.filter((name) => !process.env[name]);
 if (missing.length) throw new Error(`Missing RLS test environment variables: ${missing.join(", ")}`);
+
+const authActors = {
+  youthA: ["RLS_TEST_YOUTH_A_TOKEN", "RLS_TEST_YOUTH_A_EMAIL", "RLS_TEST_YOUTH_A_PASSWORD"],
+  youthB: ["RLS_TEST_YOUTH_B_TOKEN", "RLS_TEST_YOUTH_B_EMAIL", "RLS_TEST_YOUTH_B_PASSWORD"],
+  companyA: ["RLS_TEST_COMPANY_A_TOKEN", "RLS_TEST_COMPANY_A_EMAIL", "RLS_TEST_COMPANY_A_PASSWORD"],
+  companyB: ["RLS_TEST_COMPANY_B_TOKEN", "RLS_TEST_COMPANY_B_EMAIL", "RLS_TEST_COMPANY_B_PASSWORD"],
+};
+const missingAuth = Object.entries(authActors).flatMap(([actor, [tokenName, emailName, passwordName]]) => {
+  if (process.env[tokenName] || (process.env[emailName] && process.env[passwordName])) return [];
+  return [`${actor}: ${tokenName} or ${emailName} + ${passwordName}`];
+});
+if (missingAuth.length) throw new Error(`Missing RLS test authentication: ${missingAuth.join("; ")}`);
+
+const url = process.env.RLS_TEST_SUPABASE_URL.replace(/\/$/, "");
+const appUrl = process.env.RLS_TEST_APP_URL.replace(/\/$/, "");
+if (new URL(url).hostname !== "vwcfjvwfeatvuisojwrh.supabase.co") {
+  throw new Error("Refusing to run: RLS_TEST_SUPABASE_URL is not MatchnWork DevStaging.");
+}
+if (new URL(appUrl).hostname !== "youth-job-mvp-dev.vercel.app") {
+  throw new Error("Refusing to run: RLS_TEST_APP_URL is not the Employo dev deployment.");
+}
 if (process.env.RLS_TEST_ALLOW_WRITES !== "true") {
   throw new Error("Set RLS_TEST_ALLOW_WRITES=true only for disposable staging test data.");
 }
 
-const url = process.env.RLS_TEST_SUPABASE_URL.replace(/\/$/, "");
-const appUrl = process.env.RLS_TEST_APP_URL.replace(/\/$/, "");
 const anonKey = process.env.RLS_TEST_ANON_KEY;
 const ids = {
   youthA: process.env.RLS_TEST_YOUTH_A_ID,
@@ -43,13 +60,24 @@ const ids = {
   aiSession: process.env.RLS_TEST_YOUTH_A_AI_SESSION_ID,
   youthADocument: process.env.RLS_TEST_YOUTH_A_DOCUMENT_PATH,
 };
-const tokens = {
-  anonymous: null,
-  youthA: process.env.RLS_TEST_YOUTH_A_TOKEN,
-  youthB: process.env.RLS_TEST_YOUTH_B_TOKEN,
-  companyA: process.env.RLS_TEST_COMPANY_A_TOKEN,
-  companyB: process.env.RLS_TEST_COMPANY_B_TOKEN,
-};
+async function resolveToken(tokenName, emailName, passwordName) {
+  if (process.env[tokenName]) return process.env[tokenName];
+  const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: process.env[emailName], password: process.env[passwordName] }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || !body?.access_token) {
+    throw new Error(`Could not sign in ${emailName} for the staging RLS suite (HTTP ${response.status}).`);
+  }
+  return body.access_token;
+}
+
+const tokens = { anonymous: null };
+for (const [actor, names] of Object.entries(authActors)) {
+  tokens[actor] = await resolveToken(...names);
+}
 let failed = 0;
 
 async function rest(actor, path, options = {}) {
