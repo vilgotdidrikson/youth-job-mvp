@@ -22,8 +22,9 @@ const appUrl = process.env.DELETION_TEST_APP_URL.replace(/\/$/, "");
 if (new URL(url).hostname !== "vwcfjvwfeatvuisojwrh.supabase.co") {
   throw new Error("Refusing to run: DELETION_TEST_SUPABASE_URL is not MatchnWork DevStaging.");
 }
-if (new URL(appUrl).hostname !== "youth-job-mvp-dev.vercel.app") {
-  throw new Error("Refusing to run: DELETION_TEST_APP_URL is not the Employo dev deployment.");
+// A local `next dev` is allowed; the Supabase guard above still pins all data to DevStaging.
+if (!["youth-job-mvp-dev.vercel.app", "localhost", "127.0.0.1"].includes(new URL(appUrl).hostname)) {
+  throw new Error("Refusing to run: DELETION_TEST_APP_URL is not the Employo dev deployment or a local dev server.");
 }
 if (process.env.DELETION_TEST_ALLOW_WRITES !== "true") {
   throw new Error("Set DELETION_TEST_ALLOW_WRITES=true only for disposable staging test data.");

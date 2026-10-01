@@ -76,6 +76,19 @@ alltid upp efter sig.
    `.env.deletion` (gitignorerad) och fyll i staging-nycklarna.
 3. Kör `npm run test:deletion:staging`.
 
+Utan åtkomst till dev-deployen kan appen köras lokalt mot staging. Variabler
+som sätts i processen har företräde framför `.env.local`:
+
+```bash
+set -a; source .env.deletion; set +a
+NEXT_PUBLIC_SUPABASE_URL=$DELETION_TEST_SUPABASE_URL \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=$DELETION_TEST_ANON_KEY \
+SUPABASE_SERVICE_ROLE_KEY=$DELETION_TEST_SERVICE_ROLE_KEY \
+npm run dev
+# i en annan terminal:
+DELETION_TEST_APP_URL=http://localhost:3000 npm run test:deletion:staging
+```
+
 Fall som täcks:
 
 - En admin som försöker radera sig själv nekas. Efter avveckling kan kontot
