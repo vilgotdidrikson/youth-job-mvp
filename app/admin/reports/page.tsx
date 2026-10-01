@@ -8,7 +8,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 
 interface ModerationReport {
   id: string;
-  reporter_user_id: string;
+  reporter_user_id: string | null;
   target_type: "job" | "conversation" | "message" | "user";
   target_id: string;
   reason: "scam" | "harassment" | "discrimination" | "inappropriate" | "privacy" | "other";
@@ -16,6 +16,24 @@ interface ModerationReport {
   status: "open" | "reviewing" | "resolved" | "dismissed";
   created_at: string;
   target_summary: string;
+  target_snapshot: Record<string, unknown> | null;
+}
+
+type SnapshotMessage = { sender_user_id?: string; message_text?: string; created_at?: string };
+
+const shortId = (value: unknown) => (typeof value === "string" ? `${value.slice(0, 8)}…` : "okänd");
+
+// Evidence captured when the report was submitted, so it survives account deletion.
+function snapshotLines(report: ModerationReport): string[] {
+  const snapshot = report.target_snapshot;
+  if (!snapshot) return [];
+  if (report.target_type === "message") return [`${shortId(snapshot.sender_user_id)}: ${String(snapshot.message_text ?? "")}`];
+  if (report.target_type === "conversation") {
+    const messages = Array.isArray(snapshot.messages) ? snapshot.messages as SnapshotMessage[] : [];
+    return messages.map((message) => `${shortId(message.sender_user_id)}: ${message.message_text ?? ""}`);
+  }
+  if (report.target_type === "job") return [String(snapshot.title ?? ""), String(snapshot.description ?? "")].filter(Boolean);
+  return [`${String(snapshot.display_name ?? "Namn saknas")} (${String(snapshot.role ?? "okänd roll")})`];
 }
 
 const reasonLabels: Record<ModerationReport["reason"], string> = {
@@ -100,10 +118,16 @@ export default function ModerationReportsPage() {
               </div>
               <dl className="admin-company-details">
                 <div><dt>Typ</dt><dd>{report.target_type}</dd></div>
-                <div><dt>Anmälare</dt><dd>{report.reporter_user_id.slice(0, 8)}…</dd></div>
+                <div><dt>Anmälare</dt><dd>{report.reporter_user_id ? `${report.reporter_user_id.slice(0, 8)}…` : "Raderat konto"}</dd></div>
                 <div><dt>Inskickad</dt><dd>{new Date(report.created_at).toLocaleString("sv-SE")}</dd></div>
               </dl>
               {report.details && <p style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7", lineHeight: 1.5 }}>{report.details}</p>}
+              {snapshotLines(report).length > 0 && (
+                <details style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7" }}>
+                  <summary style={{ cursor: "pointer", fontWeight: 600 }}>Sparat innehåll vid anmälan</summary>
+                  {snapshotLines(report).map((line, index) => <p key={index} style={{ margin: ".5rem 0 0", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{line}</p>)}
+                </details>
+              )}
               {(report.status === "open" || report.status === "reviewing") && (
                 <div className="admin-review-actions">
                   {report.status === "open" && <button type="button" className="secondary-btn" disabled={actionId === report.id} onClick={() => void review(report, "reviewing")}>Påbörja granskning</button>}
