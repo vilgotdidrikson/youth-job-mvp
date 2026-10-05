@@ -1088,3 +1088,13 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-hero-caret { animation: none; }
 }
+
+/* Shared rose/plum navigation remains readable on the light canvas. */
+.landing-bold-nav,.landing-bold-footer { --landing-ink:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo,.landing-bold-language),.landing-bold-nav .landing-logo { color:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav .landing-bold-language { opacity:1; }
+.landing-bold-nav .landing-bold-language-active { color:var(--color-brand-strong)!important; }
+.landing-bold-nav .landing-logo { font-weight:550;letter-spacing:-.055em; }
+.landing-bold-nav :is(.landing-bold-language,.landing-bold-login) { font-weight:500; }
+.landing-bold-nav :is(a,button):focus-visible,.landing-bold-footer a:focus-visible { outline:3px solid var(--color-brand-strong);outline-offset:4px; }
+.landing-bold-nav .landing-bold-language:hover { color:var(--color-brand-strong)!important; }

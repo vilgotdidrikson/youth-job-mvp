@@ -84,10 +84,34 @@ do $$ declare result jsonb; begin
   raise exception 'Employer edited youth answer';
  exception when insufficient_privilege then null; end;
 end $$;
+-- Reviewed applications stay readable; published answers can be corrected or added later.
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
+select * from public.review_candidate_and_match('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001','interested');
+do $$ begin
+ if (select count(*) from public.get_company_candidates('a2000000-0000-4000-8000-000000000001'))<>1 then raise exception 'Reviewed applicant disappeared'; end if;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+do $$ declare q uuid; result jsonb; begin
+ select id into q from public.application_followups where criterion_label='Erfarenhet av kassa';
+ perform public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001','{}',array[q]);
+ if (select status from public.application_followups where id=q)<>'skipped' then raise exception 'Voluntary skip not saved'; end if;
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag har använt kassasystem i skolkiosken.'),'{}');
+ if (select status from public.application_followups where id=q)<>'answered' then raise exception 'Skipped answer not supplemented'; end if;
+ select id into q from public.application_followups where criterion_label='Kan arbeta helger';
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta på lördagar.'),'{}');
+ if (result->>'updated')::int<>1 then raise exception 'Published answer could not be corrected'; end if;
+end $$;
+insert into public.user_blocks(blocker_user_id,blocked_user_id) values('a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000003');
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
+do $$ begin
+ if (select count(*) from public.get_company_candidates('a2000000-0000-4000-8000-000000000001'))<>0 then raise exception 'Blocked candidate visible in all applications'; end if;
+ begin perform public.get_candidate_assessment_input('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001');raise exception 'Blocked assessment allowed';exception when insufficient_privilege then null;end;
+ if (select count(*) from public.application_followups)<>0 then raise exception 'Blocked follow-up answer visible'; end if;
+end $$;
 set local role anon;
 do $$ begin
  begin perform * from public.application_followups; raise exception 'Anonymous read answers'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-select 'PASS: source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
+select 'PASS: reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
 rollback;

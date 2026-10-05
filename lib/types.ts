@@ -179,6 +179,7 @@ export interface OnboardingMessage {
 }
 
 export interface CandidateFeedItem {
+  reviewDecision?: SwipeDecision;
   application?: import("./application-completions").ApplicationCompletion | null;
   youthUserId: string;
   profile: YouthProfile | null;

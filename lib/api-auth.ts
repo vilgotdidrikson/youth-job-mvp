@@ -55,6 +55,6 @@ export async function requireApiUser(request: NextRequest, endpoint: ProtectedEn
 
   const { data: allowed, error: quotaError } = await supabase.rpc("consume_api_quota", { p_endpoint: endpoint, p_limit: limits[endpoint] });
   if (quotaError) return { response: Response.json({ error: "Kunde inte kontrollera tjänstegränsen." }, { status: 503 }) } as const;
-  if (!allowed) return { response: Response.json({ error: "Du har nått gränsen för den här AI-funktionen. Försök igen om en stund." }, { status: 429 }) } as const;
+  if (!allowed) return { response: Response.json({ error: "Du har nått gränsen för den här funktionen. Försök igen om en stund." }, { status: 429 }) } as const;
   return { user, token } as const;
 }

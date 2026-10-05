@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import "./company-design.css";
+import { JobPreviewDialog } from "@/components/job-preview-dialog";
 import { ModalDialog } from "@/components/modal-dialog";
 import { UiIcon } from "@/components/ui-icon";
 import { CandidateAssessmentPanel } from "@/components/candidate-assessment-panel";
@@ -103,9 +104,10 @@ function CompanyPageContent() {
   const [error, setError] = useState("");
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidateFilter, setCandidateFilter] = useState<"pending" | "all">("pending");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [candidateCv, setCandidateCv] = useState<CandidateCv | null>(null);
+  const [candidateCv, setCandidateCv] = useState<(CandidateCv & { candidateKey: string }) | null>(null);
   const [uploadedCvError, setUploadedCvError] = useState("");
   const [openingUploadedCv, setOpeningUploadedCv] = useState(false);
   const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
@@ -170,7 +172,7 @@ function CompanyPageContent() {
         const nextCompanyProfile = cp as CompanyProfile;
         setCompanyProfile(nextCompanyProfile);
         if (nextCompanyProfile.verification_status === "verified") {
-          const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id)));
+          const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id, { includeReviewed: true })));
           setFeed(candidateGroups.flat());
         } else {
           // Unverified companies stay in their company workspace, but candidate
@@ -192,7 +194,7 @@ function CompanyPageContent() {
   useEffect(() => {
     const requestedView = searchParams.get("view");
     const requestedJob = searchParams.get("job"), requestedCandidate = searchParams.get("candidate");
-    if (requestedJob && requestedCandidate) { setSelectedCandidateId(`${requestedJob}:${requestedCandidate}`); setCandidateSearch(""); }
+    if (requestedJob && requestedCandidate) { setSelectedCandidateId(`${requestedJob}:${requestedCandidate}`); setCandidateCv(null); setUploadedCvError(""); setCandidateSearch(""); setCandidateFilter("all"); }
     if (requestedView === "kandidater" || requestedView === "skapa" || requestedView === "annonser") {
       setTab(requestedView);
     } else if (requestedView === "swipe") {
@@ -272,7 +274,7 @@ function CompanyPageContent() {
   };
 
   const handleDecision = async (decision: SwipeDecision) => {
-    const item = candidateFeed[feedIndex];
+    const item = candidateFeed.filter((candidate) => !candidate.reviewDecision)[feedIndex];
     if (!item) return;
     try {
       const result: MatchRecord | null = await reviewCandidate(item.job.id, item.youthUserId, decision);
@@ -322,9 +324,9 @@ function CompanyPageContent() {
       const result = await response.json().catch(() => ({})) as { kind?: unknown; url?: unknown; expiresAt?: unknown; text?: unknown; error?: string };
       if (!response.ok || (result.kind !== "pdf" && result.kind !== "text")) throw new Error(result.error || "Kunde inte öppna CV:t just nu.");
       if (result.kind === "pdf" && typeof result.url === "string" && typeof result.expiresAt === "string") {
-        setCandidateCv({ kind: "pdf", url: result.url, expiresAt: result.expiresAt });
+        setCandidateCv({ kind: "pdf", url: result.url, expiresAt: result.expiresAt, candidateKey: `${candidate.job.id}:${candidate.youthUserId}` });
       } else if (result.kind === "text" && typeof result.text === "string") {
-        setCandidateCv({ kind: "text", text: result.text });
+        setCandidateCv({ kind: "text", text: result.text, candidateKey: `${candidate.job.id}:${candidate.youthUserId}` });
       } else {
         throw new Error("CV:t hade ett format som inte kunde visas.");
       }
@@ -537,12 +539,14 @@ function CompanyPageContent() {
 
   const candidateFeed = feed;
   const verificationStatus = companyProfile?.verification_status ?? "pending";
-  const currentCandidate = candidateFeed[feedIndex] ?? null;
+  const pendingCandidates = candidateFeed.filter((candidate) => !candidate.reviewDecision);
+  const displayedCandidates = candidateFilter === "pending" ? pendingCandidates : candidateFeed;
+  const currentCandidate = pendingCandidates[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
   const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
   const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
-  const selectedCandidate = candidateFeed.find((candidate) => `${candidate.job.id}:${candidate.youthUserId}` === selectedCandidateId) ?? candidateFeed[0] ?? null;
+  const selectedCandidate = displayedCandidates.find((candidate) => `${candidate.job.id}:${candidate.youthUserId}` === selectedCandidateId) ?? (selectedCandidateId ? null : displayedCandidates[0] ?? null);
 
   return (
     <main className="mobile-shell mnw-company-workspace">
@@ -703,26 +707,28 @@ function CompanyPageContent() {
             <h1>Kandidater som har sökt era jobb</h1>
             <span>{candidateFeed.length} sökande</span>
           </header>
-          {candidateFeed.length === 0 ? (
+          <nav className="company-application-tabs" aria-label="Visa ansökningar"><button type="button" aria-pressed={candidateFilter === "pending"} onClick={() => {setCandidateFilter("pending");setSelectedCandidateId(null);setCandidateCv(null);}}>Att granska <span>{pendingCandidates.length}</span></button><button type="button" aria-pressed={candidateFilter === "all"} onClick={() => {setCandidateFilter("all");setSelectedCandidateId(null);setCandidateCv(null);}}>Alla ansökningar <span>{candidateFeed.length}</span></button></nav>
+          {candidateFilter === "pending" && !pendingCandidates.length && candidateFeed.length > 0 ? <section className="card company-applicants-empty"><UiIcon name="check" width="30" /><h2>Alla ansökningar är granskade</h2><p>Tidigare kandidater och deras kompletteringar finns kvar under Alla ansökningar.</p><button type="button" className="secondary-btn" onClick={() => setCandidateFilter("all")}>Visa alla ansökningar</button></section> : candidateFeed.length === 0 ? (
             <div className="card company-applicants-empty"><h2>Inga ansökningar ännu</h2><p>När någon söker en av era annonser visas deras profil här.</p></div>
           ) : (
             <div className="company-applicants-layout">
               <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} placeholder="Namn eller jobb…" /></label><div className="company-applicant-list">
-                {candidateFeed.filter((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))).map((candidate) => {
+                {displayedCandidates.filter((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))).map((candidate) => {
                   const profile = candidate.profile;
                   const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;
                   return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} aria-pressed={isSelected} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
                     <span className="company-applicant-avatar">{(profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</span>
-                    <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small></span>
+                    <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small>{candidate.reviewDecision && <em className="company-application-reviewed">{candidate.reviewDecision === "interested" ? "Intresse visat" : "Avslutad"}</em>}</span>
                     <span aria-hidden="true">›</span>
                   </button>;
                 })}
-              </div>{candidateSearch.trim() && !candidateFeed.some((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))) && <p className="company-search-empty">Inga ansökningar matchar din sökning.</p>}</div>
+              </div>{candidateSearch.trim() && !displayedCandidates.some((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))) && <p className="company-search-empty">Inga ansökningar matchar din sökning.</p>}</div>
+              {!selectedCandidate && selectedCandidateId && <section className="card company-applicants-empty"><h2>Ansökan är inte tillgänglig</h2><p>Välj en annan kandidat i listan för att fortsätta.</p></section>}
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 <CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
-                {(() => {
+                {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href="/chats" className="secondary-btn">Till chattarna <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
                   return <section aria-label="Beslut om ansökan" style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e8e8e8" }}>
@@ -869,10 +875,10 @@ function CompanyPageContent() {
                     </section>
                     <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2><div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/{salaryPeriod}</em></div></section>
                     <section className="card job-builder-section"><h2>Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
-                    <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 16:9</span></>}</label></section>
+                    <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{jobImagePreviews.length ? <div className="job-builder-image-grid">{jobImagePreviews.map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 4:3</span></>}</label></section>
                   </>)}
                 </div>
-                {previewOpen && <ModalDialog label="Förhandsvisning av annons" onClose={() => setPreviewOpen(false)} className="mnw-job-preview-modal"><article className="job-preview-detail" style={{ position: "relative" }}><button type="button" className="job-builder-preview-close" style={{ position: "absolute", top: ".65rem", right: ".65rem", zIndex: 1 }} onClick={() => setPreviewOpen(false)} aria-label="Stäng förhandsvisning">×</button><p className="job-preview-caption">Så här ser annonsen ut</p><div className="job-preview-image">{jobImagePreviews[0] ? <img src={jobImagePreviews[0]} alt="Omslag för annonsen" /> : <UiIcon name="briefcase" width="46" height="46" />}</div><div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyProfile?.company_name || user?.email || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Anställningsform</h3><p>{form.employmentType || "Välj deltid, heltid eller annan anställningsform"}</p></section></div><div className="job-preview-facts"><section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...textListItems(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{textListItems(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Adress</h3><p>{[form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Adress"}</p></section></div></div><small className="job-preview-note">Förhandsvisningen uppdateras medan du skriver.</small></article></ModalDialog>}
+                {previewOpen && <JobPreviewDialog form={form} image={jobImagePreviews[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} onClose={() => setPreviewOpen(false)} />}
               </div>
               <div className="job-builder-actions">
                 {draftSaved && <span>Utkast sparat</span>}
@@ -954,7 +960,7 @@ function CompanyPageContent() {
           </div>
         </div>
       )}
-      {candidateCv && selectedCandidate && <ModalDialog label="Kandidatens CV" onClose={() => setCandidateCv(null)} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
+      {candidateCv && selectedCandidate && candidateCv.candidateKey === `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}` && <ModalDialog label="Kandidatens CV" onClose={() => setCandidateCv(null)} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
       {showMatchProfileEditor && user && (
         <ModalDialog label="Företagets matchprofil" onClose={() => setShowMatchProfileEditor(false)}>
           <div className="company-match-modal-content" onClick={(event) => event.stopPropagation()}>

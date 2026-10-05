@@ -60,3 +60,16 @@
 .candidate-criterion-status { width:fit-content;border-radius:8px;padding:5px 9px;background:#f4f0f2;color:#776773!important;font-size:.73rem!important; }
 .candidate-assessment-panel li[data-status="fulfilled"] .candidate-criterion-status { background:#edf6f0;color:#226a54!important; }
 .candidate-assessment-panel li[data-status="unfulfilled"] .candidate-criterion-status { background:#fff0f4;color:#a73858!important; }
+
+.company-application-tabs {display:flex;gap:5px;width:fit-content;max-width:100%;padding:5px;background:#fce9ef;border:1px solid #f0d9e0;border-radius:15px;margin:0 0 25px;}
+.company-application-tabs button {display:flex;align-items:center;gap:9px;min-height:44px;border:0;border-radius:11px;padding:10px 17px;color:#896a76;background:transparent;font:inherit;font-size:.81rem;cursor:pointer;}
+.company-application-tabs button[aria-pressed="true"] {background:white;color:#b84164;box-shadow:0 2px 8px #4c303b06;}
+.company-application-tabs button span {font-size:.67rem;min-width:20px;padding:2px 5px;border-radius:6px;background:#fffafb;}
+.company-application-reviewed {display:block;font-size:.65rem;font-style:normal;margin-top:4px;color:#b84164;}
+.company-reviewed-application {display:flex;align-items:flex-start;gap:12px;margin-top:24px;padding:18px;background:#fce9ef;border:1px solid #f0d9e0;border-radius:15px;}
+.company-reviewed-application > svg {flex-shrink:0;color:#b84164;}
+.company-reviewed-application > div {flex:1;}
+.company-reviewed-application strong {font-size:.87rem;font-weight:500;}
+.company-reviewed-application p {margin:8px 0 0;font-size:.78rem;color:#896a76;line-height:1.8;}
+.company-reviewed-application a {display:flex;align-items:center;gap:8px;font-size:.77rem;text-decoration:none;}
+@media(max-width:720px) {.company-application-tabs {width:100%;}.company-application-tabs button {flex:1;justify-content:center;padding:10px;font-size:.76rem;}.company-reviewed-application {flex-wrap:wrap;}.company-reviewed-application a {margin-left:34px;}}

@@ -10,7 +10,7 @@ interface ImageCropDialogProps {
 }
 
 const OUTPUT_WIDTH = 1200;
-const OUTPUT_HEIGHT = 675;
+const OUTPUT_HEIGHT = 900;
 
 async function cropImage(file: File, zoom: number, offsetX: number, offsetY: number): Promise<File> {
   const source = URL.createObjectURL(file);
@@ -77,9 +77,10 @@ export function ImageCropDialog({ file, onCancel, onConfirm }: ImageCropDialogPr
         <div className="image-crop-viewport">
           {/* Blob URLs are local previews and cannot use the Next image optimizer. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewUrl} alt="Förhandsgranskning av beskärning" style={{ objectPosition: `${50 - offsetX * 50}% ${50 - offsetY * 50}%`, transform: `scale(${zoom})`, transformOrigin: `${50 - offsetX * 50}% ${50 - offsetY * 50}%` }} />
+          <img draggable={false} src={previewUrl} alt="Förhandsgranskning av beskärning" style={{ objectPosition: `${50 - offsetX * 50}% ${50 - offsetY * 50}%`, transform: `scale(${zoom})`, transformOrigin: `${50 - offsetX * 50}% ${50 - offsetY * 50}%` }} />
           <span aria-hidden="true" />
         </div>
+        <p className="image-crop-help">Behåll det viktigaste i mitten. Bilden beskärs i formatet 4:3 och används som annonsens omslag.</p>
         <div className="image-crop-controls">
           <label>Zoom<input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label>
           <label>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={offsetX} onChange={(event) => setOffsetX(Number(event.target.value))} /></label>

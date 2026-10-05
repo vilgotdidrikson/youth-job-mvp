@@ -120,7 +120,7 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
   ];
 }
 
-export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedItem[]> {
+export async function getCandidatesForJob(jobId: string, options?: { includeReviewed?: boolean }): Promise<CandidateFeedItem[]> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
@@ -138,7 +138,7 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
       .eq("decision", "interested"),
     supabase
       .from("company_interest_actions")
-      .select("youth_user_id")
+      .select("youth_user_id,decision")
       .eq("job_id", jobId)
       .eq("company_user_id", user.id),
   ]);
@@ -171,10 +171,10 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     throw new Error("You can only review candidates for your own jobs.");
   }
 
-  const reviewedIds = new Set((reviewsResult.data ?? []).map((row) => String(row.youth_user_id)));
+  const reviewed = new Map((reviewsResult.data ?? []).map((row) => [String(row.youth_user_id), row.decision]));
   const interestedIds = (interestsResult.data ?? [])
     .map((row) => String((row as JobInterest).youth_user_id))
-    .filter((id) => !reviewedIds.has(id));
+    .filter((id) => options?.includeReviewed || !reviewed.has(id));
 
   if (!interestedIds.length) {
     return [];
@@ -198,8 +198,9 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     profileMap.set(row.user_id, row);
   }
 
-  return interestedIds.map((youthUserId) => ({
+  return interestedIds.filter((id) => profileMap.has(id)).map((youthUserId) => ({
     youthUserId,
+    reviewDecision: reviewed.get(youthUserId) === "interested" ? "interested" : reviewed.get(youthUserId) === "skip" ? "skip" : undefined,
     profile: profileMap.get(youthUserId) ?? null,
     application: completionMap.get(youthUserId) ?? null,
     job,

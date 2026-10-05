@@ -20,7 +20,7 @@ export function MobileNav() {
     {href:"/profile",label:"Profil",icon:"profile"},
   ] : [{href:"/private",label:"Uppdrag",icon:"briefcase"},{href:"/chats",label:"Chattar",icon:"chat"},{href:"/notifications",label:"Aktivitet",icon:"activity"},{href:"/profile",label:"Profil",icon:"profile"}];
   return <nav className={styles.nav} aria-label="Huvudnavigation"><Link className={styles.brand} href={items[0].href}>MatchnWork</Link><div className={styles.links}>{items.map(item => {
-    const active = pathname === item.href.split("?")[0] && (!item.view || query.get("view") === item.view || (!query.get("view") && item.view === "annonser"));
+    const active = pathname === item.href.split("?")[0] && (!item.view || query.get("view") === item.view || (!query.get("view") && item.view === "kandidater") || (query.get("view") === "swipe" && item.view === "kandidater") || (query.get("view") === "skapa" && item.view === "annonser"));
     return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined}><UiIcon name={item.icon}/><span>{item.label}</span></Link>;
   })}</div><Link className={styles.account} href="/profile" aria-label="Mitt konto"><UiIcon name="profile"/></Link></nav>;
 }

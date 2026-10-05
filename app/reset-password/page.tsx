@@ -61,13 +61,13 @@ export default function ResetPasswordPage() {
   return <main className="auth-page"><section className="auth-layout auth-layout-form-only auth-layout-login"><div className="auth-form-stack">
     <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true">←</span><span>Till inloggning</span></Link>
     <form className="auth-card auth-card-login" onSubmit={submit}>
-      <div className="auth-card-heading"><h2>Välj nytt lösenord</h2><p>{checkingLink ? "Verifierar återställningslänken..." : ready ? "Ange ett nytt lösenord för ditt konto." : message ? "Ditt lösenord har uppdaterats." : "Öppna sidan via länken i återställningsmejlet."}</p></div>
+      <div className="auth-card-heading"><h1>Välj nytt lösenord</h1><p>{checkingLink ? "Verifierar återställningslänken..." : ready ? "Ange ett nytt lösenord för ditt konto." : message ? "Ditt lösenord har uppdaterats." : "Öppna sidan via länken i återställningsmejlet."}</p></div>
       {ready && <div className="auth-fields">
         <label>Nytt lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>
         <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>
       </div>}
-      {error && <p className="auth-message auth-error">{error}</p>}
-      {message && <p className="auth-message auth-success">{message}</p>}
+      {error && <p role="alert" className="auth-message auth-error">{error}</p>}
+      {message && <p role="status" className="auth-message auth-success">{message}</p>}
       {ready && !message && <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Sparar..." : "Spara nytt lösenord"}<span aria-hidden="true">↗</span></button>}
       {!checkingLink && !ready && !message && <Link href="/forgot-password" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Begär en ny länk<span aria-hidden="true">↗</span></Link>}
       {message && <Link href="/login" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Logga in<span aria-hidden="true">↗</span></Link>}

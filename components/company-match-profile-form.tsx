@@ -71,7 +71,7 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
     } finally { setSaving(false); }
   };
 
-  if (loading) return <section className={`company-match-profile${embedded ? " is-embedded" : ""}`}><p className="company-match-loading">Laddar matchprofil...</p></section>;
+  if (loading) return <section className={`company-match-profile${embedded ? " is-embedded" : ""}`}><p role="status" className="company-match-loading">Laddar matchprofil...</p></section>;
 
   const steps = [
     { number: 1 as const, label: "Kultur" },
@@ -85,9 +85,9 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
       <span>{completed === 6 ? "Komplett" : `${completed}/6 ifyllt`}</span>
     </header>
     <p className="company-match-intro">Fyll i detta en gång. Informationen kombineras sedan med kraven för varje enskild annons.</p>
-    <div className="company-match-progress" aria-label={`${progress} procent av matchprofilen är ifylld`}><i style={{ width: `${progress}%` }} /></div>
+    <div className="company-match-progress" role="progressbar" aria-valuemin={0} aria-valuemax={6} aria-valuenow={completed} aria-label={`${progress} procent av matchprofilen är ifylld`}><i style={{ width: `${progress}%` }} /></div>
     <nav className="company-match-steps" aria-label="Delar i företagets matchprofil">
-      {steps.map((step) => <button key={step.number} type="button" className={activeStep === step.number ? "is-active" : ""} onClick={() => { setActiveStep(step.number); setMessage(""); }}><span>{step.number}</span>{step.label}</button>)}
+      {steps.map((step) => <button key={step.number} type="button" aria-current={activeStep === step.number ? "step" : undefined} className={activeStep === step.number ? "is-active" : ""} onClick={() => { setActiveStep(step.number); setMessage(""); }}><span>{step.number}</span>{step.label}</button>)}
     </nav>
 
     <div className="company-match-fields">
@@ -112,7 +112,7 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
       </>}
     </div>
 
-    {error && <p className="company-match-error">{error}</p>}
+    {error && <p role="alert" className="company-match-error">{error}</p>}
     {message && <p role="status" className="company-match-success">✓ {message}</p>}
     <footer className="company-match-actions">
       {activeStep > 1 && <button type="button" className="secondary-btn" onClick={() => setActiveStep((activeStep - 1) as 1 | 2)}>Tillbaka</button>}

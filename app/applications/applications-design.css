@@ -46,3 +46,6 @@
 .applications-confirmation {display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:16px;background:#edf6ef;color:#315a40;font-size:14px;line-height:1.5;}
 .applications-confirmation svg {flex-shrink:0;}
 .applications-checking {padding:14px 18px;border-radius:16px;background:#fff4f7;color:#735362;font-size:14px;line-height:1.5;}
+
+.application-answer-edit {display:inline-flex;align-items:center;min-height:40px;border:0;background:transparent;color:#b84164;padding:8px 0;font:inherit;font-size:.79rem;text-decoration:underline;text-underline-offset:4px;cursor:pointer;}
+.application-answer-edit:hover {color:#a73858;}

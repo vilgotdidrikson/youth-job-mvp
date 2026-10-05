@@ -83,3 +83,8 @@
  .bubble { max-width:86%; } .bubble p { font-size:.83rem; }
 }
 @media(prefers-reduced-motion:reduce) { .contact { transition:none; } }
+
+.quickReplies {display:flex;flex-wrap:wrap;gap:8px;padding:12px 24px 0;background:white;}
+.quickReplies button {min-height:36px;max-width:100%;border:1px solid #f0d9e0;border-radius:999px;background:white;color:var(--accent);padding:8px 13px;font-size:.75rem;line-height:1.5;text-align:left;}
+.quickReplies button:hover {background:var(--rose);border-color:#dc6f8d;}
+@media(max-width:720px) {.quickReplies {padding:10px 16px 0;gap:6px;}.quickReplies button {font-size:.73rem;}}
