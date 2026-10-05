@@ -57,6 +57,8 @@ interface JobForm {
   requirements: string;
   trainableRequirements: string;
   topTraits: string;
+  candidateQuestions: string[];
+  aiGenerated: boolean;
 }
 
 const EMPTY_FORM: JobForm = {
@@ -76,6 +78,8 @@ const EMPTY_FORM: JobForm = {
   requirements: "",
   trainableRequirements: "",
   topTraits: "",
+  candidateQuestions: [],
+  aiGenerated: false,
 };
 
 function CompanyPageContent() {
@@ -114,6 +118,7 @@ function CompanyPageContent() {
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [draftSaved, setDraftSaved] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
   const [showCustomBenefit, setShowCustomBenefit] = useState(false);
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
@@ -328,6 +333,7 @@ function CompanyPageContent() {
     if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
     if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return; }
     if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return; }
+    if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan publicering."); return; }
     setBusy(true);
     setError("");
     try {
@@ -358,6 +364,8 @@ function CompanyPageContent() {
           mustHaves: textListItems(form.requirements),
           trainableRequirements: textListItems(form.trainableRequirements),
           topTraits: textListItems(form.topTraits).slice(0, 5),
+          candidateQuestions: form.candidateQuestions,
+          aiGenerated: form.aiGenerated,
         });
       } catch {
         // The listing is already published at this point. Do not make a retry
@@ -446,23 +454,49 @@ function CompanyPageContent() {
       setError("Skriv en jobbtitel först.");
       return;
     }
+    if (generatingAi || busy) return;
     setGeneratingAi(true);
     setError("");
+    setAiMessage("");
     try {
       const response = await fetch("/api/company/job/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
-        body: JSON.stringify({ title: form.title, industry: companyProfile?.industry ?? "" }),
+        body: JSON.stringify({
+          title: form.title,
+          industry: companyProfile?.industry ?? "",
+          description: form.description,
+          category: form.category,
+          employmentType: form.employmentType,
+          requirements: form.requirements,
+          trainableRequirements: form.trainableRequirements,
+          topTraits: form.topTraits,
+          benefits: form.benefits,
+        }),
       });
-      const data = (await response.json()) as { category?: string; description?: string; benefits?: string; requirements?: string; error?: string };
+      const data = (await response.json()) as {
+        category?: string;
+        employmentType?: string;
+        description?: string;
+        benefits?: string[];
+        source?: "ai" | "fallback";
+        matchProfile?: { roleSummary?: string; mustHaves?: string[]; trainableRequirements?: string[]; topTraits?: string[]; candidateQuestions?: string[] };
+        error?: string;
+      };
       if (!response.ok) throw new Error(data.error || "Kunde inte skapa annonsen.");
       setForm((previous) => ({
         ...previous,
         category: data.category || previous.category,
+        employmentType: data.employmentType || previous.employmentType,
         description: data.description || previous.description,
-        benefits: data.benefits || previous.benefits,
-        requirements: data.requirements || previous.requirements,
+        benefits: data.benefits?.join(", ") || previous.benefits,
+        requirements: data.matchProfile?.mustHaves?.join(", ") || previous.requirements,
+        trainableRequirements: data.matchProfile?.trainableRequirements?.join(", ") || previous.trainableRequirements,
+        topTraits: data.matchProfile?.topTraits?.join(", ") || previous.topTraits,
+        candidateQuestions: data.matchProfile?.candidateQuestions?.slice(0, 3) || previous.candidateQuestions,
+        aiGenerated: data.source === "ai",
       }));
+      setAiMessage(data.source === "ai" ? "AI-förslaget är klart. Granska texten nu och matchprofilen i nästa steg." : "Ett grundförslag är klart. Granska texten och matchprofilen innan publicering.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
     } finally {
@@ -808,8 +842,9 @@ function CompanyPageContent() {
                     <section className="card job-builder-section job-builder-step-panel">
                       <div className="job-builder-section-title">
                         <div><p className="job-builder-eyebrow">Steg 1 av 3</p><h2>Berätta om jobbet</h2><p className="job-builder-help">Börja med det viktigaste. Ni kan låta AI formulera ett första förslag och sedan redigera texten.</p></div>
-                        <button type="button" onClick={() => void handleAiGenerate()} disabled={generatingAi} className="job-builder-ai">{generatingAi ? "AI skriver..." : "✦ Skapa förslag med AI"}</button>
+                        <button type="button" onClick={() => void handleAiGenerate()} disabled={generatingAi || busy} className="job-builder-ai">{generatingAi ? "AI bygger förslag..." : "✦ Skapa annons + matchning med AI"}</button>
                       </div>
+                      {aiMessage && <p role="status" className="job-builder-ai-message">✓ {aiMessage}</p>}
                       <label className="job-builder-title-field">Arbetstitel *<input className="input-field" placeholder="T.ex. Butikssäljare" list="company-job-title-suggestions" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required /></label>
                       <label className="job-builder-label job-builder-description-label">Beskriv jobbet, vem ni söker och vad ni erbjuder *</label>
                       <textarea rows={7} className="job-builder-textarea" placeholder="T.ex. Vi söker en social och punktlig person som kan arbeta helger i vår butik. Erfarenhet är inget krav eftersom vi lär upp på plats..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
@@ -834,6 +869,7 @@ function CompanyPageContent() {
                       <div className="job-builder-fields" style={{ marginTop: "1rem" }}>
                         <label>Vad kan personen lära sig på plats?<textarea className="input-field" rows={3} placeholder="T.ex. kassasystem, produktkunskap, rutiner" value={form.trainableRequirements} onChange={(e) => setForm((p) => ({ ...p, trainableRequirements: e.target.value }))} /></label>
                       </div>
+                      {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Automatiskt utskick till kandidater aktiveras när kompletteringsflödet är klart.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
                     </section>
                   )}
 

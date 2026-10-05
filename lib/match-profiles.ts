@@ -42,6 +42,8 @@ interface InitialJobMatchProfileInput {
   mustHaves: string[];
   trainableRequirements: string[];
   topTraits: string[];
+  candidateQuestions?: string[];
+  aiGenerated?: boolean;
 }
 
 export async function createInitialJobMatchProfile(input: InitialJobMatchProfileInput): Promise<void> {
@@ -52,22 +54,28 @@ export async function createInitialJobMatchProfile(input: InitialJobMatchProfile
   if (companyError) throw new Error(companyError.message);
 
   const criteria = [
-    ...input.mustHaves.map((label) => ({ label, category: "must_have", weight: 40, required: true })),
-    ...input.topTraits.map((label) => ({ label, category: "trait", weight: 35, required: false })),
-    ...input.trainableRequirements.map((label) => ({ label, category: "trainable", weight: 15, required: false })),
+    ...input.mustHaves.map((label) => ({ label, category: "must_have", weight: 3, required: true })),
+    ...input.topTraits.map((label) => ({ label, category: "trait", weight: 2, required: false })),
+    ...input.trainableRequirements.map((label) => ({ label, category: "trainable", weight: 1, required: false })),
   ];
+
+  const candidateQuestions = (input.candidateQuestions ?? [])
+    .map((question) => question.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((question, index) => ({ id: `q${index + 1}`, question, answer_type: "text" }));
 
   const { error } = await getSupabaseClient().from("job_match_profiles").upsert({
     job_id: input.jobId,
-    status: "ready",
+    status: "approved",
     role_summary: input.roleSummary.trim(),
     must_haves: input.mustHaves,
     trainable_requirements: input.trainableRequirements,
     top_traits: input.topTraits.slice(0, 5),
     weighted_criteria: criteria,
-    candidate_questions: [],
+    candidate_questions: candidateQuestions,
     inherited_company_version: Number(companyProfile?.profile_version ?? 1),
-    ai_generated: false,
+    ai_generated: input.aiGenerated === true,
   }, { onConflict: "job_id" });
   if (error) throw new Error(error.message);
 }

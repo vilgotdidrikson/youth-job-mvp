@@ -962,6 +962,13 @@ button,
 .job-builder-match-note strong { color: var(--text-primary); font-size: .84rem; }
 .job-builder-match-note p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .76rem; }
 .job-builder-match-note button { flex-shrink: 0; padding: 0; border: 0; color: var(--accent); background: transparent; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.job-builder-ai-message { margin: 0 0 1rem; padding: .75rem .9rem; border: 1px solid #bce6cc; border-radius: 12px; background: #effbf3; color: #176b3a; font-size: .82rem; font-weight: 700; line-height: 1.45; }
+.job-builder-ai-questions { display: grid; gap: .75rem; margin-top: 1rem; padding: 1rem; border: 1px solid #e4e4e4; border-radius: 14px; background: #fafafa; }
+.job-builder-ai-questions > div:first-child strong { display: block; font-size: .9rem; }
+.job-builder-ai-questions > div:first-child p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .78rem; }
+.job-builder-ai-questions label { display: grid; gap: .35rem; color: #333; font-size: .75rem; font-weight: 700; }
+.job-builder-ai-questions label > div { display: grid; grid-template-columns: 1fr auto; gap: .45rem; }
+.job-builder-ai-questions label button { width: 42px; border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #555; font-size: 1.2rem; cursor: pointer; }
 .job-builder-save { padding: .65rem .4rem; border: 0; color: var(--text-secondary); background: transparent; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
 
 .company-match-profile { margin-bottom: .75rem; padding: 1.25rem; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
