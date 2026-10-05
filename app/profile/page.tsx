@@ -7,6 +7,7 @@ import { MinimalProfileSection } from "@/components/profile/minimal-profile-sect
 import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
@@ -322,7 +323,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleDeleteAccount = async () => {
     const password = window.prompt("Skriv ditt lösenord för att permanent radera kontot och all tillhörande data.");
-    if (!password || !window.confirm("Kontot, profilen, ansökningarna, chattarna och filerna raderas permanent. Personer du har chattat med får veta att chatten har stängts. Detta kan inte ångras. Vill du fortsätta?")) return;
+    const deletedData = profile?.role === "company"
+      ? "Kontot, företagsprofilen, alla annonser och bilder samt kandidaternas ansökningar, matchningar och chattar för era annonser raderas permanent."
+      : "Kontot, profilen, ansökningarna, matchningarna, chattarna och filerna raderas permanent.";
+    if (!password || !window.confirm(`${deletedData} Personer du har chattat med får veta att chatten har stängts. Anmälningar du har gjort sparas anonymt för säkerhetsgranskning. Detta kan inte ångras. Vill du fortsätta?`)) return;
     setDeletingAccount(true); setError("");
     try {
       const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ password }) });
@@ -463,6 +467,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             {saving ? "Sparar..." : "Spara ändringar"}
           </button>
         </div>
+
+        <CompanyMatchProfileForm userId={user.id} />
 
         {/* Quick link to job management */}
         <button

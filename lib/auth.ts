@@ -8,16 +8,6 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-async function insertRoleProfile(userId: string, role: Role) {
-  const supabase = getSupabaseClient();
-  const { error } = role === "youth"
-    ? await supabase.from("youth_profiles").insert({ user_id: userId })
-    : role === "company"
-      ? await supabase.from("company_profiles").insert({ user_id: userId })
-      : await supabase.from("private_profiles").insert({ user_id: userId });
-  if (error) throw new Error(error.message);
-}
-
 export async function signUp(
   email: string,
   password: string,
@@ -27,6 +17,11 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email: normalizeEmail(email),
     password,
+    options: {
+      // The auth.users trigger validates this allowlisted value and creates the
+      // immutable application profile in the same database transaction.
+      data: { role },
+    },
   });
 
   if (error) {
@@ -38,15 +33,6 @@ export async function signUp(
     const unexpectedError = new Error("Supabase did not return a user during sign up.");
     console.error(unexpectedError.message);
     throw unexpectedError;
-  }
-
-  const { error: profileError } = await supabase.from("profiles").insert({ id: data.user.id, role });
-  if (profileError) throw new Error(profileError.message);
-  try {
-    await insertRoleProfile(data.user.id, role);
-  } catch (profileInsertError) {
-    await supabase.from("profiles").delete().eq("id", data.user.id);
-    throw profileInsertError;
   }
 
   return { user: data.user, session: data.session };

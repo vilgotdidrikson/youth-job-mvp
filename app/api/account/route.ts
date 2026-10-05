@@ -73,6 +73,11 @@ export async function DELETE(request: NextRequest) {
   const { data: verified, error: passwordError } = await userClient.auth.signInWithPassword({ email: userData.user.email ?? "", password: body.password });
   if (passwordError || verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  // Privileged accounts are offboarded by another administrator first, so the
+  // platform can never lose its last admin through self-service deletion.
+  const { data: adminMembership, error: adminLookupError } = await admin.from("admin_users").select("user_id").eq("user_id", userData.user.id).maybeSingle();
+  if (adminLookupError) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
+  if (adminMembership) return NextResponse.json({ error: "Administratörskonton kan inte raderas här. Be en annan administratör att först ta bort din adminbehörighet." }, { status: 409 });
   let deletionNotifications: Awaited<ReturnType<typeof getDeletionNotification>> = [];
   try {
     deletionNotifications = await getDeletionNotification(admin, userData.user.id);

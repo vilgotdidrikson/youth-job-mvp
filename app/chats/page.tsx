@@ -8,6 +8,8 @@ import { getMessages, getMyConversationContacts, getMyConversations, sendMessage
 import { getMyMatches, markMatchHired } from "@/lib/matching";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { ReportDialog } from "@/components/report-dialog";
+import { blockConversationUser } from "@/lib/moderation";
 
 interface ConvDisplay {
   conv: ConversationSummary;
@@ -32,6 +34,7 @@ export default function ChatsPage() {
   const [error, setError] = useState("");
   const [conversationState, setConversationState] = useState<ConversationState>("loading");
   const [hiringMatchId, setHiringMatchId] = useState<string | null>(null);
+  const [blocking, setBlocking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,6 +115,22 @@ export default function ChatsPage() {
       setError(hireError instanceof Error ? hireError.message : "Kunde inte markera rekryteringen som genomförd.");
     } finally {
       setHiringMatchId(null);
+    }
+  };
+
+  const handleBlock = async (display: ConvDisplay) => {
+    if (!window.confirm(`Blockera ${display.otherName}? Ingen av er kommer kunna skicka fler meddelanden i chatten.`)) return;
+    setBlocking(true);
+    setError("");
+    try {
+      await blockConversationUser(display.conv.id);
+      setSelectedConvId(null);
+      setMessages([]);
+      await loadConversations(false);
+    } catch (blockError) {
+      setError(blockError instanceof Error ? blockError.message : "Kunde inte blockera användaren.");
+    } finally {
+      setBlocking(false);
     }
   };
 
@@ -199,6 +218,10 @@ export default function ChatsPage() {
             )}
             <p style={{ fontSize: "0.72rem", color: "#1a7f4b", margin: "0.12rem 0 0", fontWeight: 700 }}>{statusLabels[selectedDisplay.status] ?? selectedDisplay.status}</p>
           </div>
+          <ReportDialog targetType="conversation" targetId={selectedConvId} label="Anmäl" />
+          <button type="button" className="secondary-btn" onClick={() => void handleBlock(selectedDisplay)} disabled={blocking} style={{ color: "#b42318" }}>
+            {blocking ? "Blockerar..." : "Blockera"}
+          </button>
         </div>
 
         {selectedDisplay.status === "hired" && (

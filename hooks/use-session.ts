@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, createElement, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getSupabaseErrorMessage } from "@/lib/supabase-errors";
@@ -24,30 +24,58 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(false);
+  const userRef = useRef<User | null>(null);
+  const profileRef = useRef<Profile | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
-  const refresh = async () => {
+  const updateUser = useCallback((nextUser: User | null) => {
+    userRef.current = nextUser;
+    setUser(nextUser);
+  }, []);
+
+  const updateProfile = useCallback((nextProfile: Profile | null) => {
+    profileRef.current = nextProfile;
+    setProfile(nextProfile);
+  }, []);
+
+  const refresh = useCallback(async ({
+    knownUser,
+    showLoading = true,
+    preserveStateOnError = false,
+  }: {
+    knownUser?: User | null;
+    showLoading?: boolean;
+    preserveStateOnError?: boolean;
+  } = {}) => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
     }
 
     const refreshTask = (async () => {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && showLoading) {
         setLoading(true);
-        setError(null);
       }
+      if (isMountedRef.current) setError(null);
 
       try {
-        const nextUser = await getCurrentUser();
+        const nextUser = knownUser === undefined ? await getCurrentUser() : knownUser;
 
         if (!isMountedRef.current) {
           return;
         }
 
-        setUser(nextUser);
+        const sameUser = Boolean(nextUser && userRef.current?.id === nextUser.id);
+        updateUser(nextUser);
 
         if (!nextUser) {
-          setProfile(null);
+          updateProfile(null);
+          return;
+        }
+
+        // Token refreshes and mobile tab resumes frequently emit auth events.
+        // The account role cannot change during those events, so keep the
+        // existing profile instead of blanking the whole app and refetching it.
+        if (!showLoading && sameUser && profileRef.current) {
           return;
         }
 
@@ -63,7 +91,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setProfile(nextProfile);
+        updateProfile(nextProfile);
       } catch (sessionError) {
         console.error("Failed to synchronize the Supabase session in the client.", sessionError);
 
@@ -71,13 +99,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setUser(null);
-        setProfile(null);
-        setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));
+        if (!preserveStateOnError) {
+          updateUser(null);
+          updateProfile(null);
+          setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));
+        }
       } finally {
         refreshPromiseRef.current = null;
 
-        if (isMountedRef.current) {
+        if (isMountedRef.current && showLoading) {
           setLoading(false);
         }
       }
@@ -85,7 +115,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     refreshPromiseRef.current = refreshTask;
     return refreshTask;
-  };
+  }, [updateProfile, updateUser]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -95,11 +125,37 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange(() => {
-        void refresh();
-      });
+      } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+        if (event === "SIGNED_OUT") {
+          updateUser(null);
+          updateProfile(null);
+          setError(null);
+          setLoading(false);
+          return;
+        }
 
-      void refresh();
+        const sessionUser = session?.user ?? null;
+        const sameKnownUser = Boolean(sessionUser && userRef.current?.id === sessionUser.id);
+        if (sessionUser) {
+          if (!sameKnownUser) updateProfile(null);
+          updateUser(sessionUser);
+        }
+
+        // A refreshed token or a repeated SIGNED_IN event when Safari resumes
+        // should not make an already rendered app return to its loading gate.
+        if (sameKnownUser && profileRef.current && (event === "TOKEN_REFRESHED" || event === "SIGNED_IN")) {
+          return;
+        }
+
+        // Calling another Supabase API while this callback still holds the
+        // auth lock can deadlock the client. Run the refresh on the next tick.
+        window.setTimeout(() => {
+          void refresh({ knownUser: sessionUser, showLoading: false, preserveStateOnError: event !== "INITIAL_SESSION" })
+            .finally(() => {
+              if (event === "INITIAL_SESSION" && isMountedRef.current) setLoading(false);
+            });
+        }, 0);
+      });
 
       const timeoutId = setTimeout(() => {
         if (isMountedRef.current) {
@@ -122,7 +178,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         isMountedRef.current = false;
       };
     }
-  }, []);
+  }, [refresh, updateProfile, updateUser]);
 
   const logout = async () => {
     try {
@@ -132,8 +188,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setUser(null);
-      setProfile(null);
+      updateUser(null);
+      updateProfile(null);
       setError(null);
     } catch (logoutError) {
       console.error("Failed to sign out from Supabase.", logoutError);

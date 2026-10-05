@@ -75,10 +75,15 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         const result = await signUp(email, password, role);
         if (result.session) {
           isRedirectingAfterSignup.current = true;
-          router.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
+          // A full navigation lets the destination initialize from the newly
+          // persisted Supabase session. Client routing here can race the auth
+          // callback and leave the next page behind its loading gate.
+          window.location.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
           return;
         }
-        setMessage("Konto skapat. Kolla din e-post för att bekräfta, logga sedan in.");
+        // Email confirmation is disabled for this project. A missing session is
+        // therefore an unexpected fallback, but the account may still exist.
+        setMessage("Konto skapat. Logga in för att fortsätta.");
         setMode("login");
         return;
       }
@@ -89,10 +94,14 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         return;
       }
       const signedInProfile = await getUserProfile(session.user.id);
-      if (signedInProfile?.role === "youth") {
+      if (!signedInProfile) {
+        setError("Kontot saknar en användarprofil. Försök igen om en stund eller kontakta support.");
+        return;
+      }
+      if (signedInProfile.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
         router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
-      } else router.replace(safeRedirectTarget ?? (signedInProfile?.role === "company" ? "/company?view=swipe" : "/private"));
+      } else router.replace(safeRedirectTarget ?? (signedInProfile.role === "company" ? "/company?view=swipe" : "/private"));
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
@@ -133,7 +142,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true">←</span><span>Tillbaka</span></button>
           <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
           <div className="auth-card-heading"><h2>{isSignup ? "Skapa konto" : "Logga in"}</h2><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
-          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button><button type="button" className={role === "private" ? "auth-role-selected" : ""} onClick={() => setRole("private")}>Privatperson</button></div></fieldset>}
+          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button></div></fieldset>}
           <div className="auth-fields">
             <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
             <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>

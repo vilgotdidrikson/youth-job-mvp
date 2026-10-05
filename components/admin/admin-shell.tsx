@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 const links = [
   { href: "/admin", label: "Översikt", icon: "⌂" },
   { href: "/admin/companies", label: "Företag", icon: "▦" },
+  { href: "/admin/reports", label: "Anmälningar", icon: "!" },
   { href: "/admin/profile", label: "Profil", icon: "○" },
 ];
 

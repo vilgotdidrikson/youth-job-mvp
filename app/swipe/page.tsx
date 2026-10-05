@@ -106,6 +106,7 @@ function SwipePageContent() {
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Kunde inte spara ditt val.");
+      throw reason;
     }
   };
 
