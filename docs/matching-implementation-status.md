@@ -19,3 +19,11 @@ Remaining before pilot approval:
 - Review question quality, score calibration and youth copy in real pilot cases.
 
 Do not describe this as a completely validated release.
+
+## Stabilization follow-up
+
+Fixed a reproducible final-submission bypass: a pending completion could previously be submitted after its CV was removed. Final submission now rechecks CV and listing availability, including the AI completion path, while holding the youth profile read lock. Existing submitted snapshots remain immutable.
+
+Reusable transactional regression: scripts/test-application-submission.sql. DevStaging passed missing-CV denial for manual and AI submission, saving during pause, denying submission during pause, resumed submission preserving answers, and idempotent retry. Anonymous RPC access remains denied.
+
+The full visual/E2E pilot suite and step 2 (PDF extraction, richer fixed rules and profile editing UI) remain pending. Near-term roadmap after these: SMTP/basic email, then payments. Premium subscription features are a separate later phase.
