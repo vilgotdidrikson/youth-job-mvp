@@ -40,3 +40,5 @@ Implemented:
 - Shared path validation, criterion normalization and matching rules are UI-independent for future mobile reuse.
 
 Validation in this follow-up: `npm run test:matching`, TypeScript, focused ESLint and production build pass. DevStaging submission regression passes. Authenticated deployed API checks, isolation and visual review are recorded below when completed.
+
+DevStaging authenticated regression now passes with two youth and two company QA actors: criterion history is immutable and owner-only; stale/no-op saves behave correctly; pending answers remain private; existing question snapshots survive criterion edits; paused submission is denied; retries preserve submitted answers; only the youth and verified application owner can download the private PDF. Deployed CV viewing and denied-account API checks pass. PDF worker and standard fonts are explicitly included in the server artifact (verified against both route tracing manifests).
