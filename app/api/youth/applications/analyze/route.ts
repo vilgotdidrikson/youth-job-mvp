@@ -5,6 +5,9 @@ import OpenAI from "openai";
 import { requireApiUser } from "@/lib/api-auth";
 import { applicationSource, verifiedApplicationAnswers } from "@/lib/application-evidence";
 import type { ApplicationCompletion } from "@/lib/application-completions";
+import { pdfCvSource } from "@/lib/pdf-cv-source";
+
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   const auth = await requireApiUser(request, "application-analyze", ["youth"]);
@@ -21,14 +24,16 @@ export async function POST(request: NextRequest) {
   if (typeof body?.jobId === "string") query = query.eq("job_id", body.jobId);
   const [{ data, error }, { data: profile, error: profileError }] = await Promise.all([
     query,
-    supabase.from("youth_profiles").select("cv_text, cv_structured, work_experience, education, languages, employment_preferences, certificates, extracurriculars").eq("user_id", auth.user.id).maybeSingle(),
+    supabase.from("youth_profiles").select("cv_text, cv_structured, work_experience, education, languages, employment_preferences, certificates, extracurriculars, documents").eq("user_id", auth.user.id).maybeSingle(),
   ]);
   if (error || profileError) return NextResponse.json({ error: "Kunde inte läsa ansökningsunderlaget." }, { status: 503 });
-  const source = applicationSource(profile ?? {});
+  const pdf = data?.length ? await pdfCvSource(supabase, profile?.documents, auth.user.id) : { text: "", status: "none" };
+  if (pdf.status === "unreadable") return NextResponse.json({ sent: 0, source: "manual", pdfStatus: pdf.status });
+  const source = applicationSource({ ...profile, pdf_cv_text: pdf.text });
   const sourceHash = createHash("sha256").update(source).digest("hex");
   const applications = ((data ?? []) as (ApplicationCompletion & { analysis_source_hash?: string })[]).filter((item) => item.analysis_source_hash !== sourceHash);
   const key = process.env.GROQ_API_KEY;
-  if (!key || !source || !applications.length) return NextResponse.json({ sent: 0, source: "manual" });
+  if (!key || !source || !applications.length) return NextResponse.json({ sent: 0, source: "manual", pdfStatus: pdf.status });
   const client = new OpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: key, timeout: 25000, maxRetries: 0 });
   try {
     const completion = await client.chat.completions.create({
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
       const { data: saved, error: saveError } = await supabase.rpc("apply_my_application_evidence", { p_job_id: item.job_id, p_answers: answers, p_source_hash: sourceHash });
       if (!saveError && saved?.status === "submitted") sent++;
     }
-    return NextResponse.json({ sent, source: "ai" });
+    return NextResponse.json({ sent, source: "ai", pdfStatus: pdf.status });
   } catch {
     // CV or AI service failure must never block the manual answer/skip path.
     return NextResponse.json({ sent: 0, source: "manual" });

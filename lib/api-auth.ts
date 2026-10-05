@@ -9,6 +9,7 @@ const limits = {
   "job-generate": 20,
   "application-analyze": 20,
   "candidate-analyze": 30,
+  "candidate-cv": 60,
 } as const;
 
 export type ProtectedEndpoint = keyof typeof limits;

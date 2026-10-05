@@ -25,5 +25,6 @@ export function applicationSource(profile: Record<string, unknown>): string {
       if (typeof value === "string") return value.trim() ? [`${key}: ${value.trim()}`] : [];
       if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map((item) => `${key}: ${item}`);
       return [];
-    }).concat(structuredText ? [structuredText] : []).join("\n").slice(0, 14000);
+    }).concat(structuredText ? [structuredText] : []).join("\n").slice(0, 14000) +
+    (typeof profile.pdf_cv_text === "string" && profile.pdf_cv_text ? `\nPDF-CV:\n${profile.pdf_cv_text.slice(0, 12000)}` : "");
 }

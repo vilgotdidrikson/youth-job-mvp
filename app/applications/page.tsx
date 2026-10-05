@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
-import { getApplicationCompletions, saveApplicationAnswers, type ApplicationCompletion } from "@/lib/application-completions";
+import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion } from "@/lib/application-completions";
 
 function ApplicationCard({ item, onSaved }: { item: ApplicationCompletion; onSaved: (item: ApplicationCompletion) => void }) {
   const [answers, setAnswers] = useState(item.answers);
@@ -12,6 +12,18 @@ function ApplicationCard({ item, onSaved }: { item: ApplicationCompletion; onSav
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const pending = item.status === "needs_completion";
+  const readCv = async () => {
+    if (busy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      // Persist manual edits first; automatic evidence only fills remaining blanks.
+      await saveApplicationAnswers(item.job_id, answers, false);
+      const updated = await prepareApplication(item.job_id);
+      setAnswers(updated.answers); onSaved(updated);
+      setMessage(updated.status === "submitted" ? "CV:t besvarade frågorna och ansökan är skickad." : "Inga fler säkra svar kunde hämtas. Du kan svara själv eller skicka med uppgift saknas. Skannade PDF-filer kan behöva kompletteras manuellt.");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte läsa CV:t."); }
+    finally { setBusy(false); }
+  };
   const save = async (submit: boolean) => {
     if (busy) return;
     setBusy(true); setError(""); setMessage("");
@@ -25,6 +37,7 @@ function ApplicationCard({ item, onSaved }: { item: ApplicationCompletion; onSav
   return <article className="card application-completion-card">
     <header><p>{item.company_name}</p><h2>{item.job_title}</h2><span>{pending ? "Behöver kompletteras" : item.status === "submitted" ? "Skickad" : "Annonsen är inte tillgänglig"}</span></header>
     {pending && <p>Frågorna bygger på företagets önskemål och skickas automatiskt av MatchnWork. Arbetsgivaren får läsa svaren när du skickar ansökan. CV och svar används för ett förklarat matchningsunderlag. Frågorna innebär inte att du redan har blivit utvald.</p>}
+    {pending && <button type="button" className="secondary-btn" disabled={busy} onClick={() => void readCv()}>Hämta saknade svar från CV</button>}
     {item.questions.map((question, index) => <label className="application-question" key={question.id}>
       <strong>{index + 1}. {question.question}</strong>
       {pending ? <><small>Valfritt. Frågan hjälper företaget att bedöma din ansökan när uppgiften saknas i ditt CV.</small><textarea className="input-field" rows={3} maxLength={1500} disabled={busy} value={answers[question.id] ?? ""} onChange={(event) => setAnswers((current) => ({ ...current, [question.id]: event.target.value }))} placeholder="Skriv ditt svar, eller lämna tomt för uppgift saknas" /></> : <p>{item.answers[question.id]?.trim() || "Uppgift saknas"}</p>}

@@ -1226,3 +1226,9 @@ button,
 .candidate-application-answers { margin-top: 1rem; }
 .candidate-application-answers > div { margin-bottom: 1rem; }
 .candidate-assessment-note { color: #737373; }
+/* Match criterion editing shares the existing company modal shell. */
+.job-match-editor { display: grid; gap: 1rem; max-height: 90dvh; overflow-y: auto; }
+.job-match-editor label { display: grid; gap: .4rem; font-weight: 600; }
+.job-match-editor small { font-size: .8rem; font-weight: 400; color: #666; }
+.job-match-editor details { padding: .7rem 0; border-top: 1px solid #e8e8e8; }
+.job-match-editor summary { cursor: pointer; font-weight: 600; }

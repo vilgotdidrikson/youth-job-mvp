@@ -1,4 +1,5 @@
 import { applicationSource } from "./application-evidence";
+import { fixedCriterionEvidence } from "./fixed-match-rules";
 
 export type CriterionStatus = "fulfilled" | "unfulfilled" | "unknown";
 export interface MatchCriterion { id: string; label: string; category: string; weight: number; required: boolean }
@@ -12,7 +13,7 @@ export interface CandidateAssessment {
   gaps: string[];
   conflicts: string[];
   explanation: string;
-  source: "ai" | "insufficient";
+  source: "ai" | "rules" | "insufficient";
 }
 
 export function matchingCriteria(raw: unknown): MatchCriterion[] {
@@ -29,13 +30,14 @@ export function candidateSource(profile: Record<string, unknown>): string {
   const base = applicationSource(profile);
   const answers = profile.answers && typeof profile.answers === "object" ? Object.values(profile.answers) : [];
   return [base, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`)]
-    .join("\n").slice(0, 18000);
+    .join("\n").slice(0, 32000);
 }
 
 export function assessCandidate(criteria: MatchCriterion[], raw: unknown, source: string): CandidateAssessment {
   const results = Array.isArray(raw) ? raw : [];
   const evaluated = criteria.map((criterion): AssessedCriterion => {
-    const value = results.find((entry) => entry && entry.id === criterion.id);
+    const fixed = fixedCriterionEvidence(criterion.label, source);
+    const value = criterion.category === "trait" ? null : fixed ?? results.find((entry) => entry && entry.id === criterion.id);
     const quote = typeof value?.evidence === "string" ? value.evidence.trim() : "";
     const grounded = quote.length >= 8 && quote.length <= 1500 && source.includes(quote);
     const status: CriterionStatus = grounded && ["fulfilled", "unfulfilled"].includes(value?.status) ? value.status : "unknown";
@@ -52,5 +54,5 @@ export function assessCandidate(criteria: MatchCriterion[], raw: unknown, source
   const conflicts = evaluated.filter((item) => item.status === "unfulfilled" && item.weight > 0).map((item) => item.label);
   const explanation = score === null ? "Det saknas tillräckligt underlag för en matchgrad. Bedöm kandidaten genom CV och egen kontakt."
     : `${score} % av de bedömda kriteriernas vikt är uppfylld. Underlaget täcker ${coverage} % av kriteriernas vikt.${gaps.length ? " Övriga kriterier saknar tillräcklig information." : ""} Arbetsgivaren fattar alltid beslutet.`;
-  return { score, coverage, confidence, criteria: evaluated, strengths, gaps, conflicts, explanation, source: known ? "ai" : "insufficient" };
+  return { score, coverage, confidence, criteria: evaluated, strengths, gaps, conflicts, explanation, source: known ? results.length ? "ai" : "rules" : "insufficient" };
 }

@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { CandidateAssessmentPanel } from "@/components/candidate-assessment-panel";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
+import { JobMatchProfileEditor } from "@/components/job-match-profile-editor";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
@@ -128,6 +129,8 @@ function CompanyPageContent() {
   const [builderStep, setBuilderStep] = useState<1 | 2 | 3>(1);
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
+  const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
+  const closeCriteria = useCallback(() => setEditingCriteria(null), []);
   const skipNextDraftSaveRef = useRef(false);
 
   useEffect(() => {
@@ -931,6 +934,7 @@ function CompanyPageContent() {
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
                       {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
                       {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "closed")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
@@ -975,6 +979,7 @@ function CompanyPageContent() {
           </div>
         </div>
       )}
+      {editingCriteria && <JobMatchProfileEditor key={editingCriteria.id} jobId={editingCriteria.id} title={editingCriteria.title} onClose={closeCriteria} onSaved={() => { setEditingCriteria(null); setError(""); }} />}
       {imageToCrop && <ImageCropDialog file={imageToCrop} onCancel={() => setImageToCrop(null)} onConfirm={useCroppedJobImage} />}
     </main>
   );

@@ -27,3 +27,16 @@ Fixed a reproducible final-submission bypass: a pending completion could previou
 Reusable transactional regression: scripts/test-application-submission.sql. DevStaging passed missing-CV denial for manual and AI submission, saving during pause, denying submission during pause, resumed submission preserving answers, and idempotent retry. Anonymous RPC access remains denied.
 
 The full visual/E2E pilot suite and step 2 (PDF extraction, richer fixed rules and profile editing UI) remain pending. Near-term roadmap after these: SMTP/basic email, then payments. Premium subscription features are a separate later phase.
+
+## PDF and criterion editing follow-up — 2026-10-05
+
+Implemented:
+- Server-side PDF.js text extraction for youth completion and employer assessment, bounded to 5 MB / 10 pages / 12,000 text characters. Scanned, encrypted, malformed and oversized PDFs use the manual path; OCR is outside this MVP.
+- Private Storage reads require the youth owner, or a verified listing owner with submitted interest, an exact CV document path and no block. CV viewing no longer depends on a service-role key.
+- Listing criterion editor under Company → Announcements, with optimistic version checking, append-only profile snapshots, and previous assessment history.
+- Existing applications keep their original question/version snapshot. Criteria affect the next assessment, questions affect new applications. Match criteria editing does not rewrite public advertisement copy.
+- Conservative fixed checks for explicit B-licence and evening/weekend availability, including explicit negatives and conflicting statements. Personality is not inferred. Trainable requirements do not lower suitability.
+- Per-application CV refresh preserves manual answers and provides a path beyond the automatic ten-application batch.
+- Shared path validation, criterion normalization and matching rules are UI-independent for future mobile reuse.
+
+Validation in this follow-up: `npm run test:matching`, TypeScript, focused ESLint and production build pass. DevStaging submission regression passes. Authenticated deployed API checks, isolation and visual review are recorded below when completed.
