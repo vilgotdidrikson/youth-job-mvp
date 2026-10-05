@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalDialog } from "./modal-dialog";
 import { useEffect, useState, type FormEvent } from "react";
 import { getJobMatchProfile, saveJobMatchProfile, type JobMatchProfile } from "@/lib/match-profiles";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -28,9 +29,7 @@ export function JobMatchProfileEditor({ jobId, title, onClose, onSaved }: { jobI
         setHistory(versions.data ?? []);
         setLoading(false);
       }).catch((reason) => { if (active) { setError(reason instanceof Error ? reason.message : "Kunde inte läsa matchprofilen."); } });
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    document.addEventListener("keydown", escape);
-    return () => { active = false; document.removeEventListener("keydown", escape); };
+    return () => { active = false; };
   }, [jobId, onClose]);
   const save = async (event: FormEvent) => {
     event.preventDefault(); if (busy || loading) return;
@@ -41,7 +40,7 @@ export function JobMatchProfileEditor({ jobId, title, onClose, onSaved }: { jobI
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte spara matchprofilen."); }
     finally { setBusy(false); }
   };
-  return <div className="company-match-modal" role="dialog" aria-modal="true" aria-label={`Matchkriterier för ${title}`}>
+  return <ModalDialog label={`Matchkriterier för ${title}`} onClose={onClose} busy={busy}>
     <form className="company-match-modal-content job-match-editor" onSubmit={(event) => void save(event)}>
       <button type="button" className="company-match-modal-close" aria-label="Stäng kriterier" disabled={busy} onClick={onClose}>×</button>
       <h2>Matchkriterier</h2><p>{title}{profile ? ` · Version ${profile.profile_version}` : ""}</p>
@@ -57,5 +56,5 @@ export function JobMatchProfileEditor({ jobId, title, onClose, onSaved }: { jobI
         <details><summary>Versionshistorik ({history.length})</summary>{history.map((version) => <details key={version.profile_version}><summary>Version {version.profile_version} · {new Date(version.created_at).toLocaleString("sv-SE")}</summary><p>{version.snapshot.role_summary}</p><p>Grundkrav: {version.snapshot.must_haves.join(" · ") || "Inga"}</p><p>Kan läras: {version.snapshot.trainable_requirements.join(" · ") || "Inga"}</p><p>Egenskaper: {version.snapshot.top_traits.join(" · ") || "Inga"}</p><p>Frågor: {version.snapshot.candidate_questions.map((item) => item.question).join(" · ") || "Inga"}</p></details>)}</details>
       </>}
     </form>
-  </div>;
+  </ModalDialog>;
 }

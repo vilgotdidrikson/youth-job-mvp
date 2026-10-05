@@ -57,3 +57,6 @@
 .candidate-assessment-note { font-size:.75rem!important;line-height:1.8;color:#896a76; }
 @media(max-width:900px) { .company-applicants-layout { grid-template-columns:minmax(220px,.8fr) minmax(0,1.3fr);gap:18px; } .company-jobs-grid { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:720px) { .company-workspace-heading h1,.company-applicants-heading h1 { font-size:1.9rem; } .company-workspace-tabs { width:100%;min-width:0; } .company-workspace-tabs button { padding:10px 14px; } .company-applicants-layout { grid-template-columns:minmax(0,1fr);gap:20px; } .company-applicant-sidebar { position:static;padding:12px; } .company-applicant-list { max-height:270px;overflow:auto; } .mnw-product .company-candidate-profile { padding:21px; } .company-applicants-heading { margin-bottom:0; } }
+.candidate-criterion-status { width:fit-content;border-radius:8px;padding:5px 9px;background:#f4f0f2;color:#776773!important;font-size:.73rem!important; }
+.candidate-assessment-panel li[data-status="fulfilled"] .candidate-criterion-status { background:#edf6f0;color:#226a54!important; }
+.candidate-assessment-panel li[data-status="unfulfilled"] .candidate-criterion-status { background:#fff0f4;color:#a73858!important; }

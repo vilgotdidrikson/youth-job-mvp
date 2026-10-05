@@ -82,9 +82,9 @@ export default function PrivateTasksPage() {
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (profile?.role !== "private") return <main className="mobile-shell"><p>Hämtar innehåll...</p></main>;
 
-  return <main className="mobile-shell" style={{ paddingBottom: "6rem" }}>
+  return <main className="mobile-shell mnw-private-workspace" style={{ paddingBottom: "6rem" }}>
     <header style={{ padding: "0.75rem 0 1.25rem" }}><p style={{ margin: 0, color: "#737373", fontSize: ".82rem" }}>Privatperson</p><h1 style={{ margin: ".2rem 0", color: "#111", fontSize: "1.65rem" }}>Mina uppdrag</h1><p style={{ margin: 0, color: "#737373", fontSize: ".88rem" }}>Hitta hjälp för enstaka uppgifter och matcha tryggt.</p></header>
-    {error && <p style={{ color: "#b42318", background: "#fff1f0", padding: ".75rem", borderRadius: 8 }}>{error}</p>}
+    {error && <p role="alert" style={{ color: "#b42318", background: "#fff1f0", padding: ".75rem", borderRadius: 8 }}>{error}</p>}
     <form className="card" onSubmit={submit} style={{ padding: "1rem", marginBottom: "1rem" }}>
       <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Nytt engångsjobb</h2>
       <label>Vad behöver du hjälp med?<input className="input-field" required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="T.ex. Hjälp att bära flyttkartonger" /></label>

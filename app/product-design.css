@@ -167,3 +167,69 @@
  .mnw-product .company-match-fields { padding:17px; }
  .mnw-product .job-match-editor { padding:22px; }
 }
+.mnw-modal-dialog { width:min(100% - 32px,650px);max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;border:0;border-radius:24px;background:transparent;color:#4c303b;overflow:auto; }
+.mnw-modal-dialog::backdrop { background:#4c303b66;backdrop-filter:blur(4px); }
+.mnw-modal-dialog .company-match-modal-content { width:100%;max-height:none; }
+.mnw-modal-dialog .image-crop-dialog { width:100%;max-height:none;border:1px solid #f0d9e0;border-radius:24px;padding:27px;box-shadow:none; }
+.mnw-modal-dialog .image-crop-heading h2 { color:#4c303b;font-size:1.45rem;font-weight:500; }
+.mnw-modal-dialog .image-crop-heading p { color:#b84164;font-weight:500;margin-bottom:8px; }
+.mnw-modal-dialog .image-crop-heading button { width:38px;height:38px;border-radius:12px;background:#fce9ef;color:#b84164; }
+.mnw-modal-dialog .image-crop-viewport { border-radius:17px;margin:23px 0;background:#fce9ef; }
+.mnw-modal-dialog .image-crop-controls { gap:18px; }
+.mnw-modal-dialog .image-crop-controls label { font-weight:500;color:#896a76;font-size:.81rem; }
+.mnw-modal-dialog input[type="range"] { accent-color:#b84164;width:100%;min-height:28px; }
+.mnw-modal-dialog .image-crop-dialog footer { margin-top:27px; }
+.mnw-report-dialog { width:min(100% - 32px,480px); }
+.mnw-product .mnw-report-content { padding:27px; }
+.mnw-report-content h2 { font-size:1.45rem;font-weight:500; }
+.mnw-report-content p { color:#896a76!important;font-size:.84rem;line-height:1.8!important;margin-top:12px; }
+.mnw-report-content label { color:#4c303b;font-size:.83rem;font-weight:500!important; }
+.mnw-report-content :is(select,textarea) { padding:13px;font-size:16px;line-height:1.7; }
+.mnw-product .auth-footer { gap:5px; }
+@media(max-width:720px) { .mnw-modal-dialog { max-height:calc(100dvh - 28px);border-radius:20px; } .mnw-modal-dialog .image-crop-dialog,.mnw-product .mnw-report-content { padding:22px; } }
+.mnw-candidate-cv-modal { width:min(100% - 32px,1000px); }
+.mnw-candidate-cv-modal .candidate-cv-dialog { width:100%;border:1px solid #f0d9e0;border-radius:24px; }
+.mnw-candidate-cv-modal .candidate-cv-dialog > header { padding:23px 26px;border-color:#f0d9e0;background:white; }
+.mnw-candidate-cv-modal .candidate-cv-dialog > header h2 { color:#4c303b;font-size:1.4rem;font-weight:500; }
+.mnw-candidate-cv-modal .candidate-cv-dialog > header p { font-weight:500; }
+.mnw-candidate-cv-modal .candidate-cv-dialog > header span { color:#896a76; }
+.mnw-candidate-cv-modal .candidate-cv-dialog > header button { width:38px;height:38px;background:#fce9ef;color:#b84164;border-radius:12px; }
+.mnw-candidate-cv-modal .candidate-cv-dialog article { background:#fffafb;padding:28px; }
+.mnw-candidate-cv-modal .candidate-cv-dialog article p { color:#4c303b;line-height:1.95; }
+.mnw-job-preview-modal { width:min(100% - 32px,920px);background:white; }
+.mnw-job-preview-modal .job-preview-detail { width:100%;border:1px solid #f0d9e0;border-radius:24px;box-shadow:none; }
+.mnw-job-preview-modal .job-preview-caption { color:#b84164;font-size:.72rem;letter-spacing:.08em;font-weight:500;padding:20px 25px;border-bottom:1px solid #f0d9e0;background:white; }
+.mnw-job-preview-modal .job-builder-preview-close { width:38px;height:38px;border-radius:12px;color:#b84164;background:#fce9ef; }
+.mnw-job-preview-modal .job-preview-image { background:#fce9ef;color:#b84164; }
+.mnw-job-preview-modal .job-preview-company { color:#896a76; }
+.mnw-job-preview-modal .job-preview-detail h2 { color:#4c303b;font-weight:500; }
+.mnw-job-preview-modal .job-preview-detail :is(p,small) { line-height:1.8; }
+.mnw-job-preview-modal .job-preview-facts { border-color:#f0d9e0;background:#fffafb; }
+@media(max-width:720px) { .mnw-candidate-cv-modal .candidate-cv-dialog > header { padding:20px; } .mnw-candidate-cv-modal .candidate-cv-dialog article { padding:20px; } }
+.mnw-product .cv-hub-option { align-content:start;gap:13px;min-height:230px; }
+.mnw-product .cv-hub-option > .cv-hub-option-icon { display:grid;place-items:center;width:49px;height:49px;border:1px solid #f0d9e0;border-radius:16px;background:#fce9ef;color:#b84164; }
+.mnw-product .cv-hub-option.recommended > .cv-hub-option-icon { background:white; }
+.mnw-product .cv-hub-option > .cv-hub-option-recommended { position:absolute;top:28px;right:22px;font-size:.61rem;font-weight:500;letter-spacing:.02em; }
+.mnw-product .cv-hub-option strong { font-size:1rem;line-height:1.65; }
+.mnw-product .cv-hub-option small { font-size:.82rem;line-height:1.8; }
+.mnw-product .cv-hub-option em { display:block;margin:0;font-size:.71rem;font-weight:400; }
+@media(max-width:720px) { .mnw-product .cv-hub-option { min-height:165px;grid-template-columns:49px minmax(0,1fr);gap:10px 15px;align-content:center; } .mnw-product .cv-hub-option > .cv-hub-option-icon { grid-row:1/3;align-self:center; } .mnw-product .cv-hub-option > strong,.mnw-product .cv-hub-option > small { grid-column:2; } .mnw-product .cv-hub-option > .cv-hub-option-recommended { top:14px;right:19px; } }
+
+/* Shared pending states and the smaller private task workspace. */
+.mnw-product .mnw-session-state {display:flex;align-items:center;justify-content:center;min-height:60svh;}
+.mnw-session-card {display:flex;align-items:center;gap:14px;max-width:520px;padding:24px 28px;background:white;border:1px solid #f0d9e0;border-radius:22px;color:#896a76;box-shadow:0 8px 24px #4c303b04;}
+.mnw-session-card p {font-size:.87rem;line-height:1.8;margin:0;}
+.mnw-session-card[role="alert"] {color:#a73858;background:#fff4f7;}
+.mnw-session-spinner {flex-shrink:0;width:21px;height:21px;border:2px solid #f0d9e0;border-top-color:#b84164;border-radius:50%;animation:mnw-session-spin .9s linear infinite;}
+@keyframes mnw-session-spin {to {transform:rotate(360deg);}}
+.mnw-product .mnw-private-workspace {max-width:900px;}
+.mnw-private-workspace > header {margin-bottom:18px;}
+.mnw-private-workspace > header h1 {font-size:2.25rem!important;margin:12px 0!important;}
+.mnw-private-workspace > header > p:first-child {color:#b84164!important;font-size:.72rem!important;text-transform:uppercase;letter-spacing:.07em;}
+.mnw-private-workspace > .card {padding:27px!important;margin-bottom:24px!important;}
+.mnw-private-workspace form.card {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;}
+.mnw-private-workspace form > :is(h2,button,label:nth-of-type(1),label:nth-of-type(2)) {grid-column:1/-1;}
+.mnw-private-workspace form h2 {font-size:1.25rem!important;margin-bottom:3px;}
+.mnw-private-workspace form label {display:grid;gap:9px;font-size:.83rem;line-height:1.65;color:#4c303b;}
+.mnw-private-workspace .input-field {width:100%;padding:12px 14px;font-size:16px;}
+@media(max-width:720px) {.mnw-session-card {padding:22px;gap:12px;}.mnw-private-workspace form.card {grid-template-columns:1fr;gap:17px;}.mnw-private-workspace > .card {padding:22px!important;}.mnw-private-workspace > header h1 {font-size:1.9rem!important;}}

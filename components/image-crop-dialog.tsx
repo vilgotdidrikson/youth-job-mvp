@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalDialog } from "./modal-dialog";
 import { useEffect, useMemo, useState } from "react";
 
 interface ImageCropDialogProps {
@@ -70,9 +71,9 @@ export function ImageCropDialog({ file, onCancel, onConfirm }: ImageCropDialogPr
   };
 
   return (
-    <div className="image-crop-backdrop" role="dialog" aria-modal="true" aria-labelledby="image-crop-title">
+    <ModalDialog labelledBy="image-crop-title" onClose={onCancel} busy={saving}>
       <section className="image-crop-dialog">
-        <div className="image-crop-heading"><div><p>Annonsbild</p><h2 id="image-crop-title">Beskär omslagsbilden</h2></div><button type="button" onClick={onCancel} aria-label="Stäng">×</button></div>
+        <div className="image-crop-heading"><div><p>Annonsbild</p><h2 id="image-crop-title">Beskär omslagsbilden</h2></div><button type="button" onClick={onCancel} disabled={saving} aria-label="Stäng">×</button></div>
         <div className="image-crop-viewport">
           {/* Blob URLs are local previews and cannot use the Next image optimizer. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -87,6 +88,6 @@ export function ImageCropDialog({ file, onCancel, onConfirm }: ImageCropDialogPr
         {error && <p className="auth-message auth-error" role="alert">{error}</p>}
         <footer><button type="button" className="secondary-btn" onClick={onCancel} disabled={saving}>Avbryt</button><button type="button" className="cta-btn" onClick={() => void confirm()} disabled={saving}>{saving ? "Beskär..." : "Beskär och använd"}</button></footer>
       </section>
-    </div>
+    </ModalDialog>
   );
 }

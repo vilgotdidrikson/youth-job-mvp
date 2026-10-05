@@ -16,8 +16,8 @@ const STATUS_TEXT: Record<Exclude<AuthGuardStatus, "ready">, string> = {
 export function AuthGateMessage({ status, error }: { status: Exclude<AuthGuardStatus, "ready">; error?: string | null }) {
   const text = status === "error" && error ? error : STATUS_TEXT[status];
   return (
-    <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
-      <p style={{ color: status === "error" ? "#c0392b" : "#737373", fontSize: "0.9rem" }}>{text}</p>
+    <main className="mobile-shell mnw-session-state">
+      <div className="mnw-session-card" role={status === "error" ? "alert" : "status"}>{status !== "error" && <span className="mnw-session-spinner" aria-hidden="true" />}<p>{text}</p></div>
     </main>
   );
 }

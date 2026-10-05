@@ -27,11 +27,24 @@ insert into public.application_completions(youth_user_id,job_id,job_title,compan
 delete from public.admin_users where user_id='a1000000-0000-4000-8000-000000000001';
 set local role authenticated;
 select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
-do $$ declare result jsonb; q uuid; begin
+do $$ declare result jsonb; q uuid; stamp timestamptz; begin
+ stamp:=(public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'source_updated_at')::timestamptz;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger"]',repeat('a',64),stamp-interval '1 second');
+ if result->>'reason'<>'source_changed' or (select count(*) from public.application_followups)<>0 then raise exception 'Stale analysis queued a question: %',result; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if result->>'claimed'<>'true' then raise exception 'First analysis not claimed'; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('b',64));
+ if result->>'reason'<>'busy' then raise exception 'Concurrent analysis allowed'; end if;
+ perform public.release_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('b',64));
+ if (select followup_pending_hash from public.application_completions where job_id='a2000000-0000-4000-8000-000000000001')<>repeat('a',64) then raise exception 'Different request released lease'; end if;
+ perform public.release_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if (select followup_pending_hash from public.application_completions where job_id='a2000000-0000-4000-8000-000000000001') is not null then raise exception 'Lease not released'; end if;
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger","Erfarenhet av kassa"]',repeat('a',64));
  if (result->>'queued')::int<>2 then raise exception 'Expected two questions: %',result; end if;
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger"]',repeat('a',64));
  if (result->>'queued')::int<>0 then raise exception 'Duplicate question'; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if result->>'reason'<>'cached' then raise exception 'Cached analysis called again'; end if;
  begin
   perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Social"]',repeat('a',64));
   raise exception 'Trait accepted';
@@ -76,5 +89,5 @@ do $$ begin
  begin perform * from public.application_followups; raise exception 'Anonymous read answers'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-select 'PASS: question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
+select 'PASS: source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
 rollback;

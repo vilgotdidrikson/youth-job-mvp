@@ -31,7 +31,7 @@ export function candidateSource(profile: Record<string, unknown>): string {
   const answers = profile.answers && typeof profile.answers === "object" ? Object.values(profile.answers) : [];
   const followups = Array.isArray(profile.followup_answers) ? profile.followup_answers : [];
   const supplements = followups.flatMap((item) => item && typeof item.answer === "string" && item.answer.trim() ? [`Kompletteringssvar: ${item.answer.trim()}`] : []);
-  return [base, ...supplements, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`)]
+  return [...supplements, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`), base]
     .join("\n").slice(0, 32000);
 }
 

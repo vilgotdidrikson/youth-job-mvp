@@ -47,7 +47,7 @@ export function MarketingNav() {
   return (
     <nav className="landing-bold-nav" aria-label="Huvudnavigation" ref={navRef}>
       <Link className="landing-logo" href="/" aria-label="MatchnWork startsida">
-        <span className="landing-logo-mark">E</span><span>employo</span>
+        <span className="landing-logo-mark" aria-hidden="true">M</span><span>MatchnWork</span>
       </Link>
 
       <div className="landing-bold-nav-actions landing-bold-nav-actions-desktop">

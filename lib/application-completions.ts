@@ -18,19 +18,18 @@ export interface ApplicationCompletion {
   submitted_at: string | null;
 }
 
+export async function submitApplicationAction(action: "prepare" | "answers" | "drafts", values: Record<string, unknown> = {}) {
+  const response = await fetch("/api/youth/applications/submit", { method: "POST", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ action, ...values }) });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Kunde inte spara ansökan. Försök igen.");
+  return result.application;
+}
 export async function prepareApplication(jobId: string): Promise<ApplicationCompletion> {
-  const { data, error } = await getSupabaseClient().rpc("prepare_my_application", { p_job_id: jobId });
-  if (error) throw new Error(error.message);
-  const application = data as ApplicationCompletion;
-  if (application.status !== "needs_completion") {
-    if (application.status === "submitted") void requestApplicationFollowups(jobId);
-    return application;
-  }
+  const application = await submitApplicationAction("prepare", { jobId }) as ApplicationCompletion;
+  if (application.status !== "needs_completion") return application;
   await analyzeApplications(jobId);
   const { data: updated } = await getSupabaseClient().from("application_completions").select("*").eq("job_id", jobId).eq("youth_user_id", application.youth_user_id).maybeSingle();
-  const result = (updated ?? application) as ApplicationCompletion;
-  if (result.status === "submitted") void requestApplicationFollowups(jobId);
-  return result;
+  return (updated ?? application) as ApplicationCompletion;
 }
 
 export async function getApplicationCompletions(): Promise<ApplicationCompletion[]> {
@@ -41,13 +40,7 @@ export async function getApplicationCompletions(): Promise<ApplicationCompletion
 }
 
 export async function saveApplicationAnswers(jobId: string, answers: Record<string, string>, submit: boolean): Promise<ApplicationCompletion> {
-  const { data, error } = await getSupabaseClient().rpc("save_my_application_answers", {
-    p_job_id: jobId, p_answers: answers, p_submit: submit,
-  });
-  if (error) throw new Error(error.message);
-  const result = data as ApplicationCompletion;
-  if (result.status === "submitted") void requestApplicationFollowups(jobId);
-  return result;
+  return await submitApplicationAction("answers", { jobId, answers, submit }) as ApplicationCompletion;
 }
 
 export async function analyzeApplications(jobId?: string): Promise<number> {
@@ -79,13 +72,26 @@ export async function saveApplicationFollowups(jobId: string, answers: Record<st
   if (error) throw new Error("Kunde inte skicka kompletteringen. Dina svar finns kvar här; försök igen.");
   return getApplicationFollowups(jobId);
 }
-const followupRequests = new Map<string, Promise<void>>();
-export function requestApplicationFollowups(jobId: string): Promise<void> {
+export interface FollowupAnalysisResult { queued?: number; cached?: boolean; processing?: boolean; temporary?: boolean; unavailable?: boolean; stale?: boolean }
+const followupRequests = new Map<string, Promise<FollowupAnalysisResult>>();
+export function requestApplicationFollowups(jobId: string): Promise<FollowupAnalysisResult> {
   const existing = followupRequests.get(jobId);
   if (existing) return existing;
-  const request = (async () => {
-    try { await fetch("/api/youth/applications/followups", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ jobId }) }); }
-    catch { /* Existing applications remain sent when the analysis is unavailable. */ }
+  const request = (async (): Promise<FollowupAnalysisResult> => {
+    try {
+      const response = await fetch("/api/youth/applications/followups", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ jobId }) });
+      if (!response.ok) return { temporary: true };
+      const result = await response.json() as FollowupAnalysisResult;
+      // The server may still be finishing a submission after its response.
+      // Poll only the youth's own lease, without issuing additional AI requests.
+      if (result.processing) for (let attempt = 0; attempt < 8; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        const { data, error } = await getSupabaseClient().from("application_completions").select("followup_analysis_started_at").eq("job_id", jobId).maybeSingle();
+        if (error) break;
+        if (!data?.followup_analysis_started_at) return { ...result, processing: false };
+      }
+      return result;
+    } catch { return { temporary: true }; }
     finally { followupRequests.delete(jobId); }
   })();
   followupRequests.set(jobId, request);

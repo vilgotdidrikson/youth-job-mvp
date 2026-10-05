@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import {
   aiCapabilities,
   companyFeatures,
@@ -28,7 +29,7 @@ export default function FeaturesPage() {
         <div className="features-grid features-grid-3">
           {youthFeatures.map((feature) => (
             <article key={feature.title} className="features-card">
-              <span className="features-icon" aria-hidden="true">{feature.icon}</span>
+              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
               <h3>{feature.title}</h3>
               <p>{feature.body}</p>
             </article>
@@ -42,7 +43,7 @@ export default function FeaturesPage() {
         <div className="features-grid features-grid-4">
           {companyFeatures.map((feature) => (
             <article key={feature.title} className="features-card features-card-compact">
-              <span className="features-icon" aria-hidden="true">{feature.icon}</span>
+              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
               <h3>{feature.title}</h3>
               <p>{feature.body}</p>
             </article>
@@ -57,7 +58,7 @@ export default function FeaturesPage() {
         <div className="features-grid features-grid-4">
           {individualFeatures.map((feature) => (
             <article key={feature.title} className="features-card features-card-compact">
-              <span className="features-icon" aria-hidden="true">{feature.icon}</span>
+              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
               <h3>{feature.title}</h3>
               <p>{feature.body}</p>
             </article>

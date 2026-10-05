@@ -16,7 +16,7 @@ export function AdminShell({ title, eyebrow = "Adminpanel", email, children }: {
   return (
     <main className="admin-page">
       <header className="admin-topbar">
-        <Link href="/admin" className="admin-brand"><span>E</span><strong>employo</strong><small>Admin</small></Link>
+        <Link href="/admin" className="admin-brand"><span>M</span><strong>MatchnWork</strong><small>Admin</small></Link>
         <nav className="admin-desktop-nav" aria-label="Adminnavigation">
           {links.map((link) => {
             const active = link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href);

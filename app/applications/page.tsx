@@ -39,7 +39,7 @@ function ApplicationCard({ item, onSaved, followups, onFollowupsSaved }: { item:
     finally { setBusy(false); }
   };
   return <article className="card application-completion-card">
-    <header><div className="application-company-avatar">{item.company_name.slice(0, 2).toUpperCase()}</div><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">{pending ? "Behöver kompletteras" : item.status === "submitted" ? "Skickad" : "Annonsen är inte tillgänglig"}</span></header>
+    <header><div className="application-company-avatar">{item.company_name.slice(0, 2).toUpperCase()}</div><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">{pending ? "Behöver kompletteras" : item.status === "submitted" ? followups.some((question) => question.status === "pending") ? "Frågor att besvara" : "Skickad" : "Annonsen är inte tillgänglig"}</span></header>
     {pending && <p>Frågorna bygger på företagets önskemål och skickas automatiskt av MatchnWork. Arbetsgivaren får läsa svaren när du skickar ansökan. CV och svar används för ett förklarat matchningsunderlag. Frågorna innebär inte att du redan har blivit utvald.</p>}
     {pending && <button type="button" className="secondary-btn" disabled={busy} onClick={() => void readCv()}>Hämta saknade svar från CV</button>}
     {item.questions.map((question, index) => <label className="application-question" key={question.id}>
@@ -60,21 +60,25 @@ export default function ApplicationsPage() {
   const [followups, setFollowups] = useState<ApplicationFollowup[]>([]);
   const [tab, setTab] = useState<"all" | "questions">("all");
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
+  const userId = user?.id;
   useEffect(() => {
-    if (!user || profile?.role !== "youth") return;
+    if (!userId || profile?.role !== "youth") return;
     let active = true;
     void Promise.all([getApplicationCompletions(), getApplicationFollowups()]).then(([data, questions]) => {
       if (!active) return;
       setItems(data); setFollowups(questions);
+      setChecking(data.some((item) => item.status === "submitted"));
       // At most three recent applications per visit; cached source prevents repeated AI work.
       void Promise.all(data.filter((item) => item.status === "submitted").slice(0, 3).map((item) => requestApplicationFollowups(item.job_id)))
-        .then(() => getApplicationFollowups()).then((updated) => { if (active) setFollowups(updated); }).catch(() => {});
+        .then(() => getApplicationFollowups()).then((updated) => { if (active) setFollowups(updated); }).catch(() => {}).finally(() => { if (active) setChecking(false); });
     })
       .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Kunde inte hämta ansökningar."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [user, profile?.role]);
+  }, [userId, profile?.role]);
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (profile?.role !== "youth") return <main className="mobile-shell"><p>Den här sidan är för ungdomskonton.</p></main>;
   const needsAnswers = (item: ApplicationCompletion) => item.status === "needs_completion" || followups.some((question) => question.job_id === item.job_id && question.status === "pending");
@@ -86,10 +90,12 @@ export default function ApplicationsPage() {
     <div className="applications-layout"><section className="applications-content">
       <div className="applications-tabs"><button type="button" aria-pressed={tab === "all"} onClick={() => setTab("all")}>Alla ansökningar <span>{items.length}</span></button><button type="button" aria-pressed={tab === "questions"} onClick={() => setTab("questions")}>Att besvara <span>{pending.length}</span></button></div>
       {error && <p role="alert" className="application-completion-error">{error}</p>}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : visible.length ? visible.map((item) => <ApplicationCard key={item.job_id} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(saved) => setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved])} onSaved={(saved) => {
+      {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
+      {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : visible.length ? visible.map((item) => <ApplicationCard key={item.job_id} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(saved) => { setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Din befintliga ansökan är kompletterad. Företaget kan nu läsa dina svar."); }} onSaved={(saved) => {
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
-        if (saved.status === "submitted") void requestApplicationFollowups(saved.job_id).then(() => getApplicationFollowups()).then(setFollowups).catch(() => {});
-      }} />) : <section className="applications-empty"><UiIcon name={tab === "questions" ? "check" : "briefcase"} width="32" height="32" /><h2>{tab === "questions" ? "Alla frågor är besvarade" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
+        if (saved.status === "submitted") { setChecking(true); void requestApplicationFollowups(saved.job_id).then(() => getApplicationFollowups()).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
+      }} />) : <section className="applications-empty"><UiIcon name={tab === "questions" ? "check" : "briefcase"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
     </section><aside className="applications-aside"><UiIcon name="info" width="24" /><h2>En ansökan, mer om dig</h2><p>Kompletteringsfrågorna utgår från just det här jobbets önskemål. Dina svar läggs till i ansökan du redan har skickat.</p><p>Du kan lämna en fråga obesvarad. Saknad information är aldrig ett automatiskt avslag.</p><Link href="/notifications">Till din aktivitet <UiIcon name="arrow" width="16" /></Link><Link href="/youth/cv">Se ditt CV <UiIcon name="arrow" width="16" /></Link></aside></div>
   </main>;
 }

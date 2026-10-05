@@ -5,6 +5,7 @@ import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getSupabaseErrorMessage } from "@/lib/supabase-errors";
+import { sessionUserForEvent } from "@/lib/session-events";
 import type { Profile } from "@/lib/types";
 
 interface UseSessionResult {
@@ -28,9 +29,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const profileRef = useRef<Profile | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
-  const updateUser = useCallback((nextUser: User | null) => {
-    userRef.current = nextUser;
-    setUser(nextUser);
+  const updateUser = useCallback((nextUser: User | null, event?: AuthChangeEvent) => {
+    const identity = sessionUserForEvent(userRef.current, nextUser, event);
+    userRef.current = identity;
+    setUser(identity);
   }, []);
 
   const updateProfile = useCallback((nextProfile: Profile | null) => {
@@ -138,7 +140,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const sameKnownUser = Boolean(sessionUser && userRef.current?.id === sessionUser.id);
         if (sessionUser) {
           if (!sameKnownUser) updateProfile(null);
-          updateUser(sessionUser);
+          updateUser(sessionUser, event);
         }
 
         // A refreshed token or a repeated SIGNED_IN event when Safari resumes

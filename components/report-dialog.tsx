@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalDialog } from "./modal-dialog";
 import { FormEvent, useState } from "react";
 import { submitReport, type ReportReason, type ReportTargetType } from "@/lib/reports";
 
@@ -55,14 +56,8 @@ export function ReportDialog({
         {label}
       </button>
       {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="report-dialog-title"
-          style={{ position: "fixed", inset: 0, zIndex: 40, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.5)" }}
-          onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}
-        >
-          <section className="card" style={{ width: "min(100%, 430px)", padding: "1.4rem" }}>
+        <ModalDialog labelledBy="report-dialog-title" onClose={close} busy={submitting} className="mnw-report-dialog">
+          <section className="card mnw-report-content">
             {sent ? (
               <>
                 <h2 id="report-dialog-title">Anmälan är skickad</h2>
@@ -91,7 +86,7 @@ export function ReportDialog({
               </form>
             )}
           </section>
-        </div>
+        </ModalDialog>
       )}
     </>
   );

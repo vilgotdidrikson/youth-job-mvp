@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { UiIcon } from "./ui-icon";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
@@ -243,9 +244,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <p className="cv-hub-eyebrow">Ditt nästa steg</p><h1>Skapa ditt CV</h1>
     <p className="cv-hub-lead">Svara fritt med egna ord. AI:n ordnar sedan dina fakta till ett CV som du själv granskar och redigerar.</p>
     <div className="cv-hub-options">
-      <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span>Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på enkla frågor. Tar cirka 3–5 minuter.</small></button>
-      <button className="cv-hub-option" onClick={() => setStep("pdf")}><strong>Ladda upp ett CV</strong><small>Ladda upp en PDF om du redan har ett CV.</small></button>
-      <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>
+      <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på enkla frågor. Tar cirka 3–5 minuter.</small></button>
+      <button className="cv-hub-option" onClick={() => setStep("pdf")}><span className="cv-hub-option-icon"><UiIcon name="upload" width="25" height="25" /></span><strong>Ladda upp ett CV</strong><small>Ladda upp en PDF om du redan har ett CV.</small></button>
+      <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>
     </div>{error && <p className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">

@@ -1,14 +1,16 @@
 import { createHash } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { requireApiUser } from "@/lib/api-auth";
 import { applicationSource, verifiedApplicationAnswers } from "@/lib/application-evidence";
 import type { ApplicationCompletion } from "@/lib/application-completions";
 import { pdfCvSource } from "@/lib/pdf-cv-source";
+import { analyzeApplicationFollowups } from "@/lib/analyze-application-followups";
 import { groqTextOptions } from "@/lib/groq-config";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const auth = await requireApiUser(request, "application-analyze", ["youth"]);
@@ -45,13 +47,15 @@ export async function POST(request: NextRequest) {
     const raw = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
     const results = Array.isArray(raw.applications) ? raw.applications : [];
     let sent = 0;
+    const sentIds: string[] = [];
     for (const item of applications) {
       const result = results.find((value: { jobId?: unknown }) => value?.jobId === item.job_id);
       const candidates = verifiedApplicationAnswers(result?.answers, item.questions, source);
       const answers = Object.fromEntries(Object.entries(candidates).filter(([id]) => !item.answers[id]?.trim()));
       const { data: saved, error: saveError } = await supabase.rpc("apply_my_application_evidence", { p_job_id: item.job_id, p_answers: answers, p_source_hash: sourceHash });
-      if (!saveError && saved?.status === "submitted") sent++;
+      if (!saveError && saved?.status === "submitted") { sent++; sentIds.push(item.job_id); }
     }
+    if (sentIds.length) after(async () => { await Promise.allSettled(sentIds.map((jobId) => analyzeApplicationFollowups(supabase, jobId, auth.user.id))); });
     return NextResponse.json({ sent, source: "ai", pdfStatus: pdf.status });
   } catch {
     // CV or AI service failure must never block the manual answer/skip path.

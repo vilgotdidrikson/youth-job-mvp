@@ -42,3 +42,7 @@
 .applications-empty p { color:#896a76;line-height:1.7;margin:0; }
 @media(max-width:900px) { .applications-layout { grid-template-columns:minmax(0,1fr); } .applications-aside { order:2; } }
 @media(max-width:720px) { .applications-heading { margin-bottom:24px; } .applications-heading h1 { font-size:1.95rem; } .application-completion-card > header { flex-wrap:wrap; } .application-status { margin-left:60px;max-width:none;margin-top:-4px; } .applications-tabs button { font-size:.77rem;padding:11px 6px; } .application-completion-actions .cta-btn { width:100%; } }
+
+.applications-confirmation {display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:16px;background:#edf6ef;color:#315a40;font-size:14px;line-height:1.5;}
+.applications-confirmation svg {flex-shrink:0;}
+.applications-checking {padding:14px 18px;border-radius:16px;background:#fff4f7;color:#735362;font-size:14px;line-height:1.5;}

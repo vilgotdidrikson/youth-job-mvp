@@ -1,7 +1,7 @@
 "use client";
 
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
-import { analyzeApplications, requestApplicationFollowups } from "@/lib/application-completions";
+import { analyzeApplications, submitApplicationAction } from "@/lib/application-completions";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getJobById } from "@/lib/jobs";
@@ -95,14 +95,10 @@ export async function getApplicationDraftCount(): Promise<number> {
  * database also removes drafts for closed listings and creates one consolidated
  * in-app notification for the youth. */
 export async function submitApplicationDraftsAfterCv(): Promise<ApplicationDraftSubmissionResult> {
-  const youth = await requireYouth();
-  const { data, error } = await getSupabaseClient().rpc("submit_my_application_drafts");
-  if (error) throw new Error(error.message);
+  await requireYouth();
+  const data = await submitApplicationAction("drafts");
   const result = Array.isArray(data) ? data[0] : data;
   const automaticallySent = Number(result?.pending_count ?? 0) > 0 ? await analyzeApplications() : 0;
-  void getSupabaseClient().from("application_completions").select("job_id").eq("youth_user_id", youth.id).eq("status", "submitted").order("submitted_at", { ascending: false }).limit(3).then(({ data: sent }) => {
-    for (const application of sent ?? []) void requestApplicationFollowups(application.job_id);
-  });
   return {
     sent: Number(result?.sent_count ?? 0) + automaticallySent,
     unavailable: Number(result?.unavailable_count ?? 0),

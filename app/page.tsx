@@ -63,7 +63,7 @@ const platformItems: PlatformItem[] = [
     id: "ai",
     icon: "✦",
     title: "AI som känner dig",
-    body: "Vår AI hjälper dig skriva CV, formulera ett personligt brev och förbereda dig inför intervjuer.",
+    body: "Vår AI hjälper dig skriva CV och ställer kompletteringsfrågor när en ansökan saknar uppgifter.",
     visual: <AiVisual />,
   },
   {
@@ -256,7 +256,7 @@ export default function Home() {
         <footer className="landing-bold-footer">
           <div className="landing-bold-footer-brand">
             <span className="landing-logo">
-              <span className="landing-logo-mark">E</span>employo
+              <span className="landing-logo-mark" aria-hidden="true">M</span>MatchnWork
             </span>
             <p>{copy.footer}</p>
           </div>
