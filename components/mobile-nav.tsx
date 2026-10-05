@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
+import { YouthNavigation } from "./youth-navigation";
 
 const youthItems = [
   {
@@ -129,6 +130,7 @@ export function MobileNav() {
   }
 
   const firstItem = profile?.role === "company" ? companyItems : profile?.role === "private" ? [{ href: "/private", label: "Mina uppdrag", icon: companyItems[0].icon }] : youthItems;
+  if (profile?.role === "youth") return <YouthNavigation pathname={pathname}/>;
   const items = [...firstItem, ...sharedItems];
 
   return (

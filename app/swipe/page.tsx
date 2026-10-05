@@ -3,13 +3,13 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { JobSwipeDeck } from "@/components/job-swipe-deck";
+import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
-import { getApplicationDraftCount, getSavedJobs, getYouthFlowState, saveApplicationDraft } from "@/lib/youth-job-flow";
+import { getApplicationDraftCount, getSavedJobs, getYouthFlowState, saveApplicationDraft, setJobSaved } from "@/lib/youth-job-flow";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 const EMPLOYMENT_FORMS = ["Heltid", "Deltid", "Sommarjobb", "Helgjobb", "Extraarbete", "Extra vid behov", "Praktik", "Engångsjobb"];
@@ -35,7 +35,7 @@ function SwipePageContent() {
   const [showCvPrompt, setShowCvPrompt] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
   const [swipeCount, setSwipeCount] = useState(0);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [savedJobs, setSavedJobs] = useState<JobPost[]>([]);
   const showingSaved = searchParams.get("saved") === "1";
 
   useEffect(() => {
@@ -50,11 +50,11 @@ function SwipePageContent() {
     let active = true;
     const load = async () => {
       try {
-        const data = showingSaved
-          ? await getSavedJobs()
-          : await getSwipeJobs();
+        const [feed, bookmarks] = await Promise.all([showingSaved ? Promise.resolve([]) : getSwipeJobs(), getSavedJobs()]);
+        const data = showingSaved ? bookmarks : feed;
         const requestedJobId = searchParams.get("job");
         if (active) {
+          setSavedJobs(bookmarks);
           setJobs(requestedJobId ? [...data].sort((a, b) => (a.id === requestedJobId ? -1 : b.id === requestedJobId ? 1 : 0)) : data);
           setError("");
         }
@@ -89,6 +89,7 @@ function SwipePageContent() {
   ), [category, city, employmentType, jobs]);
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
+    setError("");
     try {
       if (!cvCompleted && decision === "interested") {
         await saveApplicationDraft(job.id);
@@ -113,16 +114,20 @@ function SwipePageContent() {
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (cvLoading) return <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p></main>;
 
-  return <main className="mobile-shell">
-    <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>{cvCompleted && <Link href="/applications" className="secondary-btn">Dina ansökningar och frågor</Link>}
-      {!cvCompleted && <div className="cv-required-banner"><div><strong>Gör klart ditt CV för att skicka ansökningar</strong><p>{draftCount ? `${draftCount} ${draftCount === 1 ? "ansökan är" : "ansökningar är"} sparad${draftCount === 1 ? "" : "e"} och skickas när ditt CV är klart.` : "Du kan swipa nu. Ansökningar sparas tills ditt CV är klart."}</p></div><Link className="cv-required-banner-action" href="/youth/cv">Skapa ditt CV</Link></div>}
-    </div>
-    {profile?.role !== "youth" ? <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}><p style={{ fontSize: "1.1rem", fontWeight: 700 }}>Bara för ungdomskonton</p></div> : error ? <div style={{ borderRadius: 12, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "1rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</div> : !jobsLoaded ? <div style={{ textAlign: "center", paddingTop: "3rem", color: "#737373" }}>Laddar jobb...</div> : <div className="job-explore-layout">
-      {!showingSaved && <><button type="button" className="job-filter-menu-button" onClick={() => setFiltersOpen(true)} aria-expanded={filtersOpen}>☰ Filter</button>{filtersOpen && <button type="button" className="job-filter-backdrop" aria-label="Close filters" onClick={() => setFiltersOpen(false)} />}<aside className={`job-filter-sidebar${filtersOpen ? " is-open" : ""}`} aria-label="Filtrera jobb"><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><strong>Filter</strong>{(city || category || employmentType) && <button type="button" onClick={() => { setCity(""); setCategory(""); setEmploymentType(""); }} style={{ border: 0, background: "none", color: "var(--accent)", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: "pointer" }}>Rensa</button>}</div><label>Ort<select value={city} onChange={(event) => setCity(event.target.value)}><option value="">Alla orter</option>{filterOptions.cities.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><label>Kategori<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">Alla kategorier</option>{filterOptions.categories.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><label>Anställningsform<select value={employmentType} onChange={(event) => setEmploymentType(event.target.value)}><option value="">Alla former</option>{filterOptions.employmentTypes.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><p>{filteredJobs.length} {filteredJobs.length === 1 ? "jobb" : "jobb"}</p><button type="button" className="job-filter-close" onClick={() => setFiltersOpen(false)}>Stäng</button></aside></>}
-      <div><JobSwipeDeck jobs={filteredJobs} onDecision={handleDecision} emptyTitle={showingSaved ? "Inga sparade jobb ännu" : "Inga jobb som matchar dina filter"} emptySubtitle={showingSaved ? "Spara jobb som du vill återkomma till." : "Rensa ett filter eller kolla tillbaka senare."} interestedLabel={cvCompleted ? "Skicka ansökan" : "Påbörja ansökan"} skipLabel="Hoppa" swipeHint="Swipa eller tryck" /></div>
-    </div>}
+  const handleSave = async (job: JobPost, saved: boolean) => {
+    await setJobSaved(job.id, saved);
+    setSavedJobs(current => saved ? [job, ...current.filter(item => item.id !== job.id)] : current.filter(item => item.id !== job.id));
+    if (showingSaved && !saved) setJobs(current => current.filter(item => item.id !== job.id));
+  };
+  const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
+    if (key === "city") setCity(value);
+    else if (key === "category") setCategory(value);
+    else setEmploymentType(value);
+  };
+  return <>
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
     {showCvPrompt && <div role="dialog" aria-modal="true" style={{ position: "fixed", inset: 0, zIndex: 10, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.45)" }}><section className="card" style={{ maxWidth: 380, padding: "1.4rem" }}><p style={{ margin: 0, color: "var(--accent)", fontSize: ".78rem", fontWeight: 800 }}>DU HAR UTFORSKAT 10 JOBB</p><h2>Gör klart ditt CV</h2><p>{draftCount ? `${draftCount} sparade ansökningar skickas när företagen kan se ditt CV.` : "För att skicka ansökningar behöver företagen kunna se ditt CV."}</p><Link className="cta-btn" style={{ display: "block", textAlign: "center" }} href="/youth/cv">Skapa ditt CV</Link><button type="button" className="secondary-btn" style={{ width: "100%", marginTop: ".7rem" }} onClick={() => setShowCvPrompt(false)}>Fortsätt utforska</button></section></div>}
-  </main>;
+  </>;
 }
 
 export default function SwipePage() { return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar...</p></main>}><SwipePageContent /></Suspense>; }

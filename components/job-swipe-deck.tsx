@@ -2,21 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { UiIcon } from "./ui-icon";
+import styles from "./job-discovery.module.css";
 import type { JobPost, SwipeDecision } from "@/lib/types";
-
-function bulletItems(value: string): string[] {
-  return value
-    .split(/[,\n]+/)
-    .map((item) => item.trim().replace(/^[-•]\s*/, ""))
-    .filter(Boolean);
-}
-
-type Decision = SwipeDecision;
 
 interface JobSwipeDeckProps {
   jobs: JobPost[];
-  onDecision: (job: JobPost, decision: Decision) => Promise<void>;
+  onDecision: (job: JobPost, decision: SwipeDecision) => Promise<void>;
+  onSave: (job: JobPost, saved: boolean) => Promise<void>;
+  savedIds: Set<string>;
   emptyTitle: string;
   emptySubtitle: string;
   interestedLabel: string;
@@ -24,343 +19,61 @@ interface JobSwipeDeckProps {
   swipeHint: string;
 }
 
-export function JobSwipeDeck({
-  jobs,
-  onDecision,
-  emptyTitle,
-  emptySubtitle,
-  interestedLabel,
-  skipLabel,
-}: JobSwipeDeckProps) {
-  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
   const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
-  const startXRef = useRef<number | null>(null);
-  const flyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const startX = useRef<number | null>(null);
+  const actionLock = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentJob = jobs[0];
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  const remainingJobs = useMemo(() => jobs.filter((job) => !decisions[job.id]), [decisions, jobs]);
-  const currentJob: JobPost | undefined = remainingJobs[0];
-
-  const commitDecision = async (job: JobPost, decision: Decision) => {
-    setFlyDir(null);
-    setDragX(0);
-    try {
-      await onDecision(job, decision);
-      setDecisions((prev) => ({ ...prev, [job.id]: decision }));
-    } catch {
-      // The parent renders the useful error. Keep the card available so the
-      // youth can retry instead of silently losing the job from the deck.
-    }
+  const resetDrag = () => { startX.current = null; setDragX(0); };
+  const decide = (decision: SwipeDecision) => {
+    if (!currentJob || actionLock.current) return;
+    actionLock.current = true;
+    setBusy(true); setActionError(""); resetDrag();
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduced) setFlyDir(decision === "interested" ? "right" : "left");
+    timer.current = setTimeout(() => {
+      void onDecision(currentJob, decision).catch(() => {
+        setActionError("Ditt val kunde inte sparas. Försök igen.");
+      }).finally(() => { actionLock.current = false; setBusy(false); setFlyDir(null); });
+    }, reduced ? 0 : 240);
+  };
+  const save = async () => {
+    if (!currentJob || saving) return;
+    setSaving(true); setActionError("");
+    try { await onSave(currentJob, !savedIds.has(currentJob.id)); }
+    catch { setActionError("Jobbet kunde inte sparas. Försök igen."); }
+    finally { setSaving(false); }
   };
 
-  const triggerDecision = (job: JobPost, decision: Decision) => {
-    if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
-    setFlyDir(decision === "interested" ? "right" : "left");
-    setIsDragging(false);
-    setDragX(0);
-    startXRef.current = null;
-    flyTimerRef.current = setTimeout(() => void commitDecision(job, decision), 280);
-  };
-
-  const onPointerDown = (x: number) => {
-    if (flyDir) return;
-    startXRef.current = x;
-    setIsDragging(true);
-  };
-
-  const onPointerMove = (x: number) => {
-    if (!isDragging || startXRef.current === null) return;
-    setDragX(x - startXRef.current);
-  };
-
-  const onPointerEnd = () => {
-    if (!currentJob) {
-      setIsDragging(false);
-      setDragX(0);
-      startXRef.current = null;
-      return;
-    }
-
-    if (dragX > 90) {
-      triggerDecision(currentJob, "interested");
-    } else if (dragX < -90) {
-      triggerDecision(currentJob, "skip");
-    } else {
-      setIsDragging(false);
-      setDragX(0);
-      startXRef.current = null;
-    }
-  };
-
-  const interestedCount = Object.values(decisions).filter((v) => v === "interested").length;
-  const flyTranslateX = flyDir === "right" ? 600 : flyDir === "left" ? -600 : dragX;
-  const flyRotate = flyDir === "right" ? 18 : flyDir === "left" ? -18 : dragX * 0.03;
-  const overlayOpacity = Math.min(Math.abs(dragX) / 100, 1);
-  const isLiking = dragX > 20 || flyDir === "right";
-  const isSkipping = dragX < -20 || flyDir === "left";
-
-  if (!currentJob) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 420,
-          gap: "0.75rem",
-          padding: "2rem",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontSize: "2.5rem" }}>🎉</div>
-        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-          {emptyTitle}
-        </h2>
-        <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: 0 }}>{emptySubtitle}</p>
-        {interestedCount > 0 && (
-          <div
-            style={{
-              marginTop: "0.5rem",
-              padding: "0.6rem 1.2rem",
-              borderRadius: 999,
-              background: "var(--color-success-soft)",
-              border: "1px solid var(--color-success-border)",
-              fontSize: "0.85rem",
-              color: "var(--color-success)",
-              fontWeight: 600,
-            }}
-          >
-            {interestedCount} {interestedCount === 1 ? "match" : "matches"} sent
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="swipe-deck" style={{ position: "relative", userSelect: "none" }}>
-      {/* Main swipe card */}
-      <div
-        className="swipe-job-card"
-        style={{
-          position: "relative",
-          zIndex: 1,
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: 20,
-          overflow: "hidden",
-          minHeight: 405,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-          transform: `translateX(${flyTranslateX}px) rotate(${flyRotate}deg)`,
-          transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)",
-          touchAction: "pan-y",
-          cursor: isDragging ? "grabbing" : "grab",
-        }}
-        onPointerDown={(e) => onPointerDown(e.clientX)}
-        onPointerMove={(e) => onPointerMove(e.clientX)}
-        onPointerUp={onPointerEnd}
-        onPointerCancel={onPointerEnd}
-      >
-        {/* Job image */}
-        {(currentJob.image_url ? currentJob.image_url.split(",")[0] : "") ? (
-          <div className="swipe-job-image" style={{ height: 145, overflow: "hidden", position: "relative" }}>
-            <Image
-              src={currentJob.image_url.split(",")[0]}
-              alt={currentJob.title}
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          </div>
-        ) : (
-          <div
-            className="swipe-job-image"
-            style={{
-              height: 125,
-              background: "var(--color-surface-soft)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "3rem",
-            }}
-          >
-            💼
-          </div>
-        )}
-
-        {/* Swipe direction indicators */}
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            left: 16,
-            padding: "6px 14px",
-            borderRadius: 8,
-            border: "3px solid var(--accent-green)",
-            color: "var(--accent-green)",
-            fontWeight: 800,
-            fontSize: "1.1rem",
-            letterSpacing: "0.05em",
-            opacity: isLiking ? overlayOpacity : 0,
-            transform: `rotate(-15deg)`,
-            transition: "opacity 0.1s ease",
-            pointerEvents: "none",
-          }}
-        >
-          YES
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            padding: "6px 14px",
-            borderRadius: 8,
-            border: "3px solid var(--accent-red)",
-            color: "var(--accent-red)",
-            fontWeight: 800,
-            fontSize: "1.1rem",
-            letterSpacing: "0.05em",
-            opacity: isSkipping ? overlayOpacity : 0,
-            transform: `rotate(15deg)`,
-            transition: "opacity 0.1s ease",
-            pointerEvents: "none",
-          }}
-        >
-          NOPE
-        </div>
-
-        {/* Card content */}
-        <div style={{ padding: ".85rem 1rem 1rem" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem" }}>
-            <div>
-              <p
-                style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "var(--text-tertiary)",
-                  margin: 0,
-                }}
-              >
-                {currentJob.company_name || "Company"}
-              </p>
-              {currentJob.is_boosted && (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    marginTop: "0.35rem",
-                    padding: "0.18rem 0.45rem",
-                    borderRadius: 999,
-                    background: "var(--color-surface-soft)",
-                    color: "var(--text-secondary)",
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  Framhävd annons
-                </span>
-              )}
-              <h2
-                style={{
-                  fontSize: "1.25rem",
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--text-primary)",
-                  margin: "0.2rem 0 0",
-                  lineHeight: 1.15,
-                }}
-              >
-                {currentJob.title}
-              </h2>
-            </div>
-          </div>
-
-          <p
-            style={{
-              marginTop: "0.4rem",
-              fontSize: "0.85rem",
-              color: "var(--text-secondary)",
-              display: "flex",
-              gap: "0.35rem",
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            {(currentJob.address || currentJob.city) && (
-              <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <span style={{ fontSize: "0.8rem" }}>📍</span> {[currentJob.address, currentJob.postal_code, currentJob.city].filter(Boolean).join(", ")}
-              </span>
-            )}
-            {currentJob.city && (currentJob.employment_type || currentJob.salary_per_hour) && (
-              <span style={{ color: "#e8e8e8" }}>·</span>
-            )}
-            {currentJob.employment_type && <span>{currentJob.employment_type}</span>}
-            {currentJob.employment_type && currentJob.salary_per_hour && (
-              <span style={{ color: "#e8e8e8" }}>·</span>
-            )}
-            {currentJob.salary_per_hour && (
-              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{currentJob.salary_per_hour}</span>
-            )}
-          </p>
-
-          {currentJob.description && (
-            <p
-              style={{
-                marginTop: "0.75rem",
-                fontSize: "0.9rem",
-                color: "var(--text-primary)",
-                lineHeight: 1.55,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {currentJob.description}
-            </p>
-          )}
-
-          {currentJob.category && (
-            <span
-              className="chip"
-            style={{ display: "inline-block", marginTop: "0.55rem" }}
-            >
-              {currentJob.category}
-            </span>
-            )}
-          <Link
-            href={`/jobb/${encodeURIComponent(currentJob.id)}`}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-            style={{ display: "inline-block", marginTop: "0.65rem", color: "var(--accent)", fontSize: "0.78rem", fontWeight: 800, textDecoration: "none" }}
-          >
-            Läs hela annonsen →
-          </Link>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div style={{ display: "flex", gap: "0.65rem", marginTop: ".75rem" }}>
-        <button
-          type="button"
-          className="secondary-btn"
-          style={{ flex: 1, padding: "0.78rem", fontSize: "0.9rem" }}
-          onClick={() => triggerDecision(currentJob, "skip")}
-        >
-          {skipLabel}
-        </button>
-        <button
-          type="button"
-          className="cta-btn"
-          style={{ flex: 1, padding: "0.78rem", fontSize: "0.9rem" }}
-          onClick={() => triggerDecision(currentJob, "interested")}
-        >
-          {interestedLabel}
-        </button>
-      </div>
+  if (!currentJob) return <section className={styles.empty} aria-live="polite"><span className={styles.emptyIcon}><UiIcon name="discover" width="32" height="32"/></span><h2>{emptyTitle}</h2><p>{emptySubtitle}</p><Link href="/swipe" className={styles.textLink}>Utforska jobb <UiIcon name="arrow"/></Link></section>;
+  const image = currentJob.image_url?.split(",")[0]?.trim();
+  const saved = savedIds.has(currentJob.id);
+  return <div className={styles.deck}>
+    <article className={styles.jobCard}
+      style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${dragX}px) rotate(${dragX * .025}deg)`, transition: startX.current !== null ? "none" : undefined }}
+      onPointerDown={event => { if (busy || event.button !== 0 || (event.target as HTMLElement).closest("a,button")) return; startX.current = event.clientX; event.currentTarget.setPointerCapture(event.pointerId); }}
+      onPointerMove={event => { if (startX.current !== null) setDragX(event.clientX - startX.current); }}
+      onPointerUp={() => { if (startX.current === null) return; if (dragX > 90) decide("interested"); else if (dragX < -90) decide("skip"); else resetDrag(); }}
+      onPointerCancel={resetDrag} onLostPointerCapture={resetDrag}>
+      {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
+      <div className={styles.imageShade}/>
+      <div className={styles.cardTop}><span className={styles.cardBadge}>{currentJob.is_boosted ? "Framhävd annons" : `${jobs.length} ${jobs.length === 1 ? "jobb" : "jobb att upptäcka"}`}</span><button className={styles.bookmark} type="button" aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet till senare"} aria-pressed={saved} disabled={saving || busy} onClick={() => void save()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button></div>
+      {Math.abs(dragX) > 20 && <span className={`${styles.swipeFeedback} ${dragX > 0 ? styles.feedbackYes : ""}`}>{dragX > 0 ? "Intresserad" : "Inte nu"}</span>}
+      <div className={styles.cardContent}><p className={styles.company}>{currentJob.company_name || "Arbetsgivare"}</p><h2><Link href={`/jobb/${encodeURIComponent(currentJob.id)}`}>{currentJob.title}</Link></h2><div className={styles.cardChips}>{[currentJob.city, currentJob.employment_type, currentJob.salary_per_hour].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div></div>
+    </article>
+    <div className={styles.actions}>
+      <button type="button" className={styles.action} disabled={busy || saving} onClick={() => decide("skip")}><span><UiIcon name="close"/></span><span>{skipLabel}</span></button>
+      <button type="button" className={`${styles.action} ${styles.interested}`} disabled={busy || saving} onClick={() => decide("interested")}><span><UiIcon name="heart"/></span><span>{interestedLabel}</span></button>
+      <Link className={styles.action} href={`/jobb/${encodeURIComponent(currentJob.id)}`}><span><UiIcon name="info"/></span><span>Detaljer</span></Link>
     </div>
-  );
+    <p className={styles.swipeHint}>{busy ? "Sparar ditt val…" : swipeHint}</p>
+    {actionError && <p role="alert" className={styles.error}>{actionError}</p>}
+  </div>;
 }
