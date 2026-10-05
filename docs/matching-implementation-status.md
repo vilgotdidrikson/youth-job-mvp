@@ -1,48 +1,32 @@
 # Matching MVP status — 2026-10-05
 
-Implemented on dev/DevStaging:
+Steps 1 and 2 are implemented and functionally verified on `dev` / Supabase DevStaging. Production database was not changed.
+
+## Implemented
+
 - Reusable company profile and AI-assisted approved job profile.
-- Optional application questions: maximum three, private while pending, immutable snapshot after submission.
-- Separate youth applications page; save answers, skip unknown answers, submit atomically.
-- CV-grounded question analysis: literal excerpts only, batched up to ten applications per call, cached by source hash.
-- Employer access to submitted answers; evidence-based criterion assessment with deterministic weighting, coverage and explanation.
-- Unknown information produces no inferred failure; trainable knowledge does not reduce match score; no automated rejection.
-- Assessment history is immutable and cached by job-profile version and source hash.
+- Company → Announcements → Edit match criteria: required criteria, trainable knowledge, traits, role summary and up to three optional questions. Optimistic version checks prevent stale overwrites; append-only profile history preserves previous versions. Public advertisement copy is edited separately.
+- Existing applications retain their original questions and profile-version snapshot. Updated criteria affect the next assessment; updated questions affect future applications.
+- Youth applications page supports saving manual answers, skipping unknown answers and atomic submission. Individual CV refresh also covers applications beyond the automatic ten-application batch, preserving manual answers.
+- PDF.js reads text-based CVs for both question completion and candidate assessment. Limits: 5 MB, 10 pages and 12,000 text characters. Scanned, encrypted, malformed or oversized PDFs use the manual path; OCR is outside this MVP.
+- Private CV reads require the youth owner, or a verified listing owner with submitted interest, the exact CV path and no block. CV viewing uses the authenticated user's Storage permissions, without a service-role key.
+- Evidence must quote the supplied source literally. Identity fields are excluded; personality is not inferred. Missing information remains unknown, trainable knowledge does not lower the match score, and there is no automated rejection.
+- Conservative fixed checks cover explicit B-licence and evening/weekend availability, explicit negatives and conflicting statements. Deterministic weighting, evidence coverage and explanation accompany the score.
+- Immutable assessment history and caching use the criteria version, source hash and AI configuration. Provider failures produce a temporary assessment without permanently caching the failure.
+- Three text-AI routes share `GROQ_TEXT_MODEL`, defaulting to the supported `openai/gpt-oss-120b`. This replaces the retired Llama model. JSON output and low reasoning are bounded; model changes invalidate analysis caches.
+- Shared path validation, criteria normalization and matching rules are independent of the web UI for future mobile reuse.
 
-Validation: production build and TypeScript; focused lint; literal-evidence and scoring checks; transactional DevStaging tests for youth/company isolation, optional submission, idempotence, snapshot answers, and AI/manual merge behavior.
+## Verified
 
-Remaining before pilot approval:
-- Full visual/E2E pilot cases on the deployed site, including paused listings and multiple pending applications.
-- PDF-only CV extraction: text/structured CV and profile data are analyzed; unread PDF content remains unknown.
-- More than ten pending applications: the rest keep the manual completion path.
-- Expand concrete-rule matching for schedules/certificates and add employer editing/version history UI.
-- Review question quality, score calibration and youth copy in real pilot cases.
+- `npm run test:matching`, TypeScript, focused ESLint and production build pass. Tests include scoring, unknowns, traits, conflicting evidence, trainable knowledge, literal citations, path isolation, real PDF extraction and unreadable fallback.
+- Transactional DevStaging submission regression: missing CV denies manual and AI submission; paused listings permit saving but deny sending; resumed submission preserves answers; retries are idempotent. Anonymous RPC access is denied.
+- Two youth and two company QA actors: owner-only immutable criterion history, no-op/stale saves, unchanged question snapshots, pending-answer privacy, denied cross-account access and exact private PDF access.
+- Deployed dev API: authorized PDF viewing/extraction, denied company/youth/anonymous reads, application → match → conversation → synthetic youth message → company read. Blocking revokes fresh CV, assessment and Storage access.
+- Deployed provider checks: stored candidate assessment; PDF-only evidence completes and submits an application; repeat completion does not resend; AI job-profile generation succeeds.
+- Browser inspection: signed-in youth applications page loads and displays correctly on desktop. Full employer/mobile visual review and real pilot scenarios remain part of step 5, rather than being claimed as a completed release review.
 
-Do not describe this as a completely validated release.
+PDF worker, standard fonts and the PDF.js Node canvas dependency are explicitly included in deployed route tracing. Runtime asset paths use `process.cwd()` because Turbopack can rewrite static `require.resolve()` calls to numeric module IDs.
 
-## Stabilization follow-up
+## Next
 
-Fixed a reproducible final-submission bypass: a pending completion could previously be submitted after its CV was removed. Final submission now rechecks CV and listing availability, including the AI completion path, while holding the youth profile read lock. Existing submitted snapshots remain immutable.
-
-Reusable transactional regression: scripts/test-application-submission.sql. DevStaging passed missing-CV denial for manual and AI submission, saving during pause, denying submission during pause, resumed submission preserving answers, and idempotent retry. Anonymous RPC access remains denied.
-
-The full visual/E2E pilot suite and step 2 (PDF extraction, richer fixed rules and profile editing UI) remain pending. Near-term roadmap after these: SMTP/basic email, then payments. Premium subscription features are a separate later phase.
-
-## PDF and criterion editing follow-up — 2026-10-05
-
-Implemented:
-- Server-side PDF.js text extraction for youth completion and employer assessment, bounded to 5 MB / 10 pages / 12,000 text characters. Scanned, encrypted, malformed and oversized PDFs use the manual path; OCR is outside this MVP.
-- Private Storage reads require the youth owner, or a verified listing owner with submitted interest, an exact CV document path and no block. CV viewing no longer depends on a service-role key.
-- Listing criterion editor under Company → Announcements, with optimistic version checking, append-only profile snapshots, and previous assessment history.
-- Existing applications keep their original question/version snapshot. Criteria affect the next assessment, questions affect new applications. Match criteria editing does not rewrite public advertisement copy.
-- Conservative fixed checks for explicit B-licence and evening/weekend availability, including explicit negatives and conflicting statements. Personality is not inferred. Trainable requirements do not lower suitability.
-- Per-application CV refresh preserves manual answers and provides a path beyond the automatic ten-application batch.
-- Shared path validation, criterion normalization and matching rules are UI-independent for future mobile reuse.
-
-Validation in this follow-up: `npm run test:matching`, TypeScript, focused ESLint and production build pass. DevStaging submission regression passes. Authenticated deployed API checks, isolation and visual review are recorded below when completed.
-
-DevStaging authenticated regression now passes with two youth and two company QA actors: criterion history is immutable and owner-only; stale/no-op saves behave correctly; pending answers remain private; existing question snapshots survive criterion edits; paused submission is denied; retries preserve submitted answers; only the youth and verified application owner can download the private PDF. Deployed CV viewing and denied-account API checks pass. PDF worker and standard fonts are explicitly included in the server artifact (verified against both route tracing manifests).
-
-Production packaging note: worker, standard fonts and the PDF.js Node canvas dependency are explicitly traced. Avoid static `require.resolve` for runtime asset paths: Turbopack may rewrite it to a module id. Fixed-rule assessments can be stored even without an AI key; cache input includes AI configuration so enabling the provider invalidates that cache.
-
-Deployed matching flow passed through application, authorized PDF download/extraction, match, conversation, youth message and company read. Blocking denies fresh CV/assessment/Storage access. The existing Groq Llama model was retired for standard tiers on 2026-08-16; all three affected text flows now share a configurable supported GPT-OSS default and bounded low-reasoning JSON output. Cache hashes include model identity. Final provider checks follow deployment.
+Design work can begin. The roadmap continues with SMTP/basic email, then the paid-offer payment flow, followed by the final UX review and pilot launch. Real pilot cases should review question quality and score calibration. Premium functions and subscriptions remain a later phase.

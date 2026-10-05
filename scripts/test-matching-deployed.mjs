@@ -21,6 +21,12 @@ if(!process.env.MATCHING_QA_QUICK) console.log('PASS: deployed company/youth/ano
 const cv=await api('/api/company/candidate-cv','companyA',body);assert.equal(cv.status,200,JSON.stringify(cv.data));assert.equal(cv.data.kind,'pdf');
 const pdf=await fetch(cv.data.url);assert.equal(pdf.status,200);assert.ok((await pdf.text()).startsWith('%PDF-'));console.log('PASS: deployed authorized CV and signed PDF download');
 const result=await api('/api/company/candidate-assessment','companyA',body);assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.pdfStatus,'read',JSON.stringify(result.data));assert.ok(result.data.assessment.criteria.some(c=>c.status==='fulfilled'));console.log('PASS: deployed PDF extraction and candidate assessment; temporary='+Boolean(result.data.temporary));
+if(process.env.MATCHING_QA_REQUIRE_AI){
+ assert.equal(Boolean(result.data.temporary),false,'Configured provider must complete successfully');
+ const retry=await api('/api/company/candidate-assessment','companyA',body);
+ assert.equal(retry.status,200);assert.equal(retry.data.cached,true);assert.deepEqual(retry.data.assessment,result.data.assessment);
+ console.log('PASS: provider assessment is stored and identical on cached retry');
+}
 if(process.env.MATCHING_QA_QUICK) process.exit(0);
 const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{accessToken:async()=>actors.find(a=>a.name==='companyA').token,auth:{persistSession:false,autoRefreshToken:false}});
 const {data:match,error}=await db.rpc('review_candidate_and_match',{p_job_id:state.jobId,p_youth_user_id:state.youthId,p_decision:'interested'});if(error)throw error;const m=Array.isArray(match)?match[0]:match;assert.ok(m.match_id&&m.conversation_id);state.matchId=m.match_id;state.conversationId=m.conversation_id;
