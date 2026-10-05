@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
-import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
+import { ExperienceCard, ProfileHeader, SkillList } from "@/components/profile/professional-profile";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
@@ -13,6 +13,8 @@ import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { changePassword } from "@/lib/auth";
+import { UiIcon } from "@/components/ui-icon";
+import "./profile.css";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 interface YouthProfileForm {
@@ -86,8 +88,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [cvDocuments, setCvDocuments] = useState<YouthDocument[]>([]);
   const [editingCv, setEditingCv] = useState(false);
   const [cvEditText, setCvEditText] = useState("");
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [showProfileEditor, setShowProfileEditor] = useState(false);
+
+  const [profileTab, setProfileTab] = useState<"overview" | "cv" | "details" | "settings">("overview");
   const [error, setError] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -182,7 +184,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     try {
       await saveYouthProfileDraft(form);
       setSavedNote("Profil sparad.");
-      setEditingProfile(false);
+      setProfileTab("overview");
       setError("");
     } catch (saveError) {
       console.error("Failed to save youth profile.", saveError);
@@ -380,7 +382,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       <main className="mobile-shell pb-20">
         {/* Header */}
         <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>Employo</p>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>MatchnWork</p>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0" }}>
             {companyName || "Företagsprofil"}
           </h1>
@@ -533,216 +535,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     </div>
   );
 
-  return (
-    <main className="mobile-shell pb-20 profile-page network-profile-page">
-      <ProfileHeader name={form.name} location={form.city} completion={completion} onEdit={() => setShowProfileEditor(true)} />
-
-      {showProfileEditor && (
-        <div className="network-profile-modal-backdrop" role="presentation" onMouseDown={() => setShowProfileEditor(false)}>
-          <section className="network-profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onMouseDown={(event) => event.stopPropagation()}>
-            <div><h2 id="profile-editor-title">Redigera profil</h2><button type="button" aria-label="Stäng" onClick={() => setShowProfileEditor(false)}>×</button></div>
-            <p>Uppgifterna som tidigare visades under Om dig.</p>
-            <div className="minimal-profile-fields">
-              <label><span>Namn</span><input value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} /></label>
-              <label><span>Födelsedatum</span><input type="date" value={form.dateOfBirth} onChange={(e) => setForm((current) => ({ ...current, dateOfBirth: e.target.value }))} /></label>
-              <label><span>Adress</span><input value={form.address} onChange={(e) => setForm((current) => ({ ...current, address: e.target.value }))} /></label>
-              <label><span>Postnummer</span><input value={form.postalCode} onChange={(e) => setForm((current) => ({ ...current, postalCode: e.target.value }))} /></label>
-              <label><span>Ort</span><input value={form.city} onChange={(e) => setForm((current) => ({ ...current, city: e.target.value }))} /></label>
-            </div>
-            <footer><button type="button" onClick={() => setShowProfileEditor(false)}>Avbryt</button><button type="button" onClick={() => { void handleSave(); setShowProfileEditor(false); }} disabled={saving}>{saving ? "Sparar..." : "Spara"}</button></footer>
-          </section>
-        </div>
-      )}
-
-      <div className="network-profile-layout"><div className="network-profile-main">
-
-      {error && (
-        <p style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
-          {error}
-        </p>
-      )}
-
-      <section className="card" style={{ display: "grid", gap: ".55rem", padding: "1rem", marginBottom: "1rem" }} aria-label="CV-status">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem" }}>
-          <strong style={{ color: "#111" }}>CV-status</strong>
-          <span style={{ color: hasCv ? "#226a54" : "#6a4a00", fontSize: ".82rem", fontWeight: 700 }}>{hasCv ? "Klart" : "Inte klart"}</span>
-        </div>
-        <p style={{ margin: 0, color: "#737373", fontSize: ".85rem", lineHeight: 1.45 }}>{hasCv ? "Ditt CV kan ses av företag när du skickar en ansökan." : "Du kan utforska jobb, men behöver ett CV för att skicka en ansökan."}</p>
-        <Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn" style={{ display: "block", padding: ".7rem", textAlign: "center" }}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}</Link>
-      </section>
-
-      {!hasCv && (
-        <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: "#f0c36d", background: "#fffaf0" }}>
-          <strong style={{ color: "#6a4a00" }}>CV saknas</strong>
-          <p style={{ margin: ".35rem 0 .75rem", color: "#6a4a00", fontSize: ".88rem" }}>Du kan utforska jobb, men behöver ett CV för att skicka en ansökan.</p>
-          <Link href="/youth/cv" className="cta-btn" style={{ display: "inline-block" }}>Skapa ditt CV</Link>
-        </section>
-      )}
-
-      {hasCv ? (
-        /* ── CV EXISTS ─────────────────────────────── */
-        <>
-          {/* CV preview / editor */}
-          {hasGeneratedCv ? (
-          <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
-                Ditt CV
-              </p>
-              {!editingCv && (
-                <button
-                  type="button"
-                  onClick={() => { setCvEditText(generatedCv); setEditingCv(true); }}
-                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111111", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap", marginLeft: "1rem" }}
-                >
-                  Redigera
-                </button>
-              )}
-            </div>
-            {editingCv ? (
-              <>
-                <textarea
-                  value={cvEditText}
-                  onChange={(e) => setCvEditText(e.target.value)}
-                  rows={14}
-                  style={{
-                    width: "100%", boxSizing: "border-box", borderRadius: 10,
-                    border: "1.5px solid #e8e8e8", padding: "1rem",
-                    fontSize: "0.9rem", fontFamily: "inherit",
-                    resize: "vertical", color: "#111111", lineHeight: 1.6, outline: "none", transition: "border-color 0.15s ease",
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = "#111111"}
-                  onBlur={(e) => e.target.style.borderColor = "#e8e8e8"}
-                />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-                  <button type="button" onClick={() => void handleSaveCv()} disabled={saving} className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 700 }}>
-                    {saving ? "Sparar..." : "Spara CV"}
-                  </button>
-                  <button type="button" onClick={() => setEditingCv(false)} className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 600 }}>
-                    Avbryt
-                  </button>
-                </div>
-              </>
-            ) : (
-              <pre style={{ margin: 0, borderRadius: 10, background: "#f9f9f9", border: "1px solid #e8e8e8", padding: "1rem", fontSize: "0.85rem", whiteSpace: "pre-wrap", color: "#333333", lineHeight: 1.7, maxHeight: "20rem", overflowY: "auto", fontFamily: "inherit" }}>
-                {generatedCv}
-              </pre>
-            )}
-            <div style={{ marginTop: "0.75rem" }}>
-              {generatedCvDocument ? (
-                <button type="button" onClick={() => void openYouthDocument(generatedCvDocument.url)} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna CV som PDF"}</button>
-              ) : (
-                <button type="button" onClick={() => void handleCreatePdfForExistingCv()} disabled={saving} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>
-                  {saving ? "Skapar PDF..." : "Spara CV som PDF"}
-                </button>
-              )}
-            </div>
-          </section>
-          ) : (
-            <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
-                Ditt CV
-              </p>
-              <p style={{ margin: "0.45rem 0 0", fontSize: "0.95rem", fontWeight: 700, color: "#111111" }}>Eget CV uppladdat</p>
-              <p style={{ margin: "0.35rem 0 0.8rem", fontSize: "0.84rem", lineHeight: 1.5, color: "#737373" }}>{"Ditt CV \u00e4r klart och du kan nu matchas med jobb."}</p>
-              {uploadedCvDocument && (
-                <button type="button" onClick={() => void openYouthDocument(uploadedCvDocument.url)} className="cta-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna uppladdat CV (PDF)"}</button>
-              )}
-            </section>
-          )}
-
-          {/* Edit profile toggle */}
-          {!editingProfile ? (
-            <button
-              type="button"
-              className="secondary-btn"
-              style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "1rem", fontWeight: 600 }}
-              onClick={() => setEditingProfile(true)}
-            >
-              Redigera profilinformation
-            </button>
-          ) : (
-            <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 1.5rem 0", paddingBottom: "1rem", borderBottom: "1px solid #e8e8e8" }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-                  Profilinformation
-                </p>
-                <button type="button" onClick={() => setEditingProfile(false)} style={{ fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                  Avbryt
-                </button>
-              </div>
-              <div className="space-y-4">
-                {profileSections}
-              </div>
-              {savedNote && (
-                <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", margin: "1rem 0", fontWeight: 500 }}>
-                  ✓ {savedNote}
-                </p>
-              )}
-              <button type="button" className="cta-btn" style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginTop: "1.5rem", fontWeight: 700 }} onClick={() => void handleSave()} disabled={saving}>
-                {saving ? "Sparar..." : "Spara profilinformation"}
-              </button>
-            </>
-          )}
-        </>
-      ) : (
-        /* ── NO CV YET ─────────────────────────────── */
-        <>
-          <section className="minimal-profile-status" aria-label="Profilens status">
-            <span>{completion}%</span>
-            <div><strong>{completion >= 70 ? "Nästan där." : "Börja med det viktigaste."}</strong><p>Varje detalj hjälper rätt arbetsgivare att hitta dig.</p></div>
-          </section>
-
-          <section className="card" style={{ padding: "1.25rem", marginTop: "1rem", background: "#fffaf5", borderColor: "#f5e8e0" }}>
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              Skapa ditt CV
-            </p>
-            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
-              Svara på enkla frågor och granska sedan exakt vad företag kommer att se.
-            </p>
-            <Link href="/youth/cv" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
-              Skapa med guidat formulär
-            </Link>
-            <Link href="/voice-cv" className="secondary-btn" style={{ marginTop: ".6rem", display: "block", padding: ".75rem 1.25rem", fontSize: ".9rem", fontWeight: 700, textAlign: "center" }}>
-              Se fler sätt att skapa CV
-            </Link>
-          </section>
-
-          <div className="mt-5 space-y-4">
-            {profileSections}
-          </div>
-
-          {savedNote && (
-            <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", marginTop: "1rem", fontWeight: 500 }}>
-              ✓ {savedNote}
-            </p>
-          )}
-
-          <div className="minimal-profile-save">
-            <p>Dina ändringar sparas när du fortsätter.</p>
-            <button type="button" className="cta-btn" onClick={() => void handleSave()} disabled={saving}>{saving ? "Sparar..." : "Spara ändringar"}</button>
-          </div>
-        </>
-      )}
-
-      </div><aside className="network-profile-sidebar">
-        <SidebarCard title="Profilöversikt"><p>Håll din profil uppdaterad så att fler arbetsgivare kan hitta dig.</p><div className="network-sidebar-meter"><span style={{ width: `${completion}%` }} /></div><strong>{completion}% komplett</strong></SidebarCard>
-        <SidebarCard title="Kontaktuppgifter"><dl><div><dt>Ort</dt><dd>{form.city || "Lägg till ort"}</dd></div><div><dt>E-post</dt><dd>{user.email}</dd></div></dl></SidebarCard>
-        <SidebarCard title="Dina styrkor"><SkillList skills={form.skills} /></SidebarCard>
-      </aside></div>
-
-      {accountSecurityCard}
-
-      <button
-        type="button"
-        className="secondary-btn"
-        style={{ marginTop: "2rem", width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "2rem", fontWeight: 600 }}
-        onClick={() => void handleLogout()}
-        disabled={loggingOut}
-      >
-        {loggingOut ? "Loggar ut..." : "Logga ut"}
-      </button>
-      <button type="button" className="secondary-btn" style={{ marginTop: "0.75rem", width: "100%", padding: "1rem", fontSize: "0.9rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
-    </main>
-  );
+  return <main className="mobile-shell profile-page mnw-profile">
+    <ProfileHeader name={form.name} location={form.city} completion={completion} onEdit={() => setProfileTab("details")} />
+    <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([ ["overview","Översikt"], ["cv","Mitt CV"], ["details","Mina uppgifter"], ["settings","Inställningar"] ] as const).map(([value,label]) => <button type="button" key={value} aria-pressed={profileTab === value} className={profileTab === value ? "is-active" : ""} onClick={() => setProfileTab(value)}>{label}</button>)}</nav>
+    {error && <p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote && <p role="status" className="mnw-profile-success">{savedNote}</p>}
+    {profileTab === "overview" && <div className="mnw-profile-grid"><section className="mnw-profile-card mnw-profile-cv" aria-label="CV-status"><span className="mnw-profile-icon"><UiIcon name="briefcase"/></span><div className="mnw-profile-card-heading"><h2>Ditt CV</h2><span className={hasCv ? "mnw-status-ready" : "mnw-status-pending"}>{hasCv ? "Klart" : "Nästa steg"}</span></div><p>{hasCv ? "Ditt CV kan ses av arbetsgivare när du skickar en ansökan." : "Du kan upptäcka jobb redan nu. Gör klart ditt CV för att skicka dina ansökningar."}</p><Link className="cta-btn" href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}<UiIcon name="arrow" width="18"/></Link>{hasCv && <button type="button" className="mnw-profile-textlink" onClick={() => setProfileTab("cv")}>Visa CV och PDF</button>}</section>
+      <section className="mnw-profile-card"><h2>Dina genvägar</h2><Link className="mnw-profile-shortcut" href="/swipe?saved=1"><UiIcon name="bookmark"/><span><strong>Sparade jobb</strong><small>Hitta tillbaka till dina favoriter</small></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/notifications"><UiIcon name="activity"/><span><strong>Din aktivitet</strong><small>Ansökningar, matchningar och notiser</small></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/chats"><UiIcon name="chat"/><span><strong>Dina chattar</strong><small>Fortsätt samtalet</small></span><UiIcon name="arrow" width="18"/></Link></section>
+      <section className="mnw-profile-card"><h2>Dina styrkor</h2><SkillList skills={form.skills}/><button className="mnw-profile-textlink" onClick={() => setProfileTab("details")}>Redigera mina uppgifter <UiIcon name="arrow" width="16"/></button></section><section className="mnw-profile-card mnw-profile-note"><UiIcon name="info"/><h2>Din profil, på dina villkor</h2><p>Håll dina uppgifter aktuella. Du väljer vilka jobb du visar intresse för.</p><button className="mnw-profile-textlink" onClick={() => setProfileTab("settings")}>Kontoinställningar <UiIcon name="arrow" width="16"/></button></section></div>}
+    {profileTab === "cv" && <section className="mnw-profile-card mnw-profile-panel"><div className="mnw-profile-card-heading"><h2>Mitt CV</h2><Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn">{hasCv ? "Redigera i CV-byggaren" : "Skapa CV"}</Link></div>{hasGeneratedCv ? <><p className="mnw-profile-muted">Här är det CV du har sparat. Du kan redigera texten eller öppna en PDF.</p>{editingCv ? <><label className="mnw-profile-field">CV-text<textarea rows={14} value={cvEditText} onChange={event => setCvEditText(event.target.value)}/></label><div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving} onClick={() => void handleSaveCv()}>{saving ? "Sparar…" : "Spara CV"}</button><button className="secondary-btn" onClick={() => setEditingCv(false)}>Avbryt</button></div></> : <><pre className="mnw-profile-preview">{generatedCv}</pre><button className="mnw-profile-textlink" onClick={() => {setCvEditText(generatedCv);setEditingCv(true);}}>Redigera CV-text</button></>}<div className="mnw-profile-buttons">{generatedCvDocument ? <button className="secondary-btn" onClick={() => void openYouthDocument(generatedCvDocument.url)}>Öppna CV som PDF</button> : <button className="secondary-btn" disabled={saving} onClick={() => void handleCreatePdfForExistingCv()}>{saving ? "Skapar PDF…" : "Spara CV som PDF"}</button>}</div></> : uploadedCvDocument ? <><p className="mnw-profile-muted">Ditt uppladdade CV finns sparat som PDF.</p><button className="cta-btn" onClick={() => void openYouthDocument(uploadedCvDocument.url)}>Öppna mitt PDF-CV</button></> : <p className="mnw-profile-muted">Svara på enkla frågor eller ladda upp en PDF för att komma igång.</p>}</section>}
+    {profileTab === "details" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Mina uppgifter</h2><p className="mnw-profile-muted">Uppdatera en del i taget. Spara när du är klar.</p><div className="mnw-profile-fields">{([ ["name","Fullständigt namn","text"], ["dateOfBirth","Födelsedatum","date"], ["address","Adress","text"], ["postalCode","Postnummer","text"], ["city","Ort","text"] ] as const).map(([field,label,type]) => <label className="mnw-profile-field" key={field}>{label}<input type={type} value={form[field]} onChange={event => {setForm(current => ({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div></section>{profileSections}<div className="mnw-profile-save"><p>Dina ändringar sparas när du trycker på Spara.</p><button className="cta-btn" disabled={saving} onClick={() => void handleSave()}>{saving ? "Sparar…" : "Spara mina uppgifter"}</button></div></section>}
+    {profileTab === "settings" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section>{accountSecurityCard}<section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button className="mnw-profile-danger secondary-btn" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></div></section></section>}
+  </main>;
 }

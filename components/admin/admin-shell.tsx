@@ -23,7 +23,7 @@ export function AdminShell({ title, eyebrow = "Adminpanel", email, children }: {
             return <Link key={link.href} href={link.href} className={active ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"}>{link.label}</Link>;
           })}
         </nav>
-        <Link href="/admin/profile" className="admin-user-chip" aria-label="Öppna adminprofil"><span>{email?.slice(0, 1).toUpperCase() || "A"}</span><div><strong>Admin</strong><small>{email || "Employo"}</small></div></Link>
+        <Link href="/admin/profile" className="admin-user-chip" aria-label="Öppna adminprofil"><span>{email?.slice(0, 1).toUpperCase() || "A"}</span><div><strong>Admin</strong><small>{email || "MatchnWork"}</small></div></Link>
       </header>
       <div className="admin-content">
         <header className="admin-header"><div><p>{eyebrow}</p><h1>{title}</h1></div><span className="admin-access-badge">Adminläge</span></header>

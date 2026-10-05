@@ -3,7 +3,9 @@ import { Fraunces, Inter } from "next/font/google";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
+import { ProductSurface } from "@/components/product-surface";
 import "./globals.css";
+import "./product-design.css";
 
 // Self-hosted by Next.js at build time (no runtime request to Google Fonts),
 // so it renders identically for every visitor — unlike the previous base
@@ -26,7 +28,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Employo Youth Jobs",
+  title: "MatchnWork",
   description:
     "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
 };
@@ -43,7 +45,7 @@ export default function RootLayout({
         className="antialiased"
       >
         <SessionProvider>
-          {children}
+          <ProductSurface>{children}</ProductSurface>
           <Suspense fallback={null}>
             <MobileNav />
           </Suspense>

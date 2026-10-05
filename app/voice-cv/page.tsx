@@ -342,7 +342,7 @@ export default function VoiceCvPage() {
       {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} style={{ justifySelf: "center", padding: ".25rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Hoppa över området</button>}
       {status === "paused" && (interviewState.current.conversation?.length ?? 0) > 0 && <button type="button" onClick={() => void finishInterview()} className="cta-btn">Gå vidare med mina sparade svar</button>}
       {status !== "idle" && status !== "complete" && <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>{(status === "recording" || status === "speaking") && <button type="button" onClick={pauseCall} style={{ padding: ".35rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Pausa</button>}<button type="button" onClick={abortCall} style={{ padding: ".35rem", border: 0, color: "var(--color-danger)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Avbryt samtalet</button></div>}
-      <p style={{ margin: 0, color: "var(--text-tertiary)", fontSize: ".72rem", lineHeight: 1.45 }}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av Employo.</p>
+      <p style={{ margin: 0, color: "var(--text-tertiary)", fontSize: ".72rem", lineHeight: 1.45 }}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av MatchnWork.</p>
     </section>
   </main>;
 }

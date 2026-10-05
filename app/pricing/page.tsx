@@ -90,7 +90,7 @@ export default function PricingPage() {
       )}
 
       <footer className="landing-bold-footer">
-        <span>© 2026 Employo</span>
+        <span>© 2026 MatchnWork</span>
         <span>En enklare väg från nyfiken till anställd.</span>
       </footer>
     </main>

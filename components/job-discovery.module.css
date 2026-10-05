@@ -119,3 +119,7 @@
   .empty, .skeleton { min-height: 330px; }
 }
 @media (prefers-reduced-motion: reduce) { .jobCard, .action { transition: none !important; } .jobCard { transform: none !important; } }
+
+/* Pointer gestures own the card; photos never start a native image drag. */
+.jobImage, .imageShade, .imageFallback { pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.jobCard { user-select: none; -webkit-user-select: none; touch-action: pan-y; }

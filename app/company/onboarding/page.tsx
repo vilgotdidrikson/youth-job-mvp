@@ -303,7 +303,7 @@ export default function CompanyOnboardingPage() {
       {/* ── STEP 2: Choice ── */}
       {step === "val" && (
         <div style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-          <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
+          <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat! 🎉</h1>
           <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
           <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
@@ -317,7 +317,7 @@ export default function CompanyOnboardingPage() {
         <form onSubmit={(e) => void handleCreateJob(e)}>
           <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
             <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              Employo
+              MatchnWork
             </p>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0.4rem" }}>
               Skapa jobbannons

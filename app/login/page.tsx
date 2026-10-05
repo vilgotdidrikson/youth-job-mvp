@@ -156,7 +156,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           </form>
         </div>
       </section>
-      <footer className="auth-footer">© 2026 Employo <span>En enklare väg från nyfiken till anställd.</span></footer>
+      <footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
     </main>
   );
 }

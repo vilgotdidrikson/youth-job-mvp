@@ -30,3 +30,17 @@ Validation: TypeScript, focused ESLint (no errors; existing company image warnin
 ## Remaining frames
 
 CV builder, profile, inbox/conversation, map and company design. Implement and visually review these in coherent blocks. Global palette harmonization and real image cropping/focus previews can follow; the current block fixes display dimensions without changing stored uploads.
+
+## Final block for this session
+
+- Fixed native image dragging stealing swipe gestures: photos are non-draggable, decorative layers ignore pointer events, and the release distance is taken from the pointer event. Vertical touch scrolling remains available.
+- Rebuilt chats with a desktop inbox/conversation workspace and mobile list/detail views, search, job link, dated messages, rose outgoing bubbles, composer and a compact menu retaining report/block/hire actions. No online indicators or unread claims are invented.
+- Conversation changes cannot show stale messages from another chat. Drafts are scoped per conversation, failed sends preserve text, duplicate sends are locked, and initial/realtime messages merge by ID. CV-gate copy now correctly allows browsing before the CV is ready.
+- Replaced the long youth profile with Overview, My CV, My details and Settings. One CV status, saved-job/activity/chat shortcuts, actual skills and personal data; existing PDF/CV editing, password change, logout and account deletion remain available in their appropriate sections.
+- Rebuilt short onboarding with a desktop introduction/form layout, compact mobile form, two real steps, native form submission and the original validation/persistence.
+- Added a shared presentation boundary and design styles for the CV hub, extended onboarding, authentication/recovery, application questions, company onboarding, job creation, candidates and company profile. Shared rose/plum navigation now also covers company accounts; visible product branding is MatchnWork.
+- Rebuilt the map workspace with a desktop job list beside the map and a mobile map/list switch. List and pin selection are connected; jobs remain accessible when map rendering is unavailable. Map error/empty UI speaks to the user rather than exposing deployment instructions.
+- Root palette and typography are consistent; transitions respect reduced motion. Existing marketing/admin layouts retain their structure with shared branding/palette.
+- This is a coherent visual pass, not a claim of pixel-perfect validation of every route/account/viewport. Production migrations remain deferred, master/production unchanged, and the pre-design backup branch is retained.
+
+Checks before publishing: TypeScript, focused ESLint and the production build pass. A short dev UI check follows; broad mobile/company testing is left for the next review.

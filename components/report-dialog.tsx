@@ -66,7 +66,7 @@ export function ReportDialog({
             {sent ? (
               <>
                 <h2 id="report-dialog-title">Anmälan är skickad</h2>
-                <p style={{ color: "#5f6368", lineHeight: 1.5 }}>Employos administratörer granskar ärendet. Du får en notis när granskningen är klar.</p>
+                <p style={{ color: "#5f6368", lineHeight: 1.5 }}>MatchnWorks administratörer granskar ärendet. Du får en notis när granskningen är klar.</p>
                 <button type="button" className="cta-btn" style={{ width: "100%" }} onClick={close}>Stäng</button>
               </>
             ) : (

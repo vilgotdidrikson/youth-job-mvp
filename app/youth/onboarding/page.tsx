@@ -115,7 +115,7 @@ const DOC_TYPE_LABELS: Record<YouthDocumentType, string> = {
   recommendation: "Rekommendationsbrev",
   certificate: "Intyg",
   cv: "Eget CV",
-  generated_cv: "Employo-CV",
+  generated_cv: "MatchnWork-CV",
   other: "Övrigt",
 };
 
@@ -621,7 +621,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   if (showAccountCreated) {
     return (
       <main className="mobile-shell" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
-        <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
+        <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
         <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
         <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
         <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
@@ -652,7 +652,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           <div style={{ display: "grid", gap: ".75rem" }}>
             {returnJobId && <div style={{ marginBottom: ".8rem", padding: ".75rem", borderRadius: 10, background: "#fff8eb", fontSize: ".85rem" }}>Ansökan gäller: <strong>{returnJobTitle || "valt jobb"}</strong><Link href={returnPath} style={{ display: "block", marginTop: ".45rem" }}>Tillbaka till jobbet</Link></div>}
             <button type="button" className="cv-method-card" onClick={() => router.push(`/youth/cv/create${cvQuery}`)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
-              <strong style={{ fontSize: "1rem" }}>Skapa CV i Employo</strong>
+              <strong style={{ fontSize: "1rem" }}>Skapa CV i MatchnWork</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
             <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
@@ -1454,7 +1454,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     setSaving(true);
     setError("");
     try {
-      // Every Employo-created CV is saved as both editable text and a PDF.
+      // Every MatchnWork-created CV is saved as both editable text and a PDF.
       // This makes the PDF available from the profile without requiring a
       // separate download action during onboarding.
       const pdfFile = await createCvPdfFile(cvText, answers.full_name);

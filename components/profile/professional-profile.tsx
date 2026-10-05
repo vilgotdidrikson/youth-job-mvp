@@ -8,11 +8,11 @@ export function ProfileHeader({ name, location, completion, onEdit }: { name: st
         <div className="network-profile-avatar" aria-hidden="true">{(name.trim().charAt(0) || "?").toUpperCase()}</div>
         <div className="network-profile-identity">
           <h1>{name.trim() || "Din profil"}</h1>
-          <p>Ung jobbsökande på Employo</p>
-          <span>{location || "Sverige"} · Öppen för nya möjligheter</span>
+          <p>Din profil på MatchnWork</p>
+          <span>{location || "Sverige"} · Jobbsökande</span>
         </div>
-        <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button><button type="button" aria-label="Fler profilalternativ">•••</button></div>
-        <div className="network-profile-open"><strong>Profilens styrka: {completion}%</strong><span>Fyll i dina uppgifter för att bli lättare att hitta.</span></div>
+        <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button></div>
+        <div className="network-profile-open"><strong>Profiluppgifter: {completion}%</strong><span>Du kan uppdatera dina uppgifter när du vill.</span></div>
       </div>
     </header>
   );

@@ -1,0 +1,34 @@
+.mnw-onboarding { min-height:100svh; max-width:1180px; margin:auto; padding:36px 32px 70px; color:#4c303b; }
+.mnw-onboarding-brand { color:#b84164; font-size:1.45rem; font-weight:550; letter-spacing:-.055em; text-decoration:none; }
+.mnw-onboarding-layout { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:90px; min-height:calc(100svh - 180px); padding-top:50px; }
+.mnw-onboarding-mark { display:grid; place-items:center; width:80px; height:80px; margin-bottom:28px; border-radius:26px; color:#b84164; background:#fce9ef; }
+.mnw-onboarding-intro > p:first-of-type { color:#b84164; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; }
+.mnw-onboarding-intro h1 { margin:18px 0 22px; font-size:3rem; font-weight:500; letter-spacing:-.055em; line-height:1.15; }
+.mnw-onboarding-intro > p:last-of-type { max-width:340px; color:#896a76; font-size:.92rem; line-height:1.85; }
+.mnw-onboarding-reassurance { display:flex; align-items:flex-start; gap:12px; max-width:360px; margin-top:32px; color:#896a76; font-size:.77rem; line-height:1.8; }
+.mnw-onboarding-reassurance svg { flex-shrink:0; color:#b84164; }
+.mnw-onboarding-card { padding:36px; border:1px solid #f0d9e0; border-radius:28px; background:white; box-shadow:0 18px 60px rgb(76 48 59 / .045); }
+.mnw-onboarding-card header { display:flex; justify-content:space-between; color:#896a76; font-size:.72rem; }
+.mnw-onboarding-card header p { margin:0; color:#b84164; }
+.mnw-onboarding-progress { height:6px; margin:18px 0 32px; overflow:hidden; border-radius:10px; background:#f4dce5; }
+.mnw-onboarding-progress span { display:block; height:100%; border-radius:inherit; background:#dc6f8d; transition:width 240ms; }
+.mnw-onboarding-card h2 { margin:0; font-size:1.7rem; font-weight:500; letter-spacing:-.04em; }
+.mnw-onboarding-lead { margin:14px 0 26px; color:#896a76; font-size:.84rem; line-height:1.8; }
+.mnw-onboarding-card form { display:grid; gap:20px; }
+.mnw-onboarding-card label { display:grid; gap:9px; color:#896a76; font-size:.8rem; }
+.mnw-onboarding-card input { min-height:52px; width:100%; padding:13px 15px; border:1px solid #f0d9e0; border-radius:13px; color:#4c303b; background:#fffafb; font:inherit; font-size:16px; }
+.mnw-onboarding-card footer { display:flex; gap:12px; margin-top:12px; }
+.mnw-onboarding-card .cta-btn { display:flex; justify-content:center; align-items:center; gap:14px; flex:1; }
+.mnw-onboarding-error { margin:0; color:#9c304f; font-size:.8rem; line-height:1.7; }
+@media(max-width:720px) {
+ .mnw-onboarding { max-width:480px; padding:26px 20px 50px; }
+ .mnw-onboarding-layout { display:block; padding-top:36px; }
+ .mnw-onboarding-intro { margin-bottom:28px; }
+ .mnw-onboarding-intro h1 { font-size:2rem; } .mnw-onboarding-intro h1 br { display:none; }
+ .mnw-onboarding-mark,.mnw-onboarding-intro > p:first-of-type,.mnw-onboarding-reassurance { display:none; }
+ .mnw-onboarding-intro > p:last-of-type { font-size:.82rem; max-width:none; }
+ .mnw-onboarding-card { padding:24px; border-radius:24px; }
+ .mnw-onboarding-card h2 { font-size:1.45rem; }
+ .mnw-onboarding-progress { margin-bottom:26px; }
+}
+@media(prefers-reduced-motion:reduce) { .mnw-onboarding-progress span { transition:none; } }

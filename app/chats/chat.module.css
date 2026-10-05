@@ -1,0 +1,85 @@
+.page { --ink:#4c303b; --muted:#896a76; --rose:#fce9ef; --accent:#b84164; max-width:1180px; margin:auto; padding:122px 32px 40px; color:var(--ink); }
+.page button,.page textarea,.page input { font:inherit; }
+.page button { cursor:pointer; }
+.page button:disabled { opacity:.5; cursor:default; }
+.page a:focus-visible,.page button:focus-visible,.page summary:focus-visible,.page input:focus-visible,.page textarea:focus-visible { outline:3px solid #b84164; outline-offset:3px; }
+.heading { margin-bottom:26px; }
+.heading h1 { margin:10px 0; font-size:2.1rem; letter-spacing:-.045em; font-weight:500; }
+.heading p { margin:0; color:var(--muted); font-size:.86rem; }
+.back { display:inline-flex; align-items:center; gap:8px; color:var(--muted); text-decoration:none; font-size:.75rem; }
+.back svg { transform:rotate(180deg); width:15px; order:-1; }
+.workspace { display:grid; grid-template-columns:310px minmax(0,1fr); height: min(700px,calc(100svh - 275px)); min-height:440px; border:1px solid #f0d9e0; border-radius:24px; overflow:hidden; background:white; box-shadow:0 10px 35px rgb(76 48 59 / .035); }
+.inbox { overflow-y:auto; border-right:1px solid #f0d9e0; }
+.inboxHeader { position:sticky; top:0; z-index:2; padding:24px 18px 16px; background:white; }
+.inboxHeader h2 { display:flex; justify-content:space-between; align-items:center; margin:0 0 18px; font-size:.94rem; font-weight:550; }
+.inboxHeader h2 span { display:grid; place-items:center; width:24px; height:24px; border-radius:8px; color:var(--accent); background:var(--rose); font-size:.7rem; }
+.search input { width:100%; min-height:42px; padding:10px 12px; border:1px solid #f0d9e0; border-radius:12px; color:var(--ink); background:#fffafb; font-size:.78rem; }
+.contacts { padding:0 10px 16px; }
+.contact { display:flex; align-items:center; gap:12px; width:100%; padding:16px 12px; border:0; border-radius:14px; color:var(--ink); background:white; text-align:left; transition:background 180ms; }
+.contact:hover,.contactActive { background:#fce9ef; }
+.avatar { display:grid; place-items:center; flex-shrink:0; width:42px; height:42px; border-radius:13px; background:var(--ink); color:white; font-size:.75rem; }
+.contactText { display:grid; min-width:0; flex:1; gap:5px; }
+.contactText strong { font-size:.83rem; font-weight:550; }
+.contactText > span { color:var(--muted); font-size:.72rem; }
+.contactText small { color:#226a54; font-size:.65rem; }
+.contactText strong,.contactText > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.contact > svg { flex-shrink:0; color:var(--muted); }
+.conversation { display:flex; min-width:0; min-height:0; flex-direction:column; background:#fffcfd; }
+.conversationHeader { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid #f0d9e0; background:white; }
+.conversationHeader > div { flex:1; min-width:0; }
+.conversationHeader h2 { margin:0 0 5px; font-size:.94rem; font-weight:550; overflow-wrap:anywhere; }
+.conversationHeader p { margin:0; color:var(--muted); font-size:.75rem; }
+.matchStatus { padding:6px 9px; color:#226a54; background:#edf6f0; border-radius:8px; font-size:.65rem; }
+.options { position:relative; }
+.options summary { padding:9px; border-radius:10px; list-style:none; color:var(--muted); cursor:pointer; }
+.options summary::-webkit-details-marker { display:none; }
+.options > div { position:absolute; top:100%; right:0; z-index:5; display:grid; gap:8px; min-width:190px; padding:14px; border:1px solid #f0d9e0; border-radius:14px; background:white; box-shadow:0 12px 35px rgb(76 48 59 / .12); }
+.options button { min-height:38px; padding:8px; border:0; border-radius:8px; color:var(--ink); background:#fffafb; text-align:left; font-size:.76rem; }
+.jobLink { display:flex; align-items:center; gap:10px; padding:12px 24px; border-bottom:1px solid #f0d9e0; color:var(--accent); background:#fce9ef; font-size:.7rem; text-decoration:none; }
+.jobLink span { flex:1; min-width:0; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.messages { display:flex; flex:1; min-height:0; flex-direction:column; gap:12px; overflow-y:auto; padding:20px 24px; overscroll-behavior:contain; }
+.messageGroup { display:flex; flex-direction:column; gap:8px; }
+.bubble { align-self:flex-start; max-width:82%; padding:12px 16px 9px; border:1px solid #f0d9e0; border-radius:17px 17px 17px 4px; color:var(--ink); background:white; }
+.bubble p { margin:0; font-size:.84rem; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
+.bubble time { display:block; margin-top:6px; font-size:.6rem; text-align:right; opacity:.7; }
+.bubble.mine { align-self:flex-end; border-color:#b84164; border-radius:17px 17px 4px 17px; color:white; background:#b84164; }
+.date { align-self:center; margin:5px 0 10px; color:var(--muted); font-size:.65rem; }
+.composer { display:flex; align-items:flex-end; flex-shrink:0; gap:12px; padding:16px 24px; border-top:1px solid #f0d9e0; background:white; }
+.composer label { flex:1; min-width:0; }
+.composer textarea { display:block; resize:vertical; width:100%; min-height:46px; max-height:120px; padding:12px 14px; border:1px solid #f0d9e0; border-radius:14px; color:var(--ink); background:#fffafb; font-size:.82rem; line-height:1.5; }
+.composer button { display:grid; place-items:center; flex-shrink:0; width:46px; height:46px; border:0; border-radius:14px; color:white; background:var(--accent); }
+.empty { display:grid; place-content:center; justify-items:center; flex:1; padding:40px 24px; text-align:center; }
+.emptyIcon { display:grid; place-items:center; width:68px; height:68px; margin-bottom:22px; border-radius:24px; color:var(--accent); background:var(--rose); }
+.empty h1,.empty h2 { margin:0; font-size:1.35rem; font-weight:500; letter-spacing:-.035em; }
+.empty p { max-width:310px; margin:14px 0; color:var(--muted); font-size:.84rem; line-height:1.75; }
+.primary,.secondary { display:inline-flex; justify-content:center; align-items:center; gap:10px; min-height:44px; padding:11px 16px; border:1px solid #f0d9e0; border-radius:13px; color:var(--accent); background:white; font-size:.8rem; text-decoration:none; }
+.primary { color:white; background:var(--accent); border-color:var(--accent); }
+.listNote { padding:36px 22px; color:var(--muted); text-align:center; font-size:.8rem; line-height:1.8; }
+.listNote h3 { color:var(--ink); font-size:.96rem; font-weight:500; }
+.messageNote { margin:auto; color:var(--muted); text-align:center; font-size:.8rem; }
+.welcome { margin:auto; text-align:center; color:var(--muted); font-size:.82rem; }
+.welcome svg { color:var(--accent); }
+.welcome h3 { color:var(--ink); font-weight:500; }
+.error { margin:8px 20px; padding:12px 16px; border-radius:12px; color:#9c304f; background:#fff0f4; font-size:.78rem; }
+.hired { margin:0; padding:12px 24px; color:#226a54; background:#edf6f0; font-size:.76rem; }
+.mobileBack { display:none; }
+@media(max-width:900px) and (min-width:721px) { .workspace { grid-template-columns:260px minmax(0,1fr); } .matchStatus { display:none; } }
+@media(max-width:720px) {
+ .page { max-width:480px; padding:26px 18px calc(100px + env(safe-area-inset-bottom)); }
+ .heading h1 { font-size:1.8rem; } .heading p { font-size:.8rem; line-height:1.6; }
+ .workspace { display:block; height:auto; min-height:0; border-radius:20px; }
+ .inbox { border:0; } .conversation { display:none; } .inboxHeader { padding:20px 16px 16px; }
+ .hasConversation { padding:0; height:calc(100dvh - 74px - env(safe-area-inset-bottom)); }
+ .hasConversation > .heading,.hasConversation .inbox { display:none; }
+ .hasConversation .workspace { height:100%; border:0; border-radius:0; }
+ .hasConversation .conversation { display:flex; height:100%; }
+ .conversationHeader { padding:16px; gap:10px; } .conversationHeader .avatar { width:36px; height:36px; border-radius:11px; }
+ .conversationHeader h2 { font-size:.85rem; } .matchStatus { display:none; }
+ .mobileBack { display:grid; place-items:center; width:30px; height:40px; padding:0; border:0; color:var(--ink); background:transparent; }
+ .mobileBack svg { transform:rotate(180deg); width:19px; }
+ .jobLink { padding:12px 18px; gap:8px; }
+ .messages { padding:18px; } .composer { padding:12px 16px; gap:10px; }
+ .composer textarea { font-size:16px; }
+ .bubble { max-width:86%; } .bubble p { font-size:.83rem; }
+}
+@media(prefers-reduced-motion:reduce) { .contact { transition:none; } }

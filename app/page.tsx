@@ -103,10 +103,10 @@ const copy = {
   statsSource: "Källa: SCB / Ekonomifakta",
   platformTitleStart: "En plattform, ",
   platformTitleAccent: "hela vägen",
-  platformSub: "Employo är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
+  platformSub: "MatchnWork är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
   howTitle: "Tre steg. Inget krångel.",
   manifesto: "Potential syns inte alltid i ett tomt CV.",
-  manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
+  manifestoSub: "Därför hjälper MatchnWork unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
   footer: "En enklare väg från nyfiken till anställd.",
 };
 
@@ -265,7 +265,7 @@ export default function Home() {
             <Link href="/pricing">Priser</Link>
             <Link href="/login">Logga in</Link>
           </nav>
-          <span className="landing-bold-footer-copy">© 2026 Employo</span>
+          <span className="landing-bold-footer-copy">© 2026 MatchnWork</span>
         </footer>
       </div>
     </main>

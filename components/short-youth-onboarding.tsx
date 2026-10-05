@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { MISSING_FULL_NAME_MESSAGE, normalizeFullName, saveYouthAccountDetails } from "@/lib/onboarding";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
+import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
+import "@/app/onboarding-design.css";
 import { getSupabaseClient } from "@/lib/supabase";
 
 type Form = { fullName: string; dateOfBirth: string; city: string; postalCode: string };
@@ -53,14 +56,10 @@ export function ShortYouthOnboarding() {
     finally { setSaving(false); }
   };
 
-  if (!ready) return <main className="mobile-shell" style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}><p>Laddar...</p></main>;
-  return <main className="youth-onboarding" style={{ minHeight: "100vh", maxWidth: 430, margin: "0 auto", padding: "2rem 1.25rem", background: "#fff" }}>
-    <p style={{ color: "#737373", fontSize: ".8rem", fontWeight: 700 }}>STEG {step + 1} AV 2</p>
-    <div style={{ height: 7, background: "#eee", borderRadius: 99, marginBottom: "2rem" }}><div style={{ width: `${(step + 1) * 50}%`, height: "100%", borderRadius: 99, background: "var(--color-brand)" }} /></div>
-    <h1 style={{ fontSize: "2rem", margin: 0 }}>{step === 0 ? "Berätta vad du heter" : "Var kan du jobba?"}</h1>
-    <p style={{ color: "#666", lineHeight: 1.5 }}>{step === 0 ? "Vi behöver ditt fullständiga namn och födelsedatum." : "Ort och postnummer hjälper oss att visa relevanta jobb."}</p>
-    {step === 0 ? <><label style={{ display: "grid", gap: ".4rem", marginTop: "1.5rem" }}>Fullständigt namn<input className="input-field" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} autoFocus /></label><label style={{ display: "grid", gap: ".4rem", marginTop: "1rem" }}>Födelsedatum<input className="input-field" type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} /></label></> : <><label style={{ display: "grid", gap: ".4rem", marginTop: "1.5rem" }}>Ort<input className="input-field" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} autoFocus /></label><label style={{ display: "grid", gap: ".4rem", marginTop: "1rem" }}>Postnummer<input className="input-field" inputMode="numeric" value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} /></label></>}
-    {error && <p style={{ color: "#b42318", fontSize: ".9rem" }}>{error}</p>}
-    <div style={{ display: "flex", gap: ".75rem", marginTop: "2rem" }}>{step > 0 && <button className="secondary-btn" type="button" onClick={() => { setError(""); setStep(0); }}>Tillbaka</button>}<button className="cta-btn" type="button" style={{ flex: 1 }} disabled={saving} onClick={() => step === 0 ? (normalizeFullName(form.fullName) && form.dateOfBirth ? (setError(""), setStep(1)) : setError("Fyll i fullständigt namn och födelsedatum.")) : void save()}>{saving ? "Sparar..." : step === 0 ? "Nästa" : "Klart"}</button></div>
-  </main>;
+  if (!ready) return <main className="mnw-onboarding"><p role="status">Hämtar dina uppgifter…</p></main>;
+  return <main className="mnw-onboarding"><Link href="/" className="mnw-onboarding-brand">MatchnWork</Link><div className="mnw-onboarding-layout"><aside className="mnw-onboarding-intro"><span className="mnw-onboarding-mark"><UiIcon name="discover" width="36" height="36"/></span><p>Ditt nästa steg börjar här</p><h1>Små steg.<br/>Nya möjligheter.</h1><p>Vi lär känna dig lite, så att du kan börja upptäcka jobb nära dig.</p><div className="mnw-onboarding-reassurance"><UiIcon name="info"/><span>Du kan utforska jobb först och göra klart ditt CV senare.</span></div></aside><section className="mnw-onboarding-card"><header><span>Steg {step + 1} av 2</span><p>{step === 0 ? "Om dig" : "Din plats"}</p></header><div className="mnw-onboarding-progress" role="progressbar" aria-label="Onboarding" aria-valuemin={0} aria-valuemax={2} aria-valuenow={step + 1}><span style={{width:`${(step + 1) * 50}%`}}/></div><h2>{step === 0 ? "Vad heter du?" : "Var vill du börja?"}</h2><p className="mnw-onboarding-lead">{step === 0 ? "Börja med ditt fullständiga namn och födelsedatum." : "Ort och postnummer hjälper oss att visa jobb som är relevanta för dig."}</p>
+    <form onSubmit={event => {event.preventDefault();if(step === 0){if(normalizeFullName(form.fullName) && form.dateOfBirth){setError("");setStep(1);}else setError("Fyll i fullständigt namn och födelsedatum.");}else void save();}}>
+    {step === 0 ? <><label>Fullständigt namn<input value={form.fullName} onChange={event => setForm({...form,fullName:event.target.value})} autoComplete="name" placeholder="Förnamn och efternamn" autoFocus required/></label><label>Födelsedatum<input type="date" value={form.dateOfBirth} onChange={event => setForm({...form,dateOfBirth:event.target.value})} autoComplete="bday" required/></label></> : <><label>Ort<input value={form.city} onChange={event => setForm({...form,city:event.target.value})} autoComplete="address-level2" placeholder="Till exempel Stockholm" autoFocus required/></label><label>Postnummer<input inputMode="numeric" value={form.postalCode} onChange={event => setForm({...form,postalCode:event.target.value})} autoComplete="postal-code" placeholder="123 45" required/></label></>}
+    {error && <p className="mnw-onboarding-error" role="alert">{error}</p>}
+    <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Upptäck jobb"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
 }

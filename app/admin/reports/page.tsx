@@ -96,7 +96,7 @@ export default function ModerationReportsPage() {
   };
 
   if (status !== "ready" || !adminReady) return <AuthGateMessage status={status === "ready" ? "checking" : status} error={sessionError} />;
-  if (!isAdmin) return <main className="mobile-shell"><section className="card" style={{ padding: "1.25rem" }}><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i Employos adminlista.</p></section></main>;
+  if (!isAdmin) return <main className="mobile-shell"><section className="card" style={{ padding: "1.25rem" }}><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i MatchnWorks adminlista.</p></section></main>;
 
   const activeCount = reports.filter((report) => report.status === "open" || report.status === "reviewing").length;
 

@@ -19,7 +19,7 @@ export default function FeaturesPage() {
 
       <section className="features-hero">
         <h1>Hitta jobb. Hitta personal. Enklare.</h1>
-        <p>Employo samlar hela vägen från första swipe till första arbetsdagen – för ungdomar, företag och privatpersoner.</p>
+        <p>MatchnWork samlar hela vägen från första swipe till första arbetsdagen – för ungdomar, företag och privatpersoner.</p>
       </section>
 
       <section className="features-section">
@@ -121,7 +121,7 @@ export default function FeaturesPage() {
       </section>
 
       <footer className="landing-bold-footer">
-        <span>© 2026 Employo</span>
+        <span>© 2026 MatchnWork</span>
         <span>En enklare väg från nyfiken till anställd.</span>
       </footer>
     </main>

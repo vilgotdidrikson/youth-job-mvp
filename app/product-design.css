@@ -1,0 +1,90 @@
+/* Shared MatchnWork presentation, including secondary and legacy form routes. */
+.mnw-product { --color-canvas:#fffafb; --color-text:#4c303b; --color-text-rgb:76,48,59; --color-text-muted:#896a76; --color-brand:#b84164; --color-brand-hover:#a73858; --color-surface-soft:#fce9ef; --color-border:#f0d9e0; min-height:100svh; color:#4c303b; background:#fffafb; }
+.mnw-product :is(input,textarea,select,button) { font-family:var(--font-inter),Arial,sans-serif; }
+.mnw-product :is(a,button,input,textarea,select,summary):focus-visible { outline:3px solid #b84164; outline-offset:3px; }
+.mnw-product .mobile-shell:not(.cv-hub):not(.mnw-profile) { max-width:1060px; margin-inline:auto; padding:122px 32px 100px !important; background:transparent; }
+.mnw-product h1 { color:#4c303b !important; font-weight:500 !important; letter-spacing:-.045em; line-height:1.2; }
+.mnw-product :is(h2,h3) { color:#4c303b; font-weight:550; letter-spacing:-.02em; }
+.mnw-product :is([style*="color: rgb(17, 17, 17)"],[style*="color:#111"],[style*="color: #111"]) { color:#4c303b !important; }
+.mnw-product :is([style*="color: rgb(115, 115, 115)"],[style*="color: #737373"],[style*="color: rgb(163, 163, 163)"]) { color:#896a76 !important; }
+.mnw-product .card { border-color:#f0d9e0 !important; border-radius:22px !important; box-shadow:0 5px 20px rgb(76 48 59 / .025); }
+.mnw-product :is(.input-field,.auth-input,.job-builder-textarea),.mnw-product input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),.mnw-product textarea,.mnw-product select { border-color:#f0d9e0; border-radius:13px; color:#4c303b; background:#fffafb; }
+.mnw-product :is(.cta-btn,.auth-submit,.onboarding-primary-action,.cv-hub-upload) { min-height:48px; padding:12px 20px; border:1px solid #b84164 !important; border-radius:14px !important; color:white !important; background:#b84164 !important; font-weight:500 !important; text-decoration:none; transition:background 180ms,transform 140ms; }
+.mnw-product :is(.cta-btn,.auth-submit,.onboarding-primary-action):hover { background:#a73858 !important; }
+.mnw-product :is(.cta-btn,.auth-submit,.onboarding-primary-action):active { transform:scale(.98); }
+.mnw-product :is(.secondary-btn,.job-builder-ai,.job-builder-ai-question-button) { min-height:44px; border:1px solid #f0d9e0 !important; border-radius:13px !important; color:#4c303b !important; background:white !important; font-weight:500 !important; }
+.mnw-product .secondary-btn:hover { background:#fce9ef !important; }
+.mnw-product button:disabled { cursor:default; }
+.mnw-product :is(.chip,.skill-logo-options button) { border:1px solid #f0d9e0 !important; border-radius:12px !important; color:#4c303b; background:white; }
+.mnw-product :is(.chip[aria-pressed="true"],.job-builder-chip-selected) { border-color:#b84164 !important; color:#b84164 !important; background:#fce9ef !important; }
+/* CV hub: a quiet focused workspace, not a stretched multi-column form. */
+.mnw-product .mobile-shell.cv-hub { width:100%; max-width:960px; gap:22px; padding:56px 32px 90px; background:transparent; }
+.mnw-product .cv-hub > * { width:100%; max-width:720px; justify-self:center; }
+.mnw-product .cv-hub > :is(.cv-hub-options) { max-width:960px; }
+.mnw-product .cv-hub h1 { max-width:720px; font-size:clamp(1.9rem,4vw,2.6rem); line-height:1.15; }
+.mnw-product .cv-hub-lead { max-width:650px; font-size:.92rem; line-height:1.8; }
+.mnw-product .cv-hub-eyebrow { margin:12px 0 -8px; font-size:.7rem; font-weight:500; }
+.mnw-product :is(.cv-hub-back,.cv-hub-skip) { font-size:.82rem; font-weight:500; color:#b84164; }
+.mnw-product .cv-hub-options { gap:20px; margin-top:12px; }
+.mnw-product .cv-hub-option { min-height:185px; padding:26px; border:1px solid #f0d9e0; border-radius:24px; background:white; box-shadow:0 6px 24px rgb(76 48 59 / .03); }
+.mnw-product .cv-hub-option.recommended { border-color:#dc6f8d; background:#fce9ef; }
+.mnw-product .cv-hub-option strong { font-weight:550; line-height:1.5; }
+.mnw-product .cv-hub-option > span { color:#b84164; font-weight:500; }
+.mnw-product .cv-hub-option small { line-height:1.7; }
+.mnw-product .cv-hub-progress { height:6px; margin:6px 0 8px; background:#f4dce5; }
+.mnw-product .cv-hub-form { gap:20px; padding:28px; border:1px solid #f0d9e0; border-radius:24px; background:white; }
+.mnw-product .cv-hub-form label { font-weight:500; font-size:.82rem; }
+.mnw-product .cv-hub-form :is(input,textarea,select) { background:#fffafb; font-size:16px; box-shadow:none; }
+.mnw-product .cv-hub-preview { padding:28px; border-radius:22px; line-height:1.85; background:white; box-shadow:0 10px 35px rgb(76 48 59 / .035); }
+.mnw-product :is(.cv-hub-job,.cv-hub-status,.cv-hub-saved-banner) { border:1px solid #f0d9e0 !important; border-radius:16px !important; color:#4c303b !important; background:#fce9ef !important; }
+.mnw-product .cv-hub-saved-banner span { color:#896a76 !important; }
+.mnw-product :is(.cv-hub-chips button,.cv-hub-edit-links button) { border-radius:11px; font-weight:500; }
+.mnw-product .cv-hub-chips button.is-selected { background:#fce9ef; border-color:#b84164; color:#b84164; }
+.mnw-product :is(.cv-hub-review-card,.cv-hub-section-list > button) { border-radius:18px !important; padding:20px 24px !important; }
+.mnw-product :is(.cv-hub-review-card strong,.cv-hub-section-list strong) { font-weight:550; }
+/* Onboarding retains the existing questions and validation. */
+.mnw-product[data-onboarding="true"] { background:radial-gradient(ellipse at 80% 0%,#fce9ef,transparent 45%),#fffafb; }
+.mnw-product[data-onboarding="true"] :is(.mobile-shell,.youth-onboarding) { max-width:680px !important; margin-inline:auto; padding:48px 28px 80px !important; color:#4c303b; background:transparent !important; }
+.mnw-product[data-onboarding="true"] .youth-onboarding > * { max-width:100%; }
+.mnw-product[data-onboarding="true"] :is(.onboarding-question-title,h1) { font-size:clamp(1.9rem,4vw,2.6rem) !important; line-height:1.2 !important; }
+.mnw-product[data-onboarding="true"] :is(.onboarding-question-bubble,.profile-question-card) { padding:28px !important; border:1px solid #f0d9e0 !important; border-radius:24px !important; color:#4c303b !important; background:white !important; box-shadow:0 12px 35px rgb(76 48 59 / .035); }
+.mnw-product[data-onboarding="true"] input,.mnw-product[data-onboarding="true"] textarea { font-size:16px; border-color:#f0d9e0 !important; background:white !important; box-shadow:none !important; }
+.mnw-product[data-onboarding="true"] :is(.onboarding-progress-track) { height:6px; background:#f4dce5; }
+.mnw-product[data-onboarding="true"] :is(.cv-method-card) { border:1px solid #f0d9e0 !important; border-radius:22px !important; background:white; }
+/* Authentication, recovery and utility pages share the same entry experience. */
+.mnw-product .auth-page { background:radial-gradient(ellipse at 90% 10%,#fce9ef,transparent 45%),#fffafb; }
+.mnw-product :is(.auth-form-stack,.auth-fields) { gap:20px; }
+.mnw-product .auth-card-heading h1 { font-weight:500; }
+.mnw-product .auth-input { min-height:50px; background:white; }
+.mnw-product[data-page="forgot-password"] .mobile-shell,.mnw-product[data-page="reset-password"] .mobile-shell { max-width:560px; padding-top:70px !important; }
+/* Company SaaS workspace and candidate/job editors. */
+.mnw-product[data-page="company"] .mobile-shell { max-width:1180px; }
+.mnw-product :is(.job-builder-section,.company-candidate-profile,.job-list-card,.application-completion-card) { padding:24px; border:1px solid #f0d9e0; border-radius:22px; background:white; }
+.mnw-product :is(.job-builder-steps,.job-builder-info,.job-builder-match-note) { border-color:#f0d9e0; border-radius:16px; color:#4c303b; background:#fce9ef; }
+.mnw-product .job-builder-steps button { border-radius:12px; font-weight:500; }
+.mnw-product :is(.job-builder-steps button[aria-current="step"],.job-builder-step-active) { color:#b84164; background:white; }
+.mnw-product :is(.job-builder-dropzone) { border:1px dashed #dc6f8d; border-radius:18px; background:#fffafb; }
+.mnw-product :is(.job-builder-title-field input) { min-height:54px; font-size:1.15rem; font-weight:500; }
+.mnw-product :is(.job-builder-preview,.job-preview-detail) { border-color:#f0d9e0; border-radius:22px; background:white; }
+.mnw-product :is(.company-applicant-avatar,.company-candidate-profile-avatar) { color:white; background:#4c303b; border-radius:15px; }
+.mnw-product .company-applicant-list button { border-color:#f0d9e0; border-radius:16px; background:white; }
+.mnw-product .company-applicant-list button[aria-pressed="true"] { border-color:#dc6f8d; background:#fce9ef; }
+.mnw-product .application-completions-page > header h1 { font-size:2.25rem; }
+.mnw-product :is(.application-completion-note) { padding:14px 18px; border-radius:14px; background:#fce9ef; color:#896a76; }
+.mnw-product .application-question label { color:#4c303b; font-weight:500; }
+.mnw-product[data-page="profile"] .mobile-shell:not(.mnw-profile) { max-width:850px; }
+.mnw-product .voice-cv-page { max-width:740px !important; }
+@media(max-width:720px) {
+ .mnw-product .mobile-shell:not(.cv-hub):not(.mnw-profile) { max-width:480px; padding:26px 18px calc(110px + env(safe-area-inset-bottom)) !important; }
+ .mnw-product .mobile-shell.cv-hub { max-width:480px; padding:24px 18px 60px; gap:18px; }
+ .mnw-product .cv-hub-options { grid-template-columns:1fr; gap:14px; }
+ .mnw-product .cv-hub-option { min-height:130px; padding:22px; border-radius:20px; }
+ .mnw-product .cv-hub-form { padding:20px; border-radius:20px; }
+ .mnw-product .cv-hub h1 { font-size:1.85rem; }
+ .mnw-product .cv-hub-preview { padding:20px; border-radius:18px; }
+ .mnw-product[data-onboarding="true"] :is(.mobile-shell,.youth-onboarding) { max-width:480px !important; padding:30px 20px 60px !important; }
+ .mnw-product[data-onboarding="true"] :is(.onboarding-question-bubble,.profile-question-card) { padding:22px !important; }
+ .mnw-product :is(.job-builder-section,.company-candidate-profile,.job-list-card,.application-completion-card) { padding:20px; border-radius:20px; }
+ .mnw-product .application-completions-page > header h1 { font-size:1.9rem; }
+}
+@media(prefers-reduced-motion:reduce) { .mnw-product *, .mnw-product *::before,.mnw-product *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }

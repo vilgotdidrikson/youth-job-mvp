@@ -27,10 +27,10 @@ export default function AdminDashboardPage() {
   }, [adminReady, isAdmin]);
 
   if (status !== "ready" || !adminReady) return <AuthGateMessage status={status === "ready" ? "checking" : status} error={sessionError} />;
-  if (!isAdmin) return <main className="mobile-shell"><section className="card" style={{ padding: "1.25rem" }}><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i Employos adminlista.</p></section></main>;
+  if (!isAdmin) return <main className="mobile-shell"><section className="card" style={{ padding: "1.25rem" }}><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i MatchnWorks adminlista.</p></section></main>;
 
   return <AdminShell title="Översikt" email={user?.email}>
-    <section className="admin-welcome"><div><span className="admin-welcome-kicker">Employo internt</span><h2>God eftermiddag.</h2><p>Här ser du vad som behöver hanteras innan företag och annonser kan publiceras.</p></div><div className="admin-welcome-mark" aria-hidden="true">E</div></section>
+    <section className="admin-welcome"><div><span className="admin-welcome-kicker">MatchnWork internt</span><h2>God eftermiddag.</h2><p>Här ser du vad som behöver hanteras innan företag och annonser kan publiceras.</p></div><div className="admin-welcome-mark" aria-hidden="true">E</div></section>
     <div className="admin-stat-grid">
       <Link className="admin-stat-card admin-stat-primary" href="/admin/companies"><div><span>Väntar på granskning</span><strong>{pendingCompanies ?? "–"}</strong></div><span className="admin-card-arrow" aria-hidden="true">→</span><small>Företag att kontrollera</small></Link>
       <Link className="admin-stat-card" href="/admin/reports"><div><span>Aktiva anmälningar</span><strong>{openReports ?? "–"}</strong></div><span className="admin-card-arrow" aria-hidden="true">→</span><small>Innehåll att granska</small></Link>

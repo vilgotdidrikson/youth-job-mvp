@@ -60,9 +60,10 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
       style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${dragX}px) rotate(${dragX * .025}deg)`, transition: startX.current !== null ? "none" : undefined }}
       onPointerDown={event => { if (busy || event.button !== 0 || (event.target as HTMLElement).closest("a,button")) return; startX.current = event.clientX; event.currentTarget.setPointerCapture(event.pointerId); }}
       onPointerMove={event => { if (startX.current !== null) setDragX(event.clientX - startX.current); }}
-      onPointerUp={() => { if (startX.current === null) return; if (dragX > 90) decide("interested"); else if (dragX < -90) decide("skip"); else resetDrag(); }}
+      onDragStart={event => event.preventDefault()}
+      onPointerUp={event => { if (startX.current === null) return; const delta = event.clientX - startX.current; if (delta > 90) decide("interested"); else if (delta < -90) decide("skip"); else resetDrag(); }}
       onPointerCancel={resetDrag} onLostPointerCapture={resetDrag}>
-      {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
+      {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority draggable={false} className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
       <div className={styles.imageShade}/>
       <div className={styles.cardTop}><span className={styles.cardBadge}>{currentJob.is_boosted ? "Framhävd annons" : `${jobs.length} ${jobs.length === 1 ? "jobb" : "jobb att upptäcka"}`}</span><button className={styles.bookmark} type="button" aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet till senare"} aria-pressed={saved} disabled={saving || busy} onClick={() => void save()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button></div>
       {Math.abs(dragX) > 20 && <span className={`${styles.swipeFeedback} ${dragX > 0 ? styles.feedbackYes : ""}`}>{dragX > 0 ? "Intresserad" : "Inte nu"}</span>}

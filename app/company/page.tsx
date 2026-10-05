@@ -824,7 +824,7 @@ function CompanyPageContent() {
             ];
             return <>
               <header className="job-builder-heading">
-                <div><p>Employo</p><h1>Skapa jobbannons</h1><span>Tre korta steg. Ni behåller kontrollen, medan Employo använder svaren för att skapa rätt matchning.</span></div>
+                <div><p>MatchnWork</p><h1>Skapa jobbannons</h1><span>Tre korta steg. Ni behåller kontrollen, medan MatchnWork använder svaren för att skapa rätt matchning.</span></div>
               </header>
               <nav className="job-builder-steps" aria-label="Steg i annonsskapandet">
                 {steps.map((step) => (
