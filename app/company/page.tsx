@@ -11,6 +11,7 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { reviewCandidate } from "@/lib/matching";
+import { createInitialJobMatchProfile } from "@/lib/match-profiles";
 import { uploadJobImage } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
@@ -51,6 +52,8 @@ interface JobForm {
   description: string;
   benefits: string;
   requirements: string;
+  trainableRequirements: string;
+  topTraits: string;
 }
 
 const EMPTY_FORM: JobForm = {
@@ -68,6 +71,8 @@ const EMPTY_FORM: JobForm = {
   description: "",
   benefits: "",
   requirements: "",
+  trainableRequirements: "",
+  topTraits: "",
 };
 
 function CompanyPageContent() {
@@ -301,7 +306,7 @@ function CompanyPageContent() {
       const imageUrls = jobImageFiles.length > 0
         ? await Promise.all(jobImageFiles.map((file) => uploadJobImage(file)))
         : [];
-      await createJob({
+      const job = await createJob({
         title: form.title,
         city: form.city,
         address: form.address,
@@ -317,11 +322,26 @@ function CompanyPageContent() {
         min_age: form.minAge ? parseInt(form.minAge, 10) : null,
         max_age: form.maxAge ? parseInt(form.maxAge, 10) : null,
       });
+      let matchProfileWarning = "";
+      try {
+        await createInitialJobMatchProfile({
+          jobId: job.id,
+          roleSummary: form.description,
+          mustHaves: textListItems(form.requirements),
+          trainableRequirements: textListItems(form.trainableRequirements),
+          topTraits: textListItems(form.topTraits).slice(0, 5),
+        });
+      } catch {
+        // The listing is already published at this point. Do not make a retry
+        // create a duplicate listing; flag only the profile for later repair.
+        matchProfileWarning = "Annonsen skapades, men matchprofilen behöver kompletteras senare.";
+      }
       setForm(EMPTY_FORM);
       setJobImageFiles([]);
       setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
       setTab("annonser");
+      if (matchProfileWarning) setError(matchProfileWarning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
     } finally {
@@ -714,7 +734,11 @@ function CompanyPageContent() {
                     <div className="job-builder-age"><span>Åldersspann <em>(valfritt)</em></span><div><label>Ålder från<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 16" value={form.minAge} onChange={(e) => setForm((p) => ({ ...p, minAge: e.target.value }))} /></label><b>—</b><label>Ålder till<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 19" value={form.maxAge} onChange={(e) => setForm((p) => ({ ...p, maxAge: e.target.value }))} /></label></div></div>
                     <div className="job-builder-tags">
                       <div><h3>Förmåner <span>(valfritt)</span></h3><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</div>
-                      <div><h3>Krav <span>(valfritt)</span></h3><div className="job-builder-chips">{REQUIREMENT_TIPS.map((tip) => { const selected = textListItems(form.requirements).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)}>+</button></div>{showCustomRequirement && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customRequirement.trim()) { setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); } }}>Lägg till</button></div>}</div>
+                      <div><h3>Absoluta krav <span>(valfritt)</span></h3><div className="job-builder-chips">{REQUIREMENT_TIPS.map((tip) => { const selected = textListItems(form.requirements).includes(tip); return <button key={tip} type="button" onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)}>+</button></div>{showCustomRequirement && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customRequirement.trim()) { setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); } }}>Lägg till</button></div>}</div>
+                    </div>
+                    <div className="job-builder-fields two-columns" style={{ marginTop: "1rem" }}>
+                      <label>Sådant personen kan lära sig<textarea className="input-field" rows={3} placeholder="Separera med kommatecken" value={form.trainableRequirements} onChange={(e) => setForm((p) => ({ ...p, trainableRequirements: e.target.value }))} /></label>
+                      <label>Viktigaste egenskaperna (max 5)<textarea className="input-field" rows={3} placeholder="T.ex. nyfiken, punktlig, serviceinriktad" value={form.topTraits} onChange={(e) => setForm((p) => ({ ...p, topTraits: e.target.value }))} /></label>
                     </div>
                   </section>
                   <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2><div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/{form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period"}</em></div></section>
