@@ -1227,7 +1227,11 @@ button,
 .candidate-application-answers > div { margin-bottom: 1rem; }
 .candidate-assessment-note { color: #737373; }
 /* Match criterion editing shares the existing company modal shell. */
-.job-match-editor { display: grid; gap: 1rem; max-height: 90dvh; overflow-y: auto; }
+.job-match-editor { display: grid; gap: 1rem; padding: 2rem 1.5rem 1.5rem; max-height: 90dvh; overflow-y: auto; }
+.job-match-editor h2 { padding-right: 2rem; font-size: 1.5rem; font-weight: 700; }
+.job-match-editor > p { font-size: .88rem; line-height: 1.6; }
+.application-completions-page > h1 { margin: .75rem 0; font-size: 1.8rem; font-weight: 700; }
+.application-completions-page > p { margin-bottom: 1rem; line-height: 1.6; }
 .job-match-editor label { display: grid; gap: .4rem; font-weight: 600; }
 .job-match-editor small { font-size: .8rem; font-weight: 400; color: #666; }
 .job-match-editor details { padding: .7rem 0; border-top: 1px solid #e8e8e8; }

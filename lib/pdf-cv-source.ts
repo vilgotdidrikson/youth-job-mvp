@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { uploadedCvPath } from "./cv-document-path";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 export type PdfCvStatus = "none" | "read" | "unreadable";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -12,7 +11,7 @@ const MAX_TEXT = 12000;
 export async function extractPdfText(bytes: Uint8Array): Promise<string> {
   if (!bytes.length || bytes.length > MAX_BYTES || !new TextDecoder().decode(bytes.slice(0, 1024)).includes("%PDF-")) throw new Error("Invalid PDF");
   const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const standardFontDataUrl = join(dirname(createRequire(import.meta.url).resolve("pdfjs-dist/package.json")), "standard_fonts") + "/";
+  const standardFontDataUrl = join(process.cwd(), "node_modules", "pdfjs-dist", "standard_fonts") + "/";
   const task = getDocument({ data: bytes, standardFontDataUrl, isEvalSupported: false, useSystemFonts: false, disableFontFace: true });
   const timeout = setTimeout(() => { void task.destroy(); }, 8000);
   try {
