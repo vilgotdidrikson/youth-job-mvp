@@ -9,6 +9,7 @@ import { getYouthProfile, saveUploadedCvToProfile } from "@/lib/onboarding";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { submitApplicationDraftsAfterCv, type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
 type FormStep = "about" | "education" | "experience" | "skills" | "languages" | "merits";
@@ -21,6 +22,16 @@ const YEARS = Array.from({ length: 16 }, (_, i) => String(new Date().getFullYear
 const SKILLS = ["Service", "Samarbete", "Canva", "Excel", "Sociala medier", "Kassasystem", "Matlagning", "Barnpassning"];
 const LANGUAGES = ["Svenska", "Engelska", "Arabiska", "Spanska", "Finska", "Somaliska"];
 const append = (value: string, item: string) => value.split(",").map((part) => part.trim()).includes(item) ? value : [value.trim(), item].filter(Boolean).join(", ");
+
+function completedCvMessage(result: ApplicationDraftSubmissionResult, fallback: string) {
+  const parts = [fallback];
+  if (result.sent === 1) parts.push("Din sparade ansökan har skickats.");
+  if (result.sent > 1) parts.push(`${result.sent} sparade ansökningar har skickats.`);
+  if (result.unavailable === 1) parts.push("En annons tar inte längre emot ansökningar.");
+  if (result.unavailable > 1) parts.push(`${result.unavailable} annonser tar inte längre emot ansökningar.`);
+  if (result.pending > 0) parts.push(`${result.pending} ansökningar väntar fortfarande och kan försökas igen.`);
+  return parts.join(" ");
+}
 
 function buildSource(draft: Draft, name: string, city: string) {
   return structuredCvFromForm({
@@ -200,8 +211,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
         const { error: extendedSaveError } = await client.from("youth_profiles").update(extendedPayload).eq("user_id", user.id);
         if (extendedSaveError) console.warn("Kunde inte spara utökade CV-fält:", extendedSaveError.message);
       }
-      localStorage.removeItem(key); setMessage("Ditt CV är klart!");
-      window.setTimeout(() => router.push(returnPath), 650);
+      const applications = await submitApplicationDraftsAfterCv();
+      localStorage.removeItem(key); setMessage(completedCvMessage(applications, "Ditt CV är klart!"));
+      window.setTimeout(() => router.push(returnPath), 1200);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte göra klart ditt CV."); }
     finally { setSaving(false); }
   };
@@ -210,7 +222,16 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { setError("Välj en PDF-fil."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("PDF:en är för stor. Max är 5 MB."); return; }
     setSaving(true); setError("");
-    try { const url = await uploadYouthDocument(file); const document = { name: file.name, url, type: "cv" as const }; await saveUploadedCvToProfile(document); setUploaded(document); localStorage.removeItem(key); setMessage("Ditt CV är uppladdat och klart."); }
+    try {
+      const url = await uploadYouthDocument(file);
+      const document = { name: file.name, url, type: "cv" as const };
+      await saveUploadedCvToProfile(document);
+      const applications = await submitApplicationDraftsAfterCv();
+      setUploaded(document);
+      localStorage.removeItem(key);
+      setMessage(completedCvMessage(applications, "Ditt CV är uppladdat och klart."));
+      window.setTimeout(() => router.push(returnPath), 1200);
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte ladda upp PDF:en."); }
     finally { setSaving(false); event.target.value = ""; }
   };

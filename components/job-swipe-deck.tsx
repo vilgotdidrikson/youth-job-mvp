@@ -45,8 +45,13 @@ export function JobSwipeDeck({
   const commitDecision = async (job: JobPost, decision: Decision) => {
     setFlyDir(null);
     setDragX(0);
-    setDecisions((prev) => ({ ...prev, [job.id]: decision }));
-    await onDecision(job, decision);
+    try {
+      await onDecision(job, decision);
+      setDecisions((prev) => ({ ...prev, [job.id]: decision }));
+    } catch {
+      // The parent renders the useful error. Keep the card available so the
+      // youth can retry instead of silently losing the job from the deck.
+    }
   };
 
   const triggerDecision = (job: JobPost, decision: Decision) => {
