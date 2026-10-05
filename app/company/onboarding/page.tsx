@@ -25,7 +25,6 @@ const JOB_CATEGORIES = [
 ];
 
 const TIME_OPTIONS = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
-const COMMON_ROLES = ["Utvecklare", "Säljare", "Marknadsförare", "Kundservice"];
 const HIRING_PRIORITIES = ["Erfarenhet", "Personlighet", "Tekniska kunskaper", "Kulturpassning", "Ledarskap"];
 const INDUSTRY_TIPS = ["IT", "Bygg", "Restaurang", "Vård", "E-handel", "Butik", "Transport", "Ekonomi"];
 
@@ -47,12 +46,11 @@ export default function CompanyOnboardingPage() {
   // Company profile form
   const [companyName, setCompanyName] = useState("");
   const [administrator, setAdministrator] = useState("");
+  const [organizationNumber, setOrganizationNumber] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [industry, setIndustry] = useState("");
-  const [commonRoles, setCommonRoles] = useState<string[]>([]);
-  const [customRole, setCustomRole] = useState("");
   const [hiringPriorities, setHiringPriorities] = useState<string[]>([]);
   const [customPriority, setCustomPriority] = useState("");
   const [logoName, setLogoName] = useState("");
@@ -86,18 +84,19 @@ export default function CompanyOnboardingPage() {
       let active = true;
       void getSupabaseClient()
         .from("company_profiles")
-        .select("company_name, industry, administrator")
+        .select("company_name, industry, administrator, organization_number, verification_status")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }) => {
           if (!active || !data) return;
-          if (data.company_name?.trim() && data.industry?.trim() && data.administrator?.trim()) {
+          if (data.company_name?.trim() && data.industry?.trim() && data.administrator?.trim() && (data.organization_number?.trim() || data.verification_status === "verified")) {
             router.replace("/company?view=swipe");
             return;
           }
           setCompanyName(data.company_name ?? "");
           setIndustry(data.industry ?? "");
           setAdministrator(data.administrator ?? "");
+          setOrganizationNumber(data.organization_number ?? "");
         });
       return () => { active = false; };
     }
@@ -107,6 +106,7 @@ export default function CompanyOnboardingPage() {
     e.preventDefault();
     if (!companyName.trim()) { setError("Ange företagets namn."); return; }
     if (!industry.trim()) { setError("Ange företagets bransch."); return; }
+    if (!/^\d{6}-?\d{4}$/.test(organizationNumber.trim())) { setError("Ange ett giltigt organisationsnummer med 10 siffror."); return; }
     if (!administrator.trim()) { setError("Ange administratörens namn."); return; }
     setBusy(true);
     setError("");
@@ -117,6 +117,7 @@ export default function CompanyOnboardingPage() {
         .update({
           company_name: companyName.trim(),
           industry: industry.trim(),
+          organization_number: organizationNumber.trim(),
           administrator: administrator.trim(),
           updated_at: new Date().toISOString(),
         })
@@ -197,6 +198,7 @@ export default function CompanyOnboardingPage() {
   const profileQuestions = [
     "Vad heter ditt företag?",
     "Vilken bransch verkar ni inom?",
+    "Vad är ert organisationsnummer?",
     "Vem är administratör?",
   ];
 
@@ -210,9 +212,10 @@ export default function CompanyOnboardingPage() {
       {step === "profil" && (
         <form onSubmit={(e) => {
           e.preventDefault();
-          if (profileQuestion < 2) {
+          if (profileQuestion < 3) {
             if (profileQuestion === 0 && !companyName.trim()) { setError("Ange företagets namn."); return; }
             if (profileQuestion === 1 && !industry.trim()) { setError("Ange företagets bransch."); return; }
+            if (profileQuestion === 2 && !/^\d{6}-?\d{4}$/.test(organizationNumber.trim())) { setError("Ange ett giltigt organisationsnummer med 10 siffror."); return; }
             setError("");
             setProfileQuestion((current) => current + 1);
             return;
@@ -223,9 +226,9 @@ export default function CompanyOnboardingPage() {
             <h1 style={{ fontSize: "1.9rem", fontWeight: 800, letterSpacing: "-0.04em", color: "#111", margin: 0 }}>
               {profileQuestions[profileQuestion]}
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 3</p>
+            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 4</p>
             <div style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
-              <div style={{ width: `${((profileQuestion + 1) / 3) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
+              <div style={{ width: `${((profileQuestion + 1) / 4) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
             </div>
           </div>
 
@@ -256,7 +259,18 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
 
-            {profileQuestion === 2 && <><label style={labelStyle}>Administratör *</label><input
+            {profileQuestion === 2 && <><label style={labelStyle}>Organisationsnummer *</label><input
+              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+              style={{ marginBottom: "0.85rem" }}
+              placeholder="XXXXXX-XXXX"
+              inputMode="numeric"
+              value={organizationNumber}
+              onChange={(e) => setOrganizationNumber(e.target.value.replace(/[^0-9-]/g, ""))}
+              required
+              autoFocus
+            /><p style={{ margin: 0, color: "#737373", fontSize: ".82rem", lineHeight: 1.5 }}>Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras.</p></>}
+
+            {profileQuestion === 3 && <><label style={labelStyle}>Administratör *</label><input
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="För- och efternamn"
@@ -265,7 +279,6 @@ export default function CompanyOnboardingPage() {
               required
               autoFocus
             /></>}
-            {profileQuestion === 3 && <div><div style={{ display: "flex", gap: "0.5rem" }}><input className="input-field" placeholder="Skriv en roll" value={customRole} onChange={(e) => setCustomRole(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const value = customRole.trim(); if (value) { setCommonRoles((items) => items.includes(value) ? items : [...items, value]); setCustomRole(""); } } }} /><button type="button" className="secondary-btn" style={{ padding: "0 .9rem" }} onClick={() => { const value = customRole.trim(); if (value) { setCommonRoles((items) => items.includes(value) ? items : [...items, value]); setCustomRole(""); } }}>Lägg till</button></div><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{[...new Set([...COMMON_ROLES, ...commonRoles])].map((role) => chipBtn(role, commonRoles.includes(role), () => setCommonRoles((items) => toggleItem(items, role))))}</div></div>}
             {profileQuestion === 4 && <div><label style={labelStyle}>Stad</label><input className="input-field" placeholder="Stad" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} autoFocus /><label style={{ ...labelStyle, marginTop: "1rem" }}>Adress</label><input className="input-field" placeholder="T.ex. Storgatan 12" list="address-suggestions" value={address} onChange={(e) => setAddress(e.target.value)} /></div>}
             {profileQuestion === 5 && <div><div style={{ display: "flex", gap: "0.5rem" }}><input className="input-field" placeholder="Skriv en egen prioritering" value={customPriority} onChange={(e) => setCustomPriority(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } } }} autoFocus /><button type="button" className="secondary-btn" style={{ padding: "0 .9rem" }} onClick={() => { const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } }}>Lägg till</button></div><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{[...new Set([...HIRING_PRIORITIES, ...hiringPriorities])].map((priority) => chipBtn(priority, hiringPriorities.includes(priority), () => setHiringPriorities((items) => toggleItem(items, priority))))}</div></div>}
             {profileQuestion === 6 && <><label style={labelStyle}>Beskrivning</label><textarea
@@ -282,7 +295,7 @@ export default function CompanyOnboardingPage() {
 
           <div className="profile-actions" style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem" }}>
             {profileQuestion > 0 && <button type="button" className="secondary-btn" style={{ padding: "0.9rem" }} onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
-            <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 2 ? "Spara och fortsätt →" : "Nästa →"}</button>
+            <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 3 ? "Spara och fortsätt →" : "Nästa →"}</button>
           </div>
         </form>
       )}
@@ -292,7 +305,8 @@ export default function CompanyOnboardingPage() {
         <div style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till Employo</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat! 🎉</h1>
-          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
+          <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
+          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
           <button type="button" className="cta-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
           <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=kandidater")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
         </div>

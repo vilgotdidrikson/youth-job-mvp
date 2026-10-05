@@ -11,7 +11,8 @@
     "test:voice": "node scripts/test-voice-interview.mjs",
     "test:cv-quality": "node scripts/test-cv-quality.mjs",
     "test:rls:staging": "node --env-file=.env.rls scripts/test-staging-rls.mjs",
-    "test:premium:staging": "node --env-file=.env.premium scripts/test-premium-service.mjs"
+    "test:premium:staging": "node --env-file=.env.premium scripts/test-premium-service.mjs",
+    "test:deletion:staging": "node --env-file=.env.deletion scripts/test-staging-account-deletion.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

@@ -113,6 +113,8 @@ export function MobileNav() {
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
     pathname === "/" ||
     pathname === "/pricing" ||
     pathname === "/features" ||
@@ -120,7 +122,8 @@ export function MobileNav() {
     pathname.startsWith("/youth/onboarding") ||
     pathname.startsWith("/youth/cv") ||
     pathname.startsWith("/youth/get-started") ||
-    pathname.startsWith("/company/onboarding")
+    pathname.startsWith("/company/onboarding") ||
+    pathname.startsWith("/admin")
   ) {
     return null;
   }

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { renderStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
 
 const SIGNED_URL_TTL_SECONDS = 5 * 60;
 
@@ -34,25 +35,37 @@ export async function POST(request: NextRequest) {
 
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
   const companyUserId = userData.user.id;
-  const [{ data: account }, { data: job }, { data: application }, { data: match }, { data: youthProfile, error: profileError }] = await Promise.all([
+  const [{ data: account }, { data: companyProfile }, { data: job }, { data: match }, { data: youthProfile, error: profileError }] = await Promise.all([
     admin.from("profiles").select("role").eq("id", companyUserId).maybeSingle(),
+    admin.from("company_profiles").select("verification_status").eq("user_id", companyUserId).maybeSingle(),
     admin.from("jobs").select("id").eq("id", body.jobId).eq("company_user_id", companyUserId).maybeSingle(),
-    admin.from("swipe_actions").select("id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("decision", "interested").maybeSingle(),
-    admin.from("matches").select("id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("company_user_id", companyUserId).maybeSingle(),
-    admin.from("youth_profiles").select("documents").eq("user_id", body.youthUserId).maybeSingle(),
+    admin.from("swipe_actions").select("job_id").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("decision", "interested").maybeSingle(),
+    admin.from("youth_profiles").select("documents, cv_text, cv_structured").eq("user_id", body.youthUserId).maybeSingle(),
   ]);
 
   if (account?.role !== "company") return NextResponse.json({ error: "Endast företagskonton kan öppna kandidaters CV." }, { status: 403 });
-  // Authorization is evaluated entirely on the server for the same owned listing.
-  if (!job || (!application && !match)) return NextResponse.json({ error: "Du har inte behörighet att öppna den här kandidatens CV." }, { status: 403 });
+  if (companyProfile?.verification_status !== "verified") return NextResponse.json({ error: "Företaget måste vara verifierat för att öppna kandidaters CV." }, { status: 403 });
+  // A company may inspect the full CV only after this youth has explicitly
+  // shown interest in one of that company's jobs. This lets the employer make
+  // an informed matching decision without exposing arbitrary youth CVs.
+  if (!job || !match) return NextResponse.json({ error: "CV:t är endast tillgängligt för kandidater som har visat intresse för den här annonsen." }, { status: 403 });
   if (profileError) return NextResponse.json({ error: "Kunde inte hämta kandidatens CV just nu." }, { status: 502 });
 
   const path = uploadedCvPath(youthProfile?.documents, body.youthUserId);
-  if (!path) return NextResponse.json({ error: "Kandidaten har inget uppladdat PDF-CV." }, { status: 404 });
-  const { data, error } = await admin.storage.from("youth-documents").createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
-  if (error || !data?.signedUrl) return NextResponse.json({ error: "CV:t kunde inte hämtas. Det kan ha tagits bort av kandidaten." }, { status: 404 });
-  return NextResponse.json(
-    { url: data.signedUrl, expiresAt: new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString() },
-    { headers: { "Cache-Control": "private, no-store" } },
-  );
+  if (path) {
+    const { data, error } = await admin.storage.from("youth-documents").createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
+    if (error || !data?.signedUrl) return NextResponse.json({ error: "CV:t kunde inte hämtas. Det kan ha tagits bort av kandidaten." }, { status: 404 });
+    return NextResponse.json(
+      { kind: "pdf", url: data.signedUrl, expiresAt: new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString() },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
+  const storedText = typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text.trim() : "";
+  const structuredText = !storedText && youthProfile?.cv_structured
+    ? renderStructuredCv(youthProfile.cv_structured as StructuredCvData).trim()
+    : "";
+  const text = storedText || structuredText;
+  if (!text) return NextResponse.json({ error: "Kandidaten har ännu inte skapat något CV." }, { status: 404 });
+  return NextResponse.json({ kind: "text", text }, { headers: { "Cache-Control": "private, no-store" } });
 }

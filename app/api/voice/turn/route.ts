@@ -6,7 +6,6 @@ import { COMPLETE_QUESTION, INTERVIEW_INSTRUCTIONS, INTERVIEW_QUESTIONS, intervi
 import { requireApiUser } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "", timeout: 25_000, maxRetries: 1 });
 interface InterviewState extends InterviewProgress {
   lastQuestion?: string;
   structuredCv: StructuredCvData;
@@ -33,7 +32,10 @@ function reply(state: InterviewState, next: ReturnType<typeof selectNextQuestion
 export async function POST(request: NextRequest) {
   const auth = await requireApiUser(request, "voice-turn", ["youth"]);
   if ("response" in auth) return auth.response;
-  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Röstintervjun är inte tillgänglig just nu." }, { status: 503 });
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: "Röstintervjun är inte tillgänglig just nu." }, { status: 503 });
+
+  const openai = new OpenAI({ apiKey, timeout: 25_000, maxRetries: 1 });
   try {
     const form = await request.formData();
     const rawState = form.get("state");
