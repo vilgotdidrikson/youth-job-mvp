@@ -179,6 +179,7 @@ export interface OnboardingMessage {
 }
 
 export interface CandidateFeedItem {
+  application?: import("./application-completions").ApplicationCompletion | null;
   youthUserId: string;
   profile: YouthProfile | null;
   job: JobPost;

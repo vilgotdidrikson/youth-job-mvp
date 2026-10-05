@@ -114,7 +114,7 @@ function SwipePageContent() {
   if (cvLoading) return <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p></main>;
 
   return <main className="mobile-shell">
-    <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
+    <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>{cvCompleted && <Link href="/applications" className="secondary-btn">Dina ansökningar och frågor</Link>}
       {!cvCompleted && <div className="cv-required-banner"><div><strong>Gör klart ditt CV för att skicka ansökningar</strong><p>{draftCount ? `${draftCount} ${draftCount === 1 ? "ansökan är" : "ansökningar är"} sparad${draftCount === 1 ? "" : "e"} och skickas när ditt CV är klart.` : "Du kan swipa nu. Ansökningar sparas tills ditt CV är klart."}</p></div><Link className="cv-required-banner-action" href="/youth/cv">Skapa ditt CV</Link></div>}
     </div>
     {profile?.role !== "youth" ? <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}><p style={{ fontSize: "1.1rem", fontWeight: 700 }}>Bara för ungdomskonton</p></div> : error ? <div style={{ borderRadius: 12, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "1rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</div> : !jobsLoaded ? <div style={{ textAlign: "center", paddingTop: "3rem", color: "#737373" }}>Laddar jobb...</div> : <div className="job-explore-layout">

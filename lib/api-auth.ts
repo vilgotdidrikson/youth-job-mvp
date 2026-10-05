@@ -7,6 +7,8 @@ const limits = {
   "voice-speech": 60,
   "cv-generate": 10,
   "job-generate": 20,
+  "application-analyze": 20,
+  "candidate-analyze": 30,
 } as const;
 
 export type ProtectedEndpoint = keyof typeof limits;

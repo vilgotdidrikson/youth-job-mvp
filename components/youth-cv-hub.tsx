@@ -29,7 +29,7 @@ function completedCvMessage(result: ApplicationDraftSubmissionResult, fallback: 
   if (result.sent > 1) parts.push(`${result.sent} sparade ansökningar har skickats.`);
   if (result.unavailable === 1) parts.push("En annons tar inte längre emot ansökningar.");
   if (result.unavailable > 1) parts.push(`${result.unavailable} annonser tar inte längre emot ansökningar.`);
-  if (result.pending > 0) parts.push(`${result.pending} ansökningar väntar fortfarande och kan försökas igen.`);
+  if (result.pending > 0) parts.push(`${result.pending} ansökningar behöver kompletteras. Öppna Dina ansökningar för att svara eller skicka med uppgift saknas.`);
   return parts.join(" ");
 }
 
@@ -253,7 +253,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
     {uploaded && <section className="cv-hub-status"><strong>CV uppladdat</strong><p>{uploaded.name}</p><button onClick={() => void getYouthDocumentSignedUrl(uploaded.url).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Kunde inte öppna PDF:en."))}>Förhandsvisa PDF</button></section>}
-    {message && <p className="cv-hub-success">{message}</p>}{error && <p className="cv-hub-error">{error}</p>}
+    {message && <p className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
@@ -278,7 +278,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <textarea className="cv-hub-preview" value={generated?.text ?? ""} onChange={(event) => setGenerated((current) => current ? { ...current, text: event.target.value } : current)} rows={20} />
     <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>
     <button className="cta-btn" disabled={saving || !generated?.text.trim()} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
-    {error && <p className="cv-hub-error">{error}</p>}{message && <p className="cv-hub-success">{message}</p>}
+    {error && <p className="cv-hub-error">{error}</p>}{message && <p className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
   </main>;
 
   return <main className="mobile-shell cv-hub">

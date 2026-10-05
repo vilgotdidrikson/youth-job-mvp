@@ -190,6 +190,9 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     throw new Error(getSupabaseErrorMessage(youthProfileError, "Unable to fetch youth profiles."));
   }
 
+  const { data: completions, error: completionError } = await supabase.from("application_completions").select("*").eq("job_id", jobId).eq("status", "submitted");
+  if (completionError) throw new Error("Kunde inte hämta kompletteringssvaren.");
+  const completionMap = new Map((completions ?? []).map((item) => [String(item.youth_user_id), item]));
   const profileMap = new Map<string, YouthProfile>();
   for (const row of (youthProfiles ?? []) as YouthProfile[]) {
     profileMap.set(row.user_id, row);
@@ -198,6 +201,7 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
   return interestedIds.map((youthUserId) => ({
     youthUserId,
     profile: profileMap.get(youthUserId) ?? null,
+    application: completionMap.get(youthUserId) ?? null,
     job,
   }));
 }

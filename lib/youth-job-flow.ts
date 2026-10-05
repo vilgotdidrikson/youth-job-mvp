@@ -1,6 +1,7 @@
 "use client";
 
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
+import { analyzeApplications } from "@/lib/application-completions";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getJobById } from "@/lib/jobs";
@@ -98,9 +99,10 @@ export async function submitApplicationDraftsAfterCv(): Promise<ApplicationDraft
   const { data, error } = await getSupabaseClient().rpc("submit_my_application_drafts");
   if (error) throw new Error(error.message);
   const result = Array.isArray(data) ? data[0] : data;
+  const automaticallySent = Number(result?.pending_count ?? 0) > 0 ? await analyzeApplications() : 0;
   return {
-    sent: Number(result?.sent_count ?? 0),
+    sent: Number(result?.sent_count ?? 0) + automaticallySent,
     unavailable: Number(result?.unavailable_count ?? 0),
-    pending: Number(result?.pending_count ?? 0),
+    pending: Math.max(0, Number(result?.pending_count ?? 0) - automaticallySent),
   };
 }

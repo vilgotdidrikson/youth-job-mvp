@@ -4,6 +4,7 @@ import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getJobById } from "@/lib/jobs";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { prepareApplication } from "@/lib/application-completions";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import type { CandidateReview, JobInterest, MatchRecord, SwipeDecision } from "@/lib/types";
 
@@ -179,6 +180,11 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error("Den här annonsen tar inte emot nya ansökningar.");
   }
 
+  if (direction === "interested") {
+    const application = await prepareApplication(jobId);
+    return application.status === "submitted" ? getExistingMatch(jobId, user.id, job.company_user_id) : null;
+  }
+
   try {
     await upsertJobInterestRecord({
       youth_user_id: user.id,
@@ -196,11 +202,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw reason;
   }
 
-  if (direction !== "interested") {
-    return null;
-  }
-
-  return getExistingMatch(jobId, user.id, job.company_user_id);
+  return null;
 }
 
 export async function reviewCandidate(

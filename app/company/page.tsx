@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { CandidateAssessmentPanel } from "@/components/candidate-assessment-panel";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -532,7 +533,7 @@ function CompanyPageContent() {
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
   const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
   const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
-  const selectedCandidate = candidateFeed.find((candidate) => candidate.youthUserId === selectedCandidateId) ?? candidateFeed[0] ?? null;
+  const selectedCandidate = candidateFeed.find((candidate) => `${candidate.job.id}:${candidate.youthUserId}` === selectedCandidateId) ?? candidateFeed[0] ?? null;
 
   return (
     <main className="mobile-shell">
@@ -722,8 +723,8 @@ function CompanyPageContent() {
               <div className="company-applicant-list">
                 {candidateFeed.map((candidate) => {
                   const profile = candidate.profile;
-                  const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId;
-                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} onClick={() => setSelectedCandidateId(candidate.youthUserId)}>
+                  const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;
+                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
                     <span className="company-applicant-avatar">{(profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</span>
                     <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small></span>
                     <span aria-hidden="true">›</span>
@@ -733,6 +734,7 @@ function CompanyPageContent() {
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
+                <CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
                 {(() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
@@ -869,7 +871,7 @@ function CompanyPageContent() {
                       <div className="job-builder-fields" style={{ marginTop: "1rem" }}>
                         <label>Vad kan personen lära sig på plats?<textarea className="input-field" rows={3} placeholder="T.ex. kassasystem, produktkunskap, rutiner" value={form.trainableRequirements} onChange={(e) => setForm((p) => ({ ...p, trainableRequirements: e.target.value }))} /></label>
                       </div>
-                      {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Automatiskt utskick till kandidater aktiveras när kompletteringsflödet är klart.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
+                      {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Frågorna visas separat för ungdomen innan ansökan skickas. Alla frågor är valfria.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
                     </section>
                   )}
 
