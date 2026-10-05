@@ -7,6 +7,7 @@ import { MinimalProfileSection } from "@/components/profile/minimal-profile-sect
 import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
@@ -466,6 +467,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             {saving ? "Sparar..." : "Spara ändringar"}
           </button>
         </div>
+
+        <CompanyMatchProfileForm userId={user.id} />
 
         {/* Quick link to job management */}
         <button
