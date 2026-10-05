@@ -942,10 +942,78 @@ button,
 .job-builder-onboarding .job-builder-ai { background: #f5f5f5; }
 .job-builder-onboarding .job-builder-chips .chip { border-color: #e8e8e8; background: #f5f5f5; }
 .job-builder-onboarding .job-builder-actions { position: static; max-width: none; margin: 1rem 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.job-builder-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; margin-bottom: 1rem; }
+.job-builder-steps button { display: flex; align-items: center; gap: .65rem; min-width: 0; padding: .75rem; border: 1px solid var(--border); border-radius: 12px; color: var(--text-secondary); background: var(--surface); text-align: left; font: inherit; }
+.job-builder-steps button > span { display: grid; place-items: center; flex: 0 0 1.85rem; height: 1.85rem; border-radius: 50%; color: var(--text-secondary); background: #f2f2f2; font-size: .75rem; font-weight: 800; }
+.job-builder-steps button div { min-width: 0; }
+.job-builder-steps button strong, .job-builder-steps button small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-builder-steps button strong { color: var(--text-primary); font-size: .82rem; }
+.job-builder-steps button small { margin-top: .12rem; color: var(--text-tertiary); font-size: .68rem; }
+.job-builder-steps button.is-current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.job-builder-steps button.is-current > span, .job-builder-steps button.is-complete > span { color: #fff; background: var(--accent); }
+.job-builder-steps button.is-complete { cursor: pointer; }
+.job-builder-steps button:disabled { opacity: .62; cursor: default; }
+.job-builder-onboarding .job-builder-form { max-width: 58rem; margin: 0 auto; }
+.job-builder-step-panel { min-height: 25rem; }
+.job-builder-eyebrow { margin: 0 0 .35rem; color: var(--accent); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.job-builder-description-label { margin: 1.15rem 0 .4rem; }
+.job-builder-field-help { margin: .25rem 0 .55rem; color: var(--text-secondary); font-size: .76rem; }
+.job-builder-match-note { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0 1.15rem; padding: .85rem 1rem; border: 1px solid #f0d7e4; border-radius: 12px; background: #fff7fb; }
+.job-builder-match-note strong { color: var(--text-primary); font-size: .84rem; }
+.job-builder-match-note p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .76rem; }
+.job-builder-match-note button { flex-shrink: 0; padding: 0; border: 0; color: var(--accent); background: transparent; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.job-builder-save { padding: .65rem .4rem; border: 0; color: var(--text-secondary); background: transparent; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+
+.company-match-profile { margin-bottom: .75rem; padding: 1.25rem; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.company-match-profile.is-embedded { margin: 0; border: 0; border-radius: 0; }
+.company-match-loading { margin: 0; color: var(--text-secondary); font-size: .86rem; }
+.company-match-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
+.company-match-header p { margin: 0 0 .3rem; color: var(--accent); font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.company-match-header h2 { margin: 0; color: var(--text-primary); font-size: 1.15rem; letter-spacing: -.025em; }
+.company-match-header > span { flex-shrink: 0; padding: .3rem .55rem; border-radius: 999px; color: #8c315e; background: #fff0f7; font-size: .68rem; font-weight: 800; }
+.company-match-intro { margin: .5rem 0 .8rem; color: var(--text-secondary); font-size: .82rem; line-height: 1.5; }
+.company-match-progress { height: .32rem; overflow: hidden; border-radius: 999px; background: #f0f0f0; }
+.company-match-progress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .2s ease; }
+.company-match-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin: 1rem 0; }
+.company-match-steps button { display: flex; align-items: center; justify-content: center; gap: .4rem; min-width: 0; padding: .55rem .35rem; border: 1px solid var(--border); border-radius: 10px; color: var(--text-secondary); background: #fafafa; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
+.company-match-steps button span { display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; color: var(--text-secondary); background: #ececec; font-size: .64rem; }
+.company-match-steps button.is-active { border-color: #f0b9d4; color: #8c315e; background: #fff7fb; }
+.company-match-steps button.is-active span { color: #fff; background: var(--accent); }
+.company-match-fields { display: grid; gap: .9rem; min-height: 14rem; padding: 1rem; border-radius: 12px; background: #fafafa; }
+.company-match-fields label { display: grid; gap: .4rem; color: var(--text-secondary); font-size: .75rem; font-weight: 700; }
+.company-match-fields textarea { resize: vertical; }
+.company-match-step-copy strong { color: var(--text-primary); font-size: .9rem; }
+.company-match-step-copy p { margin: .25rem 0 0; color: var(--text-secondary); font-size: .76rem; line-height: 1.45; }
+.company-match-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: -.35rem; }
+.company-match-chips button { padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 999px; color: var(--text-secondary); background: #fff; font: inherit; font-size: .7rem; font-weight: 700; cursor: pointer; }
+.company-match-chips button.is-selected { border-color: var(--accent); color: #fff; background: var(--accent); }
+.company-match-error, .company-match-success { margin: .75rem 0 0; padding: .65rem .75rem; border-radius: 9px; font-size: .78rem; }
+.company-match-error { color: #b42318; background: #fff1f0; }
+.company-match-success { color: #226a54; background: #e8faf0; }
+.company-match-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+.company-match-actions button { min-height: 2.65rem; padding: 0 .9rem; }
+.company-match-modal { position: fixed; z-index: 120; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(20, 18, 20, .52); backdrop-filter: blur(4px); }
+.company-match-modal-content { position: relative; width: min(100%, 38rem); max-height: calc(100dvh - 2rem); overflow-y: auto; border-radius: 18px; background: var(--surface); box-shadow: 0 1.5rem 4rem rgba(20, 18, 20, .25); }
+.company-match-modal-close { position: absolute; z-index: 1; top: .7rem; right: .7rem; display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 50%; color: var(--text-secondary); background: #f2f2f2; font-size: 1.25rem; cursor: pointer; }
 
 @media (min-width: 721px) {
-  .job-builder-onboarding .job-builder-form { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
-  .job-builder-onboarding .job-builder-section:first-child { grid-column: 1 / -1; }
+  .job-builder-onboarding .job-builder-form { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .job-builder-steps { gap: .35rem; }
+  .job-builder-steps button { justify-content: center; padding: .65rem .4rem; }
+  .job-builder-steps button div { display: none; }
+  .job-builder-match-note { align-items: flex-start; flex-direction: column; }
+  .job-builder-onboarding .job-builder-actions { flex-wrap: wrap; }
+  .job-builder-onboarding .job-builder-actions > span { width: 100%; }
+  .job-builder-onboarding .job-builder-actions .cta-btn { flex: 1; }
+  .company-match-header { padding-right: 2rem; }
+  .company-match-header > span { display: none; }
+  .company-match-steps button { gap: .25rem; font-size: .66rem; }
+  .company-match-fields { padding: .85rem; }
+  .company-match-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .company-match-actions .cta-btn { grid-column: 1 / -1; }
 }
 
 /* Keep the preview at the same readable width as a published advert. */
