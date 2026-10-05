@@ -3,13 +3,18 @@
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import { getSupabaseClient } from "@/lib/supabase";
-import { swipeJob } from "@/lib/matching";
 import { getJobById } from "@/lib/jobs";
 import type { JobPost } from "@/lib/types";
 
 export interface YouthFlowState {
   shortOnboardingCompleted: boolean;
   cvCompleted: boolean;
+}
+
+export interface ApplicationDraftSubmissionResult {
+  sent: number;
+  unavailable: number;
+  pending: number;
 }
 
 export async function getYouthFlowState(userId: string): Promise<YouthFlowState> {
@@ -85,25 +90,17 @@ export async function getApplicationDraftCount(): Promise<number> {
   return count ?? 0;
 }
 
-/** Sends only the owner's private drafts after their CV has been saved. Failed
- * drafts remain private and can be retried on the next completed-CV visit. */
-export async function submitApplicationDraftsAfterCv(): Promise<number> {
-  const user = await requireYouth();
-  const state = await getYouthFlowState(user.id);
-  if (!state.cvCompleted) return 0;
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from("youth_application_drafts").select("id, job_id").eq("youth_user_id", user.id);
+/** Atomically submits every available private draft after CV completion. The
+ * database also removes drafts for closed listings and creates one consolidated
+ * in-app notification for the youth. */
+export async function submitApplicationDraftsAfterCv(): Promise<ApplicationDraftSubmissionResult> {
+  await requireYouth();
+  const { data, error } = await getSupabaseClient().rpc("submit_my_application_drafts");
   if (error) throw new Error(error.message);
-  let sent = 0;
-  for (const draft of data ?? []) {
-    try {
-      await swipeJob(String(draft.job_id), "interested");
-      const { error: deleteError } = await supabase.from("youth_application_drafts").delete().eq("id", draft.id).eq("youth_user_id", user.id);
-      if (deleteError) throw deleteError;
-      sent += 1;
-    } catch (reason) {
-      console.error("Could not send saved application draft.", { draftId: draft.id, reason });
-    }
-  }
-  return sent;
+  const result = Array.isArray(data) ? data[0] : data;
+  return {
+    sent: Number(result?.sent_count ?? 0),
+    unavailable: Number(result?.unavailable_count ?? 0),
+    pending: Number(result?.pending_count ?? 0),
+  };
 }
