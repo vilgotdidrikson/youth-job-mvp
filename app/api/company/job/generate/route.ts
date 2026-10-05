@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { groqTextOptions } from "@/lib/groq-config";
 import { requireApiUser } from "@/lib/api-auth";
 
 const JOB_CATEGORIES = ["Café/restaurang", "Butik", "Barnomsorg", "Idrott", "Event", "Lager", "Leverans", "Kundtjänst", "Administration", "Handledare", "Sociala medier", "Övrigt"] as const;
@@ -167,9 +168,8 @@ Regler:
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      ...groqTextOptions(3000),
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 900,
       temperature: 0.35,
       response_format: { type: "json_object" },
     });
