@@ -1,0 +1,44 @@
+.application-completions-page { display:block!important; }
+.applications-heading { margin:0 0 32px; }
+.application-eyebrow { color:#b84164;font-size:.72rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase; }
+.applications-heading h1 { margin:10px 0 12px;font-size:2.4rem; }
+.applications-heading > p:last-child { color:#896a76;line-height:1.7;max-width:600px; }
+.applications-layout { display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;align-items:start; }
+.applications-content { min-width:0;display:grid;gap:20px; }
+.applications-tabs { display:flex;gap:5px;padding:5px;border:1px solid #f0d9e0;border-radius:15px;background:#fce9ef; }
+.applications-tabs button { border:0;border-radius:11px;padding:12px 16px;background:transparent;color:#896a76;font-size:.84rem;flex:1; }
+.applications-tabs button[aria-pressed="true"] { background:white;color:#4c303b;box-shadow:0 3px 12px #4c303b08; }
+.applications-tabs span { margin-left:7px;font-size:.73rem;background:#fce9ef;border-radius:8px;padding:3px 6px; }
+.application-completion-card { display:grid;gap:18px; }
+.application-completion-card > header { display:flex;align-items:center;gap:14px; }
+.application-completion-card > header p { font-size:.76rem;color:#896a76;margin:0 0 5px; }
+.application-completion-card > header h2 { font-size:1.2rem;margin:0; }
+.application-company-avatar { flex-shrink:0;width:46px;height:46px;border-radius:15px;background:#fce9ef;color:#b84164;display:grid;place-items:center;font-size:.82rem;font-weight:600; }
+.application-status { margin-left:auto;max-width:145px;border-radius:9px;background:#fce9ef;color:#b84164;padding:7px 10px;font-size:.7rem;line-height:1.5; }
+.application-completion-card > p { font-size:.84rem;line-height:1.75;color:#896a76; }
+.application-question { display:grid;gap:10px;margin:0;min-width:0; }
+.application-question strong { display:block;font-size:.87rem;line-height:1.6;font-weight:500; }
+.application-question small { color:#896a76;font-size:.76rem;line-height:1.6; }
+.application-question textarea { width:100%;resize:vertical;font-size:16px;line-height:1.6;padding:14px;min-height:110px; }
+.application-question > p { white-space:pre-wrap;overflow-wrap:anywhere;font-size:.85rem;line-height:1.7; }
+.application-followups { display:grid;gap:20px;padding-top:24px;border-top:1px solid #f0d9e0; }
+.application-followups-heading h3 { font-size:1.25rem;margin:8px 0 0; }
+.application-followups > p { color:#896a76;line-height:1.75;font-size:.84rem;margin:0; }
+.application-skip { display:flex;align-items:flex-start;gap:9px;color:#896a76;font-size:.76rem;line-height:1.6;font-weight:400!important; }
+.application-skip input { accent-color:#b84164;flex-shrink:0;margin-top:3px; }
+.application-published-answer { background:#fffafb;border:1px solid #f0d9e0;border-radius:13px;padding:14px; }
+.application-completion-actions { display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap; }
+.application-completion-actions small { flex:1;color:#896a76;font-size:.73rem;line-height:1.6;min-width:160px; }
+.application-job-link { display:flex;align-items:center;gap:7px;font-size:.8rem;color:#b84164;width:fit-content; }
+.application-completion-error { border:1px solid #efbccb;background:#fff0f4;border-radius:13px;padding:14px;color:#9b3152!important;line-height:1.65; }
+.applications-aside { border:1px solid #f0d9e0;border-radius:22px;background:#fce9ef;padding:26px;display:grid;gap:15px; }
+.applications-aside > svg { color:#b84164; }
+.applications-aside h2 { font-size:1.1rem;line-height:1.5;margin:0; }
+.applications-aside p { font-size:.81rem;line-height:1.8;color:#896a76;margin:0; }
+.applications-aside a { display:flex;align-items:center;justify-content:space-between;padding-top:13px;border-top:1px solid #edcbd6;font-size:.8rem;color:#b84164; }
+.applications-empty { display:grid;justify-items:center;text-align:center;gap:16px;padding:45px 28px;background:white;border:1px solid #f0d9e0;border-radius:22px; }
+.applications-empty svg { color:#b84164; }
+.applications-empty h2 { font-size:1.4rem;margin:0; }
+.applications-empty p { color:#896a76;line-height:1.7;margin:0; }
+@media(max-width:900px) { .applications-layout { grid-template-columns:minmax(0,1fr); } .applications-aside { order:2; } }
+@media(max-width:720px) { .applications-heading { margin-bottom:24px; } .applications-heading h1 { font-size:1.95rem; } .application-completion-card > header { flex-wrap:wrap; } .application-status { margin-left:60px;max-width:none;margin-top:-4px; } .applications-tabs button { font-size:.77rem;padding:11px 6px; } .application-completion-actions .cta-btn { width:100%; } }

@@ -8,6 +8,7 @@ const limits = {
   "cv-generate": 10,
   "job-generate": 20,
   "application-analyze": 20,
+  "application-followups": 20,
   "candidate-analyze": 30,
   "candidate-cv": 60,
 } as const;
@@ -45,7 +46,7 @@ export async function requireApiUser(request: NextRequest, endpoint: ProtectedEn
       .eq("id", user.id)
       .maybeSingle();
     if (profileError || !profile || !allowedRoles.includes(profile.role as ApiRole)) {
-      return { response: Response.json({ error: "Du har inte behÃ¶righet att anvÃ¤nda den hÃ¤r funktionen." }, { status: 403 }) } as const;
+      return { response: Response.json({ error: "Du har inte behörighet att använda den här funktionen." }, { status: 403 }) } as const;
     }
   }
 

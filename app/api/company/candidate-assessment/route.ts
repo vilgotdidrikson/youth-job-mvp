@@ -5,6 +5,8 @@ import OpenAI from "openai";
 import { requireApiUser } from "@/lib/api-auth";
 import { matchingCriteria, candidateSource, assessCandidate } from "@/lib/candidate-assessment";
 import { pdfCvSource } from "@/lib/pdf-cv-source";
+import { queueApplicationFollowups } from "@/lib/queue-application-followups";
+import type { CandidateAssessment } from "@/lib/candidate-assessment";
 import { groqTextOptions } from "@/lib/groq-config";
 
 export const runtime = "nodejs";
@@ -30,7 +32,10 @@ export async function POST(request: NextRequest) {
   const key = process.env.GROQ_API_KEY;
   const hash = createHash("sha256").update(JSON.stringify({ source, criteria, engine: 3, pdfStatus: pdf.status, aiConfigured: Boolean(key), model: groqTextOptions(3600).model })).digest("hex");
   const { data: cached } = await supabase.from("candidate_assessments").select("result,created_at").eq("job_id", body.jobId).eq("youth_user_id", body.youthUserId).eq("job_profile_version", matchProfile.profile_version).eq("input_hash", hash).maybeSingle();
-  if (cached && pdf.status !== "unreadable") return NextResponse.json({ assessment: cached.result, createdAt: cached.created_at, cached: true, pdfStatus: pdf.status });
+  if (cached && pdf.status !== "unreadable") {
+    const followups = key ? await queueApplicationFollowups(supabase, body.jobId!, body.youthUserId!, matchProfile.profile_version, cached.result as CandidateAssessment, hash) : { queued: 0 };
+    return NextResponse.json({ assessment: cached.result, createdAt: cached.created_at, cached: true, pdfStatus: pdf.status, followups });
+  }
   let raw: unknown = [];
   if (key && source && criteria.some((criterion) => criterion.weight > 0)) {
     try {
@@ -45,5 +50,6 @@ export async function POST(request: NextRequest) {
   const { error: insertError } = await supabase.from("candidate_assessments").insert({ job_id: body.jobId, youth_user_id: body.youthUserId, company_user_id: auth.user.id,
     job_profile_version: matchProfile.profile_version, input_hash: hash, result: assessment, criteria_snapshot: criteria });
   if (insertError && insertError.code !== "23505") return NextResponse.json({ error: "Kunde inte spara bedömningen. Försök igen." }, { status: 503 });
-  return NextResponse.json({ assessment, cached: false, pdfStatus: pdf.status });
+  const followups = key ? await queueApplicationFollowups(supabase, body.jobId!, body.youthUserId!, matchProfile.profile_version, assessment, hash) : { queued: 0 };
+  return NextResponse.json({ assessment, cached: false, pdfStatus: pdf.status, followups });
 }

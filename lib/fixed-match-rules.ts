@@ -9,7 +9,7 @@ export function fixedCriterionEvidence(label: string, source: string): { status:
   for (const sentence of sentences) {
     // Conditional wishes/plans cannot establish a qualification or availability.
     if (/\b(om|kanske|vill|planerar|tidigare|utgånget)\b/i.test(sentence)) continue;
-    const text = sentence.replace(/^(?:cv_text|Ansökningssvar|Uppgift från profil\/CV):\s*/i, "").trim();
+    const text = sentence.replace(/^(?:cv_text|Ansökningssvar|Kompletteringssvar|Uppgift från profil\/CV):\s*/i, "").trim();
     if (licence) {
       if (/^(?:jag )?(?:har|saknar) (?:inte |inget )?b[- ]körkort$/i.test(text)) {
         matches.push({ status: /(?:saknar|inte|inget)/i.test(text) ? "unfulfilled" : "fulfilled", evidence: sentence });

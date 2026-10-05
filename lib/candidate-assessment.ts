@@ -29,7 +29,9 @@ export function matchingCriteria(raw: unknown): MatchCriterion[] {
 export function candidateSource(profile: Record<string, unknown>): string {
   const base = applicationSource(profile);
   const answers = profile.answers && typeof profile.answers === "object" ? Object.values(profile.answers) : [];
-  return [base, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`)]
+  const followups = Array.isArray(profile.followup_answers) ? profile.followup_answers : [];
+  const supplements = followups.flatMap((item) => item && typeof item.answer === "string" && item.answer.trim() ? [`Kompletteringssvar: ${item.answer.trim()}`] : []);
+  return [base, ...supplements, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`)]
     .join("\n").slice(0, 32000);
 }
 

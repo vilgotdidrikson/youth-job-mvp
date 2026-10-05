@@ -378,47 +378,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       marginBottom: "0.35rem",
     };
 
-    return (
-      <main className="mobile-shell pb-20">
-        {/* Header */}
-        <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>MatchnWork</p>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0" }}>
-            {companyName || "Företagsprofil"}
-          </h1>
-          <p style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#737373" }}>{user.email}</p>
-        </div>
-
-        {error && (
-          <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
-            {error}
-          </div>
-        )}
-        {savedNote && (
-          <div style={{ borderRadius: 10, background: "#e8faf0", border: "1px solid #b6e8cf", padding: "0.65rem 1rem", fontSize: "0.85rem", color: "#1a7f4b", marginBottom: "1rem" }}>
-            {savedNote}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="card" style={{ padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", gap: "1.5rem" }}>
-          <div>
-            <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#111", margin: 0, lineHeight: 1 }}>{companyJobCount}</p>
-            <p style={{ fontSize: "0.78rem", color: "#737373", marginTop: "0.2rem" }}>Aktiva annonser</p>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: "1rem 1.25rem", marginBottom: "0.75rem", background: companyVerificationStatus === "verified" ? "#e8faf0" : companyVerificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }}>
-          <strong style={{ color: companyVerificationStatus === "verified" ? "#1a7f4b" : companyVerificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
-            {companyVerificationStatus === "verified" ? "Verifierat företag" : companyVerificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Inväntar företagsverifiering"}
-          </strong>
-          <p style={{ margin: ".3rem 0 0", color: "#737373", fontSize: ".84rem", lineHeight: 1.5 }}>
-            {companyVerificationStatus === "verified" ? "Era aktiva annonser kan publiceras för ungdomar." : companyVerificationStatus === "rejected" ? companyVerificationReason || "Kontrollera uppgifterna nedan och spara igen." : "Ni kan skapa annonser under tiden. De publiceras efter godkänd verifiering."}
-          </p>
-        </div>
-
+    return <main className="mobile-shell mnw-company-profile">
+      <header className="company-profile-header"><div className="company-profile-cover" aria-hidden="true"/><div className="company-profile-identity"><span className="company-profile-avatar"><UiIcon name="briefcase" width="30" height="30" /></span><div><p>Företagsprofil</p><h1>{companyName || "Ert företag"}</h1><span>{companyCity || "Plats ej angiven"}</span></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("details")}>Redigera profil</button></div></header>
+      <nav className="company-profile-tabs" aria-label="Delar av företagsprofilen">{([{id:"overview",label:"Översikt"},{id:"details",label:"Företagsuppgifter"},{id:"cv",label:"Matchprofil"},{id:"settings",label:"Inställningar"}] as const).map((item) => <button key={item.id} type="button" aria-pressed={profileTab === item.id} onClick={() => setProfileTab(item.id)}>{item.label}</button>)}</nav>
+      {error && <p role="alert" className="company-profile-message is-error">{error}</p>}
+      {savedNote && <p role="status" className="company-profile-message">{savedNote}</p>}
+      {profileTab === "overview" && <div className="company-profile-overview"><section className="card company-profile-about"><p className="company-profile-eyebrow">Om er</p><h2>Det här är {companyName || "ert företag"}</h2><p>{companyDescription || "Beskriv er verksamhet så att kandidater kan lära känna er. Lägg till en beskrivning under Företagsuppgifter."}</p><button type="button" className="company-profile-text-action" onClick={() => setProfileTab("details")}>Redigera företagsuppgifter <UiIcon name="arrow" width="16" /></button></section><aside><section className="card company-profile-status"><UiIcon name={companyVerificationStatus === "verified" ? "check" : "info"} width="24" /><h2>{companyVerificationStatus === "verified" ? "Verifierat företag" : companyVerificationStatus === "rejected" ? "Komplettera verifieringen" : "Verifiering pågår"}</h2><p>{companyVerificationStatus === "verified" ? "Era aktiva annonser kan publiceras för ungdomar." : companyVerificationStatus === "rejected" ? companyVerificationReason || "Kontrollera företagsuppgifterna och spara igen." : "Ni kan skapa annonser under tiden. De publiceras efter godkänd verifiering."}</p></section><Link className="card company-profile-job-count" href="/company?view=annonser"><strong>{companyJobCount}</strong><span>Aktiva annonser</span><UiIcon name="arrow" width="19" /></Link></aside><section className="card company-profile-culture"><UiIcon name="discover" width="25" /><div><h2>Vad gör er till en bra arbetsplats?</h2><p>Er matchprofil samlar kultur, värderingar och det ni erbjuder. Den återanvänds som grund för varje jobb.</p></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("cv")}>Visa matchprofil</button></section></div>}
+      {profileTab === "details" && <section className="company-profile-details"><header><h2>Företagsuppgifter</h2><p>Uppgifterna hjälper kandidater att lära känna er och används för företagsverifieringen.</p></header>
         {/* Edit form */}
-        <div className="card" style={{ padding: "1.25rem", marginBottom: "0.75rem" }}>
+        <div className="card company-profile-form">
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
 
           <label style={labelStyle}>Företagsnamn</label>
@@ -470,34 +438,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           </button>
         </div>
 
-        <CompanyMatchProfileForm userId={user.id} />
-
-        {/* Quick link to job management */}
-        <button
-          type="button"
-          className="secondary-btn"
-          style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", marginBottom: "0.75rem", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-          onClick={() => router.push("/company")}
-        >
-          <span>Annonser &amp; kandidater</span>
-          <span style={{ color: "#a3a3a3" }}>→</span>
-        </button>
-
-        {accountSecurityCard}
-
-        {/* Logout */}
-        <button
-          type="button"
-          className="secondary-btn"
-          style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", color: "#c0392b", borderColor: "#ffd6d3" }}
-          disabled={loggingOut}
-          onClick={() => void handleLogout()}
-        >
-          {loggingOut ? "Loggar ut..." : "Logga ut"}
-        </button>
-        <button type="button" className="secondary-btn" style={{ width: "100%", padding: "0.875rem", marginTop: "0.75rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
-      </main>
-    );
+      </section>}
+      {profileTab === "cv" && <CompanyMatchProfileForm userId={user.id} />}
+      {profileTab === "settings" && <div className="company-profile-settings"><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><Link href="/privacy">Integritet och hur AI används <UiIcon name="arrow" width="16" /></Link></section>{accountSecurityCard}<section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button type="button" className="company-profile-delete" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></section></div>}
+    </main>;
   }
 
   if (profile?.role === "private") {

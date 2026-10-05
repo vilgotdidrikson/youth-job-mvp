@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
+import "./company-onboarding-design.css";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -170,6 +173,8 @@ export default function CompanyOnboardingPage() {
       key={label}
       type="button"
       onClick={onClick}
+      className="company-onboarding-chip"
+      aria-pressed={selected}
       style={{
         padding: "0.35rem 0.75rem",
         borderRadius: 999,
@@ -208,9 +213,11 @@ export default function CompanyOnboardingPage() {
       <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      <header className="company-onboarding-brand"><Link href="/">MatchnWork</Link><span>För företag</span></header>
+      {step === "profil" && <aside className="company-onboarding-intro"><span className="company-onboarding-mark"><UiIcon name="briefcase" width="29" height="29" /></span><p>Er nästa kollega börjar här</p><h2>Berätta lite om ert företag.</h2><span>Fyra korta frågor gör ert konto redo. Sedan kan ni skapa en annons i lugn och ro.</span></aside>}
       {/* ── STEP 1: Company profile ── */}
       {step === "profil" && (
-        <form onSubmit={(e) => {
+        <form className="company-onboarding-form" onSubmit={(e) => {
           e.preventDefault();
           if (profileQuestion < 3) {
             if (profileQuestion === 0 && !companyName.trim()) { setError("Ange företagets namn."); return; }
@@ -223,11 +230,11 @@ export default function CompanyOnboardingPage() {
           void handleSaveProfile(e);
         }}>
           <div style={{ marginBottom: "1.75rem", paddingTop: "0.5rem" }}>
-            <h1 style={{ fontSize: "1.9rem", fontWeight: 800, letterSpacing: "-0.04em", color: "#111", margin: 0 }}>
+            <h1 style={{ fontSize: "1.9rem", fontWeight: 500, letterSpacing: "-0.04em", color: "#111", margin: 0 }}>
               {profileQuestions[profileQuestion]}
             </h1>
             <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 4</p>
-            <div style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
+            <div className="company-onboarding-progress" style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
               <div style={{ width: `${((profileQuestion + 1) / 4) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
             </div>
           </div>
@@ -302,9 +309,9 @@ export default function CompanyOnboardingPage() {
 
       {/* ── STEP 2: Choice ── */}
       {step === "val" && (
-        <div style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <div className="company-onboarding-complete" style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
-          <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat! 🎉</h1>
+          <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Er nästa rekrytering börjar nu.</h1>
           <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
           <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
           <button type="button" className="cta-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>

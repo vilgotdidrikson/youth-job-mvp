@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import "./company-design.css";
+import { UiIcon } from "@/components/ui-icon";
 import { CandidateAssessmentPanel } from "@/components/candidate-assessment-panel";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { JobMatchProfileEditor } from "@/components/job-match-profile-editor";
@@ -99,6 +101,7 @@ function CompanyPageContent() {
   const [candidateActionKey, setCandidateActionKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
+  const [candidateSearch, setCandidateSearch] = useState("");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [candidateCv, setCandidateCv] = useState<CandidateCv | null>(null);
@@ -539,7 +542,7 @@ function CompanyPageContent() {
   const selectedCandidate = candidateFeed.find((candidate) => `${candidate.job.id}:${candidate.youthUserId}` === selectedCandidateId) ?? candidateFeed[0] ?? null;
 
   return (
-    <main className="mobile-shell">
+    <main className="mobile-shell mnw-company-workspace">
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
@@ -583,32 +586,10 @@ function CompanyPageContent() {
         </div>
       )}
 
+      {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
-      {(tab === "annonser" || tab === "skapa") && <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1rem" }}>
-        {(["skapa", "annonser"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => { setTab(t); setError(""); }}
-            style={{
-              flex: 1,
-              padding: "0.6rem 0.25rem",
-              borderRadius: 10,
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              border: "1.5px solid",
-              borderColor: tab === t ? "#111111" : "#e8e8e8",
-              background: tab === t ? "#111111" : "#ffffff",
-              color: tab === t ? "#ffffff" : "#737373",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            {t === "skapa"
-              ? "Ny annons"
-              : `Mina annonser${jobs.length > 0 ? ` (${jobs.length})` : ""}`}
-          </button>
-        ))}
+      {(tab === "annonser" || tab === "skapa") && <div className="company-workspace-tabs">
+        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { setTab(item); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
       {error && (
@@ -723,17 +704,17 @@ function CompanyPageContent() {
             <div className="card company-applicants-empty"><h2>Inga ansökningar ännu</h2><p>När någon söker en av era annonser visas deras profil här.</p></div>
           ) : (
             <div className="company-applicants-layout">
-              <div className="company-applicant-list">
-                {candidateFeed.map((candidate) => {
+              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} placeholder="Namn eller jobb…" /></label><div className="company-applicant-list">
+                {candidateFeed.filter((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))).map((candidate) => {
                   const profile = candidate.profile;
                   const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;
-                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
+                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} aria-pressed={isSelected} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
                     <span className="company-applicant-avatar">{(profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</span>
                     <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small></span>
                     <span aria-hidden="true">›</span>
                   </button>;
                 })}
-              </div>
+              </div>{candidateSearch.trim() && !candidateFeed.some((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))) && <p className="company-search-empty">Inga ansökningar matchar din sökning.</p>}</div>
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
@@ -912,7 +893,7 @@ function CompanyPageContent() {
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <div className="company-jobs-grid">
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 const status = job.status ?? (job.is_active ? "active" : "paused");
@@ -920,8 +901,8 @@ function CompanyPageContent() {
                 const awaitingVerification = job.publication_status === "pending_verification";
                 return (
                   <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
-                    <Link href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
-                    <p style={{ fontWeight: 700, fontSize: "1rem", color: "#111", marginBottom: "0.25rem" }}>{job.title}</p>
+                    <Link className="company-job-summary" href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                    <div className="company-job-heading"><span className="company-job-icon"><UiIcon name="briefcase" width="23" /></span><h2>{job.title}</h2></div>
                     <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[[job.address, job.postal_code, job.city].filter(Boolean).join(", "), job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>

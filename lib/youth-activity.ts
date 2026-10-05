@@ -3,7 +3,7 @@
 import { getSupabaseClient } from "@/lib/supabase";
 
 export type ActivityStatus = "draft" | "needs_completion" | "submitted" | "unavailable" | "matched" | "in_contact" | "interview" | "hired" | "rejected" | "cancelled";
-export interface YouthActivity { jobId: string; title: string; company: string; createdAt: string; status: ActivityStatus }
+export interface YouthActivity { jobId: string; title: string; company: string; createdAt: string; status: ActivityStatus; pendingQuestions?: number }
 type Row = { job_id: string; created_at: string; status?: string; job_title?: string; company_name?: string; jobs?: { title: string; company_name: string } | { title: string; company_name: string }[] | null };
 const matchStatuses: ActivityStatus[] = ["matched", "in_contact", "interview", "hired", "rejected", "cancelled"];
 
@@ -27,5 +27,11 @@ export async function getYouthActivity(userId: string): Promise<YouthActivity[]>
       byJob.set(row.job_id, { jobId: row.job_id, title: row.job_title || job?.title || "Jobbannons", company: row.company_name || job?.company_name || "Arbetsgivare", createdAt: row.created_at, status });
     }
   });
+  const { data: followups, error: followupError } = await client.from("application_followups").select("job_id").eq("youth_user_id", userId).eq("status", "pending");
+  if (followupError) throw new Error("Kunde inte läsa dina kompletteringsfrågor.");
+  for (const question of followups ?? []) {
+    const item = byJob.get(question.job_id);
+    if (item) item.pendingQuestions = (item.pendingQuestions ?? 0) + 1;
+  }
   return [...byJob.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

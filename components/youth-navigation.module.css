@@ -13,3 +13,11 @@
   .account { display: grid; flex-shrink: 0; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: #4c303b; color: white; }
 }
 @media (prefers-reduced-motion: reduce) { .item { transition: none; } }
+
+@media (min-width:721px) and (max-width:1000px) {
+  .nav { gap:12px;padding-inline:20px; }
+  .brand { font-size:1.22rem; }
+  .item { padding:10px 9px;font-size:.77rem;gap:6px; }
+  .item svg { width:18px;height:18px; }
+  .account { display:none; }
+}

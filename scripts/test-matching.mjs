@@ -5,13 +5,14 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 const tmp=mkdtempSync(resolve('.matching-tests-'));
 try {
- for(const name of ['application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria']) {
+ for(const name of ['application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
   let code=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   code=code.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
   writeFileSync(`${tmp}/${name}.mjs`,code);
  }
  const load=name=>import(pathToFileURL(`${tmp}/${name}.mjs`));
  const {assessCandidate,matchingCriteria,candidateSource}=await load('candidate-assessment');
+ const {missingApplicationCriteria}=await load('application-followup-rules');
  const {verifiedApplicationAnswers}=await load('application-evidence');
  const {jobMatchProfilePayload}=await load('job-match-criteria');
  const base={jobId:'job',roleSummary:'Service',mustHaves:['B-körkort',' B-körkort '],trainableRequirements:[],topTraits:[],candidateQuestions:[]};
@@ -30,6 +31,12 @@ try {
  assert.equal(assessCandidate(matchingCriteria([{label:'React',required:true}]),[{id:'c0',status:'fulfilled',evidence:'Påhittad erfarenhet'}],'Annan text').score,null);
  assert.deepEqual(verifiedApplicationAnswers([{id:'q1',evidence:'Saknas i källan'}],[{id:'q1'}],'Källtext'),{});
  assert.deepEqual(verifiedApplicationAnswers([{id:'q2',evidence:'Jag har B-körkort'}],[{id:'q1'}],'Jag har B-körkort'),{});
+ const supplementSource=candidateSource({followup_answers:[{question:'Can you work weekends?',answer:'Jag kan arbeta helger.'}]});
+ assert.equal(assessCandidate(criteria,[],supplementSource).criteria[1].status,'fulfilled');
+ assert.ok(!supplementSource.includes('Can you work weekends?'));
+ const eligible=assessCandidate(matchingCriteria([{label:'React',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'},{label:'Nationalitet'},{label:'Körkort'}]),[], '');
+ assert.deepEqual(missingApplicationCriteria(eligible),['React','Körkort']);
+ assert.deepEqual(missingApplicationCriteria(eligible,['React']),['Körkort']);
  const uid='test-user';
  for(const url of ['other/cv.pdf','test-user/../other/cv.pdf','https://evil.test/cv.pdf','test-user/cv.docx']) assert.equal(uploadedCvPath([{type:'cv',url}],uid),null);
  assert.equal(uploadedCvPath([{type:'other',url:'test-user/not-cv.pdf'},{type:'cv',url:'test-user/cv.pdf'}],uid),'test-user/cv.pdf');
