@@ -76,3 +76,10 @@ Checks before publishing: TypeScript, focused ESLint and the production build pa
 - Account-created confirmation and the older onboarding CV method choices now follow the rose/plum direction with line icons and accessible PDF selection. Onboarding camera/profile-crop dialogs use native modal focus containment and Escape handling. The voice action uses the shared accessible primary color. Clarified PDF copy so it does not promise that no later application questions can arise.
 - Centered the single pricing card and retained the compact youth/company switch on smaller screens. Public desktop views of home, login, privacy and pricing were reviewed on deployed dev; this does not establish authenticated or real mobile visual validation.
 - Latest TypeScript, focused quiet ESLint, production build and transactional DEV checks pass. Master and production remain untouched; the eighth night-session migration is DEV-only and recorded with DEV's applied timestamp.
+
+## Final refresh and limit checks
+
+- Youth applications and company candidate supplementation refresh their published questions/answers when a visible page regains focus. The refresh reads authorized database rows only, preserves local draft fields and does not run AI or poll hidden pages. Concurrent focus/visibility events share one read; a late read cannot overwrite a newer explicit publish/analysis. A regression test covers contention, temporary read failure, hidden pages and cleanup on unmount.
+- DEV transactional tests additionally pass stale criterion-version rejection, normalized-label deduplication, the three-per-request/six-per-application limits and database rejection of trainable/sensitive criteria. The entire transaction rolls back its synthetic accounts and data.
+- Disposable accounts, the test announcement, generated questions and notifications from live API verification were removed from DEV after the checks. No production data was used.
+- The centered pricing layout and youth/company switch were confirmed on the deployed dev desktop view. Full authenticated/mobile visual review remains outstanding.

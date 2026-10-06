@@ -123,6 +123,45 @@ do $$ declare q uuid; result jsonb; begin
  result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta på lördagar.'),'{}');
  if (result->>'updated')::int<>1 then raise exception 'Published answer could not be corrected'; end if;
 end $$;
+-- A changed approved profile cannot create stale questions or exceed the lifetime cap.
+reset role;
+update public.job_match_profiles set weighted_criteria=weighted_criteria || '[
+ {"label":"  erfarenhet  av kassa","category":"merit"},
+ {"label":"Truckkort","category":"must_have"},
+ {"label":"Erfarenhet av plock","category":"merit"},
+ {"label":"Kan börja omgående","category":"must_have"},
+ {"label":"Erfarenhet av lager","category":"merit"},
+ {"label":"Kunskap om orderhantering","category":"merit"},
+ {"label":"Kunskap om Excel","category":"trainable"},
+ {"label":"Hälsa","category":"must_have"}
+]'::jsonb where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
+do $$ declare result jsonb; version integer; begin
+ version:=(public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'profile_version')::integer;
+ if version is null then raise exception 'Own criterion context unavailable'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('e',64));
+ if result->>'reason'<>'criteria_changed' then raise exception 'Stale criterion version accepted'; end if;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Truckkort","Erfarenhet av plock","Kan börja omgående","Erfarenhet av lager"]',repeat('e',64));
+  raise exception 'More than three questions accepted';
+ exception when invalid_parameter_value then null; end;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Kunskap om Excel"]',repeat('e',64));
+  raise exception 'Trainable criterion accepted';
+ exception when invalid_parameter_value then null; end;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Hälsa"]',repeat('e',64));
+  raise exception 'Sensitive criterion accepted';
+ exception when invalid_parameter_value then null; end;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["  erfarenhet  av kassa"]',repeat('e',64));
+ if (result->>'queued')::int<>0 then raise exception 'Normalized duplicate queued'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Truckkort","Erfarenhet av plock","Kan börja omgående"]',repeat('e',64));
+ if (result->>'queued')::int<>3 then raise exception 'Eligible batch not queued'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Erfarenhet av lager","Kunskap om orderhantering"]',repeat('f',64));
+ if (result->>'queued')::int<>1 or (select count(*) from public.application_followups)<>6 then raise exception 'Lifetime cap exceeded'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Kunskap om orderhantering"]',repeat('f',64));
+ if (result->>'queued')::int<>0 then raise exception 'Lifetime cap allowed a seventh question'; end if;
+end $$;
 insert into public.user_blocks(blocker_user_id,blocked_user_id) values('a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000003');
 select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
 do $$ begin
@@ -135,5 +174,5 @@ do $$ begin
  begin perform * from public.application_followups; raise exception 'Anonymous read answers'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-select 'PASS: rejected/hired application question guards, reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
+select 'PASS: version and question caps, sensitive/trainable exclusion, rejected/hired application question guards, reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
 rollback;

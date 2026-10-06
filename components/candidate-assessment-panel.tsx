@@ -6,6 +6,7 @@ import type { CandidateAssessment } from "@/lib/candidate-assessment";
 import { getApplicationFollowups, type ApplicationFollowup } from "@/lib/application-completions";
 import type { ApplicationCompletion } from "@/lib/application-completions";
 import { getSupabaseClient } from "@/lib/supabase";
+import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 
 const CONFIDENCE = { low: "Begränsat underlag", medium: "Delvis underlag", high: "Gott underlag" };
 const STATUS = { fulfilled: "Stöds av underlaget", unfulfilled: "Motsägs av underlaget", unknown: "Uppgift saknas" };
@@ -25,15 +26,23 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
     if (error) setError("Kunde inte läsa tidigare bedömningar."); else setHistory(data ?? []);
   };
   const request = useRef<AbortController | null>(null);
+  const followupRevision = useRef(0);
   useEffect(() => {
     let active = true;
     void getApplicationFollowups(jobId).then((items) => {
       if (active) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
     }).catch(() => {});
-    return () => { active = false; request.current?.abort(); };
+    const unsubscribe = subscribeVisibleRefresh(async () => {
+      if (request.current && !request.current.signal.aborted) return;
+      const revision = followupRevision.current;
+      const items = await getApplicationFollowups(jobId);
+      if (active && revision === followupRevision.current) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
+    });
+    return () => { active = false; unsubscribe(); request.current?.abort(); };
   }, [jobId, youthUserId]);
   const analyze = async () => {
     if (busy) return;
+    followupRevision.current++;
     const controller = new AbortController(); request.current = controller;
     setBusy(true); setError("");
     try {
@@ -46,9 +55,9 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
       setTemporary(data.temporary === true);
       setFollowupMessage(data.followups?.queued > 0 ? `${data.followups.queued} individuella frågor har skickats till kandidaten. Svaren kompletterar den befintliga ansökan.` : "");
       const questions = await getApplicationFollowups(jobId);
-      if (!controller.signal.aborted) setFollowups(questions.filter((item) => item.youth_user_id === youthUserId));
+      if (!controller.signal.aborted) { followupRevision.current++; setFollowups(questions.filter((item) => item.youth_user_id === youthUserId)); }
     } catch (reason) { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Kunde inte bedöma underlaget."); }
-    finally { if (!controller.signal.aborted) setBusy(false); }
+    finally { if (!controller.signal.aborted) { setBusy(false); request.current = null; } }
   };
   return <section className="candidate-assessment-panel" aria-label="Matchningsunderlag">
     <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy} onClick={() => void analyze()}>{busy ? "Läser underlaget…" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>

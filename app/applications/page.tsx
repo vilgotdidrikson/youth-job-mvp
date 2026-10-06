@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup } from "@/lib/application-completions";
@@ -64,6 +65,17 @@ export default function ApplicationsPage() {
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const userId = user?.id;
+  const savedRevision = useRef(0);
+  useEffect(() => {
+    if (!userId || profile?.role !== "youth" || loading) return;
+    let active = true;
+    const unsubscribe = subscribeVisibleRefresh(async () => {
+      const revision = savedRevision.current;
+      const questions = await getApplicationFollowups();
+      if (active && revision === savedRevision.current) setFollowups(questions);
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [userId, profile?.role, loading]);
   useEffect(() => {
     if (!userId || profile?.role !== "youth") return;
     let active = true;
@@ -92,7 +104,8 @@ export default function ApplicationsPage() {
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : visible.length ? visible.map((item) => <ApplicationCard key={item.job_id} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(saved) => { setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Din befintliga ansökan är kompletterad. Företaget kan nu läsa dina svar."); }} onSaved={(saved) => {
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : visible.length ? visible.map((item) => <ApplicationCard key={item.job_id} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(saved) => { savedRevision.current++; setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Din befintliga ansökan är kompletterad. Företaget kan nu läsa dina svar."); }} onSaved={(saved) => {
+        savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
         if (saved.status === "submitted") { setChecking(true); void requestApplicationFollowups(saved.job_id).then(() => getApplicationFollowups()).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
       }} />) : <section className="applications-empty"><UiIcon name={tab === "questions" ? "check" : "briefcase"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
