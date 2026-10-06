@@ -299,3 +299,8 @@
 .mnw-product[data-onboarding="true"] .onboarding-question-bubble {max-width:100%!important;}
 .mnw-product .company-match-fields > * {min-width:0;}
 @media(max-width:480px) {.mnw-onboarding-date-fields {grid-template-columns:minmax(0,1fr)!important;}}
+
+/* One form surface, with readable section headings and associated labels. */
+.mnw-product .job-builder-onboarding .job-builder-form {padding:0;border:0;background:transparent;box-shadow:none;}
+.mnw-product .job-builder-onboarding .job-builder-section h2 {text-transform:none;letter-spacing:-.02em;font-size:1.1rem;font-weight:500;color:#4c303b;}
+.mnw-product .job-builder-onboarding :is(.job-builder-title-field,.job-builder-fields label,.job-builder-label) {text-transform:none;letter-spacing:0;font-weight:500;}

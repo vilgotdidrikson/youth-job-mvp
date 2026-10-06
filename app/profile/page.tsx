@@ -389,8 +389,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
         <div className="card company-profile-form">
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
 
-          <label style={labelStyle}>Företagsnamn</label>
-          <input
+          <label htmlFor="company-profile-name" style={labelStyle}>Företagsnamn</label>
+          <input id="company-profile-name"
             className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
             style={{ marginBottom: "0.85rem" }}
             placeholder="T.ex. Bergströms Bageri AB"
@@ -398,8 +398,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyName(e.target.value); setSavedNote(""); }}
           />
 
-          <label style={labelStyle}>Stad</label>
-          <input
+          <label htmlFor="company-profile-city" style={labelStyle}>Stad</label>
+          <input id="company-profile-city"
             className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
             style={{ marginBottom: "0.85rem" }}
             placeholder="T.ex. Stockholm"
@@ -407,8 +407,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
           />
 
-          <label style={labelStyle}>Organisationsnummer</label>
-          <input
+          <label htmlFor="company-profile-organization" style={labelStyle}>Organisationsnummer</label>
+          <input id="company-profile-organization"
             className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
             style={{ marginBottom: "0.85rem" }}
             placeholder="XXXXXX-XXXX"
@@ -417,8 +417,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyOrganizationNumber(e.target.value.replace(/[^0-9-]/g, "")); setSavedNote(""); }}
           />
 
-          <label style={labelStyle}>Beskrivning</label>
-          <textarea
+          <label htmlFor="company-profile-description" style={labelStyle}>Beskrivning</label>
+          <textarea id="company-profile-description"
             rows={4}
             className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
             style={{ marginBottom: "1rem" }}

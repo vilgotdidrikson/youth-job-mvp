@@ -234,7 +234,7 @@ export default function CompanyOnboardingPage() {
               {profileQuestions[profileQuestion]}
             </h1>
             <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 4</p>
-            <div className="company-onboarding-progress" style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
+            <div className="company-onboarding-progress" role="progressbar" aria-label="Företagets onboarding" aria-valuemin={0} aria-valuemax={4} aria-valuenow={profileQuestion + 1} style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
               <div style={{ width: `${((profileQuestion + 1) / 4) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function CompanyOnboardingPage() {
           )}
 
           <div className="card profile-question-card" style={{ padding: "1.25rem" }}>
-            {profileQuestion === 0 && <><label style={labelStyle}>Företagsnamn *</label><input
+            {profileQuestion === 0 && <><label htmlFor="company-onboarding-companyName" style={labelStyle}>Företagsnamn *</label><input id="company-onboarding-companyName"
               className="h-14 w-full rounded-xl border border-[#e8e8e8] px-4 text-base"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. Bergströms Bageri AB"
@@ -257,7 +257,7 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /></>}
 
-            {profileQuestion === 1 && <><label style={labelStyle}>Bransch</label><input
+            {profileQuestion === 1 && <><label htmlFor="company-onboarding-industry" style={labelStyle}>Bransch</label><input id="company-onboarding-industry"
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. IT, Bygg eller Restaurang"
@@ -266,7 +266,7 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
 
-            {profileQuestion === 2 && <><label style={labelStyle}>Organisationsnummer *</label><input
+            {profileQuestion === 2 && <><label htmlFor="company-onboarding-organizationNumber" style={labelStyle}>Organisationsnummer *</label><input id="company-onboarding-organizationNumber"
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="XXXXXX-XXXX"
@@ -277,7 +277,7 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /><p style={{ margin: 0, color: "#737373", fontSize: ".82rem", lineHeight: 1.5 }}>Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras.</p></>}
 
-            {profileQuestion === 3 && <><label style={labelStyle}>Administratör *</label><input
+            {profileQuestion === 3 && <><label htmlFor="company-onboarding-administrator" style={labelStyle}>Administratör *</label><input id="company-onboarding-administrator"
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="För- och efternamn"
