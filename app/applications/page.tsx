@@ -5,11 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
-import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup } from "@/lib/application-completions";
+import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup, type FollowupAnalysisResult } from "@/lib/application-completions";
 
 import { ApplicationFollowupCard } from "@/components/application-followup-card";
 import { UiIcon } from "@/components/ui-icon";
 import "./applications-design.css";
+
+function analysisNotice(results: FollowupAnalysisResult[]): string {
+  if (results.some((result) => result.temporary)) return "Den automatiska kontrollen kunde inte slutföras just nu. Dina skickade ansökningar finns kvar. Återvänd hit senare för ett nytt försök.";
+  if (results.some((result) => result.processing)) return "Kontrollen pågår fortfarande. Återvänd hit om en stund för att läsa eventuella kompletteringsfrågor.";
+  return "";
+}
 
 function ApplicationCard({ item, onSaved, followups, onFollowupsSaved }: { item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
   const [answers, setAnswers] = useState(item.answers);
@@ -62,6 +68,7 @@ export default function ApplicationsPage() {
   const [tab, setTab] = useState<"all" | "questions">("all");
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
+  const [checkNotice, setCheckNotice] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const userId = user?.id;
@@ -85,7 +92,7 @@ export default function ApplicationsPage() {
       setChecking(data.some((item) => item.status === "submitted"));
       // At most three recent applications per visit; cached source prevents repeated AI work.
       void Promise.all(data.filter((item) => item.status === "submitted").slice(0, 3).map((item) => requestApplicationFollowups(item.job_id)))
-        .then(() => getApplicationFollowups()).then((updated) => { if (active) setFollowups(updated); }).catch(() => {}).finally(() => { if (active) setChecking(false); });
+        .then((results) => { if (active) setCheckNotice(analysisNotice(results)); return getApplicationFollowups(); }).then((updated) => { if (active) setFollowups(updated); }).catch(() => {}).finally(() => { if (active) setChecking(false); });
     })
       .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Kunde inte hämta ansökningar."); })
       .finally(() => { if (active) setLoading(false); });
@@ -104,10 +111,11 @@ export default function ApplicationsPage() {
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
+      {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
       {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : visible.length ? visible.map((item) => <ApplicationCard key={item.job_id} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(saved) => { savedRevision.current++; setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Din befintliga ansökan är kompletterad. Företaget kan nu läsa dina svar."); }} onSaved={(saved) => {
         savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
-        if (saved.status === "submitted") { setChecking(true); void requestApplicationFollowups(saved.job_id).then(() => getApplicationFollowups()).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
+        if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
       }} />) : <section className="applications-empty"><UiIcon name={tab === "questions" ? "check" : "briefcase"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
     </section><aside className="applications-aside"><UiIcon name="info" width="24" /><h2>En ansökan, mer om dig</h2><p>Kompletteringsfrågorna utgår från just det här jobbets önskemål. Dina svar läggs till i ansökan du redan har skickat.</p><p>Du kan lämna en fråga obesvarad. Saknad information är aldrig ett automatiskt avslag.</p><Link href="/notifications">Till din aktivitet <UiIcon name="arrow" width="16" /></Link><Link href="/youth/cv">Se ditt CV <UiIcon name="arrow" width="16" /></Link></aside></div>
   </main>;

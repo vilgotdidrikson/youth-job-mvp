@@ -89,3 +89,5 @@ Checks before publishing: TypeScript, focused ESLint and the production build pa
 - Swipe gestures now track one primary pointer. Secondary touches cannot replace its start position or finish another finger's gesture; saving a bookmark and an in-flight decision temporarily prevent a new drag. Photos remain non-draggable and vertical touch scrolling retains its cancellation path.
 - The voice screen uses the shared microphone line icon with a readable plum-on-rose idle state and white-on-primary listening state. Legacy CV text editing uses the same font as the rest of the interface.
 - These final UI changes pass the production build and focused quiet ESLint. Physical mobile gesture, camera/microphone and all authenticated layout checks are still a manual review task; the build is not a substitute for those checks.
+
+- Youth application status now explicitly distinguishes a completed check from an unfinished/temporarily unavailable automatic check. A temporary provider failure does not turn a submitted application into a failed application, and the UI no longer silently treats every unavailable analysis as a completed check with no questions.
