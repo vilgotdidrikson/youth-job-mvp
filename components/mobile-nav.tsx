@@ -15,8 +15,8 @@ export function MobileNav() {
   const items: {href:string; label:string; icon:IconName; view?:string}[] = profile.role === "company" ? [
     {href:"/company?view=annonser", label:"Annonser", icon:"briefcase",view:"annonser"},
     {href:"/company?view=kandidater",label:"Kandidater",icon:"discover",view:"kandidater"},
-    {href:"/chats",label:"Chattar",icon:"chat"},
-    {href:"/notifications",label:"Aktivitet",icon:"activity"},
+    {href:"/chats",label:"Meddelanden",icon:"chat"},
+    {href:"/notifications",label:"Notiser",icon:"bell"},
     {href:"/profile",label:"Profil",icon:"profile"},
   ] : [{href:"/private",label:"Uppdrag",icon:"briefcase"},{href:"/chats",label:"Chattar",icon:"chat"},{href:"/notifications",label:"Aktivitet",icon:"activity"},{href:"/profile",label:"Profil",icon:"profile"}];
   return <nav className={styles.nav} aria-label="Huvudnavigation"><Link className={styles.brand} href={items[0].href}>MatchnWork</Link><div className={styles.links}>{items.map(item => {

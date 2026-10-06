@@ -29,6 +29,7 @@ function SwipePageContent() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
   const [employmentType, setEmploymentType] = useState("");
@@ -89,13 +90,14 @@ function SwipePageContent() {
   ), [category, city, employmentType, jobs]);
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
-    setError("");
+    setError("");setNotice("");
     try {
       if (!cvCompleted && decision === "interested") {
         await saveApplicationDraft(job.id);
         setDraftCount((count) => count + 1);
       } else if (cvCompleted) {
         await swipeJob(job.id, decision);
+        if(decision === "interested") {setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);window.dispatchEvent(new Event("mnw-navigation-refresh"));}
       }
       setJobs((current) => current.filter((item) => item.id !== job.id));
       if (!cvCompleted && user) {
@@ -125,7 +127,7 @@ function SwipePageContent() {
     else setEmploymentType(value);
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
     {showCvPrompt && <div role="dialog" aria-modal="true" style={{ position: "fixed", inset: 0, zIndex: 10, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.45)" }}><section className="card" style={{ maxWidth: 380, padding: "1.4rem" }}><p style={{ margin: 0, color: "var(--accent)", fontSize: ".78rem", fontWeight: 800 }}>DU HAR UTFORSKAT 10 JOBB</p><h2>Gör klart ditt CV</h2><p>{draftCount ? `${draftCount} sparade ansökningar skickas när företagen kan se ditt CV.` : "För att skicka ansökningar behöver företagen kunna se ditt CV."}</p><Link className="cta-btn" style={{ display: "block", textAlign: "center" }} href="/youth/cv">Skapa ditt CV</Link><button type="button" className="secondary-btn" style={{ width: "100%", marginTop: ".7rem" }} onClick={() => setShowCvPrompt(false)}>Fortsätt utforska</button></section></div>}
   </>;
 }

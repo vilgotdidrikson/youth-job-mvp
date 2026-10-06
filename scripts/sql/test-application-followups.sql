@@ -123,7 +123,7 @@ do $$ declare q uuid; result jsonb; begin
  result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta på lördagar.'),'{}');
  if (result->>'updated')::int<>1 then raise exception 'Published answer could not be corrected'; end if;
 end $$;
--- A changed approved profile cannot create stale questions or exceed the lifetime cap.
+-- A changed approved profile allows one new batch, not a cascade after answers.
 reset role;
 update public.job_match_profiles set weighted_criteria=weighted_criteria || '[
  {"label":"  erfarenhet  av kassa","category":"merit"},
@@ -156,9 +156,9 @@ do $$ declare result jsonb; version integer; begin
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["  erfarenhet  av kassa"]',repeat('e',64));
  if (result->>'queued')::int<>0 then raise exception 'Normalized duplicate queued'; end if;
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Truckkort","Erfarenhet av plock","Kan börja omgående"]',repeat('e',64));
- if (result->>'queued')::int<>3 then raise exception 'Eligible batch not queued'; end if;
+ if (result->>'queued')::int<>0 or result->>'reason'<>'batch_complete' then raise exception 'Completed version allowed another batch'; end if;
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Erfarenhet av lager","Kunskap om orderhantering"]',repeat('f',64));
- if (result->>'queued')::int<>1 or (select count(*) from public.application_followups)<>6 then raise exception 'Lifetime cap exceeded'; end if;
+ if (result->>'queued')::int<>0 or (select count(*) from public.application_followups)<>2 then raise exception 'Same-version cascade added questions'; end if;
  result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Kunskap om orderhantering"]',repeat('f',64));
  if (result->>'queued')::int<>0 then raise exception 'Lifetime cap allowed a seventh question'; end if;
 end $$;

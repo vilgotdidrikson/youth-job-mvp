@@ -123,3 +123,6 @@
 /* Pointer gestures own the card; photos never start a native image drag. */
 .jobImage, .imageShade, .imageFallback { pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .jobCard { user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.headerActions { display:flex;align-items:center;gap:8px;flex-shrink:0; }
+.sentNotice { display:flex;align-items:center;gap:8px;color:#226a54;font-size:.8rem;line-height:1.6;margin:0 0 14px; }
+.sentNotice svg { flex-shrink:0; }

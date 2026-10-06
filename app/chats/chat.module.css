@@ -92,3 +92,4 @@
 @media(max-width:720px) {.quickReplies {padding:10px 16px 0;gap:6px;}.quickReplies button {font-size:.73rem;}}
 
 @media(max-height:600px) and (min-width:721px) {.page {padding-top:108px;}.heading {margin-bottom:16px;}.workspace {height:calc(100dvh - 220px);min-height:260px;}.conversationHeader {padding:12px 20px;}.quickReplies {padding-top:8px;}.quickReplies button {min-height:32px;padding:5px 10px;}.composer {padding:10px 20px;}}
+.headingRow { display:flex;align-items:center;justify-content:space-between;gap:16px; }

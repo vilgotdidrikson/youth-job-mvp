@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
 import { ProductSurface } from "@/components/product-surface";
+import { NavigationIndicatorsProvider } from "@/hooks/use-navigation-indicators";
 import "./globals.css";
 import "./product-design.css";
 
@@ -45,10 +46,12 @@ export default function RootLayout({
         className="antialiased"
       >
         <SessionProvider>
+          <NavigationIndicatorsProvider>
           <ProductSurface>{children}</ProductSurface>
           <Suspense fallback={null}>
             <MobileNav />
           </Suspense>
+          </NavigationIndicatorsProvider>
         </SessionProvider>
       </body>
     </html>

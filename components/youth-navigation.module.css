@@ -3,10 +3,18 @@
 .links { display: flex; justify-content: space-around; max-width: 34rem; margin: auto; }
 .item { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: .35rem; min-height: 44px; color: var(--muted); text-decoration: none; font-size: .68rem; transition: color 180ms, background 180ms; }
 .item.active { color: #b84164; }
+.icon { position:relative;display:flex; }
+.dot { position:absolute;top:-3px;right:-4px;width:9px;height:9px;border:2px solid #fffafb;background:#b84164;border-radius:50%; }
+.notificationLink { position:relative;display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border:1px solid #f0d9e0;border-radius:14px;background:white;color:#b84164; }
+.notificationLink .dot { top:6px;right:6px; }
+.notificationLink:focus-visible { outline:3px solid #b84164;outline-offset:3px; }
+.desktopNotifications { display:none; }
 .nav a:focus-visible { outline: 3px solid #b84164; outline-offset: 4px; border-radius: 12px; }
 @media (min-width: 721px) {
   .nav { top: 0; bottom: auto; display: flex; align-items: center; gap: clamp(1rem, 3vw, 3rem); height: 88px; padding: 0 max(2rem, calc((100vw - 1180px) / 2)); border-top: 0; border-bottom: 1px solid #f0d9e0; background: rgb(255 255 255 / .96); }
   .brand { display: block; margin-right: auto; color: #b84164; font-size: 1.45rem; letter-spacing: -.055em; text-decoration: none; font-weight: 550; }
+  .desktopNotifications { display:grid; }
+  .headerNotifications { display:none; }
   .links { gap: .35rem; margin: 0; max-width: none; }
   .item { flex: initial; flex-direction: row; gap: .55rem; min-height: 48px; padding: .7rem 1rem; border-radius: 14px; font-size: .87rem; }
   .item:hover, .active { background: #fce9ef; }

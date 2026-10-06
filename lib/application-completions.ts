@@ -12,6 +12,7 @@ export interface ApplicationCompletion {
   profile_version: number;
   questions: ApplicationQuestion[];
   answers: Record<string, string>;
+  omitted_question_ids?: string[];
   status: "needs_completion" | "submitted" | "unavailable";
   analysis_source_hash?: string | null;
   created_at: string;
@@ -26,10 +27,14 @@ export async function submitApplicationAction(action: "prepare" | "answers" | "d
 }
 export async function prepareApplication(jobId: string): Promise<ApplicationCompletion> {
   const application = await submitApplicationAction("prepare", { jobId }) as ApplicationCompletion;
-  if (application.status !== "needs_completion") return application;
-  await analyzeApplications(jobId);
-  const { data: updated } = await getSupabaseClient().from("application_completions").select("*").eq("job_id", jobId).eq("youth_user_id", application.youth_user_id).maybeSingle();
-  return (updated ?? application) as ApplicationCompletion;
+  // Only older, explicitly unfinished applications need the legacy submit step.
+  // Neither PDF parsing nor AI belongs in the swipe request's critical path.
+  const sent = application.status === "needs_completion"
+    ? saveApplicationAnswers(jobId, application.answers, true)
+    : application;
+  const result = await sent;
+  if(result.status !== "submitted") throw new Error("Ansökan är inte skickad. Annonsen tar inte emot ansökningar just nu.");
+  return result;
 }
 
 export async function getApplicationCompletions(): Promise<ApplicationCompletion[]> {
@@ -71,6 +76,14 @@ export async function saveApplicationFollowups(jobId: string, answers: Record<st
   const { error } = await getSupabaseClient().rpc("save_my_application_followup_answers", { p_job_id: jobId, p_answers: answers, p_skip_ids: skipIds });
   if (error) throw new Error("Kunde inte skicka kompletteringen. Dina svar finns kvar här; försök igen.");
   return getApplicationFollowups(jobId);
+}
+export async function saveApplicationSupplement(jobId: string, answers: Record<string,string>, skipIds: string[], followupAnswers: Record<string,string>, followupSkipIds: string[]) {
+  const client = getSupabaseClient();
+  const { error } = await client.rpc("save_my_application_supplement", { p_job_id:jobId,p_answers:answers,p_skip_ids:skipIds,p_followup_answers:followupAnswers,p_followup_skip_ids:followupSkipIds });
+  if (error) throw new Error("Kunde inte skicka kompletteringen. Dina svar finns kvar; försök igen.");
+  const [{data:application,error:readError},followups] = await Promise.all([client.from("application_completions").select("*").eq("job_id",jobId).single(),getApplicationFollowups(jobId)]);
+  if (readError) throw new Error("Kompletteringen är skickad, men kunde inte hämtas igen. Dina skrivna svar finns kvar här.");
+  return { application:application as ApplicationCompletion, followups };
 }
 export interface FollowupAnalysisResult { queued?: number; cached?: boolean; processing?: boolean; temporary?: boolean; unavailable?: boolean; stale?: boolean }
 const followupRequests = new Map<string, Promise<FollowupAnalysisResult>>();

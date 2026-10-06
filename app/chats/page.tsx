@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {useSearchParams} from "next/navigation";
+import {NotificationLink} from "@/components/notification-link";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
@@ -22,7 +24,7 @@ function mergeMessages(a: ChatMessage[], b: ChatMessage[]) {
   return [...new Map([...a,...b].map(item => [item.id,item])).values()].sort((x,y) => String(x.created_at ?? "").localeCompare(String(y.created_at ?? "")));
 }
 
-export default function ChatsPage() {
+function ChatsPageContent() {
   const { user, profile, status, error: sessionError } = useRequireAuth();
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [conversations, setConversations] = useState<ConvDisplay[]>([]), [selectedId, setSelectedId] = useState<string | null>(null);
@@ -34,15 +36,21 @@ export default function ChatsPage() {
   const [hiring, setHiring] = useState(false), [blocking, setBlocking] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
+  const query=useSearchParams(), requestedJob=query.get("job"), requestedConversation=query.get("conversation");
+  const openedRequest=useRef("");
   const loadConversations = useCallback(async (showLoading = true) => {
     if (showLoading) setListState("loading");
     try {
       const [convs, contacts, matches] = await Promise.all([getMyConversations(), getMyConversationContacts(), getMyMatches()]);
       const contactMap = new Map(contacts.map(item => [item.conversation_id,item])), matchMap = new Map(matches.map(item => [item.id,item]));
-      setConversations(convs.map(conv => ({conv, otherName:contactMap.get(conv.id)?.other_name || "Kontakt", jobTitle:contactMap.get(conv.id)?.job_title || undefined, status:matchMap.get(conv.match_id ?? "")?.status || "matched", matchId:conv.match_id || undefined})));
+      const display=convs.map(conv => ({conv, otherName:contactMap.get(conv.id)?.other_name || "Kontakt", jobTitle:contactMap.get(conv.id)?.job_title || undefined, status:matchMap.get(conv.match_id ?? "")?.status || "matched", matchId:conv.match_id || undefined}));
+      setConversations(display);
+      const requestKey=requestedConversation || requestedJob || "";
+      const target=display.find(item=>requestedConversation ? item.conv.id===requestedConversation : requestedJob && item.conv.job_id===requestedJob);
+      if(target && openedRequest.current!==requestKey) {openedRequest.current=requestKey;selectedRef.current=target.conv.id;setSelectedId(target.conv.id);setLoadedId("");setMessageError("");setMessageNotice("");}
       setListState("ready"); setError("");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte läsa dina chattar."); if(showLoading) setListState("error"); }
-  }, []);
+  }, [requestedJob,requestedConversation]);
   useEffect(() => { if(user && !cvLoading && (profile?.role !== "youth" || cvCompleted)) void loadConversations(); },[user,profile?.role,cvLoading,cvCompleted,loadConversations]);
   useEffect(() => {
     if(!selectedId) return;
@@ -100,7 +108,7 @@ export default function ChatsPage() {
   const currentMessages = messages.id === selectedId ? messages.items : [];
   const quickReplies = profile?.role === "company" ? ["Hej! Vad roligt att vi har matchat.", "När skulle du kunna komma på ett samtal?"] : ["Det passar bra!", "Kan vi hitta en annan tid?"];
   return <main className={`${styles.page} ${selected ? styles.hasConversation : ""}`}>
-    <header className={styles.heading}><Link href="/notifications" className={styles.back}>Aktivitet <UiIcon name="arrow"/></Link><h1>Dina chattar</h1><p>En matchning är början. Ta nästa steg tillsammans.</p></header>
+    <header className={styles.heading}><Link href={profile?.role==="youth" ? "/applications" : "/company?view=kandidater"} className={styles.back}>{profile?.role==="youth" ? "Ansökningar" : "Kandidater"} <UiIcon name="arrow"/></Link><div className={styles.headingRow}><h1>Meddelanden</h1><NotificationLink/></div><p>En matchning är början. Ta nästa steg tillsammans.</p></header>
     <div className={styles.workspace}><aside className={styles.inbox} aria-label="Inkorg"><div className={styles.inboxHeader}><h2>Meddelanden <span>{conversations.length}</span></h2><label className={styles.search}><span className="sr-only">Sök bland chattar</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Sök namn eller jobb"/></label></div>
       {listState === "loading" ? <p className={styles.listNote} role="status">Hämtar matchningar…</p> : listState === "error" ? <div className={styles.listNote}><p role="alert">{error}</p><button className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div> : visible.length === 0 ? <div className={styles.listNote}><UiIcon name="chat"/><h3>{search ? "Ingen chatt hittades" : "Dina matchningar landar här"}</h3><p>{search ? "Prova ett annat namn eller jobb." : "När båda visar intresse kan ni börja prata."}</p>{!search && profile?.role === "youth" && <Link href="/swipe" className={styles.secondary}>Upptäck jobb</Link>}</div> : <div className={styles.contacts}>{visible.map(item => <button key={item.conv.id} className={`${styles.contact} ${selectedId === item.conv.id ? styles.contactActive : ""}`} type="button" aria-pressed={selectedId === item.conv.id} onClick={() => select(item.conv.id)}><span className={styles.avatar}>{initials(item.otherName)}</span><span className={styles.contactText}><strong>{item.otherName}</strong><span>{item.jobTitle || "Din matchning"}</span><small>{statusLabels[item.status] || item.status}</small></span><UiIcon name="arrow" width="16"/></button>)}</div>}
     </aside><section className={styles.conversation} aria-label={selected ? `Samtal med ${selected.otherName}` : "Konversation"}>{selected ? <>
@@ -116,3 +124,5 @@ export default function ChatsPage() {
     </> : <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Ett samtal kan bli nästa steg</h2><p>Välj en matchning i inkorgen för att läsa eller skriva ett meddelande.</p></div>}</section></div>
   </main>;
 }
+
+export default function ChatsPage() {return <Suspense fallback={<main className={styles.page}><p role="status">Hämtar meddelanden…</p></main>}><ChatsPageContent/></Suspense>;}
