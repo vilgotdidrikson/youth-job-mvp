@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -30,6 +30,14 @@ const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Frisk
 const REQUIREMENT_TIPS = ["Kan arbeta helger", "Tidigare erfarenhet", "B-körkort", "Svenska", "Kan börja omgående"];
 const TRAIT_TIPS = ["Ansvarstagande", "Punktlig", "Social", "Noggrann", "Serviceinriktad", "Nyfiken", "Samarbetsvillig"];
 const JOB_DRAFT_STORAGE_KEY = "employo-job-draft";
+
+function formatSalary(from: string, to: string, type: string) {
+  const unit = type === "timlön" ? "tim" : type === "månadslön" ? "mån" : "period";
+  if (from && to) return `${from}–${to} kr/${unit}`;
+  if (from) return `Från ${from} kr/${unit}`;
+  if (to) return `Upp till ${to} kr/${unit}`;
+  return "";
+}
 
 type CandidateCv =
   | { kind: "pdf"; url: string; expiresAt: string }
@@ -198,9 +206,13 @@ function CompanyPageContent() {
     if (requestedView === "kandidater" || requestedView === "skapa" || requestedView === "annonser") {
       setTab(requestedView);
     } else if (requestedView === "swipe") {
-      setTab(companyProfile?.verification_status === "verified" ? "kandidater" : "skapa");
+      if (companyProfile) {
+        const view = companyProfile.verification_status === "verified" ? "kandidater" : "skapa";
+        setTab(view);
+        router.replace(`/company?view=${view}`, { scroll: false });
+      }
     }
-  }, [companyProfile?.verification_status, searchParams]);
+  }, [companyProfile, router, searchParams]);
 
   useEffect(() => {
     if (!user || profile?.role !== "company") return;
@@ -360,7 +372,7 @@ function CompanyPageContent() {
         category: form.category,
         employment_type: form.employmentType,
         description: form.description,
-        salary_per_hour: form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/${form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period"}` : "",
+        salary_per_hour: formatSalary(form.salaryFrom, form.salaryTo, form.salaryType),
         requirements: form.requirements,
         benefits: form.benefits,
         company_name: companyProfile?.company_name || user?.email || "Företag",
@@ -392,6 +404,7 @@ function CompanyPageContent() {
       setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
       setTab("annonser");
+      router.replace("/company?view=annonser", { scroll: false });
       if (matchProfileWarning) setError(matchProfileWarning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -596,7 +609,7 @@ function CompanyPageContent() {
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
       {(tab === "annonser" || tab === "skapa") && <div className="company-workspace-tabs">
-        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { setTab(item); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
+        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { setTab(item); router.replace(`/company?view=${item}`, { scroll: false }); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
       {error && (
@@ -614,7 +627,7 @@ function CompanyPageContent() {
               <p style={{ fontSize: "0.85rem", color: "#737373", marginBottom: "1rem" }}>
                 Skapa din första jobbannons för att börja se kandidater.
               </p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => setTab("skapa")}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => { setTab("skapa"); router.replace("/company?view=skapa", { scroll: false }); }}>
                 Skapa annons
               </button>
             </div>
@@ -806,7 +819,7 @@ function CompanyPageContent() {
         >
           {(() => {
             const salaryPeriod = form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period";
-            const salary = form.salaryFrom || form.salaryTo ? `${form.salaryFrom || "?"}–${form.salaryTo || "?"} kr/${salaryPeriod}` : "Lön ej angiven";
+            const salary = formatSalary(form.salaryFrom, form.salaryTo, form.salaryType) || "Lön ej angiven";
             const steps = [
               { number: 1 as const, label: "Jobbet", description: "Roll och arbetsuppgifter" },
               { number: 2 as const, label: "Matchning", description: "Vem ni söker" },
@@ -864,7 +877,7 @@ function CompanyPageContent() {
                       <div className="job-builder-fields" style={{ marginTop: "1rem" }}>
                         <label>Vad kan personen lära sig på plats?<textarea className="input-field" rows={3} placeholder="T.ex. kassasystem, produktkunskap, rutiner" value={form.trainableRequirements} onChange={(e) => setForm((p) => ({ ...p, trainableRequirements: e.target.value }))} /></label>
                       </div>
-                      {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Frågorna visas separat för ungdomen innan ansökan skickas. Alla frågor är valfria.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
+                      {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Frågorna visas som frivillig komplettering efter att ansökan skickats. Alla frågor är valfria.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
                     </section>
                   )}
 
@@ -897,7 +910,7 @@ function CompanyPageContent() {
           {jobs.length === 0 ? (
             <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
               <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.75rem" }}>Inga annonser ännu</p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => setTab("skapa")}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => { setTab("skapa"); router.replace("/company?view=skapa", { scroll: false }); }}>
                 Skapa din första annons
               </button>
             </div>

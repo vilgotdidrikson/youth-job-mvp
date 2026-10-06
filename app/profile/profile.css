@@ -162,3 +162,12 @@
 .company-profile-tabs button {min-height:44px;line-height:1.5;}
 .company-profile-culture > div {min-width:0;}
 @media(max-width:360px) {.company-profile-culture > div {min-width:0;flex-basis:calc(100% - 38px);}.company-profile-culture button {max-width:100%;white-space:normal;line-height:1.5;}}
+
+/* Separate explanatory copy from forms and calls to action. */
+.mnw-profile-card > p {margin:0 0 18px;}
+.mnw-profile-card > p:last-child {margin-bottom:0;}
+.mnw-profile-textlink {min-height:44px;padding-block:10px;line-height:1.5;}
+.mnw-profile-card-heading {flex-wrap:wrap;}
+.mnw-profile-card-heading > :is(a,button) {line-height:1.5;text-align:center;}
+.mnw-profile .network-profile-header-content > * {min-width:0;}
+.mnw-profile-shortcut span {min-width:0;overflow-wrap:anywhere;}

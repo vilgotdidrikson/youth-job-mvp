@@ -22,7 +22,7 @@
 .mnw-product .cv-hub > * { width:100%; max-width:720px; justify-self:center; }
 .mnw-product .cv-hub > :is(.cv-hub-options) { max-width:960px; }
 .mnw-product .cv-hub h1 { max-width:720px; font-size:clamp(1.9rem,4vw,2.6rem); line-height:1.15; }
-.mnw-product .cv-hub-lead { max-width:650px; font-size:.92rem; line-height:1.8; }
+.mnw-product .cv-hub-lead { max-width:720px; font-size:.92rem; line-height:1.8; }
 .mnw-product .cv-hub-eyebrow { margin:12px 0 -8px; font-size:.7rem; font-weight:500; }
 .mnw-product :is(.cv-hub-back,.cv-hub-skip) { font-size:.82rem; font-weight:500; color:#b84164; }
 .mnw-product .cv-hub-options { gap:20px; margin-top:12px; }
@@ -317,3 +317,14 @@
 .mnw-product .auth-submit {white-space:normal;line-height:1.5;}
 .mnw-product .auth-submit span {flex-shrink:0;}
 .mnw-product .auth-back-above {padding-inline:8px;margin-left:-8px;}
+
+.mnw-modal-dialog .image-crop-heading button {width:44px;height:44px;flex-shrink:0;}
+.mnw-modal-dialog .image-crop-dialog footer {display:flex;flex-wrap:wrap;gap:12px;}
+.mnw-modal-dialog .image-crop-dialog footer button {flex:1;min-width:120px;white-space:normal;line-height:1.5;}
+.mnw-report-content .cta-btn,.mnw-report-content .secondary-btn {white-space:normal;line-height:1.5;}
+
+.mnw-product :is(.cv-hub-back,.cv-hub-skip) {display:flex;align-items:center;min-height:44px;line-height:1.5;}
+
+/* Comfortable controls in the announcement builder and preview. */
+.mnw-product .job-builder-chips .chip { min-height:44px; padding:10px 14px; line-height:1.5; white-space:normal; text-align:center; }
+.mnw-job-preview-modal .job-builder-preview-close { width:44px; height:44px; }
