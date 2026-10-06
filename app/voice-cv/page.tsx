@@ -23,7 +23,7 @@ interface VoiceInterviewState {
   conversation?: InterviewTurn[];
   structuredCv: StructuredCvData;
 }
-const VOICE_BUTTON_COLOR = "#ec4899";
+const VOICE_BUTTON_COLOR = "var(--color-brand)";
 
 export default function VoiceCvPage() {
   const router = useRouter();

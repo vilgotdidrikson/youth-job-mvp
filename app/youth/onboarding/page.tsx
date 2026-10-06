@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ModalDialog } from "@/components/modal-dialog";
+import { UiIcon } from "@/components/ui-icon";
 import { ShortYouthOnboarding } from "@/components/short-youth-onboarding";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
@@ -620,12 +622,13 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
 
   if (showAccountCreated) {
     return (
-      <main className="mobile-shell" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
-        <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
-        <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
-        <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
-        <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa mitt CV</button>
-        <button type="button" className="secondary-btn" onClick={() => router.push("/swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Upptäck jobb</button>
+      <main className="mobile-shell mnw-onboarding-success" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+        <span className="mnw-onboarding-success-mark"><UiIcon name="check" width="32" height="32" /></span>
+        <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
+        <h1 style={{ margin: "0.75rem 0", color: "var(--text-primary)", fontSize: "clamp(2.3rem, 7vw, 3.2rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
+        <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
+        <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: ".95rem" }}>Fortsätt skapa mitt CV</button>
+        <button type="button" className="secondary-btn" onClick={() => router.push("/swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: ".95rem" }}>Upptäck jobb</button>
       </main>
     );
   }
@@ -635,7 +638,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   if (!loading && user && profile?.role === "youth" && (!accountDetailsLoaded || redirectingBetweenFlows)) {
     return (
       <main className="youth-onboarding" style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
-        <p style={{ color: "#737373" }}>Laddar...</p>
+        <p style={{ color: "#737373" }}>Laddar…</p>
       </main>
     );
   }
@@ -643,7 +646,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   /* ── CV preview / edit step ─────────────────────── */
   if (flow === "cv" && showCvMethodChoice) {
     return (
-      <main className="youth-onboarding" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: 430, margin: "0 auto", padding: "2rem 1.25rem", background: "var(--color-canvas)" }}>
+      <main className="youth-onboarding mnw-onboarding-methods" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: 430, margin: "0 auto", padding: "2rem 1.25rem", background: "var(--color-canvas)" }}>
         <div style={{ marginTop: "auto", marginBottom: "auto" }}>
           <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Ditt CV</p>
           <h1 style={{ margin: ".45rem 0 0", color: "var(--text-primary)", fontSize: "2.2rem", letterSpacing: "-.06em", lineHeight: 1 }}>Hur vill du skapa ditt CV?</h1>
@@ -652,21 +655,21 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           <div style={{ display: "grid", gap: ".75rem" }}>
             {returnJobId && <div style={{ marginBottom: ".8rem", padding: ".75rem", borderRadius: 10, background: "#fff8eb", fontSize: ".85rem" }}>Ansökan gäller: <strong>{returnJobTitle || "valt jobb"}</strong><Link href={returnPath} style={{ display: "block", marginTop: ".45rem" }}>Tillbaka till jobbet</Link></div>}
             <button type="button" className="cv-method-card" onClick={() => router.push(`/youth/cv/create${cvQuery}`)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
-              <strong style={{ fontSize: "1rem" }}>Skapa CV i MatchnWork</strong>
+              <span className="mnw-cv-method-icon"><UiIcon name="file" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV i MatchnWork</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
             <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
-              <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "#ec4899", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
-              <strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
+              <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "var(--color-brand)", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
+              <span className="mnw-cv-method-icon"><UiIcon name="microphone" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
             </Link>
             <label className="cv-method-card" style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
-              <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} style={{ display: "none" }} />
-              <strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
-              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Klart direkt - du behöver inte svara på fler frågor.</span>
+              <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} className="mnw-cv-file-input" />
+              <span className="mnw-cv-method-icon"><UiIcon name="upload" /></span><strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
+              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Använd ditt befintliga CV som underlag för dina ansökningar.</span>
             </label>
           </div>
-          {error && <p style={{ margin: "1rem 0 0", color: "var(--color-danger)", fontSize: ".85rem" }}>{error}</p>}
+          {error && <p role="alert" style={{ margin: "1rem 0 0", color: "var(--color-danger)", fontSize: ".85rem" }}>{error}</p>}
         </div>
       </main>
     );
@@ -686,8 +689,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           padding: "0 1.25rem",
         }}
       >
-        {cameraOpen && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 20, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></div>}
-        {cropSource && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 21, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></div>}
+        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></ModalDialog>}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></ModalDialog>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
             Ditt CV är klart!
@@ -701,6 +704,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         </div>
 
         <textarea
+          aria-label="CV-text att granska och redigera"
           value={cvText}
           onChange={(e) => setCvText(e.target.value)}
           rows={18}
@@ -766,8 +770,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           padding: "0 1.25rem",
         }}
       >
-        {cameraOpen && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 20, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></div>}
-        {cropSource && <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 21, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.65)" }}><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></div>}
+        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></ModalDialog>}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></ModalDialog>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <div
             style={{
@@ -1534,7 +1538,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         {ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
       </datalist>
       {cropSource && (
-        <div role="dialog" aria-modal="true" aria-label="Beskär profilbild" style={{ position: "fixed", zIndex: 10, inset: 0, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0, 0, 0, .62)" }}>
+        <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal">
           <div style={{ width: "min(100%, 25rem)", display: "grid", gap: "1rem", padding: "1.25rem", borderRadius: 16, background: "#fff" }}>
             <div>
               <h2 style={{ margin: 0, fontSize: "1.15rem", color: "#111" }}>Beskär din profilbild</h2>
@@ -1552,7 +1556,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>{docUploading ? "Sparar..." : "Använd bild"}</button>
             </div>
           </div>
-        </div>
+        </ModalDialog>
       )}
       {/* Progress bar */}
       <div style={{ paddingTop: "3rem", paddingBottom: "2.5rem" }}>

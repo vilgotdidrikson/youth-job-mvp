@@ -84,12 +84,34 @@ do $$ declare result jsonb; begin
   raise exception 'Employer edited youth answer';
  exception when insufficient_privilege then null; end;
 end $$;
+-- Final employer decisions stop additional questions, while existing answers remain readable.
+select * from public.review_candidate_and_match('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001','skip');
+do $$ declare result jsonb; begin
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('c',64));
+ if result->>'reason'<>'application_closed' then raise exception 'Rejected application queued questions: %',result; end if;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+do $$ begin
+ if public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'available'<>'false' then raise exception 'Rejected application available for analysis'; end if;
+ if (select count(*) from public.application_followups)<>2 then raise exception 'Historical questions lost after rejection'; end if;
+end $$;
+
 -- Reviewed applications stay readable; published answers can be corrected or added later.
 select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
 select * from public.review_candidate_and_match('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001','interested');
 do $$ begin
  if (select count(*) from public.get_company_candidates('a2000000-0000-4000-8000-000000000001'))<>1 then raise exception 'Reviewed applicant disappeared'; end if;
 end $$;
+reset role;
+update public.matches set status='hired' where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
+do $$ declare result jsonb; begin
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('d',64));
+ if result->>'reason'<>'application_closed' then raise exception 'Hired application queued questions'; end if;
+end $$;
+reset role;
+update public.matches set status='matched' where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
 select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
 do $$ declare q uuid; result jsonb; begin
  select id into q from public.application_followups where criterion_label='Erfarenhet av kassa';
@@ -113,5 +135,5 @@ do $$ begin
  begin perform * from public.application_followups; raise exception 'Anonymous read answers'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-select 'PASS: reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
+select 'PASS: rejected/hired application question guards, reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
 rollback;
