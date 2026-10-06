@@ -290,3 +290,12 @@
 .mnw-onboarding-photo-modal button:disabled {opacity:.55;cursor:wait;}
 @media(max-width:480px) {.mnw-product .mnw-onboarding-methods .cv-method-card {padding:19px!important;gap:5px 12px!important;}.mnw-onboarding-photo-modal > div {padding:22px!important;}}
 @media(max-width:480px) {.mnw-product .cv-hub-groups {gap:7px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr);}.cv-hub-groups li {font-size:.68rem;align-items:flex-start;gap:6px;}.cv-hub-groups li > span {width:24px;height:24px;border-radius:8px;}}
+
+/* Long CV forms share the same actions and keyboard-accessible uploads. */
+.mnw-product[data-onboarding="true"] .youth-onboarding :is(input,select,textarea) {min-width:0;max-width:100%;}
+.mnw-onboarding-file-input {position:absolute;width:1px;height:1px;padding:0!important;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.youth-onboarding label:has(.mnw-onboarding-file-input:focus-visible) {outline:3px solid #b84164;outline-offset:4px;border-radius:13px;}
+.mnw-product[data-onboarding="true"] .youth-onboarding :is(button,label:has(input[type="file"])) {min-height:44px;}
+.mnw-product[data-onboarding="true"] .onboarding-question-bubble {max-width:100%!important;}
+.mnw-product .company-match-fields > * {min-width:0;}
+@media(max-width:480px) {.mnw-onboarding-date-fields {grid-template-columns:minmax(0,1fr)!important;}}

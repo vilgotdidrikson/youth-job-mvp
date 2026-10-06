@@ -53,3 +53,5 @@
  .mnw-map-view-list .mnw-map-canvas { display:none; }
  .mnw-map-view-list .mnw-map-job { display:block; }
 }
+
+@media(min-width:721px) and (max-width:900px) {.mnw-map-workspace {grid-template-columns:260px minmax(0,1fr);gap:16px;}.mnw-map-list {padding:15px;}.mnw-map-job footer {flex-wrap:wrap;}}

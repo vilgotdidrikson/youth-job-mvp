@@ -7,7 +7,7 @@
 .mnw-onboarding-intro > p:last-of-type { max-width:340px; color:#896a76; font-size:.92rem; line-height:1.85; }
 .mnw-onboarding-reassurance { display:flex; align-items:flex-start; gap:12px; max-width:360px; margin-top:32px; color:#896a76; font-size:.77rem; line-height:1.8; }
 .mnw-onboarding-reassurance svg { flex-shrink:0; color:#b84164; }
-.mnw-onboarding-card { padding:36px; border:1px solid #f0d9e0; border-radius:28px; background:white; box-shadow:0 18px 60px rgb(76 48 59 / .045); }
+.mnw-onboarding-card { min-width:0; padding:36px; border:1px solid #f0d9e0; border-radius:28px; background:white; box-shadow:0 18px 60px rgb(76 48 59 / .045); }
 .mnw-onboarding-card header { display:flex; justify-content:space-between; color:#896a76; font-size:.72rem; }
 .mnw-onboarding-card header p { margin:0; color:#b84164; }
 .mnw-onboarding-progress { height:6px; margin:18px 0 32px; overflow:hidden; border-radius:10px; background:#f4dce5; }

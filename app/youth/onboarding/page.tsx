@@ -624,7 +624,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     return (
       <main className="mobile-shell mnw-onboarding-success" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
         <span className="mnw-onboarding-success-mark"><UiIcon name="check" width="32" height="32" /></span>
-        <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
+        <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
         <h1 style={{ margin: "0.75rem 0", color: "var(--text-primary)", fontSize: "clamp(2.3rem, 7vw, 3.2rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
         <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
         <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: ".95rem" }}>Fortsätt skapa mitt CV</button>
@@ -638,7 +638,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   if (!loading && user && profile?.role === "youth" && (!accountDetailsLoaded || redirectingBetweenFlows)) {
     return (
       <main className="youth-onboarding" style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
-        <p style={{ color: "#737373" }}>Laddar…</p>
+        <p style={{ color: "var(--color-text-muted)" }}>Laddar…</p>
       </main>
     );
   }
@@ -689,16 +689,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           padding: "0 1.25rem",
         }}
       >
-        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></ModalDialog>}
-        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></ModalDialog>}
+        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#4c303b" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Ta bild</button></div></div></ModalDialog>}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Använd bild</button></div></div></ModalDialog>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
-          <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
             Ditt CV är klart!
           </p>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: 0 }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--color-text)", margin: 0 }}>
             Granska ditt CV
           </h1>
-          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "#737373" }}>
+          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
             Redigera texten nedan om du vill ändra något.
           </p>
         </div>
@@ -713,12 +713,12 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             boxSizing: "border-box",
             flex: 1,
             borderRadius: 12,
-            border: "1.5px solid #e8e8e8",
+            border: "1px solid var(--color-border)",
             padding: "1rem",
             fontSize: "0.85rem",
             fontFamily: "inherit",
             resize: "vertical",
-            color: "#111111",
+            color: "var(--color-text)",
             lineHeight: 1.65,
             outline: "none",
             background: "#fafafa",
@@ -742,7 +742,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               background: "var(--color-brand)",
               color: "#ffffff",
               fontSize: "1rem",
-              fontWeight: 700,
+              fontWeight: 500,
               cursor: saving ? "not-allowed" : "pointer",
               fontFamily: "inherit",
               opacity: saving ? 0.6 : 1,
@@ -770,8 +770,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           padding: "0 1.25rem",
         }}
       >
-        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Ta bild</button></div></div></ModalDialog>}
-        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700 }}>Använd bild</button></div></div></ModalDialog>}
+        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#4c303b" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Ta bild</button></div></div></ModalDialog>}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Använd bild</button></div></div></ModalDialog>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <div
             style={{
@@ -782,22 +782,22 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               maxWidth: "88%",
             }}
           >
-            <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111111", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.5 }}>
               Visa vem du är! En profilbild ger arbetsgivare ett bättre första intryck (valfritt)
             </p>
           </div>
-          <p style={{ fontSize: "0.85rem", color: "#737373", marginTop: "0.75rem", lineHeight: 1.55 }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0.75rem", lineHeight: 1.55 }}>
             Välj en bild eller ta en ny med kameran. Du kan sedan beskära den till din profilbild.
           </p>
         </div>
 
         <div style={{ display: "grid", gap: ".75rem", marginBottom: "1rem" }}>
-          <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
+          <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "var(--color-text-muted)", overflow: "hidden", background: "#fafafa" }}>
             {profileImagePreview ? <img src={profileImagePreview} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
-            <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>
-            <button type="button" onClick={() => void openCamera()} disabled={docUploading} style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>Ta bild</button>
+            <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} className="mnw-onboarding-file-input" />Bifoga bild</label>
+            <button type="button" onClick={() => void openCamera()} disabled={docUploading} style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}>Ta bild</button>
           </div>
         </div>
         <div style={{ display: "none" }} aria-hidden="true">
@@ -809,10 +809,10 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             style={{
               height: 44,
               borderRadius: 10,
-              border: "1.5px solid #e8e8e8",
+              border: "1px solid var(--color-border)",
               padding: "0 0.75rem",
               fontSize: "0.9rem",
-              color: "#111111",
+              color: "var(--color-text)",
               background: "#ffffff",
               outline: "none",
               fontFamily: "inherit",
@@ -841,15 +841,15 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              style={{ display: "none" }}
+              className="mnw-onboarding-file-input"
               disabled={docUploading}
               onChange={(e) => void handleFileSelect(e)}
             />
             <span style={{ fontSize: "1.5rem" }}>📎</span>
-            <p style={{ fontSize: "0.85rem", color: "#737373", margin: 0 }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", margin: 0 }}>
               {docUploading ? "Laddar upp..." : "Tryck för att välja fil"}
             </p>
-            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", margin: 0 }}>PDF, JPG eller PNG · max 5 MB</p>
+            <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", margin: 0 }}>PDF, JPG eller PNG · max 5 MB</p>
           </label>
         </div>
 
@@ -870,15 +870,15 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               >
                 <span style={{ fontSize: "1rem" }}>📎</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "#111111", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {doc.name}
                   </p>
-                  <p style={{ fontSize: "0.72rem", color: "#737373", margin: 0 }}>{DOC_TYPE_LABELS[doc.type]}</p>
+                  <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", margin: 0 }}>{DOC_TYPE_LABELS[doc.type]}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDocuments((d) => d.filter((_, j) => j !== i))}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#a3a3a3", fontSize: "1rem", padding: "0.25rem", lineHeight: 1 }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "1rem", padding: "0.25rem", lineHeight: 1 }}
                 >
                   ✕
                 </button>
@@ -903,10 +903,10 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               padding: "1rem",
               borderRadius: 12,
               border: "none",
-              background: "#111111",
+              background: "var(--color-brand)",
               color: "#ffffff",
               fontSize: "1rem",
-              fontWeight: 700,
+              fontWeight: 500,
               cursor: saving || docUploading ? "not-allowed" : "pointer",
               fontFamily: "inherit",
               opacity: saving || docUploading ? 0.6 : 1,
@@ -923,7 +923,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               fontSize: "0.875rem",
               background: "none",
               border: "none",
-              color: "#a3a3a3",
+              color: "var(--color-text-muted)",
               cursor: "pointer",
               fontFamily: "inherit",
             }}
@@ -1541,19 +1541,19 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal">
           <div style={{ width: "min(100%, 25rem)", display: "grid", gap: "1rem", padding: "1.25rem", borderRadius: 16, background: "#fff" }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.15rem", color: "#111" }}>Beskär din profilbild</h2>
-              <p style={{ margin: ".35rem 0 0", color: "#737373", fontSize: ".82rem", lineHeight: 1.45 }}>Cirkeln visar den bild som kommer att användas i din profil.</p>
+              <h2 style={{ margin: 0, fontSize: "1.15rem", color: "var(--color-text)" }}>Beskär din profilbild</h2>
+              <p style={{ margin: ".35rem 0 0", color: "var(--color-text-muted)", fontSize: ".82rem", lineHeight: 1.45 }}>Cirkeln visar den bild som kommer att användas i din profil.</p>
             </div>
             <div onPointerDown={startCropDrag} onPointerMove={moveCropDrag} onPointerUp={endCropDrag} onPointerCancel={endCropDrag} style={{ width: cropSize, height: cropSize, maxWidth: "100%", justifySelf: "center", position: "relative", overflow: "hidden", background: "#e8e8e8", cursor: "grab", touchAction: "none" }}>
               <img src={cropSource} alt="Förhandsgranskning för beskärning" style={{ position: "absolute", width: cropImageWidth, height: cropImageHeight, maxWidth: "none", left: cropImageLeft, top: cropImageTop, userSelect: "none", pointerEvents: "none" }} />
               <div aria-hidden="true" style={{ position: "absolute", inset: 10, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.46)", pointerEvents: "none" }} />
             </div>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Zoom<input type="range" min="1" max="3" step="0.01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 700 }}>Flytta lodrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step="0.01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label>
+            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Flytta lodrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label>
             <div style={{ display: "flex", gap: ".65rem" }}>
-              <button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Avbryt</button>
-              <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}>{docUploading ? "Sparar..." : "Använd bild"}</button>
+              <button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500, cursor: "pointer" }}>Avbryt</button>
+              <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}>{docUploading ? "Sparar..." : "Använd bild"}</button>
             </div>
           </div>
         </ModalDialog>
@@ -1561,7 +1561,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       {/* Progress bar */}
       <div style={{ paddingTop: "3rem", paddingBottom: "2.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "#737373", fontWeight: 700, letterSpacing: "0.05em" }}>
+          <span style={{ fontSize: "0.95rem", color: "var(--color-text-muted)", fontWeight: 500, letterSpacing: "0.05em" }}>
             {flowStep} / {flowTotal}
           </span>
           {((isAccountDetailsFlow && !accountDetailsSaved && step > 0) || (!voiceFinalize && !isAccountDetailsFlow && (step > FIRST_CV_STEP || cvBuilder))) && (
@@ -1574,7 +1574,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               }}
               aria-label={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
               title={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
-              style={{ minWidth: step === FIRST_CV_STEP ? 32 : undefined, minHeight: step === FIRST_CV_STEP ? 32 : undefined, fontSize: "0.8rem", color: "#737373", background: "none", border: "none", cursor: "pointer", padding: step === FIRST_CV_STEP ? 0 : undefined }}
+              style={{ minWidth: step === FIRST_CV_STEP ? 32 : undefined, minHeight: step === FIRST_CV_STEP ? 32 : undefined, fontSize: "0.8rem", color: "var(--color-text-muted)", background: "none", border: "none", cursor: "pointer", padding: step === FIRST_CV_STEP ? 0 : undefined }}
             >
               {step === FIRST_CV_STEP ? "←" : "← Tillbaka"}
             </button>
@@ -1607,11 +1607,11 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           }}
         >
           {current.type === "image" ? (
-            <h1 style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "var(--color-text)", lineHeight: 1.35, letterSpacing: "-0.03em" }}>
+            <h1 style={{ margin: 0, fontSize: "1.55rem", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.35, letterSpacing: "-0.03em" }}>
               {current.question}
             </h1>
           ) : (
-            <p className="onboarding-question-title" style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, color: "var(--color-text)", lineHeight: 1.5, whiteSpace: "pre-line" }}>
+            <p className="onboarding-question-title" style={{ margin: 0, fontSize: "1.55rem", fontWeight: 500, color: "var(--color-text)", lineHeight: 1.5, whiteSpace: "pre-line" }}>
               {current.question}
             </p>
           )}
@@ -1637,7 +1637,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               aria-invalid={nameError && !normalizeFullName(firstName) ? true : undefined}
               aria-describedby={nameError ? "youth-name-error" : undefined}
               autoFocus
-              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(firstName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(firstName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }}
             />
             <input
               type="text"
@@ -1652,7 +1652,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               autoComplete="family-name"
               aria-invalid={nameError && !normalizeFullName(lastName) ? true : undefined}
               aria-describedby={nameError ? "youth-name-error" : undefined}
-              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(lastName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }}
+              style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: `1.5px solid ${nameError && !normalizeFullName(lastName) ? "#c0392b" : "#e8e8e8"}`, fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }}
             />
           </div>
           {nameError && (
@@ -1661,37 +1661,37 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           </div>
         ) : current.field === "date_of_birth" ? (
           <div style={{ display: "grid", gridTemplateColumns: "0.8fr 1.4fr 1fr", gap: "0.55rem" }}>
-            <select value={birthDateParts.day} onChange={(e) => updateBirthDate("day", e.target.value)} aria-label="Dag" style={{ height: "3.2rem", padding: "0 .55rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#111", background: "#fff", font: "inherit" }}><option value="">Dag</option>{BIRTH_DAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>
-            <select value={birthDateParts.month} onChange={(e) => updateBirthDate("month", e.target.value)} aria-label="Månad" style={{ height: "3.2rem", padding: "0 .55rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#111", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((month, index) => <option key={month} value={String(index + 1)}>{month}</option>)}</select>
-            <select value={birthDateParts.year} onChange={(e) => updateBirthDate("year", e.target.value)} aria-label="År" style={{ height: "3.2rem", padding: "0 .55rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#111", background: "#fff", font: "inherit" }}><option value="">År</option>{BIRTH_YEARS.map((year) => <option key={year} value={year}>{year}</option>)}</select>
+            <select value={birthDateParts.day} onChange={(e) => updateBirthDate("day", e.target.value)} aria-label="Dag" style={{ height: "3.2rem", padding: "0 .55rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-text)", background: "#fff", font: "inherit" }}><option value="">Dag</option>{BIRTH_DAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>
+            <select value={birthDateParts.month} onChange={(e) => updateBirthDate("month", e.target.value)} aria-label="Månad" style={{ height: "3.2rem", padding: "0 .55rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-text)", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((month, index) => <option key={month} value={String(index + 1)}>{month}</option>)}</select>
+            <select value={birthDateParts.year} onChange={(e) => updateBirthDate("year", e.target.value)} aria-label="År" style={{ height: "3.2rem", padding: "0 .55rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-text)", background: "#fff", font: "inherit" }}><option value="">År</option>{BIRTH_YEARS.map((year) => <option key={year} value={year}>{year}</option>)}</select>
           </div>
         ) : current.field === "address" ? (
           <div style={{ display: "grid", gap: "0.75rem" }}>
-            <div style={{ display: "grid", gap: "0.75rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
-              <p style={{ margin: "0 0 -0.2rem", color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Adress 1</p>
-              <input type="text" value={answers.city} onChange={(e) => setAnswers((previous) => ({ ...previous, city: e.target.value }))} placeholder="Stad" autoComplete="address-level2" list="youth-city-suggestions" autoFocus style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
-              <input type="text" value={answers.address} onChange={(e) => setAnswers((previous) => ({ ...previous, address: e.target.value }))} placeholder="Adress" autoComplete="street-address" list="youth-address-suggestions" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
-              <input type="text" inputMode="numeric" value={answers.postal_code} onChange={(e) => setAnswers((previous) => ({ ...previous, postal_code: e.target.value }))} placeholder="Postnummer" autoComplete="postal-code" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
+            <div style={{ display: "grid", gap: "0.75rem", padding: "1rem", border: "1px solid var(--color-border)", borderRadius: 14 }}>
+              <p style={{ margin: "0 0 -0.2rem", color: "var(--color-text-muted)", fontSize: "0.78rem", fontWeight: 500 }}>Adress 1</p>
+              <input type="text" value={answers.city} onChange={(e) => setAnswers((previous) => ({ ...previous, city: e.target.value }))} placeholder="Stad" autoComplete="address-level2" list="youth-city-suggestions" autoFocus style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} />
+              <input type="text" value={answers.address} onChange={(e) => setAnswers((previous) => ({ ...previous, address: e.target.value }))} placeholder="Adress" autoComplete="street-address" list="youth-address-suggestions" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} />
+              <input type="text" inputMode="numeric" value={answers.postal_code} onChange={(e) => setAnswers((previous) => ({ ...previous, postal_code: e.target.value }))} placeholder="Postnummer" autoComplete="postal-code" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} />
             </div>
             {additionalAddresses.map((item, index) => (
-              <div key={index} style={{ position: "relative", display: "grid", gap: "0.75rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
-                <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Adress {index + 2}</p>
-                <button type="button" onClick={() => setAdditionalAddresses((previous) => previous.filter((_, addressIndex) => addressIndex !== index))} aria-label={`Ta bort adress ${index + 2}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>
-                {(["city", "address", "postal_code"] as const).map((field) => <input key={field} type="text" inputMode={field === "postal_code" ? "numeric" : undefined} list={field === "city" ? "youth-city-suggestions" : field === "address" ? "youth-address-suggestions" : undefined} value={item[field]} onChange={(e) => setAdditionalAddresses((previous) => previous.map((address, addressIndex) => addressIndex === index ? { ...address, [field]: e.target.value } : address))} placeholder={field === "city" ? "Stad" : field === "address" ? "Adress" : "Postnummer"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />)}
+              <div key={index} style={{ position: "relative", display: "grid", gap: "0.75rem", padding: "1rem", border: "1px solid var(--color-border)", borderRadius: 14 }}>
+                <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.78rem", fontWeight: 500 }}>Adress {index + 2}</p>
+                <button type="button" onClick={() => setAdditionalAddresses((previous) => previous.filter((_, addressIndex) => addressIndex !== index))} aria-label={`Ta bort adress ${index + 2}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "var(--color-text-muted)", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>
+                {(["city", "address", "postal_code"] as const).map((field) => <input key={field} type="text" inputMode={field === "postal_code" ? "numeric" : undefined} list={field === "city" ? "youth-city-suggestions" : field === "address" ? "youth-address-suggestions" : undefined} value={item[field]} onChange={(e) => setAdditionalAddresses((previous) => previous.map((address, addressIndex) => addressIndex === index ? { ...address, [field]: e.target.value } : address))} placeholder={field === "city" ? "Stad" : field === "address" ? "Adress" : "Postnummer"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} />)}
               </div>
             ))}
-            <button type="button" onClick={() => setAdditionalAddresses((previous) => [...previous, { city: "", address: "", postal_code: "" }])} style={{ justifySelf: "start", marginTop: "0.25rem", padding: "0.65rem 0.9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till en ytterligare adress</button>
+            <button type="button" onClick={() => setAdditionalAddresses((previous) => [...previous, { city: "", address: "", postal_code: "" }])} style={{ justifySelf: "start", marginTop: "0.25rem", padding: "0.65rem 0.9rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>+ Lägg till en ytterligare adress</button>
           </div>
         ) : current.type === "image" ? (
           <div style={{ display: "grid", gap: ".75rem" }}>
-            <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "#737373", overflow: "hidden", background: "#fafafa" }}>
+            <div style={{ width: "100%", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".7rem", border: "1.5px dashed #d1d1d1", borderRadius: 16, color: "var(--color-text-muted)", overflow: "hidden", background: "#fafafa" }}>
               {profileImagePreview ? <img src={profileImagePreview} alt="Profilbild" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <><span style={{ fontSize: "2.2rem" }}>👤</span><span style={{ fontSize: ".9rem", fontWeight: 600 }}>Välj eller ta en profilbild</span></>}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem" }}>
-              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Bifoga bild</label>
-              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={handleProfileImageSelect} disabled={docUploading} style={{ display: "none" }} />Ta bild</label>
+              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileImageSelect} disabled={docUploading} className="mnw-onboarding-file-input" />Bifoga bild</label>
+              <label style={{ display: "grid", placeItems: "center", padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={handleProfileImageSelect} disabled={docUploading} className="mnw-onboarding-file-input" />Ta bild</label>
             </div>
-            <p style={{ margin: 0, color: "#737373", fontSize: ".75rem", textAlign: "center" }}>När du har valt en bild kan du beskära den till profilbilden.</p>
+            <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".75rem", textAlign: "center" }}>När du har valt en bild kan du beskära den till profilbilden.</p>
           </div>
         ) : current.type === "chips" ? (
           <div>
@@ -1706,8 +1706,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                   style={{
                     padding: "0.55rem 1.1rem",
                     borderRadius: 999,
-                    border: selected ? "none" : "1.5px solid #e8e8e8",
-                    background: selected ? "#111111" : "#ffffff",
+                    border: selected ? "none" : "1px solid var(--color-border)",
+                    background: selected ? "var(--color-brand)" : "#ffffff",
                     color: selected ? "#ffffff" : "#111111",
                     fontSize: "0.9rem",
                     cursor: "pointer",
@@ -1725,74 +1725,74 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         ) : current.field === "work_experience" ? (
           <div style={{ display: "grid", gap: "0.9rem" }}>
             {workExperiences.map((experience, index) => (
-              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
+              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1px solid var(--color-border)", borderRadius: 14 }}>
                 {savedWorkExperiences[index] ? (
                   <>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem" }}>
-                      <div><p style={{ margin: 0, color: "#111", fontSize: "1.05rem", fontWeight: 700 }}>{experience.title || "Arbetserfarenhet"}</p><p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.82rem" }}>{[experience.company, experience.employment_type].filter(Boolean).join(" · ") || "Företag ej angivet"}</p></div>
-                      <button type="button" onClick={() => setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "#49636a", font: "inherit", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>Redigera</button>
+                      <div><p style={{ margin: 0, color: "var(--color-text)", fontSize: "1.05rem", fontWeight: 500 }}>{experience.title || "Arbetserfarenhet"}</p><p style={{ margin: "0.2rem 0 0", color: "var(--color-text-muted)", fontSize: "0.82rem" }}>{[experience.company, experience.employment_type].filter(Boolean).join(" · ") || "Företag ej angivet"}</p></div>
+                      <button type="button" onClick={() => setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "var(--color-brand)", font: "inherit", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>Redigera</button>
                     </div>
                     <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[experience.start_date, experience.end_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
                     {experience.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{experience.description}</p>}
-                    <p style={{ margin: 0, color: "#737373", fontSize: "0.8rem" }}>{[experience.location, experience.location_type].filter(Boolean).join(" · ") || "Plats ej angiven"}</p>
+                    <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.8rem" }}>{[experience.location, experience.location_type].filter(Boolean).join(" · ") || "Plats ej angiven"}</p>
                   </>
                 ) : <>
-                <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Arbetserfarenhet {index + 1}</p>
-                {workExperiences.length > 1 && <button type="button" onClick={() => { setWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); setSavedWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); }} aria-label={`Ta bort arbetserfarenhet ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel" : field === "company" ? "Arbetsgivare" : "Plats"}<input type="text" list={field === "title" ? "youth-job-title-suggestions" : field === "company" ? "youth-company-name-suggestions" : "youth-city-suggestions"} value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>)}
-                <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Platstyp<select value={experience.location_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, location_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.location_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="På plats">På plats</option><option value="Hybrid">Hybrid</option><option value="Distans">Distans</option></select></label>
-                <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Anställningstyp<select value={experience.employment_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, employment_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: experience.employment_type ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Deltid">Deltid</option><option value="Heltid">Heltid</option><option value="Sommarjobb">Sommarjobb</option><option value="Praktik">Praktik</option><option value="Extraarbete">Extraarbete</option></select></label>
-                <label style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "#737373", fontSize: ".8rem", cursor: "pointer" }}><input type="checkbox" checked={experience.is_current} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, is_current: e.target.checked, end_date: e.target.checked ? "" : item.end_date } : item))} /> Detta är min nuvarande arbetsplats</label>
-                <div style={{ display: "grid", gridTemplateColumns: experience.is_current ? "1fr" : "1fr 1fr", gap: "0.6rem" }}>
+                <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.78rem", fontWeight: 500 }}>Arbetserfarenhet {index + 1}</p>
+                {workExperiences.length > 1 && <button type="button" onClick={() => { setWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); setSavedWorkExperiences((previous) => previous.filter((_, experienceIndex) => experienceIndex !== index)); }} aria-label={`Ta bort arbetserfarenhet ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "var(--color-text-muted)", background: "#ffffff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
+                {(["title", "company", "location"] as const).map((field) => <label key={field} style={{ display: "grid", gap: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>{field === "title" ? "Titel" : field === "company" ? "Arbetsgivare" : "Plats"}<input type="text" list={field === "title" ? "youth-job-title-suggestions" : field === "company" ? "youth-company-name-suggestions" : "youth-city-suggestions"} value={experience[field]} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "title" ? "T.ex. Butiksmedarbetare" : field === "company" ? "T.ex. ICA" : "T.ex. Stockholm"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} /></label>)}
+                <label style={{ display: "grid", gap: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>Platstyp<select value={experience.location_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, location_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", color: experience.location_type ? "#111" : "var(--color-text-muted)", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="På plats">På plats</option><option value="Hybrid">Hybrid</option><option value="Distans">Distans</option></select></label>
+                <label style={{ display: "grid", gap: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>Anställningstyp<select value={experience.employment_type} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, employment_type: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", color: experience.employment_type ? "#111" : "var(--color-text-muted)", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Deltid">Deltid</option><option value="Heltid">Heltid</option><option value="Sommarjobb">Sommarjobb</option><option value="Praktik">Praktik</option><option value="Extraarbete">Extraarbete</option></select></label>
+                <label style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--color-text-muted)", fontSize: ".8rem", cursor: "pointer" }}><input type="checkbox" checked={experience.is_current} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, is_current: e.target.checked, end_date: e.target.checked ? "" : item.end_date } : item))} /> Detta är min nuvarande arbetsplats</label>
+                <div className="mnw-onboarding-date-fields" style={{ display: "grid", gridTemplateColumns: experience.is_current ? "1fr" : "1fr 1fr", gap: "0.6rem" }}>
                   {((experience.is_current ? ["start_date"] : ["start_date", "end_date"]) as Array<"start_date" | "end_date">).map((dateField) => {
                     const [year = "", month = ""] = experience[dateField].split("-");
-                    return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}>
+                    return <div key={dateField} style={{ color: "var(--color-text-muted)", fontSize: "0.75rem" }}>
                       <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum"}</span>
-                      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "0.4rem", marginTop: "0.3rem" }}>
-                        <select value={month} onChange={(e) => updateExperienceDate(index, dateField, "month", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} månad`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const value = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, experience.start_date, experience.end_date)}>{monthName}</option>; })}</select>
-                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1.5px solid #e8e8e8", color: "#111", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, experience.start_date, experience.end_date)}>{workYear}</option>)}</select>
+                      <div className="mnw-onboarding-date-fields" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "0.4rem", marginTop: "0.3rem" }}>
+                        <select value={month} onChange={(e) => updateExperienceDate(index, dateField, "month", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} månad`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1px solid var(--color-border)", color: "var(--color-text)", background: "#fff", font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const value = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, experience.start_date, experience.end_date)}>{monthName}</option>; })}</select>
+                        <select value={year} onChange={(e) => updateExperienceDate(index, dateField, "year", e.target.value)} aria-label={`${dateField === "start_date" ? "Startdatum" : "Slutdatum"} år`} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 0.4rem", borderRadius: 10, border: "1px solid var(--color-border)", color: "var(--color-text)", background: "#fff", font: "inherit" }}><option value="">År{dateField === "start_date" ? " *" : ""}</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, experience.start_date, experience.end_date)}>{workYear}</option>)}</select>
                       </div>
                     </div>;
                   })}
                 </div>
-                <label style={{ display: "grid", gap: "0.3rem", color: "#a3a3a3", fontSize: "0.72rem", fontWeight: 600 }}>Beskrivning<textarea value={experience.description} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Jag hjälpte kunder och fyllde på varor" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", resize: "vertical", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} /></label>
-                <button type="button" onClick={() => { if (!workExperienceIsComplete(experience)) { setError("Fyll i alla fält för att spara erfarenheten."); return; } setError(""); setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: "0.55rem 0.8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>Spara erfarenhet</button>
+                <label style={{ display: "grid", gap: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>Beskrivning<textarea value={experience.description} onChange={(e) => setWorkExperiences((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Jag hjälpte kunder och fyllde på varor" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", resize: "vertical", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} /></label>
+                <button type="button" onClick={() => { if (!workExperienceIsComplete(experience)) { setError("Fyll i alla fält för att spara erfarenheten."); return; } setError(""); setSavedWorkExperiences((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: "0.55rem 0.8rem", border: 0, borderRadius: 8, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: "0.8rem", fontWeight: 500, cursor: "pointer" }}>Spara erfarenhet</button>
                 </>}
               </div>
             ))}
-            <button type="button" onClick={() => { setWorkExperiences((previous) => [...previous, emptyWorkExperience()]); setSavedWorkExperiences((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: "0.65rem 0.9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till arbetserfarenhet</button>
+            <button type="button" onClick={() => { setWorkExperiences((previous) => [...previous, emptyWorkExperience()]); setSavedWorkExperiences((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: "0.65rem 0.9rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", background: "#ffffff", font: "inherit", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>+ Lägg till arbetserfarenhet</button>
           </div>
         ) : current.field === "education" ? (
           <div style={{ display: "grid", gap: "0.9rem" }}>
-            <p style={{ margin: 0, color: "#737373", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
+            <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
             {educations.map((education, index) => (
-              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
+              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1px solid var(--color-border)", borderRadius: 14 }}>
                 {savedEducations[index] ? <>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}><div><p style={{ margin: 0, color: "#111", fontSize: "1.05rem", fontWeight: 700 }}>{education.school || "Utbildning"}</p><p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.82rem" }}>{[education.degree, education.subject].filter(Boolean).join(" · ") || "Examen ej angiven"}</p></div><button type="button" onClick={() => setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "#49636a", font: "inherit", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>Redigera</button></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}><div><p style={{ margin: 0, color: "var(--color-text)", fontSize: "1.05rem", fontWeight: 500 }}>{education.school || "Utbildning"}</p><p style={{ margin: "0.2rem 0 0", color: "var(--color-text-muted)", fontSize: "0.82rem" }}>{[education.degree, education.subject].filter(Boolean).join(" · ") || "Examen ej angiven"}</p></div><button type="button" onClick={() => setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "var(--color-brand)", font: "inherit", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>Redigera</button></div>
                   <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[education.start_date, education.end_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
                   {education.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{education.description}</p>}
                 </> : <>
-                  <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Utbildning {index + 1}</p>
-                  {educations.length > 1 && <button type="button" onClick={() => { setEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort utbildning ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Examen *<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="T.ex. gymnasium, universitet eller yrkesutbildning" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Skola *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="Kungsholmens Gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Ämnesområde *<input type="text" value={education.subject} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, subject: e.target.value } : item))} placeholder="T.ex. Ekonomi" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>
+                  <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.78rem", fontWeight: 500 }}>Utbildning {index + 1}</p>
+                  {educations.length > 1 && <button type="button" onClick={() => { setEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedEducations((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort utbildning ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "var(--color-text-muted)", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
+                  <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Examen *<input type="text" value={education.degree} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, degree: e.target.value } : item))} placeholder="T.ex. gymnasium, universitet eller yrkesutbildning" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Skola *<input type="text" value={education.school} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, school: e.target.value } : item))} placeholder="Kungsholmens Gymnasium" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#fff" }} /></label>
+                  <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Ämnesområde *<input type="text" value={education.subject} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, subject: e.target.value } : item))} placeholder="T.ex. Ekonomi" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#fff" }} /></label>
                   <div style={{ display: "grid", gap: ".3rem" }}>
-                    <span style={{ color: "#737373", fontSize: ".72rem", fontWeight: 600 }}>Tid *</span>
+                    <span style={{ color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Tid *</span>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
                       {(["start_date", "end_date"] as const).map((dateField) => {
                         const [year = "", month = ""] = education[dateField].split("-");
-                        return <div key={dateField} style={{ color: "#737373", fontSize: "0.75rem" }}>
+                        return <div key={dateField} style={{ color: "var(--color-text-muted)", fontSize: "0.75rem" }}>
                           <span>{dateField === "start_date" ? "Startdatum" : "Slutdatum (eller förväntat)"}</span>
-                          <div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}>
-                            <select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}>
+                          <div className="mnw-onboarding-date-fields" style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem", marginTop: ".3rem" }}>
+                            <select value={month} onChange={(e) => updateEducationDate(index, dateField, "month", e.target.value)} style={{ height: "3rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }}>
                               <option value="">Månad</option>
                               {BIRTH_MONTHS.map((monthName, monthIndex) => {
                                 const value = String(monthIndex + 1).padStart(2, "0");
                                 return <option key={monthName} value={value} disabled={!canSelectDatePart(dateField, "month", value, education.start_date, education.end_date)}>{monthName}</option>;
                               })}
                             </select>
-                            <select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}>
+                            <select value={year} onChange={(e) => updateEducationDate(index, dateField, "year", e.target.value)} style={{ height: "3rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }}>
                               <option value="">År</option>
                               {workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(dateField, "year", workYear, education.start_date, education.end_date)}>{workYear}</option>)}
                             </select>
@@ -1801,50 +1801,50 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                       })}
                     </div>
                   </div>
-                  <textarea value={education.description} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="Beskrivning *" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />
-                  <button type="button" onClick={() => { if (!educationIsComplete(education)) { setError("Fyll i alla fält för att spara utbildningen."); return; } setError(""); setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ width: "100%", padding: ".85rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontWeight: 700, cursor: "pointer" }}>Spara utbildning</button>
+                  <textarea value={education.description} onChange={(e) => setEducations((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="Beskrivning *" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 10, border: "1px solid var(--color-border)", font: "inherit", resize: "vertical" }} />
+                  <button type="button" onClick={() => { if (!educationIsComplete(education)) { setError("Fyll i alla fält för att spara utbildningen."); return; } setError(""); setSavedEducations((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ width: "100%", padding: ".85rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500, cursor: "pointer" }}>Spara utbildning</button>
                 </>}
               </div>
             ))}
-            <button type="button" onClick={() => { setEducations((previous) => [...previous, emptyEducation()]); setSavedEducations((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: ".65rem .9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#fff", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till utbildning</button>
+            <button type="button" onClick={() => { setEducations((previous) => [...previous, emptyEducation()]); setSavedEducations((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: ".65rem .9rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", background: "#fff", font: "inherit", fontSize: ".85rem", fontWeight: 500, cursor: "pointer" }}>+ Lägg till utbildning</button>
           </div>
         ) : current.field === "certificates" ? (
           <div style={{ display: "grid", gap: "0.9rem" }}>
             {certificates.map((certificate, index) => (
-              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1.5px solid #e8e8e8", borderRadius: 14 }}>
+              <div key={index} style={{ position: "relative", display: "grid", gap: "0.7rem", padding: "1rem", border: "1px solid var(--color-border)", borderRadius: 14 }}>
                 {savedCertificates[index] ? <>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}><div><p style={{ margin: 0, color: "#111", fontSize: "1.05rem", fontWeight: 700 }}>{certificate.name || "Certifikat"}</p><p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.82rem" }}>{[certificate.issuer, certificate.category].filter(Boolean).join(" · ") || "Organisation ej angiven"}</p></div><button type="button" onClick={() => setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "#49636a", font: "inherit", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>Redigera</button></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}><div><p style={{ margin: 0, color: "var(--color-text)", fontSize: "1.05rem", fontWeight: 500 }}>{certificate.name || "Certifikat"}</p><p style={{ margin: "0.2rem 0 0", color: "var(--color-text-muted)", fontSize: "0.82rem" }}>{[certificate.issuer, certificate.category].filter(Boolean).join(" · ") || "Organisation ej angiven"}</p></div><button type="button" onClick={() => setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? false : saved))} style={{ border: 0, background: "none", color: "var(--color-brand)", font: "inherit", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>Redigera</button></div>
                   <p style={{ margin: 0, color: "#555", fontSize: "0.82rem" }}>{[certificate.issue_date, certificate.expiry_date].filter(Boolean).join(" – ") || "Datum ej angivet"}</p>
                   {certificate.description && <p style={{ margin: 0, color: "#555", fontSize: "0.85rem", lineHeight: 1.45 }}>{certificate.description}</p>}
-                  {certificate.credential_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem" }}>{certificate.credential_url}</p>}
-                  {certificate.pdf_url && <p style={{ margin: 0, color: "#49636a", fontSize: "0.8rem", fontWeight: 600 }}>PDF-intyg bifogat</p>}
+                  {certificate.credential_url && <p style={{ margin: 0, color: "var(--color-brand)", fontSize: "0.8rem" }}>{certificate.credential_url}</p>}
+                  {certificate.pdf_url && <p style={{ margin: 0, color: "var(--color-brand)", fontSize: "0.8rem", fontWeight: 600 }}>PDF-intyg bifogat</p>}
                 </> : <>
-                  <p style={{ margin: 0, color: "#737373", fontSize: "0.78rem", fontWeight: 700 }}>Certifikat {index + 1}</p>
-                  {certificates.length > 1 && <button type="button" onClick={() => { setCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort certifikat ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "#737373", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
-                  {(["name", "issuer"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>{field === "name" ? "Namn *" : "Utfärdande organisation *"}<input type="text" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "name" ? "T.ex. HLR-certifikat" : "T.ex. Röda Korset"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "#111", background: "#fff" }} /></label>)}
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Typ<select value={certificate.category} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, category: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: certificate.category ? "#111" : "#a3a3a3", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Certifikat">Certifikat</option><option value="Stipendium">Stipendium</option><option value="Licens">Licens</option><option value="Annat">Annat</option></select></label>
+                  <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.78rem", fontWeight: 500 }}>Certifikat {index + 1}</p>
+                  {certificates.length > 1 && <button type="button" onClick={() => { setCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); setSavedCertificates((previous) => previous.filter((_, itemIndex) => itemIndex !== index)); }} aria-label={`Ta bort certifikat ${index + 1}`} style={{ position: "absolute", top: "0.65rem", right: "0.65rem", display: "grid", width: "1.8rem", height: "1.8rem", placeItems: "center", border: "1px solid #e8e8e8", borderRadius: "50%", color: "var(--color-text-muted)", background: "#fff", fontSize: "1rem", cursor: "pointer" }}>×</button>}
+                  {(["name", "issuer"] as const).map((field) => <label key={field} style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>{field === "name" ? "Namn *" : "Utfärdande organisation *"}<input type="text" value={certificate[field]} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: e.target.value } : item))} placeholder={field === "name" ? "T.ex. HLR-certifikat" : "T.ex. Röda Korset"} style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#fff" }} /></label>)}
+                  <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Typ<select value={certificate.category} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, category: e.target.value } : item))} style={{ width: "100%", height: "3rem", padding: "0 1rem", border: "1px solid var(--color-border)", borderRadius: 10, color: certificate.category ? "#111" : "var(--color-text-muted)", background: "#fff", font: "inherit", fontSize: "1rem" }}><option value="">Välj</option><option value="Certifikat">Certifikat</option><option value="Stipendium">Stipendium</option><option value="Licens">Licens</option><option value="Annat">Annat</option></select></label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>
                     {(["issue_date", "expiry_date"] as const).map((field) => {
                       const [year = "", month = ""] = certificate[field].split("-");
-                      return <label key={field} style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>
+                      return <label key={field} style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>
                         {field === "issue_date" ? "Utfärdandedatum *" : "Giltig till *"}
-                        <div style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem" }}>
-                          <select value={month} onChange={(e) => updateCertificateDate(index, field, "month", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const monthValue = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={monthValue} disabled={!canSelectDatePart(field, "month", monthValue, certificate.issue_date, certificate.expiry_date)}>{monthName}</option>; })}</select>
-                          <select value={year} onChange={(e) => updateCertificateDate(index, field, "year", e.target.value)} style={{ height: "3rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }}><option value="">År</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(field, "year", workYear, certificate.issue_date, certificate.expiry_date)}>{workYear}</option>)}</select>
+                        <div className="mnw-onboarding-date-fields" style={{ display: "grid", gridTemplateColumns: "1.2fr .9fr", gap: ".4rem" }}>
+                          <select value={month} onChange={(e) => updateCertificateDate(index, field, "month", e.target.value)} style={{ height: "3rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }}><option value="">Månad</option>{BIRTH_MONTHS.map((monthName, monthIndex) => { const monthValue = String(monthIndex + 1).padStart(2, "0"); return <option key={monthName} value={monthValue} disabled={!canSelectDatePart(field, "month", monthValue, certificate.issue_date, certificate.expiry_date)}>{monthName}</option>; })}</select>
+                          <select value={year} onChange={(e) => updateCertificateDate(index, field, "year", e.target.value)} style={{ height: "3rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }}><option value="">År</option>{workYears.map((workYear) => <option key={workYear} value={workYear} disabled={!canSelectDatePart(field, "year", workYear, certificate.issue_date, certificate.expiry_date)}>{workYear}</option>)}</select>
                         </div>
                       </label>;
                     })}
                   </div>
-                  <div style={{ display: "grid", gap: ".55rem" }}><p style={{ margin: 0, color: "#a3a3a3", fontSize: ".72rem", fontWeight: 700 }}>Bifoga ett intyg</p><label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "#a3a3a3", boxSizing: "border-box", padding: "0 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit" }} /></label><label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px solid #e8e8e8", borderRadius: 10, color: "#a3a3a3", fontSize: ".85rem", fontWeight: 400, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />Bifoga fil som intyg</label></div>
-                  <label style={{ display: "grid", gap: ".3rem", color: "#a3a3a3", fontSize: ".72rem", fontWeight: 600 }}>Beskrivning<textarea value={certificate.description} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Vad certifikatet eller stipendiet gällde" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".7rem 1rem", border: "1.5px solid #e8e8e8", borderRadius: 10, font: "inherit", resize: "vertical" }} /></label>
+                  <div style={{ display: "grid", gap: ".55rem" }}><p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 500 }}>Bifoga ett intyg</p><label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "var(--color-text-muted)", boxSizing: "border-box", padding: "0 1rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }} /></label><label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-text-muted)", fontSize: ".85rem", fontWeight: 400, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />Bifoga fil som intyg</label></div>
+                  <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Beskrivning<textarea value={certificate.description} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Vad certifikatet eller stipendiet gällde" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".7rem 1rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit", resize: "vertical" }} /></label>
                   {false && (
-                  <label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "#49636a", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} style={{ display: "none" }} />📎 {certificate.pdf_url ? "PDF-intyg bifogat – byt fil" : "Bifoga PDF-intyg (valfritt)"}</label>
+                  <label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {certificate.pdf_url ? "PDF-intyg bifogat – byt fil" : "Bifoga PDF-intyg (valfritt)"}</label>
                   )}
-                  <button type="button" onClick={() => { if (!certificateIsComplete(certificate)) { setError("Fyll i alla fält för att spara certifikatet."); return; } setError(""); setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: ".55rem .8rem", border: 0, borderRadius: 8, color: "#fff", background: "#111", font: "inherit", fontSize: ".8rem", fontWeight: 700, cursor: "pointer" }}>Spara certifikat</button>
+                  <button type="button" onClick={() => { if (!certificateIsComplete(certificate)) { setError("Fyll i alla fält för att spara certifikatet."); return; } setError(""); setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: ".55rem .8rem", border: 0, borderRadius: 8, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: ".8rem", fontWeight: 500, cursor: "pointer" }}>Spara certifikat</button>
                 </>}
               </div>
             ))}
-            <button type="button" onClick={() => { setCertificates((previous) => [...previous, emptyCertificate()]); setSavedCertificates((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: ".65rem .9rem", border: "1.5px solid #49636a", borderRadius: 10, color: "#49636a", background: "#fff", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>+ Lägg till certifikat eller stipendium</button>
+            <button type="button" onClick={() => { setCertificates((previous) => [...previous, emptyCertificate()]); setSavedCertificates((previous) => [...previous, false]); }} style={{ justifySelf: "start", padding: ".65rem .9rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-brand)", background: "#fff", font: "inherit", fontSize: ".85rem", fontWeight: 500, cursor: "pointer" }}>+ Lägg till certifikat eller stipendium</button>
           </div>
         ) : selectionField ? (
           <div style={{ display: "grid", gap: ".8rem" }}>
@@ -1860,7 +1860,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               />
               <button type="button" onClick={() => saveCustomValue(selectionField)} aria-label="Lägg till" style={{ minWidth: "3rem", padding: "0 0.9rem", border: 0, borderRadius: 10, color: "var(--color-on-brand)", background: "var(--color-brand)", font: "inherit", fontSize: "1.35rem", fontWeight: 500, cursor: "pointer" }}>+</button>
             </div>
-            <p style={{ margin: 0, color: "#737373", fontSize: ".78rem", order: selectionField === "strengths" ? 2 : undefined }}>Skriv en egen och tryck på +, eller välj bland förslagen.</p>
+            <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".78rem", order: selectionField === "strengths" ? 2 : undefined }}>Skriv en egen och tryck på +, eller välj bland förslagen.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", order: selectionField === "strengths" ? 1 : undefined }}>
               {[...new Set([...(selectionField === "strengths" ? STRENGTH_TIPS : LANGUAGE_TIPS.map((item) => item.label)), ...(selectionField === "strengths" ? selectedStrengths : selectedLanguages)])].map((value) => {
                 const selected = (selectionField === "strengths" ? selectedStrengths : selectedLanguages).includes(value);
@@ -1871,16 +1871,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           </div>
         ) : current.field === "extracurriculars" ? (
           <div style={{ display: "grid", gap: ".8rem" }}>
-            <p style={{ margin: 0, color: "#737373", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
-            {otherEntries.map((entry, index) => <div key={`${entry.title}-${index}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".7rem", padding: ".85rem", border: "1.5px solid #e8e8e8", borderRadius: 12 }}><div><strong style={{ color: "#111", fontSize: ".9rem" }}>{entry.title}</strong><p style={{ margin: ".2rem 0 0", color: "#737373", fontSize: ".78rem" }}>{entry.type === "write" ? entry.value : entry.type === "link" ? "Länk bifogad" : "PDF bifogad"}</p></div><button type="button" onClick={() => setOtherEntries((previous) => previous.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Ta bort ${entry.title}`} style={{ border: 0, background: "none", color: "#737373", fontSize: "1.2rem", cursor: "pointer" }}>×</button></div>)}
+            <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".88rem", lineHeight: 1.5 }}>{current.description}</p>
+            {otherEntries.map((entry, index) => <div key={`${entry.title}-${index}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".7rem", padding: ".85rem", border: "1px solid var(--color-border)", borderRadius: 12 }}><div><strong style={{ color: "var(--color-text)", fontSize: ".9rem" }}>{entry.title}</strong><p style={{ margin: ".2rem 0 0", color: "var(--color-text-muted)", fontSize: ".78rem" }}>{entry.type === "write" ? entry.value : entry.type === "link" ? "Länk bifogad" : "PDF bifogad"}</p></div><button type="button" onClick={() => setOtherEntries((previous) => previous.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Ta bort ${entry.title}`} style={{ border: 0, background: "none", color: "var(--color-text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>×</button></div>)}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: ".5rem" }}>
-              {([ ["write", "Skriva"], ["link", "Bifoga länk"], ["pdf", "Bifoga PDF"] ] as const).map(([type, label]) => <button key={type} type="button" onClick={() => { setError(""); setOtherType(type); }} style={{ minHeight: "3.1rem", padding: ".55rem", borderRadius: 10, border: otherType === type ? "none" : "1.5px solid #e8e8e8", background: otherType === type ? "#111" : "#fff", color: otherType === type ? "#fff" : "#111", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: "pointer" }}>{label}</button>)}
+              {([ ["write", "Skriva"], ["link", "Bifoga länk"], ["pdf", "Bifoga PDF"] ] as const).map(([type, label]) => <button key={type} type="button" onClick={() => { setError(""); setOtherType(type); }} style={{ minHeight: "3.1rem", padding: ".55rem", borderRadius: 10, border: otherType === type ? "none" : "1px solid var(--color-border)", background: otherType === type ? "var(--color-brand)" : "#fff", color: otherType === type ? "#fff" : "var(--color-text)", font: "inherit", fontSize: ".78rem", fontWeight: 500, cursor: "pointer" }}>{label}</button>)}
             </div>
-            {otherType && <input type="text" value={otherTitle} onChange={(e) => setOtherTitle(e.target.value)} placeholder="Titel" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit" }} />}
-            {otherType === "write" && <textarea value={answers.extracurriculars} onChange={(e) => handleTextChange(e.target.value)} placeholder="Skriv ditt tillägg här" rows={4} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 12, border: "1.5px solid #e8e8e8", font: "inherit", resize: "vertical" }} />}
-            {otherType === "link" && <input type="url" value={otherLink} onChange={(e) => setOtherLink(e.target.value)} placeholder="https://linkedin.com/in/..." style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1.5px solid #e8e8e8", font: "inherit" }} />}
-            {otherType === "pdf" && <label style={{ display: "grid", placeItems: "center", gap: ".4rem", minHeight: "8rem", padding: "1rem", border: "1.5px dashed #d1d1d1", borderRadius: 12, color: "#49636a", fontSize: ".85rem", fontWeight: 700, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} style={{ display: "none" }} />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
-            <button type="button" onClick={saveOtherEntry} style={{ justifySelf: "start", padding: ".65rem .9rem", border: 0, borderRadius: 10, color: "#fff", background: "#111", font: "inherit", fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>Spara tillägg</button>
+            {otherType && <input type="text" value={otherTitle} onChange={(e) => setOtherTitle(e.target.value)} placeholder="Titel" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", font: "inherit" }} />}
+            {otherType === "write" && <textarea value={answers.extracurriculars} onChange={(e) => handleTextChange(e.target.value)} placeholder="Skriv ditt tillägg här" rows={4} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 12, border: "1px solid var(--color-border)", font: "inherit", resize: "vertical" }} />}
+            {otherType === "link" && <input type="url" value={otherLink} onChange={(e) => setOtherLink(e.target.value)} placeholder="https://linkedin.com/in/..." style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", font: "inherit" }} />}
+            {otherType === "pdf" && <label style={{ display: "grid", placeItems: "center", gap: ".4rem", minHeight: "8rem", padding: "1rem", border: "1.5px dashed #d1d1d1", borderRadius: 12, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
+            <button type="button" onClick={saveOtherEntry} style={{ justifySelf: "start", padding: ".65rem .9rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: ".85rem", fontWeight: 500, cursor: "pointer" }}>Spara tillägg</button>
           </div>
         ) : current.field === "skills_text" ? (
           <div style={{ display: "grid", gap: "1rem" }}>
@@ -1895,9 +1895,9 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                 );
               })}
             </div>
-            <label style={{ display: "grid", gap: ".4rem", color: "#737373", fontSize: ".8rem", fontWeight: 600 }}>
+            <label style={{ display: "grid", gap: ".4rem", color: "var(--color-text-muted)", fontSize: ".8rem", fontWeight: 600 }}>
               Andra kompetenser
-              <textarea value={currentTextValue} onChange={(e) => handleTextChange(e.target.value)} placeholder="T.ex. kassasystem eller bildredigering" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 12, border: "1.5px solid #e8e8e8", fontSize: "1rem", outline: "none", resize: "none", fontFamily: "inherit", color: "#111111", background: "#ffffff" }} />
+              <textarea value={currentTextValue} onChange={(e) => handleTextChange(e.target.value)} placeholder="T.ex. kassasystem eller bildredigering" rows={3} style={{ width: "100%", boxSizing: "border-box", padding: "0.875rem 1rem", borderRadius: 12, border: "1px solid var(--color-border)", fontSize: "1rem", outline: "none", resize: "none", fontFamily: "inherit", color: "var(--color-text)", background: "#ffffff" }} />
             </label>
           </div>
         ) : current.type === "textarea" ? (
@@ -1911,12 +1911,12 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               boxSizing: "border-box",
               padding: "0.875rem 1rem",
               borderRadius: 12,
-              border: "1.5px solid #e8e8e8",
+              border: "1px solid var(--color-border)",
               fontSize: "1rem",
               outline: "none",
               resize: "none",
               fontFamily: "inherit",
-              color: "#111111",
+              color: "var(--color-text)",
               background: "#ffffff",
             }}
           />
@@ -1936,11 +1936,11 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               height: "3rem",
               padding: "0 1rem",
               borderRadius: 10,
-              border: "1.5px solid #e8e8e8",
+              border: "1px solid var(--color-border)",
               fontSize: "1rem",
               outline: "none",
               fontFamily: "inherit",
-              color: "#111111",
+              color: "var(--color-text)",
               background: "#ffffff",
             }}
           />
@@ -1966,7 +1966,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             background: "var(--color-brand)",
             color: "var(--color-on-brand)",
             fontSize: "1rem",
-            fontWeight: 700,
+            fontWeight: 500,
             cursor: saving ? "not-allowed" : "pointer",
             fontFamily: "inherit",
             opacity: saving ? 0.6 : 1,
@@ -1990,7 +1990,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               fontSize: "0.875rem",
               background: "none",
               border: "none",
-              color: "#a3a3a3",
+              color: "var(--color-text-muted)",
               cursor: "pointer",
               fontFamily: "inherit",
             }}

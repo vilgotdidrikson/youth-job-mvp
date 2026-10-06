@@ -91,3 +91,12 @@ Checks before publishing: TypeScript, focused ESLint and the production build pa
 - These final UI changes pass the production build and focused quiet ESLint. Physical mobile gesture, camera/microphone and all authenticated layout checks are still a manual review task; the build is not a substitute for those checks.
 
 - Youth application status now explicitly distinguishes a completed check from an unfinished/temporarily unavailable automatic check. A temporary provider failure does not turn a submitted application into a failed application, and the UI no longer silently treats every unavailable analysis as a completed check with no questions.
+
+## Responsive finishing pass — 2026-10-06
+
+- Extended CV/account form actions, selection controls and secondary text now use the shared rose/plum tokens and calmer typography. Upload inputs retain keyboard access with visible focus on the containing control; obsolete hidden wrappers stay hidden. Media/tool logos retain their own surfaces.
+- Date/month/year groups stack on narrow screens. Onboarding cards and company matching fields allow their content to shrink rather than forcing horizontal overflow.
+- Application announcement/employer titles wrap independently of their status badge. Candidate names, evidence and company announcement titles wrap; the company candidate workspace becomes one column at smaller tablet widths. Map list width is reduced at tablet sizes.
+- Mobile navigation has a consistent 66px base height plus the device safe area. The chat conversation uses the same height, dynamic viewport sizing and a top safe-area inset. Short desktop windows use a more compact conversation layout.
+- Validation: TypeScript, focused quiet ESLint, production build and whitespace checks pass. An authenticated dev browser review covered short youth onboarding, profile overview, the CV entry choices and guided form, plus the incomplete-CV chat state. No profile/application data was entered or submitted.
+- Remaining visual verification: physical-phone swipe/keyboard/camera/microphone, an existing active conversation and a company account with actual candidate/announcement data. Responsive source changes and a passing build are not substitutes for those checks. No database changes, production migrations or master changes in this pass.

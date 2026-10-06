@@ -49,3 +49,11 @@
 
 .application-answer-edit {display:inline-flex;align-items:center;min-height:40px;border:0;background:transparent;color:#b84164;padding:8px 0;font:inherit;font-size:.79rem;text-decoration:underline;text-underline-offset:4px;cursor:pointer;}
 .application-answer-edit:hover {color:#a73858;}
+
+/* Keep actual announcement titles readable without pushing status/actions out. */
+.application-completion-card > header > div:not(.application-company-avatar) {min-width:0;flex:1;}
+.application-completion-card > header h2,.application-completion-card > header p {overflow-wrap:anywhere;}
+.application-status {flex-shrink:0;}
+.application-job-link {max-width:100%;overflow-wrap:anywhere;}
+.application-job-link svg {flex-shrink:0;}
+@media(max-width:720px) {.application-status {flex-basis:calc(100% - 60px);}}

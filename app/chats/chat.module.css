@@ -28,7 +28,7 @@
 .conversationHeader { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid #f0d9e0; background:white; }
 .conversationHeader > div { flex:1; min-width:0; }
 .conversationHeader h2 { margin:0 0 5px; font-size:.94rem; font-weight:550; overflow-wrap:anywhere; }
-.conversationHeader p { margin:0; color:var(--muted); font-size:.75rem; }
+.conversationHeader p { margin:0; color:var(--muted); font-size:.75rem; overflow-wrap:anywhere; }
 .matchStatus { padding:6px 9px; color:#226a54; background:#edf6f0; border-radius:8px; font-size:.65rem; }
 .options { position:relative; }
 .options summary { padding:9px; border-radius:10px; list-style:none; color:var(--muted); cursor:pointer; }
@@ -69,11 +69,11 @@
  .heading h1 { font-size:1.8rem; } .heading p { font-size:.8rem; line-height:1.6; }
  .workspace { display:block; height:auto; min-height:0; border-radius:20px; }
  .inbox { border:0; } .conversation { display:none; } .inboxHeader { padding:20px 16px 16px; }
- .hasConversation { padding:0; height:calc(100dvh - 74px - env(safe-area-inset-bottom)); }
+ .hasConversation { padding:0; height:calc(100dvh - 66px - env(safe-area-inset-bottom)); }
  .hasConversation > .heading,.hasConversation .inbox { display:none; }
  .hasConversation .workspace { height:100%; border:0; border-radius:0; }
  .hasConversation .conversation { display:flex; height:100%; }
- .conversationHeader { padding:16px; gap:10px; } .conversationHeader .avatar { width:36px; height:36px; border-radius:11px; }
+ .conversationHeader { padding:calc(16px + env(safe-area-inset-top)) 16px 16px; gap:10px; } .conversationHeader .avatar { width:36px; height:36px; border-radius:11px; }
  .conversationHeader h2 { font-size:.85rem; } .matchStatus { display:none; }
  .mobileBack { display:grid; place-items:center; width:30px; height:40px; padding:0; border:0; color:var(--ink); background:transparent; }
  .mobileBack svg { transform:rotate(180deg); width:19px; }
@@ -88,3 +88,5 @@
 .quickReplies button {min-height:36px;max-width:100%;border:1px solid #f0d9e0;border-radius:999px;background:white;color:var(--accent);padding:8px 13px;font-size:.75rem;line-height:1.5;text-align:left;}
 .quickReplies button:hover {background:var(--rose);border-color:#dc6f8d;}
 @media(max-width:720px) {.quickReplies {padding:10px 16px 0;gap:6px;}.quickReplies button {font-size:.73rem;}}
+
+@media(max-height:600px) and (min-width:721px) {.page {padding-top:108px;}.heading {margin-bottom:16px;}.workspace {height:calc(100dvh - 220px);min-height:260px;}.conversationHeader {padding:12px 20px;}.quickReplies {padding-top:8px;}.quickReplies button {min-height:32px;padding:5px 10px;}.composer {padding:10px 20px;}}

@@ -1,4 +1,4 @@
-.nav { --ink: #4c303b; --muted: #896a76; position: fixed; z-index: 90; bottom: 0; inset-inline: 0; padding: .7rem 1rem calc(.6rem + env(safe-area-inset-bottom)); border-top: 1px solid #f0d9e0; background: rgb(255 250 251 / .96); color: var(--ink); backdrop-filter: blur(16px); }
+.nav { --ink: #4c303b; --muted: #896a76; position: fixed; z-index: 90; bottom: 0; inset-inline: 0; height:calc(66px + env(safe-area-inset-bottom)); padding:10px 12px calc(11px + env(safe-area-inset-bottom)); border-top: 1px solid #f0d9e0; background: rgb(255 250 251 / .96); color: var(--ink); backdrop-filter: blur(16px); }
 .brand, .account { display: none; }
 .links { display: flex; justify-content: space-around; max-width: 34rem; margin: auto; }
 .item { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: .35rem; min-height: 44px; color: var(--muted); text-decoration: none; font-size: .68rem; transition: color 180ms, background 180ms; }
