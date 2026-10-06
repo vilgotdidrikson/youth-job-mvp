@@ -30,6 +30,7 @@ export default function ChatsPage() {
   const [drafts, setDrafts] = useState<Record<string,string>>({}), [search, setSearch] = useState("");
   const [listState, setListState] = useState<"loading" | "ready" | "error">("loading"), [loadedId, setLoadedId] = useState("");
   const [error, setError] = useState(""), [messageError, setMessageError] = useState(""), [sending, setSending] = useState(false);
+  const [messageNotice, setMessageNotice] = useState(""), [historyRetry, setHistoryRetry] = useState(0);
   const [hiring, setHiring] = useState(false), [blocking, setBlocking] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
@@ -56,19 +57,28 @@ export default function ChatsPage() {
       setMessages(current => ({id:selectedId, items:mergeMessages(items,current.id === selectedId ? current.items : [])})); setLoadedId(selectedId);
     }).catch(reason => { if(active) setMessageError(reason instanceof Error ? reason.message : "Kunde inte läsa meddelanden."); });
     return () => { active = false; unsubscribe(); };
-  },[selectedId,loadConversations]);
+  },[selectedId,loadConversations,historyRetry]);
   useEffect(() => { bottomRef.current?.scrollIntoView({behavior:"instant",block:"nearest"}); },[messages]);
-  const select = (id: string | null) => { selectedRef.current=id; setSelectedId(id); setLoadedId(""); setMessageError(""); setError(""); };
+  const select = (id: string | null) => {
+    if (id === selectedRef.current) return;
+    selectedRef.current=id; setSelectedId(id); setLoadedId(""); setMessageError(""); setMessageNotice(""); setError("");
+  };
+  const retryMessages = () => { setMessageError(""); setLoadedId(""); setHistoryRetry(current => current + 1); };
   const handleSend = async (event: FormEvent) => {
     event.preventDefault();
     const id = selectedId, text = id ? drafts[id]?.trim() : "";
     if(!id || !text || loadedId !== id || sendLock.current) return;
-    sendLock.current=true; setSending(true); setMessageError("");
+    sendLock.current=true; setSending(true); setMessageError(""); setMessageNotice("");
     try {
       await sendMessage(id,text);
       setDrafts(current => ({...current,[id]:current[id]?.trim() === text ? "" : current[id]}));
-      const items=await getMessages(id);
-      if(selectedRef.current === id) setMessages(current => ({id,items:mergeMessages(items,current.id === id ? current.items : [])}));
+      if(selectedRef.current === id) setMessageNotice("Meddelandet är skickat.");
+      try {
+        const items=await getMessages(id);
+        if(selectedRef.current === id) setMessages(current => ({id,items:mergeMessages(items,current.id === id ? current.items : [])}));
+      } catch {
+        if(selectedRef.current === id) setMessageError("Meddelandet är skickat, men samtalet kunde inte uppdateras. Hämta meddelandena igen för att se den senaste historiken.");
+      }
       void loadConversations(false);
     } catch(reason) { if(selectedRef.current === id) setMessageError(reason instanceof Error ? reason.message : "Kunde inte skicka meddelandet. Texten finns kvar."); }
     finally { sendLock.current=false; setSending(false); }
@@ -99,7 +109,8 @@ export default function ChatsPage() {
       {selected.status === "hired" && <p className={styles.hired}>Rekryteringen är markerad som genomförd. Samtalet finns kvar.</p>}
       {error && listState !== "error" && <p className={styles.error} role="alert">{error}</p>}
       <div className={styles.messages} aria-label="Meddelanden">{loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}><p>{message.message_text}</p><time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
-      {messageError && <p className={styles.error} role="alert">{messageError}</p>}
+      {messageNotice && <p className={styles.sentNotice} role="status">{messageNotice}</p>}
+      {messageError && <div className={styles.error}><p role="alert">{messageError}</p><button type="button" className={styles.secondary} disabled={sending} onClick={retryMessages}>Hämta meddelanden igen</button></div>}
       {loadedId === selectedId && !drafts[selected.conv.id]?.trim() && <div className={styles.quickReplies} aria-label="Förslag på svar">{quickReplies.map((reply) => <button key={reply} type="button" disabled={sending} onClick={() => {setDrafts(current => ({...current,[selected.conv.id]:reply}));composerRef.current?.focus();}}>{reply}</button>)}</div>}
       <form className={styles.composer} onSubmit={handleSend}><label><span className="sr-only">Meddelande till {selected.otherName}</span><textarea ref={composerRef} rows={1} value={drafts[selected.conv.id] || ""} onChange={event => setDrafts(current => ({...current,[selected.conv.id]:event.target.value}))} placeholder="Skriv ett meddelande…" disabled={sending || loadedId !== selectedId}/></label><button type="submit" aria-label={sending ? "Skickar meddelande" : "Skicka meddelande"} disabled={sending || loadedId !== selectedId || !drafts[selected.conv.id]?.trim()}><UiIcon name="arrow"/></button></form>
     </> : <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Ett samtal kan bli nästa steg</h2><p>Välj en matchning i inkorgen för att läsa eller skriva ett meddelande.</p></div>}</section></div>

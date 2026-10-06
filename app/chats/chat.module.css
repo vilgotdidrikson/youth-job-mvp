@@ -61,6 +61,8 @@
 .welcome svg { color:var(--accent); }
 .welcome h3 { color:var(--ink); font-weight:500; }
 .error { margin:8px 20px; padding:12px 16px; border-radius:12px; color:#9c304f; background:#fff0f4; font-size:.78rem; }
+.error p { margin:0 0 10px; line-height:1.6; }
+.sentNotice { flex-shrink:0; margin:0; padding:8px 24px; color:#226a54; background:#edf6f0; font-size:.75rem; }
 .hired { margin:0; padding:12px 24px; color:#226a54; background:#edf6f0; font-size:.76rem; }
 .mobileBack { display:none; }
 @media(max-width:900px) and (min-width:721px) { .workspace { grid-template-columns:260px minmax(0,1fr); } .matchStatus { display:none; } }
@@ -84,7 +86,7 @@
 }
 @media(prefers-reduced-motion:reduce) { .contact { transition:none; } }
 
-.quickReplies {display:flex;flex-wrap:wrap;gap:8px;padding:12px 24px 0;background:white;}
+.quickReplies {display:flex;flex-shrink:0;flex-wrap:wrap;gap:8px;padding:12px 24px 0;background:white;}
 .quickReplies button {min-height:36px;max-width:100%;border:1px solid #f0d9e0;border-radius:999px;background:white;color:var(--accent);padding:8px 13px;font-size:.75rem;line-height:1.5;text-align:left;}
 .quickReplies button:hover {background:var(--rose);border-color:#dc6f8d;}
 @media(max-width:720px) {.quickReplies {padding:10px 16px 0;gap:6px;}.quickReplies button {font-size:.73rem;}}

@@ -57,3 +57,5 @@
 .application-job-link {max-width:100%;overflow-wrap:anywhere;}
 .application-job-link svg {flex-shrink:0;}
 @media(max-width:720px) {.application-status {flex-basis:calc(100% - 60px);}}
+
+.application-completion-card[hidden] { display:none!important; }
