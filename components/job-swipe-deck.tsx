@@ -14,12 +14,13 @@ interface JobSwipeDeckProps {
   savedIds: Set<string>;
   emptyTitle: string;
   emptySubtitle: string;
+  onClearFilters?: () => void;
   interestedLabel: string;
   skipLabel: string;
   swipeHint: string;
 }
 
-export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
+export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
   const [dragX, setDragX] = useState(0);
   const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,7 +54,7 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
     finally { setSaving(false); }
   };
 
-  if (!currentJob) return <section className={styles.empty} aria-live="polite"><span className={styles.emptyIcon}><UiIcon name="discover" width="32" height="32"/></span><h2>{emptyTitle}</h2><p>{emptySubtitle}</p><Link href="/swipe" className={styles.textLink}>Utforska jobb <UiIcon name="arrow"/></Link></section>;
+  if (!currentJob) return <section className={styles.empty} aria-live="polite"><span className={styles.emptyIcon}><UiIcon name="discover" width="32" height="32"/></span><h2>{emptyTitle}</h2><p>{emptySubtitle}</p><>{onClearFilters ? <button type="button" className={styles.textLink} onClick={onClearFilters}>Rensa filter <UiIcon name="arrow"/></button> : <Link href="/swipe" className={styles.textLink}>Utforska jobb <UiIcon name="arrow"/></Link>}</></section>;
   const image = currentJob.image_url?.split(",")[0]?.trim();
   const saved = savedIds.has(currentJob.id);
   return <div className={styles.deck}>

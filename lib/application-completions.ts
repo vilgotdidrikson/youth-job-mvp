@@ -66,7 +66,7 @@ export interface ApplicationFollowup {
   job_profile_version: number; status: "pending" | "answered" | "skipped"; answer: string; created_at: string; answered_at: string | null;
 }
 export async function getApplicationFollowups(jobId?: string): Promise<ApplicationFollowup[]> {
-  let query = getSupabaseClient().from("application_followups").select("*").order("created_at");
+  let query = getSupabaseClient().from("application_followups").select("*").order("created_at").order("id");
   if (jobId) query = query.eq("job_id", jobId);
   const { data, error } = await query;
   if (error) throw new Error("Kunde inte läsa kompletteringsfrågorna.");

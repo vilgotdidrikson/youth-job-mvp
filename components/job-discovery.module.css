@@ -136,3 +136,5 @@
 .cardChips span {max-width:100%;overflow-wrap:anywhere;}
 .company {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .action {line-height:1.5;}
+
+button.textLink {border:0;background:transparent;font:inherit;cursor:pointer;}

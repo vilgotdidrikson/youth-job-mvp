@@ -47,11 +47,11 @@ function CvPdfDocument({ cvText }: { cvText: string }) {
   const { name, sections } = parseCv(cvText);
 
   return (
-    <Document title={`${name} - CV`} author="Employo">
+    <Document title={`${name} - CV`} author="MatchnWork">
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.name}>{name}</Text>
-          <Text style={styles.brand}>CV skapad med Employo</Text>
+          <Text style={styles.brand}>CV skapat med MatchnWork</Text>
         </View>
         {sections.map((section, index) => (
           <View key={`${section.heading ?? "text"}-${index}`} style={styles.section}>
@@ -59,7 +59,7 @@ function CvPdfDocument({ cvText }: { cvText: string }) {
             <Text style={styles.body}>{section.body}</Text>
           </View>
         ))}
-        <Text style={styles.footer} fixed>Employo - ditt CV, din start</Text>
+        <Text style={styles.footer} fixed>MatchnWork - ditt CV, din start</Text>
       </Page>
     </Document>
   );
@@ -71,7 +71,7 @@ function safeFilename(value: string): string {
 
 export async function createCvPdfFile(cvText: string, fullName: string): Promise<File> {
   const blob = await pdf(<CvPdfDocument cvText={cvText} />).toBlob();
-  return new File([blob], `${safeFilename(fullName || "mitt-cv")}-employo-cv.pdf`, { type: "application/pdf" });
+  return new File([blob], `${safeFilename(fullName || "mitt-cv")}-matchnwork-cv.pdf`, { type: "application/pdf" });
 }
 
 export function downloadPdfFile(file: File): void {

@@ -328,3 +328,7 @@
 /* Comfortable controls in the announcement builder and preview. */
 .mnw-product .job-builder-chips .chip { min-height:44px; padding:10px 14px; line-height:1.5; white-space:normal; text-align:center; }
 .mnw-job-preview-modal .job-builder-preview-close { width:44px; height:44px; }
+
+.mnw-product :is(.cv-hub-chips button,.cv-hub-edit-links button) {min-height:44px;padding:10px 14px;line-height:1.5;white-space:normal;}
+.mnw-product .cv-hub-check {min-height:44px;line-height:1.6;cursor:pointer;}
+.mnw-product .cv-hub-check input {flex-shrink:0;height:20px;width:20px;min-height:20px;padding:0;}

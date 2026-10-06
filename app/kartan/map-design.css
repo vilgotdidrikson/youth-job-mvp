@@ -55,3 +55,8 @@
 }
 
 @media(min-width:721px) and (max-width:900px) {.mnw-map-workspace {grid-template-columns:260px minmax(0,1fr);gap:16px;}.mnw-map-list {padding:15px;}.mnw-map-job footer {flex-wrap:wrap;}}
+
+.mnw-map :is(.map-back-link,.mnw-map-empty a,.mnw-map-job footer a) {min-height:44px;display:inline-flex;align-items:center;padding:10px 0;line-height:1.5;}
+.mnw-map-job footer {padding-block:4px;}
+.mnw-map-job footer span {min-width:0;overflow-wrap:anywhere;line-height:1.6;}
+.mnw-map-switch button {min-height:44px;}

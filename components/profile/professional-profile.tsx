@@ -27,5 +27,6 @@ export function ExperienceCard({ title, children }: { title: string; children: R
 }
 
 export function SkillList({ skills }: { skills: string[] }) {
-  return <div className="network-skill-list">{skills.length ? skills.map((skill) => <span key={skill}>{skill}</span>) : <span className="network-empty">Lägg till dina styrkor</span>}</div>;
+  const uniqueSkills = [...new Set(skills.map(skill => skill.trim()).filter(Boolean))];
+  return <div className="network-skill-list">{uniqueSkills.length ? uniqueSkills.map((skill) => <span key={skill}>{skill}</span>) : <span className="network-empty">Lägg till dina styrkor</span>}</div>;
 }

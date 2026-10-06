@@ -167,6 +167,10 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     }
   }, [draft, editedSections, key, ready, returnToReview, step, user]);
 
+  useEffect(() => {
+    if (ready) window.scrollTo({ top: 0, behavior: "instant" });
+  }, [ready, step]);
+
   const generate = async () => {
     setError(""); setGenerating(true);
     try {

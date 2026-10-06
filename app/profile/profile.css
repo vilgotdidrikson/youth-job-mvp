@@ -171,3 +171,5 @@
 .mnw-profile-card-heading > :is(a,button) {line-height:1.5;text-align:center;}
 .mnw-profile .network-profile-header-content > * {min-width:0;}
 .mnw-profile-shortcut span {min-width:0;overflow-wrap:anywhere;}
+
+.mnw-profile .network-skill-list span {max-width:100%;overflow-wrap:anywhere;line-height:1.7;}
