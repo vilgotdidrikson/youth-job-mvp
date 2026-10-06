@@ -83,3 +83,9 @@ Checks before publishing: TypeScript, focused ESLint and the production build pa
 - DEV transactional tests additionally pass stale criterion-version rejection, normalized-label deduplication, the three-per-request/six-per-application limits and database rejection of trainable/sensitive criteria. The entire transaction rolls back its synthetic accounts and data.
 - Disposable accounts, the test announcement, generated questions and notifications from live API verification were removed from DEV after the checks. No production data was used.
 - The centered pricing layout and youth/company switch were confirmed on the deployed dev desktop view. Full authenticated/mobile visual review remains outstanding.
+
+## Final gesture and voice polish
+
+- Swipe gestures now track one primary pointer. Secondary touches cannot replace its start position or finish another finger's gesture; saving a bookmark and an in-flight decision temporarily prevent a new drag. Photos remain non-draggable and vertical touch scrolling retains its cancellation path.
+- The voice screen uses the shared microphone line icon with a readable plum-on-rose idle state and white-on-primary listening state. Legacy CV text editing uses the same font as the rest of the interface.
+- These final UI changes pass the production build and focused quiet ESLint. Physical mobile gesture, camera/microphone and all authenticated layout checks are still a manual review task; the build is not a substitute for those checks.

@@ -9,6 +9,7 @@ import { createEmptyStructuredCv, type StructuredCvData } from "@/lib/structured
 import type { CvInterviewArea } from "@/lib/cv-interview";
 import { INTERVIEW_QUESTIONS, type InterviewTurn } from "@/lib/voice-interview";
 import { authenticatedAudioUrl, authenticatedHeaders } from "@/lib/api-client";
+import { UiIcon } from "@/components/ui-icon";
 
 const VOICE_CV_STORAGE_KEY = "employo-voice-cv-answers";
 const VOICE_CV_STRUCTURED_KEY = "employo-voice-cv-structured";
@@ -331,7 +332,7 @@ export default function VoiceCvPage() {
       <p style={{ margin: 0, color: "var(--accent)", fontSize: ".72rem", fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase" }}>Röstsamtal</p>
       <h1 style={{ margin: "-.6rem 0 0", color: "var(--text-primary)", fontSize: "1.9rem", letterSpacing: "-.05em" }}>Prata fram ditt CV</h1>
       <p style={{ margin: "-.5rem 0 0", color: "var(--text-secondary)", fontSize: ".9rem", lineHeight: 1.55 }}>AI:n frågar, du svarar. Samtalet går vidare när du har pratat klart.</p>
-      <div style={{ display: "grid", width: "5.5rem", height: "5.5rem", margin: ".4rem auto", placeItems: "center", borderRadius: "50%", color: "var(--color-on-brand)", background: status === "recording" ? VOICE_BUTTON_COLOR : "var(--color-surface-soft)", fontSize: "1.6rem" }} aria-hidden="true">{status === "recording" ? "●" : "◌"}</div>
+      <div style={{ display: "grid", width: "5.5rem", height: "5.5rem", margin: ".4rem auto", placeItems: "center", borderRadius: "50%", color: status === "recording" ? "var(--color-on-brand)" : "var(--accent)", background: status === "recording" ? VOICE_BUTTON_COLOR : "var(--color-surface-soft)", fontSize: "1.6rem" }} aria-hidden="true"><UiIcon name="microphone" width="34" height="34" /></div>
       {question && <p style={{ margin: 0, color: "var(--text-primary)", fontSize: ".95rem", lineHeight: 1.5 }}>{question}</p>}
       {lastTranscript && <details style={{ textAlign: "left", color: "var(--text-secondary)", fontSize: ".82rem" }}><summary>Det här hörde vi senast</summary><p>{lastTranscript}</p></details>}
       {status !== "complete" && <label style={{ fontSize: ".8rem", color: "var(--text-secondary)" }}><input type="checkbox" checked={longerPauses} onChange={(event) => { setLongerPauses(event.target.checked); silenceDelay.current = event.target.checked ? 2200 : 1100; }} /> Ge mig mer betänketid mellan meningarna</label>}

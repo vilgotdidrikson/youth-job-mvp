@@ -716,7 +716,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             border: "1.5px solid #e8e8e8",
             padding: "1rem",
             fontSize: "0.85rem",
-            fontFamily: "monospace",
+            fontFamily: "inherit",
             resize: "vertical",
             color: "#111111",
             lineHeight: 1.65,
