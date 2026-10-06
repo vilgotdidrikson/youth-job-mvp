@@ -106,61 +106,59 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [companyVerificationStatus, setCompanyVerificationStatus] = useState<"pending" | "verified" | "rejected">("pending");
   const [companyVerificationReason, setCompanyVerificationReason] = useState("");
   const [companyJobCount, setCompanyJobCount] = useState(0);
+  const [loadedProfileKey, setLoadedProfileKey] = useState("");
+  const [profileLoadError, setProfileLoadError] = useState("");
+  const [profileLoadRetry, setProfileLoadRetry] = useState(0);
+  const profileKey = `${user?.id ?? ""}:${profile?.role ?? ""}`;
 
   useEffect(() => {
-    if (!loading && user && profile?.role === "company") {
-      void (async () => {
-        try {
+    if (loading || !user || (profile?.role !== "company" && profile?.role !== "youth")) return;
+    let active = true;
+    const key = `${user.id}:${profile.role}`;
+    setLoadedProfileKey("");
+    setProfileLoadError("");
+    void (async () => {
+      try {
+        if (profile.role === "company") {
           const { getSupabaseClient } = await import("@/lib/supabase");
           const supabase = getSupabaseClient();
           const [cpResult, jobsResult] = await Promise.all([
             supabase.from("company_profiles").select("*").eq("user_id", user.id).maybeSingle(),
             supabase.from("jobs").select("id").eq("company_user_id", user.id).eq("is_active", true),
           ]);
-          if (cpResult.data) {
-            setCompanyName((cpResult.data as Record<string, unknown>).company_name as string ?? "");
-            setCompanyCity((cpResult.data as Record<string, unknown>).city as string ?? "");
-            setCompanyDescription((cpResult.data as Record<string, unknown>).description as string ?? "");
-            setCompanyOrganizationNumber((cpResult.data as Record<string, unknown>).organization_number as string ?? "");
-            const verificationStatus = (cpResult.data as Record<string, unknown>).verification_status;
-            if (verificationStatus === "verified" || verificationStatus === "rejected") setCompanyVerificationStatus(verificationStatus);
-            setCompanyVerificationReason((cpResult.data as Record<string, unknown>).verification_rejection_reason as string ?? "");
-          }
+          if (cpResult.error) throw cpResult.error;
+          if (jobsResult.error) throw jobsResult.error;
+          if (!active) return;
+          const cp = cpResult.data;
+          setCompanyName(cp?.company_name ?? "");
+          setCompanyCity(cp?.city ?? "");
+          setCompanyDescription(cp?.description ?? "");
+          setCompanyOrganizationNumber(cp?.organization_number ?? "");
+          setCompanyVerificationStatus(cp?.verification_status === "verified" || cp?.verification_status === "rejected" ? cp.verification_status : "pending");
+          setCompanyVerificationReason(cp?.verification_rejection_reason ?? "");
           setCompanyJobCount((jobsResult.data ?? []).length);
-          setError("");
-        } catch (loadError) {
-          setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda företagsprofilen.");
-        }
-      })();
-    }
-
-    if (!loading && user && profile?.role === "youth") {
-      const fallbackName = user.email?.split("@")[0] ?? "";
-
-      void (async () => {
-        try {
+        } else {
           const youthProfile = await getYouthProfile(user.id);
-          setForm(mapProfileToForm(youthProfile, fallbackName));
+          if (!active) return;
+          setForm(mapProfileToForm(youthProfile, user.email?.split("@")[0] ?? ""));
           const cv = typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text : "";
           setGeneratedCv(cv);
           setCvEditText(cv);
           setCvDocuments(Array.isArray(youthProfile?.documents) ? youthProfile.documents : []);
-          setError("");
-        } catch (loadError) {
-          console.error("Failed to load youth profile.", loadError);
-          setForm({ ...initialForm, name: fallbackName });
-          setGeneratedCv("");
-          setCvEditText("");
-          setCvDocuments([]);
-          setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda din profil.");
         }
-      })();
-    }
-  }, [loading, profile?.role, router, user]);
+        setError("");
+        setLoadedProfileKey(key);
+      } catch (loadError) {
+        if (!active) return;
+        setProfileLoadError(loadError instanceof Error ? loadError.message : "Kunde inte ladda profilen. Försök igen.");
+      }
+    })();
+    return () => { active = false; };
+  }, [loading, profile?.role, profileLoadRetry, user]);
 
   const completedSections = useMemo(() => {
     return {
-      personal: hasContent(form.name) && hasContent(form.dateOfBirth) && hasContent(form.address),
+      personal: hasContent(form.name) && hasContent(form.dateOfBirth) && hasContent(form.city),
       skills: form.skills.length > 0,
       experience: hasContent(form.experience),
       education: hasContent(form.education),
@@ -168,11 +166,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     };
   }, [form]);
 
-  const completion = useMemo(() => {
-    const entries = Object.values(completedSections);
-    const completeCount = entries.filter(Boolean).length;
-    return Math.round((completeCount / entries.length) * 100);
-  }, [completedSections]);
+  const completedSectionCount = Object.values(completedSections).filter(Boolean).length;
 
   const generatedCvDocument = cvDocuments.find((document) => document.type === "generated_cv");
   const uploadedCvDocument = cvDocuments.find((document) => document.type === "cv");
@@ -340,6 +334,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (!user) return null;
+  if ((profile?.role === "youth" || profile?.role === "company") && loadedProfileKey !== profileKey) return <main className="mobile-shell profile-page mnw-profile"><section className="mnw-profile-card">{profileLoadError ? <><h1>Profilen kunde inte hämtas</h1><p role="alert">{profileLoadError}</p><button type="button" className="secondary-btn" onClick={() => setProfileLoadRetry((value) => value + 1)}>Försök igen</button></> : <p role="status">Hämtar din profil…</p>}</section></main>;
 
   const accountSecurityCard = (
     <section className="card" style={{ padding: "1.25rem", marginTop: "0.75rem", marginBottom: "0.75rem" }} aria-labelledby="password-settings-title">
@@ -483,7 +478,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   );
 
   return <main className="mobile-shell profile-page mnw-profile">
-    <ProfileHeader name={form.name} location={form.city} completion={completion} onEdit={() => setProfileTab("details")} />
+    <ProfileHeader name={form.name} location={form.city} completedSections={completedSectionCount} totalSections={Object.keys(completedSections).length} onEdit={() => setProfileTab("details")} />
     <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([ ["overview","Översikt"], ["cv","Mitt CV"], ["details","Mina uppgifter"], ["settings","Inställningar"] ] as const).map(([value,label]) => <button type="button" key={value} aria-pressed={profileTab === value} className={profileTab === value ? "is-active" : ""} onClick={() => setProfileTab(value)}>{label}</button>)}</nav>
     {error && <p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote && <p role="status" className="mnw-profile-success">{savedNote}</p>}
     {profileTab === "overview" && <div className="mnw-profile-grid"><section className="mnw-profile-card mnw-profile-cv" aria-label="CV-status"><span className="mnw-profile-icon"><UiIcon name="briefcase"/></span><div className="mnw-profile-card-heading"><h2>Ditt CV</h2><span className={hasCv ? "mnw-status-ready" : "mnw-status-pending"}>{hasCv ? "Klart" : "Nästa steg"}</span></div><p>{hasCv ? "Ditt CV kan ses av arbetsgivare när du skickar en ansökan." : "Du kan upptäcka jobb redan nu. Gör klart ditt CV för att skicka dina ansökningar."}</p><Link className="cta-btn" href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}<UiIcon name="arrow" width="18"/></Link>{hasCv && <button type="button" className="mnw-profile-textlink" onClick={() => setProfileTab("cv")}>Visa CV och PDF</button>}</section>

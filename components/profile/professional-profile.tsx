@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function ProfileHeader({ name, location, completion, onEdit }: { name: string; location: string; completion: number; onEdit: () => void }) {
+export function ProfileHeader({ name, location, completedSections, totalSections, onEdit }: { name: string; location: string; completedSections: number; totalSections: number; onEdit: () => void }) {
   return (
     <header className="network-profile-header">
       <div className="network-profile-cover" />
@@ -12,7 +12,7 @@ export function ProfileHeader({ name, location, completion, onEdit }: { name: st
           <span>{location || "Sverige"} · Jobbsökande</span>
         </div>
         <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button></div>
-        <div className="network-profile-open"><strong>Profiluppgifter: {completion}%</strong><span>Du kan uppdatera dina uppgifter när du vill.</span></div>
+        <div className="network-profile-open"><strong>Fyllda profilavsnitt: {completedSections} av {totalSections}</strong><span>Ditt CV visas separat. Du kan lägga till fler uppgifter när du vill.</span></div>
       </div>
     </header>
   );

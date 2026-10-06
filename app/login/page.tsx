@@ -56,14 +56,21 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
+    // Read the submitted controls so password-manager/autofill changes are
+    // included even when they have not triggered React's change handlers.
+    const submitted = new FormData(event.currentTarget);
+    const submittedEmail = String(submitted.get("email") ?? "").trim();
+    const submittedPassword = String(submitted.get("password") ?? "");
+    const submittedConfirmation = String(submitted.get("confirmPassword") ?? "");
     setError("");
     setMessage("");
 
-    if (mode === "signup" && password !== confirmPassword) {
+    if (mode === "signup" && submittedPassword !== submittedConfirmation) {
       setError("Lösenorden matchar inte. Kontrollera och försök igen.");
       return;
     }
-    if (mode === "signup" && password.length < 8) {
+    if (mode === "signup" && submittedPassword.length < 8) {
       setError("Lösenordet måste innehålla minst 8 tecken.");
       return;
     }
@@ -72,7 +79,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
     try {
       if (mode === "signup") {
-        const result = await signUp(email, password, role);
+        const result = await signUp(submittedEmail, submittedPassword, role);
         if (result.session) {
           isRedirectingAfterSignup.current = true;
           // A full navigation lets the destination initialize from the newly
@@ -87,7 +94,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         setMode("login");
         return;
       }
-      const session = await signIn(email, password);
+      const session = await signIn(submittedEmail, submittedPassword);
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
       if (!adminError && isAdmin === true) {
         router.replace(safeRedirectTarget ?? "/admin");
@@ -108,7 +115,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         setError("Det finns redan ett konto med den e-postadressen. Logga in istället.");
         setMode("login");
       } else {
-        setError(msg);
+        setError(msg.toLowerCase().includes("invalid login credentials") ? "E-postadressen eller lösenordet stämmer inte. Kontrollera och försök igen." : msg);
       }
     } finally {
       setLoading(false);
@@ -144,10 +151,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           <div className="auth-card-heading"><h2>{isSignup ? "Skapa konto" : "Logga in"}</h2><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
           {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button></div></fieldset>}
           <div className="auth-fields">
-            <label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
-            <label>Lösenord<input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>
+            <label>E-postadress<input name="email" className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
+            <label>Lösenord<input name="password" className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>
             {!isSignup && <Link href="/forgot-password" className="auth-switch" style={{ display: "inline-block", textAlign: "left" }}>Glömt lösenord?</Link>}
-            {isSignup && <label>Bekräfta lösenord<input className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
+            {isSignup && <label>Bekräfta lösenord<input name="confirmPassword" className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
           </div>
           {error && <p className="auth-message auth-error">{error}</p>}
           {message && <p className="auth-message auth-success">{message}</p>}
