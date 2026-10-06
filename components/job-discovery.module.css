@@ -126,3 +126,13 @@
 .headerActions { display:flex;align-items:center;gap:8px;flex-shrink:0; }
 .sentNotice { display:flex;align-items:center;gap:8px;color:#226a54;font-size:.8rem;line-height:1.6;margin:0 0 14px; }
 .sentNotice svg { flex-shrink:0; }
+
+/* Filters and tertiary links keep their padding at narrow widths. */
+.filterChip,.clearFilters,.textLink {min-height:44px;line-height:1.5;}
+.clearFilters {padding:8px 10px;}
+.textLink {white-space:normal;}
+.textLink svg {flex-shrink:0;}
+.cardBadge {overflow-wrap:anywhere;}
+.cardChips span {max-width:100%;overflow-wrap:anywhere;}
+.company {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.action {line-height:1.5;}

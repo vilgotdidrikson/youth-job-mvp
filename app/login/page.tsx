@@ -148,16 +148,16 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         <div className="auth-form-stack">
           <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true">←</span><span>Tillbaka</span></button>
           <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
-          <div className="auth-card-heading"><h2>{isSignup ? "Skapa konto" : "Logga in"}</h2><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
-          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button></div></fieldset>}
+          <div className="auth-card-heading"><h1>{isSignup ? "Skapa konto" : "Logga in"}</h1><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
+          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div><button type="button" aria-pressed={role === "youth"} className={role === "youth" ? "auth-role-selected" : ""} onClick={() => setRole("youth")}>Arbetssökande</button><button type="button" aria-pressed={role === "company"} className={role === "company" ? "auth-role-selected" : ""} onClick={() => setRole("company")}>Företag</button></div></fieldset>}
           <div className="auth-fields">
             <label>E-postadress<input name="email" className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
-            <label>Lösenord<input name="password" className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : undefined} /></label>
-            {!isSignup && <Link href="/forgot-password" className="auth-switch" style={{ display: "inline-block", textAlign: "left" }}>Glömt lösenord?</Link>}
+            <label>Lösenord<input name="password" className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} aria-describedby={isSignup ? "signup-password-hint" : undefined} required minLength={isSignup ? 8 : undefined} />{isSignup && <span id="signup-password-hint" className="auth-field-hint">Minst 8 tecken.</span>}</label>
+            {!isSignup && <Link href="/forgot-password" className="auth-switch auth-recovery-link">Glömt lösenord?</Link>}
             {isSignup && <label>Bekräfta lösenord<input name="confirmPassword" className="auth-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
           </div>
-          {error && <p className="auth-message auth-error">{error}</p>}
-          {message && <p className="auth-message auth-success">{message}</p>}
+          {error && <p className="auth-message auth-error" role="alert">{error}</p>}
+          {message && <p className="auth-message auth-success" role="status">{message}</p>}
           <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true">↗</span></button>
           <button type="button" className="auth-switch" onClick={() => { setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
           </form>

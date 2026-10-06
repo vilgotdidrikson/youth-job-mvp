@@ -153,3 +153,12 @@
 .private-account-management h2,.private-account-management p {margin:0;}
 .private-account-management button {width:fit-content;min-height:44px;}
 @media(max-width:720px) {.private-account-heading {align-items:flex-start;gap:15px;margin-bottom:25px;}.private-account-heading > span {width:56px;height:56px;border-radius:18px;}.private-account-heading h1 {font-size:1.9rem;}.private-account-layout {grid-template-columns:minmax(0,1fr);gap:20px;}.private-account-layout .card {padding:22px;}}
+
+/* Quiet text actions still have enough padding to tap and wrap. */
+.company-profile-text-action {min-height:44px;padding-block:10px;line-height:1.5;}
+.company-profile-account a {min-height:44px;gap:12px;line-height:1.6;}
+.company-profile-identity > div {min-width:0;}
+.company-profile-identity :is(h1,p),.company-profile-tabs button {overflow-wrap:anywhere;}
+.company-profile-tabs button {min-height:44px;line-height:1.5;}
+.company-profile-culture > div {min-width:0;}
+@media(max-width:360px) {.company-profile-culture > div {min-width:0;flex-basis:calc(100% - 38px);}.company-profile-culture button {max-width:100%;white-space:normal;line-height:1.5;}}

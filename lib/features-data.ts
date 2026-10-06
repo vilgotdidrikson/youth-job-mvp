@@ -12,7 +12,7 @@ export const youthFeatures: FeatureItem[] = [
   { icon: "discover", title: "Smart jobbmatchning", body: "Få jobb rekommenderade utifrån dina erfarenheter, intressen och önskemål." },
   { icon: "map", title: "Karta", body: "Se jobb nära dig och hitta möjligheter i ditt område." },
   { icon: "chat", title: "Direktkontakt", body: "Matcha med företag och prata direkt i chatten." },
-  { icon: "info", title: "Komplettera ansökan", body: "Besvara individuella frågor om uppgifter som saknas för jobbet du har sökt." },
+  { icon: "info", title: "Komplettera ansökan", body: "Ansök direkt och komplettera frivilligt med uppgifter som saknas." },
 ];
 
 export const companyFeatures: FeatureItem[] = [
@@ -46,7 +46,7 @@ export const processSteps: string[] = [
   "Profil",
   "Jobb",
   "Match",
-  "Chat",
+  "Chatt",
   "Intervju",
   "Anställning",
 ];

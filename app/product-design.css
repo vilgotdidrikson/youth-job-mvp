@@ -308,3 +308,12 @@
 .mnw-product .cv-hub-upload {position:relative;}
 .mnw-product .cv-hub-upload input {display:block;position:absolute;width:1px;height:1px;min-height:0;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
 .mnw-product .cv-hub-upload:has(input:focus-visible) {outline:3px solid #b84164;outline-offset:4px;}
+
+/* Entry-page polish: roomy text actions and predictable multiline labels. */
+.mnw-product .auth-card-heading h1 {margin:0;}
+.mnw-product .auth-switch {min-height:44px;padding:10px 12px;white-space:normal;text-wrap:pretty;}
+.mnw-product .auth-fields .auth-recovery-link {width:fit-content;margin-top:-8px;padding:10px 0;text-align:left;}
+.mnw-product .auth-field-hint {display:block;margin-top:8px;color:#896a76;font-size:.76rem;font-weight:400;line-height:1.5;}
+.mnw-product .auth-submit {white-space:normal;line-height:1.5;}
+.mnw-product .auth-submit span {flex-shrink:0;}
+.mnw-product .auth-back-above {padding-inline:8px;margin-left:-8px;}

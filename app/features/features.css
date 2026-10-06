@@ -354,3 +354,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.features-card {min-width:0;}
+.features-card :is(h3,p),.features-ai-copy h2 {overflow-wrap:anywhere;text-wrap:pretty;}
+.features-ai-list li {align-items:flex-start;line-height:1.6;}
+.features-ai-list li span {flex-shrink:0;margin-top:.12rem;}
+.features-process-step {line-height:1.7;}

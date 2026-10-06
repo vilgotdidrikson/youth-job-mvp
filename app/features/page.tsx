@@ -5,7 +5,6 @@ import { UiIcon } from "@/components/ui-icon";
 import {
   aiCapabilities,
   companyFeatures,
-  individualFeatures,
   processSteps,
   youthFeatures,
 } from "@/lib/features-data";
@@ -20,7 +19,7 @@ export default function FeaturesPage() {
 
       <section className="features-hero">
         <h1>Hitta jobb. Hitta personal. Enklare.</h1>
-        <p>MatchnWork samlar hela vägen från första swipe till första arbetsdagen – för ungdomar, företag och privatpersoner.</p>
+        <p>MatchnWork samlar hela vägen från första swipe till första arbetsdagen – för ungdomar och företag.</p>
       </section>
 
       <section className="features-section">
@@ -42,21 +41,6 @@ export default function FeaturesPage() {
         <p className="features-section-eyebrow">För företag</p>
         <div className="features-grid features-grid-4">
           {companyFeatures.map((feature) => (
-            <article key={feature.title} className="features-card features-card-compact">
-              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="features-section">
-        <h2>Behöver du hjälp? Lägg ut jobbet.</h2>
-        <p className="features-section-eyebrow">För privatpersoner</p>
-        <p className="features-intro">Från snöskottning till lövkrattning – hitta ungdomar som kan hjälpa till nära dig.</p>
-        <div className="features-grid features-grid-4">
-          {individualFeatures.map((feature) => (
             <article key={feature.title} className="features-card features-card-compact">
               <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
               <h3>{feature.title}</h3>

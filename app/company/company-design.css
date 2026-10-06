@@ -78,3 +78,15 @@
 .company-job-heading h2,.company-candidate-profile > header :is(h2,span),.candidate-assessment-panel :is(li,blockquote) {overflow-wrap:anywhere;}
 .company-application-tabs button {min-width:0;}
 @media(min-width:721px) and (max-width:820px) {.company-applicants-layout {grid-template-columns:minmax(0,1fr);}.company-applicant-sidebar {position:static;}.company-applicant-list {max-height:270px;overflow:auto;}}
+
+/* Candidate controls accommodate longer text without squeezing badges. */
+.candidate-assessment-panel > header {flex-wrap:wrap;gap:12px;align-items:center;}
+.candidate-assessment-panel > header h3 {margin:0;flex:1;min-width:140px;}
+.candidate-assessment-panel header button {min-height:44px;line-height:1.5;white-space:normal;}
+.company-reviewed-application > div {min-width:0;}
+.company-reviewed-application a {min-height:44px;line-height:1.6;gap:8px;}
+.company-reviewed-application a svg {flex-shrink:0;}
+.company-jobs-grid .job-list-card-link {min-height:44px;line-height:1.6;gap:8px;}
+.company-application-tabs button span {flex-shrink:0;}
+.company-workspace-tabs {max-width:100%;}
+@media(max-width:360px) {.company-workspace-tabs button {white-space:normal;padding:10px 9px;gap:6px;}.company-workspace-tabs button svg {flex-shrink:0;}.company-application-tabs button {padding:10px 7px;gap:6px;}}

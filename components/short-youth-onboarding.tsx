@@ -42,13 +42,13 @@ export function ShortYouthOnboarding() {
     })();
   }, [loading, profile?.role, router, user]);
 
-  const save = async () => {
-    const name = normalizeFullName(form.fullName);
+  const save = async (submittedForm: Form) => {
+    const name = normalizeFullName(submittedForm.fullName);
     if (!name) { setError(MISSING_FULL_NAME_MESSAGE); setStep(0); return; }
-    if (!form.dateOfBirth || !form.city.trim() || !form.postalCode.trim()) { setError("Fyll i födelsedatum, ort och postnummer för att fortsätta."); setStep(1); return; }
+    if (!submittedForm.dateOfBirth || !submittedForm.city.trim() || !submittedForm.postalCode.trim()) { setError("Fyll i födelsedatum, ort och postnummer för att fortsätta."); setStep(1); return; }
     setSaving(true); setError("");
     try {
-      await saveYouthAccountDetails({ full_name: name, date_of_birth: form.dateOfBirth, city: form.city, postal_code: form.postalCode, address: "", additional_addresses: [] });
+      await saveYouthAccountDetails({ full_name: name, date_of_birth: submittedForm.dateOfBirth, city: submittedForm.city, postal_code: submittedForm.postalCode, address: "", additional_addresses: [] });
       const { error: updateError } = await getSupabaseClient().from("youth_profiles").update({ short_onboarding_completed: true }).eq("user_id", user?.id);
       if (updateError) throw new Error(updateError.message);
       router.replace("/swipe?welcome=1");
@@ -58,8 +58,8 @@ export function ShortYouthOnboarding() {
 
   if (!ready) return <main className="mnw-onboarding"><p role="status">Hämtar dina uppgifter…</p></main>;
   return <main className="mnw-onboarding"><Link href="/" className="mnw-onboarding-brand">MatchnWork</Link><div className="mnw-onboarding-layout"><aside className="mnw-onboarding-intro"><span className="mnw-onboarding-mark"><UiIcon name="discover" width="36" height="36"/></span><p>Ditt nästa steg börjar här</p><h1>Små steg.<br/>Nya möjligheter.</h1><p>Vi lär känna dig lite, så att du kan börja upptäcka jobb nära dig.</p><div className="mnw-onboarding-reassurance"><UiIcon name="info"/><span>Du kan utforska jobb först och göra klart ditt CV senare.</span></div></aside><section className="mnw-onboarding-card"><header><span>Steg {step + 1} av 2</span><p>{step === 0 ? "Om dig" : "Din plats"}</p></header><div className="mnw-onboarding-progress" role="progressbar" aria-label="Onboarding" aria-valuemin={0} aria-valuemax={2} aria-valuenow={step + 1}><span style={{width:`${(step + 1) * 50}%`}}/></div><h2>{step === 0 ? "Vad heter du?" : "Var vill du börja?"}</h2><p className="mnw-onboarding-lead">{step === 0 ? "Börja med ditt fullständiga namn och födelsedatum." : "Ort och postnummer hjälper oss att visa jobb som är relevanta för dig."}</p>
-    <form onSubmit={event => {event.preventDefault();if(step === 0){if(normalizeFullName(form.fullName) && form.dateOfBirth){setError("");setStep(1);}else setError("Fyll i fullständigt namn och födelsedatum.");}else void save();}}>
-    {step === 0 ? <><label>Fullständigt namn<input value={form.fullName} onChange={event => setForm({...form,fullName:event.target.value})} autoComplete="name" placeholder="Förnamn och efternamn" autoFocus required/></label><label>Födelsedatum<input type="date" value={form.dateOfBirth} onChange={event => setForm({...form,dateOfBirth:event.target.value})} autoComplete="bday" required/></label></> : <><label>Ort<input value={form.city} onChange={event => setForm({...form,city:event.target.value})} autoComplete="address-level2" placeholder="Till exempel Stockholm" autoFocus required/></label><label>Postnummer<input inputMode="numeric" value={form.postalCode} onChange={event => setForm({...form,postalCode:event.target.value})} autoComplete="postal-code" placeholder="123 45" required/></label></>}
+    <form onSubmit={event => {event.preventDefault();if(saving)return;const values=new FormData(event.currentTarget);const submittedForm=step === 0 ? {...form,fullName:String(values.get("fullName") ?? ""),dateOfBirth:String(values.get("dateOfBirth") ?? "")} : {...form,city:String(values.get("city") ?? ""),postalCode:String(values.get("postalCode") ?? "")};setForm(submittedForm);if(step === 0){if(normalizeFullName(submittedForm.fullName) && submittedForm.dateOfBirth){setError("");setStep(1);}else setError("Fyll i fullständigt namn och födelsedatum.");}else void save(submittedForm);}}>
+    {step === 0 ? <><label>Fullständigt namn<input name="fullName" value={form.fullName} onChange={event => setForm({...form,fullName:event.target.value})} autoComplete="name" placeholder="Förnamn och efternamn" autoFocus required/></label><label>Födelsedatum<input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={event => setForm({...form,dateOfBirth:event.target.value})} autoComplete="bday" required/></label></> : <><label>Ort<input name="city" value={form.city} onChange={event => setForm({...form,city:event.target.value})} autoComplete="address-level2" placeholder="Till exempel Stockholm" autoFocus required/></label><label>Postnummer<input name="postalCode" inputMode="numeric" value={form.postalCode} onChange={event => setForm({...form,postalCode:event.target.value})} autoComplete="postal-code" placeholder="123 45" required/></label></>}
     {error && <p className="mnw-onboarding-error" role="alert">{error}</p>}
     <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Upptäck jobb"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
 }

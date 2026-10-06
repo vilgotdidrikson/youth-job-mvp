@@ -15,12 +15,10 @@ import "./pricing.css";
 
 export default function PricingPage() {
   const [audience, setAudience] = useState<PricingAudience>("youth");
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const plans = pricingPlans[audience];
 
   const selectAudience = (nextAudience: PricingAudience) => {
     setAudience(nextAudience);
-    setSelectedPlanId(null);
   };
 
   return (
@@ -30,13 +28,12 @@ export default function PricingPage() {
       <section className="pricing-hero">
         <h1>{pricingHeadlines[audience]}</h1>
 
-        <div className="pricing-switch" role="tablist" aria-label="Kundtyp">
+        <div className="pricing-switch" role="group" aria-label="Kundtyp">
           {pricingAudiences.map((option) => (
             <button
               key={option.id}
               type="button"
-              role="tab"
-              aria-selected={audience === option.id}
+              aria-pressed={audience === option.id}
               className={audience === option.id ? "pricing-switch-selected" : ""}
               onClick={() => selectAudience(option.id)}
             >
@@ -46,21 +43,11 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className={`pricing-grid pricing-grid-${plans.length}`} role="radiogroup" aria-label="Välj prisplan">
+      <section className={`pricing-grid pricing-grid-${plans.length}`} aria-label="Prisplaner">
         {plans.map((plan) => (
           <article
             key={plan.id}
-            className={`pricing-card${selectedPlanId === plan.id ? " pricing-card-selected" : ""}`}
-            role="radio"
-            aria-checked={selectedPlanId === plan.id}
-            tabIndex={0}
-            onClick={() => setSelectedPlanId(plan.id)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                setSelectedPlanId(plan.id);
-              }
-            }}
+            className="pricing-card"
           >
             <h2>{plan.name}</h2>
             <p className="pricing-price">

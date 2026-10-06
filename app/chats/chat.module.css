@@ -93,3 +93,14 @@
 
 @media(max-height:600px) and (min-width:721px) {.page {padding-top:108px;}.heading {margin-bottom:16px;}.workspace {height:calc(100dvh - 220px);min-height:260px;}.conversationHeader {padding:12px 20px;}.quickReplies {padding-top:8px;}.quickReplies button {min-height:32px;padding:5px 10px;}.composer {padding:10px 20px;}}
 .headingRow { display:flex;align-items:center;justify-content:space-between;gap:16px; }
+
+/* Text and menu actions use the same touch target as the composer. */
+.back {min-height:44px;line-height:1.5;}
+.options summary {display:grid;place-items:center;min-width:44px;min-height:44px;}
+.options button {min-height:44px;line-height:1.5;}
+.mobileBack {width:44px;height:44px;flex-shrink:0;}
+.quickReplies button {min-height:44px;white-space:normal;overflow-wrap:anywhere;}
+.search input {font-size:16px;}
+.jobLink {min-height:44px;}
+.jobLink > svg {flex-shrink:0;}
+.primary,.secondary {white-space:normal;line-height:1.5;text-align:center;}
