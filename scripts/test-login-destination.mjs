@@ -9,8 +9,8 @@ const dir = mkdtempSync(join(tmpdir(), 'mnw-login-'));
 try {
   writeFileSync(join(dir, 'destination.mjs'), ts.transpileModule(readFileSync('lib/login-destination.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
   const { loginDestination } = await import(pathToFileURL(join(dir, 'destination.mjs')));
-  assert.equal(loginDestination('company', '/swipe?saved=1'), '/company?view=swipe');
-  assert.equal(loginDestination('company', '/applications'), '/company?view=swipe');
+  assert.equal(loginDestination('company', '/swipe?saved=1'), '/company?view=annonser');
+  assert.equal(loginDestination('company', '/applications'), '/company?view=annonser');
   assert.equal(loginDestination('youth', '/company?view=kandidater'), '/swipe');
   assert.equal(loginDestination('youth', '/admin'), '/swipe');
   assert.equal(loginDestination('private', '/youth/cv'), '/private');

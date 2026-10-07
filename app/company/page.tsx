@@ -101,6 +101,7 @@ function CompanyPageContent() {
   const searchParams = useSearchParams();
   const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const hasCompanyAccess = profile?.role === "company";
+  const jobDraftStorageKey = `${JOB_DRAFT_STORAGE_KEY}:${user?.id ?? "signed-out"}`;
 
   const [tab, setTab] = useState<Tab>("kandidater");
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -141,32 +142,36 @@ function CompanyPageContent() {
   const [customRequirement, setCustomRequirement] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [builderStep, setBuilderStep] = useState<1 | 2 | 3>(1);
-  const [draftHydrated, setDraftHydrated] = useState(false);
+  const [draftOwnerId, setDraftOwnerId] = useState<string | null>(null);
+  const draftHydrated = Boolean(user?.id) && draftOwnerId === user?.id;
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
   const skipNextDraftSaveRef = useRef(false);
 
   useEffect(() => {
+    if (!user?.id) return;
+    setForm(EMPTY_FORM);
+    setBuilderStep(1);
     try {
-      const stored = window.localStorage.getItem(JOB_DRAFT_STORAGE_KEY);
+      const stored = window.localStorage.getItem(jobDraftStorageKey);
       if (!stored) return;
       const parsed = JSON.parse(stored) as Partial<JobForm> | { form?: Partial<JobForm>; builderStep?: number };
       const savedForm = "form" in parsed ? parsed.form : parsed;
       if (savedForm && typeof savedForm === "object") setForm({ ...EMPTY_FORM, ...savedForm });
       if ("builderStep" in parsed && (parsed.builderStep === 1 || parsed.builderStep === 2 || parsed.builderStep === 3)) setBuilderStep(parsed.builderStep);
     } catch {
-      window.localStorage.removeItem(JOB_DRAFT_STORAGE_KEY);
+      window.localStorage.removeItem(jobDraftStorageKey);
     } finally {
-      setDraftHydrated(true);
+      setDraftOwnerId(user.id);
     }
-  }, []);
+  }, [jobDraftStorageKey, user?.id]);
 
   useEffect(() => {
     if (!draftHydrated) return;
     if (skipNextDraftSaveRef.current) { skipNextDraftSaveRef.current = false; return; }
-    window.localStorage.setItem(JOB_DRAFT_STORAGE_KEY, JSON.stringify({ form, builderStep }));
-  }, [builderStep, draftHydrated, form]);
+    window.localStorage.setItem(jobDraftStorageKey, JSON.stringify({ form, builderStep }));
+  }, [builderStep, draftHydrated, form, jobDraftStorageKey]);
 
   const loadData = async (userId: string) => {
     try {
@@ -399,7 +404,7 @@ function CompanyPageContent() {
       skipNextDraftSaveRef.current = true;
       setForm(EMPTY_FORM);
       setBuilderStep(1);
-      window.localStorage.removeItem(JOB_DRAFT_STORAGE_KEY);
+      window.localStorage.removeItem(jobDraftStorageKey);
       setJobImageFiles([]);
       setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
@@ -469,7 +474,7 @@ function CompanyPageContent() {
   };
 
   const handleSaveDraft = () => {
-    window.localStorage.setItem(JOB_DRAFT_STORAGE_KEY, JSON.stringify({ form, builderStep }));
+    window.localStorage.setItem(jobDraftStorageKey, JSON.stringify({ form, builderStep }));
     setDraftSaved(true);
     window.setTimeout(() => setDraftSaved(false), 2500);
   };

@@ -2,7 +2,7 @@ import type { Role } from "./types";
 
 /** Keep sign-in deep links within the current account's workspace. */
 export function loginDestination(role: Role, requested: string | null, isAdmin = false): string {
-  const fallback = isAdmin ? "/admin" : role === "company" ? "/company?view=swipe" : role === "youth" ? "/swipe" : "/private";
+  const fallback = isAdmin ? "/admin" : role === "company" ? "/company?view=annonser" : role === "youth" ? "/swipe" : "/private";
   if (!requested?.startsWith("/") || requested.startsWith("//") || /[\\\u0000-\u0020]/.test(requested)) return fallback;
   const url = new URL(requested, "https://matchnwork.invalid");
   const path = url.pathname;
