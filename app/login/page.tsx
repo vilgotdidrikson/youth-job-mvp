@@ -8,6 +8,7 @@ import { getUserProfile, signIn, signUp } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
+import { loginDestination } from "@/lib/login-destination";
 
 type Mode = "login" | "signup";
 
@@ -34,16 +35,16 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
       if (!active) return;
       if (!adminError && isAdmin === true) {
-        router.replace(safeRedirectTarget ?? "/admin");
+        router.replace(loginDestination(profile?.role ?? "youth", safeRedirectTarget, true));
         return;
       }
       if (!profile) return;
       if (profile.role === "youth") {
         const state = await getYouthFlowState(user.id);
-        if (active) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
+        if (active) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(profile.role, safeRedirectTarget));
         return;
       }
-      router.replace(safeRedirectTarget ?? (profile.role === "company" ? "/company?view=swipe" : "/private"));
+      router.replace(loginDestination(profile.role, safeRedirectTarget));
     })();
     return () => { active = false; };
   }, [profile, router, safeRedirectTarget, sessionLoading, user]);
@@ -97,7 +98,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       const session = await signIn(submittedEmail, submittedPassword);
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
       if (!adminError && isAdmin === true) {
-        router.replace(safeRedirectTarget ?? "/admin");
+        router.replace(loginDestination(profile?.role ?? "youth", safeRedirectTarget, true));
         return;
       }
       const signedInProfile = await getUserProfile(session.user.id);
@@ -107,8 +108,8 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       }
       if (signedInProfile.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
-        router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : safeRedirectTarget ?? "/swipe");
-      } else router.replace(safeRedirectTarget ?? (signedInProfile.role === "company" ? "/company?view=swipe" : "/private"));
+        router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(signedInProfile.role, safeRedirectTarget));
+      } else router.replace(loginDestination(signedInProfile.role, safeRedirectTarget));
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {

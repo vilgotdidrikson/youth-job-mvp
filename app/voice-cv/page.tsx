@@ -1,5 +1,7 @@
 "use client";
 
+import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -55,11 +57,12 @@ export default function VoiceCvPage() {
   }, [loading, profile, router, user]);
 
   useEffect(() => {
+    if (!user?.id) return;
     try {
-      const draft = JSON.parse(sessionStorage.getItem(VOICE_CV_DRAFT_KEY) ?? "null") as { answers?: VoiceAnswers; state?: VoiceInterviewState; question?: string } | null;
+      const draft = JSON.parse(sessionStorage.getItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id)) ?? "null") as { answers?: VoiceAnswers; state?: VoiceInterviewState; question?: string } | null;
       if (!draft?.answers || !draft.state) return;
       if (!draft.state.structuredCv || !Array.isArray(draft.state.askedQuestionIds)) {
-        sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
+        sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
         return;
       }
       answers.current = draft.answers;
@@ -67,12 +70,12 @@ export default function VoiceCvPage() {
       setQuestion(draft.question ?? "");
       setStatus("paused");
     } catch {
-      sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
+      sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
     }
-  }, []);
+  }, [user?.id]);
 
   const saveDraft = (currentQuestion = question) => {
-    sessionStorage.setItem(VOICE_CV_DRAFT_KEY, JSON.stringify({ answers: answers.current, state: interviewState.current, question: currentQuestion }));
+    sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id), JSON.stringify({ answers: answers.current, state: interviewState.current, question: currentQuestion }));
   };
 
   const stopSilenceMonitor = () => {
@@ -150,10 +153,10 @@ export default function VoiceCvPage() {
       setQuestion(nextQuestion);
       saveDraft(nextQuestion);
       if (result.complete) {
-        sessionStorage.setItem(VOICE_CV_STORAGE_KEY, JSON.stringify(result.answers));
-        sessionStorage.setItem(VOICE_CV_STRUCTURED_KEY, JSON.stringify(result.structured ?? result.state.structuredCv));
-        sessionStorage.setItem("employo-voice-cv-conversation", JSON.stringify(result.state.conversation ?? []));
-        sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
+        sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_STORAGE_KEY, user?.id), JSON.stringify(result.answers));
+        sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_STRUCTURED_KEY, user?.id), JSON.stringify(result.structured ?? result.state.structuredCv));
+        sessionStorage.setItem(voiceCvStorageKey("employo-voice-cv-conversation", user?.id), JSON.stringify(result.state.conversation ?? []));
+        sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
         retryTurn.current = null;
         microphone.current?.getTracks().forEach((track) => track.stop());
         microphone.current = null;
@@ -303,7 +306,7 @@ export default function VoiceCvPage() {
   };
 
   const abortCall = () => {
-    sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
+    sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
     stopCall();
     setError("");
     setStatus("idle");
@@ -319,7 +322,7 @@ export default function VoiceCvPage() {
   };
 
   const goBack = () => {
-    sessionStorage.removeItem(VOICE_CV_DRAFT_KEY);
+    sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
     stopCall();
     router.push("/youth/cv");
   };

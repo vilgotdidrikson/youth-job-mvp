@@ -240,7 +240,7 @@ export default function CompanyOnboardingPage() {
           </div>
 
           {error && (
-            <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
+            <div role="alert" style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
               {error}
             </div>
           )}
@@ -257,12 +257,13 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /></>}
 
-            {profileQuestion === 1 && <><label htmlFor="company-onboarding-industry" style={labelStyle}>Bransch</label><input id="company-onboarding-industry"
+            {profileQuestion === 1 && <><label htmlFor="company-onboarding-industry" style={labelStyle}>Bransch *</label><input id="company-onboarding-industry"
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
               style={{ marginBottom: "0.85rem" }}
               placeholder="T.ex. IT, Bygg eller Restaurang"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
+              required
               autoFocus
             /><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
 

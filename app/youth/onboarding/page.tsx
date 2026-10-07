@@ -1,5 +1,7 @@
 "use client";
 
+import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -526,9 +528,9 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         }
         if (voiceFinalize) {
           try {
-            const savedVoiceAnswers = JSON.parse(sessionStorage.getItem("employo-voice-cv-answers") ?? "{}") as Partial<Pick<Answers, "strengths" | "languages" | "work_experience" | "education" | "certificates">>;
+            const savedVoiceAnswers = JSON.parse(sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-answers", user?.id)) ?? "{}") as Partial<Pick<Answers, "strengths" | "languages" | "work_experience" | "education" | "certificates">>;
             setAnswers((previous) => ({ ...previous, ...savedVoiceAnswers }));
-            const savedStructuredCv = JSON.parse(sessionStorage.getItem("employo-voice-cv-structured") ?? "null") as StructuredCvData | null;
+            const savedStructuredCv = JSON.parse(sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-structured", user?.id)) ?? "null") as StructuredCvData | null;
             if (savedStructuredCv) setStructuredCv(savedStructuredCv);
           } catch {
             // The final optional step is still available if the temporary voice data is unavailable.
@@ -1208,7 +1210,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
     };
     let voiceConversation: unknown[] = [];
     if (voiceFinalize) {
-      try { voiceConversation = JSON.parse(sessionStorage.getItem("employo-voice-cv-conversation") ?? "[]"); } catch { /* The structured source still retains the original notes. */ }
+      try { voiceConversation = JSON.parse(sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-conversation", user?.id)) ?? "[]"); } catch { /* The structured source still retains the original notes. */ }
     }
     const cvPayload = {
       ...answersForCv,
@@ -1490,7 +1492,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       });
       sessionStorage.removeItem(cvDraftStorageKey);
       if (voiceFinalize) {
-        for (const key of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(key);
+        for (const key of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(key, user?.id));
       }
       router.replace(returnPath);
     } catch (saveError) {

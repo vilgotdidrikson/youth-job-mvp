@@ -1,5 +1,7 @@
 "use client";
 
+import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
+
 import Link from "next/link";
 import { UiIcon } from "./ui-icon";
 import { useEffect, useMemo, useState } from "react";
@@ -142,7 +144,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
           setGenerated({ text: youth.cv_text || renderStructuredCv(existingStructured), structured: existingStructured });
           setStep("preview");
         } else if (query.get("voice") === "finalize") {
-          const voice = sessionStorage.getItem("employo-voice-cv-structured");
+          const voice = sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-structured", user?.id));
           if (voice) {
             const cv = JSON.parse(voice) as StructuredCvData;
             setDraft({ ...EMPTY, about: cv.profile.summary ?? cv.profile.sourceNotes.join(" "), skills: cv.skills.map((item) => item.name).join(", "), languages: cv.languages.map((item) => item.name).join(", "), merits: cv.certifications.map((item) => item.name).filter(Boolean).join(", "), experience: cv.workExperience.flatMap((item) => item.sourceNotes).join("\n"), school: cv.education[0]?.school ?? "", program: cv.education[0]?.program ?? "", graduation: cv.education[0]?.expectedGraduation ?? cv.education[0]?.endDate ?? "" });
@@ -206,8 +208,13 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     try {
       const legacy = structuredCvToLegacy(generated.structured);
       const client = getSupabaseClient();
+      const { data: latestProfile, error: documentError } = await client.from("youth_profiles").select("documents").eq("user_id", user.id).single();
+      if (documentError) throw documentError;
+      const latestDocuments: YouthDocument[] = Array.isArray(latestProfile.documents) ? latestProfile.documents : [];
       const { error: saveError } = await client.from("youth_profiles").update({
         cv_text: generated.text, cv_generated: true,
+        // A PDF made from the previous text must not be presented as this CV.
+        documents: latestDocuments.filter((document) => document.type !== "generated_cv"),
         strengths: legacy.strengths, work_experience: legacy.workExperience, education: legacy.education,
         languages: legacy.languages,
       }).eq("user_id", user.id);
@@ -223,6 +230,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
         if (extendedSaveError) console.warn("Kunde inte spara utökade CV-fält:", extendedSaveError.message);
       }
       const applications = await submitApplicationDraftsAfterCv();
+      if (query.get("voice") === "finalize") {
+        for (const base of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(base, user.id));
+      }
       localStorage.removeItem(key); setMessage(completedCvMessage(applications, "Ditt CV är klart!"));
       window.setTimeout(() => router.push(returnPath), 1200);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte göra klart ditt CV."); }
