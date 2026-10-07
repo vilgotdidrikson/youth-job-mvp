@@ -80,6 +80,7 @@ export default function CompanyVerificationAdminPage() {
             <div><dt>Ort</dt><dd>{request.city || "Ej angiven"}</dd></div>
             <div><dt>Inskickad</dt><dd>{request.verification_submitted_at ? new Date(request.verification_submitted_at).toLocaleDateString("sv-SE") : "Datum saknas"}</dd></div>
           </dl>
+          {!request.organization_number && <p className="admin-alert">Företaget behöver komplettera sitt organisationsnummer innan det kan godkännas. Använd ”Begär komplettering” för att skicka en förklaring.</p>}
           <div className="admin-review-actions">
             <button type="button" className="cta-btn" disabled={actionId === request.user_id || !request.organization_number} onClick={() => void review(request, "verified")}>Godkänn företag</button>
             <button type="button" className="secondary-btn" disabled={actionId === request.user_id} onClick={() => void review(request, "rejected")}>Begär komplettering</button>
