@@ -93,6 +93,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        if (!nextProfile) throw new Error("Kontouppgifterna kunde inte hämtas. Försök igen.");
         updateProfile(nextProfile);
       } catch (sessionError) {
         console.error("Failed to synchronize the Supabase session in the client.", sessionError);
@@ -101,7 +102,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        if (!preserveStateOnError) {
+        if (!preserveStateOnError || !profileRef.current || profileRef.current.id !== userRef.current?.id) {
           updateUser(null);
           updateProfile(null);
           setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));

@@ -103,4 +103,6 @@
 .search input {font-size:16px;}
 .jobLink {min-height:44px;}
 .jobLink > svg {flex-shrink:0;}
+.matchStatus {flex-shrink:0;}
+@media(max-width:720px) {.composer textarea {font-size:16px;}.conversationHeader {align-items:flex-start;}}
 .primary,.secondary {white-space:normal;line-height:1.5;text-align:center;}

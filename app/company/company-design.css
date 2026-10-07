@@ -90,3 +90,12 @@
 .company-application-tabs button span {flex-shrink:0;}
 .company-workspace-tabs {max-width:100%;}
 @media(max-width:360px) {.company-workspace-tabs button {white-space:normal;padding:10px 9px;gap:6px;}.company-workspace-tabs button svg {flex-shrink:0;}.company-application-tabs button {padding:10px 7px;gap:6px;}}
+/* Candidate content stays readable for long names, job titles and smaller screens. */
+.company-applicant-row {grid-template-columns:auto minmax(0,1fr) auto;}
+.company-applicant-row > span:nth-child(2) {min-width:0;overflow-wrap:anywhere;}
+.company-candidate-profile header > div:last-child {min-width:0;overflow-wrap:anywhere;}
+.candidate-assessment-panel summary {min-height:44px;padding:10px 0;line-height:1.6;cursor:pointer;}
+.company-reviewed-application {flex-wrap:wrap;}
+.company-reviewed-application .secondary-btn {min-height:44px;white-space:normal;}
+.mnw-company-workspace > div:has(> button[aria-label="Stäng"]) {flex-wrap:wrap;}
+.mnw-company-workspace > div:has(> button[aria-label="Stäng"]) button {min-height:44px;}

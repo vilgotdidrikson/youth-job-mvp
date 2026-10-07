@@ -14,6 +14,7 @@ import { CompanyMatchProfileForm } from "@/components/company-match-profile-form
 import { JobMatchProfileEditor } from "@/components/job-match-profile-editor";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { getSupabaseClient } from "@/lib/supabase";
+import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
@@ -107,6 +108,7 @@ function CompanyPageContent() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+  const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobActionId, setJobActionId] = useState<string | null>(null);
   const [candidateActionKey, setCandidateActionKey] = useState<string | null>(null);
@@ -175,11 +177,13 @@ function CompanyPageContent() {
 
   const loadData = async (userId: string) => {
     try {
+      setError("");
       const supabase = getSupabaseClient();
-      const [jobsData, { data: cp }] = await Promise.all([
+      const [jobsData, { data: cp, error: companyError }] = await Promise.all([
         getFeedCompanyJobs(),
         supabase.from("company_profiles").select("*").eq("user_id", userId).maybeSingle(),
       ]);
+      if (companyError) throw new Error("Kunde inte hämta företagets verifieringsstatus. Försök igen.");
       setJobs(jobsData);
       if (cp) {
         const nextCompanyProfile = cp as CompanyProfile;
@@ -193,6 +197,7 @@ function CompanyPageContent() {
           setFeed([]);
         }
       }
+      setDataOwnerId(userId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte ladda data.");
     }
@@ -555,16 +560,22 @@ function CompanyPageContent() {
     );
   }
 
+  if (dataOwnerId !== user?.id) return <main className="mobile-shell mnw-company-workspace"><section className="card company-applicants-empty">
+    {error ? <><h1>Företagsvyn kunde inte hämtas</h1><p role="alert">{error}</p><button type="button" className="secondary-btn" onClick={() => user && void loadData(user.id)}>Försök igen</button></> : <p role="status">Hämtar företagets annonser och ansökningar…</p>}
+  </section></main>;
+
   const candidateFeed = feed;
   const verificationStatus = companyProfile?.verification_status ?? "pending";
   const pendingCandidates = candidateFeed.filter((candidate) => !candidate.reviewDecision);
   const displayedCandidates = candidateFilter === "pending" ? pendingCandidates : candidateFeed;
+  const filteredCandidates = filterCandidates(displayedCandidates, candidateSearch);
   const currentCandidate = pendingCandidates[feedIndex] ?? null;
   const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
   const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
   const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
   const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
-  const selectedCandidate = displayedCandidates.find((candidate) => `${candidate.job.id}:${candidate.youthUserId}` === selectedCandidateId) ?? (selectedCandidateId ? null : displayedCandidates[0] ?? null);
+  const selectedCandidate = selectCandidate(filteredCandidates, selectedCandidateId);
+  const selectedConversation = selectedCandidate && conversations.find(conversation => conversation.job_id === selectedCandidate.job.id && conversation.youth_user_id === selectedCandidate.youthUserId);
 
   return (
     <main className="mobile-shell mnw-company-workspace">
@@ -596,7 +607,7 @@ function CompanyPageContent() {
             type="button"
             className="cta-btn"
             style={{ flexShrink: 0, padding: "0.5rem 0.85rem", fontSize: "0.82rem", background: "#1a7f4b" }}
-            onClick={() => router.push("/chats")}
+            onClick={() => router.push(`/chats?conversation=${matchedConvId}`)}
           >
             Chatta →
           </button>
@@ -730,8 +741,8 @@ function CompanyPageContent() {
             <div className="card company-applicants-empty"><h2>Inga ansökningar ännu</h2><p>När någon söker en av era annonser visas deras profil här.</p></div>
           ) : (
             <div className="company-applicants-layout">
-              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} placeholder="Namn eller jobb…" /></label><div className="company-applicant-list">
-                {displayedCandidates.filter((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))).map((candidate) => {
+              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => {setCandidateSearch(event.target.value);setSelectedCandidateId(null);setCandidateCv(null);setUploadedCvError("");}} placeholder="Namn eller jobb…" /></label><div className="company-applicant-list">
+                {filteredCandidates.map((candidate) => {
                   const profile = candidate.profile;
                   const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;
                   return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} aria-pressed={isSelected} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
@@ -740,13 +751,13 @@ function CompanyPageContent() {
                     <span aria-hidden="true">›</span>
                   </button>;
                 })}
-              </div>{candidateSearch.trim() && !displayedCandidates.some((candidate) => [candidate.profile?.full_name, candidate.job.title].join(" ").toLocaleLowerCase("sv-SE").includes(candidateSearch.trim().toLocaleLowerCase("sv-SE"))) && <p className="company-search-empty">Inga ansökningar matchar din sökning.</p>}</div>
-              {!selectedCandidate && selectedCandidateId && <section className="card company-applicants-empty"><h2>Ansökan är inte tillgänglig</h2><p>Välj en annan kandidat i listan för att fortsätta.</p></section>}
+              </div>{candidateSearch.trim() && !filteredCandidates.length && <p className="company-search-empty" role="status">Inga ansökningar matchar din sökning.</p>}</div>
+              {!selectedCandidate && <section className="card company-applicants-empty"><h2>{selectedCandidateId ? "Ansökan är inte tillgänglig" : "Ingen kandidat att visa"}</h2><p>{selectedCandidateId ? "Välj en annan kandidat i listan för att fortsätta." : "Prova ett annat namn eller jobb för att hitta en ansökan."}</p></section>}
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 <CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
-                {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href="/chats" className="secondary-btn">Till chattarna <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
+                {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
                   return <section aria-label="Beslut om ansökan" style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e8e8e8" }}>
