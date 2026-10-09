@@ -1,6 +1,9 @@
 "use client";
 
 import { Document, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
+import { getSupabaseClient } from "@/lib/supabase";
+import { getVerifiedExperience } from "@/lib/recruitment";
+import { withVerifiedExperience } from "@/lib/recruitment-types";
 
 const styles = StyleSheet.create({
   page: { paddingTop: 48, paddingRight: 46, paddingBottom: 50, paddingLeft: 46, fontFamily: "Helvetica", color: "#39242d" },
@@ -70,7 +73,10 @@ function safeFilename(value: string): string {
 }
 
 export async function createCvPdfFile(cvText: string, fullName: string): Promise<File> {
-  const blob = await pdf(<CvPdfDocument cvText={cvText} />).toBlob();
+  const { data: { user }, error } = await getSupabaseClient().auth.getUser();
+  if (error || !user) throw new Error("Logga in igen innan du skapar ditt CV.");
+  const experiences = await getVerifiedExperience(user.id);
+  const blob = await pdf(<CvPdfDocument cvText={withVerifiedExperience(cvText, experiences)} />).toBlob();
   return new File([blob], `${safeFilename(fullName || "mitt-cv")}-matchnwork-cv.pdf`, { type: "application/pdf" });
 }
 

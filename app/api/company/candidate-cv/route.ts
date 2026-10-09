@@ -4,6 +4,7 @@ import { renderStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
 
 import { uploadedCvPath } from "@/lib/cv-document-path";
 import { requireApiUser } from "@/lib/api-auth";
+import { withVerifiedExperience, type VerifiedExperience } from "@/lib/recruitment-types";
 
 const SIGNED_URL_TTL_SECONDS = 5 * 60;
 
@@ -41,7 +42,9 @@ export async function POST(request: NextRequest) {
   const structuredText = !storedText && youthProfile?.cv_structured
     ? renderStructuredCv(youthProfile.cv_structured as StructuredCvData).trim()
     : "";
-  const text = storedText || structuredText;
+  const { data: experiences, error: experienceError } = await userClient.rpc("get_verified_experience", { p_youth_user_id: body.youthUserId, p_job_id: body.jobId });
+  if (experienceError) return NextResponse.json({ error: "Kunde inte läsa kandidatens bekräftade erfarenhet." }, { status: 503 });
+  const text = withVerifiedExperience(storedText || structuredText, (experiences ?? []) as VerifiedExperience[]);
   if (!text) return NextResponse.json({ error: "Kandidaten har ännu inte skapat något CV." }, { status: 404 });
   return NextResponse.json({ kind: "text", text }, { headers: { "Cache-Control": "private, no-store" } });
 }

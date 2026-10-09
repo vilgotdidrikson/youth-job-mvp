@@ -11,6 +11,7 @@ import { ApplicationFollowupCard } from "@/components/application-followup-card"
 import { UiIcon } from "@/components/ui-icon";
 import { supplementQuestions } from "@/lib/application-supplement";
 import { NotificationLink } from "@/components/notification-link";
+import { RecruitmentSummary } from "@/components/recruitment-summary";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {getYouthActivity,type YouthActivity} from "@/lib/youth-activity";
@@ -102,6 +103,7 @@ function ApplicationsPageContent() {
   return <main className="mobile-shell application-completions-page">
     <header className="applications-heading"><div><p className="application-eyebrow">Dina nästa steg</p><h1>Dina ansökningar</h1><p>Följ det du har skickat. Komplettera när det passar dig.</p></div><NotificationLink /></header>
     <div className="applications-layout"><section className="applications-content">
+      <RecruitmentSummary />
       <div className="applications-tabs"><button type="button" aria-pressed={tab === "all"} onClick={() => setTab("all")}>Alla <span>{items.length}</span></button><button type="button" aria-pressed={tab === "questions"} onClick={() => setTab("questions")}>Frivilliga frågor <span>{pending.filter(item=>item.status==='submitted').length}</span></button></div>
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}

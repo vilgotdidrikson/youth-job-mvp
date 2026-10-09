@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function ProfileHeader({ name, location, completedSections, totalSections, onEdit }: { name: string; location: string; completedSections: number; totalSections: number; onEdit: () => void }) {
+export function ProfileHeader({ name, location, completedSections, totalSections, onEdit, verification }: { name: string; location: string; completedSections: number; totalSections: number; onEdit: () => void; verification?: ReactNode }) {
   return (
     <header className="network-profile-header">
       <div className="network-profile-cover" />
@@ -8,6 +8,7 @@ export function ProfileHeader({ name, location, completedSections, totalSections
         <div className="network-profile-avatar" aria-hidden="true">{(name.trim().charAt(0) || "?").toUpperCase()}</div>
         <div className="network-profile-identity">
           <h1>{name.trim() || "Din profil"}</h1>
+          {verification}
           <p>Din profil på MatchnWork</p>
           <span>{location || "Sverige"} · Jobbsökande</span>
         </div>

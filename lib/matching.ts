@@ -275,24 +275,8 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus): P
   return data as MatchRecord;
 }
 
-/**
- * Completes a hire through the database authorization boundary. The RPC derives
- * company ownership from auth.uid() and validates the match plus conversation.
- */
+/** Legacy lifecycle calls must use the employment form with role/start date. */
 export async function markMatchHired(matchId: string): Promise<MatchRecord> {
-  const { profile } = await getAuthenticatedUser("company");
-  if (profile?.role !== "company") {
-    throw new Error("Only the company that owns a match can mark a candidate as hired.");
-  }
-
-  const { data, error } = await getSupabaseClient()
-    .rpc("mark_match_hired", { p_match_id: matchId })
-    .single();
-
-  if (error || !data) {
-    logSupabaseError("matches.mark_hired", error ?? new Error("No match returned."), { matchId });
-    throw new Error(getSupabaseErrorMessage(error, "Unable to mark this candidate as hired."));
-  }
-
-  return data as MatchRecord;
+  void matchId;
+  throw new Error("Registrera befattning och startdatum i chatten för att markera kandidaten som anställd.");
 }

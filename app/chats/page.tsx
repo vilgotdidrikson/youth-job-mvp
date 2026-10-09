@@ -8,7 +8,8 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
-import { getMyMatches, markMatchHired } from "@/lib/matching";
+import { getMyMatches } from "@/lib/matching";
+import { RecruitmentPanel } from "@/components/recruitment-panel";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { ReportDialog } from "@/components/report-dialog";
 import { blockConversationUser } from "@/lib/moderation";
@@ -33,7 +34,7 @@ function ChatsPageContent() {
   const [listState, setListState] = useState<"loading" | "ready" | "error">("loading"), [loadedId, setLoadedId] = useState("");
   const [error, setError] = useState(""), [messageError, setMessageError] = useState(""), [sending, setSending] = useState(false);
   const [messageNotice, setMessageNotice] = useState(""), [historyRetry, setHistoryRetry] = useState(0);
-  const [hiring, setHiring] = useState(false), [blocking, setBlocking] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
   const query=useSearchParams(), requestedJob=query.get("job"), requestedConversation=query.get("conversation");
@@ -92,11 +93,6 @@ function ChatsPageContent() {
     finally { sendLock.current=false; setSending(false); }
   };
   const selected = conversations.find(item => item.conv.id === selectedId);
-  const handleHire = async () => {
-    if(!selected?.matchId || profile?.role !== "company" || hiring) return;
-    if(!window.confirm(`Markera ${selected.otherName} som anställd? Chatten och matchhistoriken sparas.`)) return;
-    setHiring(true); try { await markMatchHired(selected.matchId); await loadConversations(false); } catch(reason) { setError(reason instanceof Error ? reason.message : "Kunde inte markera som anställd."); } finally { setHiring(false); }
-  };
   const handleBlock = async () => {
     if(!selected || blocking || !window.confirm(`Blockera ${selected.otherName}? Ingen av er kommer kunna skicka fler meddelanden i chatten.`)) return;
     setBlocking(true); try { await blockConversationUser(selected.conv.id); select(null); setMessages({id:"",items:[]}); await loadConversations(false); } catch(reason) { setError(reason instanceof Error ? reason.message : "Kunde inte blockera användaren."); } finally { setBlocking(false); }
@@ -112,9 +108,9 @@ function ChatsPageContent() {
     <div className={styles.workspace}><aside className={styles.inbox} aria-label="Inkorg"><div className={styles.inboxHeader}><h2>Meddelanden <span>{conversations.length}</span></h2><label className={styles.search}><span className="sr-only">Sök bland chattar</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Sök namn eller jobb"/></label></div>
       {listState === "loading" ? <p className={styles.listNote} role="status">Hämtar matchningar…</p> : listState === "error" ? <div className={styles.listNote}><p role="alert">{error}</p><button className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div> : visible.length === 0 ? <div className={styles.listNote}><UiIcon name="chat"/><h3>{search ? "Ingen chatt hittades" : "Dina matchningar landar här"}</h3><p>{search ? "Prova ett annat namn eller jobb." : "När båda visar intresse kan ni börja prata."}</p>{!search && profile?.role === "youth" && <Link href="/swipe" className={styles.secondary}>Upptäck jobb</Link>}</div> : <div className={styles.contacts}>{visible.map(item => <button key={item.conv.id} className={`${styles.contact} ${selectedId === item.conv.id ? styles.contactActive : ""}`} type="button" aria-pressed={selectedId === item.conv.id} onClick={() => select(item.conv.id)}><span className={styles.avatar}>{initials(item.otherName)}</span><span className={styles.contactText}><strong>{item.otherName}</strong><span>{item.jobTitle || "Din matchning"}</span><small>{statusLabels[item.status] || item.status}</small></span><UiIcon name="arrow" width="16"/></button>)}</div>}
     </aside><section className={styles.conversation} aria-label={selected ? `Samtal med ${selected.otherName}` : "Konversation"}>{selected ? <>
-      <header className={styles.conversationHeader}><button className={styles.mobileBack} type="button" aria-label="Tillbaka till inkorgen" onClick={() => select(null)}><UiIcon name="arrow"/></button><span className={styles.avatar}>{initials(selected.otherName)}</span><div><h2>{selected.otherName}</h2><p>{selected.jobTitle || "Din matchning"}</p></div><span className={styles.matchStatus}>{statusLabels[selected.status] || selected.status}</span><details className={styles.options}><summary aria-label="Alternativ för chatten">•••</summary><div><ReportDialog targetType="conversation" targetId={selected.conv.id} label="Anmäl chatt"/><button type="button" disabled={blocking} onClick={() => void handleBlock()}>{blocking ? "Blockerar…" : "Blockera kontakt"}</button>{profile?.role === "company" && selected.status !== "hired" && selected.matchId && <button type="button" disabled={hiring} onClick={() => void handleHire()}>{hiring ? "Markerar…" : "Markera som anställd"}</button>}</div></details></header>
+      <header className={styles.conversationHeader}><button className={styles.mobileBack} type="button" aria-label="Tillbaka till inkorgen" onClick={() => select(null)}><UiIcon name="arrow"/></button><span className={styles.avatar}>{initials(selected.otherName)}</span><div><h2>{selected.otherName}</h2><p>{selected.jobTitle || "Din matchning"}</p></div><span className={styles.matchStatus}>{statusLabels[selected.status] || selected.status}</span><details className={styles.options}><summary aria-label="Alternativ för chatten">•••</summary><div><ReportDialog targetType="conversation" targetId={selected.conv.id} label="Anmäl chatt"/><button type="button" disabled={blocking} onClick={() => void handleBlock()}>{blocking ? "Blockerar…" : "Blockera kontakt"}</button></div></details></header>
       {selected.conv.job_id && <Link className={styles.jobLink} href={`/jobb/${selected.conv.job_id}`}><UiIcon name="briefcase" width="18"/><span>{selected.jobTitle || "Jobbannonsen"}</span>Visa annons <UiIcon name="arrow" width="16"/></Link>}
-      {selected.status === "hired" && <p className={styles.hired}>Rekryteringen är markerad som genomförd. Samtalet finns kvar.</p>}
+      {selected.matchId && <RecruitmentPanel key={selected.matchId} matchId={selected.matchId} company={profile?.role === "company"} onChanged={() => void loadConversations(false)} />}
       {error && listState !== "error" && <p className={styles.error} role="alert">{error}</p>}
       <div className={styles.messages} aria-label="Meddelanden">{loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}><p>{message.message_text}</p><time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
       {messageNotice && <p className={styles.sentNotice} role="status">{messageNotice}</p>}

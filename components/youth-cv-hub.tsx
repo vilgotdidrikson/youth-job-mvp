@@ -14,6 +14,8 @@ import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 import { submitApplicationDraftsAfterCv, type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
+import { useVerifiedExperience } from "@/hooks/use-verified-experience";
+import { withVerifiedExperience } from "@/lib/recruitment-types";
 
 type FormStep = "about" | "education" | "experience" | "skills" | "languages" | "merits";
 type Step = "start" | "pdf" | "review" | "preview" | FormStep;
@@ -96,6 +98,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const router = useRouter();
   const query = useSearchParams();
   const { user, profile, loading } = useSession();
+  const verified = useVerifiedExperience(user?.id);
   const jobId = query.get("job");
   const title = query.get("title");
   const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : "/profile";
@@ -297,6 +300,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <p className="cv-hub-status"><strong>Status: redo att granska</strong><br />Dina ändringar är med. Du kan redigera manuellt eller be AI:n skriva en ny version när du vill.</p>
     <div className="cv-hub-edit-links">{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>Redigera {LABELS[item]}</button>)}</div>
     <textarea aria-label="Redigera CV-förhandsvisningen" className="cv-hub-preview" value={generated?.text ?? ""} onChange={(event) => setGenerated((current) => current ? { ...current, text: event.target.value } : current)} rows={20} />
+    {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
+    {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
     <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>
     <button className="cta-btn" disabled={saving || !generated?.text.trim()} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
@@ -316,6 +321,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa min CV-förhandsvisning" : "Förhandsvisa ändringar" : "Fortsätt"}</button>
     <p className="cv-hub-draft-note"><UiIcon name="info" width="17" />{draftStorageUnavailable ? "Utkastet kunde inte sparas på den här enheten. Stanna på sidan tills du har granskat och gjort CV:t klart." : "Utkastet sparas på den här enheten medan du skriver. Du granskar CV:t innan du gör det klart."}</p>
     {!draftStorageUnavailable && <Link className="cv-hub-save-later" href={returnPath}>Fortsätt senare <UiIcon name="arrow" width="16" /></Link>}
+    {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
+    {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
     <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "about" ? "Jag vill skriva detta senare" : "Hoppa över"}</button>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;

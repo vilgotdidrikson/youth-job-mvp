@@ -18,6 +18,10 @@ import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
+import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
+import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
+import { RecruitmentSummary } from "@/components/recruitment-summary";
+import { CandidateVerifiedJobBadge } from "@/components/verified-job-badge";
 import { reviewCandidate } from "@/lib/matching";
 import { createInitialJobMatchProfile } from "@/lib/match-profiles";
 import { uploadJobImage } from "@/lib/storage";
@@ -148,6 +152,7 @@ function CompanyPageContent() {
   const draftHydrated = Boolean(user?.id) && draftOwnerId === user?.id;
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
+  const [closingJob, setClosingJob] = useState<JobPost | null>(null);
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
   const skipNextDraftSaveRef = useRef(false);
 
@@ -560,7 +565,10 @@ function CompanyPageContent() {
     );
   }
 
-  if (dataOwnerId !== user?.id) return <main className="mobile-shell mnw-company-workspace"><section className="card company-applicants-empty">
+  if (dataOwnerId !== user?.id) return <main className="mobile-shell mnw-company-workspace">
+      {user && <CompanyRecruitmentStatus userId={user.id} />}
+      {tab === "kandidater" && <RecruitmentSummary company />}
+      {closingJob && <CloseRecruitmentDialog jobId={closingJob.id} title={closingJob.title} onClose={() => setClosingJob(null)} onSaved={async () => {if (user) await loadData(user.id);}} />}<section className="card company-applicants-empty">
     {error ? <><h1>Företagsvyn kunde inte hämtas</h1><p role="alert">{error}</p><button type="button" className="secondary-btn" onClick={() => user && void loadData(user.id)}>Försök igen</button></> : <p role="status">Hämtar företagets annonser och ansökningar…</p>}
   </section></main>;
 
@@ -579,6 +587,9 @@ function CompanyPageContent() {
 
   return (
     <main className="mobile-shell mnw-company-workspace">
+      {user && <CompanyRecruitmentStatus userId={user.id} />}
+      {tab === "kandidater" && <RecruitmentSummary company />}
+      {closingJob && <CloseRecruitmentDialog jobId={closingJob.id} title={closingJob.title} onClose={() => setClosingJob(null)} onSaved={async () => {if (user) await loadData(user.id);}} />}
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
@@ -754,7 +765,7 @@ function CompanyPageContent() {
               </div>{candidateSearch.trim() && !filteredCandidates.length && <p className="company-search-empty" role="status">Inga ansökningar matchar din sökning.</p>}</div>
               {!selectedCandidate && <section className="card company-applicants-empty"><h2>{selectedCandidateId ? "Ansökan är inte tillgänglig" : "Ingen kandidat att visa"}</h2><p>{selectedCandidateId ? "Välj en annan kandidat i listan för att fortsätta." : "Prova ett annat namn eller jobb för att hitta en ansökan."}</p></section>}
               {selectedCandidate && <article className="company-candidate-profile card">
-                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
+                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 <CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
                 {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
@@ -956,7 +967,7 @@ function CompanyPageContent() {
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
                       {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
-                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "closed")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
+                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setClosingJob(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
                       <button type="button" disabled={isWorking} onClick={() => void handleDeleteJob(job)} style={{ padding: ".5rem .7rem", border: 0, color: "#b42318", background: "transparent", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: isWorking ? "wait" : "pointer" }}>{isWorking ? "Sparar..." : "Ta bort"}</button>
                     </div>
                   </article>
@@ -989,7 +1000,7 @@ function CompanyPageContent() {
           </div>
         </div>
       )}
-      {candidateCv && selectedCandidate && candidateCv.candidateKey === `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}` && <ModalDialog label="Kandidatens CV" onClose={() => setCandidateCv(null)} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
+      {candidateCv && selectedCandidate && candidateCv.candidateKey === `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}` && <ModalDialog label="Kandidatens CV" onClose={() => setCandidateCv(null)} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
       {showMatchProfileEditor && user && (
         <ModalDialog label="Företagets matchprofil" onClose={() => setShowMatchProfileEditor(false)}>
           <div className="company-match-modal-content" onClick={(event) => event.stopPropagation()}>

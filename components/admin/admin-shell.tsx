@@ -8,6 +8,7 @@ const links = [
   { href: "/admin", label: "Översikt", icon: "⌂" },
   { href: "/admin/companies", label: "Företag", icon: "▦" },
   { href: "/admin/reports", label: "Anmälningar", icon: "!" },
+  { href: "/admin/recruitment", label: "Rekrytering", icon: "✓" },
   { href: "/admin/profile", label: "Profil", icon: "○" },
 ];
 
@@ -29,7 +30,7 @@ export function AdminShell({ title, eyebrow = "Adminpanel", email, children }: {
         <header className="admin-header"><div><p>{eyebrow}</p><h1>{title}</h1></div><span className="admin-access-badge">Adminläge</span></header>
         {children}
       </div>
-      <nav className="admin-mobile-nav" aria-label="Adminnavigation">
+      <nav className="admin-mobile-nav" aria-label="Adminnavigation" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
         {links.map((link) => <Link key={link.href} href={link.href} className={(link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href)) ? "admin-nav-link-active" : ""}><span aria-hidden="true">{link.icon}</span>{link.label}</Link>)}
       </nav>
     </main>
