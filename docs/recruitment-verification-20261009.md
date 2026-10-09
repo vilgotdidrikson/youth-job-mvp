@@ -1,12 +1,12 @@
 # Employer-confirmed employment — MVP
 
-Implemented in the local dev checkout and applied to Supabase **MatchnWork DevStaging**. GitHub/Vercel publication is blocked pending explicit user approval for the repository/branch destination. Production database is unchanged.
+Published to GitHub `vilgotdidrikson/youth-job-mvp` branch `dev` and successfully deployed by Vercel after explicit user approval on 2026-10-09. The published implementation commit is `6269d3a8f9d6e7525485d3f74039f0626af3578f`, with the exact same tree as local commit `7020aed`. Applied to Supabase **MatchnWork DevStaging**. Production database is unchanged.
 
-## Rollout blocker
+## Initial rollout blocker — resolved
 
-Automatic approval review rejected pushing to `vilgotdidrikson/youth-job-mvp` branch `dev`, citing publication of potentially private code to an external repository without explicit destination approval. The commit is local and reviewable.
+Automatic approval review rejected pushing to `vilgotdidrikson/youth-job-mvp` branch `dev`, citing publication of potentially private code to an external repository without explicit destination approval. The user subsequently approved that exact destination, and publication succeeded through the GitHub connector.
 
-The database migration is already applied. Consequently the OLD deployed UI's legacy hire button and direct close-recruitment action are blocked until the new frontend is published. A proposed restoration of the previous legacy RPC permission was also rejected by automatic review as weakening the new boundary. No workaround or second push was attempted. Publishing the prepared frontend resolves these UI/API mismatches.
+Between the database migration and frontend rollout, the OLD deployed UI's legacy hire button and direct close-recruitment action were blocked. A proposed restoration of the previous legacy RPC permission was also rejected by automatic review as weakening the new boundary. No permission-restoration workaround was attempted. The user-approved frontend publication resolved these UI/API mismatches.
 
 ## Behavior
 
@@ -28,7 +28,7 @@ The database migration is already applied. Consequently the OLD deployed UI's le
 - `scripts/test-recruitment-staging.sql`: 54 positive/negative assertions passed under real `anon` and `authenticated` database roles. All changes and generated notifications were rolled back. Checks include cross-account isolation, no youth-authored hire, employer/youth separation, private report/admin-note boundaries, correction/reapproval, weekly limits, reminder timing and deduplication, billing independence, outcome enforcement, restrictions at the DB boundary, existing message sending, restoration and dormant rewards.
 - Supabase security advisors introduced no findings for the new public invoker RPCs or RLS tables. Existing advisor findings outside this change remain.
 - The legacy `test:cv` scenario script needs a local API server and was unavailable here; pure CV checks ran instead.
-- Signed-in browser E2E remains to be completed: the available browser had no authenticated staging session. Public deployment reachability is checked separately.
+- Signed-in browser E2E remains to be completed: the available browser had no authenticated staging session. Vercel deployment status is success and `/admin/recruitment` responds successfully with the authentication gate.
 
 ## Manual acceptance test
 
