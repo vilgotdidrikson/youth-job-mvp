@@ -11,7 +11,7 @@ try {
   writeFileSync(`${tmp}/${name}.mjs`,code);
  }
  const load=name=>import(pathToFileURL(`${tmp}/${name}.mjs`));
- const {assessCandidate,matchingCriteria,candidateSource}=await load('candidate-assessment');
+ const {assessCandidate,matchingCriteria,candidateSource,criteriaRequiringAi}=await load('candidate-assessment');
  const {missingApplicationCriteria}=await load('application-followup-rules');
  const {verifiedApplicationAnswers}=await load('application-evidence');
  const {emptyRecruitmentProfile,validateRecruitmentProfile,recruitmentProfileSource}=await load('recruitment-profile');
@@ -23,6 +23,7 @@ try {
  const explicit=candidateSource({recruitment_profile:expanded,cv_text:'x'.repeat(14000)});
  assert.ok(explicit.includes('Föreningskiosk'),'Optional structured facts must survive a long CV');
  const explicitResult=assessCandidate(matchingCriteria([{label:'B-körkort',required:true},{label:'Kan arbeta helger',required:true},{label:'Kan arbeta kvällar',required:true},{label:'Social',category:'trait'}]),[],explicit);
+ assert.deepEqual(criteriaRequiringAi(matchingCriteria([{label:'B-körkort',required:true},{label:'Kan arbeta helger',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'},{label:'React',required:true}]),explicit).map(item=>item.label),['React'],'Only genuinely unresolved model criteria should use AI');
  assert.equal(explicitResult.score,100);assert.equal(explicitResult.coverage,100);assert.equal(explicitResult.criteria[3].status,'unknown','Examples must not certify a personality trait');
 
  const {fixedCriterionEvidence}=await load('fixed-match-rules');

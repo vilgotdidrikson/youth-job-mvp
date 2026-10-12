@@ -168,9 +168,8 @@ Regler:
 
   try {
     const completion = await openai.chat.completions.create({
-      ...openaiTextOptions(3000),
+      ...openaiTextOptions(3000, "job"),
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.35,
       response_format: { type: "json_object" },
     });
     const content = completion.choices[0]?.message?.content?.trim() ?? "";

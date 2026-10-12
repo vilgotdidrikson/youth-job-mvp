@@ -27,5 +27,9 @@ try {
  assert.equal((await processApplicationAnalysisJobs(client,'synthetic-test-key')).completed,0);assert.ok(calls.some(([name])=>name==='fail_application_analysis_job'));assert.ok(!calls.some(([name])=>name==='finish_application_analysis_job'),'Failure must not cache invented gaps');
  fail(false);setStatus('unreadable');calls.length=0;
  await processApplicationAnalysisJobs(client,'synthetic-test-key');result=calls.find(([name])=>name==='finish_application_analysis_job')[1];assert.deepEqual(result.p_missing,[],'Unreadable PDFs must not trigger possibly duplicate questions');
+ setStatus('none');fail(true);calls.length=0;
+ jobs[0].criteria=[{label:'B-körkort',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'}];
+ assert.equal((await processApplicationAnalysisJobs(client,'synthetic-test-key')).completed,1,'Rules-only evidence succeeds without any provider call, even during an outage');
+ result=calls.find(([name])=>name==='finish_application_analysis_job')[1];assert.equal(result.p_result.score,100);assert.deepEqual(result.p_missing,[]);
  console.log('PASS: automatic worker, source-grounded facts, manual trait review, cache reuse, outages, unreadable PDF and lease forwarding.');
 } finally {rmSync(dir,{recursive:true,force:true});}

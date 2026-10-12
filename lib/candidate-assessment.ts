@@ -35,6 +35,12 @@ export function candidateSource(profile: Record<string, unknown>): string {
     .join("\n").slice(0, 32000);
 }
 
+/** Rules already decide these criteria; never pay to ask AI for an ignored answer. */
+export function criteriaRequiringAi(criteria: MatchCriterion[], source: string): MatchCriterion[] {
+  return criteria.filter(item => item.weight > 0 && !["trait", "trainable"].includes(item.category)
+    && fixedCriterionEvidence(item.label, source) === null);
+}
+
 export function assessCandidate(criteria: MatchCriterion[], raw: unknown, source: string): CandidateAssessment {
   const results = Array.isArray(raw) ? raw : [];
   const evaluated = criteria.map((criterion): AssessedCriterion => {
