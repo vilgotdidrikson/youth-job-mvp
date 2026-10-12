@@ -13,7 +13,7 @@ Steps 1 and 2 are implemented and functionally verified on `dev` / Supabase DevS
 - Evidence must quote the supplied source literally. Identity fields are excluded; personality is not inferred. Missing information remains unknown, trainable knowledge does not lower the match score, and there is no automated rejection.
 - Conservative fixed checks cover explicit B-licence and evening/weekend availability, explicit negatives and conflicting statements. Deterministic weighting, evidence coverage and explanation accompany the score.
 - Immutable assessment history and caching use the criteria version, source hash and AI configuration. Provider failures produce a temporary assessment without permanently caching the failure.
-- Text-AI routes share `GROQ_TEXT_MODEL`, defaulting to the supported `openai/gpt-oss-120b`. This replaces the retired Llama model. JSON output and low reasoning are bounded; model changes invalidate analysis caches.
+- Text-AI routes now use the official OpenAI endpoint and `OPENAI_API_KEY`. `OPENAI_TEXT_MODEL` selects the text model, falling back to the existing `OPENAI_CV_MODEL` or `gpt-4.1-mini`. Output is bounded, `store:false` is explicit, and provider/model changes invalidate analysis caches.
 - Shared path validation, criteria normalization and matching rules are independent of the web UI for future mobile reuse.
 - After an application is submitted, server-side analysis identifies missing concrete criteria and sends individual optional questions through the application and in-app notifications. Existing CV, structured data, readable PDF and published static answers are considered first. Questions never create a second application.
 - Youth can explicitly publish, skip, later answer or correct supplementation. Employers can read published answers in the relevant candidate view and include them in the next evidence-based assessment. Pending draft text is not shared. Reviewed applications remain reachable through Alla ansökningar.
@@ -74,3 +74,11 @@ Remaining approved work: reusable presentation videos with explicit sharing in a
 - Matching uses explicit earliest start dates. Exact ISO-date deadlines can be compared; a future date against vague immediate-start wording remains for employer review without repeating the question or inventing a grace period. Explicit language levels are used as self-reported evidence. Follow-up wording separates start dates, work times and language levels. Existing pending questions can use published profile facts; manual answers and skips are preserved.
 
 Verification: TypeScript, focused ESLint, production build, matching/follow-up/supplement/recruitment/login/worker regressions; 18 profile boundary checks, 22 queue/lease/access checks and five profile-answer reuse/preservation checks pass. No authenticated browser or physical-touch verification is claimed for this feedback batch.
+
+## OpenAI-only provider correction — 2026-10-12
+
+All active text-AI flows use `OPENAI_API_KEY` and the official `https://api.openai.com/v1` endpoint: job generation, candidate assessment, application evidence, follow-ups and the durable matching worker. CV and hidden voice flows already used OpenAI. The retired provider helper was removed; no automatic fallback to another AI provider is permitted.
+
+`OPENAI_TEXT_MODEL` takes precedence over the existing `OPENAI_CV_MODEL`, with `gpt-4.1-mini` as the code default. Text completions explicitly set `store:false` and bounded output. Candidate/application cache versions were advanced to prevent reuse of old-provider results; historical assessments are retained.
+
+Offline provider/configuration, matching, follow-up and worker tests pass. Live OpenAI execution and scheduled worker activation still require deployed runtime verification. No candidate data was sent to the retired provider during these checks.

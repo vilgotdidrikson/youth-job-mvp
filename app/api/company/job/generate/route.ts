@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
-import { groqTextOptions } from "@/lib/groq-config";
+import { OPENAI_API_BASE_URL, openaiTextOptions } from "@/lib/openai-config";
 import { requireApiUser } from "@/lib/api-auth";
 
 const JOB_CATEGORIES = ["Café/restaurang", "Butik", "Barnomsorg", "Idrott", "Event", "Lager", "Leverans", "Kundtjänst", "Administration", "Handledare", "Sociala medier", "Övrigt"] as const;
@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
   if (!title) return NextResponse.json({ error: "Ange en jobbtitel först." }, { status: 400 });
 
   const safeFallback = fallback(title, industry, body);
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) return NextResponse.json({ ...safeFallback, source: "fallback" });
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) return NextResponse.json({ ...safeFallback, source: "fallback" });
 
   let companyMatchProfile: CompanyMatchProfileRow | null = null;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     companyMatchProfile = (data ?? null) as CompanyMatchProfileRow | null;
   }
 
-  const groq = new OpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: groqApiKey, timeout: 30_000, maxRetries: 1 });
+  const openai = new OpenAI({ baseURL: OPENAI_API_BASE_URL, apiKey: openaiApiKey, timeout: 30_000, maxRetries: 1 });
   const prompt = `Du hjälper ett svenskt företag att skapa en ungdomsvänlig jobbannons och en intern matchprofil.
 
 Arbetsgivarens uppgifter:
@@ -167,8 +167,8 @@ Regler:
 - Företagsprofilen beskriver kultur och erbjudande; den får påverka ton och egenskaper men inte skapa nya absoluta krav.`;
 
   try {
-    const completion = await groq.chat.completions.create({
-      ...groqTextOptions(3000),
+    const completion = await openai.chat.completions.create({
+      ...openaiTextOptions(3000),
       messages: [{ role: "user", content: prompt }],
       temperature: 0.35,
       response_format: { type: "json_object" },

@@ -5,9 +5,9 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
 const dir=mkdtempSync(join(tmpdir(),'mnw-question-batch-'));
-const previousKey=process.env.GROQ_API_KEY;
+const previousKey=process.env.OPENAI_API_KEY;
 try {
-  process.env.GROQ_API_KEY='synthetic-test-key';
+  process.env.OPENAI_API_KEY='synthetic-test-key';
   const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   writeFileSync(join(dir,'recruitment-profile.mjs'),compile('lib/recruitment-profile.ts'));
   writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts').replace('./recruitment-profile','./recruitment-profile.mjs'));
@@ -22,8 +22,9 @@ try {
     export const candidateAssessmentHash=value=>value.includes('Uppgift från profil/CV:') ? 'b'.repeat(64):'a'.repeat(64);
     export const queueApplicationFollowups=async(...args)=>{calls.push(['queue',args]);return {queued:1};};
     export const pdfCvSource=async()=>({status:'none',text:''});
-    export const groqTextOptions=()=>({model:'test'});`);
-  const imports=`import {OpenAI,matchingCriteria,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,groqTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+    export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
+    export const openaiTextOptions=()=>({model:'test',store:false});`);
+  const imports=`import {OpenAI,matchingCriteria,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
   writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
   const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
   const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));
@@ -54,6 +55,6 @@ try {
   assert.equal(mocks.calls.filter(([name])=>name==='queue').length,0,'An outage must not invent missing facts');
   console.log('PASS: one combined AI pass, literal CV evidence, stable batch, stale-source and outage guards.');
 } finally {
-  if(previousKey===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=previousKey;
+  if(previousKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=previousKey;
   rmSync(dir,{recursive:true,force:true});
 }
