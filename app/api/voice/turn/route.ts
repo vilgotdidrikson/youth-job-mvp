@@ -1,3 +1,4 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { CV_INTERVIEW_AREAS } from "@/lib/cv-interview";
@@ -30,6 +31,7 @@ function reply(state: InterviewState, next: ReturnType<typeof selectNextQuestion
   });
 }
 export async function POST(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-turn", ["youth"]);
   if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;

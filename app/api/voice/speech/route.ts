@@ -1,3 +1,4 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { COMPLETE_QUESTION, INTERVIEW_QUESTIONS } from "@/lib/voice-interview";
@@ -7,6 +8,7 @@ export const runtime = "nodejs";
 // Bounded by the question bank; no personal speech or recordings enter this cache.
 const audioCache = new Map<string, Promise<ArrayBuffer>>();
 export async function GET(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-speech", ["youth"]);
   if ("response" in auth) return auth.response;
   const id = request.nextUrl.searchParams.get("id");

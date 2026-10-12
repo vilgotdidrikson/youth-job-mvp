@@ -22,7 +22,7 @@ export function matchingCriteria(raw: unknown): MatchCriterion[] {
     if (!item || typeof item.label !== "string" || !item.label.trim()) return [];
     return [{ id: `c${index}`, label: item.label.trim().slice(0, 200), category: String(item.category ?? "merit"),
       // Knowledge explicitly trainable on the job is never a reason to lower suitability.
-      weight: item.category === "trainable" ? 0 : item.required === true ? 3 : 2, required: item.required === true }];
+      weight: ["trainable", "trait"].includes(item.category) ? 0 : item.required === true ? 3 : 2, required: item.required === true }];
   });
 }
 

@@ -43,3 +43,23 @@ The shared design pass is implemented on dev. The roadmap continues with SMTP/ba
 
 
 For the remaining authenticated/mobile pilot review, use youth and verified-company test accounts on DEV: finish onboarding/CV by text or PDF, swipe and vertically scroll a photo card, answer/edit/skip application supplementation, revisit the employer's reviewed application, update the assessment, and confirm chat quick replies only fill the composer. Review camera/microphone permissions and actual touch gestures on a physical phone. Production migration and email/payment work remain separate from this pass.
+
+
+## Progressive recruitment profile and background matching — 2026-10-12
+
+Implemented in code and DevStaging (not production):
+
+- Four optional profile sections: availability, job preferences/motivation, real examples and self-reported qualifications/languages. Small section saves use optimistic revisions. Applications keep their existing submission requirements. Discovery reminders can be dismissed for seven days.
+- Submitted candidates’ authorized employers can read the additional profile. Profile facts are included before long CV text in assessment input. Examples are self-reported and do not certify personality. Traits remain unknown and are excluded from evidence coverage.
+- Chat recruitment controls default to a compact header; existing hiring confirmation and dispute actions remain available.
+- Voice CV entry points and APIs are disabled by default, with the full interview code retained. Set NEXT_PUBLIC_VOICE_CV_ENABLED=true and rebuild to restore it. Text/PDF CV flows remain available.
+- Durable background assessment jobs coalesce profile, criteria, submitted-answer and follow-up changes. Generation/lease checks reject stale results, retries are bounded, and optional missing-information questions retain existing deduplication and limits. Employer views show pending/completed status without requiring a manual assessment click.
+- Scheduler is installed but disabled until the deployed DEV worker endpoint has passed runtime checks. Credentials are generated/stored in Vault and validated through a service-only RPC. Never copy decrypted credentials into logs or frontend configuration.
+
+Validation: production build, TypeScript, focused ESLint, matching/follow-up/application/recruitment regressions, offline worker outage/cache/evidence tests, 18 transactional profile access/validation checks and 22 transactional queue/lease/result/privacy checks pass. All transactional fixtures roll back. Final-lease recovery was additionally verified against the deployed SQL definition. Full authenticated browser/mobile review and live provider execution of the new worker remain pending.
+
+DevStaging migration history: 20261012124134, 20261012125211 and 20261012130305. Production is untouched.
+
+Security advisor: queue/config tables intentionally have no client policies or grants; worker RPCs are service-only. Authorized request/state RPCs preserve existing candidate-access checks. pg_net is non-relocatable and registers its extension metadata in public while its HTTP objects live in net; the extension-schema warning remains recorded, rather than modifying system catalogs or dropping an active extension. Existing unrelated project warnings remain outside this batch.
+
+Remaining approved work: reusable presentation videos with explicit sharing in applications, employer-specific question/video requests, video calls, broader employer requirement UX and the full page-by-page UX review. Provider/storage configuration and media privacy/access tests must precede enabling media. These features are not represented as completed by this phase.

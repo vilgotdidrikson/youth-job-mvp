@@ -9,7 +9,7 @@ const items: { href: string; label: string; icon: IconName; routes: string[] }[]
   { href: "/swipe", label: "Upptäck", icon: "discover", routes: ["/swipe", "/jobb/", "/kartan"] },
   { href: "/applications", label: "Ansökningar", icon: "briefcase", routes: ["/applications"] },
   { href: "/chats", label: "Meddelanden", icon: "chat", routes: ["/chats"] },
-  { href: "/profile", label: "Profil", icon: "profile", routes: ["/profile", "/cv-builder"] },
+  { href: "/profile", label: "Profil", icon: "profile", routes: ["/profile", "/profile/", "/cv-builder"] },
 ];
 
 export function YouthNavigation({ pathname }: { pathname: string }) {

@@ -1,3 +1,4 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/api-auth";
 
@@ -47,6 +48,7 @@ const session = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-session", ["youth"]);
   if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;

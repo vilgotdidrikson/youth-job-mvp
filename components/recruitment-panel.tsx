@@ -32,9 +32,10 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
   </form></ModalDialog>;
 }
 
-export function RecruitmentPanel({ matchId, jobId, company = false, onChanged }: { matchId?: string; jobId?: string; company?: boolean; onChanged?: () => void }) {
+export function RecruitmentPanel({ matchId, jobId, company = false, compact = false, onChanged }: { matchId?: string; jobId?: string; company?: boolean; compact?: boolean; onChanged?: () => void }) {
   const [item, setItem] = useState<RecruitmentRecord | null>(null), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [edit, setEdit] = useState(false), [report, setReport] = useState(false), [details, setDetails] = useState("");
+  const [expanded, setExpanded] = useState(false);
   const load = useCallback(async () => {
     const items = await getRecruitmentRecords();
     setItem(items.find(entry => matchId ? entry.match_id === matchId : entry.job_id === jobId) ?? null); setError("");
@@ -61,7 +62,11 @@ export function RecruitmentPanel({ matchId, jobId, company = false, onChanged }:
   const employment = item.employment;
   const eligible = ["matched", "in_contact", "interview", "hired"].includes(item.match_status);
   const requestedRecently = Boolean(item.requested_at && new Date(item.requested_at).getTime() > Date.now() - 7 * 86400000);
-  return <section className={styles.panel} aria-label="Rekryteringsavslut"><div><h3>{employment ? employment.response === "approved" ? "Anställning bekräftad" : employment.response === "disputed" ? "Uppgifterna behöver rättas" : "Anställning registrerad" : "Har rekryteringen lett till ett jobb?"}</h3>
+  const attention = employment?.response === "disputed" || (!company && employment?.response === "pending");
+  const panelId = `recruitment-${item.match_id}`;
+  return <section className={`${styles.panel} ${compact ? styles.compact : ""}`} aria-label="Rekryteringsavslut">
+    {compact && <div className={styles.compactHeader}><div><strong>{employment ? employment.response === "approved" ? "Anställning bekräftad" : employment.response === "disputed" ? "Uppgifter behöver rättas" : company ? "Inväntar kandidatens granskning" : "En anställning väntar på din granskning" : "Rekrytering"}</strong>{employment && <span>{employment.role_name}</span>}</div>{attention && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{company ? "Rätta uppgifter" : "Granska"}</button>}{company && eligible && !employment && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>Registrera anställning</button>}<button type="button" className={styles.textButton} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded(current => !current)}>{expanded ? "Dölj detaljer" : "Visa alternativ"}</button></div>}
+    <div id={panelId} hidden={compact && !expanded} className={compact ? styles.compactBody : undefined}><h3>{employment ? employment.response === "approved" ? "Anställning bekräftad" : employment.response === "disputed" ? "Uppgifterna behöver rättas" : "Anställning registrerad" : "Har rekryteringen lett till ett jobb?"}</h3>
     {employment ? <><p>{employment.role_name} · {employment.company_name}<br/>{experiencePeriod(employment.start_date)}</p><p>{employment.response === "approved" ? "Arbetsgivaren och ungdomen har godkänt uppgifterna." : employment.response === "disputed" ? "Kontrollera befattning och startdatum tillsammans. Admin kan följa upp ärendet." : company ? "Kandidaten behöver granska uppgifterna innan erfarenheten kan visas på profilen och i CV:t." : "Granska arbetsgivarens uppgifter och välj om erfarenheten ska visas på din profil och i ditt CV."}</p></> : <p>{company ? "Registrera anställningen när ni har kommit överens. Kandidaten får en verifierad erfarenhet att använda i sitt CV." : "Be arbetsgivaren registrera anställningen. När du godkänt uppgifterna kan du visa en bock på profilen och ta med erfarenheten i CV:t."}</p>}
     {eligible && <div className={styles.actions}>{company ? <>
       {employment?.response !== "approved" && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{employment ? "Rätta anställningsuppgifter" : "Markera som anställd"}</button>}

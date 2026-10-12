@@ -9,7 +9,8 @@ const previousKey=process.env.GROQ_API_KEY;
 try {
   process.env.GROQ_API_KEY='synthetic-test-key';
   const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-  writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts'));
+  writeFileSync(join(dir,'recruitment-profile.mjs'),compile('lib/recruitment-profile.ts'));
+  writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts').replace('./recruitment-profile','./recruitment-profile.mjs'));
   writeFileSync(join(dir,'mocks.mjs'),`export const calls=[];
     export const source='Jag vill lära mig produktkunskap.';
     export let fail=false;

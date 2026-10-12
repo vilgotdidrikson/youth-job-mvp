@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 const tmp=mkdtempSync(resolve('.matching-tests-'));
 try {
- for(const name of ['application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
+ for(const name of ['recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
   let code=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   code=code.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
   writeFileSync(`${tmp}/${name}.mjs`,code);
@@ -14,6 +14,17 @@ try {
  const {assessCandidate,matchingCriteria,candidateSource}=await load('candidate-assessment');
  const {missingApplicationCriteria}=await load('application-followup-rules');
  const {verifiedApplicationAnswers}=await load('application-evidence');
+ const {emptyRecruitmentProfile,validateRecruitmentProfile,recruitmentProfileSource}=await load('recruitment-profile');
+ const expanded=emptyRecruitmentProfile();expanded.availability.days=['sat','sun'];expanded.availability.periods=['evening'];expanded.qualifications.licences=['B-körkort'];expanded.examples=[{strength:'service',context:'Föreningskiosk',action:'Jag tog beställningar och hjälpte besökare.'}];
+ assert.ok(recruitmentProfileSource(expanded).includes('Föreningskiosk'));
+ assert.throws(()=>validateRecruitmentProfile({...expanded,examples:[{strength:'service',context:'',action:'Påstående'}]}));
+ assert.throws(()=>validateRecruitmentProfile({...expanded,availability:{...expanded.availability,startDate:'2026-02-30'}}));
+ assert.throws(()=>validateRecruitmentProfile({...expanded,availability:{...expanded.availability,days:['someday']}}));
+ const explicit=candidateSource({recruitment_profile:expanded,cv_text:'x'.repeat(14000)});
+ assert.ok(explicit.includes('Föreningskiosk'),'Optional structured facts must survive a long CV');
+ const explicitResult=assessCandidate(matchingCriteria([{label:'B-körkort',required:true},{label:'Kan arbeta helger',required:true},{label:'Kan arbeta kvällar',required:true},{label:'Social',category:'trait'}]),[],explicit);
+ assert.equal(explicitResult.score,100);assert.equal(explicitResult.coverage,100);assert.equal(explicitResult.criteria[3].status,'unknown','Examples must not certify a personality trait');
+
  const {jobMatchProfilePayload}=await load('job-match-criteria');
  const base={jobId:'job',roleSummary:'Service',mustHaves:['B-körkort',' B-körkort '],trainableRequirements:[],topTraits:[],candidateQuestions:[]};
  assert.equal(jobMatchProfilePayload(base).must_haves.length,1);
@@ -25,7 +36,7 @@ try {
  const criteria=matchingCriteria([{label:'B-körkort',required:true},{label:'Kan arbeta helger',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'}]);
  let source=candidateSource({certificates:'B-körkort',cv_text:'Jag kan inte arbeta helger.'});
  let a=assessCandidate(criteria,[{id:'c2',status:'fulfilled',evidence:'Jag kan inte arbeta helger'}],source);
- assert.equal(a.score,50);assert.equal(a.criteria[0].status,'fulfilled');assert.equal(a.criteria[1].status,'unfulfilled');assert.equal(a.criteria[2].status,'unknown');assert.equal(a.criteria[3].weight,0);
+ assert.equal(a.score,50);assert.equal(a.criteria[0].status,'fulfilled');assert.equal(a.criteria[1].status,'unfulfilled');assert.equal(a.criteria[2].status,'unknown');assert.equal(a.criteria[3].weight,0);assert.equal(a.criteria[2].weight,0);assert.equal(a.coverage,100);
  for(const text of ['Jag vill ta B-körkort.','Jag kan arbeta helger om det passar.','Jag arbetade helger förra året.','']) assert.equal(assessCandidate(criteria,[],candidateSource({cv_text:text})).score,null);
  assert.equal(assessCandidate(criteria,[],candidateSource({cv_text:'Jag kan arbeta helger. Jag kan inte arbeta helger.'})).criteria[1].status,'unknown');
  assert.equal(assessCandidate(matchingCriteria([{label:'React',required:true}]),[{id:'c0',status:'fulfilled',evidence:'Påhittad erfarenhet'}],'Annan text').score,null);

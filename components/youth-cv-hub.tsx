@@ -1,5 +1,7 @@
 "use client";
 
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
+
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
 
 import Link from "next/link";
@@ -146,7 +148,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
           setDraft(existingDraft);
           setGenerated({ text: youth.cv_text || renderStructuredCv(existingStructured), structured: existingStructured });
           setStep("preview");
-        } else if (query.get("voice") === "finalize") {
+        } else if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
           const voice = sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-structured", user?.id));
           if (voice) {
             const cv = JSON.parse(voice) as StructuredCvData;
@@ -233,7 +235,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
         if (extendedSaveError) console.warn("Kunde inte spara utökade CV-fält:", extendedSaveError.message);
       }
       const applications = await submitApplicationDraftsAfterCv();
-      if (query.get("voice") === "finalize") {
+      if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
         for (const base of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(base, user.id));
       }
       localStorage.removeItem(key); setMessage(completedCvMessage(applications, "Ditt CV är klart!"));
@@ -269,7 +271,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <div className="cv-hub-options">
       <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på enkla frågor. Tar cirka 3–5 minuter.</small></button>
       <button className="cv-hub-option" onClick={() => setStep("pdf")}><span className="cv-hub-option-icon"><UiIcon name="upload" width="25" height="25" /></span><strong>Ladda upp ett CV</strong><small>Ladda upp en PDF om du redan har ett CV.</small></button>
-      <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>
+      {VOICE_CV_ENABLED && <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>}
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">

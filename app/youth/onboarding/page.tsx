@@ -1,5 +1,7 @@
 "use client";
 
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
+
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -660,11 +662,11 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               <span className="mnw-cv-method-icon"><UiIcon name="file" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV i MatchnWork</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
-            <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
+            {VOICE_CV_ENABLED && <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
               <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "var(--color-brand)", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
               <span className="mnw-cv-method-icon"><UiIcon name="microphone" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
-            </Link>
+            </Link>}
             <label className="cv-method-card" style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
               <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} className="mnw-cv-file-input" />
               <span className="mnw-cv-method-icon"><UiIcon name="upload" /></span><strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>

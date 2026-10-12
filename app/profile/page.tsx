@@ -1,5 +1,7 @@
 "use client";
 
+import { ProfileDevelopmentPrompt } from "@/components/profile-development-prompt";
+
 import { BlockedContacts } from "@/components/blocked-contacts";
 import { PasswordInput } from "@/components/password-input";
 
@@ -496,6 +498,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   return <main className="mobile-shell profile-page mnw-profile">
     <ProfileHeader name={form.name} location={form.city} completedSections={completedSectionCount} totalSections={Object.keys(completedSections).length} onEdit={() => setProfileTab("details")} verification={<VerifiedJobBadge experiences={verified.items} />} />
     {verified.error && <p role="alert">{verified.error}</p>}
+    {profileTab === "overview" && <ProfileDevelopmentPrompt/>}
     {profileTab === "overview" && <EmploymentExperiences userId={user.id} />}
     <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([ ["overview","Översikt"], ["cv","Mitt CV"], ["details","Mina uppgifter"], ["settings","Inställningar"] ] as const).map(([value,label]) => <button type="button" key={value} aria-pressed={profileTab === value} className={profileTab === value ? "is-active" : ""} onClick={() => setProfileTab(value)}>{label}</button>)}</nav>
     {error && <p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote && <p role="status" className="mnw-profile-success">{savedNote}</p>}

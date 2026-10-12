@@ -20,6 +20,31 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
   const [followups, setFollowups] = useState<ApplicationFollowup[]>([]);
   const [followupMessage, setFollowupMessage] = useState("");
   const [history, setHistory] = useState<{ id: string; job_profile_version: number; result: CandidateAssessment; created_at: string }[] | null>(null);
+  const [automaticStatus, setAutomaticStatus] = useState("");
+  useEffect(() => {
+    let active = true, reading = false;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const refresh = async () => {
+      if (!active || reading || document.visibilityState !== "visible") return;
+      reading = true;
+      try {
+        const { data, error: readError } = await getSupabaseClient().rpc("get_application_assessment_state", { p_job_id: jobId, p_youth_user_id: youthUserId });
+        if (!active || readError || !data) return;
+        setAutomaticStatus(data.status);
+        if (!timer && (["pending","processing"].includes(data.status) || (data.status === "failed" && data.retrying))) timer=setInterval(() => void refresh().catch(()=>{}),10000);
+        if (data.assessment) { setAssessment(data.assessment); setTemporary(false); setPdfStatus(data.assessment.pdfStatus ?? "none"); }
+        else if (["pending","processing"].includes(data.status)) setAssessment(null);
+        if (timer && (["completed","cancelled"].includes(data.status) || (data.status === "failed" && !data.retrying))) {clearInterval(timer);timer=undefined;}
+      } finally { reading = false; }
+    };
+    void getSupabaseClient().rpc("request_application_assessment", { p_job_id: jobId, p_youth_user_id: youthUserId }).then(({error: requestError}) => {
+      if (!active || requestError) return;
+      timer=setInterval(() => void refresh().catch(()=>{}),10000);
+      void refresh().catch(()=>{});
+    });
+    const stop=subscribeVisibleRefresh(refresh);
+    return () => {active=false;stop();if(timer)clearInterval(timer);};
+  }, [jobId,youthUserId]);
   const loadHistory = async () => {
     const { data, error } = await getSupabaseClient().from("candidate_assessments").select("id,job_profile_version,result,created_at")
       .eq("job_id", jobId).eq("youth_user_id", youthUserId).order("created_at", { ascending: false }).limit(20);
@@ -60,12 +85,14 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
     finally { if (!controller.signal.aborted) { setBusy(false); request.current = null; } }
   };
   return <section className="candidate-assessment-panel" aria-label="Matchningsunderlag">
-    <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy} onClick={() => void analyze()}>{busy ? "Läser underlaget…" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>
+    <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy || ["pending","processing"].includes(automaticStatus)} onClick={() => void analyze()}>{busy ? "Läser underlaget…" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>
     {error && <p role="alert">{error}</p>}
+    {["pending","processing"].includes(automaticStatus) && <p role="status">Bedömningen uppdateras automatiskt utifrån kandidatens senaste underlag.</p>}
+    {automaticStatus === "failed" && <p role="status">Den automatiska bedömningen är tillfälligt fördröjd. Du kan granska CV:t och uppdatera bedömningen manuellt.</p>}
     {pdfStatus === "read" && <p>Texten i uppladdat PDF-CV ingår i underlaget.</p>}
     {pdfStatus === "unreadable" && <p role="status">PDF-CV:t kunde inte läsas automatiskt. Öppna CV:t för egen granskning. Bedömningen använder övriga uppgifter.</p>}
     {temporary && pdfStatus !== "unreadable" && <p role="status">En preliminär bedömning visas. Automatisk analys är tillfälligt otillgänglig; försök igen senare.</p>}
-    {assessment && <><div className="candidate-assessment-summary"><strong>{assessment.score === null ? "Matchgrad saknas" : `${assessment.score} % av bedömda kriterier`}</strong><span>{CONFIDENCE[assessment.confidence]} · {assessment.coverage} % täckning</span></div><p>{assessment.explanation}</p><ul>{assessment.criteria.map((criterion) => <li key={criterion.id} data-status={criterion.status}><strong>{criterion.label}</strong><span className="candidate-criterion-status">{criterion.category === "trainable" ? "Kan läras på plats – påverkar inte matchgraden" : STATUS[criterion.status]}{criterion.required ? " · Grundkrav" : ""}</span>{criterion.evidence && <blockquote>{criterion.evidence}</blockquote>}</li>)}</ul></>}
+    {assessment && <><div className="candidate-assessment-summary"><strong>{assessment.score === null ? "Matchgrad saknas" : `${assessment.score} % av bedömda kriterier`}</strong><span>{CONFIDENCE[assessment.confidence]} · {assessment.coverage} % täckning</span></div><p>{assessment.explanation}</p><ul>{assessment.criteria.map((criterion) => <li key={criterion.id} data-status={criterion.status}><strong>{criterion.label}</strong><span className="candidate-criterion-status">{criterion.category === "trainable" ? "Kan läras på plats – påverkar inte matchgraden" : criterion.category === "trait" ? "Granska kandidatens egna exempel – ingår inte i matchgraden" : STATUS[criterion.status]}{criterion.required ? " · Grundkrav" : ""}</span>{criterion.evidence && <blockquote>{criterion.evidence}</blockquote>}</li>)}</ul></>}
     {application && application.questions.length > 0 && <div className="candidate-application-answers"><h3>Ansökningsfrågor</h3>{application.questions.map((question) => <div key={question.id}><strong>{question.question}</strong><p>{application.answers[question.id]?.trim() || "Uppgift saknas"}</p></div>)}</div>}
     {followupMessage && <p role="status" className="candidate-followup-notice">{followupMessage}</p>}
     {followups.length > 0 && <section className="candidate-application-answers"><h3>Individuella kompletteringar</h3><p>Skickade svar ingår i nästa uppdatering av matchningsunderlaget.</p>{followups.map((item) => <div key={item.id}><strong>{item.question}</strong><p>{item.status === "answered" ? item.answer : item.status === "skipped" ? "Uppgift saknas – kandidaten valde att inte svara" : "Frågan har skickats. Inv väntar svar.".replace("Inv väntar", "Inväntar")}</p></div>)}</section>}

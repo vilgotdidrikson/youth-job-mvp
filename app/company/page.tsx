@@ -1,5 +1,7 @@
 "use client";
 
+import { CandidateRecruitmentProfile } from "@/components/candidate-recruitment-profile";
+
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -767,7 +769,7 @@ function CompanyPageContent() {
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
-                <CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
+                <CandidateRecruitmentProfile key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthId={selectedCandidate.youthUserId}/><CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
                 {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
