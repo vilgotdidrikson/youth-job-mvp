@@ -32,3 +32,10 @@
  .mnw-product .company-onboarding-form .profile-question-card { padding:21px!important; }
  .company-onboarding-complete h1 { font-size:2.1rem!important; }
 }
+
+.mnw-product[data-onboarding="true"] {height:auto!important;overflow:visible!important;}
+.mnw-product[data-onboarding="true"] .company-onboarding {height:auto!important;min-height:100dvh;overflow:visible!important;align-content:start;}
+.mnw-product[data-onboarding="true"] .company-onboarding-complete {min-height:0!important;padding:24px 0 60px;}
+.company-onboarding-complete > button {width:min(100%,31rem);}
+
+.company-onboarding.company-profile-onboarding > form {height:auto!important;min-height:0!important;}

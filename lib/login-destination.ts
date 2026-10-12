@@ -12,6 +12,6 @@ export function loginDestination(role: Role, requested: string | null, isAdmin =
     || (isAdmin && within("/admin"))
     || (role === "company" && within("/company"))
     || (role === "private" && within("/private"))
-    || (role === "youth" && (["/swipe", "/kartan", "/applications", "/voice-cv", "/cv-builder"].includes(path) || within("/youth")));
+    || (role === "youth" && (["/swipe", "/kartan", "/applications", "/voice-cv", "/cv-builder"].includes(path) || within("/youth") || within("/profile")));
   return permitted ? `${path}${url.search}${url.hash}` : fallback;
 }

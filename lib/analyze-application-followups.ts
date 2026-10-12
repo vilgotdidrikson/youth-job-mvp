@@ -51,7 +51,7 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
       if (evidenceResult?.stale) return {queued:0,stale:true};
       hash = candidateAssessmentHash(candidateSource({...context.profile,answers:{...context.answers,...answers},pdf_cv_text:pdf.text}),criteria,pdf.status,context.profile_version);
     }
-    return await queueApplicationFollowups(client, jobId, youthId, context.profile_version, assessCandidate(criteria, raw, source), hash, context.source_updated_at);
+    return await queueApplicationFollowups(client, jobId, youthId, context.profile_version, assessCandidate(criteria, raw, source), hash, context.source_updated_at, source);
   } finally {
     await client.rpc("release_application_followup_analysis", leaseArgs);
   }

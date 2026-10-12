@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { UiIcon } from "@/components/ui-icon";
 import "./company-onboarding-design.css";
 import { FormEvent, useEffect, useState } from "react";
@@ -10,7 +11,7 @@ import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getSupabaseClient } from "@/lib/supabase";
 import { createJob } from "@/lib/jobs";
 import { uploadJobImage } from "@/lib/storage";
-import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
+import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 
 const JOB_CATEGORIES = [
   "Café/restaurang",
@@ -31,7 +32,7 @@ const TIME_OPTIONS = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid b
 const HIRING_PRIORITIES = ["Erfarenhet", "Personlighet", "Tekniska kunskaper", "Kulturpassning", "Ledarskap"];
 const INDUSTRY_TIPS = ["IT", "Bygg", "Restaurang", "Vård", "E-handel", "Butik", "Transport", "Ekonomi"];
 
-type Step = "profil" | "val" | "annons";
+type Step = "profil" | "val" | "annons" | "matchprofil";
 
 function toggleItem(arr: string[], item: string): string[] {
   return arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item];
@@ -209,7 +210,6 @@ export default function CompanyOnboardingPage() {
 
   return (
     <main className={`mobile-shell company-onboarding ${step === "profil" ? "company-profile-onboarding" : ""}`}>
-      <datalist id="company-name-suggestions">{COMPANY_NAME_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
@@ -249,8 +249,7 @@ export default function CompanyOnboardingPage() {
             {profileQuestion === 0 && <><label htmlFor="company-onboarding-companyName" style={labelStyle}>Företagsnamn *</label><input id="company-onboarding-companyName"
               className="h-14 w-full rounded-xl border border-[#e8e8e8] px-4 text-base"
               style={{ marginBottom: "0.85rem" }}
-              placeholder="T.ex. Bergströms Bageri AB"
-              list="company-name-suggestions"
+              placeholder="Företagets registrerade namn"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
@@ -313,13 +312,15 @@ export default function CompanyOnboardingPage() {
         <div className="company-onboarding-complete" style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Er nästa rekrytering börjar nu.</h1>
-          <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Vill du skapa din första jobbannons nu eller gå in på ditt konto?</p>
+          <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
           <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
-          <button type="button" className="cta-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
+          <button type="button" className="cta-btn" onClick={() => setStep("matchprofil")}>Bygg företagets matchprofil</button>
+          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
           <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=kandidater")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
         </div>
       )}
 
+      {step === "matchprofil" && user && <section><h1>Er matchprofil</h1><p>Valfritt. Välj förslag eller skriv egna uppgifter. Jobbkrav bestämmer ni sedan per annons.</p><CompanyMatchProfileForm userId={user.id}/><button type="button" className="secondary-btn" onClick={() => setStep("val")}>Till nästa steg</button></section>}
       {/* ── STEP 3: Job form ── */}
       {step === "annons" && (
         <form onSubmit={(e) => void handleCreateJob(e)}>
@@ -408,7 +409,7 @@ export default function CompanyOnboardingPage() {
               )}
             </div>
 
-            <label style={labelStyle}>Ålderskrav (valfritt)</label>
+<label>Egen arbetskategori<input className="input-field" value={jobCategory} maxLength={80} onChange={event=>setJobCategory(event.target.value)}/></label><label>Arbetstider – välj ovan eller skriv egna<input className="input-field" value={jobTimePrefs.join(", ")} maxLength={200} onChange={event=>setJobTimePrefs(event.target.value.split(",").map(value=>value.trim()).filter(Boolean))}/></label>            <label style={labelStyle}>Ålderskrav (valfritt)</label>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.85rem" }}>
               <input
                 type="number"

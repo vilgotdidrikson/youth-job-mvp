@@ -37,7 +37,7 @@ export async function processApplicationAnalysisJobs(client: SupabaseClient, api
         assessment = { ...assessCandidate(criteria, raw, source), pdfStatus: pdf.status };
       }
       // An unreadable PDF must not turn possibly-present information into new questions.
-      const missing = pdf.status === "unreadable" ? [] : missingApplicationCriteria(assessment);
+      const missing = pdf.status === "unreadable" ? [] : missingApplicationCriteria(assessment, [], source);
       const { data: finished, error: saveError } = await client.rpc("finish_application_analysis_job", { ...task, p_hash: hash, p_result: assessment, p_criteria: criteria, p_missing: missing });
       if (saveError) throw new Error("Save unavailable");
       return finished?.completed === true;

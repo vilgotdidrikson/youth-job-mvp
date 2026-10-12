@@ -13,7 +13,7 @@ export function ProfileHeader({ name, location, completedSections, totalSections
           <span>{location || "Sverige"} · Jobbsökande</span>
         </div>
         <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button></div>
-        <div className="network-profile-open"><strong>Fyllda profilavsnitt: {completedSections} av {totalSections}</strong><span>Ditt CV visas separat. Du kan lägga till fler uppgifter när du vill.</span></div>
+        <div className="network-profile-open"><strong>Delar med sparade uppgifter: {completedSections} av {totalSections}</strong><span>CV och fyra valfria profildelar. Sparade uppgifter betyder inte att alla fält är ifyllda.</span></div>
       </div>
     </header>
   );

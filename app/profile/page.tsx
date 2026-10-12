@@ -1,12 +1,15 @@
 "use client";
 
+import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
+import { completedProfileSections } from "@/lib/recruitment-profile";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { ProfileDevelopmentPrompt } from "@/components/profile-development-prompt";
 
 import { BlockedContacts } from "@/components/blocked-contacts";
 import { PasswordInput } from "@/components/password-input";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
 import { ExperienceCard, ProfileHeader, SkillList } from "@/components/profile/professional-profile";
@@ -80,13 +83,12 @@ function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): Y
   };
 }
 
-function hasContent(value: string) {
-  return value.trim().length > 0;
-}
 
 export default function ProfilePage() {
   const router = useRouter();
 const { user, profile, loading, logout, status, error: sessionError } = useRequireAuth();
+  const {cvCompleted} = useCvCompletion(user?.id,profile?.role === "youth");
+  const recruitment = useRecruitmentProfile(profile?.role === "youth" ? user?.id : undefined);
   const verified = useVerifiedExperience(profile?.role === "youth" ? user?.id : undefined);
 
   const [form, setForm] = useState<YouthProfileForm>(initialForm);
@@ -174,17 +176,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     return () => { active = false; };
   }, [loading, profile?.role, profileLoadRetry, user]);
 
-  const completedSections = useMemo(() => {
-    return {
-      personal: hasContent(form.name) && hasContent(form.dateOfBirth) && hasContent(form.city),
-      skills: form.skills.length > 0,
-      experience: hasContent(form.experience),
-      education: hasContent(form.education),
-      extras: hasContent(form.languages) || hasContent(form.certificates) || hasContent(form.extracurriculars),
-    };
-  }, [form]);
-
-  const completedSectionCount = Object.values(completedSections).filter(Boolean).length;
+  const completedSectionCount = completedProfileSections(recruitment.profile).length + Number(cvCompleted);
 
   const generatedCvDocument = cvDocuments.find((document) => document.type === "generated_cv");
   const uploadedCvDocument = cvDocuments.find((document) => document.type === "cv");
@@ -496,7 +488,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   );
 
   return <main className="mobile-shell profile-page mnw-profile">
-    <ProfileHeader name={form.name} location={form.city} completedSections={completedSectionCount} totalSections={Object.keys(completedSections).length} onEdit={() => setProfileTab("details")} verification={<VerifiedJobBadge experiences={verified.items} />} />
+    <ProfileHeader name={form.name} location={form.city} completedSections={completedSectionCount} totalSections={5} onEdit={() => setProfileTab("details")} verification={<VerifiedJobBadge experiences={verified.items} />} />
     {verified.error && <p role="alert">{verified.error}</p>}
     {profileTab === "overview" && <ProfileDevelopmentPrompt/>}
     {profileTab === "overview" && <EmploymentExperiences userId={user.id} />}

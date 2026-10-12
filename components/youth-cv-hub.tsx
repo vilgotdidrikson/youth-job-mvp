@@ -103,7 +103,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const verified = useVerifiedExperience(user?.id);
   const jobId = query.get("job");
   const title = query.get("title");
-  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : "/profile";
+  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : query.get("return") === "build" ? "/profile/build" : "/profile";
   const [step, setStep] = useState<Step>(initialCreate ? "about" : "start");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [name, setName] = useState("");

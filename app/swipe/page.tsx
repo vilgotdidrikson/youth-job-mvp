@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
 import { getSwipeJobs } from "@/lib/feeds";
@@ -9,7 +9,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
-import { getApplicationDraftCount, getSavedJobs, getYouthFlowState, saveApplicationDraft, setJobSaved } from "@/lib/youth-job-flow";
+import { getSavedJobs, getYouthFlowState, saveApplicationDraft, setJobSaved } from "@/lib/youth-job-flow";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 const EMPLOYMENT_FORMS = ["Heltid", "Deltid", "Sommarjobb", "Helgjobb", "Extraarbete", "Extra vid behov", "Praktik", "Engångsjobb"];
@@ -33,9 +33,10 @@ function SwipePageContent() {
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
   const [employmentType, setEmploymentType] = useState("");
-  const [showCvPrompt, setShowCvPrompt] = useState(false);
+  const pending = useRef(new Set<string>());
+  const [pendingCount, setPendingCount] = useState(0);
   const [draftCount, setDraftCount] = useState(0);
-  const [swipeCount, setSwipeCount] = useState(0);
+
   const [savedJobs, setSavedJobs] = useState<JobPost[]>([]);
   const showingSaved = searchParams.get("saved") === "1";
 
@@ -70,11 +71,10 @@ function SwipePageContent() {
   }, [cvLoading, loading, profile?.role, searchParams, showingSaved, user]);
 
   useEffect(() => {
-    if (!user || cvCompleted || profile?.role !== "youth") return;
-    const storageKey = `employo-pre-cv-swipe-count:${user.id}`;
-    setSwipeCount(Number(window.localStorage.getItem(storageKey) ?? "0"));
-    void getApplicationDraftCount().then(setDraftCount).catch(() => undefined);
-  }, [cvCompleted, profile?.role, user]);
+    const protect = (event: BeforeUnloadEvent) => { if (pending.current.size) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  }, []);
 
   const filterOptions = useMemo(() => ({
     cities: uniqueSorted(jobs.map((job) => job.city)),
@@ -90,27 +90,26 @@ function SwipePageContent() {
   ), [category, city, employmentType, jobs]);
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
-    setError("");setNotice("");
-    try {
-      if (!cvCompleted && decision === "interested") {
-        await saveApplicationDraft(job.id);
-        setDraftCount((count) => count + 1);
-      } else if (cvCompleted) {
-        await swipeJob(job.id, decision);
-        if(decision === "interested") {setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);window.dispatchEvent(new Event("mnw-navigation-refresh"));}
-      }
-      setJobs((current) => current.filter((item) => item.id !== job.id));
-      if (!cvCompleted && user) {
-        const storageKey = `employo-pre-cv-swipe-count:${user.id}`;
-        const nextCount = swipeCount + 1;
-        window.localStorage.setItem(storageKey, String(nextCount));
-        setSwipeCount(nextCount);
-        if (nextCount > 0 && nextCount % 10 === 0) setShowCvPrompt(true);
-      }
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Kunde inte spara ditt val.");
-      throw reason;
-    }
+    if (pending.current.has(job.id)) return;
+    pending.current.add(job.id); setPendingCount(pending.current.size);
+    setError(""); setNotice("");
+    setJobs(current => current.filter(item => item.id !== job.id));
+    // Release the deck immediately; only show success once the server confirms it.
+    void (async () => {
+      try {
+        if (!cvCompleted && decision === "interested") {
+          await saveApplicationDraft(job.id); setDraftCount(count => count + 1);
+          setNotice("Intresset är sparat. Skapa ditt CV under Profil för att skicka ansökan.");
+        } else if (cvCompleted) {
+          await swipeJob(job.id, decision);
+          if (decision === "interested") setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);
+        }
+        window.dispatchEvent(new Event("mnw-navigation-refresh"));
+      } catch {
+        setJobs(current => current.some(item => item.id === job.id) ? current : [job, ...current]);
+        setError(`Valet för ${job.title} kunde inte sparas. Jobbet finns kvar – försök igen.`);
+      } finally { pending.current.delete(job.id); setPendingCount(pending.current.size); }
+    })();
   };
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
@@ -128,7 +127,7 @@ function SwipePageContent() {
   };
   return <>
     {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
-    {showCvPrompt && <div role="dialog" aria-modal="true" style={{ position: "fixed", inset: 0, zIndex: 10, display: "grid", placeItems: "center", padding: "1.25rem", background: "rgba(0,0,0,.45)" }}><section className="card" style={{ maxWidth: 380, padding: "1.4rem" }}><p style={{ margin: 0, color: "var(--accent)", fontSize: ".78rem", fontWeight: 800 }}>DU HAR UTFORSKAT 10 JOBB</p><h2>Gör klart ditt CV</h2><p>{draftCount ? `${draftCount} sparade ansökningar skickas när företagen kan se ditt CV.` : "För att skicka ansökningar behöver företagen kunna se ditt CV."}</p><Link className="cta-btn" style={{ display: "block", textAlign: "center" }} href="/youth/cv">Skapa ditt CV</Link><button type="button" className="secondary-btn" style={{ width: "100%", marginTop: ".7rem" }} onClick={() => setShowCvPrompt(false)}>Fortsätt utforska</button></section></div>}
+    <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }
 

@@ -25,6 +25,25 @@ try {
  const explicitResult=assessCandidate(matchingCriteria([{label:'B-körkort',required:true},{label:'Kan arbeta helger',required:true},{label:'Kan arbeta kvällar',required:true},{label:'Social',category:'trait'}]),[],explicit);
  assert.equal(explicitResult.score,100);assert.equal(explicitResult.coverage,100);assert.equal(explicitResult.criteria[3].status,'unknown','Examples must not certify a personality trait');
 
+ const {fixedCriterionEvidence}=await load('fixed-match-rules');
+ const dateSource='Kan börja arbeta: 2026-10-14';
+ assert.equal(fixedCriterionEvidence('Kan börja omgående',dateSource,'2026-10-12').status,'unknown');
+ assert.equal(fixedCriterionEvidence('Kan börja omgående','Kan börja arbeta: 2026-11-14','2026-10-12').status,'unknown');
+ assert.equal(fixedCriterionEvidence('Kan börja senast 2026-10-13',dateSource,'2026-10-12').status,'unfulfilled');
+ assert.equal(fixedCriterionEvidence('Kan börja omgående','','2026-10-12').status,'unknown');
+ assert.equal(fixedCriterionEvidence('Kan arbeta helger',dateSource,'2026-10-12').status,'unknown');
+ assert.equal(fixedCriterionEvidence('Svenska','Språk: Svenska, självuppgiven nivå Flytande').status,'fulfilled');
+ assert.equal(fixedCriterionEvidence('Flytande svenska','Språk: Svenska, självuppgiven nivå Grundläggande').status,'unfulfilled');
+ assert.equal(fixedCriterionEvidence('Svenska','Språk: Svenska, självuppgiven nivå Lite').status,'unknown');
+ const knownStart=assessCandidate(matchingCriteria([{label:'Kan börja omgående',required:true}]),[],dateSource);
+ assert.deepEqual(missingApplicationCriteria(knownStart,[],dateSource),[]);
+ assert.equal(knownStart.criteria[0].evidence,dateSource);
+ assert.equal(fixedCriterionEvidence('Kan börja omgående','Kan börja arbeta: 2026-10-11','2026-10-12').status,'fulfilled');
+ const own=validateRecruitmentProfile({...expanded,examples:[{strength:'Kreativitet',context:'Skolprojekt',action:'Jag gjorde affischer.'}],availability:{...expanded.availability,notes:'Efter skolan från 16'},qualifications:{...expanded.qualifications,languages:[{language:'Svenska',level:'Vardagligt tal'}]}});
+ assert.ok(recruitmentProfileSource(own).includes('Kreativitet'));
+ assert.ok(recruitmentProfileSource(own).includes('Efter skolan från 16'));
+ assert.throws(()=>validateRecruitmentProfile({...own,examples:[{strength:'x'.repeat(31),context:'Skolprojekt',action:'Jag gjorde affischer.'}]}));
+
  const {jobMatchProfilePayload}=await load('job-match-criteria');
  const base={jobId:'job',roleSummary:'Service',mustHaves:['B-körkort',' B-körkort '],trainableRequirements:[],topTraits:[],candidateQuestions:[]};
  assert.equal(jobMatchProfilePayload(base).must_haves.length,1);

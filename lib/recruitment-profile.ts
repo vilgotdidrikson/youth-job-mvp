@@ -4,7 +4,7 @@ export const PERIODS = { day: "Dagtid", evening: "Kväll", night: "Natt", holida
 export const STRENGTHS = { service: "Kundbemötande", teamwork: "Samarbete", responsibility: "Ansvar", initiative: "Initiativ", learning: "Lära nytt" };
 export const LANGUAGE_LEVELS = ["Grundläggande", "God", "Mycket god", "Flytande", "Modersmål"];
 export interface RecruitmentProfile {
-  availability: { days: string[]; periods: string[]; startDate: string; hours: string };
+  availability: { days: string[]; periods: string[]; startDate: string; hours: string; notes?: string };
   preferences: { roles: string[]; locations: string[]; travelMinutes: string; motivation: string };
   examples: { strength: string; context: string; action: string }[];
   qualifications: { licences: string[]; tools: string[]; languages: { language: string; level: string }[] };
@@ -31,17 +31,17 @@ export function validateRecruitmentProfile(raw: unknown): RecruitmentProfile {
   const travelMinutes = text(p.travelMinutes, 3);
   if (travelMinutes && (!/^\d{1,3}$/.test(travelMinutes) || Number(travelMinutes) > 180)) throw new Error("Ange högst 180 minuters restid.");
   if (!Array.isArray(data.examples) || data.examples.length > 5 || !Array.isArray(q.languages) || q.languages.length > 8) throw new Error("För många exempel eller språk.");
-  const examples = data.examples.map(value => { const e = object(value), strength = text(e.strength, 30), context = text(e.context, 200), action = text(e.action, 1000); if (!(strength in STRENGTHS) || !context || !action) throw new Error("Ange både situation och vad du gjorde i exemplet."); return { strength, context, action }; });
-  const languages = q.languages.map(value => { const l = object(value), language = text(l.language, 60), level = text(l.level, 30); if (!language || !LANGUAGE_LEVELS.includes(level)) throw new Error("Ange språk och nivå."); return { language, level }; });
-  return { availability: { days, periods, startDate, hours }, preferences: { roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
+  const examples = data.examples.map(value => { const e = object(value), strength = text(e.strength, 30), context = text(e.context, 200), action = text(e.action, 1000); if (!strength || !context || !action) throw new Error("Ange både situation och vad du gjorde i exemplet."); return { strength, context, action }; });
+  const languages = q.languages.map(value => { const l = object(value), language = text(l.language, 60), level = text(l.level, 30); if (!language || !level) throw new Error("Ange språk och nivå."); return { language, level }; });
+  return { availability: { days, periods, startDate, hours, ...(a.notes !== undefined ? {notes:text(a.notes,1000)} : {}) }, preferences: { roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
 }
 export function readRecruitmentProfile(raw: unknown): RecruitmentProfile {
   try { return validateRecruitmentProfile(raw); } catch { return emptyRecruitmentProfile(); }
 }
 export function completedProfileSections(profile: RecruitmentProfile): ProfileSection[] {
   return PROFILE_SECTIONS.filter(({key}) => {
-    if (key === "availability") return profile.availability.days.length || profile.availability.periods.length || profile.availability.startDate || profile.availability.hours;
-    if (key === "preferences") return profile.preferences.roles.length || profile.preferences.locations.length || profile.preferences.motivation;
+    if (key === "availability") return profile.availability.days.length || profile.availability.periods.length || profile.availability.startDate || profile.availability.hours || profile.availability.notes;
+    if (key === "preferences") return profile.preferences.roles.length || profile.preferences.locations.length || profile.preferences.motivation || profile.preferences.travelMinutes;
     if (key === "examples") return profile.examples.length;
     return profile.qualifications.licences.length || profile.qualifications.tools.length || profile.qualifications.languages.length;
   }).map(({key}) => key);
@@ -55,6 +55,7 @@ export function recruitmentProfileSource(raw: unknown): string {
   if (a.periods.includes("evening")) lines.push("Jag kan arbeta kvällar");
   if (a.periods.length) lines.push(`Tillgängliga tider: ${a.periods.map(period => PERIODS[period as keyof typeof PERIODS]).join(", ")}`);
   if (a.startDate) lines.push(`Kan börja arbeta: ${a.startDate}`);
+  if (a.notes) lines.push(`Egna uppgifter om arbetstider: ${a.notes}`);
   if (a.hours) lines.push(`Önskad arbetstid: ${a.hours} timmar per vecka`);
   const p = profile.preferences;
   if (p.roles.length) lines.push(`Söker jobb inom: ${p.roles.join(", ")}`);
@@ -64,6 +65,6 @@ export function recruitmentProfileSource(raw: unknown): string {
   for (const licence of profile.qualifications.licences) lines.push(licence === "B-körkort" ? "Jag har B-körkort" : `Självuppgiven behörighet: ${licence}`);
   if (profile.qualifications.tools.length) lines.push(`Självuppgivna verktyg och kunskaper: ${profile.qualifications.tools.join(", ")}`);
   for (const l of profile.qualifications.languages) lines.push(`Språk: ${l.language}, självuppgiven nivå ${l.level}`);
-  for (const e of profile.examples) lines.push(`Eget exempel på ${STRENGTHS[e.strength as keyof typeof STRENGTHS]}: Situation: ${e.context}. Vad jag gjorde: ${e.action}`);
+  for (const e of profile.examples) lines.push(`Eget exempel på ${STRENGTHS[e.strength as keyof typeof STRENGTHS] ?? e.strength}: Situation: ${e.context}. Vad jag gjorde: ${e.action}`);
   return lines.join("\n");
 }

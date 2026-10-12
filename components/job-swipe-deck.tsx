@@ -27,6 +27,8 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState("");
   const startX = useRef<number | null>(null);
+  const startY = useRef(0);
+  const suppressClick = useRef(false);
   const activePointer = useRef<number | null>(null);
   const actionLock = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,7 +46,7 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
       void onDecision(currentJob, decision).catch(() => {
         setActionError("Ditt val kunde inte sparas. Försök igen.");
       }).finally(() => { actionLock.current = false; setBusy(false); setFlyDir(null); });
-    }, reduced ? 0 : 240);
+    }, reduced ? 0 : 160);
   };
   const save = async () => {
     if (!currentJob || saving) return;
@@ -60,10 +62,11 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
   return <div className={styles.deck}>
     <article className={styles.jobCard}
       style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${dragX}px) rotate(${dragX * .025}deg)`, transition: startX.current !== null ? "none" : undefined }}
-      onPointerDown={event => { if (busy || saving || actionLock.current || startX.current !== null || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("a,button")) return; activePointer.current = event.pointerId; startX.current = event.clientX; event.currentTarget.setPointerCapture(event.pointerId); }}
-      onPointerMove={event => { if (startX.current !== null && event.pointerId === activePointer.current) setDragX(event.clientX - startX.current); }}
+      onPointerDown={event => { if (busy || saving || actionLock.current || startX.current !== null || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("button,input,textarea,select")) return; activePointer.current = event.pointerId; startX.current = event.clientX; startY.current = event.clientY; suppressClick.current = false; }}
+      onPointerMove={event => { if (startX.current !== null && event.pointerId === activePointer.current) { const dx=event.clientX-startX.current, dy=event.clientY-startY.current; if (Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.2) { suppressClick.current=true; event.currentTarget.setPointerCapture(event.pointerId); setDragX(dx); } } }}
+      onClickCapture={event => {if(suppressClick.current) {event.preventDefault();event.stopPropagation();suppressClick.current=false;}}}
       onDragStart={event => event.preventDefault()}
-      onPointerUp={event => { if (startX.current === null || event.pointerId !== activePointer.current) return; const delta = event.clientX - startX.current; if (delta > 90) decide("interested"); else if (delta < -90) decide("skip"); else resetDrag(); }}
+      onPointerUp={event => { if (startX.current === null || event.pointerId !== activePointer.current) return; const delta = event.clientX - startX.current; if (suppressClick.current && delta > 60) decide("interested"); else if (suppressClick.current && delta < -60) decide("skip"); else resetDrag(); }}
       onPointerCancel={event => { if (event.pointerId === activePointer.current) resetDrag(); }} onLostPointerCapture={event => { if (event.pointerId === activePointer.current) resetDrag(); }}>
       {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority draggable={false} className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
       <div className={styles.imageShade}/>

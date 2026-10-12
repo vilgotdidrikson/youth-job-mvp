@@ -8,3 +8,9 @@
 .page a:focus-visible,.page button:focus-visible,.prompt a:focus-visible,.prompt button:focus-visible,.form input:focus-visible,.form select:focus-visible,.form textarea:focus-visible {outline:3px solid #b84164;outline-offset:3px;}.form fieldset:disabled {opacity:.65;}
 @media(max-width:720px){.page {padding:24px 18px calc(100px + env(safe-area-inset-bottom));}.sectionGrid,.columns {grid-template-columns:1fr;}.form {padding:20px;}.form footer button {flex:1 1 100%;}.language {grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;}.prompt {padding:16px;gap:10px;}.prompt a {margin-left:32px;}.prompt>div {min-width:0;flex-basis:calc(100% - 40px);}.sectionCard {padding:22px;}}
 .candidate {border:1px solid #f0d9e0;border-radius:16px;background:#fffafb;padding:18px;margin-block:16px;color:#4c303b;}.candidate summary {cursor:pointer;font-size:15px;font-weight:550;min-height:44px;}.candidate summary span {display:block;margin-top:6px;font-size:13px;font-weight:400;color:#765563;}.candidate h3 {font-size:15px;font-weight:550;}.candidate p {font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:#765563;}.candidate section {border-top:1px solid #f0d9e0;padding-top:8px;margin-top:16px;}
+
+.sectionCard label {display:flex;align-items:center;gap:12px;cursor:pointer;min-height:44px;}
+.sectionCard label strong {margin:0;font-size:19px;color:#4c303b;}
+.sectionCard input[type=checkbox] {width:22px;height:22px;accent-color:#b84164;flex-shrink:0;}
+.sectionCard a {display:inline-flex;align-items:center;min-height:44px;color:#b84164;font-size:14px;}
+.sectionCard span {margin-top:12px;}

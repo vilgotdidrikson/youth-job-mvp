@@ -51,7 +51,7 @@ export function ShortYouthOnboarding() {
       await saveYouthAccountDetails({ full_name: name, date_of_birth: submittedForm.dateOfBirth, city: submittedForm.city, postal_code: submittedForm.postalCode, address: "", additional_addresses: [] });
       const { error: updateError } = await getSupabaseClient().from("youth_profiles").update({ short_onboarding_completed: true }).eq("user_id", user?.id);
       if (updateError) throw new Error(updateError.message);
-      router.replace("/swipe?welcome=1");
+      router.replace("/profile/build?welcome=1");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte spara dina uppgifter."); }
     finally { setSaving(false); }
   };
@@ -61,5 +61,5 @@ export function ShortYouthOnboarding() {
     <form onSubmit={event => {event.preventDefault();if(saving)return;const values=new FormData(event.currentTarget);const submittedForm=step === 0 ? {...form,fullName:String(values.get("fullName") ?? ""),dateOfBirth:String(values.get("dateOfBirth") ?? "")} : {...form,city:String(values.get("city") ?? ""),postalCode:String(values.get("postalCode") ?? "")};setForm(submittedForm);if(step === 0){if(normalizeFullName(submittedForm.fullName) && submittedForm.dateOfBirth){setError("");setStep(1);}else setError("Fyll i fullständigt namn och födelsedatum.");}else void save(submittedForm);}}>
     {step === 0 ? <><label>Fullständigt namn<input name="fullName" value={form.fullName} onChange={event => setForm({...form,fullName:event.target.value})} autoComplete="name" placeholder="Förnamn och efternamn" autoFocus required/></label><label>Födelsedatum<input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={event => setForm({...form,dateOfBirth:event.target.value})} autoComplete="bday" required/></label></> : <><label>Ort<input name="city" value={form.city} onChange={event => setForm({...form,city:event.target.value})} autoComplete="address-level2" placeholder="Till exempel Stockholm" autoFocus required/></label><label>Postnummer<input name="postalCode" inputMode="numeric" value={form.postalCode} onChange={event => setForm({...form,postalCode:event.target.value})} autoComplete="postal-code" placeholder="123 45" required/></label></>}
     {error && <p className="mnw-onboarding-error" role="alert">{error}</p>}
-    <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Upptäck jobb"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
+    <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Spara och fortsätt"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
 }

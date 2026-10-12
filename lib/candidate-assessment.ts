@@ -43,7 +43,7 @@ export function assessCandidate(criteria: MatchCriterion[], raw: unknown, source
     const quote = typeof value?.evidence === "string" ? value.evidence.trim() : "";
     const grounded = quote.length >= 8 && quote.length <= 1500 && source.includes(quote);
     const status: CriterionStatus = grounded && ["fulfilled", "unfulfilled"].includes(value?.status) ? value.status : "unknown";
-    return { ...criterion, status, evidence: grounded && status !== "unknown" ? quote : null };
+    return { ...criterion, status, evidence: grounded && (status !== "unknown" || (fixed?.status === "unknown" && fixed.evidence)) ? quote : null };
   });
   const total = evaluated.reduce((sum, criterion) => sum + criterion.weight, 0);
   const known = evaluated.filter((criterion) => criterion.status !== "unknown").reduce((sum, criterion) => sum + criterion.weight, 0);

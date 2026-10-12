@@ -20,7 +20,7 @@ export interface ApplicationCompletion {
 }
 
 export async function submitApplicationAction(action: "prepare" | "answers" | "drafts", values: Record<string, unknown> = {}) {
-  const response = await fetch("/api/youth/applications/submit", { method: "POST", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ action, ...values }) });
+  const response = await fetch("/api/youth/applications/submit", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ action, ...values }) });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Kunde inte spara ansökan. Försök igen.");
   return result.application;

@@ -155,6 +155,7 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
 }
 
 export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
+  if (direction === "interested") { await prepareApplication(jobId); return null; }
   const { user } = await getAuthenticatedUser("youth");
   const { data: youthProfile, error: profileError } = await getSupabaseClient()
     .from("youth_profiles")
@@ -180,10 +181,6 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error("Den här annonsen tar inte emot nya ansökningar.");
   }
 
-  if (direction === "interested") {
-    const application = await prepareApplication(jobId);
-    return application.status === "submitted" ? getExistingMatch(jobId, user.id, job.company_user_id) : null;
-  }
 
   try {
     await upsertJobInterestRecord({
