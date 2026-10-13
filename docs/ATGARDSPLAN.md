@@ -24,7 +24,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Pågår | Vilgot / Codex |
-| 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
+| 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Pågår | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
 | 6 | [N12](#n12) | P1 | Video i chatten | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Ej påbörjad | — |
@@ -368,14 +368,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 4
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f03-cv-consistency-20261013`
 - Åtgärd: Låt användaren granska och rätta både CV-text och profilfakta i samma flöde. En rättad text får inte lämna motsägande datum eller språknivåer i profilen som används för matchning.
 - Klar när: Samma faktauppgifter används i CV, profil och matchningsunderlag; fria formuleringar kan fortfarande redigeras.
 - Implementerat: —
 - Verifierat: —
-- Återstår / blockerare: —
+- Återstår / blockerare: Reserverad 2026-10-13. Beroende på F02 i PR #49. Samordna fri CV-text med granskade fakta, härled äldre profilfält från aktuell version och spara tillsammans. PR #49:s merge till dev väntar på uttryckligt godkännande efter automatisk granskningsspärr.
 
 <a id="f04"></a>
 ### F04 Rätta företagets första navigation
