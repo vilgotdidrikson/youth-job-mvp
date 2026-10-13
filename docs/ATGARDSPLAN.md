@@ -1,6 +1,6 @@
 # MatchnWork gemensam åtgärdsplan
 
-Gemensam arbetslista för de kommande två veckorna och återstående lanseringsarbete. Omfattningen är större än en garanterad tvåveckorsleverans; prioriteringen styr vad som ska göras först. Följ den globala ordningen nedan. P1 ska vara klara före skarp lansering. P2 förbättrar kärnflödena och P3 är senare puts. Den globala ordningen tar hänsyn till beroenden; slutverifiering och lansering sker efter implementation även om de är P1. F = befintlig funktionalitet, N = ny funktion, D = design och text. L = lansering, tidigare beslut och kompletterande verifiering. N11/N12 (video) och N14/N15 (flera adresser och annonskopior) är nya högt prioriterade funktioner. Inspelning N13 följer efter fungerande uppladdning och delning.
+Gemensam arbetslista för de kommande två veckorna och återstående lanseringsarbete. Omfattningen är större än en garanterad tvåveckorsleverans; prioriteringen styr vad som ska göras först. Följ den globala ordningen nedan. P1 ska vara klara före skarp lansering. P2 förbättrar kärnflödena och P3 är senare puts. Den globala ordningen tar hänsyn till beroenden; slutverifiering och lansering sker efter implementation även om de är P1. F = befintlig funktionalitet, N = ny funktion, D = design och text. L = lansering, tidigare beslut och kompletterande verifiering. N11/N12 (video) och N14/N15 (flera adresser och annonskopior) samt N16 (platsantal och nytt lyft efter bekräftad anställning) är nya högt prioriterade funktioner. Inspelning N13 följer efter fungerande uppladdning och delning.
 
 Video är frivilligt och ska hjälpa ungdomen att presentera sig. Psykologiskt personlighetstest och automatisk analys av personlighet från video ingår inte i denna plan. Befintliga egna exempel och motivation behålls.
 
@@ -33,53 +33,54 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Ej påbörjad | — |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Ej påbörjad | — |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | Ej påbörjad | — |
-| 13 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
-| 14 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
-| 15 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
-| 16 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Ej påbörjad | — |
-| 17 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Ej påbörjad | — |
-| 18 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
-| 19 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
-| 20 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
-| 21 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
-| 22 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
-| 23 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
-| 24 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | Ej påbörjad | — |
-| 25 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | Ej påbörjad | — |
-| 26 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Ej påbörjad | — |
-| 27 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
-| 28 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
-| 29 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
-| 30 | [F22](#f22) | P2 | Validera inmatning nära fälten | Ej påbörjad | — |
-| 31 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Ej påbörjad | — |
-| 32 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
-| 33 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
-| 34 | [F15](#f15) | P2 | Förenkla ungdomens första steg | Ej påbörjad | — |
-| 35 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | Ej påbörjad | — |
-| 36 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
-| 37 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
-| 38 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
-| 39 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
-| 40 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
-| 41 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | Ej påbörjad | — |
-| 42 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
-| 43 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
-| 44 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
-| 45 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
-| 46 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
-| 47 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Ej påbörjad | — |
-| 48 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Ej påbörjad | — |
-| 49 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
-| 50 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
-| 51 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
-| 52 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
-| 53 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Ej påbörjad | — |
-| 54 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Ej påbörjad | — |
-| 55 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Ej påbörjad | — |
-| 56 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
-| 57 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
-| 58 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
-| 59 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
+| 13 | [N16](#n16) | P1 | Antal lediga platser och nytt lyft efter bekräftad anställning | Ej påbörjad | — |
+| 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
+| 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
+| 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
+| 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Ej påbörjad | — |
+| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Ej påbörjad | — |
+| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
+| 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
+| 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
+| 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
+| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
+| 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
+| 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | Ej påbörjad | — |
+| 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | Ej påbörjad | — |
+| 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Ej påbörjad | — |
+| 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
+| 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
+| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
+| 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | Ej påbörjad | — |
+| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Ej påbörjad | — |
+| 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
+| 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
+| 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | Ej påbörjad | — |
+| 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | Ej påbörjad | — |
+| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
+| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
+| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
+| 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
+| 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
+| 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | Ej påbörjad | — |
+| 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
+| 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
+| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
+| 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
+| 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
+| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Ej påbörjad | — |
+| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Ej påbörjad | — |
+| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
+| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
+| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
+| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
+| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Ej påbörjad | — |
+| 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Ej påbörjad | — |
+| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Ej påbörjad | — |
+| 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
+| 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
+| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
+| 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 
 ## Nya funktioner
 
@@ -125,7 +126,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
-- Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna antal tjänster och platsinformation med N05; första versionen har gemensam annonsstatus.
+- Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna antal tjänster och platsinformation med N05/N16; första versionen har gemensam annonsstatus.
 - Klar när: En annons med minst två adresser kan sparas, återupptas, publiceras och redigeras. Båda adresserna visas korrekt på kartan och fungerar i geografiska filter, utan dubbla listposter eller ansökningar.
 - Implementerat: —
 - Verifierat: —
@@ -147,12 +148,28 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Verifierat: —
 - Återstår / blockerare: —
 
+<a id="n16"></a>
+### N16 Antal lediga platser och nytt lyft efter bekräftad anställning
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 13
+- Typ: Ny uttryckligen beställd funktion och utveckling av befintligt platsfält
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Låt företaget ange hur många personer det vill anställa på en annons, inte ett tak för antalet sökande. Visa totalt antal tjänster och kvarvarande lediga platser. Återanvänd befintliga platsfält där det är möjligt och samordna med N05/N14. När anställningen blir bekräftad genom det gemensamma flödet i L04 ska antalet lediga platser minska exakt en gång. Om platser återstår och annonsen är aktiv och giltig får den ett nytt flödesdatum så att den sorteras högst bland motsvarande behöriga resultat. Behåll annons-ID, ursprungligt publiceringsdatum, ansökningar och chattar. Vid noll platser blir annonsen tydligt tillsatt/stängd och lyfts inte igen. Återaktivera aldrig en manuellt pausad/stängd eller utgången annons automatiskt. För samma annons med flera adresser gäller i första versionen ett gemensamt totalt platsantal. Hantera samtidiga bekräftelser atomärt, hindra negativa värden och definiera korrigering av en felaktig bekräftelse utan dubbla minskningar eller upprepade lyft. En lyftning kringgår inte ungdomens filter eller skydd mot dubbelansökningar.
+- Klar när: En annons med tre platser går till två lediga efter en bekräftad anställning och lyfts i det relevanta flödet. Samma bekräftelse igen förändrar inget. Sista platsen gör annonsen tillsatt, inte återpublicerad. Samtidiga bekräftelser och pausad/stängd annons ger korrekt platsantal och status; befintliga ansökningar och chattar finns kvar.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
 <a id="n01"></a>
 ### N01 Redigera hela publicerade annonsen
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 18
+- Global ordning: 19
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -167,7 +184,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 19
+- Global ordning: 20
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -182,7 +199,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 25
+- Global ordning: 26
 - Typ: Ny funktion
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -198,7 +215,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 27
+- Global ordning: 28
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -213,7 +230,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 31
+- Global ordning: 32
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -228,7 +245,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 36
+- Global ordning: 37
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -243,11 +260,11 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 37
+- Global ordning: 38
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
-- Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag och antal tjänster. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
+- Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag samt platsantalet från N16. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
 - Klar när: Ungdomen kan jämföra arbetstid och tidsram utan att leta i fri text.
 - Implementerat: —
 - Verifierat: —
@@ -258,7 +275,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 39
+- Global ordning: 40
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -273,7 +290,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 40
+- Global ordning: 41
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -288,7 +305,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 43
+- Global ordning: 44
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -303,7 +320,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 58
+- Global ordning: 59
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -410,7 +427,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 15
+- Global ordning: 16
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -425,7 +442,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 16
+- Global ordning: 17
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -440,7 +457,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 17
+- Global ordning: 18
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -455,7 +472,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 22
+- Global ordning: 23
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -470,7 +487,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 23
+- Global ordning: 24
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -485,7 +502,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 26
+- Global ordning: 27
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -500,7 +517,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 28
+- Global ordning: 29
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -515,7 +532,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 29
+- Global ordning: 30
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -530,7 +547,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 30
+- Global ordning: 31
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -545,7 +562,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 32
+- Global ordning: 33
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -560,7 +577,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 33
+- Global ordning: 34
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -575,7 +592,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 34
+- Global ordning: 35
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -590,7 +607,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 35
+- Global ordning: 36
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -605,7 +622,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 38
+- Global ordning: 39
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -620,7 +637,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 41
+- Global ordning: 42
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -635,7 +652,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 42
+- Global ordning: 43
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -650,7 +667,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 50
+- Global ordning: 51
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -665,7 +682,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 55
+- Global ordning: 56
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -680,7 +697,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 56
+- Global ordning: 57
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -697,7 +714,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 24
+- Global ordning: 25
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -712,7 +729,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 47
+- Global ordning: 48
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -727,7 +744,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 48
+- Global ordning: 49
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -742,7 +759,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 49
+- Global ordning: 50
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -757,7 +774,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 51
+- Global ordning: 52
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -772,7 +789,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 52
+- Global ordning: 53
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -787,7 +804,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 53
+- Global ordning: 54
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -802,7 +819,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 54
+- Global ordning: 55
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -817,7 +834,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P3
-- Global ordning: 57
+- Global ordning: 58
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
@@ -866,7 +883,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 13
+- Global ordning: 14
 - Typ: Tidigare beslutad funktion / återstående införande
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -882,7 +899,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 14
+- Global ordning: 15
 - Typ: Tidigare beslutad funktion
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -898,7 +915,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 20
+- Global ordning: 21
 - Typ: Verifiering och komplettering av befintlig funktionalitet
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -914,7 +931,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 21
+- Global ordning: 22
 - Typ: Verifiering och komplettering
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -930,7 +947,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P2
-- Global ordning: 44
+- Global ordning: 45
 - Typ: Verifiering och eventuell designförbättring
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -946,7 +963,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 45
+- Global ordning: 46
 - Typ: Slutverifiering och korrigering
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -962,7 +979,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 46
+- Global ordning: 47
 - Typ: Slutverifiering
 - Status: Ej påbörjad
 - Ansvarig: —
@@ -978,7 +995,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - [ ] Klar
 - Prioritet: P1
-- Global ordning: 59
+- Global ordning: 60
 - Typ: Tidigare planerad lanseringsförberedelse
 - Status: Ej påbörjad
 - Ansvarig: —
