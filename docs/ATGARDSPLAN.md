@@ -23,8 +23,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 |---|---|---|---|---|---|
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
-| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | För granskning | Vilgot / Codex |
-| 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | För granskning | Vilgot / Codex |
+| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Klar | Vilgot / Codex |
+| 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
 | 6 | [N12](#n12) | P1 | Video i chatten | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Ej påbörjad | — |
@@ -350,32 +350,32 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 <a id="f02"></a>
 ### F02 Stoppa påhittade fakta i AI CV
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 3
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: [PR #49](https://github.com/vilgotdidrikson/youth-job-mvp/pull/49), `codex/f02-cv-fact-review-20261013`
+- Branch/PR: [PR #49](https://github.com/vilgotdidrikson/youth-job-mvp/pull/49), `codex/f02-cv-fact-review-20261013`, mergad till dev 2026-10-13
 - Åtgärd: AI får inte göra våren 2026 till exakta månader, ändra flytande svenska till modersmål eller lägga till en obekräftad yrkestitel. Bevara osäkerhet och använd bara uppgifter som ungdomen lämnat.
 - Klar när: CV och profil innehåller inga nya sakuppgifter utan användarens uttryckliga godkännande.
 - Implementerat: Gemensam faktagranskning i CV-hubben och äldre onboarding. Alla profilfakta visas och kan rättas före uttryckligt godkännande. Godkännande gäller exakt aktuell CV-text och strukturerade fakta och återanvänds inte efter redigering, ny generation eller omladdning. Sparfunktionerna avvisar ogranskade förslag. AI-instruktioner för bevarad osäkerhet; serverkontroll tar bort datum/perioder och språknivåer utan uttryckligt stöd i underlaget. Logiken ligger i lib/cv-fact-review.ts för framtida mobilåteranvändning.
-- Verifierat: Lokalt: node scripts/test-cv-fact-review.mjs, npm run test:cv-quality, node scripts/test-auth-route-contract.mjs och TypeScript passerade. Fullt npm run build -- --webpack passerade, inklusive 48 statiska sidor. Riktad ESLint: 0 fel, 8 tidigare varningar i onboarding. F02-testet använder ett simulerat schema-giltigt AI-svar med de rapporterade felen och testar både writer-kontroll och godkännandeversion; ingen skarp modellkörning i detta test.
-- Återstår / blockerare: PR #49 har godkända Vercel-kontroller men är inte införd i dev. Automatisk godkännandegranskning nekade merge eftersom uttryckligt godkännande för delade dev/driftsättning krävs. Säker inloggning och fiktiv QA-profil verifierade på vanliga dev; där finns ännu inte F02. Inloggningsförsök i F02:s dev-projekts PR-förhandsvisning visar saknade Supabase-miljövariabler, så generering/granskning/sparning/omladdning där är inte verifierade. F03 hanterar samordningen av fri text och profilfakta. Produktionsdatabasen orörd.
+- Verifierat: F02-regression, CV-quality, auth-route och TypeScript passerar. Fullt produktionsbygge av sammanslagen dev passerar, inklusive 49 genererade sidor; båda Vercel-kontrollerna success för dev-commit 8eab8f7. Riktad ESLint: 0 fel, 8 tidigare onboardingvarningar. I driftsatt dev med fiktivt Alex-QA-konto: ny faktahämtning tog bort gamla exakta månader och ersatte modersmål med Flytande enligt texten. Våren/hösten 2026 bevarades utan specifika månader. En verklig ny AI-CV-version höll Flytande och vag period; den var spärrad för sparning tills uttryckligt godkännande. Godkännandet återställs efter text-/faktaredigering, ny generation och återöppning. Granskade uppgifter sparades och lästes tillbaka efter omladdning.
+- Återstår / blockerare: Ingen blockerare för granskningskravet. AI är ingen fullständig faktakontroll och kan fortfarande föreslå exempelvis en titel eller ett obestyrkt belägg; det syns i granskningen och får inte sparas utan godkännande. Ett granskat språkfält används för matchning; råa belägg/anteckningar utesluts enligt F03. Äldre onboardingvägen är automatiserat verifierad, inte separat inloggat webbtestad. PR-förhandsvisningens saknade miljövariabler kvarstår som miljöfråga; driftsatt dev fungerar. Produktionsdatabasen orörd.
 
 <a id="f03"></a>
 ### F03 Samordna CV text och strukturerade profilfakta
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 4
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: [PR #50](https://github.com/vilgotdidrikson/youth-job-mvp/pull/50), `codex/f03-cv-consistency-20261013`
+- Branch/PR: [PR #50](https://github.com/vilgotdidrikson/youth-job-mvp/pull/50), `codex/f03-cv-consistency-20261013`, mergad till dev 2026-10-13
 - Åtgärd: Låt användaren granska och rätta både CV-text och profilfakta i samma flöde. En rättad text får inte lämna motsägande datum eller språknivåer i profilen som används för matchning.
 - Klar när: Samma faktauppgifter används i CV, profil och matchningsunderlag; fria formuleringar kan fortfarande redigeras.
 - Implementerat: Fri CV-text behålls exakt och måste synkas till nya profilfakta före godkännande. Gemensam granskning i CV-hubben, profilens textredigering och äldre onboarding. Endast aktuell text skickas till faktahämtning; tidigare borttagna fakta återanvänds inte. Äldre profilfält härleds från rättade fakta, aldrig intervjuanteckningar. CV, strukturerade fakta, profilfält, dokumentreferenser och berörda språk i rekryteringsprofilen sparas tillsammans. Saknat schema eller misslyckad skrivning avbryter hela uppdateringen. Föråldrade anteckningar/belägg utesluts ur matchningsunderlaget. Gemensam logik kan återanvändas i mobilappen.
-- Verifierat: F03-regression och profilsparning med simulerad Supabase-klient passerar: rättade datum/språk, borttagna uppgifter, bibehållen fri text, nytt godkännande, en ägarfiltrerad uppdatering, språk i rekryteringsprofilen, dokumentbevarande och fel utan delvis sparning. F02, CV-quality, matching, application-supplement, profilbyggarens hämtning och auth-route passerar. TypeScript och fullt produktionsbygge passerar. Riktad ESLint: 0 fel, 8 tidigare onboardingvarningar. Modellsvaret simuleras i regressionstesterna; inget betalt modelltest eller inloggat F03-webbflöde verifierat.
-- Återstår / blockerare: Beroende på PR #49; båda väntar på införande i dev. Automatisk godkännandegranskning nekade merge av #49 eftersom uttryckligt godkännande för delade dev/driftsättning krävs. F02-förhandsvisningen saknar NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY och kan inte logga in. Vanliga dev har verifierad säker inloggning med fiktivt QA-konto, men innehåller ännu inte F02/F03. Efter godkänd integration: kör verklig generering/synk/rättning/sparning/omladdning i staging. AI-faktahämtning kräver fortfarande användargranskning; uppdatering via faktapanelen bygger om CV-texten. Ingen databasändring eller produktionsdataändring.
+- Verifierat: F03-regression, profilerad sparning med simulerad Supabase-klient och sync-API-test passerar: ägarfilter, kvot/roll, samlad uppdatering, borttagna fakta, källisolering, fel utan delvis sparning och rekryteringsspråk. F02, CV-quality, matching, application-supplement, profilhämtning och auth-route passerar. TypeScript och fullt produktionsbygge av sammanslagen dev passerar; Vercel success. Inloggat driftsatt dev: fri text ändrades från våren/Flytande till hösten/Grundläggande, synkades och behölls exakt före sparning och efter återöppning. Gamla exakta datum/modersmål fanns inte kvar i granskade sparade fakta. Direkt ändring av språk och period byggde om CV-texten och krävde nytt godkännande. Ny AI-version fungerade och krävde godkännande. Både CV-hubbens och profilens alternativa sparning fungerade; profilens sparning gav CV och profilfakta sparade och en ny PDF-referens. Full omladdning visade det nya språket och perioden.
+- Återstår / blockerare: Ingen blockerare för F03. Faktahämtning kräver fortsatt användargranskning; faktapanelen bygger om CV-texten och kan ersätta fria formuleringar enligt informationen i vyn. Fel/nekad åtkomst och äldre onboarding är automatiserat testade, inte framkallade i driftsatt webb. Företagets fullständiga matchningsflöde ligger i L07; samordnat payload och källunderlag verifierades automatiserat här. PDF-referensens sparning verifierades, men fysisk PDF-layout hör till L09. Separat uppladdad PDF kan ha eget innehåll. Ingen schema- eller produktionsdataändring. Nästa punkt påbörjas inte i denna insats enligt användarens besked 2026-10-13.
 
 <a id="f04"></a>
 ### F04 Rätta företagets första navigation
