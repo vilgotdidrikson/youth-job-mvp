@@ -370,7 +370,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Global ordning: 4
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/f03-cv-consistency-20261013`
+- Branch/PR: [PR #50](https://github.com/vilgotdidrikson/youth-job-mvp/pull/50), `codex/f03-cv-consistency-20261013`
 - Åtgärd: Låt användaren granska och rätta både CV-text och profilfakta i samma flöde. En rättad text får inte lämna motsägande datum eller språknivåer i profilen som används för matchning.
 - Klar när: Samma faktauppgifter används i CV, profil och matchningsunderlag; fria formuleringar kan fortfarande redigeras.
 - Implementerat: Fri CV-text behålls exakt och måste synkas till nya profilfakta före godkännande. Gemensam granskning i CV-hubben, profilens textredigering och äldre onboarding. Endast aktuell text skickas till faktahämtning; tidigare borttagna fakta återanvänds inte. Äldre profilfält härleds från rättade fakta, aldrig intervjuanteckningar. CV, strukturerade fakta, profilfält, dokumentreferenser och berörda språk i rekryteringsprofilen sparas tillsammans. Saknat schema eller misslyckad skrivning avbryter hela uppdateringen. Föråldrade anteckningar/belägg utesluts ur matchningsunderlaget. Gemensam logik kan återanvändas i mobilappen.
