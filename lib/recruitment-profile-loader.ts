@@ -8,7 +8,7 @@ function existingCvFacts(data: Record<string, unknown>) {
   const structured = (data.cv_structured ?? {}) as Record<string, unknown>;
   return [data.languages, data.certificates, data.employment_preferences, data.strengths, structured.languages, structured.skills]
     .filter(value => value && (!Array.isArray(value) || value.length))
-    .map(value => typeof value === "string" ? value : JSON.stringify(value))
+    .map(value => typeof value === "string" ? value : JSON.stringify(value, (field, item) => ["sourceNotes", "evidence", "textBasis"].includes(field) ? undefined : item))
     .join("\n")
     .slice(0, 3000);
 }
