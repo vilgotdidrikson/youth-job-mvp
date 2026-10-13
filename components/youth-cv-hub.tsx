@@ -10,10 +10,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { authenticatedHeaders } from "@/lib/api-client";
-import { getYouthProfile, saveUploadedCvToProfile } from "@/lib/onboarding";
-import { getSupabaseClient } from "@/lib/supabase";
+import { getYouthProfile, saveUploadedCvToProfile, saveReviewedCvToProfile } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
-import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import { submitApplicationDraftsAfterCv, type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 import { useVerifiedExperience } from "@/hooks/use-verified-experience";
@@ -63,7 +62,7 @@ function draftFromProfile(profile: YouthProfile): Draft {
     school: cv.education[0]?.school ?? "",
     program: cv.education[0]?.program ?? "",
     graduation: cv.education[0]?.expectedGraduation ?? cv.education[0]?.endDate ?? "",
-    experience: cv.workExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : item.responsibilities).join("\n"),
+    experience: cv.workExperience.map((item) => [item.role, item.employer, item.startDate, item.endDate, item.duration, ...item.responsibilities].filter(Boolean).join(" – ")).join("\n"),
     noExperience: cv.workExperience.length === 0,
     skills: cv.skills.map((item) => item.name).join(", "),
     languages: cv.languages.map((item) => [item.name, item.level].filter(Boolean).join(" – ")).join(", "),
@@ -222,29 +221,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     if (!factsApproved || generating) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
     setSaving(true); setError("");
     try {
-      const legacy = structuredCvToLegacy(generated.structured);
-      const client = getSupabaseClient();
-      const { data: latestProfile, error: documentError } = await client.from("youth_profiles").select("documents").eq("user_id", user.id).single();
-      if (documentError) throw documentError;
-      const latestDocuments: YouthDocument[] = Array.isArray(latestProfile.documents) ? latestProfile.documents : [];
-      const { error: saveError } = await client.from("youth_profiles").update({
-        cv_text: generated.text, cv_generated: true,
-        // A PDF made from the previous text must not be presented as this CV.
-        documents: latestDocuments.filter((document) => document.type !== "generated_cv"),
-        strengths: legacy.strengths, work_experience: legacy.workExperience, education: legacy.education,
-        languages: legacy.languages,
-      }).eq("user_id", user.id);
-      if (saveError) throw saveError;
-      if (supportsStructuredCv || supportsCvExtras) {
-        const extendedPayload: Record<string, unknown> = {};
-        if (supportsStructuredCv) extendedPayload.cv_structured = generated.structured;
-        if (supportsCvExtras) {
-          extendedPayload.certificates = legacy.certificates.join("\n") || null;
-          extendedPayload.extracurriculars = legacy.extracurriculars.join("\n") || null;
-        }
-        const { error: extendedSaveError } = await client.from("youth_profiles").update(extendedPayload).eq("user_id", user.id);
-        if (extendedSaveError) console.warn("Kunde inte spara utökade CV-fält:", extendedSaveError.message);
-      }
+      if (!supportsStructuredCv || !supportsCvExtras) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Kontakta support; din text finns kvar.");
+      await saveReviewedCvToProfile(generated.text, generated.structured, approvedSnapshot);
       const applications = await submitApplicationDraftsAfterCv();
       if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
         for (const base of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(base, user.id));
@@ -313,7 +291,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <p className="cv-hub-status"><strong>Status: redo att granska</strong><br />Dina ändringar är med. Du kan redigera manuellt eller be AI:n skriva en ny version när du vill.</p>
     <div className="cv-hub-edit-links">{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>Redigera {LABELS[item]}</button>)}</div>
     <textarea aria-label="Redigera CV-förhandsvisningen" className="cv-hub-preview" disabled={saving || generating} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
-    {generated && <CvFactReview cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating}
+    {generated && <CvFactReview text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating}
       onApprove={(approved) => setApprovedSnapshot(approved ? cvReviewSnapshot(generated.text, generated.structured) : null)}
       onChange={(cv) => { setApprovedSnapshot(null); setGenerated({ text: renderStructuredCv(cv), structured: cv }); }} />}
     {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}

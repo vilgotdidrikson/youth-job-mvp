@@ -42,21 +42,21 @@ export function matchesCvSchema(value: unknown, schema: Schema = CV_WRITING_SCHE
   return Object.keys(record).every((key) => key in schema.properties!) && Object.entries(schema.properties!).every(([key, child]) => matchesCvSchema(record[key], child));
 }
 
-export async function writeCv(source: StructuredCvData, signal: AbortSignal, conversation: unknown[] = []): Promise<StructuredCvData> {
+export async function writeCv(source: StructuredCvData, signal: AbortSignal, conversation: unknown[] = [], mode: "write" | "extract" = "write"): Promise<StructuredCvData> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 45_000, maxRetries: 1 });
   const response = await client.responses.create({
     model: process.env.OPENAI_CV_MODEL ?? "gpt-4.1-mini",
     store: false,
-    instructions: CV_WRITING_INSTRUCTIONS,
+    instructions: mode === "extract" ? CV_EXTRACTION_INSTRUCTIONS : CV_WRITING_INSTRUCTIONS,
     input: JSON.stringify(cvWritingInput(source, conversation)),
-    text: { format: { type: "json_schema", name: "written_cv", strict: true, schema: CV_WRITING_SCHEMA } },
+    text: { format: { type: "json_schema", name: "written_cv", strict: true, schema: mode === "extract" ? CV_EXTRACTION_SCHEMA : CV_WRITING_SCHEMA } },
     max_output_tokens: 6000,
     temperature: 0,
   }, { signal });
   if (response.status !== "completed" || !response.output_text) throw new Error("CV generation incomplete");
   const result = JSON.parse(response.output_text);
-  if (!matchesCvSchema(result)) throw new Error("Invalid CV output");
-  const cv = createEmptyStructuredCv(source.personalInfo);
+  if (!matchesCvSchema(result, (mode === "extract" ? CV_EXTRACTION_SCHEMA : CV_WRITING_SCHEMA) as Schema)) throw new Error("Invalid CV output");
+  const cv = createEmptyStructuredCv(mode === "extract" ? result.personalInfo : source.personalInfo);
   cv.profile = { ...cv.profile, summary: result.summary, strengths: result.strengths, targetRoles: source.profile.targetRoles };
   for (const key of ["workExperience", "education", "projects", "certifications", "otherExperience"] as const) {
     cv[key] = result[key].map((item: object) => ({ ...item, sourceNotes: [] }));
@@ -80,3 +80,19 @@ export function cvWritingInput(source: StructuredCvData, conversation: unknown[]
   supplements.languages = supplements.languages.filter((item) => !answers.has(item.name));
   return { source: supplements, conversation };
 }
+
+export const CV_EXTRACTION_INSTRUCTIONS = `${CV_WRITING_INSTRUCTIONS}
+Denna körning är enbart faktahämtning från en användarredigerad CV-text. Texten är det ENDA underlaget. Ingen äldre profil eller intervju gäller. Kopiera faktauppgifter och formuleringar från texten; tillför inget och förstärk inget. Uppgifter som tagits bort ska inte finnas kvar. Skapa INTE en ny CV-text. Behåll avsnitt och beskrivningar så troget som möjligt. Bevara vaga perioder ordagrant och språkens uttryckligen angivna nivåer. Tomma fält/listor när uppgifter saknas.`;
+
+export async function extractCvFacts(text: string, signal: AbortSignal): Promise<StructuredCvData> {
+  const source = createEmptyStructuredCv();
+  source.profile.sourceNotes = [text];
+  const cv = await writeCv(source, signal, [], "extract");
+  cv.textBasis = text;
+  return cv;
+}
+
+export const CV_EXTRACTION_SCHEMA = object({
+  ...CV_WRITING_SCHEMA.properties,
+  personalInfo: object({ name: string, city: string, phone: string, email: string, linkedin: string, portfolio: string }),
+});

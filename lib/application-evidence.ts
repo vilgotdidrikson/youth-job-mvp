@@ -19,7 +19,7 @@ export function applicationSource(profile: Record<string, unknown>): string {
   // Exclude identity, birth date, images, document links and other irrelevant personal data.
   const structured = profile.cv_structured && typeof profile.cv_structured === "object" ? profile.cv_structured as Record<string, unknown> : {};
   const sections = ["profile", "workExperience", "education", "skills", "languages", "certifications", "extracurriculars"];
-  const structuredText = sections.flatMap((key) => structured[key] ? [`${key}: ${JSON.stringify(structured[key])}`] : []).join("\n");
+  const structuredText = sections.flatMap((key) => structured[key] ? [`${key}: ${JSON.stringify(structured[key], (field, value) => ["sourceNotes", "evidence", "textBasis"].includes(field) ? undefined : value)}`] : []).join("\n");
   return [recruitmentProfileSource(profile.recruitment_profile), ...["cv_text", "experience", "skills", "work_experience", "education", "languages", "working_time", "employment_preferences", "certificates", "extracurriculars"]
     .flatMap((key) => {
       const value = profile[key];

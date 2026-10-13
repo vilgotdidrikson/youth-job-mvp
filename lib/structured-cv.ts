@@ -79,6 +79,8 @@ export interface CvOtherExperience {
 }
 
 export interface StructuredCvData {
+  // Exact freely edited text from which these reviewed facts were extracted.
+  textBasis?: string;
   personalInfo: CvPersonalInfo;
   profile: {
     summary?: string;
@@ -263,12 +265,13 @@ export function appendInterviewAnswer(cv: StructuredCvData, area: keyof Omit<Str
 }
 
 export function structuredCvToLegacy(cv: StructuredCvData) {
+  // Source notes are provenance, never the current match/profile facts.
   return {
-    strengths: [...cv.profile.strengths, ...cv.profile.sourceNotes],
-    workExperience: cv.workExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.role, item.employer, item.startDate, item.endDate, ...item.responsibilities]).join(" – ")]),
-    education: cv.education.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.program, item.school, item.startDate, item.endDate, item.description]).join(" – ")]),
-    languages: cv.languages.map((item) => compact([item.name, item.level]).join(" – ")),
-    certificates: cv.certifications.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.name, item.issuer, item.year]).join(" – ")]),
-    extracurriculars: cv.otherExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : [compact([item.title, item.organization, item.period, ...item.details]).join(" – ")]),
+    strengths: [...cv.profile.strengths, ...cv.skills.map((item) => item.name)],
+    workExperience: cv.workExperience.map((item) => compact([item.role, item.employer, item.location, item.startDate, item.endDate, item.duration, ...item.responsibilities, ...item.projects, ...item.achievements, ...item.learnings]).join(" – ")).filter(Boolean),
+    education: cv.education.map((item) => compact([item.program, item.school, item.city, item.startDate, item.endDate, item.expectedGraduation ? `Planerad examen ${item.expectedGraduation}` : "", item.description, ...item.courses, ...item.achievements]).join(" – ")).filter(Boolean),
+    languages: cv.languages.map((item) => compact([item.name, item.level, ...item.abilities]).join(" – ")).filter(Boolean),
+    certificates: cv.certifications.map((item) => compact([item.name, item.issuer, item.year, item.reason]).join(" – ")).filter(Boolean),
+    extracurriculars: [...cv.otherExperience.map((item) => compact([item.title, item.organization, item.period, ...item.details]).join(" – ")), ...cv.projects.map((item) => compact([item.name, item.role, item.description, ...item.contributions, ...item.results]).join(" – "))].filter(Boolean),
   };
 }

@@ -737,7 +737,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           }}
         />
 
-        <CvFactReview cv={reviewCv} sourceText={cvReviewSource || cvSourceText(structuredCvFromForm({ ...answers, work_experiences: workExperiences, educations, certificate_entries: certificates, other_entries: otherEntries }))}
+        <CvFactReview text={cvText} onSync={(cv) => { setApprovedCvSnapshot(null); setCvReviewSource(cvText); setStructuredCv(cv); }} cv={reviewCv} sourceText={cvReviewSource || cvSourceText(structuredCvFromForm({ ...answers, work_experiences: workExperiences, educations, certificate_entries: certificates, other_entries: otherEntries }))}
           approved={cvFactsApproved} disabled={saving}
           onApprove={(approved) => setApprovedCvSnapshot(approved ? cvReviewSnapshot(cvText, reviewCv) : null)}
           onChange={(cv) => { setApprovedCvSnapshot(null); setStructuredCv(cv); setCvText(renderStructuredCv(cv)); }} />

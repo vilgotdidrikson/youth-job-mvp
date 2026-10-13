@@ -1,4 +1,4 @@
-import type { StructuredCvData } from "./structured-cv";
+import { renderStructuredCv, structuredCvToLegacy, type StructuredCvData } from "./structured-cv";
 
 // Shared with a future mobile client. Approval is for this exact text AND facts,
 // never for a previous generation or a restored browser draft.
@@ -6,8 +6,21 @@ export function cvReviewSnapshot(text: string, cv: StructuredCvData): string {
   return JSON.stringify({ text, cv });
 }
 
+export function isCvTextAligned(text: string, cv: StructuredCvData): boolean {
+  return Boolean(text.trim() && (text === renderStructuredCv(cv) || text === cv.textBasis));
+}
+
+export function reviewedCvPayload(text: string, cv: StructuredCvData, approval: string | null) {
+  if (!hasApprovedCv(approval, text, cv)) throw new Error("Granska och godkänn aktuell CV-text och profilfakta innan du sparar.");
+  const legacy = structuredCvToLegacy(cv);
+  return { cv_text: text, cv_structured: cv, cv_generated: true,
+    strengths: legacy.strengths, work_experience: legacy.workExperience, education: legacy.education,
+    languages: legacy.languages, certificates: legacy.certificates.join("\n") || null,
+    extracurriculars: legacy.extracurriculars.join("\n") || null };
+}
+
 export function hasApprovedCv(approval: string | null, text: string, cv: StructuredCvData): boolean {
-  return Boolean(approval && text.trim() && approval === cvReviewSnapshot(text, cv));
+  return Boolean(approval && isCvTextAligned(text, cv) && approval === cvReviewSnapshot(text, cv));
 }
 
 export const CV_FACT_LABELS: Record<string, string> = {
@@ -34,7 +47,7 @@ export function cvFactFields(cv: StructuredCvData): CvFactField[] {
       fields.push({ path, label: path.map((part) => /^\d+$/.test(part) ? String(Number(part) + 1) : CV_FACT_LABELS[part] ?? part).join(" · "), value: value ?? "" });
     } else if (Array.isArray(value)) value.forEach((item, index) => visit(item, [...path, String(index)]));
     else if (value && typeof value === "object") Object.entries(value).forEach(([key, item]) => {
-      if (key !== "sourceNotes") visit(item, [...path, key]);
+      if (key !== "sourceNotes" && key !== "textBasis") visit(item, [...path, key]);
     });
   }
   visit(cv, []);
@@ -43,6 +56,7 @@ export function cvFactFields(cv: StructuredCvData): CvFactField[] {
 
 export function updateCvFact(cv: StructuredCvData, path: string[], value: string): StructuredCvData {
   const next = structuredClone(cv);
+  delete next.textBasis;
   let target: unknown = next;
   for (const part of path.slice(0, -1)) target = (target as Record<string, unknown>)[part];
   (target as Record<string, unknown>)[path[path.length - 1]] = value;
@@ -91,4 +105,17 @@ export function guardCvPrecision(cv: StructuredCvData, source: StructuredCvData,
     if (!supported) language.level = undefined;
   }
   return next;
+}
+
+// Preserve independently entered languages, but replace/remove every language
+// that belonged to the previous CV. The CV editor is the source for those facts.
+export function syncRecruitmentCvLanguages(raw: unknown, previous: StructuredCvData | null | undefined, next: StructuredCvData) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const result = structuredClone(raw) as Record<string, unknown>;
+  if (!result.qualifications || typeof result.qualifications !== "object") return raw;
+  const qualifications = result.qualifications as Record<string, unknown>;
+  const replaced = new Set([...(previous?.languages ?? []), ...next.languages].map((item) => item.name.trim().toLocaleLowerCase("sv-SE")));
+  const other = (Array.isArray(qualifications.languages) ? qualifications.languages : []).filter((item) => item && typeof item.language === "string" && !replaced.has(item.language.trim().toLocaleLowerCase("sv-SE")));
+  qualifications.languages = [...other, ...next.languages.filter((item) => item.level).map((item) => ({ language: item.name, level: item.level }))].slice(0, 8);
+  return result;
 }
