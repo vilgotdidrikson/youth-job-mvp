@@ -1,7 +1,5 @@
-"use client";
-
-import LoginPage from "@/app/login/page";
+import { AuthPage } from "@/components/auth-page";
 
 export default function SignupPage() {
-  return <LoginPage initialMode="signup" />;
+  return <AuthPage initialMode="signup" />;
 }
