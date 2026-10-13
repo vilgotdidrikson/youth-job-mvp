@@ -23,7 +23,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 |---|---|---|---|---|---|
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
-| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Ej påbörjad | — |
+| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Pågår | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
 | 6 | [N12](#n12) | P1 | Video i chatten | Ej påbörjad | — |
@@ -353,14 +353,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 3
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f02-cv-fact-review-20261013`
 - Åtgärd: AI får inte göra våren 2026 till exakta månader, ändra flytande svenska till modersmål eller lägga till en obekräftad yrkestitel. Bevara osäkerhet och använd bara uppgifter som ungdomen lämnat.
 - Klar när: CV och profil innehåller inga nya sakuppgifter utan användarens uttryckliga godkännande.
 - Implementerat: —
 - Verifierat: —
-- Återstår / blockerare: —
+- Återstår / blockerare: Reserverad 2026-10-13. Egen F02-leverans; F03 bedöms separat efter faktagranskningen. Kontroll av datum/språknivåer och uttrycklig granskning av AI-fakta före sparning planeras. Inga kod- eller webbtester ännu.
 
 <a id="f03"></a>
 ### F03 Samordna CV text och strukturerade profilfakta
