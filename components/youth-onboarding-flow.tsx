@@ -17,7 +17,9 @@ import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, COMPANY_NAME_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { YouthDocument, YouthDocumentType } from "@/lib/types";
-import { structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { CvFactReview } from "./cv-fact-review";
+import { cvReviewSnapshot, cvSourceText, hasApprovedCv } from "@/lib/cv-fact-review";
 
 const STRENGTH_TIPS = [
   "Ansvarstagande",
@@ -471,6 +473,10 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   const [showCvMethodChoice] = useState(flow === "cv" && !cvBuilder);
   const [cvText, setCvText] = useState("");
   const [structuredCv, setStructuredCv] = useState<StructuredCvData | null>(null);
+  const [approvedCvSnapshot, setApprovedCvSnapshot] = useState<string | null>(null);
+  const [cvReviewSource, setCvReviewSource] = useState("");
+  const reviewCv = structuredCv ?? structuredCvFromForm({ ...answers, work_experiences: workExperiences, educations, certificate_entries: certificates, other_entries: otherEntries });
+  const cvFactsApproved = hasApprovedCv(approvedCvSnapshot, cvText, reviewCv);
   const [documents, setDocuments] = useState<YouthDocument[]>([]);
   const [docType, setDocType] = useState<YouthDocumentType>("grades");
   const [docUploading, setDocUploading] = useState(false);
@@ -550,6 +556,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               otherEntries?: OtherEntry[];
               showCvStep?: boolean;
               cvText?: string;
+              structuredCv?: StructuredCvData;
+              cvReviewSource?: string;
             } | null;
             if (draft?.answers && typeof draft.step === "number" && draft.step >= FIRST_CV_STEP && draft.step < STEPS.length) {
               setAnswers((previous) => ({ ...previous, ...draft.answers }));
@@ -565,6 +573,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               setOtherEntries(draft.otherEntries ?? []);
               setShowCvStep(Boolean(draft.showCvStep));
               setCvText(draft.cvText ?? "");
+              setStructuredCv(draft.structuredCv ?? null);
+              setCvReviewSource(draft.cvReviewSource ?? "");
               restoredDraft = true;
             }
           } catch {
@@ -600,8 +610,10 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       otherEntries,
       showCvStep,
       cvText,
+      structuredCv,
+      cvReviewSource,
     }));
-  }, [accountDetailsLoaded, answers, certificates, cvBuilder, cvDraftStorageKey, cvText, educations, flow, otherEntries, savedCertificates, savedEducations, savedWorkExperiences, selectedLanguages, selectedStrengths, showCvStep, step, voiceFinalize, workExperiences]);
+  }, [accountDetailsLoaded, answers, certificates, cvBuilder, cvDraftStorageKey, cvText, structuredCv, cvReviewSource, educations, flow, otherEntries, savedCertificates, savedEducations, savedWorkExperiences, selectedLanguages, selectedStrengths, showCvStep, step, voiceFinalize, workExperiences]);
 
   useEffect(() => {
     if (!cameraOpen || !cameraStreamRef.current || !cameraVideoRef.current) return;
@@ -705,7 +717,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         <textarea
           aria-label="CV-text att granska och redigera"
           value={cvText}
-          onChange={(e) => setCvText(e.target.value)}
+          disabled={saving}
+          onChange={(e) => { setApprovedCvSnapshot(null); setCvText(e.target.value); }}
           rows={18}
           style={{
             width: "100%",
@@ -724,6 +737,11 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           }}
         />
 
+        <CvFactReview cv={reviewCv} sourceText={cvReviewSource || cvSourceText(structuredCvFromForm({ ...answers, work_experiences: workExperiences, educations, certificate_entries: certificates, other_entries: otherEntries }))}
+          approved={cvFactsApproved} disabled={saving}
+          onApprove={(approved) => setApprovedCvSnapshot(approved ? cvReviewSnapshot(cvText, reviewCv) : null)}
+          onChange={(cv) => { setApprovedCvSnapshot(null); setStructuredCv(cv); setCvText(renderStructuredCv(cv)); }} />
+
         {error && (
           <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</p>
         )}
@@ -732,7 +750,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           <button
             type="button"
             onClick={() => void handleSaveCv()}
-            disabled={saving}
+            disabled={saving || !cvFactsApproved}
             style={{
               width: "100%",
               padding: "1rem",
@@ -1217,6 +1235,8 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
       certificate_entries: certificates.map(({ name, issuer, category, issue_date, expiry_date, credential_url, description }) => ({ name, issuer, category, issue_date, expiry_date, credential_url, description })),
       other_entries: otherEntries.map(({ title, type, value }) => ({ title, type, value })),
     };
+    setApprovedCvSnapshot(null);
+    setCvReviewSource(cvSourceText(voiceFinalize && structuredCv ? structuredCv : structuredCvFromForm(cvPayload), voiceConversation));
     try {
       const res = await fetch("/api/youth/cv/generate", {
         method: "POST",
@@ -1454,6 +1474,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   }
 
   async function handleSaveWithDocs() {
+    if (!cvFactsApproved) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); setShowCvStep(true); return; }
     setSaving(true);
     setError("");
     try {

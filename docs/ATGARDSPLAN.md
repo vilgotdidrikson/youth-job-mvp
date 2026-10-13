@@ -23,7 +23,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 |---|---|---|---|---|---|
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
-| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Pågår | Vilgot / Codex |
+| 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | För granskning | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
 | 6 | [N12](#n12) | P1 | Video i chatten | Ej påbörjad | — |
@@ -353,14 +353,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 3
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/f02-cv-fact-review-20261013`
 - Åtgärd: AI får inte göra våren 2026 till exakta månader, ändra flytande svenska till modersmål eller lägga till en obekräftad yrkestitel. Bevara osäkerhet och använd bara uppgifter som ungdomen lämnat.
 - Klar när: CV och profil innehåller inga nya sakuppgifter utan användarens uttryckliga godkännande.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: Reserverad 2026-10-13. Egen F02-leverans; F03 bedöms separat efter faktagranskningen. Kontroll av datum/språknivåer och uttrycklig granskning av AI-fakta före sparning planeras. Inga kod- eller webbtester ännu.
+- Implementerat: Gemensam faktagranskning i CV-hubben och äldre onboarding. Alla profilfakta visas och kan rättas före uttryckligt godkännande. Godkännande gäller exakt aktuell CV-text och strukturerade fakta och återanvänds inte efter redigering, ny generation eller omladdning. Sparfunktionerna avvisar ogranskade förslag. AI-instruktioner för bevarad osäkerhet; serverkontroll tar bort datum/perioder och språknivåer utan uttryckligt stöd i underlaget. Logiken ligger i lib/cv-fact-review.ts för framtida mobilåteranvändning.
+- Verifierat: Lokalt: node scripts/test-cv-fact-review.mjs, npm run test:cv-quality, node scripts/test-auth-route-contract.mjs och TypeScript passerade. Fullt npm run build -- --webpack passerade, inklusive 48 statiska sidor. Riktad ESLint: 0 fel, 8 tidigare varningar i onboarding. F02-testet använder ett simulerat schema-giltigt AI-svar med de rapporterade felen och testar både writer-kontroll och godkännandeversion; ingen skarp modellkörning i detta test.
+- Återstår / blockerare: Invändiga webbflöden är ännu inte verifierade i driftsatt dev. Browsern är på testmiljöns login och saknar session. Kräver säker inloggning med eget fiktivt ungdomskonto, generering, godkännande, rättning, sparning och omladdning. Precisionskontrollen är konservativ och ersätter inte granskning av samtliga sakuppgifter. F03 kvarstår: fri CV-text synkas inte automatiskt tillbaka till profilfakta; rätta sakuppgifter i faktapanelen. Produktionsdatabasen är orörd.
 
 <a id="f03"></a>
 ### F03 Samordna CV text och strukturerade profilfakta
