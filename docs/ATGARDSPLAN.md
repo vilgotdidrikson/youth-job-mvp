@@ -21,8 +21,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
-| 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | För granskning | Vilgot / Codex |
-| 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | För granskning | Vilgot / Codex |
+| 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
+| 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Ej påbörjad | — |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
@@ -335,17 +335,17 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 <a id="f01"></a>
 ### F01 Gör profilbyggaren tillgänglig
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 2
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
 - Branch/PR: [PR #47](https://github.com/vilgotdidrikson/youth-job-mvp/pull/47), `fix/f01-profile-builder-20261013`
 - Åtgärd: Åtgärda hämtningen i profilbyggaren så att tillgänglighet, kunskaper och egna exempel går att öppna. Ge fungerande återförsök och en väg tillbaka vid fel.
 - Klar när: Profilbyggaren öppnas utan hämtningsfel och ett tillfälligt fel går att återhämta utan dataförlust.
 - Implementerat: Införd i dev genom PR #47. Borttagen fråga efter saknade kolumnen `working_time`. Gemensam hämtning för första laddning och återförsök, tidsgräns och skydd mot inaktuella svar. Knappar för återförsök och tillbaka till profilen; sparade data behålls vid tillfälliga fel.
-- Verifierat: Riktad ESLint och regressionstest med riktig Supabase-klient mot simulerad stagingstruktur godkända. Sparade delar, version, CV-fakta, nätverks-/serverfel, nekad/saknad profil och återförsök kontrollerade. Samma kolumner lästa i staging under testkontots authenticated/RLS-kontext utan dataändring. Ändringen kompilerar.
-- Återstår / blockerare: Verifiera `/profile/build?welcome=1`, sparade delar och återförsök med inloggat eget ungdomstestkonto i driftsatt dev. Säker testinloggning kräver användarens hjälp. Byggblockeraren är åtgärdad genom L01; kombinerat produktionsbygge och regressionstest passerar. Vercel-status för den kombinerade dev-committen är success.
+- Verifierat: Riktad ESLint och regressionstest med riktig Supabase-klient mot simulerad stagingstruktur godkända. Sparade delar, version, CV-fakta, nätverks-/serverfel, nekad/saknad profil och återförsök kontrollerade automatiserat. Tidigare även samma kolumner lästa i staging under testkontots authenticated/RLS-kontext utan dataändring. Kombinerat produktionsbygge med L01 passerar och Vercel dev success. Säker inloggning lyckades. I driftsatt webbläsare öppnar `/profile/build?welcome=1` → Bygg din profil samtliga fem delar utan hämtningsfel. Tillgänglighet, kunskaper/språk och egna exempel öppnas; återgång och full omladdning behåller synlig sparad CV-status. Inga profiluppgifter ändrades i webbtestet.
+- Återstår / blockerare: Ingen blockerare för F01. Återförsök efter nätverksfel är automatiserat verifierat, inte framkallat i den driftsatta webbläsaren. Bredare mobil-/tillgänglighetstest och profilsparande hör till L08/F18.
 
 <a id="f02"></a>
 ### F02 Stoppa påhittade fakta i AI CV
@@ -849,18 +849,18 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 <a id="l01"></a>
 ### L01 Återställ ett godkänt produktionsbygge
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 1
 - Typ: Konstaterad teknisk blockerare
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
 - Branch/PR: [PR #48](https://github.com/vilgotdidrikson/youth-job-mvp/pull/48), `fix/l01-build-20261013`, införd i dev
 - Åtgärd: Åtgärda det befintliga typfelet i app/login/page.tsx där sidans default-export har otillåtna props. Bevara inloggnings- och registreringsflöden och kontrollera aktuellt dev innan ändring. Detta är en separat uppgift från F01.
 - Klar när: Produktionsbygget passerar och inloggnings-/registreringsvägarna fungerar efter ändringen.
 - Implementerat: Återanvändbar AuthPage flyttad till components; login/signup exporterar giltiga routes utan specialprops. Äldre YouthOnboardingFlow flyttad ut från onboardingens routefil; kort onboarding behålls. Inga ändringar i formulärlogik, auth eller databassäkerhet.
-- Verifierat: Hela `npm run build -- --webpack` passerar både separat och tillsammans med F01, inklusive typkontroll och 48 statiska sidor. Auth-route-regression och F01-regression passerar. Bytejämförelser visar bevarad formulär-/onboardinglogik. Riktad ESLint har 0 fel och 8 tidigare varningar i äldre onboardingkod. Vercel dev success. I driftsatt dev har signup med företagsroll samt växling signup/login kontrollerats utan kontoskapande eller credentialinmatning.
-- Återstår / blockerare: Slutlig inloggad kontroll av login och skyddad onboarding tillsammans med F01. Ingen ny registrering eller lyckad inloggning har ännu verifierats i denna leverans.
+- Verifierat: Hela `npm run build -- --webpack` passerar både separat och tillsammans med F01, inklusive typkontroll och 48 statiska sidor. Auth-route-regression och F01-regression passerar. Bytejämförelser visar bevarad formulär-/onboardinglogik. Riktad ESLint har 0 fel och 8 tidigare varningar i äldre onboardingkod. Vercel dev success. I driftsatt dev fungerar signup med vald företagsroll, växling signup/login och säker inloggning med befintligt ungdomstestkonto. Skyddad onboarding-rutt återgår korrekt till upptäck för kontot med redan färdig onboarding; skyddade profildelar öppnas.
+- Återstår / blockerare: Ingen byggblockerare. Ny kontoregistrering och nya kontons hela onboarding har inte körts i denna leverans; ingår i L06/L07. Tidigare lintvarningar i äldre onboardingkod kvarstår men stoppar inte bygget.
 
 <a id="l04"></a>
 ### L04 Färdigställ och verifiera anställningsbekräftelsen
