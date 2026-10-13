@@ -17,7 +17,7 @@ Gemensam arbetslista för de kommande två veckorna. Följ den globala ordningen
 
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
-| 1 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Pågår | Vilgot / Codex |
+| 1 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | För granskning | Vilgot / Codex |
 | 2 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Ej påbörjad | — |
 | 3 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
 | 4 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
@@ -222,14 +222,14 @@ Gemensam arbetslista för de kommande två veckorna. Följ den globala ordningen
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 1
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `fix/f01-profile-builder-20261013`
+- Branch/PR: [PR #47](https://github.com/vilgotdidrikson/youth-job-mvp/pull/47), `fix/f01-profile-builder-20261013`
 - Åtgärd: Åtgärda hämtningen i profilbyggaren så att tillgänglighet, kunskaper och egna exempel går att öppna. Ge fungerande återförsök och en väg tillbaka vid fel.
 - Klar när: Profilbyggaren öppnas utan hämtningsfel och ett tillfälligt fel går att återhämta utan dataförlust.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Borttagen fråga efter saknade kolumnen `working_time`. Gemensam hämtning för första laddning och återförsök, tidsgräns och skydd mot inaktuella svar. Knappar för återförsök och tillbaka till profilen; sparade data behålls vid tillfälliga fel.
+- Verifierat: Riktad ESLint och regressionstest med riktig Supabase-klient mot simulerad stagingstruktur godkända. Sparade delar, version, CV-fakta, nätverks-/serverfel, nekad/saknad profil och återförsök kontrollerade. Samma kolumner lästa i staging under testkontots authenticated/RLS-kontext utan dataändring. Ändringen kompilerar.
+- Återstår / blockerare: PR ska införas i dev och `/profile/build?welcome=1`, sparade delar samt återförsök verifieras i driftsatt webbläsarflöde innan avkryssning. Fullständigt bygge stoppas av befintligt typfel i `app/login/page.tsx` (ogiltig default-export), även på oförändrad baskod; ingår inte i F01.
 
 <a id="f02"></a>
 ### F02 Stoppa påhittade fakta i AI CV
