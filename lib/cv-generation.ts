@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { createEmptyStructuredCv, type StructuredCvData } from "./structured-cv";
+import { guardCvPrecision } from "./cv-fact-review";
 
 const string = { type: "string" };
 const strings = { type: "array", items: string };
@@ -29,6 +30,7 @@ Skolprojekt placeras enbart i projects på toppnivå, aldrig i education.descrip
 Varje erfarenhet får högst 3 korta punkter med aktiva verb, faktiska uppgifter och ansvar. Exempel: 'asså jag stod typ i kassan och fyllde på hyllor' blir 'Hanterade kassan och fyllde på varor.'
 Behåll arbetsgivare, skolor, roller, verktyg och perioder som faktiskt angivits. Hitta aldrig på namn, datum, resultat, siffror, kompetenser, språknivåer eller ansvar. Om en formell titel inte angivits, använd bara en neutral angiven beskrivning som 'Sommarjobb' eller 'Praktik'. Bevara angiven längd i duration. För pågående utbildning: skriv planerat examensår i expectedGraduation, inte endDate. Gör inte om intresse till erfarenhet. Om inga jobb finns ska arbetslivserfarenhet vara tom, lyft verkliga skolprojekt eller föreningsansvar i rätt avsnitt.
 Ett nej är inte en merit. 'Inga certifikat' ska ge tom lista, inte en post. Ett nej till en följdfråga raderar inte tidigare erfarenhet. Språk ska vara separata poster. Normalisera nivå bara när den uttryckligen framgår, annars tom sträng.
+Kopiera perioder och datum ordagrant från underlaget. 'Våren 2026' ska behållas som duration='våren 2026' med tomma startDate/endDate; det betyder ALDRIG mars–maj eller 2026-03–2026-05. Uppskattningar förblir uppskattningar. Språknivån 'flytande' betyder Flytande, aldrig Modersmål. Modersmål kräver att användaren uttryckligen angett det för just det språket. Kopiera uttryckligen angivna roller; arbetsuppgifter eller en önskad framtida roll räcker inte för en yrkestitel. Lägg inte till specifika månader, år, examen, ansvar eller högre kompetensnivå för att CV:t ska se komplett ut.
 Utelämna saknade uppgifter med tomma strängar/listor, aldrig 'okänt', platshållare eller frågor. Upprepa inte samma fakta i flera punkter. Kontrollera innan du svarar att varje påstående stöds av underlaget och att ingen separat erfarenhet tappats.`;
 
 type Schema = { type: string; properties?: Record<string, Schema>; items?: Schema; enum?: string[] };
@@ -61,7 +63,7 @@ export async function writeCv(source: StructuredCvData, signal: AbortSignal, con
   }
   cv.skills = result.skills;
   cv.languages = result.languages.map((item: { level: string }) => ({ ...item, level: item.level || undefined }));
-  return cv;
+  return guardCvPrecision(cv, source, conversation);
 }
 
 export function cvWritingInput(source: StructuredCvData, conversation: unknown[]) {
