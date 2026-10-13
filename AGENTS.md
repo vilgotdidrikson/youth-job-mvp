@@ -24,4 +24,4 @@ Använd tydligt fiktiva QA-konton i dev för användartester. Hantera inte rikti
 
 ## Omfattning för den aktuella insatsen
 
-Endast F01 är beställd för kodarbete. Övriga punkter är planerade och ska inte implementeras i denna insats. Samarbetsdokumenten ingår i uppdraget.
+Användaren har godkänt fortsatt kodarbete enligt den globala prioriteringslistan. Arbeta i avgränsade leveranser: en större punkt eller flera små sammanhängande punkter, följt av publicering och verifiering. Reservera varje punkt innan arbetet börjar och redovisa faktisk verifiering innan nästa leverans.

@@ -4,7 +4,7 @@ Gemensam arbetslista för de kommande två veckorna och återstående lanserings
 
 Video är frivilligt och ska hjälpa ungdomen att presentera sig. Psykologiskt personlighetstest och automatisk analys av personlighet från video ingår inte i denna plan. Befintliga egna exempel och motivation behålls.
 
-För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Planen utökar dokumentationen; koduppdraget är fortfarande endast F01.
+För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Fortsatt kodarbete är godkänt enligt prioriteringslistan, i avgränsade leveranser med publicering och verifiering.
 
 ## Arbetssätt
 
@@ -21,7 +21,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
-| 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Ej påbörjad | — |
+| 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Pågår | Vilgot / Codex |
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | För granskning | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Ej påbörjad | — |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Ej påbörjad | — |
@@ -853,9 +853,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 1
 - Typ: Konstaterad teknisk blockerare
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `fix/l01-build-20261013`
 - Åtgärd: Åtgärda det befintliga typfelet i app/login/page.tsx där sidans default-export har otillåtna props. Bevara inloggnings- och registreringsflöden och kontrollera aktuellt dev innan ändring. Detta är en separat uppgift från F01.
 - Klar när: Produktionsbygget passerar och inloggnings-/registreringsvägarna fungerar efter ändringen.
 - Implementerat: —
