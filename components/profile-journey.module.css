@@ -1,0 +1,11 @@
+.progress { color:#5b394a;margin:0 0 26px;padding:18px 20px;background:#fff;border:1px solid #ecdce5;border-radius:18px; }
+.progressTop { display:flex;justify-content:space-between;gap:14px;align-items:center;font-size:.75rem;line-height:1.6; }
+.progressTop > span { font-weight:600; }.progressTop a { color:#946478;min-height:36px;display:inline-flex;align-items:center;text-decoration:none; }
+.progress ol { display:flex;gap:12px;padding:0;margin:18px 0 0;list-style:none;justify-content:space-between; }
+.progress li { display:flex;gap:7px;align-items:center;color:#9a818e;font-size:.7rem; }.progress li > span { display:grid;place-items:center;width:23px;height:23px;border:1px solid #ebdde5;border-radius:50%;font-size:.65rem;flex-shrink:0; }
+.progress .current { color:#a83d64;font-weight:600; }.progress .current > span { color:#fff;background:#ad4065;border-color:#ad4065; }
+.next { padding:32px;border:1px solid #eadce3;border-radius:23px;background:#fff;text-align:center;color:#513241;margin-block:20px; }
+.next h2 { font-size:1.5rem;font-weight:500;letter-spacing:-.035em;margin:12px 0; }.next p { font-size:.85rem;line-height:1.7;color:#8a6d7d; }
+.eyebrow { text-transform:uppercase;letter-spacing:.1em;font-size:.65rem!important; }.nextIcon { display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#eff5ef;color:#49735b;margin:0 auto 14px; }
+.buttons { display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:24px; }.buttons a { display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:12px 18px;border-radius:12px;font-size:.82rem;text-decoration:none; }.buttons :global(.cta-btn) { background:#ad4065;color:white;border:0; }.buttons :global(.secondary-btn) { border:1px solid #e5d6df;color:#765265;background:white; }
+@media(max-width:720px) { .progress { padding:14px;margin-bottom:20px; }.progressTop { font-size:.7rem; }.progress ol { display:grid;grid-template-columns:repeat(3,1fr);gap:12px 6px;margin-top:12px; }.progress li { font-size:.65rem;gap:5px; }.next { padding:24px 18px; }.next h2 { font-size:1.3rem; }.buttons a { flex:1 1 100%; } }

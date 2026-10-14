@@ -15,6 +15,7 @@
     "test:cv-quality": "node scripts/test-cv-quality.mjs",
     "test:openai-migration": "node scripts/test-openai-config.mjs && node scripts/test-openai-audio-migration.mjs",
     "test:profile-video": "node scripts/test-profile-video.mjs && node scripts/test-video-client.mjs && node scripts/test-video-recorder.mjs",
+    "test:profile-journey": "node scripts/test-profile-journey.mjs && node scripts/test-recruitment-profile-load.mjs",
     "test:recruitment": "node scripts/test-recruitment.mjs",
     "test:rls:staging": "node --env-file=.env.rls scripts/test-staging-rls.mjs",
     "test:premium:staging": "node --env-file=.env.premium scripts/test-premium-service.mjs",

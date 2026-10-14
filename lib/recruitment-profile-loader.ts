@@ -6,11 +6,13 @@ export const RECRUITMENT_PROFILE_COLUMNS = "recruitment_profile,recruitment_prof
 
 function existingCvFacts(data: Record<string, unknown>) {
   const structured = (data.cv_structured ?? {}) as Record<string, unknown>;
-  return [data.languages, data.certificates, data.employment_preferences, data.strengths, structured.languages, structured.skills]
-    .filter(value => value && (!Array.isArray(value) || value.length))
-    .map(value => typeof value === "string" ? value : JSON.stringify(value, (field, item) => ["sourceNotes", "evidence", "textBasis"].includes(field) ? undefined : item))
-    .join("\n")
-    .slice(0, 3000);
+  const names=(value:unknown):string[]=>Array.isArray(value)?value.flatMap(item=>typeof item==='string'?[item]:item&&typeof item==='object'&&'name' in item&&typeof item.name==='string'?[item.name+('level' in item&&typeof item.level==='string'?` – ${item.level}`:'')]:[]):typeof value==='string'?[value]:[];
+  return [
+    ['Språk',names(Array.isArray(structured.languages)?structured.languages:data.languages)],
+    ['Kunskaper',names(Array.isArray(structured.skills)?structured.skills:data.strengths)],
+    ['Meriter',names(Array.isArray(structured.certifications)?structured.certifications:data.certificates)],
+    ['Tidigare jobbönskemål',names(data.employment_preferences)],
+  ].flatMap(([label,items])=>Array.isArray(items)&&items.length?[`${label}: ${[...new Set(items)].join(', ')}`]:[]).join('\n').slice(0,3000);
 }
 
 /** Authenticated, ownership-filtered read shared by initial load and retry. */
@@ -25,5 +27,6 @@ export async function loadRecruitmentProfile(client: SupabaseClient, userId: str
     profile: readRecruitmentProfile(data.recruitment_profile),
     version: data.recruitment_profile_version ?? 0,
     cvFacts: existingCvFacts(data),
+    cvLanguages: Array.isArray(data.cv_structured?.languages) ? data.cv_structured.languages.flatMap((item: {name?:unknown;level?:unknown})=>typeof item?.name==='string'?[{language:item.name,level:typeof item.level==='string'?item.level:''}]:[]) : [],
   };
 }

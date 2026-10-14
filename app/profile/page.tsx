@@ -4,7 +4,8 @@ import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
 import { ProfileVideo } from "@/components/profile-video";
 import { completedProfileSections } from "@/lib/recruitment-profile";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
-import { ProfileDevelopmentPrompt } from "@/components/profile-development-prompt";
+import { ModalDialog } from "@/components/modal-dialog";
+import { RecruitmentProfileEditor } from "@/components/recruitment-profile-editor";
 
 import { BlockedContacts } from "@/components/blocked-contacts";
 import { PasswordInput } from "@/components/password-input";
@@ -13,15 +14,13 @@ import { CvFactReview } from "@/components/cv-fact-review";
 import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
-import { ExperienceCard, ProfileHeader, SkillList } from "@/components/profile/professional-profile";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
-import { getYouthProfile, saveYouthProfileDraft, saveReviewedCvToProfile } from "@/lib/onboarding";
+import { getYouthProfile, saveYouthContactDetails, saveReviewedCvToProfile } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { changePassword } from "@/lib/auth";
@@ -33,62 +32,15 @@ import { withVerifiedExperience } from "@/lib/recruitment-types";
 import "./profile.css";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
-interface YouthProfileForm {
-  name: string;
-  dateOfBirth: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  skills: string[];
-  experience: string;
-  education: string;
-  languages: string;
-  certificates: string;
-  extracurriculars: string;
-}
-
-const initialForm: YouthProfileForm = {
-  name: "",
-  dateOfBirth: "",
-  address: "",
-  postalCode: "",
-  city: "",
-  skills: [],
-  experience: "",
-  education: "",
-  languages: "",
-  certificates: "",
-  extracurriculars: "",
-};
-
-function normalizeStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
-function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): YouthProfileForm {
-  if (!profile) {
-    return { ...initialForm, name: fallbackName };
-  }
-
-  const experienceList = normalizeStringArray(profile.work_experience);
-
-  return {
-    name: typeof profile.full_name === "string" && profile.full_name.trim() ? profile.full_name : fallbackName,
-    dateOfBirth: typeof profile.date_of_birth === "string" ? profile.date_of_birth : "",
-    address: typeof profile.address === "string" ? profile.address : "",
-    postalCode: typeof profile.postal_code === "string" ? profile.postal_code : "",
-    city: typeof profile.city === "string" ? profile.city : "",
-    skills: normalizeStringArray(profile.strengths),
-    experience: experienceList.join("\n"),
-    education: normalizeStringArray(profile.education).join("\n"),
-    languages: normalizeStringArray(profile.languages).join(", "),
-    certificates: typeof profile.certificates === "string" ? profile.certificates : "",
-    extracurriculars: typeof profile.extracurriculars === "string" ? profile.extracurriculars : "",
-  };
+interface YouthProfileForm { name:string;dateOfBirth:string;address:string;postalCode:string;city:string }
+const initialForm:YouthProfileForm={name:"",dateOfBirth:"",address:"",postalCode:"",city:""};
+function mapProfileToForm(profile:YouthProfile|null,fallbackName:string):YouthProfileForm {
+ return {name:profile?.full_name?.trim()||fallbackName,dateOfBirth:profile?.date_of_birth??"",address:profile?.address??"",postalCode:profile?.postal_code??"",city:profile?.city??""};
 }
 
 
-export default function ProfilePage() {
+function ProfilePageContent() {
+  const query=useSearchParams();
   const router = useRouter();
 const { user, profile, loading, logout, status, error: sessionError } = useRequireAuth();
   const {cvCompleted} = useCvCompletion(user?.id,profile?.role === "youth");
@@ -105,10 +57,13 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [editingCv, setEditingCv] = useState(false);
   const [cvEditText, setCvEditText] = useState("");
   const [cvStructured, setCvStructured] = useState<StructuredCvData | null>(null);
+  const [storedCvStructured,setStoredCvStructured]=useState<StructuredCvData|null>(null);
   const [cvApproval, setCvApproval] = useState<string | null>(null);
   const cvApproved = cvStructured ? hasApprovedCv(cvApproval, cvEditText, cvStructured) : false;
 
-  const [profileTab, setProfileTab] = useState<"overview" | "cv" | "details" | "settings">("overview");
+  const [profileTab, setProfileTab] = useState<"overview" | "work" | "cv" | "details" | "settings">(query.get("tab")==="work"?"work":"overview");
+  const [frame,setFrame]=useState<"cv"|"video"|"general"|null>(null);
+  const [frameBusy,setFrameBusy]=useState(false),[frameDirty,setFrameDirty]=useState(false);
   const [error, setError] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -173,6 +128,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           setCvEditText(cv);
           setCvApproval(null);
           setCvStructured(youthProfile?.cv_structured ?? structuredCvFromForm({ full_name: youthProfile?.full_name ?? "", city: youthProfile?.city ?? "", work_experience: (youthProfile?.work_experience ?? []).join("\n"), education: (youthProfile?.education ?? []).join("\n"), languages: (youthProfile?.languages ?? []).join(", ") }));
+          setStoredCvStructured(youthProfile?.cv_structured ?? structuredCvFromForm({ full_name: youthProfile?.full_name ?? "", city: youthProfile?.city ?? "", work_experience: (youthProfile?.work_experience ?? []).join("\n"), education: (youthProfile?.education ?? []).join("\n"), languages: (youthProfile?.languages ?? []).join(", ") }));
           setCvDocuments(Array.isArray(youthProfile?.documents) ? youthProfile.documents : []);
         }
         setError("");
@@ -185,7 +141,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     return () => { active = false; };
   }, [loading, profile?.role, profileLoadRetry, user]);
 
-  const completedSectionCount = completedProfileSections(recruitment.profile).length + Number(cvCompleted);
+  const completedSectionCount = completedProfileSections(recruitment.profile).length;
 
   const generatedCvDocument = cvDocuments.find((document) => document.type === "generated_cv");
   const uploadedCvDocument = cvDocuments.find((document) => document.type === "cv");
@@ -195,9 +151,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveYouthProfileDraft(form);
-      setSavedNote("Profil sparad.");
-      setProfileTab("overview");
+      await saveYouthContactDetails(form);
+      setSavedNote("Dina kontaktuppgifter är sparade.");
       setError("");
     } catch (saveError) {
       console.error("Failed to save youth profile.", saveError);
@@ -217,6 +172,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       const pdfUrl = await uploadYouthDocument(pdfFile);
       const savedCv = await saveReviewedCvToProfile(cvEditText, cvStructured, cvApproval, { name: pdfFile.name, url: pdfUrl, type: "generated_cv" });
       setGeneratedCv(cvEditText);
+      setStoredCvStructured(cvStructured);
       setForm(mapProfileToForm(savedCv as YouthProfile, form.name));
       setSavedNote("CV och profilfakta sparade.");
       setCvDocuments(Array.isArray(savedCv.documents) ? savedCv.documents : []);
@@ -470,43 +426,24 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     );
   }
 
-  const profileSections = (
-    <div className="minimal-profile-sections">
-      <MinimalProfileSection id="work-experience" eyebrow="01 — Erfarenhet" title="Erfarenhet" description="Jobb, hjälp hemma, volontärarbete eller annat du har gjort.">
-        <ExperienceCard title="Erfarenhet"><label className="minimal-profile-textarea"><span className="sr-only">Arbetslivserfarenhet</span><textarea value={form.experience} onChange={(e) => { setForm((p) => ({ ...p, experience: e.target.value })); setSavedNote(""); }} rows={6} placeholder="T.ex. barnvaktade för grannar, hjälpte i en butik..." /></label></ExperienceCard>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="education" eyebrow="02 — Utbildning" title="Utbildning" description="Skola, kurs eller annan utbildning som du har lagt till.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Utbildning</span><textarea value={form.education} onChange={(e) => { setForm((p) => ({ ...p, education: e.target.value })); setSavedNote(""); }} rows={5} placeholder="T.ex. Norra gymnasium, grundskolan" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="certificates" eyebrow="03 — Meriter" title="Licenser & certifikat" description="Certifikat, licenser och behörigheter du har fått.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Licenser och certifikat</span><textarea value={form.certificates} onChange={(e) => { setForm((p) => ({ ...p, certificates: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. HLR-certifikat eller körkort" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="awards" eyebrow="04 — Meriter" title="Utmärkelser & priser" description="Stipendier, fritidsmeriter och andra saker du är stolt över.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Utmärkelser och priser</span><textarea value={form.extracurriculars} onChange={(e) => { setForm((p) => ({ ...p, extracurriculars: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. stipendium, tävling eller föreningsuppdrag" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="languages" eyebrow="05 — Språk" title="Språk" description="Språk du kan använda i skolan, på jobbet eller i vardagen.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Språk</span><textarea value={form.languages} onChange={(e) => { setForm((p) => ({ ...p, languages: e.target.value })); setSavedNote(""); }} rows={2} placeholder="T.ex. svenska, engelska" /></label>
-      </MinimalProfileSection>
-    </div>
-  );
-
+  const closeFrame=()=>{
+    if(saving||frameBusy)return;
+    if((frameDirty||editingCv)&&!window.confirm("Stäng utan att spara dina ändringar?"))return;
+    setFrame(null);setFrameDirty(false);setEditingCv(false);setCvEditText(generatedCv);setCvStructured(storedCvStructured);setCvApproval(null);
+  };
+  const openFrame=(next:"cv"|"video"|"general")=>{setFrame(next);setFrameDirty(false);setError("");setSavedNote("");};
   return <main className="mobile-shell profile-page mnw-profile">
-    <ProfileHeader name={form.name} location={form.city} completedSections={completedSectionCount} totalSections={5} onEdit={() => setProfileTab("details")} verification={<VerifiedJobBadge experiences={verified.items} />} />
-    {verified.error && <p role="alert">{verified.error}</p>}
-    {profileTab === "overview" && <ProfileDevelopmentPrompt/>}
-    {profileTab === "overview" && <EmploymentExperiences userId={user.id} />}
-    <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([ ["overview","Översikt"], ["cv","Mitt CV"], ["details","Mina uppgifter"], ["settings","Inställningar"] ] as const).map(([value,label]) => <button type="button" key={value} aria-pressed={profileTab === value} className={profileTab === value ? "is-active" : ""} onClick={() => setProfileTab(value)}>{label}</button>)}</nav>
-    {error && <p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote && <p role="status" className="mnw-profile-success">{savedNote}</p>}
-    {(profileTab === "overview" || profileTab === "cv") && <ProfileVideo userId={user.id}/>}
-    {profileTab === "overview" && <div className="mnw-profile-grid"><section className="mnw-profile-card mnw-profile-cv" aria-label="CV-status"><span className="mnw-profile-icon"><UiIcon name="briefcase"/></span><div className="mnw-profile-card-heading"><h2>Ditt CV</h2><span className={hasCv ? "mnw-status-ready" : "mnw-status-pending"}>{hasCv ? "Klart" : "Nästa steg"}</span></div><p>{hasCv ? "Ditt CV kan ses av arbetsgivare när du skickar en ansökan." : "Du kan upptäcka jobb redan nu. Gör klart ditt CV för att skicka dina ansökningar."}</p><Link className="cta-btn" href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}<UiIcon name="arrow" width="18"/></Link>{hasCv && <button type="button" className="mnw-profile-textlink" onClick={() => setProfileTab("cv")}>Visa CV och PDF</button>}</section>
-      <section className="mnw-profile-card"><h2>Dina genvägar</h2><Link className="mnw-profile-shortcut" href="/swipe?saved=1"><UiIcon name="bookmark"/><span><strong>Sparade jobb</strong><small>Hitta tillbaka till dina favoriter</small></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/applications"><UiIcon name="briefcase"/><span><strong>Dina ansökningar</strong><small>Skickade ansökningar och frivilliga frågor</small></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/chats"><UiIcon name="chat"/><span><strong>Dina chattar</strong><small>Fortsätt samtalet</small></span><UiIcon name="arrow" width="18"/></Link></section>
-      <section className="mnw-profile-card"><h2>Dina styrkor</h2><SkillList skills={form.skills}/><button className="mnw-profile-textlink" onClick={() => setProfileTab("details")}>Redigera mina uppgifter <UiIcon name="arrow" width="16"/></button></section><section className="mnw-profile-card mnw-profile-note"><UiIcon name="info"/><h2>Din profil, på dina villkor</h2><p>Håll dina uppgifter aktuella. Du väljer vilka jobb du visar intresse för.</p><button className="mnw-profile-textlink" onClick={() => setProfileTab("settings")}>Kontoinställningar <UiIcon name="arrow" width="16"/></button></section></div>}
-    {profileTab === "cv" && <section className="mnw-profile-card mnw-profile-panel"><div className="mnw-profile-card-heading"><h2>Mitt CV</h2><Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn">{hasCv ? "Redigera i CV-byggaren" : "Skapa CV"}</Link></div>{hasGeneratedCv ? <><p className="mnw-profile-muted">Här är det CV du har sparat. Du kan redigera texten eller öppna en PDF.</p>{editingCv ? <><label className="mnw-profile-field">CV-text<textarea rows={14} disabled={saving} value={cvEditText} onChange={event => { setCvApproval(null); setCvEditText(event.target.value); }}/></label>{cvStructured && <CvFactReview text={cvEditText} cv={cvStructured} sourceText={generatedCv} approved={cvApproved} disabled={saving}
+    <header className="mnw-profile-compact-header"><span className="mnw-profile-small-avatar">{form.name.trim().charAt(0)||"?"}</span><div><p>Din profil</p><h1>{form.name||"Din profil"}</h1><span>{form.city||"Ort ej angiven"}</span></div><VerifiedJobBadge experiences={verified.items}/></header>
+    <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([["overview","Översikt"],["work","Din jobbprofil"],["settings","Inställningar"]] as const).map(([value,label])=><button type="button" key={value} aria-pressed={profileTab===value} className={profileTab===value?"is-active":""} onClick={()=>setProfileTab(value)}>{label}</button>)}</nav>
+    {error&&!frame&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&!frame&&<p role="status" className="mnw-profile-success">{savedNote}</p>}
+    {profileTab==="overview"&&<div className="mnw-profile-grid"><section className="mnw-profile-card"><span className="mnw-profile-icon"><UiIcon name="profile"/></span><h2>Din jobbprofil, på ett ställe</h2><p>{hasCv||cvCompleted?"Ditt CV finns sparat. Video och andra profildelar är frivilliga.":"Du kan upptäcka jobb nu och bygga din profil i din takt."}</p><div className="mnw-profile-buttons"><Link className="cta-btn" href="/profile/build">Bygg / fortsätt min profil</Link><button className="secondary-btn" type="button" onClick={()=>setProfileTab("work")}>Visa min jobbprofil</button></div></section><section className="mnw-profile-card"><h2>Dina genvägar</h2><Link className="mnw-profile-shortcut" href="/swipe?saved=1"><UiIcon name="bookmark"/><span><strong>Sparade jobb</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/applications"><UiIcon name="briefcase"/><span><strong>Dina ansökningar</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/chats"><UiIcon name="chat"/><span><strong>Dina samtal</strong></span><UiIcon name="arrow" width="18"/></Link></section></div>}
+    {profileTab==="work"&&<section className="mnw-job-profile"><header><div><h2>Din jobbprofil</h2><p>Öppna en del för att se eller ändra den.</p></div><Link className="secondary-btn" href="/profile/build">Bygg steg för steg</Link></header><div className="mnw-job-profile-parts">{([{key:"cv",title:"Mitt CV",description:hasCv?"Visa CV, redigera och öppna PDF":"Skapa ett CV eller ladda upp PDF",icon:"file"},{key:"video",title:"Min profilvideo",description:"Visa, spela in, ersätt eller ta bort · frivilligt",icon:"camera"},{key:"general",title:"Min allmänna profil",description:`Vad jag söker, tillgänglighet och kunskaper · ${completedSectionCount} av 4 delar har uppgifter`,icon:"profile"}] as const).map(item=><button type="button" key={item.key} onClick={()=>openFrame(item.key)}><span className="mnw-profile-icon"><UiIcon name={item.icon}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><UiIcon name="arrow" width="19"/></button>)}</div><details className="mnw-profile-card mnw-profile-confirmed"><summary>Bekräftad erfarenhet</summary><EmploymentExperiences userId={user.id}/>{verified.error&&<p role="alert">{verified.error}</p>}</details></section>}
+    {profileTab === "settings" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section><details className="mnw-profile-card"><summary>Kontaktuppgifter</summary><p className="mnw-profile-muted">Kontaktuppgifter sparas separat från CV och jobbönskemål. Ändrar du namn eller ort, kontrollera även ditt sparade CV.</p><div className="mnw-profile-fields">{([["name","Fullständigt namn","text"],["dateOfBirth","Födelsedatum","date"],["address","Adress","text"],["postalCode","Postnummer","text"],["city","Ort","text"]] as const).map(([field,label,type])=><label className="mnw-profile-field" key={field}>{label}<input type={type} disabled={saving} value={form[field]} onChange={event=>{setForm(current=>({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div><div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving} onClick={()=>void handleSave()}>{saving?"Sparar…":"Spara kontaktuppgifter"}</button></div></details><details className="mnw-profile-card"><summary>Lösenord</summary>{accountSecurityCard}</details><details className="mnw-profile-card"><summary>Blockerade kontakter</summary><BlockedContacts key={user.id} userId={user.id}/></details><section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button className="mnw-profile-danger secondary-btn" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></div></section></section>}
+    {frame&&<ModalDialog label={frame==="cv"?"Mitt CV":frame==="video"?"Min profilvideo":"Min allmänna profil"} busy={saving||frameBusy} onClose={closeFrame} className="mnw-profile-frame"><header className="mnw-profile-frame-heading"><h2>{frame==="cv"?"Mitt CV":frame==="video"?"Min profilvideo":"Min allmänna profil"}</h2><button type="button" className="secondary-btn" disabled={saving||frameBusy} aria-label="Stäng profildelen" onClick={closeFrame}><UiIcon name="close"/></button></header>{error&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&<p role="status" className="mnw-profile-success">{savedNote}</p>}{frame==="cv"?<section className="mnw-profile-card mnw-profile-panel"><div className="mnw-profile-card-heading"><h3>Ditt CV</h3><Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn">{hasCv ? "Redigera i CV-byggaren" : "Skapa CV"}</Link></div>{hasGeneratedCv ? <><p className="mnw-profile-muted">Här är det CV du har sparat. Du kan redigera texten eller öppna en PDF.</p>{editingCv ? <><label className="mnw-profile-field">CV-text<textarea rows={14} disabled={saving} value={cvEditText} onChange={event => { setCvApproval(null); setCvEditText(event.target.value); }}/></label>{cvStructured && <CvFactReview text={cvEditText} cv={cvStructured} sourceText={generatedCv} approved={cvApproved} disabled={saving}
       onApprove={(approved) => setCvApproval(approved ? cvReviewSnapshot(cvEditText, cvStructured) : null)}
       onSync={(cv) => { setCvApproval(null); setCvStructured(cv); }}
       onChange={(cv) => { setCvApproval(null); setCvStructured(cv); setCvEditText(renderStructuredCv(cv)); }} />}
-      <div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving || !cvApproved} onClick={() => void handleSaveCv()}>{saving ? "Sparar…" : "Spara CV"}</button><button className="secondary-btn" disabled={saving} onClick={() => setEditingCv(false)}>Avbryt</button></div></> : <><pre className="mnw-profile-preview">{withVerifiedExperience(generatedCv, verified.items)}</pre><button className="mnw-profile-textlink" onClick={() => {setCvApproval(null);setCvEditText(generatedCv);setEditingCv(true);}}>Redigera CV-text</button></>}<div className="mnw-profile-buttons">{generatedCvDocument ? <button className="secondary-btn" onClick={() => void openYouthDocument(generatedCvDocument.url)}>Öppna CV som PDF</button> : <button className="secondary-btn" disabled={saving} onClick={() => void handleCreatePdfForExistingCv()}>{saving ? "Skapar PDF…" : "Spara CV som PDF"}</button>}</div></> : uploadedCvDocument ? <><p className="mnw-profile-muted">Ditt uppladdade CV finns sparat som PDF.</p><button className="cta-btn" onClick={() => void openYouthDocument(uploadedCvDocument.url)}>Öppna mitt PDF-CV</button></> : <p className="mnw-profile-muted">Svara på enkla frågor eller ladda upp en PDF för att komma igång.</p>}</section>}
-    {profileTab === "details" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Mina uppgifter</h2><p className="mnw-profile-muted">Uppdatera en del i taget. Spara när du är klar.</p><div className="mnw-profile-fields">{([ ["name","Fullständigt namn","text"], ["dateOfBirth","Födelsedatum","date"], ["address","Adress","text"], ["postalCode","Postnummer","text"], ["city","Ort","text"] ] as const).map(([field,label,type]) => <label className="mnw-profile-field" key={field}>{label}<input type={type} value={form[field]} onChange={event => {setForm(current => ({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div></section>{hasGeneratedCv ? <section className="mnw-profile-card"><h2>Erfarenhet, utbildning och språk</h2><p>Redigera dina CV-uppgifter tillsammans så att profilen och matchningen använder samma fakta.</p><Link className="secondary-btn" href="/youth/cv/create?edit=1">Redigera CV och profilfakta</Link></section> : profileSections}<div className="mnw-profile-save"><p>Dina ändringar sparas när du trycker på Spara.</p><button className="cta-btn" disabled={saving} onClick={() => void handleSave()}>{saving ? "Sparar…" : "Spara mina uppgifter"}</button></div></section>}
-    {profileTab === "settings" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button className="mnw-profile-danger secondary-btn" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></div></section></section>}
+      <div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving || !cvApproved} onClick={() => void handleSaveCv()}>{saving ? "Sparar…" : "Spara CV"}</button><button className="secondary-btn" disabled={saving} onClick={() => {setEditingCv(false);setCvStructured(storedCvStructured);setCvEditText(generatedCv);setCvApproval(null);}}>Avbryt</button></div></> : <><pre className="mnw-profile-preview">{withVerifiedExperience(generatedCv, verified.items)}</pre><button className="mnw-profile-textlink" onClick={() => {setCvApproval(null);setCvEditText(generatedCv);setEditingCv(true);}}>Redigera CV-text</button></>}<div className="mnw-profile-buttons">{generatedCvDocument ? <button className="secondary-btn" onClick={() => void openYouthDocument(generatedCvDocument.url)}>Öppna CV som PDF</button> : <button className="secondary-btn" disabled={saving} onClick={() => void handleCreatePdfForExistingCv()}>{saving ? "Skapar PDF…" : "Spara CV som PDF"}</button>}</div></> : uploadedCvDocument ? <><p className="mnw-profile-muted">Ditt uppladdade CV finns sparat som PDF.</p><button className="cta-btn" onClick={() => void openYouthDocument(uploadedCvDocument.url)}>Öppna mitt PDF-CV</button></> : <p className="mnw-profile-muted">Svara på enkla frågor eller ladda upp en PDF för att komma igång.</p>}</section>:frame==="video"?<ProfileVideo userId={user.id} onBusyChange={setFrameBusy}/>:<RecruitmentProfileEditor embedded onBusyChange={setFrameBusy} onDirtyChange={setFrameDirty}/>}</ModalDialog>}
   </main>;
 }
+export default function ProfilePage(){return <Suspense fallback={<main className="mobile-shell"><p role="status">Hämtar din profil…</p></main>}><ProfilePageContent/></Suspense>;}

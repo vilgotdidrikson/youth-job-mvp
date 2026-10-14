@@ -1,4 +1,5 @@
 .page {max-width:1000px;margin:auto;padding:120px 28px 48px;color:#4c303b;}
+.embedded { color:#4c303b; }.embedded .sectionGrid { margin:12px 0; }.embedded .sectionCard { padding:20px; }.embedded .form { padding:20px; }.embedded .heading { margin:0; }
 .back {display:inline-flex;align-items:center;min-height:44px;color:#896a76;font-size:14px;text-decoration:none;}
 .heading {max-width:700px;margin:20px 0 30px;}.heading h1 {font-size:clamp(1.8rem,4vw,2.6rem);font-weight:500;letter-spacing:-.045em;margin:10px 0 16px;}.heading p,.form p {font-size:15px;line-height:1.7;color:#765563;}
 .sectionGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:24px 0;}
@@ -14,3 +15,4 @@
 .sectionCard input[type=checkbox] {width:22px;height:22px;accent-color:#b84164;flex-shrink:0;}
 .sectionCard a {display:inline-flex;align-items:center;min-height:44px;color:#b84164;font-size:14px;}
 .sectionCard span {margin-top:12px;}
+.journeyList { display:grid;gap:0;margin:24px 0; }.journeyList > div { display:flex;gap:14px;align-items:center;padding:15px 0;border-bottom:1px solid #f2e8ed; }.journeyList > div > span { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#f8edf2;color:#aa456a;font-size:.75rem; }.journeyList > div > div { display:grid;gap:5px;flex:1; }.journeyList strong { font-size:.88rem;font-weight:500; }.journeyList small { font-size:.76rem;color:#8d7080; }.journeyList em { font-size:.65rem;color:#997b8b;font-style:normal; }.form footer a { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;text-decoration:none; }.form footer :global(.cta-btn) { background:#b84164;color:white; }.form footer :global(.secondary-btn) { background:white;color:#765563; }

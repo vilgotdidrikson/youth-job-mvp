@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileJourneyHeader, ProfileStepComplete } from "./profile-journey";
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
@@ -104,7 +105,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const verified = useVerifiedExperience(user?.id);
   const jobId = query.get("job");
   const title = query.get("title");
-  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : query.get("return") === "build" ? "/profile/build" : "/profile";
+  const inJourney = query.get("return") === "build" && !jobId;
+  const [completed,setCompleted] = useState(false);
+  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : inJourney ? "/profile/build" : "/profile?tab=work";
   const [step, setStep] = useState<Step>(initialCreate ? "about" : "start");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [name, setName] = useState("");
@@ -166,6 +169,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
           if (parsed.step && !["start", "pdf", "preview", "review"].includes(parsed.step)) setStep(parsed.step);
           setReturnToReview(Boolean(parsed.returnToReview));
           setEditedSections(parsed.editedSections ?? []);
+        } else if (youth) {
+          setDraft(draftFromProfile(youth));
         }
       } catch { if (active) setError("Kunde inte läsa ditt sparade utkast."); }
       finally { if (active) setReady(true); }
@@ -218,22 +223,23 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const canUseAi = true;
   const finish = async () => {
     if (!user?.id || !generated) return;
-    if (!factsApproved || generating) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
+    if (!factsApproved || generating || saving) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
     setSaving(true); setError("");
     try {
       if (!supportsStructuredCv || !supportsCvExtras) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Kontakta support; din text finns kvar.");
       await saveReviewedCvToProfile(generated.text, generated.structured, approvedSnapshot);
-      const applications = await submitApplicationDraftsAfterCv();
+      const applications = await submitApplicationDraftsAfterCv().catch(() => null);
       if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
         for (const base of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(base, user.id));
       }
-      localStorage.removeItem(key); setMessage(completedCvMessage(applications, "Ditt CV är klart!"));
-      window.setTimeout(() => router.push(returnPath), 1200);
+      try { localStorage.removeItem(key); } catch { /* Saving to the account succeeded. */ }
+      setMessage(applications ? completedCvMessage(applications, "Ditt CV är klart!") : "Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
+      setCompleted(true);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte göra klart ditt CV."); }
     finally { setSaving(false); }
   };
   const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; if (!file) return;
+    const file = event.target.files?.[0]; if (!file || saving) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { setError("Välj en PDF-fil."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("PDF:en är för stor. Max är 5 MB."); return; }
     setSaving(true); setError("");
@@ -241,11 +247,11 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
       const url = await uploadYouthDocument(file);
       const document = { name: file.name, url, type: "cv" as const };
       await saveUploadedCvToProfile(document);
-      const applications = await submitApplicationDraftsAfterCv();
+      const applications = await submitApplicationDraftsAfterCv().catch(() => null);
       setUploaded(document);
-      localStorage.removeItem(key);
-      setMessage(completedCvMessage(applications, "Ditt CV är uppladdat och klart."));
-      window.setTimeout(() => router.push(returnPath), 1200);
+      try { localStorage.removeItem(key); } catch { /* Saving to the account succeeded. */ }
+      setMessage(applications ? completedCvMessage(applications, "Ditt CV är uppladdat och klart.") : "Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
+      setCompleted(true);
     }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte ladda upp PDF:en."); }
     finally { setSaving(false); event.target.value = ""; }
@@ -253,7 +259,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
   if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p></main>;
+  if (completed) return <main className="mobile-shell cv-hub">{inJourney && <ProfileJourneyHeader step="cv"/>}<h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
+    {inJourney && <ProfileJourneyHeader step="cv"/>}
     <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>{jobNote}
     <p className="cv-hub-eyebrow">Ditt nästa steg</p><h1>Skapa ditt CV</h1>
     <p className="cv-hub-lead">Svara fritt med egna ord. AI:n ordnar sedan dina fakta till ett CV som du själv granskar och redigerar.</p>
@@ -264,6 +272,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
+    {inJourney && <ProfileJourneyHeader step="cv"/>}
     <button className="cv-hub-back" onClick={() => setStep("start")}>← Tillbaka till valen</button>{jobNote}
     <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
@@ -271,6 +280,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
+    {inJourney && <ProfileJourneyHeader step="cv"/>}
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
     <p className="cv-hub-lead">Välj en del i taget. Dina ändringar sparas här medan du arbetar och syns när du förhandsvisar CV:t.</p>
@@ -286,6 +296,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "preview") return <main className="mobile-shell cv-hub cv-hub-preview-page">
+    {inJourney && <ProfileJourneyHeader step="cv"/>}
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <p className="cv-hub-eyebrow">Din CV-förhandsvisning</p><h1>Så här kommer företag att se din profil.</h1>
     <p className="cv-hub-status"><strong>Status: redo att granska</strong><br />Dina ändringar är med. Du kan redigera manuellt eller be AI:n skriva en ny version när du vill.</p>
@@ -302,6 +313,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   </main>;
 
   return <main className="mobile-shell cv-hub">
+    {inJourney && <ProfileJourneyHeader step="cv"/>}
     <button className="cv-hub-back" onClick={() => { if (returnToReview) { setReturnToReview(false); setStep("preview"); } else setStep(index <= 0 ? "start" : STEPS[index - 1]); }}>← {returnToReview ? "Tillbaka till förhandsvisningen" : "Tillbaka"}</button>{jobNote}
     <p className="cv-hub-eyebrow">Del {GROUP_FOR_STEP[index] + 1} av 3 · Fråga {index + 1} av {STEPS.length}</p><ol className="cv-hub-groups" aria-label="CV-formulärets delar">{GROUPS.map((group, groupIndex) => <li key={group} aria-current={GROUP_FOR_STEP[index] === groupIndex ? "step" : undefined} className={GROUP_FOR_STEP[index] > groupIndex ? "is-passed" : ""}><span>{GROUP_FOR_STEP[index] > groupIndex ? <UiIcon name="check" width="15" /> : groupIndex + 1}</span>{group}</li>)}</ol><div className="cv-hub-progress" role="progressbar" aria-label="Frågor i CV-formuläret" aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={index + 1}><span style={{ width: `${Math.round(((index + 1) / STEPS.length) * 100)}%` }} /></div><h1>{LABELS[step]}</h1>
     <div className="cv-hub-form">
