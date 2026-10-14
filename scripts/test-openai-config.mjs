@@ -10,7 +10,7 @@ const previous=Object.fromEntries(names.map(name=>[name,process.env[name]]));
 try {
   const compiled=ts.transpileModule(readFileSync('lib/openai-config.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText;
   writeFileSync(join(dir,'config.mjs'),compiled);
-  const {OPENAI_API_BASE_URL,openaiTextOptions}=await import(pathToFileURL(join(dir,'config.mjs')));
+  const {OPENAI_API_BASE_URL,openaiTextOptions,openaiResponseOptions,currentTextModel,currentRealtimeModel}=await import(pathToFileURL(join(dir,'config.mjs')));
   for(const name of names)delete process.env[name];
   assert.equal(OPENAI_API_BASE_URL,'https://api.openai.com/v1');
   assert.deepEqual(openaiTextOptions(3600),{model:'gpt-6-luna',max_completion_tokens:6000,store:false,reasoning_effort:'medium'});
@@ -22,7 +22,15 @@ try {
   process.env.OPENAI_TEXT_MODEL='gpt-4.1-mini';
   assert.equal(openaiTextOptions(3000).model,'gpt-6-luna','Retired global defaults do not override explicit Luna task defaults');
   process.env.OPENAI_MATCH_MODEL='gpt-4.1-mini';
-  assert.deepEqual(openaiTextOptions(3600),{model:'gpt-4.1-mini',max_completion_tokens:3600,store:false,temperature:0});
+  assert.equal(openaiTextOptions(3600).model,'gpt-6-luna','Retired deployment override must migrate too');
+  for(const model of ['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini','gpt-4o-mini-2024-07-18','gpt-4.1-mini-2025-04-14']) assert.equal(currentTextModel(model),'gpt-6-luna');
+  assert.equal(currentTextModel('gpt-6-sol'),'gpt-6-sol');
+  assert.equal(currentTextModel('gpt-4o-mini-tts'),'gpt-4o-mini-tts','Do not conflate modalities');
+  assert.deepEqual(openaiResponseOptions(1200),{model:'gpt-6-luna',store:false,max_output_tokens:1200,reasoning:{effort:'none'},temperature:0});
+  assert.equal('temperature' in openaiResponseOptions(1200,'gpt-6.1-sol'),false);
+  assert.equal(currentRealtimeModel('gpt-realtime'),'gpt-realtime-2.1');
+  assert.equal(currentRealtimeModel(undefined,true),'gpt-realtime-2.1-mini');
+  assert.equal(currentRealtimeModel('gpt-4o-mini-tts-2025-12-15',true),'gpt-realtime-2.1-mini');
   assert.equal(openaiTextOptions(3000,'job').model,'gpt-6-luna','Task overrides remain separate');
   for(const file of ['lib/application-analysis-worker.ts','lib/analyze-application-followups.ts','app/api/company/candidate-assessment/route.ts','app/api/company/job/generate/route.ts','app/api/youth/applications/analyze/route.ts']) {
     const source=readFileSync(file,'utf8');
