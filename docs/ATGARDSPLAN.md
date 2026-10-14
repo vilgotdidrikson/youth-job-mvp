@@ -39,8 +39,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Klar | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
-| 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Pågår | Vilgot / Codex |
-| 6 | [N12](#n12) | P1 | Video i chatten | Pågår | Vilgot / Codex |
+| 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | För granskning | Vilgot / Codex |
+| 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Ej påbörjad | — |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
@@ -60,7 +60,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | Ej påbörjad | — |
-| 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | Pågår | Vilgot / Codex |
+| 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Ej påbörjad | — |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
@@ -105,14 +105,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 5
 - Typ: Ny funktion
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/n11-profile-video-20261014`
+- Branch/PR: `codex/n11-profile-video-20261014`, [PR #54](https://github.com/vilgotdidrikson/youth-job-mvp/pull/54).
 - Åtgärd: Låt ungdomen frivilligt ladda upp en kort presentationsvideo, förhandsvisa, ersätta och radera den. Ge enkla stödfrågor och tydliga gränser för längd, storlek och format; sikta på 30–60 sekunder. Visa videon i kandidatprofilen för behöriga företag. Lagra privat och kontrollera åtkomst som för övriga kandidatunderlag. Videon ska inte krävas för att ansöka och ska inte användas för automatisk personlighetsbedömning.
 - Klar när: En ungdom kan hantera sin video på mobil och dator, och endast behöriga mottagare kan spela upp den. Felaktigt format, avbruten uppladdning och radering hanteras begripligt.
-- Implementerat: Första avgränsade delsteget: UI-oberoende policy och validering för MP4/WebM/MOV, högst 30 MB och 60 sekunder, samt kontrollerade ägar-/UUID-sökvägar. Korta videor tillåts; 30–60 sekunder är en rekommendation, inte ett obligatoriskt minimum. Fem minuters signerad uppspelning definierad för kommande integration. Ingen aktiv videofunktion eller databasändring ännu.
-- Verifierat: `npm run test:profile-video` testar giltiga format, storleks-/tidsgränser, tomma/ogiltiga metadata, falska MIME-/filändelsekombinationer, främmande ägare, traversal och externa URL:er. TypeScript och riktad ESLint passerar. Detta är lokala enhetstester, inte uppladdning eller behörighetstest i webben.
-- Återstår / blockerare: Reserverad 2026-10-14 före kodarbete. Nästa delsteg är privat lagring med server-/bucketgränser och RLS, därefter ungdomens uppladdning/förhandsvisning/ersättning/radering och behörig företagsuppspelning. Klientmetadata är inte en säkerhetsgräns eller verifierad verklig medielängd. N11 är Pågår, inte Klar. Produktionsdatabasen har inte ändrats. Inspelning och chattdelning ingår inte i N11.
+- Implementerat: Frivillig videokort i ungdomens profil, filkontroll och lokal förhandsvisning, uttrycklig spara/ersätt/radera, avbrytbar uppladdning och återhämtningsbara fel. Privat bucket med 30 MB och MIME-allowlist; immutabla objekt, metadata med ägarkontroll, profilpekare, signerad uppspelning fem minuter. Behöriga företag kan spela upp videon i kandidatvyn. Säker återförsökshantering och jämförelse mot föregående profilpekare. Kontoradering inkluderar videofiler. Migration införd enbart i DevStaging.
+- Verifierat: Validering och klientkontrakt tester passerar, inklusive gränser, CAS, förlorat skrivsvar, avbrott och städningsfel. `scripts/test-video-rls.sql` passerar i staging: ägare, mottagare, utomstående, ofärdig uppladdning, oföränderliga objekt, blockering, återkallande och anonym nekad åtkomst; samtliga testskrivningar rullades tillbaka. TypeScript och produktionsbygge passerar. Säkerhetsrådgivaren flaggar inga nya videoobjekt; befintliga projektanmärkningar lämnas orörda.
+- Återstår / begränsningar: Driftsatt webbtest och manuella mobil-/datorfall enligt `docs/VIDEO_TESTGUIDE.md` återstår innan Klar. Den verkliga filens längd/playbarhet kontrolleras i webbläsaren; databasens längd är deklarerad metadata, inte serveravkodad media. Signerade länkar kan fungera tills de löper ut (högst fem minuter); redan nedladdade kopior kan inte återkallas. Vid avbrott kan privat, återkallad restfil kräva senare städning; kontoradering tar även sådana filer. Produktionsdatabasen har inte ändrats.
 
 <a id="n12"></a>
 ### N12 Video i chatten
@@ -121,14 +121,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 6
 - Typ: Ny funktion
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, PR #54; gemensam videoleverans uttryckligen beställd 2026-10-14.
 - Åtgärd: Låt ungdomen dela sin profilvideo eller ladda upp en separat video i en befintlig chatt. Visa förhandsvisning, uppladdningsstatus, hanterbara fel och uppspelning. Använd samma privata mediehantering som N11 och kontrollera deltagarbehörighet, blockering och rapportering. Definiera vad som händer med en skickad delning när profilvideon senare ersätts eller tas bort.
 - Klar när: Båda deltagarna kan spela upp skickad video på mobil och dator. Utomstående nekas åtkomst och fel kan återhämtas utan dubbletter.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Ungdomen kan dela aktuell profilvideo eller ladda upp/spela in en separat video i en matchad chatt. Explicit skicka efter förhandsvisning, avbrott, retry med deterministiskt meddelande-ID, borttagning av egen separat video och anmälan per videomeddelande. Båda deltagarna får signerad uppspelning. Profilvideodelningar följer aktuell profilpekare; byte byter innehållet och borttagning gör delningen otillgänglig. Separata meddelanden har egna immutabla filer och påverkas inte av profilbyten. Rapporter sparar videoreferensen vid anmälan för behörig admin; borttagna videobytes arkiveras inte i en dold kopia.
+- Verifierat: Klienttester för idempotenta skickförsök och fel; staging-RLS testar chattscope, utomstående, blockerade deltagare, ungdomsägarskap, ofärdig uppladdning, rapportreferens och återkallande. Alla testskrivningar återställda.
+- Återstår / begränsningar: Driftsatt webbflöde och användarens mobil-/datoracceptans enligt testguiden. Inspelning och delning kräver inte AI. Kontrollera rapporterat innehåll före eventuell borttagning; metadatareferens bevarar inte raderade videobytes.
 
 <a id="n14"></a>
 ### N14 Publicera samma annons på flera adresser
@@ -215,14 +215,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P2
 - Global ordning: 26
 - Typ: Ny funktion
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, PR #54; reserverad före kodarbete efter uttrycklig beställning om hela videoflödet. Implementeras efter N11/N12:s grund.
 - Åtgärd: Komplettera uppladdningen med inspelning via kamera och mikrofon. Ge förhandsvisning, ta om och uttryckligt spara/skicka. Hantera nekad behörighet och använd uppladdning som alternativ när inspelning inte stöds. Återanvänd N11/N12; inspelning publicerar inte automatiskt.
 - Klar när: Inspelning fungerar i avsedda mobil- och datorwebbläsare, kan tas om och går att avbryta utan att video publiceras.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Gemensam MediaRecorder-komponent i profil och chatt med användarinitierad kamera/mikrofon, lokal kameraförhandsvisning, stoppa/ta om/avbryt, automatstopp vid 60 sekunder och bytegräns. Ingen automatisk publicering. Spår stängs vid stopp, avbrott, navigering och sent behörighetssvar. Nekad/ej stödd inspelning visar filuppladdning som alternativ. MP4 väljs när stödet finns, annars WebM.
+- Verifierat: Faktiska komponentcallbacks körda med simulerade media-API:er: förhandsvisning utan publicering, avbrott, avmontering, sent behörighetssvar, 60-sekundersstopp, för stor inspelning, nekad behörighet och stängda mediespår. TypeScript och riktad ESLint passerar.
+- Återstår / begränsningar: Fysisk kamera/mikrofon samt avsedda mobil-/datorwebbläsare måste provas av användaren före Klar. Simulerade media-API:er är inte ett sådant acceptanstest. N13 genomförs före ordinarie senare punkter enligt uttrycklig beställning 2026-10-14.
 
 <a id="n08"></a>
 ### N08 Erbjud CV utan obligatorisk AI

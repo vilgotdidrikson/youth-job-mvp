@@ -155,6 +155,8 @@ export interface ChatMessage {
   conversation_id: string;
   sender_user_id: string;
   message_text: string;
+  video_kind?: "profile" | "file" | null;
+  video_id?: string | null;
   created_at?: string | null;
   [key: string]: unknown;
 }

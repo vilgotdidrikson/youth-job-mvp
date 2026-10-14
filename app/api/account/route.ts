@@ -87,6 +87,7 @@ export async function DELETE(request: NextRequest) {
   }
   try {
     await removeUserStorage(admin, "youth-documents", userData.user.id);
+    await removeUserStorage(admin, "youth-profile-videos", userData.user.id);
     await removeUserStorage(admin, "job-images", userData.user.id);
   } catch (storageError) {
     console.error("Failed to remove account-owned storage objects.", storageError);

@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useAdminAccess } from "@/hooks/use-admin-access";
 import { getSupabaseClient } from "@/lib/supabase";
+import { VideoPlayer } from "@/components/video-player";
 
 interface ModerationReport {
   id: string;
@@ -122,6 +123,7 @@ export default function ModerationReportsPage() {
                 <div><dt>Inskickad</dt><dd>{new Date(report.created_at).toLocaleString("sv-SE")}</dd></div>
               </dl>
               {report.details && <p style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7", lineHeight: 1.5 }}>{report.details}</p>}
+              {typeof report.target_snapshot?.video_id==='string'&&<><VideoPlayer videoId={report.target_snapshot.video_id} label="Anmäld video"/><p>Videoreferensen sparades vid anmälan. En borttagen video kan inte spelas upp.</p></>}
               {snapshotLines(report).length > 0 && (
                 <details style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7" }}>
                   <summary style={{ cursor: "pointer", fontWeight: 600 }}>Sparat innehåll vid anmälan</summary>
