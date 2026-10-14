@@ -50,7 +50,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | För granskning | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
-| 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Ej påbörjad | — |
+| 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Pågår | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Ej påbörjad | — |
@@ -152,9 +152,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 7
 - Typ: Ny uttryckligen beställd funktion
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n14-multiple-locations-20261014`
 - Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna antal tjänster och platsinformation med N05/N16; första versionen har gemensam annonsstatus.
 - Klar när: En annons med minst två adresser kan sparas, återupptas, publiceras och redigeras. Båda adresserna visas korrekt på kartan och fungerar i geografiska filter, utan dubbla listposter eller ansökningar.
 - Implementerat: —
