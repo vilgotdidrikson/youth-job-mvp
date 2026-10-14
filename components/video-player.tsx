@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getProfileVideo, getVideo, videoPlaybackUrl } from "@/lib/video-client";
+import { UiIcon } from "./ui-icon";
 import styles from "./video.module.css";
 
 export function VideoPlayer({userId,videoId,label="Presentationsvideo"}:{userId?:string;videoId?:string;label?:string}) {
@@ -19,8 +20,9 @@ export function VideoPlayer({userId,videoId,label="Presentationsvideo"}:{userId?
     }catch(reason){if(run===generation.current)setError(reason instanceof Error?reason.message:"Kunde inte spela upp videon.");}
     finally{if(run===generation.current)setLoading(false);}
   };
-  return <div className={styles.player}><button type="button" className="secondary-btn" disabled={loading} onClick={()=>void load()}>{loading?"Hämtar video…":url?"Förnya uppspelningslänk":`Visa ${label.toLowerCase()}`}</button>
+  return <div className={styles.player}>{!url&&<button type="button" className={styles.playCard} disabled={loading} onClick={()=>void load()}><span className={styles.playCircle}><UiIcon name="play" width="23"/></span><span>{loading?"Hämtar video…":label}<small>{loading?'Ett ögonblick':'Tryck för att spela upp'}</small></span></button>}
     {url&&<video key={url} className={styles.video} src={url} controls playsInline preload="metadata" aria-label={label} onError={()=>{setUrl("");setError("Videon kunde inte spelas upp. Förnya länken eller prova en annan webbläsare.");}}/>}
+    {url&&<button type="button" className={styles.textButton} disabled={loading} onClick={()=>void load()}>Förnya uppspelning</button>}
     {error&&<p role="status">{error}</p>}
   </div>;
 }

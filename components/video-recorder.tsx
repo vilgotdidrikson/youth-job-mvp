@@ -5,7 +5,7 @@ import { PROFILE_VIDEO_POLICY } from "@/lib/profile-video";
 import styles from "./video.module.css";
 
 export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (file: File, duration: number) => void; disabled: boolean; onBusy?: (busy:boolean)=>void }) {
-  const [state,setState] = useState<"idle"|"permission"|"recording">("idle");
+  const [state,setState] = useState<"idle"|"permission"|"ready"|"recording">("idle");
   const [seconds,setSeconds] = useState(0), [error,setError] = useState("");
   const preview = useRef<HTMLVideoElement>(null), stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null), generation = useRef(0), interval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -23,7 +23,7 @@ export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (f
     if(recorder.current?.state==='recording')recorder.current.stop();
     stopTracks();setState("idle");setSeconds(0);
   };
-  const start = async () => {
+  const openCamera = async () => {
     if(disabled || state!=="idle")return;
     if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined') {
       setError("Inspelning stöds inte i den här webbläsaren. Ladda upp en video i stället.");return;
@@ -33,6 +33,19 @@ export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (f
       const media=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:true});
       if(current!==generation.current || !mounted.current){media.getTracks().forEach(track=>track.stop());return;}
       stream.current=media;
+      setState("ready");
+    } catch(reason) {
+      if(current!==generation.current || !mounted.current)return;stopTracks();
+      setState("idle");onBusy?.(false);
+      setError(reason instanceof DOMException && reason.name==='NotAllowedError'
+        ? "Kamera eller mikrofon nekades. Tillåt åtkomst i webbläsaren eller välj en videofil."
+        : "Kunde inte öppna kameran. Försök igen eller välj en videofil.");
+    }
+  };
+  const start = () => {
+    if(disabled||state!=="ready"||!stream.current||recorder.current?.state==='recording')return;
+    const current=generation.current,media=stream.current;
+    try {
       const mime=["video/mp4","video/webm;codecs=vp8,opus","video/webm"].find(value=>MediaRecorder.isTypeSupported(value));
       if(!mime)throw new Error("Inget kompatibelt inspelningsformat. Ladda upp en video i stället.");
       const capture=new MediaRecorder(media,{mimeType:mime,videoBitsPerSecond:1500000,audioBitsPerSecond:64000});
@@ -66,14 +79,14 @@ export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (f
       onBusy?.(false);
       setError(reason instanceof DOMException && reason.name==='NotAllowedError'
         ? "Kamera eller mikrofon nekades. Tillåt åtkomst i webbläsaren eller ladda upp en video."
-        : reason instanceof Error ? reason.message : "Kunde inte starta inspelningen. Ladda upp en fil i stället.");
+        : reason instanceof Error ? reason.message : "Kunde inte starta inspelningen. Välj en videofil i stället.");
     }
   };
   return <div className={styles.recorder}>
-    {state==='idle' ? <button type="button" className="secondary-btn" disabled={disabled} onClick={()=>void start()}>Spela in med kamera</button> : <>
-      {state==='recording' && <video ref={preview} className={styles.video} autoPlay muted playsInline aria-label="Kameraförhandsvisning"/>}
-      <p role="status">{state==='permission' ? "Väntar på kamera och mikrofon…" : `Spelar in: ${seconds} / 60 sekunder. Inspelningen publiceras inte automatiskt.`}</p>
-      <div className={styles.actions}>{state==='recording' && <button className="cta-btn" type="button" onClick={()=>{if(recorder.current?.state==='recording')recorder.current.stop();}}>Stoppa och förhandsvisa</button>}<button className="secondary-btn" type="button" onClick={cancel}>Avbryt inspelning</button></div>
+    {state==='idle' ? <div className={styles.cameraPlaceholder}><span className={styles.cameraOutline} aria-hidden="true">◉</span><h2>Gör dig redo i lugn och ro</h2><p>Kameran öppnas först. Du väljer själv när inspelningen börjar.</p><button type="button" className="cta-btn" disabled={disabled} onClick={()=>void openCamera()}>Öppna kamera</button></div> : <>
+      {(state==='ready'||state==='recording') && <div className={styles.cameraFrame}><video ref={preview} className={`${styles.video} ${styles.mirrored}`} autoPlay muted playsInline aria-label="Speglad kameraförhandsvisning"/><span className={state==='recording'?styles.recordingBadge:styles.readyBadge}>{state==='recording'?`● Spelar in · ${String(seconds).padStart(2,'0')} / 60 s`:'Kameran är redo · spelar inte in'}</span></div>}
+      <p className={styles.hint} role="status">{state==='permission' ? "Väntar på kamera och mikrofon…" : state==='ready'?'Ta plats i bilden. Tryck på Starta inspelning när du är redo.':"Tryck på stopp när du är klar."}</p>
+      <div className={styles.actions}>{state==='ready'&&<button className={styles.recordButton} type="button" onClick={start}>Starta inspelning</button>}{state==='recording' && <button className={styles.recordButton} type="button" onClick={()=>{if(recorder.current?.state==='recording')recorder.current.stop();}}>Stoppa inspelning</button>}<button className="secondary-btn" type="button" onClick={cancel}>{state==='recording'?'Avbryt inspelning':'Stäng kamera'}</button></div>
     </>}
     {error && <p role="alert">{error}</p>}
   </div>;
