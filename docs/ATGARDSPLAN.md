@@ -19,6 +19,19 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ## Gemensam prioriteringsordning
 
+### L11 OpenAI-modellmigrering – uttryckligt tillägg 2026-10-14
+
+- [ ] Klar
+- Prioritet: P1, före fortsatt ordinarie lista enligt användarens beställning.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l11-openai-migration-20261014`
+- Åtgärd: Flytta återstående GPT-4-textmodeller till GPT-6 Luna och migrera pensionerade ljudmodeller med korrekta API-kontrakt. Bevara dold röstfunktion, behörigheter, kostnadsgränser och faktagranskning.
+- Klar när: Kod införd i dev, regressioner och bygge passerar, aktiva CV-anrop verifierade och ljudmigreringens verifieringsnivå uttryckligen redovisad.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: Reserverad före kodarbete 2026-10-14. Verifiera modellåtkomst utan att exponera nycklar. Nästa ordinarie punkt är N11; reserveras separat efter denna leverans.
+
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
