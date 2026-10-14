@@ -21,7 +21,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ### Profilflöde och informationsöversyn – beställt 2026-10-14
 
-- Status: För granskning, Vilgot / Codex, `codex/profile-journey-20261014`.
+- Status: För granskning, Vilgot / Codex, `codex/profile-journey-20261014`, [PR #58](https://github.com/vilgotdidrikson/youth-job-mvp/pull/58), implementation `461476d`.
 - Reserverat före kodarbete: F15/F16/F18/D02 och uppföljning N11/N13. Fast ordning CV → Video → övriga profildelar, stegantal och uttryckligt fortsätt/pausa. Profilen samlas i Översikt, Din jobbprofil och Inställningar, med öppningsbara CV-/video-/allmänprofilramar. Informationskällor, användning och sparning inventeras; överlapp förenklas utan dataförlust. Företagsdelarna av F10 ingår inte. Migrationshistorik och produktion ändras inte.
 - Implementerat: Sex fasta steg med CV/video först, aktivt fortsätt/pausa efter sparning, stabil CV-bekräftelse utan timer, tre profilflikar och öppningsbara ramar. Kontaktuppdatering isolerad från CV, CV-ägda språk tydliggjorda och separat sparning av kompletterande delar. Chattens desktopnavigation och rubrik har komprimerats; meddelandeytan följer tillgänglig skärmhöjd. Se `docs/PROFILE_DATA_REVIEW.md` för datakällor, användning, avvägningar och acceptanstest.
 - Verifierat lokalt: produktionsbygge med webpack och TypeScript, riktad ESLint, `test:profile-journey` inklusive profilhämtning, `test:profile-video`, `test:matching`, `test:application-supplement`, `test:recruitment`, CV-faktagranskning, CV-konsistens, godkänt CV-sparande och auth-route-kontrakt. Transport-/kameratester är simulerade.
