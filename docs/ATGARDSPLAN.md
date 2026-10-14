@@ -21,16 +21,17 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ### L11 OpenAI-modellmigrering – uttryckligt tillägg 2026-10-14
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1, före fortsatt ordinarie lista enligt användarens beställning.
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l11-openai-migration-20261014`
+- Branch/PR: `codex/l11-openai-migration-20261014`, [PR #53](https://github.com/vilgotdidrikson/youth-job-mvp/pull/53), mergad till dev `ec287b7`.
 - Åtgärd: Flytta återstående GPT-4-textmodeller till GPT-6 Luna och migrera pensionerade ljudmodeller med korrekta API-kontrakt. Bevara dold röstfunktion, behörigheter, kostnadsgränser och faktagranskning.
 - Klar när: Kod införd i dev, regressioner och bygge passerar, aktiva CV-anrop verifierade och ljudmigreringens verifieringsnivå uttryckligen redovisad.
 - Implementerat: CV/faktahämtning och röstbeslut använder GPT-6 Luna med Responses och uttrycklig reasoning none. Kända gamla GPT-4-överstyrningar mappas till Luna; separata arbetslastinställningar behålls. Färdig röstinspelning använder gpt-transcribe med languages-array. Generiska frågor läses via gpt-realtime-2.1-mini på serverns Realtime-WebSocket och returneras som begränsad WAV; timeout, fel, avbrott, cachenyckel och ljudversion hanteras. WebRTC-modellen är gpt-realtime-2.1. Röstfunktionen förblir dold/avstängd. Dokumentation, livekontrollskript och låst ws-beroende uppdaterade.
 - Verifierat: Modell-/parameterregressioner, simulerade Realtime-händelser (framgång, timeout, fel, tomt/ofullständigt ljud, för stor utdata, avbrott), WAV-header och verklig OpenAI-SDK-serialisering av languages[] mot simulerad transport passerar. F02, F03, samlad CV-sparning, sync-API, CV-quality och matching passerar. TypeScript, riktad ESLint utan fel och fullständigt webpack-produktionsbygge passerar.
-- Återstår / blockerare: Inloggad CV-generering i driftsatt dev återstår efter merge. Lokal OpenAI-nyckel saknas, därför har ljudets modellåtkomst och svenska uppspelning/transkribering inte liveverifierats. Röstfunktionen får inte aktiveras utan sådan separat verifiering. Inga nycklar har extraherats eller exponerats. Nästa ordinarie punkt är N11; reserveras separat efter denna leverans.
+- Webbverifierat efter merge 2026-10-14: Inloggat fiktivt QA-konto i driftsatt dev kunde skriva om CV med AI utan API-fel. Redigering av svenska från Flytande till Grundläggande följt av Uppdatera profilfakta från texten gav motsvarande strukturerad språknivå. Godkännanderutan förblev avmarkerad och sparknappen spärrad. Inga CV-ändringar sparades till profilen under detta test. Dev-driftsättningen av merge-commit har godkänd byggstatus.
+- Återstår / begränsning: Lokal OpenAI-nyckel saknas, därför har ljudets modellåtkomst och svenska uppspelning/transkribering inte liveverifierats. Röstfunktionen är fortsatt avstängd och får inte aktiveras utan sådan separat verifiering. L11:s kriterium kräver uttryckligt redovisad ljudverifieringsnivå, inte aktivering. Inga nycklar har extraherats eller exponerats. N11 har reserverats separat efter denna leverans.
 
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
@@ -109,9 +110,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: `codex/n11-profile-video-20261014`
 - Åtgärd: Låt ungdomen frivilligt ladda upp en kort presentationsvideo, förhandsvisa, ersätta och radera den. Ge enkla stödfrågor och tydliga gränser för längd, storlek och format; sikta på 30–60 sekunder. Visa videon i kandidatprofilen för behöriga företag. Lagra privat och kontrollera åtkomst som för övriga kandidatunderlag. Videon ska inte krävas för att ansöka och ska inte användas för automatisk personlighetsbedömning.
 - Klar när: En ungdom kan hantera sin video på mobil och dator, och endast behöriga mottagare kan spela upp den. Felaktigt format, avbruten uppladdning och radering hanteras begripligt.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: Reserverad 2026-10-14 före kodarbete. Privat videolagring, ägarkontroller, begränsade format/längd/storlek och signerad uppspelning planeras. Produktionsdatabasen får inte ändras. Inspelning och chattdelning ingår inte i N11.
+- Implementerat: Första avgränsade delsteget: UI-oberoende policy och validering för MP4/WebM/MOV, högst 30 MB och 60 sekunder, samt kontrollerade ägar-/UUID-sökvägar. Korta videor tillåts; 30–60 sekunder är en rekommendation, inte ett obligatoriskt minimum. Fem minuters signerad uppspelning definierad för kommande integration. Ingen aktiv videofunktion eller databasändring ännu.
+- Verifierat: `npm run test:profile-video` testar giltiga format, storleks-/tidsgränser, tomma/ogiltiga metadata, falska MIME-/filändelsekombinationer, främmande ägare, traversal och externa URL:er. TypeScript och riktad ESLint passerar. Detta är lokala enhetstester, inte uppladdning eller behörighetstest i webben.
+- Återstår / blockerare: Reserverad 2026-10-14 före kodarbete. Nästa delsteg är privat lagring med server-/bucketgränser och RLS, därefter ungdomens uppladdning/förhandsvisning/ersättning/radering och behörig företagsuppspelning. Klientmetadata är inte en säkerhetsgräns eller verifierad verklig medielängd. N11 är Pågår, inte Klar. Produktionsdatabasen har inte ändrats. Inspelning och chattdelning ingår inte i N11.
 
 <a id="n12"></a>
 ### N12 Video i chatten
