@@ -38,7 +38,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Klar | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
-| 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Ej påbörjad | — |
+| 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | Pågår | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Ej påbörjad | — |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
@@ -104,14 +104,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 5
 - Typ: Ny funktion
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n11-profile-video-20261014`
 - Åtgärd: Låt ungdomen frivilligt ladda upp en kort presentationsvideo, förhandsvisa, ersätta och radera den. Ge enkla stödfrågor och tydliga gränser för längd, storlek och format; sikta på 30–60 sekunder. Visa videon i kandidatprofilen för behöriga företag. Lagra privat och kontrollera åtkomst som för övriga kandidatunderlag. Videon ska inte krävas för att ansöka och ska inte användas för automatisk personlighetsbedömning.
 - Klar när: En ungdom kan hantera sin video på mobil och dator, och endast behöriga mottagare kan spela upp den. Felaktigt format, avbruten uppladdning och radering hanteras begripligt.
 - Implementerat: —
 - Verifierat: —
-- Återstår / blockerare: —
+- Återstår / blockerare: Reserverad 2026-10-14 före kodarbete. Privat videolagring, ägarkontroller, begränsade format/längd/storlek och signerad uppspelning planeras. Produktionsdatabasen får inte ändras. Inspelning och chattdelning ingår inte i N11.
 
 <a id="n12"></a>
 ### N12 Video i chatten
