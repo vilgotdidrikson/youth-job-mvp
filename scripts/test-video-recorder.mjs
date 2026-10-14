@@ -56,6 +56,14 @@ try{
   let permissionResolve;request=()=>new Promise(resolve=>{permissionResolve=resolve;});
   tree=render();const starting=button(tree,'Spela in med kamera').props.onClick();render();unmount();permissionResolve(media());await starting;assert.equal(stopped,12,'Late permission tracks must close');assert.equal(results.length,2);
   request=async()=>{throw new DOMException('Denied','NotAllowedError');};tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();assert.ok(JSON.stringify(tree).includes('nekades'));unmount();
+  let rejectOld;request=()=>new Promise((_resolve,reject)=>{rejectOld=reject;});
+  tree=render();button(tree,'Spela in med kamera').props.onClick();tree=render();button(tree,'Avbryt inspelning').props.onClick();
+  request=async()=>media();tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();
+  const beforeLateError=stopped;rejectOld(new DOMException('Late denied','NotAllowedError'));await Promise.resolve();
+  assert.equal(stopped,beforeLateError,'Old permission rejection must not stop a new recording');
+  const oldRecorder=instance;button(tree,'Avbryt inspelning').props.onClick();tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();
+  const beforeOldEvents=stopped;oldRecorder.onstop();oldRecorder.onerror();oldRecorder.ondataavailable({data:{size:31457281}});
+  assert.equal(stopped,beforeOldEvents,'Stale recorder events must not stop newer tracks');assert.ok(intervalCallback);unmount();
   console.log('PASS actual recorder callbacks with mocked media: preview-only, cancel, unmount, late permission, 60 sec, byte cap, denied permission and track cleanup.');
 }finally{
   delete globalThis.__recorderHooks;

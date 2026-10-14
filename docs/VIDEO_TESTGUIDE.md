@@ -32,3 +32,10 @@ Miljö: https://youth-job-mvp-dev.vercel.app. Använd fiktiva QA-konton, inte ri
 - Standarduppladdning kan behöva göras om efter nätavbrott. En avbruten restfil är privat och återkallas; misslyckad fysisk städning kan behöva hanteras senare.
 
 Rapportera gärna stegnummer, webbläsare/enhet, vad du förväntade dig och vad som hände. N11–N13 markeras inte Klar enbart på grund av enhetstester eller bygge.
+
+## Genomförd utvecklarverifiering
+
+- Lokala validerings-/klienttester och inspelningscallbacks med simulerade media-API:er passerar. Fullt produktionsbygge, TypeScript samt CV-/matchnings-/rekryteringsregressioner passerar.
+- RLS-/triggertester kördes i DevStaging; alla testskrivningar rullades tillbaka och noll videor/objektrader återstod efter testet.
+- Driftsatt autentiserat webbtest kunde inte genomföras eftersom testwebbläsaren behöll ett inloggningsskydd. Det räknas inte som ett godkänt uppladdnings-, uppspelnings- eller kameratest.
+- Säkerhetsrådgivaren gav inga nya videorelaterade fynd. Befintliga projektanmärkningar är utanför videoleveransen: [pg_net i public](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [publikt körbar äldre SECURITY DEFINER-funktion](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [granskning av autentiserade RPC:er](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) och [läckta lösenordsskyddet](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Inga av dessa inställningar har ändrats här.

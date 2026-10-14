@@ -39,13 +39,14 @@ export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (f
       recorder.current=capture;
       const chunks:BlobPart[]=[];let bytes=0;const started=performance.now();
       capture.ondataavailable=event=>{
+        if(!mounted.current||current!==generation.current)return;
         if(event.data.size){chunks.push(event.data);bytes+=event.data.size;}
         if(bytes>PROFILE_VIDEO_POLICY.maxBytes){discard.current=true;setError("Inspelningen blev för stor. Prova en kortare video.");if(capture.state==='recording')capture.stop();}
       };
-      capture.onerror=()=>{discard.current=true;clearTimer();stopTracks();if(!mounted.current||current!==generation.current)return;setError("Inspelningen avbröts. Försök igen eller ladda upp en fil.");setState("idle");onBusy?.(false);};
+      capture.onerror=()=>{if(!mounted.current||current!==generation.current)return;discard.current=true;clearTimer();stopTracks();setError("Inspelningen avbröts. Försök igen eller ladda upp en fil.");setState("idle");onBusy?.(false);};
       capture.onstop=()=>{
-        clearTimer();stopTracks();
         if(!mounted.current || current!==generation.current)return;
+        clearTimer();stopTracks();
         setState("idle");
         onBusy?.(false);
         const duration=Math.min(60,(performance.now()-started)/1000);
@@ -60,7 +61,7 @@ export function VideoRecorder({ onRecorded, disabled, onBusy }: { onRecorded: (f
         if(elapsed>=60 && capture.state==='recording')capture.stop();
       },200);
     } catch(reason) {
-      stopTracks();if(current!==generation.current || !mounted.current)return;
+      if(current!==generation.current || !mounted.current)return;stopTracks();
       setState("idle");
       onBusy?.(false);
       setError(reason instanceof DOMException && reason.name==='NotAllowedError'
