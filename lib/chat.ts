@@ -37,6 +37,8 @@ function normalizeMessage(row: Record<string, unknown>): ChatMessage {
     conversation_id: String(row.conversation_id ?? ""),
     sender_user_id: String(row.sender_user_id ?? ""),
     message_text: typeof row.message_text === "string" ? row.message_text : "",
+    video_kind: row.video_kind === "profile" || row.video_kind === "file" ? row.video_kind : null,
+    video_id: typeof row.video_id === "string" ? row.video_id : null,
   };
 }
 
