@@ -19,6 +19,12 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ## Gemensam prioriteringsordning
 
+### Profilflöde och informationsöversyn – beställt 2026-10-14
+
+- Status: Pågår, Vilgot / Codex, `codex/profile-journey-20261014`.
+- Reserverat före kodarbete: F15/F16/F18/D02 och uppföljning N11/N13. Fast ordning CV → Video → övriga profildelar, stegantal och uttryckligt fortsätt/pausa. Profilen samlas i Översikt, Din jobbprofil och Inställningar, med öppningsbara CV-/video-/allmänprofilramar. Informationskällor, användning och sparning inventeras; överlapp förenklas utan dataförlust. Företagsdelarna av F10 ingår inte. Migrationshistorik och produktion ändras inte.
+
+
 ### L11 OpenAI-modellmigrering – uttryckligt tillägg 2026-10-14
 
 - [x] Klar
@@ -59,7 +65,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
-| 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | Ej påbörjad | — |
+| 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | Pågår | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Ej påbörjad | — |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
@@ -69,14 +75,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Ej påbörjad | — |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
-| 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | Ej påbörjad | — |
-| 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | Ej påbörjad | — |
+| 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | Pågår | Vilgot / Codex |
+| 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | Pågår | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
-| 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | Ej påbörjad | — |
+| 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | Pågår | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
 | 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
@@ -613,9 +619,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 35
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
 - Åtgärd: Låt kort onboarding leda direkt till jobbupptäckt med en diskret möjlighet att bygga profil senare. Förklara att CV behövs för att skicka ansökan, medan övriga profildelar och kompletteringsfrågor är valfria.
 - Klar när: Ungdomen kan börja utforska utan ytterligare obligatorisk profilintroduktion eller stopp i swipeflödet.
 - Implementerat: —
@@ -628,9 +634,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 36
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
 - Åtgärd: Ta bort tidsstyrd navigation som gör succésrutans ansökningslänk svår att använda. Låt användaren själv välja nästa steg eller gå direkt till ansökningarna med tydlig bekräftelse på vad som skickats.
 - Klar när: Bekräftelsen och dess länkar hinner läsas och användas.
 - Implementerat: —
@@ -658,9 +664,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 42
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
 - Åtgärd: Låt användaren stanna vid den del som redigeras efter sparande. Använd sparknappar per del eller en tydlig gemensam sparfunktion. Skilj ifylld information från faktiskt sparad information i progressen.
 - Klar när: Sparbekräftelsen är korrekt och användaren tappar inte sin plats.
 - Implementerat: —
@@ -735,9 +741,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 25
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
 - Åtgärd: Beräkna chattens höjd med hänsyn till navigation och sidrubrik. Låt meddelandeytan skrolla separat och håll skrivfält samt Skicka åtkomliga, även på liten skärm och när tangentbordet visas.
 - Klar när: Skrivfältet hamnar inte nedanför den tillgängliga vyn.
 - Implementerat: —
