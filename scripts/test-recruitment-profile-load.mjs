@@ -50,6 +50,14 @@ try {
   assert.ok(loaded.cvFacts.includes("Svenska flytande"));
   assert.ok(loaded.cvFacts.includes("HLR"));
   assert.ok(loaded.cvFacts.includes("Servering"));
+  assert.ok(!loaded.cvFacts.includes('"skills"'),"CV summary must be readable text, not JSON");
+  row.cv_structured={skills:[{name:"Service",sourceNotes:["old secret"]}],languages:[{name:"Svenska",level:"Grundläggande",evidence:"old evidence"}]};
+  const current=await load();
+  assert.ok(current.cvFacts.includes('Grundläggande'));
+  assert.ok(!current.cvFacts.includes('flytande'),"Structured CV takes precedence over legacy summaries");
+  assert.ok(!current.cvFacts.includes('secret')&&!current.cvFacts.includes('evidence'));
+  assert.deepEqual(current.cvLanguages,[{language:'Svenska',level:'Grundläggande'}]);
+  assert.ok(current.cvFacts.split('\n').length>1,'Readable facts need real line breaks');
   for (const mode of ["temporary", "network", "missing", "denied"]) {
     responseMode = mode;
     await assert.rejects(load, /Profiluppgifterna kunde inte hämtas/);

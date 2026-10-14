@@ -10,6 +10,7 @@ import type {
   YouthProfile,
 } from "@/lib/types";
 import { reviewedCvPayload, cvReviewSnapshot, syncRecruitmentCvLanguages } from "./cv-fact-review";
+import { contactProfilePayload } from "./contact-profile";
 import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 
 const ONBOARDING_QUESTIONS = [
@@ -227,6 +228,10 @@ export async function saveReviewedCvToProfile(text: string, cv: StructuredCvData
   }).eq("user_id", user.id).select("*").single();
   if (error || !data) throw new Error(error?.message ?? "Kunde inte spara CV och profilfakta.");
   return data as YouthProfile;
+}
+
+export async function saveYouthContactDetails(input: {name:string;dateOfBirth:string;address:string;postalCode:string;city:string}): Promise<YouthProfile> {
+  return persistYouthProfile(contactProfilePayload(input));
 }
 
 export async function saveYouthProfileDraft(input: {
