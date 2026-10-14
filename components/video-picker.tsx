@@ -2,16 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { validateProfileVideo } from "@/lib/profile-video";
-import { VideoRecorder } from "./video-recorder";
 import styles from "./video.module.css";
 
 export interface SelectedVideo { file: File; duration: number }
 
+export function VideoPreview({value}:{value:SelectedVideo}) {
+  const preview=useRef<HTMLVideoElement>(null);
+  useEffect(()=>{const src=URL.createObjectURL(value.file),element=preview.current;if(element)element.src=src;return()=>{if(element){element.removeAttribute('src');element.load();}URL.revokeObjectURL(src);};},[value.file]);
+  return <div><video ref={preview} className={styles.video} controls playsInline preload="metadata" aria-label="Förhandsvisning av vald video"/><p className={styles.hint}>{Math.ceil(value.duration)} sekunder · {(value.file.size/1024/1024).toFixed(1)} MB</p></div>;
+}
+
 export function VideoPicker({value,onChange,disabled}:{value:SelectedVideo|null;onChange:(value:SelectedVideo|null)=>void;disabled:boolean}) {
-  const [url,setUrl]=useState(""),[error,setError]=useState("");
+  const [error,setError]=useState("");
   const generation=useRef(0), probe=useRef<HTMLVideoElement|null>(null);
-  const [reading,setReading]=useState(false),[recording,setRecording]=useState(false);
-  useEffect(()=>{if(!value){setUrl("");return;}const src=URL.createObjectURL(value.file);setUrl(src);return()=>URL.revokeObjectURL(src);},[value]);
+  const [reading,setReading]=useState(false);
   useEffect(()=>()=>{generation.current++;if(probe.current){probe.current.removeAttribute('src');probe.current.load();}},[]);
   const accept=(file:File,duration:number)=>{
     const result=validateProfileVideo({name:file.name,type:file.type.split(';')[0],size:file.size,durationSeconds:duration});
@@ -36,11 +40,10 @@ export function VideoPicker({value,onChange,disabled}:{value:SelectedVideo|null;
     finally{URL.revokeObjectURL(src);video.removeAttribute('src');video.load();if(run===generation.current)setReading(false);}
   };
   return <div>
-    <label className={styles.picker}>Välj videofil (MP4, WebM eller MOV)<input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" disabled={disabled||reading||recording} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file)void choose(file);}}/></label>
-    <p className={styles.hint}>Högst 30 MB och 60 sekunder. Sikta gärna på 30–60 sekunder. Formatet måste kunna spelas upp i mottagarens webbläsare; MP4 passar oftast bäst.</p>
-    <VideoRecorder disabled={disabled||reading} onBusy={busy=>{setRecording(busy);if(busy)onChange(null);}} onRecorded={(file,duration)=>{generation.current++;accept(file,duration);}}/>
+    <label className={styles.picker}>Välj video<input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" disabled={disabled||reading} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file)void choose(file);}}/></label>
+    <p className={styles.hint}>MP4, WebM eller MOV · högst 60 s / 30 MB</p>
     {reading&&<p role="status">Kontrollerar videon…</p>}
     {error&&<p role="alert" className={styles.error}>{error}</p>}
-    {value&&<><p>Förhandsvisning · {Math.ceil(value.duration)} sekunder · {(value.file.size/1024/1024).toFixed(1)} MB. Inte publicerad ännu.</p><video className={styles.video} src={url} controls playsInline preload="metadata" aria-label="Förhandsvisning av vald video"/><button type="button" className="secondary-btn" disabled={disabled} onClick={()=>onChange(null)}>Ta om / välj annan video</button></>}
+    {value&&<><VideoPreview value={value}/><button type="button" className="secondary-btn" disabled={disabled} onClick={()=>onChange(null)}>Välj annan video</button></>}
   </div>;
 }

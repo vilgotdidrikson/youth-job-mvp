@@ -46,25 +46,35 @@ try{
   const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children)]:[];
   const button=(tree,label)=>nodes(tree).find(node=>node.type==='button'&&node.props.children===label);
   const unmount=()=>{slots.forEach(slot=>slot?.cleanup?.());slots=[];effects=[];};
-  request=async()=>media();let tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();
-  time=2500;button(tree,'Stoppa och förhandsvisa').props.onClick();render();
+  const openAndStart=async()=>{
+    let tree=render();const previous=instance,previousResults=results.length;await button(tree,'Öppna kamera').props.onClick();tree=render();
+    assert.equal(instance,previous,'Opening camera must not even construct a recorder');
+    assert.ok(button(tree,'Starta inspelning'),'A separate explicit start button is required');
+    assert.ok(nodes(tree).some(node=>node.type==='video'&&node.props['aria-label']==='Speglad kameraförhandsvisning'));
+    assert.equal(results.length,previousResults,'Camera preview does not publish');
+    button(tree,'Starta inspelning').props.onClick();return render();
+  };
+  request=async()=>media();let tree=await openAndStart();
+  time=2500;button(tree,'Stoppa inspelning').props.onClick();render();
   assert.equal(results.length,1);assert.equal(results[0][0].type,'video/webm');assert.equal(results[0][1],2.5);assert.equal(stopped,2);assert.equal(intervalCallback,null);
-  tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();button(tree,'Avbryt inspelning').props.onClick();render();assert.equal(results.length,1);assert.equal(stopped,4);
-  tree=render();await button(tree,'Spela in med kamera').props.onClick();render();time+=61000;intervalCallback();render();assert.equal(results.length,2);assert.equal(results[1][1],60);assert.equal(stopped,6);
-  tree=render();await button(tree,'Spela in med kamera').props.onClick();render();instance.ondataavailable({data:{size:31457281}});render();assert.equal(results.length,2);assert.equal(stopped,8);
-  tree=render();await button(tree,'Spela in med kamera').props.onClick();render();unmount();assert.equal(stopped,10);assert.equal(results.length,2);
+  tree=await openAndStart();button(tree,'Avbryt inspelning').props.onClick();render();assert.equal(results.length,1);assert.equal(stopped,4);
+  await openAndStart();time+=61000;intervalCallback();render();assert.equal(results.length,2);assert.equal(results[1][1],60);assert.equal(stopped,6);
+  await openAndStart();instance.ondataavailable({data:{size:31457281}});render();assert.equal(results.length,2);assert.equal(stopped,8);
+  await openAndStart();unmount();assert.equal(stopped,10);assert.equal(results.length,2);
   let permissionResolve;request=()=>new Promise(resolve=>{permissionResolve=resolve;});
-  tree=render();const starting=button(tree,'Spela in med kamera').props.onClick();render();unmount();permissionResolve(media());await starting;assert.equal(stopped,12,'Late permission tracks must close');assert.equal(results.length,2);
-  request=async()=>{throw new DOMException('Denied','NotAllowedError');};tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();assert.ok(JSON.stringify(tree).includes('nekades'));unmount();
+  tree=render();const starting=button(tree,'Öppna kamera').props.onClick();render();unmount();permissionResolve(media());await starting;assert.equal(stopped,12,'Late permission tracks must close');assert.equal(results.length,2);
+  request=async()=>{throw new DOMException('Denied','NotAllowedError');};tree=render();await button(tree,'Öppna kamera').props.onClick();tree=render();assert.ok(JSON.stringify(tree).includes('nekades'));unmount();
   let rejectOld;request=()=>new Promise((_resolve,reject)=>{rejectOld=reject;});
-  tree=render();button(tree,'Spela in med kamera').props.onClick();tree=render();button(tree,'Avbryt inspelning').props.onClick();
-  request=async()=>media();tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();
+  tree=render();button(tree,'Öppna kamera').props.onClick();tree=render();button(tree,'Stäng kamera').props.onClick();
+  request=async()=>media();tree=await openAndStart();
   const beforeLateError=stopped;rejectOld(new DOMException('Late denied','NotAllowedError'));await Promise.resolve();
   assert.equal(stopped,beforeLateError,'Old permission rejection must not stop a new recording');
-  const oldRecorder=instance;button(tree,'Avbryt inspelning').props.onClick();tree=render();await button(tree,'Spela in med kamera').props.onClick();tree=render();
+  const oldRecorder=instance;button(tree,'Avbryt inspelning').props.onClick();tree=await openAndStart();
   const beforeOldEvents=stopped;oldRecorder.onstop();oldRecorder.onerror();oldRecorder.ondataavailable({data:{size:31457281}});
   assert.equal(stopped,beforeOldEvents,'Stale recorder events must not stop newer tracks');assert.ok(intervalCallback);unmount();
-  console.log('PASS actual recorder callbacks with mocked media: preview-only, cancel, unmount, late permission, 60 sec, byte cap, denied permission and track cleanup.');
+  request=async()=>media();tree=render();await button(tree,'Öppna kamera').props.onClick();tree=render();const beforeReadyCancel=stopped;button(tree,'Stäng kamera').props.onClick();assert.equal(stopped,beforeReadyCancel+2,'Closing preview releases camera without recording');unmount();
+  assert.ok(readFileSync('components/video.module.css','utf8').includes('transform:scaleX(-1)'));
+  console.log('PASS actual recorder callbacks with mocked media: separate camera/record steps, mirrored preview, no auto-start, cancel, unmount, late events, 60 sec, byte cap and denied permission.');
 }finally{
   delete globalThis.__recorderHooks;
   for(const [key,descriptor] of Object.entries(saved)){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}

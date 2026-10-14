@@ -1,7 +1,9 @@
 import type { SVGProps } from "react";
 
-export type IconName = "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off";
+export type IconName = "camera" | "play" | "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off";
 const paths: Record<IconName, React.ReactNode> = {
+  camera: <><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3Z"/></>,
+  play: <path d="m9 5 10 7-10 7Z"/>,
   eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></>,
   "eye-off": <><path d="m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a21 21 0 0 1-3.1 4.1M6.2 6.2A20 20 0 0 0 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></>,
   bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>,
