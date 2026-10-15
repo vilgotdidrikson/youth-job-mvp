@@ -49,6 +49,30 @@ assert.match(profile, /setProfileTab\(requestedProfileTab\); }, \[requestedProfi
 const onboarding = readFileSync('app/company/onboarding/page.tsx', 'utf8');
 assert.match(onboarding, /if \(step !== "profil"\) return;/);
 assert.match(onboarding, /\[loading, user, profile, router, step\]/, 'Step transitions cancel stale initial profile reads');
+const onboardingAst = ts.createSourceFile('onboarding.tsx', onboarding, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+let initialEffect;
+const findEffect = node => {
+  if (!initialEffect && ts.isCallExpression(node) && node.expression.getText(onboardingAst) === 'useEffect') initialEffect = node.arguments[0].getText(onboardingAst);
+  ts.forEachChild(node, findEffect);
+};
+findEffect(onboardingAst);
+const effectJs = ts.transpileModule(`const effect = ${initialEffect}; return effect();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+let reads = 0, resolveRead;
+const database = { from() { reads++; return this; }, select() { return this; }, eq() { return this; }, maybeSingle() { return new Promise(resolve => { resolveRead = resolve; }); } };
+const noop = () => {};
+const runEffect = (step, role = 'company') => new Function('loading', 'user', 'profile', 'router', 'step', 'getSupabaseClient', 'setCompanyName', 'setIndustry', 'setAdministrator', 'setOrganizationNumber', effectJs)(false, {id:'fictional-owner'}, {role}, router, step, () => database, noop, noop, noop, noop);
+for (const step of ['val', 'matchprofil', 'annons']) assert.equal(runEffect(step), undefined);
+assert.equal(reads, 0, 'Completed onboarding choices must not trigger an entry redirect');
+const cleanup = runEffect('profil');
+assert.equal(reads, 1);
+cleanup(); // Saving the profile moves to the choice step and cleans up the old effect.
+resolveRead({data:{company_name:'Fictional company',industry:'Test',administrator:'Test',organization_number:'0000000000'}});
+await Promise.resolve();
+assert.equal(calls.length, 0, 'Late profile reads may not redirect away from completion choices');
+runEffect('profil');
+resolveRead({data:{company_name:'Fictional company',industry:'Test',administrator:'Test',organization_number:'0000000000'}});
+await Promise.resolve();
+assert.deepEqual(calls.pop(), ['replace', '/company?view=swipe'], 'Returning completed accounts keep their existing entry redirect');
 const nav = readFileSync('components/mobile-nav.tsx', 'utf8');
 assert.match(nav, /profile\.role === "company" \? COMPANY_ROUTES\.account : "\/profile"/);
 console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, preserved youth account destination.');
