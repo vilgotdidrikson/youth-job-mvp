@@ -982,7 +982,7 @@ function CompanyPageContent() {
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
-                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
                       {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}

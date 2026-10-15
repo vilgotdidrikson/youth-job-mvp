@@ -70,12 +70,12 @@ export function WorkplacePreference({ job, youthId, readOnly = false }: { job: J
           {saved && !places.some(place => place.id === saved.id) && <option value={saved.id} disabled>Tidigare val (arbetsplats borttagen)</option>}
           {places.map(place => <option key={place.id} value={place.id}>{workplaceLabel(place)}</option>)}
         </select></label>
-        <button className="secondary-btn" type="button" disabled={busy || Boolean(selected && !places.some(place => place.id === selected))} onClick={() => void save()}>{busy ? "Sparar…" : "Spara arbetsplatsval"}</button>
+        <button className="secondary-btn" style={{ padding: ".65rem 1rem", marginTop: ".7rem" }} type="button" disabled={busy || Boolean(selected && !places.some(place => place.id === selected))} onClick={() => void save()}>{busy ? "Sparar…" : "Spara arbetsplatsval"}</button>
       </>}
       {readOnly && !saved && <p>Inget särskilt önskemål.</p>}
     </>}
     {error && <p role="alert">{error}</p>}
-    {loadError && <button type="button" className="secondary-btn" disabled={loading} onClick={() => { setLoading(true); setRevision(current => current + 1); }}>Försök igen</button>}
+    {loadError && <button type="button" className="secondary-btn" style={{ padding: ".65rem 1rem" }} disabled={loading} onClick={() => { setLoading(true); setRevision(current => current + 1); }}>Försök igen</button>}
     {note && <p role="status">{note}</p>}
   </section>;
 }
