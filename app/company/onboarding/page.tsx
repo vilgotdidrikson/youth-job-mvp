@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { COMPANY_ROUTES } from "@/lib/company-navigation";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { UiIcon } from "@/components/ui-icon";
 import "./company-onboarding-design.css";
@@ -84,6 +85,9 @@ export default function CompanyOnboardingPage() {
       router.replace("/swipe");
       return;
     }
+    // Once saved, keep the completion choices visible. A refreshed session or
+    // a late initial profile read must not redirect away from the next step.
+    if (step !== "profil") return;
     if (!loading && user && profile?.role === "company") {
       let active = true;
       void getSupabaseClient()
@@ -104,7 +108,7 @@ export default function CompanyOnboardingPage() {
         });
       return () => { active = false; };
     }
-  }, [loading, user, profile, router]);
+  }, [loading, user, profile, router, step]);
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -315,8 +319,8 @@ export default function CompanyOnboardingPage() {
           <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
           <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
           <button type="button" className="cta-btn" onClick={() => setStep("matchprofil")}>Bygg företagets matchprofil</button>
-          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=skapa")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
-          <button type="button" className="secondary-btn" onClick={() => router.replace("/company?view=kandidater")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
+          <button type="button" className="secondary-btn" onClick={() => router.replace(COMPANY_ROUTES.create)} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem" }}>Fortsätt skapa min jobbannons</button>
+          <button type="button" className="secondary-btn" onClick={() => router.replace(COMPANY_ROUTES.account)} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem" }}>Gå till mitt konto</button>
         </div>
       )}
 

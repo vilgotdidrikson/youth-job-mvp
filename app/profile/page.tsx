@@ -14,6 +14,7 @@ import { CvFactReview } from "@/components/cv-fact-review";
 import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import Link from "next/link";
+import { profileTabFromQuery, type ProfileTab } from "@/lib/company-navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -61,7 +62,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [cvApproval, setCvApproval] = useState<string | null>(null);
   const cvApproved = cvStructured ? hasApprovedCv(cvApproval, cvEditText, cvStructured) : false;
 
-  const [profileTab, setProfileTab] = useState<"overview" | "work" | "cv" | "details" | "settings">(query.get("tab")==="work"?"work":"overview");
+  const requestedProfileTab = profileTabFromQuery(query.get("tab"));
+  const [profileTab, setProfileTab] = useState<ProfileTab>(requestedProfileTab);
+  useEffect(() => { setProfileTab(requestedProfileTab); }, [requestedProfileTab]);
   const [frame,setFrame]=useState<"cv"|"video"|"general"|null>(null);
   const [frameBusy,setFrameBusy]=useState(false),[frameDirty,setFrameDirty]=useState(false);
   const [error, setError] = useState("");

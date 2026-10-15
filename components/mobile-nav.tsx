@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { COMPANY_ROUTES, companyView } from "@/lib/company-navigation";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { YouthNavigation } from "./youth-navigation";
@@ -13,14 +14,15 @@ export function MobileNav() {
   if(!profile || ["/","/login","/signup","/auth","/forgot-password","/reset-password","/pricing","/features","/privacy","/velaris-preview"].includes(pathname) || pathname.startsWith("/admin") || pathname.includes("onboarding") || pathname.startsWith("/youth/cv") || pathname.startsWith("/youth/get-started")) return null;
   if(profile.role === "youth") return <YouthNavigation pathname={pathname}/>;
   const items: {href:string; label:string; icon:IconName; view?:string}[] = profile.role === "company" ? [
-    {href:"/company?view=annonser", label:"Annonser", icon:"briefcase",view:"annonser"},
-    {href:"/company?view=kandidater",label:"Kandidater",icon:"discover",view:"kandidater"},
+    {href:COMPANY_ROUTES.listings, label:"Annonser", icon:"briefcase",view:"annonser"},
+    {href:COMPANY_ROUTES.candidates,label:"Kandidater",icon:"discover",view:"kandidater"},
     {href:"/chats",label:"Meddelanden",icon:"chat"},
     {href:"/notifications",label:"Notiser",icon:"bell"},
     {href:"/profile",label:"Profil",icon:"profile"},
   ] : [{href:"/private",label:"Uppdrag",icon:"briefcase"},{href:"/chats",label:"Chattar",icon:"chat"},{href:"/notifications",label:"Aktivitet",icon:"activity"},{href:"/profile",label:"Profil",icon:"profile"}];
   return <nav className={`${styles.nav} ${pathname==="/chats"?styles.compact:""}`} aria-label="Huvudnavigation"><Link className={styles.brand} href={items[0].href}>MatchnWork</Link><div className={styles.links}>{items.map(item => {
-    const active = pathname === item.href.split("?")[0] && (!item.view || query.get("view") === item.view || (!query.get("view") && item.view === "kandidater") || (query.get("view") === "swipe" && item.view === "kandidater") || (query.get("view") === "skapa" && item.view === "annonser"));
+    const selectedCompanyView = companyView(query.get("view"));
+    const active = pathname === item.href.split("?")[0] && (!item.view || selectedCompanyView === item.view || (selectedCompanyView === "skapa" && item.view === "annonser"));
     return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined}><UiIcon name={item.icon}/><span>{item.label}</span></Link>;
-  })}</div><Link className={styles.account} href="/profile" aria-label="Mitt konto"><UiIcon name="profile"/></Link></nav>;
+  })}</div><Link className={styles.account} href={profile.role === "company" ? COMPANY_ROUTES.account : "/profile"} aria-label="Mitt konto"><UiIcon name="profile"/></Link></nav>;
 }

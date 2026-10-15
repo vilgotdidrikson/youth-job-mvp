@@ -26,6 +26,7 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { EMPTY_JOB_FORM as EMPTY_FORM, draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
+import { COMPANY_ROUTES, companyView } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
 import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
@@ -59,8 +60,6 @@ function textListItems(value: string): string[] {
   return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
 }
 
-type Tab = "kandidater" | "skapa" | "annonser";
-
 
 function formWorkplaces(form: JobForm): JobWorkplace[] {
   return Array.isArray(form.workplaces) && form.workplaces.length ? form.workplaces : [{ id: "00000000-0000-4000-8000-000000000001", name: "Huvudarbetsplats", address: form.address, postal_code: form.postalCode, city: form.city, longitude: null, latitude: null }];
@@ -73,10 +72,10 @@ function CompanyPageContent() {
   const hasCompanyAccess = profile?.role === "company";
   const jobDraftStorageKey = `${JOB_DRAFT_STORAGE_KEY}:${user?.id ?? "signed-out"}`;
 
-  const [tab, setTab] = useState<Tab>("kandidater");
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+  const tab = companyView(searchParams.get("view"), companyProfile?.verification_status === "verified");
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobActionId, setJobActionId] = useState<string | null>(null);
@@ -190,12 +189,9 @@ function CompanyPageContent() {
     const requestedView = searchParams.get("view");
     const requestedJob = searchParams.get("job"), requestedCandidate = searchParams.get("candidate");
     if (requestedJob && requestedCandidate) { setSelectedCandidateId(`${requestedJob}:${requestedCandidate}`); setCandidateCv(null); setUploadedCvError(""); setCandidateSearch(""); setCandidateFilter("all"); }
-    if (requestedView === "kandidater" || requestedView === "skapa" || requestedView === "annonser") {
-      setTab(requestedView);
-    } else if (requestedView === "swipe") {
+    if (requestedView === "swipe") {
       if (companyProfile) {
-        const view = companyProfile.verification_status === "verified" ? "kandidater" : "skapa";
-        setTab(view);
+        const view = companyView(requestedView, companyProfile.verification_status === "verified");
         router.replace(`/company?view=${view}`, { scroll: false });
       }
     }
@@ -347,9 +343,9 @@ function CompanyPageContent() {
       setForm(copied); setBuilderStep(1);
       setJobImageFiles([]);
       setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; });
-      setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null); setTab("skapa");
+      setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null);
       setDraftOwnerId(ownerId);
-      router.replace("/company?view=skapa", { scroll: false });
+      router.replace(COMPANY_ROUTES.create, { scroll: false });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (reason) { setCopyError(reason instanceof Error ? reason.message : "Kunde inte kopiera annonsen. Ditt befintliga utkast finns kvar."); }
     finally { copyLock.current = false; setCopyBusy(false); }
@@ -414,8 +410,7 @@ function CompanyPageContent() {
       setJobImageFiles([]);
       setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
-      setTab("annonser");
-      router.replace("/company?view=annonser", { scroll: false });
+      router.replace(COMPANY_ROUTES.listings, { scroll: false });
       if (matchProfileWarning) setError(matchProfileWarning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -636,7 +631,7 @@ function CompanyPageContent() {
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
       {(tab === "annonser" || tab === "skapa") && <div className="company-workspace-tabs">
-        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { setTab(item); router.replace(`/company?view=${item}`, { scroll: false }); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
+        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { router.push(item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings, { scroll: false }); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
       {error && (
@@ -654,7 +649,7 @@ function CompanyPageContent() {
               <p style={{ fontSize: "0.85rem", color: "#737373", marginBottom: "1rem" }}>
                 Skapa din första jobbannons för att börja se kandidater.
               </p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => { setTab("skapa"); router.replace("/company?view=skapa", { scroll: false }); }}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => router.push(COMPANY_ROUTES.create, { scroll: false })}>
                 Skapa annons
               </button>
             </div>
@@ -945,7 +940,7 @@ function CompanyPageContent() {
           {jobs.length === 0 ? (
             <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
               <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.75rem" }}>Inga annonser ännu</p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => { setTab("skapa"); router.replace("/company?view=skapa", { scroll: false }); }}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => router.push(COMPANY_ROUTES.create, { scroll: false })}>
                 Skapa din första annons
               </button>
             </div>
