@@ -7,11 +7,16 @@ import { getApplicationFollowups, type ApplicationFollowup } from "@/lib/applica
 import type { ApplicationCompletion } from "@/lib/application-completions";
 import { getSupabaseClient } from "@/lib/supabase";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
+import { assessmentDeadline, observeAssessment } from "@/lib/assessment-progress";
 
 const CONFIDENCE = { low: "Begränsat underlag", medium: "Delvis underlag", high: "Gott underlag" };
 const STATUS = { fulfilled: "Stöds av underlaget", unfulfilled: "Motsägs av underlaget", unknown: "Uppgift saknas" };
 
 export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { jobId: string; youthUserId: string; application?: ApplicationCompletion | null }) {
+  return <AssessmentPanel key={`${jobId}:${youthUserId}`} jobId={jobId} youthUserId={youthUserId} application={application} />;
+}
+
+function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; youthUserId: string; application?: ApplicationCompletion | null }) {
   const [assessment, setAssessment] = useState<CandidateAssessment | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -21,30 +26,36 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
   const [followupMessage, setFollowupMessage] = useState("");
   const [history, setHistory] = useState<{ id: string; job_profile_version: number; result: CandidateAssessment; created_at: string }[] | null>(null);
   const [automaticStatus, setAutomaticStatus] = useState("");
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const observer = useRef<ReturnType<typeof observeAssessment> | null>(null);
   useEffect(() => {
-    let active = true, reading = false;
-    let timer: ReturnType<typeof setInterval> | undefined;
-    const refresh = async () => {
-      if (!active || reading || document.visibilityState !== "visible") return;
-      reading = true;
-      try {
-        const { data, error: readError } = await getSupabaseClient().rpc("get_application_assessment_state", { p_job_id: jobId, p_youth_user_id: youthUserId });
-        if (!active || readError || !data) return;
-        setAutomaticStatus(data.status);
-        if (!timer && (["pending","processing"].includes(data.status) || (data.status === "failed" && data.retrying))) timer=setInterval(() => void refresh().catch(()=>{}),10000);
-        if (data.assessment) { setAssessment(data.assessment); setTemporary(false); setPdfStatus(data.assessment.pdfStatus ?? "none"); }
-        else if (["pending","processing"].includes(data.status)) setAssessment(null);
-        if (timer && (["completed","cancelled"].includes(data.status) || (data.status === "failed" && !data.retrying))) {clearInterval(timer);timer=undefined;}
-      } finally { reading = false; }
-    };
-    void getSupabaseClient().rpc("request_application_assessment", { p_job_id: jobId, p_youth_user_id: youthUserId }).then(({error: requestError}) => {
-      if (!active || requestError) return;
-      timer=setInterval(() => void refresh().catch(()=>{}),10000);
-      void refresh().catch(()=>{});
+    const params = { p_job_id: jobId, p_youth_user_id: youthUserId };
+    const watch = observeAssessment({
+      visible: () => document.visibilityState === "visible",
+      read: async (signal) => {
+        const { data, error } = await getSupabaseClient().rpc("get_application_assessment_state", params).abortSignal(signal);
+        if (error || !data) throw new Error("Assessment read failed");
+        return data;
+      },
+      enqueue: async (signal) => {
+        const { error } = await getSupabaseClient().rpc("request_application_assessment", params).abortSignal(signal);
+        if (error) throw new Error("Assessment request failed");
+      },
+      update: (data) => {
+        setAutomaticStatus(data.status === "failed" && data.retrying ? "pending" : data.status);
+        setError("");
+        if (data.assessment) {
+          setAssessment(data.assessment); setTemporary(false);
+          setPdfStatus((data.assessment as CandidateAssessment & { pdfStatus?: string }).pdfStatus ?? "none");
+          setUpdatedAt(data.updated_at ?? null);
+        }
+      },
+      fail: setError,
     });
-    const stop=subscribeVisibleRefresh(refresh);
-    return () => {active=false;stop();if(timer)clearInterval(timer);};
-  }, [jobId,youthUserId]);
+    observer.current = watch;
+    const stopRefresh = subscribeVisibleRefresh(watch.refresh);
+    return () => { watch.stop(); stopRefresh(); };
+  }, [jobId, youthUserId]);
   const loadHistory = async () => {
     const { data, error } = await getSupabaseClient().from("candidate_assessments").select("id,job_profile_version,result,created_at")
       .eq("job_id", jobId).eq("youth_user_id", youthUserId).order("created_at", { ascending: false }).limit(20);
@@ -54,6 +65,7 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
   const followupRevision = useRef(0);
   useEffect(() => {
     let active = true;
+    const revisions = followupRevision;
     void getApplicationFollowups(jobId).then((items) => {
       if (active) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
     }).catch(() => {});
@@ -63,32 +75,45 @@ export function CandidateAssessmentPanel({ jobId, youthUserId, application }: { 
       const items = await getApplicationFollowups(jobId);
       if (active && revision === followupRevision.current) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
     });
-    return () => { active = false; unsubscribe(); request.current?.abort(); };
+    return () => { active = false; revisions.current++; unsubscribe(); request.current?.abort(); };
   }, [jobId, youthUserId]);
   const analyze = async () => {
-    if (busy) return;
+    if (request.current) return;
+    observer.current?.stop();
     followupRevision.current++;
     const controller = new AbortController(); request.current = controller;
-    setBusy(true); setError("");
+    const timeout = setTimeout(() => controller.abort(), 55_000);
+    setBusy(true); setError(""); setAutomaticStatus("");
     try {
-      const response = await fetch("/api/company/candidate-assessment", { method: "POST", signal: controller.signal,
-        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ jobId, youthUserId }) });
-      const data = await response.json();
+      const headers = await assessmentDeadline(authenticatedHeaders(), controller.signal);
+      const response = await assessmentDeadline(fetch("/api/company/candidate-assessment", { method: "POST", signal: controller.signal,
+        headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ jobId, youthUserId }) }), controller.signal);
+      const data = await assessmentDeadline(response.json(), controller.signal);
       if (!response.ok) throw new Error(data.error || "Kunde inte bedöma underlaget.");
+      if (!data.assessment || !Array.isArray(data.assessment.criteria)) throw new Error("Svaret saknade en bedömning. Försök igen.");
       setAssessment(data.assessment);
       setPdfStatus(data.pdfStatus ?? "none");
       setTemporary(data.temporary === true);
+      setUpdatedAt(data.temporary ? null : data.createdAt ?? new Date().toISOString());
+      setAutomaticStatus("completed");
       setFollowupMessage(data.followups?.queued > 0 ? `${data.followups.queued} individuella frågor har skickats till kandidaten. Svaren kompletterar den befintliga ansökan.` : "");
-      const questions = await getApplicationFollowups(jobId);
-      if (!controller.signal.aborted) { followupRevision.current++; setFollowups(questions.filter((item) => item.youth_user_id === youthUserId)); }
-    } catch (reason) { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Kunde inte bedöma underlaget."); }
-    finally { if (!controller.signal.aborted) { setBusy(false); request.current = null; } }
+      // Supplementation must not turn a successful assessment into a failed update.
+      const revision = ++followupRevision.current;
+      void getApplicationFollowups(jobId).then((questions) => {
+        if (!controller.signal.aborted && revision === followupRevision.current) setFollowups(questions.filter((item) => item.youth_user_id === youthUserId));
+      }).catch(() => {});
+    } catch (reason) {
+      if (request.current === controller) setError(reason instanceof Error ? reason.message : "Kunde inte bedöma underlaget.");
+    } finally {
+      clearTimeout(timeout);
+      if (request.current === controller) { setBusy(false); request.current = null; }
+    }
   };
-  return <section className="candidate-assessment-panel" aria-label="Matchningsunderlag">
-    <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy || ["pending","processing"].includes(automaticStatus)} onClick={() => void analyze()}>{busy ? "Läser underlaget…" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>
-    {error && <p role="alert">{error}</p>}
-    {["pending","processing"].includes(automaticStatus) && <p role="status">Bedömningen uppdateras automatiskt utifrån kandidatens senaste underlag.</p>}
-    {automaticStatus === "failed" && <p role="status">Den automatiska bedömningen är tillfälligt fördröjd. Du kan granska CV:t och uppdatera bedömningen manuellt.</p>}
+  return <section className="candidate-assessment-panel" aria-label="Matchningsunderlag" aria-busy={busy}>
+    <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy} onClick={() => void analyze()}>{busy ? "Beräknar…" : error || temporary ? "Försök igen" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>
+    <p role="status" aria-live="polite">{busy ? "Beräknar" : error ? "Kunde inte uppdateras" : ["pending", "processing"].includes(automaticStatus) ? "Beräknar automatiskt – du kan också uppdatera bedömningen direkt." : assessment ? temporary ? "Preliminärt underlag" : "Klart" : "Hämtar bedömning…"}</p>
+    {error && <p role="alert">{error}{assessment ? " Tidigare underlag visas nedan." : " Du kan fortfarande öppna kandidatens CV för egen granskning."}</p>}
+    {updatedAt && <p>Senaste färdiga bedömning: <time dateTime={updatedAt}>{new Date(updatedAt).toLocaleString("sv-SE")}</time></p>}
     {pdfStatus === "read" && <p>Texten i uppladdat PDF-CV ingår i underlaget.</p>}
     {pdfStatus === "unreadable" && <p role="status">PDF-CV:t kunde inte läsas automatiskt. Öppna CV:t för egen granskning. Bedömningen använder övriga uppgifter.</p>}
     {temporary && pdfStatus !== "unreadable" && <p role="status">En preliminär bedömning visas. Automatisk analys är tillfälligt otillgänglig; försök igen senare.</p>}

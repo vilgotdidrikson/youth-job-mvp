@@ -22,7 +22,8 @@
     "test:deletion:staging": "node --env-file=.env.deletion scripts/test-staging-account-deletion.mjs",
     "test:job-workplaces": "node scripts/test-job-workplaces.mjs",
     "test:job-copy": "node scripts/test-job-copy.mjs",
-    "test:company-navigation": "node scripts/test-company-navigation.mjs"
+    "test:company-navigation": "node scripts/test-company-navigation.mjs",
+    "test:assessment-progress": "node scripts/test-assessment-progress.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",

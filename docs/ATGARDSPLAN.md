@@ -53,7 +53,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
-| 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Ej påbörjad | — |
+| 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | För granskning | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Ej påbörjad | — |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | Ej påbörjad | — |
 | 13 | [N16](#n16) | P1 | Antal lediga platser och nytt lyft efter bekräftad anställning | Ej påbörjad | — |
@@ -428,14 +428,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 10
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f05-match-analysis-20261015`, reserverad före kodarbete 2026-10-15.
 - Åtgärd: Utred varför bedömningen inte blir läsbar och säkerställ att beräkningen slutförs eller visar ett hanterbart fel. Visa Beräknar, Klart eller Kunde inte uppdateras, senaste uppdatering och återförsök.
 - Klar när: Företaget kan läsa ett färdigt underlag eller förstå och återhämta ett fel; en avstängd knapp blir inte ett oklart slutläge.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Tydliga lägen Beräknar/Klart/Kunde inte uppdateras, tid för färdigt underlag, synliga hämtningsfel, begränsad väntan och direkt återförsök via befintligt behörighetskontrollerat API. Tidigare underlag bevaras vid fel och tillstånd isoleras vid kandidatbyte.
+- Verifierat: Lokalt test:assessment-progress (observer och faktiska komponentcallbacks), test:matching och test:company-navigation passerar. TypeScript passerar. Byggkontroll och kompletteringsregression redovisas i docs/F05.md.
+- Återstår / blockerare: Användaren godkände uttryckligen publicering i dev 2026-10-15. PR, merge och driftsatt webbtest följer; se docs/F05.md för kontroller. Ingen databasändring.
 
 <a id="f06"></a>
 ### F06 Förklara pris och anställningsavgift
