@@ -71,6 +71,7 @@ export interface CompanyProfile {
 }
 
 export interface JobPost {
+  workplaces?: import("./job-workplaces").JobWorkplace[];
   id: string;
   title: string;
   description: string;

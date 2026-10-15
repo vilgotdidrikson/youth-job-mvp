@@ -1,5 +1,6 @@
 "use client";
 
+import { getJobWorkplaces, jobMatchesCity } from "@/lib/job-workplaces";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -77,14 +78,14 @@ function SwipePageContent() {
   }, []);
 
   const filterOptions = useMemo(() => ({
-    cities: uniqueSorted(jobs.map((job) => job.city)),
+    cities: uniqueSorted(jobs.flatMap(job => getJobWorkplaces(job).map(place => place.city))),
     // Older listings incorrectly copied employment type to category. Do not
     // surface those values under work categories.
     categories: uniqueSorted(jobs.map((job) => job.category).filter((value) => !employmentFormKeys.has(value.trim().toLocaleLowerCase("sv")))),
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
   const filteredJobs = useMemo(() => jobs.filter((job) =>
-    (!city || job.city === city)
+    (!city || jobMatchesCity(job, city))
     && (!category || job.category === category)
     && (!employmentType || job.employment_type.split(",").some((value) => value.trim().toLocaleLowerCase("sv") === employmentType.toLocaleLowerCase("sv"))),
   ), [category, city, employmentType, jobs]);
