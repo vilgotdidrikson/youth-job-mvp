@@ -192,7 +192,7 @@ function CompanyPageContent() {
     if (requestedView === "swipe") {
       if (companyProfile) {
         const view = companyView(requestedView, companyProfile.verification_status === "verified");
-        router.replace(`/company?view=${view}`, { scroll: false });
+        window.history.replaceState(null, "", `/company?view=${view}`);
       }
     }
   }, [companyProfile, router, searchParams]);
@@ -345,7 +345,7 @@ function CompanyPageContent() {
       setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; });
       setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null);
       setDraftOwnerId(ownerId);
-      router.replace(COMPANY_ROUTES.create, { scroll: false });
+      window.history.replaceState(null, "", COMPANY_ROUTES.create);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (reason) { setCopyError(reason instanceof Error ? reason.message : "Kunde inte kopiera annonsen. Ditt befintliga utkast finns kvar."); }
     finally { copyLock.current = false; setCopyBusy(false); }
@@ -410,7 +410,7 @@ function CompanyPageContent() {
       setJobImageFiles([]);
       setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
       if (user) await loadData(user.id);
-      router.replace(COMPANY_ROUTES.listings, { scroll: false });
+      window.history.replaceState(null, "", COMPANY_ROUTES.listings);
       if (matchProfileWarning) setError(matchProfileWarning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -631,7 +631,7 @@ function CompanyPageContent() {
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
       {(tab === "annonser" || tab === "skapa") && <div className="company-workspace-tabs">
-        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { router.push(item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings, { scroll: false }); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
+        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { window.history.pushState(null, "", item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
       {error && (
@@ -649,7 +649,7 @@ function CompanyPageContent() {
               <p style={{ fontSize: "0.85rem", color: "#737373", marginBottom: "1rem" }}>
                 Skapa din första jobbannons för att börja se kandidater.
               </p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => router.push(COMPANY_ROUTES.create, { scroll: false })}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>
                 Skapa annons
               </button>
             </div>
@@ -940,7 +940,7 @@ function CompanyPageContent() {
           {jobs.length === 0 ? (
             <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
               <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.75rem" }}>Inga annonser ännu</p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => router.push(COMPANY_ROUTES.create, { scroll: false })}>
+              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>
                 Skapa din första annons
               </button>
             </div>

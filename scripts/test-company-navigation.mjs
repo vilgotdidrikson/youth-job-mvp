@@ -17,6 +17,7 @@ for (const tab of [null, '', 'overview', 'unknown']) assert.equal(profileTabFrom
 // Execute the actual JSX navigation callbacks, not copies of their destination logic.
 const calls = [];
 const router = { push: (...args) => calls.push(['push', ...args]), replace: (...args) => calls.push(['replace', ...args]) };
+const browserWindow = { history: { pushState: (...args) => calls.push(['pushState', ...args]), replaceState: (...args) => calls.push(['replaceState', ...args]) } };
 function clickButton(file, label) {
   const source = readFileSync(file, 'utf8');
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -31,18 +32,29 @@ function clickButton(file, label) {
   visit(ast);
   assert.ok(handler, `Missing actual callback for ${label}`);
   const js = ts.transpileModule(`const callback = ${handler}; callback();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  new Function('router', 'COMPANY_ROUTES', js)(router, COMPANY_ROUTES);
+  new Function('router', 'COMPANY_ROUTES', 'window', js)(router, COMPANY_ROUTES, browserWindow);
 }
-clickButton('app/company/onboarding/page.tsx', 'Gå till mitt konto');
-assert.deepEqual(calls.pop(), ['replace', '/profile?tab=settings']);
-clickButton('app/company/onboarding/page.tsx', 'Fortsätt skapa min jobbannons');
-assert.deepEqual(calls.pop(), ['replace', '/company?view=skapa']);
+function linkDestination(file, label) {
+  const source = readFileSync(file, 'utf8');
+  const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let href;
+  const visit = node => {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(ast) === 'Link' && node.children.filter(ts.isJsxText).map(child => child.text.trim()).join(' ') === label) {
+      href = node.openingElement.attributes.properties.find(prop => prop.name?.getText(ast) === 'href')?.initializer?.expression?.getText(ast);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast); assert.ok(href, `Missing actual link for ${label}`);
+  return new Function('COMPANY_ROUTES', `return ${href}`)(COMPANY_ROUTES);
+}
+assert.equal(linkDestination('app/company/onboarding/page.tsx', 'Gå till mitt konto'), '/profile?tab=settings');
+assert.equal(linkDestination('app/company/onboarding/page.tsx', 'Fortsätt skapa min jobbannons'), '/company?view=skapa');
 clickButton('app/company/page.tsx', 'Skapa din första annons');
-assert.deepEqual(calls.pop(), ['push', '/company?view=skapa', { scroll: false }]);
+assert.deepEqual(calls.pop(), ['pushState', null, '', '/company?view=skapa']);
 const page = readFileSync('app/company/page.tsx', 'utf8');
 assert.doesNotMatch(page, /setTab\(/, 'Company view may not have a second local source of truth');
 assert.match(page, /const tab = companyView\(searchParams\.get\("view"\)/);
-assert.match(page, /router\.push\(item === "skapa" \? COMPANY_ROUTES\.create : COMPANY_ROUTES\.listings/);
+assert.match(page, /window\.history\.pushState\(null, "", item === "skapa" \? COMPANY_ROUTES\.create : COMPANY_ROUTES\.listings/);
 const profile = readFileSync('app/profile/page.tsx', 'utf8');
 assert.match(profile, /profileTabFromQuery\(query\.get\("tab"\)\)/);
 assert.match(profile, /setProfileTab\(requestedProfileTab\); }, \[requestedProfileTab\]/);
