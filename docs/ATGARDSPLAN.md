@@ -53,7 +53,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
-| 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | För granskning | Vilgot / Codex |
+| 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Ej påbörjad | — |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | Ej påbörjad | — |
 | 13 | [N16](#n16) | P1 | Antal lediga platser och nytt lyft efter bekräftad anställning | Ej påbörjad | — |
@@ -425,17 +425,17 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 <a id="f05"></a>
 ### F05 Gör matchningsanalysen begriplig och användbar
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 10
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/f05-match-analysis-20261015`, reserverad före kodarbete 2026-10-15.
+- Branch/PR: `codex/f05-match-analysis-20261015`, [PR #64](https://github.com/vilgotdidrikson/youth-job-mvp/pull/64), mergad till dev `e292a12`.
 - Åtgärd: Utred varför bedömningen inte blir läsbar och säkerställ att beräkningen slutförs eller visar ett hanterbart fel. Visa Beräknar, Klart eller Kunde inte uppdateras, senaste uppdatering och återförsök.
 - Klar när: Företaget kan läsa ett färdigt underlag eller förstå och återhämta ett fel; en avstängd knapp blir inte ett oklart slutläge.
 - Implementerat: Tydliga lägen Beräknar/Klart/Kunde inte uppdateras, tid för färdigt underlag, synliga hämtningsfel, begränsad väntan och direkt återförsök via befintligt behörighetskontrollerat API. Tidigare underlag bevaras vid fel och tillstånd isoleras vid kandidatbyte.
-- Verifierat: Lokalt test:assessment-progress (observer och faktiska komponentcallbacks), test:matching och test:company-navigation passerar. TypeScript passerar. Byggkontroll och kompletteringsregression redovisas i docs/F05.md.
-- Återstår / blockerare: Användaren godkände uttryckligen publicering i dev 2026-10-15. PR, merge och driftsatt webbtest följer; se docs/F05.md för kontroller. Ingen databasändring.
+- Verifierat: Lokalt test:assessment-progress (observer och faktiska komponentcallbacks), test:matching och test:company-navigation passerar. TypeScript passerar. Kompletteringsregression, riktad ESLint utan varningar och webpack-produktionsbygge passerar. Autentiserad QA-ansökan i driftsatt dev går från väntande kö till direkt Beräknar → Klart med läsbart underlag och tidpunkt. Upprepad uppdatering fungerar och bevarar cachetid. Se docs/F05.md.
+- Återstår / begränsningar: Inga blockerare för F05:s kriterium. Timeout/nätverksfel är simulerade regressioner. QA-annonsen saknar bedömbara kriterier; inget nytt live-OpenAI-resultat påstås verifierat. Fysisk mobilkontroll ligger kvar under L08. Ingen databasändring.
 
 <a id="f06"></a>
 ### F06 Förklara pris och anställningsavgift
