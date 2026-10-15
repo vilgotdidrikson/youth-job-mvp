@@ -99,3 +99,5 @@
 .company-reviewed-application .secondary-btn {min-height:44px;white-space:normal;}
 .mnw-company-workspace > div:has(> button[aria-label="Stäng"]) {flex-wrap:wrap;}
 .mnw-company-workspace > div:has(> button[aria-label="Stäng"]) button {min-height:44px;}
+
+.job-workplace-fields{border:0;padding:0;min-width:0;display:grid;gap:1rem}.job-workplace-fields>legend{font-weight:700;margin-bottom:.5rem}.job-workplace-fields>p,.job-workplace-fields>small{color:#68645f;font-size:.88rem}.job-workplace-fields>section{padding:1rem;border:1px solid #e8e2da;border-radius:16px}.job-workplace-fields header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}.job-workplace-fields>.secondary-btn{justify-self:start}.job-workplace-fields input{width:100%;min-width:0}.workplace-editor{max-width:700px;padding:1.5rem;max-height:85dvh;overflow:auto}.workplace-editor h2{margin-bottom:1rem}.workplace-editor-actions{display:flex;gap:.75rem;margin-top:1rem}

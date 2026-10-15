@@ -1,5 +1,9 @@
 "use client";
 
+import { JobWorkplaceFields } from "@/components/job-workplace-fields";
+import { JobWorkplaceEditor } from "@/components/job-workplace-editor";
+import { WorkplacePreference } from "@/components/workplace-preference";
+import { validateJobWorkplaces, jobCities, type JobWorkplace } from "@/lib/job-workplaces";
 import { CandidateRecruitmentProfile } from "@/components/candidate-recruitment-profile";
 import { VideoPlayer } from "@/components/video-player";
 
@@ -63,6 +67,7 @@ function textListItems(value: string): string[] {
 type Tab = "kandidater" | "skapa" | "annonser";
 
 interface JobForm {
+  workplaces: JobWorkplace[];
   title: string;
   city: string;
   address: string;
@@ -84,6 +89,7 @@ interface JobForm {
 }
 
 const EMPTY_FORM: JobForm = {
+  workplaces: [],
   title: "",
   city: "",
   address: "",
@@ -103,6 +109,10 @@ const EMPTY_FORM: JobForm = {
   candidateQuestions: [],
   aiGenerated: false,
 };
+
+function formWorkplaces(form: JobForm): JobWorkplace[] {
+  return Array.isArray(form.workplaces) && form.workplaces.length ? form.workplaces : [{ id: "00000000-0000-4000-8000-000000000001", name: "Huvudarbetsplats", address: form.address, postal_code: form.postalCode, city: form.city, longitude: null, latitude: null }];
+}
 
 function CompanyPageContent() {
   const router = useRouter();
@@ -154,6 +164,7 @@ function CompanyPageContent() {
   const [draftOwnerId, setDraftOwnerId] = useState<string | null>(null);
   const draftHydrated = Boolean(user?.id) && draftOwnerId === user?.id;
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
+  const [editingWorkplaces, setEditingWorkplaces] = useState<JobPost | null>(null);
   const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
   const [closingJob, setClosingJob] = useState<JobPost | null>(null);
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
@@ -375,6 +386,7 @@ function CompanyPageContent() {
     if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
     if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return; }
     if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return; }
+    try { validateJobWorkplaces(formWorkplaces(form)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera arbetsplatserna."); return; }
     if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan publicering."); return; }
     setBusy(true);
     setError("");
@@ -383,6 +395,7 @@ function CompanyPageContent() {
         ? await Promise.all(jobImageFiles.map((file) => uploadJobImage(file)))
         : [];
       const job = await createJob({
+        workplaces: formWorkplaces(form),
         title: form.title,
         city: form.city,
         address: form.address,
@@ -771,6 +784,7 @@ function CompanyPageContent() {
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
                 <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
                 <section aria-label="Kandidatens presentationsvideo"><h3>Presentationsvideo — frivilligt</h3><VideoPlayer key={selectedCandidate.youthUserId} userId={selectedCandidate.youthUserId}/></section>
+                <WorkplacePreference key={`workplace:${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} job={selectedCandidate.job} youthId={selectedCandidate.youthUserId} readOnly/>
                 <CandidateRecruitmentProfile key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthId={selectedCandidate.youthUserId}/><CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
                 {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
@@ -915,7 +929,7 @@ function CompanyPageContent() {
                   {builderStep === 3 && (<>
                     <section className="card job-builder-section job-builder-step-panel">
                       <p className="job-builder-eyebrow">Steg 3 av 3</p><h2>Plats och praktiska detaljer</h2><p className="job-builder-help">Slutför annonsen. Lön, förmåner och bild är valfria men gör annonsen mer attraktiv.</p>
-                      <div className="job-builder-fields two-columns"><label>Gatuadress *<input className="input-field" placeholder="T.ex. Storgatan 12" list="company-address-suggestions" autoComplete="street-address" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} required /></label><label>Postnummer *<input className="input-field" placeholder="123 45" autoComplete="postal-code" inputMode="numeric" value={form.postalCode} onChange={(e) => setForm((p) => ({ ...p, postalCode: e.target.value }))} required /></label><label>Stad *<input className="input-field" placeholder="T.ex. Stockholm" list="company-city-suggestions" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} required /></label></div>
+                      <JobWorkplaceFields value={formWorkplaces(form)} disabled={busy} onChange={workplaces => setForm(current => ({ ...current, workplaces, address: workplaces[0].address, postalCode: workplaces[0].postal_code, city: workplaces[0].city }))}/>
                     </section>
                     <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2><div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value }))} /></label><em>kr/{salaryPeriod}</em></div></section>
                     <section className="card job-builder-section"><h2>Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
@@ -956,7 +970,7 @@ function CompanyPageContent() {
                   <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
                     <Link className="company-job-summary" href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
                     <div className="company-job-heading"><span className="company-job-icon"><UiIcon name="briefcase" width="23" /></span><h2>{job.title}</h2></div>
-                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[[job.address, job.postal_code, job.city].filter(Boolean).join(", "), job.category, agePart].filter(Boolean).join(" · ")}</p>
+                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[jobCities(job), job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
@@ -968,6 +982,7 @@ function CompanyPageContent() {
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
                       {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
@@ -1013,6 +1028,7 @@ function CompanyPageContent() {
           </div>
         </ModalDialog>
       )}
+      {editingWorkplaces && <JobWorkplaceEditor key={editingWorkplaces.id} job={editingWorkplaces} onClose={() => setEditingWorkplaces(null)} onSaved={updated => { setJobs(current => current.map(job => job.id === updated.id ? updated : job)); setEditingWorkplaces(null); }}/>}
       {editingCriteria && <JobMatchProfileEditor key={editingCriteria.id} jobId={editingCriteria.id} title={editingCriteria.title} onClose={closeCriteria} onSaved={() => { setEditingCriteria(null); setError(""); }} />}
       {imageToCrop && <ImageCropDialog file={imageToCrop} onCancel={() => setImageToCrop(null)} onConfirm={useCroppedJobImage} />}
     </main>

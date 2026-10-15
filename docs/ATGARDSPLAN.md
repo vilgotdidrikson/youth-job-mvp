@@ -50,7 +50,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | För granskning | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
-| 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | Pågår | Vilgot / Codex |
+| 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Ej påbörjad | — |
@@ -152,14 +152,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 7
 - Typ: Ny uttryckligen beställd funktion
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n14-multiple-locations-20261014`
 - Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna antal tjänster och platsinformation med N05/N16; första versionen har gemensam annonsstatus.
 - Klar när: En annons med minst två adresser kan sparas, återupptas, publiceras och redigeras. Båda adresserna visas korrekt på kartan och fungerar i geografiska filter, utan dubbla listposter eller ansökningar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Upp till tio namngivna arbetsplatser i en gemensam annons, beständiga plats-ID, validerad JSON och primäradress synkroniserad för äldre flöden. Arbetsplatser sparas i kontobundet annonsutkast och kan redigeras separat på befintliga annonser. Alla orter omfattas av upptäcktsfilter och varje arbetsplats får en kartposition. Frivilligt arbetsplatsval efter skickat eller sparat intresse; företaget ser valet. Databasen sparar adressögonblicksbild vid valet, oberoende av senare annonsändringar.
+- Verifierat: `test:job-workplaces` testar validering, geokodning, create/update, ägarkontroll, äldre annonser och ortsfilter. Matching- och application-supplement-regressioner samt fullständigt webpack-produktionsbygge passerar 2026-10-15. Staging-RLS-test med återställda fiktiva data: ägarredigering, dubletter/format/koordinater/sista arbetsplats, serverskapad adressögonblicksbild, kandidatens skrivning, företagets läsning utan ändring, borttagen arbetsplats och nekad utomstående/anonym.
+- Återstår / blockerare: Driftsatt autentiserat webbtest inklusive utkast/återläsning, publicering/redigering och karta. N14 markeras inte Klar före faktisk verifiering. Migrationerna 20261014215942 och 20261014220115 är applicerade i DevStaging och repofilerna matchar dessa nya fjärrversioner; tidigare videomigrationshistorik är orörd. Produktion är inte uppdaterad.
 
 <a id="n15"></a>
 ### N15 Kopiera befintliga annonser till nya utkast

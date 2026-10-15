@@ -1,5 +1,6 @@
 "use client";
 
+import { jobMatchesCity } from "@/lib/job-workplaces";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getMyConversations as getChatConversations } from "@/lib/chat";
 import { getCompanyJobs as getOwnedCompanyJobs, getJobs } from "@/lib/jobs";
@@ -37,7 +38,7 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
     }
   }
 
-  if (profile.city && profile.city.toLowerCase() === job.city.toLowerCase()) {
+  if (profile.city && jobMatchesCity(job, profile.city)) {
     score += 2;
   }
 
@@ -100,7 +101,7 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
       if (swipedJobIds.has(job.id)) return false;
       const needle = filters.query?.trim().toLowerCase();
       if (needle && ![job.title, job.description, job.company_name, job.category].join(" ").toLowerCase().includes(needle)) return false;
-      if (filters.city?.trim() && job.city.toLowerCase() !== filters.city.trim().toLowerCase()) return false;
+      if (filters.city?.trim() && !jobMatchesCity(job, filters.city)) return false;
       if (filters.category?.trim() && job.category.toLowerCase() !== filters.category.trim().toLowerCase()) return false;
       if (filters.employmentType?.trim() && !job.employment_type.toLowerCase().includes(filters.employmentType.trim().toLowerCase())) return false;
       const age = youthProfile?.age;

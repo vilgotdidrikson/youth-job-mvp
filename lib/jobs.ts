@@ -3,6 +3,7 @@
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
 import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
 
@@ -12,6 +13,7 @@ const JOB_TABLE_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
@@ -37,6 +39,7 @@ const JOB_CREATE_INPUT_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
@@ -58,6 +61,7 @@ const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
 
 export interface CreateJobInput {
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -84,6 +88,7 @@ export interface UpdateJobInput extends Partial<CreateJobInput> {
 }
 
 interface JobInsertPayload {
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -218,6 +223,7 @@ function assertValidInsertPayload(payload: Record<string, unknown>): void {
 function normalizeJob(row: Record<string, unknown>): JobPost {
   return {
     id: String(row.id ?? ""),
+    workplaces: Array.isArray(row.workplaces) ? row.workplaces as JobWorkplace[] : [],
     title: normalizeJobString(row.title),
     description: normalizeJobString(row.description),
     city: normalizeJobString(row.city),
@@ -262,6 +268,7 @@ async function assertCompanyUser(): Promise<{ id: string; email: string | null }
 
 function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown> {
   return stripUndefinedValues({
+    workplaces: updates.workplaces,
     title: updates.title,
     description: updates.description,
     city: updates.city,
@@ -379,7 +386,8 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
 export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   assertAllowedJobCreateInput(toRecord(jobData));
 
-  const hasAddress = Boolean(jobData.address?.trim());
+  const workplaces = jobData.workplaces ? await resolveWorkplaces(jobData.workplaces) : undefined;
+  const hasAddress = Boolean(jobData.address?.trim()) || Boolean(workplaces?.length);
   const hasCoordinates = validCoordinates(jobData.longitude, jobData.latitude);
   if (!hasAddress && !hasCoordinates) {
     throw new Error("Ange en arbetsplatsadress eller giltiga koordinater.");
@@ -389,15 +397,16 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   }
 
   const companyUser = await assertCompanyUser();
-  const coordinates = hasCoordinates
+  const coordinates = workplaces?.[0] ?? (hasCoordinates
     ? { longitude: jobData.longitude, latitude: jobData.latitude }
     : await geocodeJobLocation({
       address: jobData.address,
       postalCode: jobData.postal_code,
       city: jobData.city,
-    });
+    }));
 
   const payload: JobInsertPayload = {
+    ...(workplaces ? { workplaces } : {}),
     title: jobData.title,
     description: jobData.description,
     city: jobData.city,
@@ -442,6 +451,9 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
   }
 
   const payload = buildJobUpdatePayload(updates);
+  if (updates.workplaces) {
+    payload.workplaces = await resolveWorkplaces(updates.workplaces);
+  }
 
   const hasExplicitCoordinates = updates.longitude !== undefined || updates.latitude !== undefined;
   if (hasExplicitCoordinates && !validCoordinates(updates.longitude, updates.latitude)) {
@@ -490,4 +502,13 @@ export async function getCompanyJobs(companyUserId?: string, includeInactive = t
   const ownerId = companyUserId ?? (await assertCompanyUser()).id;
   const jobs = await getJobs(includeInactive);
   return jobs.filter((job) => job.company_user_id === ownerId);
+}
+
+async function resolveWorkplaces(input: JobWorkplace[]): Promise<JobWorkplace[]> {
+  return Promise.all(validateJobWorkplaces(input).map(async place => {
+    const coordinates = place.longitude !== null && place.latitude !== null
+      ? { longitude: place.longitude, latitude: place.latitude }
+      : await geocodeJobLocation({ address: place.address, postalCode: place.postal_code, city: place.city });
+    return { ...place, longitude: coordinates?.longitude ?? null, latitude: coordinates?.latitude ?? null };
+  }));
 }
