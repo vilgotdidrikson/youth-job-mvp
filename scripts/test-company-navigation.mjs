@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire, Module } from 'node:module';
+import ts from 'typescript';
+const require = createRequire(import.meta.url);
+Module._extensions['.ts'] = (module, file) => module._compile(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, file);
+const { COMPANY_ROUTES, companyView, profileTabFromQuery } = require('../lib/company-navigation.ts');
+for (const verified of [true, false]) {
+  for (const view of ['annonser', 'skapa', 'kandidater']) assert.equal(companyView(view, verified), view);
+  for (const view of [null, '', 'unknown', 'https://example.invalid']) assert.equal(companyView(view, verified), 'annonser');
+}
+assert.equal(companyView('swipe', true), 'kandidater');
+assert.equal(companyView('swipe', false), 'skapa');
+for (const tab of ['work', 'cv', 'details', 'settings']) assert.equal(profileTabFromQuery(tab), tab);
+for (const tab of [null, '', 'overview', 'unknown']) assert.equal(profileTabFromQuery(tab), 'overview');
+
+// Execute the actual JSX navigation callbacks, not copies of their destination logic.
+const calls = [];
+const router = { push: (...args) => calls.push(['push', ...args]), replace: (...args) => calls.push(['replace', ...args]) };
+function clickButton(file, label) {
+  const source = readFileSync(file, 'utf8');
+  const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let handler;
+  const visit = node => {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(ast) === 'button') {
+      const text = node.children.filter(ts.isJsxText).map(child => child.text.trim()).join(' ');
+      if (text === label) handler = node.openingElement.attributes.properties.find(prop => prop.name?.getText(ast) === 'onClick')?.initializer?.expression?.getText(ast);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  assert.ok(handler, `Missing actual callback for ${label}`);
+  const js = ts.transpileModule(`const callback = ${handler}; callback();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+  new Function('router', 'COMPANY_ROUTES', js)(router, COMPANY_ROUTES);
+}
+clickButton('app/company/onboarding/page.tsx', 'Gå till mitt konto');
+assert.deepEqual(calls.pop(), ['replace', '/profile?tab=settings']);
+clickButton('app/company/onboarding/page.tsx', 'Fortsätt skapa min jobbannons');
+assert.deepEqual(calls.pop(), ['replace', '/company?view=skapa']);
+clickButton('app/company/page.tsx', 'Skapa din första annons');
+assert.deepEqual(calls.pop(), ['push', '/company?view=skapa', { scroll: false }]);
+const page = readFileSync('app/company/page.tsx', 'utf8');
+assert.doesNotMatch(page, /setTab\(/, 'Company view may not have a second local source of truth');
+assert.match(page, /const tab = companyView\(searchParams\.get\("view"\)/);
+assert.match(page, /router\.push\(item === "skapa" \? COMPANY_ROUTES\.create : COMPANY_ROUTES\.listings/);
+const profile = readFileSync('app/profile/page.tsx', 'utf8');
+assert.match(profile, /profileTabFromQuery\(query\.get\("tab"\)\)/);
+assert.match(profile, /setProfileTab\(requestedProfileTab\); }, \[requestedProfileTab\]/);
+const onboarding = readFileSync('app/company/onboarding/page.tsx', 'utf8');
+assert.match(onboarding, /if \(step !== "profil"\) return;/);
+assert.match(onboarding, /\[loading, user, profile, router, step\]/, 'Step transitions cancel stale initial profile reads');
+const nav = readFileSync('components/mobile-nav.tsx', 'utf8');
+assert.match(nav, /profile\.role === "company" \? COMPANY_ROUTES\.account : "\/profile"/);
+console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, preserved youth account destination.');
