@@ -7,7 +7,7 @@ export interface JobBuilderDraft {
   title: string; city: string; address: string; postalCode: string;
   category: string; employmentType: string; minAge: string; maxAge: string;
   salaryFrom: string; salaryTo: string; salaryType: "timlön" | "månadslön" | "fast lön";
-  salaryText: string; openPositions: string;
+  salaryText: string;
   description: string; benefits: string; requirements: string; listingRequirements: string | null;
   trainableRequirements: string; topTraits: string; candidateQuestions: string[];
   matchRoleSummary: string; aiGenerated: boolean;
@@ -16,7 +16,7 @@ export interface JobBuilderDraft {
 }
 export const EMPTY_JOB_FORM: JobBuilderDraft = {
   workplaces: [], title: "", city: "", address: "", postalCode: "", category: "", employmentType: "",
-  minAge: "", maxAge: "", salaryFrom: "", salaryTo: "", salaryType: "timlön", salaryText: "", openPositions: "1",
+  minAge: "", maxAge: "", salaryFrom: "", salaryTo: "", salaryType: "timlön", salaryText: "",
   description: "", benefits: "", requirements: "", listingRequirements: null, trainableRequirements: "", topTraits: "", candidateQuestions: [],
   matchRoleSummary: "", aiGenerated: false, imageUrls: [], imagePending: false, copiedFromTitle: "", copyReviewed: false,
 };
@@ -31,7 +31,6 @@ export function createCopyJobDraft(job: JobPost, criteria: JobMatchProfile | nul
     workplaces, city: first.city, address: first.address, postalCode: first.postal_code,
     minAge: job.min_age == null ? "" : String(job.min_age), maxAge: job.max_age == null ? "" : String(job.max_age),
     salaryText: job.salary_per_hour,
-    openPositions: String(Number.isSafeInteger(job.open_positions) && job.open_positions! > 0 ? job.open_positions : 1),
     benefits: job.benefits, listingRequirements: job.requirements, requirements: criteria ? criteria.must_haves.join(", ") : job.requirements,
     trainableRequirements: criteria?.trainable_requirements.join(", ") ?? "",
     topTraits: criteria?.top_traits.join(", ") ?? "",
@@ -51,9 +50,16 @@ export function draftSalary(form: JobBuilderDraft): string {
 }
 export function validateDraftPublication(form: JobBuilderDraft): void {
   if (form.copiedFromTitle && !form.copyReviewed) throw new Error("Granska kopians datum, lön och villkor och bekräfta innan publicering.");
-  if (!/^\d+$/.test(form.openPositions) || !Number.isSafeInteger(Number(form.openPositions)) || Number(form.openPositions) < 1) throw new Error("Ange minst en tjänst med ett heltal.");
   if (form.imagePending) throw new Error("Den nya bilden är inte sparad. Välj bilden igen eller välj att behålla den sparade bilden.");
 }
 export function hasJobDraftContent(form: JobBuilderDraft): boolean {
   return Object.entries(form).some(([key, value]) => JSON.stringify(value) !== JSON.stringify(EMPTY_JOB_FORM[key as keyof JobBuilderDraft]));
+}
+
+/** Restore current editable fields only; obsolete position counts never block old drafts. */
+export function restoreJobBuilderDraft(saved: Partial<JobBuilderDraft>): JobBuilderDraft {
+  const editable = Object.fromEntries(Object.entries(saved).filter(([key]) => Object.hasOwn(EMPTY_JOB_FORM, key)));
+  return { ...EMPTY_JOB_FORM, ...editable,
+    imageUrls: Array.isArray(saved.imageUrls) ? saved.imageUrls.filter((url): url is string => typeof url === "string") : [],
+  };
 }
