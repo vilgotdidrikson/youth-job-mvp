@@ -75,4 +75,9 @@ Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservati
 - Mer utvecklad rangordning och rättvis exponering av äldre relevanta annonser när användningsdata finns. Ingen slentrianmässig prioritering av flest ansökningar.
 - Påminnelse att bekräfta fortsatt rekrytering och eventuell paus av övergivna annonser; tidsgräns, undantag och förhandsinformation återstår att besluta.
 
-Dessa framtidsspår följs i MatchnWork-Idebank.md. Denna specifikation ändrar inte äldre orelaterade beslut om video, betalning eller e-post.
+Dessa framtidsspår följs i MatchnWork-Idebank.md. Betalning och e-post ändras inte. Videobeslutet uppdaterades uttryckligen 2026-10-18 enligt N22/N23 nedan.
+
+
+## Videotillägg 2026-10-18 (N22/N23)
+
+Permanent profilvideo ska bort från profil, profilbyggande och kandidatvy. Video behålls separat i chatt. Företag ska kunna be om en jobbspecifik video i samband med ansökan, men ungdomen får avstå och ansökan ska skickas ändå. Obesvarad förfrågan, kamerafel eller uppladdningsfel får inte skapa en spärr; erbjud komplettering efter skickad ansökan utan stopp i swipeflödet. Ingen automatisk poängsänkning eller bortsortering när video saknas, och ingen AI-analys av video. Detta ersätter äldre förslag om profilvideo och obligatoriska videokrav, även för framtida premium. Fullständiga åtgärder och verifieringskrav finns i ATGARDSPLAN.md, N22/N23. Här dokumenteras beslutet; funktionen är inte implementerad genom dokumentändringen.

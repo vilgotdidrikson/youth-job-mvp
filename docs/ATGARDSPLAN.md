@@ -2,7 +2,7 @@
 
 Gemensam arbetslista för de kommande två veckorna och återstående lanseringsarbete. Omfattningen är större än en garanterad tvåveckorsleverans; prioriteringen styr vad som ska göras först. Följ den globala ordningen nedan. P1 ska vara klara före skarp lansering. P2 förbättrar kärnflödena och P3 är senare puts. Den globala ordningen tar hänsyn till beroenden; slutverifiering och lansering sker efter implementation även om de är P1. F = befintlig funktionalitet, N = ny funktion, D = design och text. L = lansering, tidigare beslut och kompletterande verifiering. N11/N12 (video) och N14/N15 (flera adresser och annonskopior) samt N16–N21/F26 (förenklad annonslivscykel, gemensamma jobbtyper, relevans och profilhjälp) är nya högt prioriterade funktioner. Inspelning N13 följer efter fungerande uppladdning och delning.
 
-Video är frivilligt och ska hjälpa ungdomen att presentera sig. Psykologiskt personlighetstest och automatisk analys av personlighet från video ingår inte i denna plan. Befintliga egna exempel och motivation behålls.
+Videobeslut 2026-10-18: permanent profilvideo ska tas bort (N22). Video behålls i chatt (N12/N13), och företag ska kunna be om en frivillig video i samband med ansökan (N23). Ungdomen får avstå och ansökan skickas ändå; ingen väntan på videosvar eller uppladdning. Beslutet ersätter tidigare instruktioner om profilvideo och obligatoriska videokrav. Video ska hjälpa ungdomen att presentera sig. Psykologiskt personlighetstest och automatisk analys av personlighet från video ingår inte i denna plan. Befintliga egna exempel och motivation behålls.
 
 För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Fortsatt kodarbete är godkänt enligt prioriteringslistan, i avgränsade leveranser med publicering och verifiering.
 
@@ -54,8 +54,10 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Klar | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
-| 5 | [N11](#n11) | P1 | Presentationsvideo i ungdomens profil | För granskning | Vilgot / Codex |
+| 4.1 | [N22](#n22) | P1 | Ta bort permanent profilvideo | Ej påbörjad | — |
+| 5 | [N11](#n11) | P1 | Tidigare profilvideo – ersatt av N22, historik | För granskning | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
+| 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
@@ -120,7 +122,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 ## Nya funktioner
 
 <a id="n11"></a>
-### N11 Presentationsvideo i ungdomens profil
+### N11 Presentationsvideo i ungdomens profil – historik
+
+**Ersatt beslut 2026-10-18:** Profilvideo ska inte längre erbjudas. N22 styr borttagningen; N23 styr frivillig video vid ansökan. Nedanstående beskriver tidigare implementation och verifiering, inte ett fortsatt uppdrag att lansera profilvideo. N11 markeras inte Klar genom detta beslut.
 
 - [ ] Klar
 - Prioritet: P1
@@ -129,8 +133,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, [PR #54](https://github.com/vilgotdidrikson/youth-job-mvp/pull/54).
-- Åtgärd: Låt ungdomen frivilligt ladda upp en kort presentationsvideo, förhandsvisa, ersätta och radera den. Ge enkla stödfrågor och tydliga gränser för längd, storlek och format; sikta på 30–60 sekunder. Visa videon i kandidatprofilen för behöriga företag. Lagra privat och kontrollera åtkomst som för övriga kandidatunderlag. Videon ska inte krävas för att ansöka och ska inte användas för automatisk personlighetsbedömning.
-- Klar när: En ungdom kan hantera sin video på mobil och dator, och endast behöriga mottagare kan spela upp den. Felaktigt format, avbruten uppladdning och radering hanteras begripligt.
+- Tidigare åtgärd: Låt ungdomen frivilligt ladda upp en kort presentationsvideo, förhandsvisa, ersätta och radera den. Ge enkla stödfrågor och tydliga gränser för längd, storlek och format; sikta på 30–60 sekunder. Visa videon i kandidatprofilen för behöriga företag. Lagra privat och kontrollera åtkomst som för övriga kandidatunderlag. Videon ska inte krävas för att ansöka och ska inte användas för automatisk personlighetsbedömning.
+- Tidigare kriterium: En ungdom kan hantera sin video på mobil och dator, och endast behöriga mottagare kan spela upp den. Felaktigt format, avbruten uppladdning och radering hanteras begripligt.
 - Implementerat: Frivillig videokort i ungdomens profil, filkontroll och lokal förhandsvisning, uttrycklig spara/ersätt/radera, avbrytbar uppladdning och återhämtningsbara fel. Privat bucket med 30 MB och MIME-allowlist; immutabla objekt, metadata med ägarkontroll, profilpekare, signerad uppspelning fem minuter. Behöriga företag kan spela upp videon i kandidatvyn. Säker återförsökshantering och jämförelse mot föregående profilpekare. Kontoradering inkluderar videofiler. Migration införd enbart i DevStaging.
 - Verifierat: Validering och klientkontrakt tester passerar, inklusive gränser, CAS, förlorat skrivsvar, avbrott och städningsfel. `scripts/test-video-rls.sql` passerar i staging: ägare, mottagare, utomstående, ofärdig uppladdning, oföränderliga objekt, blockering, återkallande och anonym nekad åtkomst; samtliga testskrivningar rullades tillbaka. TypeScript och produktionsbygge passerar. Säkerhetsrådgivaren flaggar inga nya videoobjekt; befintliga projektanmärkningar lämnas orörda.
 - Återstår / begränsningar: Driftsatt webbtest och manuella mobil-/datorfall enligt `docs/VIDEO_TESTGUIDE.md` återstår innan Klar. Den verkliga filens längd/playbarhet kontrolleras i webbläsaren; databasens längd är deklarerad metadata, inte serveravkodad media. Signerade länkar kan fungera tills de löper ut (högst fem minuter); redan nedladdade kopior kan inte återkallas. Vid avbrott kan privat, återkallad restfil kräva senare städning; kontoradering tar även sådana filer. Produktionsdatabasen har inte ändrats.
@@ -151,7 +155,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, PR #54; gemensam videoleverans uttryckligen beställd 2026-10-14.
-- Åtgärd: Låt ungdomen dela sin profilvideo eller ladda upp en separat video i en befintlig chatt. Visa förhandsvisning, uppladdningsstatus, hanterbara fel och uppspelning. Använd samma privata mediehantering som N11 och kontrollera deltagarbehörighet, blockering och rapportering. Definiera vad som händer med en skickad delning när profilvideon senare ersätts eller tas bort.
+- Åtgärd (reviderad 2026-10-18): Låt ungdomen spela in eller ladda upp en separat frivillig video i en befintlig chatt. Visa förhandsvisning, uppladdningsstatus, hanterbara fel och uppspelning. Behåll privat mediehantering, deltagarbehörighet, blockering och rapportering. Ta bort valet att dela profilvideo enligt N22; befintliga profilvideodelningar hanteras enligt avvecklingsplanen utan att skada separata chattvideor.
 - Klar när: Båda deltagarna kan spela upp skickad video på mobil och dator. Utomstående nekas åtkomst och fel kan återhämtas utan dubbletter.
 - Implementerat: Ungdomen kan dela aktuell profilvideo eller ladda upp/spela in en separat video i en matchad chatt. Explicit skicka efter förhandsvisning, avbrott, retry med deterministiskt meddelande-ID, borttagning av egen separat video och anmälan per videomeddelande. Båda deltagarna får signerad uppspelning. Profilvideodelningar följer aktuell profilpekare; byte byter innehållet och borttagning gör delningen otillgänglig. Separata meddelanden har egna immutabla filer och påverkas inte av profilbyten. Rapporter sparar videoreferensen vid anmälan för behörig admin; borttagna videobytes arkiveras inte i en dold kopia.
 - Verifierat: Klienttester för idempotenta skickförsök och fel; staging-RLS testar chattscope, utomstående, blockerade deltagare, ungdomsägarskap, ofärdig uppladdning, rapportreferens och återkallande. Alla testskrivningar återställda.
@@ -1153,3 +1157,37 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
+
+## Reviderad video – beställt 2026-10-18
+
+Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg ändrar planen, inte produktkoden eller lagrade filer. N22/N23 är Ej påbörjad och ska reserveras före respektive kodleverans. Prioriteringen placerar borttagning av profilvideo före den tidigare videolanseringen; nya ansökningsvideor följer fungerande chattvideo och får inte blockera ansökningar. Den äldre profilflödesbeställningen CV → Video → övrigt ovan är historik och ersätts för videosteget av N22.
+
+<a id="n22"></a>
+### N22 Ta bort permanent profilvideo
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 4.1
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Ta bort profilvideo från ungdomens profil, profilbyggandets steg/framsteg, kandidatvyer och chattens val Dela profilvideo. Uppdatera texter och nästa-steg-länkar så CV följs av övriga profildelar utan videosteg. Stäng även gamla direktlänkar och backendmöjligheten att skapa/ersätta eller hämta profilvideo som del av produkten; enbart dold UI räcker inte. Behåll inspelning/uppladdning av separat chattvideo. Inventera befintliga profilfiler, profilpekare och gamla chattdelningar och definiera tydlig avveckling/städning med hänsyn till behörighet och rapporterat innehåll. Ingen blind radering av delad videolagring, chattar eller migrationshistorik.
+- Klar när: Profilvideo kan varken skapas, visas eller räknas som saknad i profil, kandidatvy eller profilguide. Gamla URL:er/API-vägar återinför inte funktionen. Separat chattinspelning/uppladdning/uppspelning fungerar fortsatt för rätt deltagare. Gamla profilvideodelningar har begriplig status och påverkar inte separata chattfiler. Datahantering/städning och faktisk verifiering dokumenteras.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: Kodändring och verifiering; ingen profilvideo har tagits bort genom planuppdateringen.
+
+<a id="n23"></a>
+### N23 Frivillig videoförfrågan vid ansökan
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 6.1
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Företaget kan lägga till en kort jobbspecifik videoförfrågan med instruktioner i annonsen. Video är alltid frivillig och får inte vara ett absolut ansökningskrav, inte heller via framtida premium. Ungdomen kan spela in/ladda upp och granska före uttryckligt skickande, välja Avstå eller helt lämna förfrågan obesvarad. Ansökan skickas till företaget enligt ordinarie CV-/behörighetsregler oavsett video. Intresse/swipe får inte stoppas av ett videoval, inspelning, kameraavslag, misslyckad uppladdning eller avbruten navigering. Erbjud komplettering efter skickad ansökan, med diskret ingång/notis i befintligt ansökningsflöde. Gör ingen väntande-videostatus till spärr för företagsvisning, matchning eller chatt.
+- Klar när: Företagets instruktioner kan sparas, redigeras och ses av rätt sökande. Testa skicka med video, avstå, inget svar, kameran nekad, fel vid uppladdning och avbrott: ansökan skickas i samtliga fall när ordinarie ansökningskrav är uppfyllda, exakt en gång. Senare videokomplettering behåller samma ansökan utan dubbletter och blir tillgänglig endast för behörig mottagare. Ingen automatisk bortsortering, poängsänkning eller sämre ansökningsstatus för avstående/saknad video. Ingen AI-analys av video. Åtkomst, blockering, borttagning och eventuell chattreferens fungerar utan att återinföra permanent profilvideo.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: Produktkod och verifiering. Återanvänd privat videohantering; besluta och dokumentera tydlig lagringstid för ansökningsvideo innan den aktiveras. Ingen premiumkoppling eller debitering beställd. N23 ersätter den äldre idén om obligatoriska videokrav; den frivilliga funktionen är nu beställd, inte bara en pausad premiumidé.
