@@ -1,5 +1,7 @@
 "use client";
 
+import { effectiveJobCategories, jobMatchesCategory, preferredJobCategories, roleCategoryIds } from "@/lib/job-categories";
+import { readRecruitmentProfile } from "@/lib/recruitment-profile";
 import { jobMatchesCity } from "@/lib/job-workplaces";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getMyConversations as getChatConversations } from "@/lib/chat";
@@ -17,7 +19,8 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
     return 0;
   }
 
-  const desiredRoles = normalizeStringArray(profile.target_roles ?? profile.desired_roles);
+  const recruitment = readRecruitmentProfile(profile.recruitment_profile);
+  const desiredRoles = [...normalizeStringArray(profile.target_roles ?? profile.desired_roles), ...recruitment.preferences.roles];
   const preferences = normalizeStringArray(profile.working_time ?? profile.employment_preferences);
   const haystack = [
     job.title,
@@ -32,10 +35,10 @@ function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
 
   let score = 0;
 
-  for (const role of desiredRoles) {
-    if (haystack.includes(role.toLowerCase())) {
-      score += 3;
-    }
+  const actualCategories = effectiveJobCategories(job);
+  score += [...new Set([...(recruitment.preferences.categoryIds ?? []), ...preferredJobCategories(desiredRoles)])].filter(id=>actualCategories.includes(id)).length * 3;
+  for (const role of new Set(desiredRoles.map(role=>role.trim().toLocaleLowerCase("sv")))) {
+    if (role && !roleCategoryIds(role).length && haystack.includes(role)) score += 3;
   }
 
   if (profile.city && jobMatchesCity(job, profile.city)) {
@@ -100,9 +103,9 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
     .filter((job) => {
       if (swipedJobIds.has(job.id)) return false;
       const needle = filters.query?.trim().toLowerCase();
-      if (needle && ![job.title, job.description, job.company_name, job.category].join(" ").toLowerCase().includes(needle)) return false;
+      if (needle && (roleCategoryIds(needle).length ? !jobMatchesCategory(job,needle) : ![job.title, job.description, job.company_name, job.category].join(" ").toLowerCase().includes(needle))) return false;
       if (filters.city?.trim() && !jobMatchesCity(job, filters.city)) return false;
-      if (filters.category?.trim() && job.category.toLowerCase() !== filters.category.trim().toLowerCase()) return false;
+      if (filters.category?.trim() && !jobMatchesCategory(job, filters.category)) return false;
       if (filters.employmentType?.trim() && !job.employment_type.toLowerCase().includes(filters.employmentType.trim().toLowerCase())) return false;
       const age = youthProfile?.age;
       if (typeof age === "number") {

@@ -1,3 +1,4 @@
+import { validJobCategoryIds } from "./job-categories";
 import { getJobWorkplaces, type JobWorkplace } from "./job-workplaces";
 import type { JobPost } from "./types";
 import type { JobMatchProfile } from "./match-profiles";
@@ -5,6 +6,7 @@ import type { JobMatchProfile } from "./match-profiles";
 export interface JobBuilderDraft {
   workplaces: JobWorkplace[];
   title: string; city: string; address: string; postalCode: string;
+  categoryIds: string[]; categoryManual: boolean;
   category: string; employmentType: string; minAge: string; maxAge: string;
   salaryFrom: string; salaryTo: string; salaryType: "timlön" | "månadslön" | "fast lön";
   salaryText: string;
@@ -15,7 +17,7 @@ export interface JobBuilderDraft {
   copiedFromTitle: string; copyReviewed: boolean;
 }
 export const EMPTY_JOB_FORM: JobBuilderDraft = {
-  workplaces: [], title: "", city: "", address: "", postalCode: "", category: "", employmentType: "",
+  categoryIds: [], categoryManual: false, workplaces: [], title: "", city: "", address: "", postalCode: "", category: "", employmentType: "",
   minAge: "", maxAge: "", salaryFrom: "", salaryTo: "", salaryType: "timlön", salaryText: "",
   description: "", benefits: "", requirements: "", listingRequirements: null, trainableRequirements: "", topTraits: "", candidateQuestions: [],
   matchRoleSummary: "", aiGenerated: false, imageUrls: [], imagePending: false, copiedFromTitle: "", copyReviewed: false,
@@ -27,6 +29,7 @@ export function createCopyJobDraft(job: JobPost, criteria: JobMatchProfile | nul
   const first = workplaces[0];
   return {
     ...EMPTY_JOB_FORM,
+    categoryIds: [...(job.job_category_ids ?? [])], categoryManual: job.job_category_manual ?? false,
     title: job.title, description: job.description, category: job.category, employmentType: job.employment_type,
     workplaces, city: first.city, address: first.address, postalCode: first.postal_code,
     minAge: job.min_age == null ? "" : String(job.min_age), maxAge: job.max_age == null ? "" : String(job.max_age),
@@ -60,6 +63,8 @@ export function hasJobDraftContent(form: JobBuilderDraft): boolean {
 export function restoreJobBuilderDraft(saved: Partial<JobBuilderDraft>): JobBuilderDraft {
   const editable = Object.fromEntries(Object.entries(saved).filter(([key]) => Object.hasOwn(EMPTY_JOB_FORM, key)));
   return { ...EMPTY_JOB_FORM, ...editable,
+    categoryIds: (()=>{try{return validJobCategoryIds(saved.categoryIds ?? []);}catch{return [];}})(),
+    categoryManual: saved.categoryManual === true,
     imageUrls: Array.isArray(saved.imageUrls) ? saved.imageUrls.filter((url): url is string => typeof url === "string") : [],
   };
 }

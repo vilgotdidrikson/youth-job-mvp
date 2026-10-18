@@ -1,5 +1,6 @@
 "use client";
 
+import { validJobCategoryIds } from "@/lib/job-categories";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -19,6 +20,8 @@ const JOB_TABLE_FIELDS = [
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -45,6 +48,8 @@ const JOB_CREATE_INPUT_FIELDS = [
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -61,6 +66,8 @@ const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
 
 export interface CreateJobInput {
+  job_category_ids?: string[];
+  job_category_manual?: boolean;
   workplaces?: JobWorkplace[];
   title: string;
   description: string;
@@ -99,6 +106,8 @@ interface JobInsertPayload {
   salary_per_hour: string;
   employment_type: string;
   category: string;
+  job_category_ids: string[];
+  job_category_manual: boolean;
   requirements: string;
   benefits: string;
   company_name: string;
@@ -234,6 +243,8 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     salary_per_hour: normalizeJobString(row.salary_per_hour),
     employment_type: normalizeJobString(row.employment_type),
     category: normalizeJobString(row.category),
+    job_category_ids: Array.isArray(row.job_category_ids) ? row.job_category_ids as string[] : [],
+    job_category_manual: row.job_category_manual === true,
     requirements: normalizeJobString(row.requirements),
     benefits: normalizeJobString(row.benefits),
     company_name: normalizeJobString(row.company_name),
@@ -279,6 +290,8 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     salary_per_hour: updates.salary_per_hour,
     employment_type: updates.employment_type,
     category: updates.category,
+    job_category_ids: updates.job_category_ids === undefined ? undefined : validJobCategoryIds(updates.job_category_ids),
+    job_category_manual: updates.job_category_manual,
     requirements: updates.requirements,
     benefits: updates.benefits,
     company_name: updates.company_name,
@@ -416,7 +429,9 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     latitude: coordinates?.latitude ?? null,
     salary_per_hour: jobData.salary_per_hour,
     employment_type: jobData.employment_type,
-    category: jobData.category ?? jobData.employment_type,
+    category: jobData.category ?? "",
+    job_category_ids: validJobCategoryIds(jobData.job_category_ids ?? []),
+    job_category_manual: jobData.job_category_manual === true,
     requirements: jobData.requirements ?? "",
     benefits: jobData.benefits ?? "",
     company_name: jobData.company_name ?? companyUser.email ?? "Company",

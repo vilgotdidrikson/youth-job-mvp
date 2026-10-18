@@ -12,6 +12,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import "./company-design.css";
+import { draftJobCategories, categoryLabel, effectiveJobCategories } from "@/lib/job-categories";
+import { JobCategoryField } from "@/components/job-category-field";
+import { JobCategoryEditor } from "@/components/job-category-editor";
 import { JobPreviewDialog } from "@/components/job-preview-dialog";
 import { ModalDialog } from "@/components/modal-dialog";
 import { UiIcon } from "@/components/ui-icon";
@@ -38,7 +41,6 @@ import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision } from "@/lib/types";
 
-const JOB_CATEGORIES = ["Café/restaurang", "Butik", "Barnomsorg", "Idrott", "Event", "Lager", "Leverans", "Kundtjänst", "Administration", "Handledare", "Sociala medier", "Övrigt"];
 const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
 const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
 const REQUIREMENT_TIPS = ["Kan arbeta helger", "Tidigare erfarenhet", "B-körkort", "Svenska", "Kan börja omgående"];
@@ -114,6 +116,7 @@ function CompanyPageContent() {
   const [draftOwnerId, setDraftOwnerId] = useState<string | null>(null);
   const draftHydrated = Boolean(user?.id) && draftOwnerId === user?.id;
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
+  const [editingCategory,setEditingCategory]=useState<JobPost|null>(null);
   const [editingWorkplaces, setEditingWorkplaces] = useState<JobPost | null>(null);
   const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
   const [copyingJob, setCopyingJob] = useState<JobPost | null>(null);
@@ -354,7 +357,6 @@ function CompanyPageContent() {
     e.preventDefault();
     if (busy || copyingJob) return;
     try { validateDraftPublication({ ...form, imagePending: form.imagePending && jobImageFiles.length === 0 }); } catch (reason) { setError(reason instanceof Error ? reason.message : "Granska annonsen."); return; }
-    if (!form.category) { setError("Välj en arbetskategori."); return; }
     if (!form.employmentType) { setError("Välj en anställningsform."); return; }
     if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return; }
     if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
@@ -375,6 +377,8 @@ function CompanyPageContent() {
         address: form.address,
         postal_code: form.postalCode,
         category: form.category,
+        job_category_ids: draftJobCategories(form),
+        job_category_manual: form.categoryManual,
         employment_type: form.employmentType,
         description: form.description,
         salary_per_hour: draftSalary(form),
@@ -422,7 +426,6 @@ function CompanyPageContent() {
       if (builderStep === 1) {
         if (!form.title.trim()) { setError("Fyll i en jobbtitel innan du går vidare."); return; }
         if (!form.description.trim()) { setError("Beskriv jobbet innan du går vidare."); return; }
-        if (!form.category) { setError("Välj en arbetskategori innan du går vidare."); return; }
         if (!form.employmentType) { setError("Välj en anställningsform innan du går vidare."); return; }
       }
       if (builderStep === 2 && nextStep === 3 && textListItems(form.topTraits).length > 5) {
@@ -517,7 +520,7 @@ function CompanyPageContent() {
       if (!response.ok) throw new Error(data.error || "Kunde inte skapa annonsen.");
       setForm((previous) => ({
         ...previous,
-        category: data.category || previous.category,
+        category: previous.category,
         employmentType: data.employmentType || previous.employmentType,
         description: data.description || previous.description,
         matchRoleSummary: data.description || previous.matchRoleSummary,
@@ -879,9 +882,8 @@ function CompanyPageContent() {
                       <label htmlFor="job-builder-description" className="job-builder-label job-builder-description-label">Beskriv jobbet, vem ni söker och vad ni erbjuder *</label>
                       <textarea id="job-builder-description" rows={7} className="job-builder-textarea" placeholder="T.ex. Vi söker en social och punktlig person som kan arbeta helger i vår butik. Erfarenhet är inget krav eftersom vi lär upp på plats..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
                       {form.listingRequirements !== null && <label>Krav i annonsen<textarea className="job-builder-textarea" rows={3} value={form.listingRequirements} onChange={event => setForm(current => ({ ...current, listingRequirements: event.target.value }))}/><small>De absoluta kraven för urvalet granskar du i nästa steg.</small></label>}
-                      <label className="job-builder-label" style={{ marginTop: "1.2rem" }}>Arbetskategori *</label>
-                      <div className="job-builder-chips">{JOB_CATEGORIES.map((category) => <button key={category} type="button" aria-pressed={form.category === category} onClick={() => setForm((p) => ({ ...p, category: p.category === category ? "" : category }))} className={`chip ${form.category === category ? "job-builder-chip-selected" : ""}`}>{category}</button>)}</div>
-                      <label>Arbetskategori – välj ovan eller skriv eget<input className="input-field" maxLength={80} value={form.category} onChange={event=>setForm(current=>({...current,category:event.target.value}))} placeholder="Egen arbetskategori"/></label><label className="job-builder-label" style={{ marginTop: "1rem" }}>Anställningsform *</label>
+                      <JobCategoryField title={form.title} description={form.description} legacyCategory={form.category} value={draftJobCategories(form)} manual={form.categoryManual} disabled={busy||generatingAi} onChange={(categoryIds,categoryManual)=>setForm(current=>({...current,categoryIds,categoryManual}))}/>
+                      <label className="job-builder-label" style={{ marginTop: "1rem" }}>Anställningsform *</label>
                       <div className="job-builder-chips">{EMPLOYMENT_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.employmentType === type} onClick={() => setForm((p) => ({ ...p, employmentType: p.employmentType === type ? "" : type }))} className={`chip ${form.employmentType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><label>Anställningsform – välj ovan eller skriv eget<input className="input-field" maxLength={80} value={form.employmentType} onChange={event=>setForm(current=>({...current,employmentType:event.target.value}))} placeholder="Egen anställningsform"/></label>
                     </section>
                   )}
@@ -952,7 +954,7 @@ function CompanyPageContent() {
                   <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
                     <Link className="company-job-summary" href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
                     <div className="company-job-heading"><span className="company-job-icon"><UiIcon name="briefcase" width="23" /></span><h2>{job.title}</h2></div>
-                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[jobCities(job), job.category, agePart].filter(Boolean).join(" · ")}</p>
+                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[jobCities(job), effectiveJobCategories(job).map(categoryLabel).join(" / ") || job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
@@ -965,6 +967,7 @@ function CompanyPageContent() {
                     </Link>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
                       <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Kopiera annons</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera jobbtyp</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
@@ -1012,6 +1015,7 @@ function CompanyPageContent() {
         </ModalDialog>
       )}
       {copyingJob && <ModalDialog label="Kopiera annons" busy={copyBusy} onClose={() => { if (!copyBusy) setCopyingJob(null); }} className="job-copy-dialog"><h2>Kopiera annons</h2><p>Skapa ett nytt redigerbart utkast från ”{copyingJob.title}”. Originalet och dess kandidater finns kvar.</p>{hasJobDraftContent(form) && <p className="job-copy-notice">Du har redan ett annonsutkast på den här enheten. Om du fortsätter ersätts det med kopian.</p>}{copyError && <p role="alert">{copyError}</p>}<div><button type="button" className="cta-btn" disabled={copyBusy} onClick={() => void handleCopyJob()}>{copyBusy ? "Kopierar…" : hasJobDraftContent(form) ? "Ersätt utkast med kopia" : "Skapa annonskopia"}</button><button type="button" className="secondary-btn" disabled={copyBusy} onClick={() => setCopyingJob(null)}>Avbryt</button></div></ModalDialog>}
+      {editingCategory && <JobCategoryEditor key={editingCategory.id} job={editingCategory} onClose={()=>setEditingCategory(null)} onSaved={updated=>{setJobs(current=>current.map(job=>job.id===updated.id?updated:job));setEditingCategory(null);}}/>}
       {editingWorkplaces && <JobWorkplaceEditor key={editingWorkplaces.id} job={editingWorkplaces} onClose={() => setEditingWorkplaces(null)} onSaved={updated => { setJobs(current => current.map(job => job.id === updated.id ? updated : job)); setEditingWorkplaces(null); }}/>}
       {editingCriteria && <JobMatchProfileEditor key={editingCriteria.id} jobId={editingCriteria.id} title={editingCriteria.title} onClose={closeCriteria} onSaved={() => { setEditingCriteria(null); setError(""); }} />}
       {imageToCrop && <ImageCropDialog file={imageToCrop} onCancel={() => setImageToCrop(null)} onConfirm={useCroppedJobImage} />}
