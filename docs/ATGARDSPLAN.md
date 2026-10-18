@@ -82,6 +82,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
+| 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -1063,7 +1064,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Premiumfunktioner och abonnemangsbetalning kommer senare. Fakturering vid anställning ingår i den aktuella affärsmodellen.
 - Kandidatdatabas, privatpersoners småjobb och en separat mobilapp ingår inte i denna utvecklingsperiod. Ny logik ska ändå gå att återanvända i framtida mobilapp.
 - Besluta exakt anställningsavgift, fakturauppgifter/betalningsvillkor, avgiftsutlösande status och eventuell ungdomsbelöning innan skarpa belopp eller löften publiceras.
-- Bestäm gränser för video och hantering av delningar efter ersättning/radering. Video ska omfattas av åtkomstkontroll, hjälp/integritetsinformation och rapportering.
+- Video gallras efter 14 dagar från skickandet enligt L12. Övriga mediagränser och hantering av delningar efter ersättning/radering återstår. Video ska omfattas av åtkomstkontroll, hjälp/integritetsinformation och rapportering.
 - Testning av externa utskick, känslig kontohantering och administration sker bara med egna testkonton och tydligt märkta testuppgifter.
 
 ## Profil, relevans och matchningskvalitet – beställt 2026-10-18
@@ -1200,4 +1201,47 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - Samordning 2026-10-18 (F26/N19): Visa bara video och svar som ungdomen uttryckligen delat för aktuell ansökan, även i API/databas och fillänkar. Ungdomen kan förhandsvisa delningen. Saknad video får inte automatiskt neka eller dölja ansökan eller påverka personlighetspoäng; ingen AI-analys av video. Ingen generell företagsåtkomst till jobbprofilen.
 - Implementerat: —
 - Verifierat: —
-- Återstår / blockerare: Produktkod och verifiering. Återanvänd privat videohantering; besluta och dokumentera tydlig lagringstid för ansökningsvideo innan den aktiveras. Ingen premiumkoppling eller debitering beställd. N23 ersätter den äldre idén om obligatoriska videokrav; den frivilliga funktionen är nu beställd, inte bara en pausad premiumidé.
+- Återstår / blockerare: Produktkod och verifiering. Återanvänd privat videohantering; inför och verifiera beslutad 14-dagarsgallring från skickandet enligt L12 innan ansökningsvideo aktiveras. Ingen premiumkoppling eller debitering beställd. N23 ersätter den äldre idén om obligatoriska videokrav; den frivilliga funktionen är nu beställd, inte bara en pausad premiumidé.
+
+
+## Lagring och gallring – beslutat 2026-10-18
+
+<a id="l12"></a>
+### L12 Inför beslutade lagringstider och automatisk gallring
+
+- [ ] Klar
+- Prioritet: P1, före skarp lansering; 14-dagarsgallring krävs före aktivering av ansökningsvideo.
+- Global ordning: 22.1
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: Dokumentationsleverans `codex/l12-gdpr-retention-plan-20261018`. Implementationsbranch och ägare reserveras separat före kodarbete.
+- Beslut: Användaren har godkänt nedanstående produktpolicy. Tiderna är inte lagstadgade GDPR-frister eller en färdig juridisk bedömning. Ändamål, rättslig grund och nödvändighet ska dokumenteras per uppgiftskategori före införandet.
+- Beroenden/samordning: L02 (påminnelsemejl), L05 (åtkomst och rapporter), L06/N10 (kontoradering), L04 (anställningshistorik), F20 (integritetsinformation), F26/N19 (ansökningsunderlag), N12/N13/N22/N23 (video). Återanvänd befintlig raderingslogik och bevara andras pågående arbete.
+
+| Uppgifter | Beslutad normalregel | Startpunkt och användarupplevelse |
+|---|---|---|
+| Skickad video i chatt eller ansökan | Radera efter 14 dagar | Från serverregistrerat skickande, oberoende av uppspelning. Visa exakt utgångsdatum för båda parter; därefter endast en neutral markering, exempelvis Videon har raderats. |
+| Avslutad ansökan, dess CV-underlag och AI-bedömningar | Radera efter 6 månader | Från dokumenterat avslut av den enskilda ansökan. Tidigare ansökningar visar avslutsstatus och planerad radering. |
+| Textchatt | Skrivskydda efter 6 månaders inaktivitet; radera efter 12 månader | Från definierad användaraktivitet i den aktuella konversationen. Arkivering och skrivskydd är inte radering. Exakt aktivitetsdefinition och hantering av återöppning fastställs före implementation. |
+| Inaktivt ungdomskonto med jobbprofil och aktuellt CV | Radera efter 24 månaders inaktivitet | Från användarens egen definierade aktivitet. Påminn 30 och 7 dagar före; förklara vad som försvinner och hur kontot behålls. Automatiska mejl, AI-jobb och bakgrundsuppdateringar återställer inte tiden. |
+
+#### Omfattning och skydd
+
+- Ansökningsgallring avser den avslutade ansökans kopior, utdrag, kompletteringssvar, underlag, bedömningar och historiska bedömningsversioner samt företagets åtkomst till dessa. Ungdomens aktuella profil/CV och andra legitima ansökningar ska inte raderas för att en ansökan löper ut. Aktivt konto förlänger inte gamla ansökningars lagringstid.
+- Definiera avslut för avslag, återkallande, avslutad rekrytering och anställning, samt regel för övergivna ansökningar som aldrig avslutas. Att pausa en annons är inte automatiskt att avsluta alla dess rekryteringar. Vid öppna frågor ska beslut dokumenteras; använd inte en status som gör att uppgifter kan sparas obegränsat.
+- Video: radera faktiska lagringsobjekt, eventuella miniatyrbilder och obehövliga metadata/åtkomstreferenser. Utgången video får inte kunna hämtas genom API, gamla direktvägar eller nya signerade länkar. Dokumentera hur redan utfärdade länkar och cache hanteras vid tidsgränsen. Vid flera referenser får delning inte tyst förlänga filens första beslutade utgångstid. Fastställ separat kort städregel för oskickade/avbrutna uppladdningar.
+- Förklara att arbetsgivaren kan hinna missa en video efter två veckor. Saknad, avböjd eller utgången video påverkar inte matchpoäng, ansökans synlighet eller möjligheten att skicka ansökan. Ingen AI-analys av video. Redan nedladdade externa kopior kan inte återkallas tekniskt; beskriv ansvarsfördelningen utan att utlova detta.
+- Kontogallring ska omfatta autentiseringskonto, profil, CV/filer och relaterade personuppgifter i den omfattning de ska raderas. Samordna med andra deltagare i chatt och delade filer. En ny verklig aktivitet under påminnelseperioden ska stoppa felaktig inaktivitetsradering. Verifiera påminnelseleverans, återförsök och konflikter; inför ingen destruktiv gallring utifrån enbart antagen mejlleverans.
+- Separata kategorier återstår: bekräftad anställningshistorik, fakturor/bokföring, konkreta rättsliga anspråk, rapporterat innehåll/moderationsärenden, säkerhetsloggar samt privata utkast/råa textsamtal/avvisade AI-förslag. Bestäm och dokumentera nödvändiga tider och rättsligt stöd för dessa innan skarp användning. Ingen generell permanent lagring eller automatisk förlängning av hela ansökan/chatten/video får motiveras med möjliga framtida tvister. Eventuellt undantag ska vara avgränsat, åtkomstbegränsat, dokumenterat och omprövas med bestämd tidpunkt.
+- Inventera säkerhetskopior, cache och relevanta leverantörskopior. Dokumentera raderings-/rotationsfrister och rutin så att återställning inte återinför gallrade uppgifter. Lova inte fullständig radering i samtliga kopior på exakt samma dag utan verifierat stöd.
+- Bygg schemalagd, idempotent och återförsökbar gallring med minimal revisionsinformation utan kvarvarande CV-/chattinnehåll. Om fysisk radering misslyckas ska åtkomst ändå spärras vid utgången tid; felet följs upp tills radering lyckas. Testkör först med tydligt fiktiva data i dev/DevStaging.
+
+#### Klar när
+
+- Beslutade tider, exakt aktivitets-/avslutsdefinition, övergivna ärenden och separata kategorier är dokumenterade med ändamål och rättslig grund. Integritetsinformation och UI överensstämmer med faktiskt beteende.
+- Verifiera strax före, vid och efter varje tidsgräns; återförsök, avbruten filradering, samtidiga meddelanden/inloggningar, ändrad ansökningsstatus, delade referenser och åtkomst via gamla länkar. Gallringen får inte ta bort aktivt underlag för andra ansökningar.
+- Verifiera 30-/7-dagarspåminnelser och avbruten kontogallring efter verklig aktivitet. Testa att bakgrundsjobb och mejlutskick inte räknas som användaraktivitet.
+- Verifiera backup-/återställningsrutinen och dokumentera driftsatta scheman, bevakning, genomförda tester och kvarstående begränsningar. Markera inte Klar efter enbart skriven kod eller dokumentation.
+- Implementerat: Ingen produktkod, inget schema och inga lagrade användaruppgifter ändras genom denna dokumentationsleverans.
+- Verifierat: Dokumentationskontroll; funktionella gallrings- och mejltester återstår.
+- Återstår / blockerare: Implementering, ändamåls-/rättslig-grund-bedömning, preciserade aktivitets-/avslutsregler, separata uppgiftskategoriers tider, leverantörs-/backupinventering och faktisk verifiering.
