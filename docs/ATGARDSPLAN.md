@@ -62,7 +62,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
-| 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | Pågår | Vilgot / Codex |
+| 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | För granskning | Vilgot / Codex |
 | 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | Ej påbörjad | — |
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | Ej påbörjad | — |
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Ej påbörjad | — |
@@ -197,14 +197,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 13
 - Typ: Reviderat användarbeslut 2026-10-18, ersätter tidigare minskning av platsantal och lyft vid anställning.
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/n16-annonsflode-20261018` (reservation publiceras före kodändring).
+- Branch/PR: `codex/n16-annonsflode-20261018` (reservation publicerad före kodändring, commit `5da009b`).
 - Åtgärd: Ta bort obligatoriskt antal tjänster från skapande, kopiering och publiceringskontroll. Företaget pausar/stänger när rekryteringen är färdig. En registrerad/bekräftad anställning ändrar inte automatiskt annonsstatus eller flödesdatum. Bevara befintliga annonser, ansökningar, chattar och äldre databasfält utan att framställa ett tekniskt standardvärde som ett faktiskt rekryteringsbehov. Ingen destruktiv datamigrering.
 - Klar när: Ny annons och annonskopia kan publiceras utan platsantal; gamla utkast med platsantal kan fortsättas utan detta krav. Originalets uppgifter ändras inte av en kopia. Befintlig manuell paus/stängning och anställningsbekräftelse fungerar separat och historiken bevaras.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Platsfält och publiceringskrav borttagna från annonsbyggaren och kopior. Gamla utkast återställs med nuvarande redigerbara fält så att ett övergivet/ogiltigt platsantal inte blockerar. Befintliga databasfält och annonser lämnas kvar; ingen migration eller automatisk annonsstatus/lyft har lagts till.
+- Verifierat: test:job-copy (inklusive äldre utkast och originalisolering), test:job-workplaces, test:recruitment, test:recruitment-review och test:company-navigation passerar. TypeScript och fullständigt webpack-bygge passerar med 50 sidor. Riktad ESLint: 0 fel, 1 befintlig img-varning i företagssidan. Dokumentlänkar/uppgifts-ID:n kontrollerade.
+- Återstår / blockerare: Driftsatt inloggat webbtest av ny annons, gammalt utkast och kopia återstår; ingen sådan verifiering påstås. Befintlig manuell paus/stängning och anställning har inte liveomtestats i denna insats. Se docs/N16.md. N17 byggs i en separat reserverad leverans.
 
 <a id="n01"></a>
 ### N01 Redigera hela publicerade annonsen
