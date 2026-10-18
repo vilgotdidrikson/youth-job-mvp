@@ -1215,7 +1215,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - Status: För granskning (avgränsad videoleverans; övriga kategorier återstår)
 - Ansvarig: Codex
 - Branch/PR: `codex/l12-video-retention-20261018`, [PR #73](https://github.com/vilgotdidrikson/youth-job-mvp/pull/73), kodcommit `25c7d40c79248582948caaad0b9ad94d4305f570`. Reservation före kodarbete; 14-dagars åtkomstgräns och gallring för chattvideo, med återanvändbar grund för N23. Övriga L12-kategorier och N23 aktiveras inte i denna leverans.
-- Verifieringsuppföljning: Codex, `codex/l12-storage-verification-20261018`. Användaren godkände 2026-10-18 uttryckligen det avgränsade verkliga filtestet i DevStaging: två fiktiva filer genom tillfällig tokenkontrollerad serverfunktion. Automatisk gallring förblir avstängd.
+- Verifieringsuppföljning: Codex, `codex/l12-storage-verification-20261018`, [PR #74](https://github.com/vilgotdidrikson/youth-job-mvp/pull/74), verifieringscommit `7b499b0bd8bd25165811094b5c0a999b5c1e460b`. Användaren godkände 2026-10-18 uttryckligen det avgränsade verkliga filtestet i DevStaging: två fiktiva filer genom tillfällig tokenkontrollerad serverfunktion. Automatisk gallring förblir avstängd.
 - Beslut: Användaren har godkänt nedanstående produktpolicy. Tiderna är inte lagstadgade GDPR-frister eller en färdig juridisk bedömning. Ändamål, rättslig grund och nödvändighet ska dokumenteras per uppgiftskategori före införandet.
 - Beroenden/samordning: L02 (påminnelsemejl), L05 (åtkomst och rapporter), L06/N10 (kontoradering), L04 (anställningshistorik), F20 (integritetsinformation), F26/N19 (ansökningsunderlag), N12/N13/N22/N23 (video). Återanvänd befintlig raderingslogik och bevara andras pågående arbete.
 

@@ -36,7 +36,7 @@ Rapporterade videor väljs inte för fysisk radering. Ordinarie uppspelning stä
 
 ## Verifieringsuppföljning efter användarens godkännande
 
-Användaren godkände uttryckligen filtestet 2026-10-18. Uppföljningen reserverades på `codex/l12-storage-verification-20261018` före körningen. Det tidigare avslaget från automatisk godkännandegranskning gällde bristande uttryckligt godkännande av testdriftsättningen; den nya driftsättningen godkändes efter användarens svar. Ingen kringgående väg användes.
+Användaren godkände uttryckligen filtestet 2026-10-18. Uppföljningen reserverades på `codex/l12-storage-verification-20261018` före körningen och dokumenteras i [PR #74](https://github.com/vilgotdidrikson/youth-job-mvp/pull/74), verifieringscommit `7b499b0bd8bd25165811094b5c0a999b5c1e460b`. Det tidigare avslaget från automatisk godkännandegranskning gällde bristande uttryckligt godkännande av testdriftsättningen; den nya driftsättningen godkändes efter användarens svar. Ingen kringgående väg användes.
 
 - Testvariant av `video-cleanup`, version 1, körde `scripts/manual-video-storage-smoke.mjs` bakom samma Vault-tokenkontroll som den vanliga funktionen. Projektet låstes till DevStaging, namngivna fiktiva QA-fixturer kontrollerades och kön måste vara tom före testet. Inga verkliga rekryteringar användes som testdata.
 - HTTP 200: `passed=true`, två verkliga Storage-objekt uppladdade och borttagna, två metadatarester rensade, upprepad körning `claimed=0`. Hämtning av båda borttagna objekten nekades. Slutstädningen kunde dessutom ta bort redan saknade objekt utan fel. Testfilerna bestod av 100 syntetiska bytes per fil med video/mp4; detta verifierar filhantering, inte en spelbar videokodek eller fysisk kamera.
