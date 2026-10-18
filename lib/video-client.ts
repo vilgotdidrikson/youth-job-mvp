@@ -1,5 +1,6 @@
 "use client";
 
+import { videoHasExpired } from "@/lib/video-retention";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import { PROFILE_VIDEO_POLICY as policy, isProfileVideoPath, validateProfileVideo } from "@/lib/profile-video";
@@ -7,32 +8,37 @@ import { PROFILE_VIDEO_POLICY as policy, isProfileVideoPath, validateProfileVide
 export interface YouthVideo {
   id: string;
   owner_id: string;
-  storage_path: string;
+  storage_path: string | null;
   conversation_id: string | null;
-  duration_seconds: number;
+  duration_seconds: number | null;
+  first_sent_at?: string | null;
+  expires_at?: string;
+  deleted_at?: string | null;
   revoked_at: string | null;
 }
 
 export async function getVideo(id: string): Promise<YouthVideo | null> {
-  const { data, error } = await getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at").eq("id", id).maybeSingle();
+  const { data, error } = await getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at,first_sent_at,expires_at,deleted_at").eq("id", id).maybeSingle();
   if (error) throw new Error("Kunde inte hämta videon. Försök igen.");
   return !data?.conversation_id || data.revoked_at ? null : data as YouthVideo;
 }
 
 export async function videoPlaybackUrl(video: YouthVideo): Promise<string> {
-  if (!video.conversation_id || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
-  const { data, error } = await getSupabaseClient().storage.from(policy.bucket).createSignedUrl(video.storage_path, policy.signedUrlSeconds);
-  if (error || !data?.signedUrl) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
-  return data.signedUrl;
+  if (videoHasExpired(video.expires_at) || video.deleted_at) throw new Error("Videon är inte längre tillgänglig.");
+  if (!video.conversation_id || !video.storage_path || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
+  const { data, error } = await getSupabaseClient().storage.from(policy.bucket).download(video.storage_path, {}, { cache: "no-store" });
+  if (error || !data) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
+  // The JWT is checked on every download. No reusable Storage bearer URL.
+  if (videoHasExpired(video.expires_at)) throw new Error("Videon är inte längre tillgänglig.");
+  return URL.createObjectURL(data);
 }
 
 export async function revokeVideo(video: YouthVideo): Promise<boolean> {
   const db = getSupabaseClient();
   const { data, error } = await db.from("youth_videos").update({ revoked_at: new Date().toISOString() }).eq("id", video.id).select("id");
   if (error || !data?.length) throw new Error("Videon kunde inte tas bort. Försök igen.");
-  // Access is revoked first, even if object cleanup fails. Caller can report it.
-  const { error: cleanupError } = await db.storage.from(policy.bucket).remove([video.storage_path]);
-  return !cleanupError;
+  // Physical deletion is centralized so report exclusions and retries apply.
+  return true;
 }
 
 /** Standard upload with a task-scoped fetch abort signal; never modify the shared
@@ -56,7 +62,7 @@ export async function uploadVideo(file: File, duration: number, userId: string, 
       auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
       global:{fetch:(url,options)=>fetch(url,{...options,signal})},
     });
-    const {error:uploadError} = await uploadClient.storage.from(policy.bucket).upload(video.storage_path,file,{contentType:validation.mimeType,upsert:false,cacheControl:"0"});
+    const {error:uploadError} = await uploadClient.storage.from(policy.bucket).upload(video.storage_path!,file,{contentType:validation.mimeType,upsert:false,cacheControl:"0"});
     if (uploadError) throw new Error("Uppladdningen misslyckades. Kontrollera anslutningen och försök igen.");
     signal.throwIfAborted();
     return video;

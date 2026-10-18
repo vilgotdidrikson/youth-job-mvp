@@ -42,7 +42,7 @@ export function ChatVideoComposer({conversationId,userId,onSent}:{conversationId
     {open&&<ModalDialog label="Skicka en video" busy={busy} onClose={()=>setOpen(false)} className={styles.videoDialog}><div className={styles.dialogHeading}><h2>Skicka en video</h2><button type="button" disabled={busy} className={styles.closeButton} aria-label="Stäng videoförhandsvisningen" onClick={()=>setOpen(false)}><UiIcon name="close"/></button></div>
     <VideoPicker value={selected} disabled={busy||!!pending.current} onChange={value=>{setSelected(value);setError("");setNote("");messageId.current=crypto.randomUUID();}}/>
     <div className={styles.actions}>{selected&&<button type="button" className="cta-btn" disabled={busy} onClick={()=>void send()}>{busy?phase:"Skicka vald video"}</button>}{controller.current&&phase==='Laddar upp…'&&<button className="secondary-btn" type="button" onClick={()=>controller.current?.abort()}>Avbryt uppladdning</button>}{pending.current&&!busy&&<button className="secondary-btn" type="button" onClick={()=>void discardPending()}>Återkalla video och välj annan</button>}</div>
-    <p className={styles.hint}>Delas bara i den här chatten.</p>{busy&&<p role="status">{phase||"Förbereder delning…"}</p>}{error&&<p role="alert" className={styles.error}>{error}</p>}{note&&<p role="status">{note}</p>}</ModalDialog>}
+    <p className={styles.hint}>Delas bara i den här chatten och är tillgänglig i 14 dagar efter att den skickats. Mottagaren kan hinna missa den.</p>{busy&&<p role="status">{phase||"Förbereder delning…"}</p>}{error&&<p role="alert" className={styles.error}>{error}</p>}{note&&<p role="status">{note}</p>}</ModalDialog>}
     {!open&&error&&<p role="alert" className={styles.error}>{error}</p>}{!open&&note&&<p role="status">{note}</p>}
   </section>;
 }
@@ -54,7 +54,7 @@ export function VideoMessage({message,own}:{message:ChatMessage;own:boolean}) {
     if(!message.video_id||busy||!window.confirm("Ta bort videon från det här meddelandet? Meddelandet blir kvar men videon slutar vara tillgänglig."))return;
     setBusy(true);setError("");try{const video=await getVideo(message.video_id);if(video)await revokeVideo(video);setRemoved(true);}catch{setError("Kunde inte ta bort videon. Försök igen.");}finally{setBusy(false);}
   };
-  return <div className={styles.videoMessage}>{removed?<p>Videon har tagits bort.</p>:message.video_kind==='profile'?<p>Profilvideo används inte längre. Be om en ny video i chatten om du vill.</p>:<VideoPlayer videoId={message.video_id??undefined} label="Videomeddelande"/>}
+  return <div className={styles.videoMessage}>{removed?<p>Videon har tagits bort från chatten.</p>:message.video_kind==='profile'?<p>Profilvideo används inte längre. Be om en ny video i chatten om du vill.</p>:<VideoPlayer videoId={message.video_id??undefined} label="Videomeddelande"/>}
     <details className={styles.messageOptions}><summary aria-label="Alternativ för videomeddelandet">•••</summary><div>{own&&message.video_kind==='file'&&!removed&&<button className="secondary-btn" type="button" disabled={busy} onClick={()=>void remove()}>Ta bort video</button>}<ReportDialog targetType="message" targetId={message.id} label="Anmäl video"/></div></details>{error&&<p role="alert">{error}</p>}
   </div>;
 }

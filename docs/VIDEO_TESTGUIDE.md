@@ -26,3 +26,7 @@ Miljö: https://youth-job-mvp-dev.vercel.app. Använd enbart fiktiva QA-konton o
 - Längd kontrolleras i webbläsaren/deklareras i metadata; servern avkodar inte filmen. MOV/WebM-codecs kan skilja mellan webbläsare; fel ska ge en begriplig återhämtning.
 - Rapporter sparar referenser, inte en dold kopia av bytes. N22 raderar inte befintliga filer. Fysisk gallring och beslutade 14 dagar från skickande hör till L12 och är ännu inte infört genom N22.
 - Frivillig ansökningsvideo enligt N23 är ännu en separat uppgift. Saknad video ska aldrig stoppa ansökan.
+
+## L12 videodel (2026-10-18)
+
+Se [L12_VIDEO.md](L12_VIDEO.md) för införda åtkomstgränser och det avstängda gallringsjobbet. Klienten hämtar nu video autentiserat med no-store och lokal Blob-URL; nya signerade videolänkar ska nekas. Kör `npm run test:video-retention` och rollback-testet `scripts/test-video-retention.sql` utöver N22-regressionerna. Verklig Storage-radering, signer-/hämtnings-HTTP-anrop, parallella klienter och visuell uppspelning återstår. Den automatiska granskningen stoppade det tillfälliga filtestets driftsättning; schemat är inte aktiverat och N23 är fortfarande Ej påbörjad.

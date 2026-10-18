@@ -8,7 +8,7 @@ import ts from 'typescript';
 const dir=mkdtempSync(join(tmpdir(),'mnw-video-client-'));
 const replies=[],calls=[];let uploadResult={error:null},uploadCallback=null;
 const storage={
-  createSignedUrl:async(...args)=>{calls.push(['sign',...args]);return replies.shift();},
+  download:async(...args)=>{calls.push(['download',...args]);return replies.shift();},
   remove:async(...args)=>{calls.push(['remove',...args]);return replies.shift()??{error:null};},
   upload:async(...args)=>{calls.push(['upload',...args]);if(uploadCallback)await uploadCallback();return uploadResult;},
 };
@@ -27,7 +27,7 @@ try{
   let code=ts.transpileModule(readFileSync('lib/video-client.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText;
   code=code.replace(/import .* from "@supabase\/supabase-js";/,'const createClient=()=>globalThis.__videoTestDb;')
     .replace(/import .* from "@\/lib\/supabase";/,'const getSupabaseClient=()=>globalThis.__videoTestDb;')
-    .replace('"@/lib/profile-video"','"./policy.mjs"');
+    .replace('"@/lib/profile-video"','"./policy.mjs"').replace(/import .* from "@\/lib\/video-retention";/,'const videoHasExpired=value=>!!value&&Date.parse(value)<=Date.now();');
   writeFileSync(join(dir,'client.mjs'),code);
   const {getVideo,videoPlaybackUrl,revokeVideo,sendVideoMessage,uploadVideo}=await import(pathToFileURL(join(dir,'client.mjs')));
   const owner='11111111-1111-4111-8111-111111111111',id='22222222-2222-4222-8222-222222222222';
@@ -39,8 +39,9 @@ try{
   reset({data:{...video,conversation_id:null},error:null});assert.equal(await getVideo(id),null);
   reset();await assert.rejects(videoPlaybackUrl({...video,conversation_id:null}),/Ogiltig/);assert.equal(calls.length,0);
   reset();await assert.rejects(videoPlaybackUrl({...video,storage_path:'https://example.org/a.mp4'}),/Ogiltig/);assert.equal(calls.length,0);
-  reset({data:{signedUrl:'https://example.org/signed'},error:null});assert.equal(await videoPlaybackUrl(video),'https://example.org/signed');assert.equal(calls[0][2],300);
-  reset({data:[{id}],error:null},{error:{code:'offline'}});assert.equal(await revokeVideo(video),false);assert.equal(calls[0][1],'update');assert.equal(calls.at(-1)[0],'remove');
+  reset({data:new Blob(['qa']),error:null});const src=await videoPlaybackUrl(video);assert.ok(src.startsWith('blob:'));URL.revokeObjectURL(src);assert.equal(calls[0][0],'download');
+  reset();await assert.rejects(videoPlaybackUrl({...video,expires_at:new Date(Date.now()-1).toISOString()}),/tillgänglig/);assert.equal(calls.length,0);
+  reset({data:[{id}],error:null});assert.equal(await revokeVideo(video),true);assert.equal(calls[0][1],'update');assert.ok(!calls.some(c=>c[0]==='remove'),'Only server cleanup removes bytes');
   reset({data:[],error:null});await assert.rejects(revokeVideo(video));assert.ok(!calls.some(c=>c[0]==='remove'));
   reset({error:{code:'23505'}},{data:{id:'message',conversation_id:'conversation',sender_user_id:owner,video_kind:'file',video_id:id}});
   await sendVideoMessage('conversation',owner,'message',video);
@@ -53,8 +54,8 @@ try{
   reset({error:null});const uploaded=await uploadVideo(file,30,owner,"conversation",new AbortController().signal);
   assert.equal(uploaded.owner_id,owner);assert.ok(uploaded.storage_path.startsWith(owner+'/'));assert.equal(calls.find(c=>c[0]==='upload')[3].upsert,false);
   reset({error:null},{data:[{id}],error:null},{error:null});uploadResult={error:{code:'offline'}};
-  await assert.rejects(uploadVideo(file,30,owner,"conversation",new AbortController().signal));assert.ok(calls.some(c=>c[0]==='remove'),'Failed upload cleanup attempted');
+  await assert.rejects(uploadVideo(file,30,owner,"conversation",new AbortController().signal));assert.ok(calls.some(c=>c[1]==='update'),'Failed upload revoked for scheduled cleanup');
   const aborted=new AbortController();reset({error:null},{data:[{id}],error:null},{error:null});uploadCallback=async()=>aborted.abort();
   await assert.rejects(uploadVideo(file,30,owner,"conversation",aborted.signal));assert.ok(calls.some(c=>c[1]==='update'),'Late abort revokes asset before cleanup');
-  console.log('PASS video client: signing TTL, invalid paths and retired profile rejection, lost responses, idempotent sends, failed/aborted uploads and cleanup. Transport simulated.');
+  console.log('PASS video client: authenticated downloads and expiry, invalid paths and retired profile rejection, lost responses, idempotent sends, failed/aborted uploads and cleanup. Transport simulated.');
 }finally{delete globalThis.__videoTestDb;rmSync(dir,{recursive:true,force:true});}

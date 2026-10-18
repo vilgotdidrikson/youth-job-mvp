@@ -11,6 +11,7 @@ declare
  msg uuid := gen_random_uuid(); shared uuid := gen_random_uuid(); report_id uuid;
  p_path text; c_path text; affected integer;
 begin
+ perform set_config('storage.operation','object.get_authenticated',true);
  if not exists(select 1 from public.youth_profiles where user_id=youth and full_name='Alex Testsson') or
     not exists(select 1 from public.company_profiles where user_id=company and company_name like 'QA Bistro%') or
     not exists(select 1 from public.conversations c join public.matches m on m.id=c.match_id
@@ -130,9 +131,9 @@ begin
   raise exception 'FAIL blocked youth sends';
  exception when insufficient_privilege then null; end;
  update public.youth_videos set revoked_at=now() where id=chat;
- if not exists(select 1 from storage.objects where bucket_id='youth-profile-videos' and name=c_path) then raise exception 'FAIL owner cleanup inaccessible'; end if;
+ if exists(select 1 from storage.objects where bucket_id='youth-profile-videos' and name=c_path) then raise exception 'FAIL revoked bytes accessible'; end if;
  -- Real Storage deletion must use the Storage API. This rollback-only SQL
- -- fixture verifies owner cleanup visibility, not physical object deletion.
+ -- fixture verifies revocation; only the service worker deletes physical objects.
  reset role;
  -- Nothing retired is deleted by this feature, including moderation evidence.
  if not exists(select 1 from public.youth_videos where id=legacy) or
@@ -148,4 +149,4 @@ begin
  reset role;
 end $$;
 rollback;
-select 'PASS N22: retired metadata/pointers/files/shares denied; chat upload, participant, outsider, block, immutable scope, incomplete upload, cleanup visibility, report and legacy preservation. All writes rolled back.' as result;
+select 'PASS N22: retired metadata/pointers/files/shares denied; chat upload, participant, outsider, block, immutable scope, incomplete upload, revocation, report and legacy preservation. All writes rolled back.' as result;
