@@ -199,7 +199,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Typ: Reviderat användarbeslut 2026-10-18, ersätter tidigare minskning av platsantal och lyft vid anställning.
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/n16-annonsflode-20261018` (reservation publicerad före kodändring, commit `5da009b`).
+- Branch/PR: `codex/n16-annonsflode-20261018`, [PR #68](https://github.com/vilgotdidrikson/youth-job-mvp/pull/68), implementation `d916552`; reservation publicerad före kodändring i `5da009b`.
 - Åtgärd: Ta bort obligatoriskt antal tjänster från skapande, kopiering och publiceringskontroll. Företaget pausar/stänger när rekryteringen är färdig. En registrerad/bekräftad anställning ändrar inte automatiskt annonsstatus eller flödesdatum. Bevara befintliga annonser, ansökningar, chattar och äldre databasfält utan att framställa ett tekniskt standardvärde som ett faktiskt rekryteringsbehov. Ingen destruktiv datamigrering.
 - Klar när: Ny annons och annonskopia kan publiceras utan platsantal; gamla utkast med platsantal kan fortsättas utan detta krav. Originalets uppgifter ändras inte av en kopia. Befintlig manuell paus/stängning och anställningsbekräftelse fungerar separat och historiken bevaras.
 - Implementerat: Platsfält och publiceringskrav borttagna från annonsbyggaren och kopior. Gamla utkast återställs med nuvarande redigerbara fält så att ett övergivet/ogiltigt platsantal inte blockerar. Befintliga databasfält och annonser lämnas kvar; ingen migration eller automatisk annonsstatus/lyft har lagts till.
