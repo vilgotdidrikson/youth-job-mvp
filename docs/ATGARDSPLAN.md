@@ -1,6 +1,6 @@
 # MatchnWork gemensam åtgärdsplan
 
-Gemensam arbetslista för de kommande två veckorna och återstående lanseringsarbete. Omfattningen är större än en garanterad tvåveckorsleverans; prioriteringen styr vad som ska göras först. Följ den globala ordningen nedan. P1 ska vara klara före skarp lansering. P2 förbättrar kärnflödena och P3 är senare puts. Den globala ordningen tar hänsyn till beroenden; slutverifiering och lansering sker efter implementation även om de är P1. F = befintlig funktionalitet, N = ny funktion, D = design och text. L = lansering, tidigare beslut och kompletterande verifiering. N11/N12 (video) och N14/N15 (flera adresser och annonskopior) samt N16 (platsantal och nytt lyft efter bekräftad anställning) är nya högt prioriterade funktioner. Inspelning N13 följer efter fungerande uppladdning och delning.
+Gemensam arbetslista för de kommande två veckorna och återstående lanseringsarbete. Omfattningen är större än en garanterad tvåveckorsleverans; prioriteringen styr vad som ska göras först. Följ den globala ordningen nedan. P1 ska vara klara före skarp lansering. P2 förbättrar kärnflödena och P3 är senare puts. Den globala ordningen tar hänsyn till beroenden; slutverifiering och lansering sker efter implementation även om de är P1. F = befintlig funktionalitet, N = ny funktion, D = design och text. L = lansering, tidigare beslut och kompletterande verifiering. N11/N12 (video) och N14/N15 (flera adresser och annonskopior) samt N16–N21/F26 (förenklad annonslivscykel, gemensamma jobbtyper, relevans och profilhjälp) är nya högt prioriterade funktioner. Inspelning N13 följer efter fungerande uppladdning och delning.
 
 Video är frivilligt och ska hjälpa ungdomen att presentera sig. Psykologiskt personlighetstest och automatisk analys av personlighet från video ingår inte i denna plan. Befintliga egna exempel och motivation behålls.
 
@@ -18,6 +18,12 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Beroenden har företräde: gemensamma profilfakta före förifyllning, strukturerade jobbuppgifter före detaljerade filter. Vid avsteg dokumenteras orsaken.
 
 ## Gemensam prioriteringsordning
+
+### Reviderad produktinriktning – beställt 2026-10-18
+
+- Beslut och acceptanskriterier: `docs/PROFIL_OCH_RELEVANS.md`. Framtidsidéer finns i det befintliga dokumentet MatchnWork-Idebank.md; de aktiveras inte genom denna plan.
+- N16 ersätter det gamla kravet på antal tjänster och automatiskt lyft. N17 → N18 ger gemensamma jobbtyper före relevans; F26 granskar kärnmatchningen; N19 → N20/N21 ger gemensam profilgrund före nya AI-ingångar. Delordning 13.1–13.6 läggs före återstående ordinarie lista enligt beställningen; övriga uppgifters status ändras inte.
+- Reserverat före kodarbete: N16, Vilgot / Codex, `codex/n16-annonsflode-20261018`. Första leveransen omfattar bara slopat platskrav; övriga nya punkter reserveras separat vid byggstart.
 
 ### Profilflöde och informationsöversyn – beställt 2026-10-14
 
@@ -56,7 +62,13 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
-| 13 | [N16](#n16) | P1 | Antal lediga platser och nytt lyft efter bekräftad anställning | Ej påbörjad | — |
+| 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | Pågår | Vilgot / Codex |
+| 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | Ej påbörjad | — |
+| 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | Ej påbörjad | — |
+| 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Ej påbörjad | — |
+| 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Ej påbörjad | — |
+| 13.5 | [N20](#n20) | P2 | Textbaserad profilguide och diskret formulärhjälp | Ej påbörjad | — |
+| 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
@@ -155,7 +167,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n14-multiple-locations-20261014`, [PR #59](https://github.com/vilgotdidrikson/youth-job-mvp/pull/59), mergad till dev `ba847e5`. Webbverifiering och liten knappjustering reserverad på `codex/n14-web-verification-20261015` 2026-10-15.
-- Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna antal tjänster och platsinformation med N05/N16; första versionen har gemensam annonsstatus.
+- Åtgärd: Låt företaget lägga till, redigera och ta bort flera namngivna arbetsplatser med adress och ort i en och samma annons. Visa samtliga arbetsplatser i annonsen och kartan; listan ska visa annonsen en gång och närhetsfilter ska använda relevanta arbetsplatser. Ansökningar hör till den gemensamma annonsen och företaget kan se eventuell vald arbetsplats. Ungdomen ska kunna ange arbetsplatspreferens utan obligatoriskt stopp i swipeflödet. Bevara platsreferenser för befintliga ansökningar när en adress ändras eller tas bort. Samordna platsinformation med N05/N16; första versionen har gemensam annonsstatus utan obligatoriskt platsantal.
 - Klar när: En annons med minst två adresser kan sparas, återupptas, publiceras och redigeras. Båda adresserna visas korrekt på kartan och fungerar i geografiska filter, utan dubbla listposter eller ansökningar.
 - Implementerat: Upp till tio namngivna arbetsplatser i en gemensam annons, beständiga plats-ID, validerad JSON och primäradress synkroniserad för äldre flöden. Arbetsplatser sparas i kontobundet annonsutkast och kan redigeras separat på befintliga annonser. Alla orter omfattas av upptäcktsfilter och varje arbetsplats får en kartposition. Frivilligt arbetsplatsval efter skickat eller sparat intresse; företaget ser valet. Databasen sparar adressögonblicksbild vid valet, oberoende av senare annonsändringar.
 - Verifierat: `test:job-workplaces` testar validering, geokodning, create/update, ägarkontroll, äldre annonser och ortsfilter. Matching- och application-supplement-regressioner samt fullständigt webpack-produktionsbygge passerar 2026-10-15. Staging-RLS-test med återställda fiktiva data: ägarredigering, dubletter/format/koordinater/sista arbetsplats, serverskapad adressögonblicksbild, kandidatens skrivning, företagets läsning utan ändring, borttagen arbetsplats och nekad utomstående/anonym.
@@ -179,17 +191,17 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Återstår / blockerare: —
 
 <a id="n16"></a>
-### N16 Antal lediga platser och nytt lyft efter bekräftad anställning
+### N16 Slopa obligatoriskt platsantal och behåll manuell annonsstatus
 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 13
-- Typ: Ny uttryckligen beställd funktion och utveckling av befintligt platsfält
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
-- Åtgärd: Låt företaget ange hur många personer det vill anställa på en annons, inte ett tak för antalet sökande. Visa totalt antal tjänster och kvarvarande lediga platser. Återanvänd befintliga platsfält där det är möjligt och samordna med N05/N14. När anställningen blir bekräftad genom det gemensamma flödet i L04 ska antalet lediga platser minska exakt en gång. Om platser återstår och annonsen är aktiv och giltig får den ett nytt flödesdatum så att den sorteras högst bland motsvarande behöriga resultat. Behåll annons-ID, ursprungligt publiceringsdatum, ansökningar och chattar. Vid noll platser blir annonsen tydligt tillsatt/stängd och lyfts inte igen. Återaktivera aldrig en manuellt pausad/stängd eller utgången annons automatiskt. För samma annons med flera adresser gäller i första versionen ett gemensamt totalt platsantal. Hantera samtidiga bekräftelser atomärt, hindra negativa värden och definiera korrigering av en felaktig bekräftelse utan dubbla minskningar eller upprepade lyft. En lyftning kringgår inte ungdomens filter eller skydd mot dubbelansökningar.
-- Klar när: En annons med tre platser går till två lediga efter en bekräftad anställning och lyfts i det relevanta flödet. Samma bekräftelse igen förändrar inget. Sista platsen gör annonsen tillsatt, inte återpublicerad. Samtidiga bekräftelser och pausad/stängd annons ger korrekt platsantal och status; befintliga ansökningar och chattar finns kvar.
+- Typ: Reviderat användarbeslut 2026-10-18, ersätter tidigare minskning av platsantal och lyft vid anställning.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n16-annonsflode-20261018` (reservation publiceras före kodändring).
+- Åtgärd: Ta bort obligatoriskt antal tjänster från skapande, kopiering och publiceringskontroll. Företaget pausar/stänger när rekryteringen är färdig. En registrerad/bekräftad anställning ändrar inte automatiskt annonsstatus eller flödesdatum. Bevara befintliga annonser, ansökningar, chattar och äldre databasfält utan att framställa ett tekniskt standardvärde som ett faktiskt rekryteringsbehov. Ingen destruktiv datamigrering.
+- Klar när: Ny annons och annonskopia kan publiceras utan platsantal; gamla utkast med platsantal kan fortsättas utan detta krav. Originalets uppgifter ändras inte av en kopia. Befintlig manuell paus/stängning och anställningsbekräftelse fungerar separat och historiken bevaras.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -294,7 +306,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
-- Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag samt platsantalet från N16. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
+- Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag utan krav på platsantal enligt det reviderade N16-beslutet. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
 - Klar när: Ungdomen kan jämföra arbetstid och tidsram utan att leta i fri text.
 - Implementerat: —
 - Verifierat: —
@@ -1043,3 +1055,101 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Besluta exakt anställningsavgift, fakturauppgifter/betalningsvillkor, avgiftsutlösande status och eventuell ungdomsbelöning innan skarpa belopp eller löften publiceras.
 - Bestäm gränser för video och hantering av delningar efter ersättning/radering. Video ska omfattas av åtkomstkontroll, hjälp/integritetsinformation och rapportering.
 - Testning av externa utskick, känslig kontohantering och administration sker bara med egna testkonton och tydligt märkta testuppgifter.
+
+## Profil, relevans och matchningskvalitet – beställt 2026-10-18
+
+<a id="n17"></a>
+### N17 Gemensamma jobbtyper med fria annonstitlar
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 13.1
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Behåll egen titel; föreslå rättningsbar gemensam jobbtyp från rollens titel/beskrivning, aldrig enbart företagets bransch. Använd stabila kategori-ID:n och synonymer i annons, profilönskemål och filter. Hantera äldre fria kategorier utan dataförlust, osäkra förslag och roller som ännu saknas.
+- Klar när: Cafémedarbetare, caféjobb och cafépersonal hittas genom samma val Caféarbete; barista behåller sin inriktning. Ekonom på café blir inte caféarbete. Rättat förslag bevaras vid redigering/kopia/omladdning; okänd roll försvinner inte från flödet.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="n18"></a>
+### N18 Relevant och varierat jobbflöde
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 13.2
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Bygg vidare på N17: uttryckliga filter är hårda val; profilönskemål, plats och känd tillgänglighet ger mjuk prioritering. Ovisade annonser, publiceringstid och variation mellan företag styr därefter. Behåll spärrar för tidigare val/ansökningar; ingen automatisk återvisning/lyft vid anställning eller textredigering. Visa begriplig anledning till relevans.
+- Klar när: Tom profil kan upptäcka jobb och nybörjare utesluts inte för saknad erfarenhet. Filter respekteras, resultat/paginering är stabila, flera arbetsplatser räknas en gång och ett företag tar inte över flödet. Sparade jobb fungerar separat. Inga betalda lyft aktiveras.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="f26"></a>
+### F26 Granska matchningens rättvisa och faktaunderlag
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 13.3
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Granska faktiskt kriterieflöde, AI-instruktioner, regler, belägg och beräkning; F05 täckte teknisk leverans, inte detta kvalitetskrav. Förstå likvärdiga formuleringar utan nya sakpåståenden. Skilj uppfyllt, uttrycklig motsägelse och okänt. Personliga egenskaper visas som självuppgivna med källa och hålls utanför poäng tills annat beslut fattas.
+- Klar när: Synonympar som punktlig/bra på att passa tider visas rättvist utan verifieringspåstående. Fotbollstränare ger inte automatiskt punktlighet, ansvar eller ledarskap. Saknad uppgift är inte underkänd. Bedömda kriterier och täckningsgrad visas separat; mer text ger inte i sig bättre poäng. Inaktuella/ogranskade AI-förslag och känsliga attribut används inte.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="n19"></a>
+### N19 Samlad jobbprofil och ett kort grund-CV
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 13.4
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Gör Bygg din profil till övergripande flöde. Återanvänd F02/F03/F15/F18 och separera godkända profilfakta, CV-urval och opublicerat arbetsmaterial. Ett generellt granskat grund-CV, normalt en sida, upp till två vid behov; fullständigare profil behåller relevanta godkända uppgifter. Ingen tyst kapning vid 500 ord.
+- Klar när: Alla skapande-/redigeringsvägar använder samma granskningskrav och aktuella faktakällor. Ungdomen kan se vad som finns i profil respektive CV, välja/rätta urval, pausa och fortsätta. CV håller mallen och lång PDF är läsbar enligt L09. Profilönskemål/tillgänglighet behöver inte fylla CV:t; opublicerat arbetsmaterial används inte i matchning.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="n20"></a>
+### N20 Textbaserad profilguide och diskret formulärhjälp
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 13.5
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Erbjud valfritt textsamtal med en fråga åt gången, relevanta öppna följdfrågor, hoppa över och fortsätt senare. Samma profilmodell som N19 och vanliga formuläret. Hjälp mig utveckla texten öppnar lokalt i avsnittet, inte en kedja av modaler. Återanvänd relevanta frågeområden från avstängd röstfunktion utan att aktivera ljud.
+- Klar när: Guiden undviker upprepade/ledande frågor, håller isär erfarenheter och producerar ett användbart utkast. Förslag kan godkännas/ändras/avvisas; nya lärdomar/egenskaper förs inte in utan bekräftelse. Godkännande gäller aktuell text, återställs efter ändring och krävs före profil-/CV-publicering och matchningsanvändning. Mobil med tangentbord och avbrott fungerar.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="n21"></a>
+### N21 Valfri genomläsning av uppladdat CV
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 13.6
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Behåll original-PDF och erbjud Få förbättringsförslag för struktur, tydlighet, upprepningar och saknade relevanta uppgifter. Ge konkreta frivilliga frågor utan att fylla i svar. Godkända kompletteringar kan läggas i profilen och användaren väljer om nytt grund-CV ska skapas. Återanvänd PDF-läsning och åtkomstkontroll.
+- Klar när: Originalet ersätts aldrig utan uttryckligt val. Saknade fakta blir förslag/frågor, inte publicerade antaganden. Oåtkomlig/oläsbar/skannad PDF hanteras tydligt utan falskt genomläsningsbesked. Samma granskningskrav som N19/N20 gäller; uppladdning kräver inte AI-genomläsning.
+- Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
