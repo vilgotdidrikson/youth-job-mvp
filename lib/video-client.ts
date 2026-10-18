@@ -13,21 +13,14 @@ export interface YouthVideo {
   revoked_at: string | null;
 }
 
-export async function getProfileVideo(userId: string): Promise<YouthVideo | null> {
-  const db = getSupabaseClient();
-  const { data: pointer, error } = await db.from("youth_profile_videos").select("video_id").eq("user_id", userId).maybeSingle();
-  if (error) throw new Error("Kunde inte hämta profilvideon. Försök igen.");
-  return pointer ? getVideo(pointer.video_id) : null;
-}
-
 export async function getVideo(id: string): Promise<YouthVideo | null> {
   const { data, error } = await getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at").eq("id", id).maybeSingle();
   if (error) throw new Error("Kunde inte hämta videon. Försök igen.");
-  return data?.revoked_at ? null : data as YouthVideo | null;
+  return !data?.conversation_id || data.revoked_at ? null : data as YouthVideo;
 }
 
 export async function videoPlaybackUrl(video: YouthVideo): Promise<string> {
-  if (!isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
+  if (!video.conversation_id || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
   const { data, error } = await getSupabaseClient().storage.from(policy.bucket).createSignedUrl(video.storage_path, policy.signedUrlSeconds);
   if (error || !data?.signedUrl) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
   return data.signedUrl;
@@ -42,33 +35,10 @@ export async function revokeVideo(video: YouthVideo): Promise<boolean> {
   return !cleanupError;
 }
 
-export async function replaceProfileVideo(userId: string, video: YouthVideo | null, previous: YouthVideo | null): Promise<boolean> {
-  const db = getSupabaseClient();
-  let result;
-  if (previous) {
-    result = video
-      ? await db.from("youth_profile_videos").update({video_id:video.id,updated_at:new Date().toISOString()}).eq("user_id",userId).eq("video_id",previous.id).select("user_id")
-      : await db.from("youth_profile_videos").delete().eq("user_id",userId).eq("video_id",previous.id).select("user_id");
-  } else if (video) {
-    result = await db.from("youth_profile_videos").insert({user_id:userId,video_id:video.id}).select("user_id");
-  } else return true;
-  if (result.error || !result.data?.length) {
-    // A lost write response must not turn a successful save into a duplicate or
-    // revoke the newly published asset on retry.
-    const {data:current,error:readError}=await db.from("youth_profile_videos").select("video_id").eq("user_id",userId).maybeSingle();
-    if(readError || (video ? current?.video_id!==video.id : !!current)) {
-      throw new Error("Profilvideon har ändrats i en annan vy eller kunde inte sparas. Hämta sidan igen.");
-    }
-  }
-  if (previous) {
-    try { return await revokeVideo(previous); } catch { return false; }
-  }
-  return true;
-}
-
 /** Standard upload with a task-scoped fetch abort signal; never modify the shared
  * client's transport or upload through a service-role client. */
-export async function uploadVideo(file: File, duration: number, userId: string, conversationId: string | null, signal: AbortSignal): Promise<YouthVideo> {
+export async function uploadVideo(file: File, duration: number, userId: string, conversationId: string, signal: AbortSignal): Promise<YouthVideo> {
+  if (!conversationId) throw new Error("Välj en chatt innan du laddar upp video.");
   const validation = validateProfileVideo({name:file.name,type:file.type.split(";")[0],size:file.size,durationSeconds:duration});
   if (!validation.ok) throw new Error(validation.message);
   signal.throwIfAborted();
@@ -98,10 +68,11 @@ export async function uploadVideo(file: File, duration: number, userId: string, 
 }
 
 /** A deterministic message UUID makes retries idempotent, including lost replies. */
-export async function sendVideoMessage(conversationId: string, userId: string, messageId: string, video: YouthVideo | null): Promise<void> {
+export async function sendVideoMessage(conversationId: string, userId: string, messageId: string, video: YouthVideo): Promise<void> {
+  if (!video || video.conversation_id !== conversationId || video.owner_id !== userId) throw new Error("Videon tillhör inte den här chatten.");
   const db = getSupabaseClient();
   const expected = {id:messageId,conversation_id:conversationId,sender_user_id:userId,
-    message_text:video ? "Videomeddelande" : "Min presentationsvideo",video_kind:video ? "file" : "profile",video_id:video?.id ?? null};
+    message_text:"Videomeddelande",video_kind:"file",video_id:video.id};
   const {error} = await db.from("messages").insert(expected);
   if (!error) return;
   const {data} = await db.from("messages").select("id,conversation_id,sender_user_id,video_kind,video_id").eq("id",messageId).maybeSingle();
