@@ -54,8 +54,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
-| 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Ej påbörjad | — |
-| 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | Ej påbörjad | — |
+| 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Pågår | Vilgot / Codex |
+| 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | Pågår | Vilgot / Codex |
 | 13 | [N16](#n16) | P1 | Antal lediga platser och nytt lyft efter bekräftad anställning | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
@@ -443,9 +443,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 11
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l04-recruitment-20261018`, reserverad före kodarbete 2026-10-18. L04: status, rättelse, samtidighet och båda rollerna. F06: korrekt information om nuvarande kostnadsfria läge; framtida avgiftsbeslut återstår.
 - Åtgärd: Beskriv den avsedda avgiften, vad som utlöser den, vem som faktureras och när. Gör gratis konto och eventuell avgift vid anställning begripliga på prissidan och före anställningsregistrering. Förklara också en aktiv rekrytering och 20 kandidater, inklusive vad som händer vid gränsen.
 - Klar när: Företaget kan förstå hela prismodellen innan ett avgiftsutlösande steg. Visa bara gränser som faktiskt gäller.
 - Implementerat: —
@@ -899,9 +899,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 12
 - Typ: Befintligt flöde / tidigare beslut som ska verifieras
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l04-recruitment-20261018`, reserverad före kodarbete 2026-10-18. L04: status, rättelse, samtidighet och båda rollerna. F06: korrekt information om nuvarande kostnadsfria läge; framtida avgiftsbeslut återstår.
 - Åtgärd: Inventera redan byggt flöde för företagets registrering, ungdomens bekräftelse eller invändning, slutstatus och historik. Förtydliga skillnaden mellan väntande och bekräftad anställning. Koppla fakturering först till beslutad utlösande händelse. Kontrollera tidigare beslutad åtgärd mot utebliven registrering och eventuell profilmarkering för bekräftat jobb; bestäm eventuell belöning separat innan den utlovas. Samordna med F06/F17.
 - Klar när: Båda rollerna förstår och kan genomföra bekräftelse eller invändning. Status, historik och fakturautlösning överensstämmer; företaget kan inte ensamt skapa en felaktigt bekräftad anställning.
 - Implementerat: —
