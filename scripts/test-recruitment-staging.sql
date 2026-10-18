@@ -28,7 +28,7 @@ begin
   select m.* into fixture from public.matches m
     join public.company_profiles cp on cp.user_id=m.company_user_id
     join public.conversations c on c.match_id=m.id
-    where m.status='matched' and cp.verification_status='verified'
+    where m.status='matched' and cp.verification_status='verified' and cp.company_name ilike '%QA%'
       and not public.is_admin_account(m.youth_user_id)
       and not public.users_are_blocked(m.company_user_id,m.youth_user_id)
       and not exists(select 1 from public.employment_records e where e.match_id=m.id)
@@ -41,6 +41,14 @@ begin
   perform set_config('mnw.test_fixture',json_build_object('match',fixture.id,'job',fixture.job_id,'company',fixture.company_user_id,'youth',fixture.youth_user_id,'company_b',company_b,'youth_b',youth_b,'admin',admin_id)::text,true);
 end; $$;
 create function pg_temp.fixture(key text) returns uuid language sql as $$ select (current_setting('mnw.test_fixture')::jsonb->>key)::uuid; $$;
+
+-- Snapshot includes only reviewed business facts, never client-supplied ownership.
+create function pg_temp.reviewed_payload(payload jsonb) returns jsonb language sql as $$
+  select payload || jsonb_build_object('expected_employment',coalesce((
+    select jsonb_build_object('role_name',role_name,'start_date',start_date::text,'response',response)
+    from public.employment_records where match_id=pg_temp.fixture('match')
+  ),'null'::jsonb));
+$$;
 
 -- An unanswered new match also gets an employer followup after fourteen days.
 insert into public.recruitment_followups(match_id,opened_at) values(pg_temp.fixture('match'),now()-interval '15 days')
@@ -82,8 +90,13 @@ select pg_temp.assert_test('other company cannot list this match',not exists(sel
 select pg_temp.actor(pg_temp.fixture('company'));
 select pg_temp.assert_test('employer cannot read private report text',(select r->>'report_details' is null from jsonb_array_elements(public.get_recruitment_records()) r where r->>'match_id'=pg_temp.fixture('match')::text));
 select pg_temp.expect_error('legacy endpoint cannot bypass employment fields','select public.mark_match_hired('||quote_literal(pg_temp.fixture('match'))||'::uuid)');
-select public.recruitment_action('register',pg_temp.fixture('match'),'{"role_name":"Rollback test assistant","start_date":"2026-10-09"}');
+select public.recruitment_action('register',pg_temp.fixture('match'),pg_temp.reviewed_payload('{"role_name":"Rollback test assistant","start_date":"2026-10-09"}'::jsonb));
 select pg_temp.assert_test('employer registration marks hired',(select status='hired' from public.matches where id=pg_temp.fixture('match')));
+select pg_temp.actor(pg_temp.fixture('youth'));
+select pg_temp.assert_test('registration notification targets exact candidate match',
+  exists(select 1 from public.notifications where user_id=pg_temp.fixture('youth') and title='Granska din anställning'
+    and href='/chats?match='||pg_temp.fixture('match')::text and created_at>=transaction_timestamp()));
+select pg_temp.actor(pg_temp.fixture('company'));
 select pg_temp.assert_test('registration alone grants no badge',jsonb_array_length(public.get_verified_experience(pg_temp.fixture('youth'),pg_temp.fixture('job')))=0);
 select pg_temp.expect_error('employer cannot approve for youth','select public.recruitment_action(''respond'','||quote_literal(pg_temp.fixture('match'))||'::uuid,''{"response":"approved"}'')');
 select pg_temp.expect_error('employer cannot mark fee paid','update public.employment_records set paid_at=now() where match_id='||quote_literal(pg_temp.fixture('match'))||'::uuid');
@@ -95,10 +108,23 @@ select pg_temp.assert_test('other youth cannot read employment row',not exists(s
 select pg_temp.expect_error('other youth cannot read verified experience','select public.get_verified_experience('||quote_literal(pg_temp.fixture('youth'))||'::uuid)');
 
 select pg_temp.actor(pg_temp.fixture('youth'));
-select public.recruitment_action('respond',pg_temp.fixture('match'),'{"response":"disputed"}');
+select public.recruitment_action('respond',pg_temp.fixture('match'),pg_temp.reviewed_payload('{"response":"disputed"}'::jsonb));
 select pg_temp.assert_test('dispute clears verification',jsonb_array_length(public.get_verified_experience(pg_temp.fixture('youth')))=0);
 select pg_temp.actor(pg_temp.fixture('company'));
-select public.recruitment_action('register',pg_temp.fixture('match'),'{"role_name":"Corrected rollback role","start_date":"2026-10-10"}');
+select public.recruitment_action('register',pg_temp.fixture('match'),pg_temp.reviewed_payload('{"role_name":"Corrected rollback role","start_date":"2026-10-10"}'::jsonb));
+-- The youth had reviewed the original pending facts before the employer corrected them.
+select pg_temp.actor(pg_temp.fixture('youth'));
+select pg_temp.expect_error('stale youth approval is rejected',
+  'select public.recruitment_action(''respond'','||quote_literal(pg_temp.fixture('match'))||'::uuid,''{"response":"approved","expected_employment":{"role_name":"Rollback test assistant","start_date":"2026-10-09","response":"pending"}}'')','40001');
+select pg_temp.expect_error('missing youth snapshot is rejected',
+  'select public.recruitment_action(''respond'','||quote_literal(pg_temp.fixture('match'))||'::uuid,''{"response":"approved"}'')','40001');
+select pg_temp.assert_test('stale approval does not grant verification',
+  (select response='pending' and not show_on_profile and not include_in_cv and approved_at is null from public.employment_records where match_id=pg_temp.fixture('match')));
+select pg_temp.actor(pg_temp.fixture('company'));
+select pg_temp.expect_error('stale employer correction is rejected',
+  'select public.recruitment_action(''register'','||quote_literal(pg_temp.fixture('match'))||'::uuid,''{"role_name":"Stale overwritten role","start_date":"2026-10-11","expected_employment":{"role_name":"Rollback test assistant","start_date":"2026-10-09","response":"pending"}}'')','40001');
+select pg_temp.assert_test('rejected corrections preserve the latest facts',
+  (select role_name='Corrected rollback role' and start_date=date '2026-10-10' from public.employment_records where match_id=pg_temp.fixture('match')));
 select pg_temp.assert_test('correction requires new youth approval',(select response='pending' from public.employment_records where match_id=pg_temp.fixture('match')));
 
 -- Advance pending date solely inside this rollback transaction.
@@ -108,16 +134,16 @@ select private.process_recruitment_reminders();
 select pg_temp.assert_test('pending employment gets reminder',(select reminder_sent_at is not null from public.recruitment_followups where match_id=pg_temp.fixture('match')));
 select pg_temp.assert_test('pending employment escalates after seven days',(select escalated_at is not null from public.recruitment_followups where match_id=pg_temp.fixture('match')));
 select private.process_recruitment_reminders();
-select pg_temp.assert_test('reminder is not duplicated',(select count(*)=1 from public.notifications where user_id=pg_temp.fixture('youth') and title='Påminnelse om anställning' and href='/chats?job='||pg_temp.fixture('job')::text and created_at>=transaction_timestamp()));
+select pg_temp.assert_test('reminder is not duplicated',(select count(*)=1 from public.notifications where user_id=pg_temp.fixture('youth') and title='Påminnelse om anställning' and href='/chats?match='||pg_temp.fixture('match')::text and created_at>=transaction_timestamp()));
 
 set local role authenticated;
 select pg_temp.actor(pg_temp.fixture('youth'));
-select public.recruitment_action('respond',pg_temp.fixture('match'),'{"response":"approved","show_on_profile":false,"include_in_cv":false}');
+select public.recruitment_action('respond',pg_temp.fixture('match'),pg_temp.reviewed_payload('{"response":"approved","show_on_profile":false,"include_in_cv":false}'::jsonb));
 select pg_temp.assert_test('youth can approve without public sharing',(select response='approved' and not show_on_profile and not include_in_cv from public.employment_records where match_id=pg_temp.fixture('match')));
 select pg_temp.actor(pg_temp.fixture('company'));
 select pg_temp.assert_test('hidden experience is not disclosed',jsonb_array_length(public.get_verified_experience(pg_temp.fixture('youth'),pg_temp.fixture('job')))=0);
 select pg_temp.actor(pg_temp.fixture('youth'));
-select public.recruitment_action('respond',pg_temp.fixture('match'),'{"response":"approved","show_on_profile":true,"include_in_cv":true}');
+select public.recruitment_action('respond',pg_temp.fixture('match'),pg_temp.reviewed_payload('{"response":"approved","show_on_profile":true,"include_in_cv":true}'::jsonb));
 select pg_temp.assert_test('approved experience exists without payment',(select response='approved' and show_on_profile and include_in_cv and paid_at is null from public.employment_records where match_id=pg_temp.fixture('match')));
 select pg_temp.actor(pg_temp.fixture('company'));
 select pg_temp.assert_test('authorized company sees approved shared experience',exists(select 1 from jsonb_array_elements(public.get_verified_experience(pg_temp.fixture('youth'),pg_temp.fixture('job'))) r where r->>'match_id'=pg_temp.fixture('match')::text));

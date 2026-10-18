@@ -8,6 +8,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
+import { chatRequestKey, isRequestedConversation } from "@/lib/chat-navigation";
 import { getMyMatches } from "@/lib/matching";
 import { RecruitmentPanel } from "@/components/recruitment-panel";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
@@ -18,7 +19,7 @@ import { UiIcon } from "@/components/ui-icon";
 import styles from "./chat.module.css";
 
 interface ConvDisplay { conv: ConversationSummary; otherName: string; jobTitle?: string; status: string; matchId?: string }
-const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: "Anställd", rejected: "Avslutad", cancelled: "Avslutad" };
+const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: "Anställning registrerad", rejected: "Avslutad", cancelled: "Avslutad" };
 const initials = (name: string) => name.split(" ").filter(Boolean).slice(0,2).map(word => word[0]).join("").toUpperCase();
 function messageTime(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", { hour:"2-digit", minute:"2-digit" }).format(date); }
 function messageDate(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", {day:"numeric", month:"long"}).format(date); }
@@ -38,7 +39,7 @@ function ChatsPageContent() {
   const [blocking, setBlocking] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
-  const query=useSearchParams(), requestedJob=query.get("job"), requestedConversation=query.get("conversation");
+  const query=useSearchParams(), requestedJob=query.get("job"), requestedConversation=query.get("conversation"), requestedMatch=query.get("match");
   const openedRequest=useRef("");
   useEffect(()=>{const input=composerRef.current;if(input){input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;}},[selectedId,drafts]);
   // A separate recording page must not discard an unfinished chat message.
@@ -57,12 +58,13 @@ function ChatsPageContent() {
       const contactMap = new Map(contacts.map(item => [item.conversation_id,item])), matchMap = new Map(matches.map(item => [item.id,item]));
       const display=convs.map(conv => ({conv, otherName:contactMap.get(conv.id)?.other_name || "Kontakt", jobTitle:contactMap.get(conv.id)?.job_title || undefined, status:matchMap.get(conv.match_id ?? "")?.status || "matched", matchId:conv.match_id || undefined}));
       setConversations(display);
-      const requestKey=requestedConversation || requestedJob || "";
-      const target=display.find(item=>requestedConversation ? item.conv.id===requestedConversation : requestedJob && item.conv.job_id===requestedJob);
+      const request={conversationId:requestedConversation,matchId:requestedMatch,jobId:requestedJob};
+      const requestKey=chatRequestKey(request);
+      const target=display.find(item=>isRequestedConversation(item.conv,request));
       if(target && openedRequest.current!==requestKey) {openedRequest.current=requestKey;selectedRef.current=target.conv.id;setSelectedId(target.conv.id);setLoadedId("");setMessageError("");}
       setListState("ready"); setError("");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte läsa dina chattar."); if(showLoading) setListState("error"); }
-  }, [requestedJob,requestedConversation]);
+  }, [requestedJob,requestedConversation,requestedMatch]);
   useEffect(() => { if(user && !cvLoading && (profile?.role !== "youth" || cvCompleted)) void loadConversations(); },[user,profile?.role,cvLoading,cvCompleted,loadConversations]);
   useEffect(() => {
     if(!selectedId) return;

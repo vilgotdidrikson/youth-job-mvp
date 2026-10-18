@@ -44,8 +44,6 @@ export const pricingPlans: Record<PricingAudience, PricingPlan[]> = {
       price: "0 kr",
       priceSuffix: "/mån",
       features: [
-        "En aktiv rekrytering",
-        "Upp till 20 kandidater",
         "Företagsprofil",
         "Publicera jobbannons",
         "Kandidatchatt efter matchning",

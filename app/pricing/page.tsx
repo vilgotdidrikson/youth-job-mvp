@@ -9,6 +9,7 @@ import {
   pricingPlans,
   type PricingAudience,
 } from "@/lib/pricing-data";
+import { CURRENT_COMPANY_OFFER } from "@/lib/current-offer";
 import { MarketingNav } from "@/components/marketing-nav";
 import "../landing.css";
 import "./pricing.css";
@@ -67,6 +68,13 @@ export default function PricingPage() {
           </article>
         ))}
       </section>
+
+      {audience === "company" && <section className="pricing-enterprise" aria-label="Priser och anställning">
+        <h2>{CURRENT_COMPANY_OFFER.title}</h2>
+        <p>{CURRENT_COMPANY_OFFER.description}</p>
+        <p>{CURRENT_COMPANY_OFFER.registration}</p>
+        <p>{CURRENT_COMPANY_OFFER.future}</p>
+      </section>}
 
       {audience === "company" && (
         <section className="pricing-enterprise">
