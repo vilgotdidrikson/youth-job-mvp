@@ -1,6 +1,6 @@
 # L12 – videors åtkomst och gallringsgrund
 
-Avgränsad leverans 2026-10-18, branch `codex/l12-video-retention-20261018`.
+Avgränsad leverans 2026-10-18, branch `codex/l12-video-retention-20261018`, [PR #73](https://github.com/vilgotdidrikson/youth-job-mvp/pull/73), kodcommit `25c7d40c79248582948caaad0b9ad94d4305f570`.
 Status: För granskning. Databasens åtkomstgräns är införd i DevStaging. Gallringsarbetaren är skriven men **inte driftsatt eller aktiverad**. N23 förblir Ej påbörjad.
 
 ## Implementerat
