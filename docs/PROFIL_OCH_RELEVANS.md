@@ -1,6 +1,6 @@
 # Jobbprofil, relevans och matchning
 
-Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservation och leveransbevis följs i `ATGARDSPLAN.md`. All utveckling sker i dev/DevStaging. Ingen premiumfunktion eller debitering aktiveras genom beslutet.
+Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservation och leveransbevis följs i `ATGARDSPLAN.md`. All utveckling sker i dev/DevStaging. Ingen premiumfunktion eller debitering aktiveras genom beslutet. Tillägget om jobbspecifikt ansökningsunderlag nedan är ett beslutat krav 2026-10-18, inte en uppgift om redan genomförd implementation eller verifiering.
 
 ## Gemensamma jobbtyper (N17)
 
@@ -24,9 +24,10 @@ Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservati
 ## Matchningsgranskning (F26)
 
 - Jämför innebörden i krav med kandidatens godkända uppgifter. ”Punktlig” och ”bra på att passa tider” är likvärdiga formuleringar. Ett yrkesnamn som fotbollstränare bevisar däremot inte punktlighet, ansvar eller ledarskap.
-- Skilj uppfyllt, uttryckligen motsagt och okänt. Saknad uppgift är aldrig samma sak som underkänd. Krav, meriter och sådant som kan läras på jobbet hålls isär.
-- Självuppgivna personliga egenskaper och godkända exempel visas med källa och tydlig karaktär av egen uppgift. De ger inte poäng tills ett nytt uttryckligt beslut fattats. Systemet intygar inte personlighet.
-- Befintlig beräkning skiljer poäng på bedömda kriterier från underlagstäckning. Granska begriplighet och risk för missvisande höga siffror med tunt underlag. Likvärdiga fakta ska ge samma bedömning oberoende av formulering eller textlängd.
+- Visa varje jobbkrav med relevanta belägg och tydlig skillnad mellan stöd, uttrycklig motsägelse och okänd uppgift. Saknad uppgift är aldrig samma sak som underkänd. Krav, meriter och sådant som kan läras på jobbet hålls isär; ett självuppgivet belägg är inte oberoende verifiering.
+- Relevanta egna exempel visas med källa och märks Självuppgivet. Likvärdiga formuleringar får förstås, men exemplen får inte bli verifierade personlighetsomdömen eller personlighetspoäng. Systemet intygar inte personlighet.
+- Låt kriterier och belägg dominera framför procenttalet. Eventuell matchprocent visas sekundärt och alltid tillsammans med täckningsgrad och förklaring av vad som faktiskt kunnat bedömas. Befintlig beräkning skiljer poäng på bedömda kriterier från underlagstäckning; detta är inte bevis på att presentationen redan följer beslutet. Granska missvisande höga siffror vid tunt underlag. Likvärdiga fakta ska ge samma bedömning oberoende av formulering eller textlängd.
+- Ingen ansökan får automatiskt nekas eller döljas på grund av matchningsgrad eller saknad video. Detta gäller även listor, filter, sorterings-/urvalslogik och servervägar; arbetsgivaren gör den mänskliga bedömningen. Ungdomens egna uttryckliga jobbfilter enligt N18 är en annan funktion.
 - Råa intervjusvar, avvisade AI-förslag, tidigare ersatta fakta och känsliga attribut får inte tillföras som kandidatmeriter. Företaget fattar beslutet. Video analyseras inte av AI.
 - Testa synonympar, negationer, motsägelser, svagt underlag, relevanta följdsvar, ändrade profiler och text utan belägg. Kontrollera både synligt underlag och verkligt API-/regelresultat. F05:s slutförande innebär inte att denna kvalitetsgranskning redan passerat.
 
@@ -34,14 +35,51 @@ Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservati
 
 | Del | Innehåll och användning |
 | --- | --- |
-| Godkänd jobbprofil | Erfarenheter, utbildning, kunskaper, språk, egna exempel, önskemål och tillgänglighet. Tillgängligt för behörig matchning enligt befintliga synlighetsregler. |
+| Godkänd jobbprofil | Ungdomens samlade godkända uppgifter. Ingen generell företagsåtkomst. Endast relevant, godkänt underlag för det aktuella jobbet används i matchning och det avgränsade ansökningsunderlaget. |
 | Grund-CV | Ett kort, generellt och granskat urval av profilens uppgifter. Samma version används tills ungdomen ändrar den. Inte automatiskt olika CV för olika ansökningar. |
 | Arbetsmaterial | Intervjusvar och ofärdiga/ogranskade förslag. Inte publicerade fakta, inte belägg i matchning. Förklara synlighet/sparning och låt användaren radera. |
 
 - Huvudflödet heter Bygg din profil. Formulär, textguide och uppladdat CV är alternativa ingångar till samma datamodell; skapa inte tre separata profiler eller dubbla språk-/erfarenhetskällor.
-- Återanvänd och utveckla befintlig faktagranskning och samordnad sparning (F02/F03). Godkännande gäller exakt aktuell version; återställ vid ändring. Visa vad som går till CV respektive bara profilen. Att godkänna en omformulering är inte oberoende verifiering av uppgiften.
+- Återanvänd och utveckla befintlig faktagranskning och samordnad sparning (F02/F03). Godkännande gäller exakt aktuell version; återställ vid ändring. Visa vad som går till CV, enbart egen profil respektive det aktuella jobbets ansökningsunderlag och matchning. Att godkänna en omformulering är inte oberoende verifiering av uppgiften.
 - Gör inte nytt konto-/profilbyggande eller frivillig förbättringshjälp till ett nytt stopp i swipeflödet. Bevara regler för när ansökan kan skickas och val att fortsätta senare.
 - Inga relevanta godkända profilfakta får försvinna för att CV:t kortas. Redan separat uppladdat CV kan avvika; skilj originaldokument och nytt genererat dokument och undvik motsägande publicerade fakta.
+
+## Jobbspecifikt ansökningsunderlag (F26/N19, beslut 2026-10-18)
+
+Den generella rutan **Mer om kandidaten** ska ersättas med ett **jobbspecifikt ansökningsunderlag**. Företaget får inte generell tillgång till hela jobbprofilen. Att uppgifter finns sparade eller har godkänts i profilen ger inte i sig rätt att visa dem för alla företag.
+
+| Företaget får se för den aktuella ansökan | Avgränsning |
+| --- | --- |
+| Ungdomens granskade CV | Det dokument/den version ungdomen granskat och valt att dela. Uppladdat CV kan innehålla mejl, telefonnummer eller bostadsadress; detta måste framgå i förhandsvisningen. |
+| Relevanta praktiska uppgifter | Exempelvis tillgänglighet, tidigaste start och ungefärligt bostadsområde. Dessa ska kunna läsas direkt som fakta utan att arbetsgivaren måste förlita sig enbart på AI. |
+| Matchningsunderlag | Jobbkrav, relevanta belägg från godkända profiluppgifter, källhänvisning och skillnad mellan stöd, uttrycklig motsägelse och okänd uppgift. |
+| Ansökningssvar och frivillig video | Endast sådant ungdomen uttryckligen delat för just den aktuella ansökan, med rätt mottagare och åtkomstkontroll. |
+
+### Bostadsområde och arbetsplats är olika uppgifter
+
+- Använd postnummer som underlag när det behövs för ungefärligt bostadsområde/närhet. Visa inte exakt bostadsadress i praktiska uppgifter, matchningsbelägg eller andra automatiskt framställda delar av ansökningsunderlaget. Lämna inte heller ut adressen via API-/databassvar eller precisa bostadskoordinater. Postnummer behöver inte exponeras ordagrant om ett ungefärligt område räcker.
+- **Arbetsplatsens adress ska finnas kvar i annonsen och på kartan**, inklusive flera arbetsplatser enligt N14. Den begränsas inte av reglerna för ungdomens bostadsadress.
+- Ett uppladdat original-CV kan självt innehålla exakt bostadsadress eller kontaktuppgifter. Förklara att den delade filens innehåll blir synligt; en dold kontaktsektion tar inte bort uppgifter ur PDF:en. Erbjud möjlighet att byta/rätta filen före delning. Lova inte automatisk maskning utan separat implementation och verifiering. Behåll ungdomens uttryckliga val att dela sitt granskade dokument.
+
+### Vad som inte ingår
+
+- Ingen generell Mer om kandidaten-vy eller åtkomst till hela jobbprofilen.
+- Inga privata utkast, råa textsamtal/intervjusvar, avvisade eller ogranskade AI-förslag eller orelaterade profiluppgifter. Dessa får inte läcka genom citerade belägg, AI-sammanfattningar, alternativa endpoints, bilagereferenser eller direkta databasfrågor.
+- Godkända egna exempel får användas när de är relevanta för jobbkravet, med märkningen Självuppgivet. De får inte omvandlas till verifierad personlighet eller personlighetspoäng.
+- Video analyseras inte av AI. Saknad video eller låg/okänd matchningsgrad får inte automatiskt neka eller dölja ansökan. N22 tar bort permanent profilvideo; N23:s ansökningsvideo är alltid frivillig och ger ingen generell profilåtkomst.
+
+### Ungdomens insyn och teknisk åtkomst
+
+- Ungdomen ska kunna förhandsvisa vad just det sökande företaget får se för den aktuella ansökan: CV-version, praktiska uppgifter, relevanta profilbelägg, uttryckligen delade svar och eventuell video. Visa även vilka godkända uppgifter som används för matchningen och skillnaden mellan självuppgift, belägg och bedömning.
+- Förhandsvisningen ska spegla verkligt delat innehåll, inte bara en förenklad UI-bild. Ändrade fakta eller delningar måste hanteras konsekvent så att förhandsvisning, CV och företagsunderlag inte motsäger varandra. Dokumentera hur redan skickat underlag uppdateras/versioneras innan detta byggs.
+- Definiera en uttrycklig tillåten uppsättning jobbspecifika fält och kontrollera mottagare, företag, jobb och ansökan på server-/databasnivå. Returnera inte hela profilraden till klienten för lokal filtrering. Begränsningen ska omfatta API:er, RPC:er, direkta databasfrågor/RLS och dokument-/videolänkar, även äldre alternativa vägar.
+- Intern matchningsbehandling ska också använda relevant, godkänt underlag; den är inte ett skäl att lämna ut hela profilen. Varken råa samtal eller dolda profilfält får bli en bakväg in i företagsvyn genom AI-resultatet.
+
+### Återstående implementation och verifiering
+
+Besluten ovan är krav. Denna dokumentändring bygger inte om UI/API, ändrar inga databasregler och verifierar inte att befintlig produkt redan uppfyller kraven. F26 äger matchning/presentation; N19 äger profilfakta, delningsurval och förhandsvisning. L05 verifierar åtkomstgränser, L07 hela flödet och L09 CV/PDF; N22/N23 styr video.
+
+Före Klar ska testfall visa rätt underlag för rätt ansökan och neka anonym, annat företag och fel jobb/ansökan. Kontrollera verkliga nätverkssvar, direkt databas-/RPC-åtkomst och privata filvägar, inte bara dolda UI-fält. Testa att råa/avvisade/orelaterade uppgifter och exakt bostadsadress inte läcker i strukturerat underlag eller AI-belägg; hantera original-CV med kontaktuppgifter enligt delningsförhandsvisningen. Verifiera direkt läsbara praktiska fakta, självuppgiftsmärkning, sekundär procent med täckningsgrad och att låg/okänd matchning samt avstående från video aldrig automatiskt stoppar eller döljer en ansökan. Kontrollera separat att arbetsplatsens adresser fortfarande syns korrekt i annons/karta.
 
 ## CV-mall och kvalitet (N19/L09)
 
@@ -65,7 +103,7 @@ Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservati
 
 - Valfri Få förbättringsförslag efter uppladdning; befintlig uppladdning ska kunna bli klar utan granskningstjänsten.
 - Ge några konkreta tips om saknade arbetsuppgifter, otydliga perioder/språknivåer, struktur och upprepningar. Ställ frågor i stället för att hitta på svar. Begränsa återkopplingens mängd och prioritera värdet.
-- Behåll originalet. Godkända kompletteringar kan tillföras profilen, ett nytt CV skapas bara genom aktivt val. Ingen tyst ersättning av originalfil eller inaktuella fakta från äldre dokument.
+- Behåll originalet. Godkända kompletteringar kan tillföras profilen, ett nytt CV skapas bara genom aktivt val. Ingen tyst ersättning av originalfil eller inaktuella fakta från äldre dokument. Uppmärksamma kontaktuppgifter/bostadsadress i uppladdade CV och använd samma förhandsvisning av verkligt delat innehåll som N19; dokumentets innehåll skyddas inte genom att dölja separata kontaktfält.
 - Återanvänd privat PDF-läsning; redovisa läsbegränsningar och skannade/oläsbara filer. Ett lyckat uppladdningsanrop är inte ett bevis på lyckad genomläsning.
 
 ## Senare – inga aktiva bygguppdrag

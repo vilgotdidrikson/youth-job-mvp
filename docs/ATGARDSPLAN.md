@@ -21,6 +21,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ### Reviderad produktinriktning – beställt 2026-10-18
 
+- Beslutat dokumenttillägg: Ersätt Mer om kandidaten med jobbspecifikt ansökningsunderlag enligt F26/N19 och docs/PROFIL_OCH_RELEVANS.md. Visa granskat CV, relevanta direkt läsbara praktiska fakta, källgrundade kriterier/belägg och uttryckligen delade ansökningssvar/frivillig video. Ingen generell företagsåtkomst till jobbprofilen, inte heller via API/databas. Ungdomen får förhandsvisa delningen och matchningens uppgiftsunderlag. Exakt bostadsadress utesluts från strukturerat underlag; arbetsplatsens adresser i annons/karta bevaras. Kontaktuppgifter i original-CV måste uppmärksammas. Beslutet är inte implementerat eller säkerhetsverifierat genom denna dokumentuppdatering (`codex/f26-n19-application-plan-20261018`).
+
 - Beslut och acceptanskriterier: `docs/PROFIL_OCH_RELEVANS.md`. Framtidsidéer finns i det befintliga dokumentet MatchnWork-Idebank.md; de aktiveras inte genom denna plan.
 - N16 ersätter det gamla kravet på antal tjänster och automatiskt lyft. N17 → N18 ger gemensamma jobbtyper före relevans; F26 granskar kärnmatchningen; N19 → N20/N21 ger gemensam profilgrund före nya AI-ingångar. Delordning 13.1–13.6 läggs före återstående ordinarie lista enligt beställningen; övriga uppgifters status ändras inte.
 - Reserverat före kodarbete: N16, Vilgot / Codex, `codex/n16-annonsflode-20261018`. Första leveransen omfattar bara slopat platskrav; övriga nya punkter reserveras separat vid byggstart.
@@ -614,6 +616,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Lägg tydliga ingångar till befintlig integritetsinformation, AI-användning, villkor och kontakt på publika sidor och vid registrering samt konsekvent i båda rollerna. Förklara hur CV och profil används.
 - Klar när: Relevant information och hjälp är åtkomliga där användaren fattar beslut; den nödvändiga saktexten är genomgången.
+- Tillägg 2026-10-18: Förklara skillnaden mellan egen jobbprofil, jobbspecifikt delat ansökningsunderlag och uppgifter som används i matchningen. Förklara självuppgivna exempel, eventuell sekundär procent/täckningsgrad och kontaktuppgifter i uppladdade CV. Samordna med N19:s förhandsvisning; generell företagsåtkomst till profil får inte utlovas.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -968,6 +971,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Inventera blockering, rapportering, företagsverifiering och adminhantering innan ny kod skrivs. Kontrollera att rapporter kan följas upp och att blockering påverkar kommunikation som avsett. Kör negativa åtkomsttester med egna ungdoms- och företagskonton: andra profiler, ansökningar, privata CV/video, matchningar och chattar samt pausade/stängda jobb. Lägg till verkligt saknade delar och bevara RLS.
 - Klar när: Obehörig åtkomst nekas, rapporter kan hanteras av rätt administratör och blockerade konton kan inte fortsätta den kommunikation som spärren avser.
+- Tillägg 2026-10-18 (F26/N19): Verifiera att företaget bara når jobbspecifikt ansökningsunderlag, inte hela jobbprofilen. Testa verkliga API-/RPC-svar, direkta databasfrågor/RLS och privata CV-/videolänkar med anonym, fel företag och fel jobb/ansökan. Kontrollera även äldre alternativa åtkomstvägar och AI-belägg: inga privata utkast, råa textsamtal, avvisade AI-förslag, orelaterade profilfält eller exakt bostadsadress i strukturerat underlag. Original-CV kan innehålla kontaktuppgifter och ska motsvara ungdomens granskade delning. Dold UI är inte åtkomstkontroll. Dessa nya kontroller är beställda, inte genomförda.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1000,6 +1004,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Kontrollera uppladdat PDF-CV, behörig visning före match och exporterat CV. Granska faktisk PDF-layout med kort och långt innehåll, sidbrytningar, svenska tecken och läsbarhet. En startad nedladdning räcker inte som layoutverifiering.
 - Klar när: Uppladdat och genererat CV kan öppnas av rätt användare och PDF:en är läsbar utan klippt text eller felaktiga sidbrytningar.
+- Tillägg 2026-10-18 (N19/N21): Förhandsvisa den faktiskt delade CV-versionen, även uppladdad original-PDF med mejl, telefon eller bostadsadress. Förklara att sådant innehåll blir synligt i dokumentet och låt ungdomen byta/rätta filen före delning; dold kontaktsektion räcker inte. Påstå inte automatisk PDF-maskning. Testa behörighet och att dokumentet motsvarar delningsförhandsvisningen; detta tillägg är inte verifierat ännu.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1032,6 +1037,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Kör med egna fiktiva konton: ny ungdom och nytt företag, verifiering före/efter adminbeslut, annonsutkast/AI/bild/publicering/redigering/paus/stängning, intresse före/efter CV, kandidater/filter/CV före match/analys/beslut, match/chatt/video/notiser och bekräftad eller invänd anställning med testfaktura. Kontrollera kvarstående och återkommande status efter omladdning. Dokumentera faktiskt testat och skilj verktygsproblem från produktfel.
 - Klar när: Kärnflödet fungerar genom båda rollerna och admin utan verkliga ärenden eller betalningar; inga öppna blockerande fel återstår.
+- Tillägg 2026-10-18: Verifiera ungdomens delningsförhandsvisning mot företagets faktiska jobbspecifika underlag och nätverkssvar. Praktiska fakta ska gå att läsa utan AI. Testa låg/okänd matchning, avstå/ingen video och kamera-/uppladdningsfel: ansökan skickas och förblir synlig. Kontrollera att arbetsplatsens adress/flera adresser fortsatt fungerar i annons och karta. Ingen generell Mer om kandidaten-vy får exponera hela jobbprofilen. N22/N23 gäller; testfallen är ännu inte genomförda.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1103,8 +1109,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
-- Åtgärd: Granska faktiskt kriterieflöde, AI-instruktioner, regler, belägg och beräkning; F05 täckte teknisk leverans, inte detta kvalitetskrav. Förstå likvärdiga formuleringar utan nya sakpåståenden. Skilj uppfyllt, uttrycklig motsägelse och okänt. Personliga egenskaper visas som självuppgivna med källa och hålls utanför poäng tills annat beslut fattas.
-- Klar när: Synonympar som punktlig/bra på att passa tider visas rättvist utan verifieringspåstående. Fotbollstränare ger inte automatiskt punktlighet, ansvar eller ledarskap. Saknad uppgift är inte underkänd. Bedömda kriterier och täckningsgrad visas separat; mer text ger inte i sig bättre poäng. Inaktuella/ogranskade AI-förslag och känsliga attribut används inte.
+- Åtgärd: Granska faktiskt kriterieflöde, AI-instruktioner, regler, belägg och beräkning; F05 täckte teknisk leverans, inte detta kvalitetskrav. Ersätt den generella rutan Mer om kandidaten med jobbspecifikt ansökningsunderlag tillsammans med N19. Låt jobbkrav, relevanta belägg från godkända uppgifter och skillnaden stöd/uttrycklig motsägelse/okänd dominera. Eventuell matchprocent visas sekundärt tillsammans med täckningsgrad. Förstå likvärdiga formuleringar utan nya sakpåståenden. Märk egna exempel som självuppgivna, aldrig verifierade personlighetsomdömen eller personlighetspoäng. Använd bara relevant godkänt underlag; läck inte hela profilen genom AI-resultat. Ingen ansökan nekas eller döljs automatiskt på grund av matchningsgrad eller saknad video.
+- Klar när: Synonympar som punktlig/bra på att passa tider återges rättvist med självuppgivet belägg. Fotbollstränare ger inte automatiskt punktlighet, ansvar eller ledarskap. Saknad uppgift är okänd, inte underkänd. Kriterier/belägg är primära, eventuell procent sekundär med täckningsgrad; mer text ger inte i sig bättre poäng. Inaktuella/ogranskade/avvisade AI-förslag, råa textsamtal, orelaterade profiluppgifter och känsliga attribut används inte. Företagsunderlaget har rätt jobb-/ansökningsscope även via API/databas enligt L05; ungdomen ser vilka uppgifter som används. Testa låg/okänd matchning och ingen/nekad video: ansökan är fortsatt synlig och skickas enligt ordinarie behörighets-/CV-regler.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
 - Implementerat: —
 - Verifierat: —
@@ -1119,8 +1125,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —
-- Åtgärd: Gör Bygg din profil till övergripande flöde. Återanvänd F02/F03/F15/F18 och separera godkända profilfakta, CV-urval och opublicerat arbetsmaterial. Ett generellt granskat grund-CV, normalt en sida, upp till två vid behov; fullständigare profil behåller relevanta godkända uppgifter. Ingen tyst kapning vid 500 ord.
-- Klar när: Alla skapande-/redigeringsvägar använder samma granskningskrav och aktuella faktakällor. Ungdomen kan se vad som finns i profil respektive CV, välja/rätta urval, pausa och fortsätta. CV håller mallen och lång PDF är läsbar enligt L09. Profilönskemål/tillgänglighet behöver inte fylla CV:t; opublicerat arbetsmaterial används inte i matchning.
+- Åtgärd: Gör Bygg din profil till övergripande flöde. Återanvänd F02/F03/F15/F18 och separera godkända profilfakta, CV-urval och privat arbetsmaterial. Ett generellt granskat grund-CV, normalt en sida, upp till två vid behov; ingen tyst kapning vid 500 ord. Företaget får ett jobbspecifikt ansökningsunderlag, inte generell tillgång till hela jobbprofilen: granskat CV, relevanta direkt läsbara praktiska uppgifter (tillgänglighet, tidigaste start, ungefärligt bostadsområde), F26:s kriterier/belägg och svar/frivillig video uttryckligen delade för aktuell ansökan. Använd postnummer vid behov, inte exakt bostadsadress. Bevara arbetsplatsens adress i annons/karta. Låt ungdomen förhandsvisa verklig delning och förstå vilka godkända uppgifter som används i matchningen, inklusive kontaktuppgifter som kan finnas i uppladdat CV. Begränsa åtkomsten även i API/RPC/databas/RLS och privata fillänkar; returnera inte hela profilrader för klientfiltrering.
+- Klar när: Alla skapande-/redigeringsvägar använder samma granskningskrav och aktuella faktakällor. Ungdomen kan välja/rätta CV-urval, pausa/fortsätta och förhandsvisa delat ansökningsunderlag för rätt jobb inklusive PDF-innehåll/kontaktuppgifter. Dokumentera hantering av ändringar/versioner av redan skickat underlag. CV är kort/läsbart enligt L09; fler godkända fakta kan finnas i egen profil utan generell företagsåtkomst. Praktiska fakta är läsbara utan AI. Privata utkast, råa textsamtal, avvisade/ogranskade AI-förslag, orelaterade uppgifter och exakt bostadsadress läcker inte genom strukturerade företagsdata eller AI-belägg; original-CV hanteras med uttrycklig granskad delning. L05:s negativa API-/databastester passerar. Låg matchningsgrad/saknad video stoppar eller döljer inte ansökan.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
 - Implementerat: —
 - Verifierat: —
@@ -1138,6 +1144,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Åtgärd: Erbjud valfritt textsamtal med en fråga åt gången, relevanta öppna följdfrågor, hoppa över och fortsätt senare. Samma profilmodell som N19 och vanliga formuläret. Hjälp mig utveckla texten öppnar lokalt i avsnittet, inte en kedja av modaler. Återanvänd relevanta frågeområden från avstängd röstfunktion utan att aktivera ljud.
 - Klar när: Guiden undviker upprepade/ledande frågor, håller isär erfarenheter och producerar ett användbart utkast. Förslag kan godkännas/ändras/avvisas; nya lärdomar/egenskaper förs inte in utan bekräftelse. Godkännande gäller aktuell text, återställs efter ändring och krävs före profil-/CV-publicering och matchningsanvändning. Mobil med tangentbord och avbrott fungerar.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Tillägg 2026-10-18: Råa textsamtal, privata utkast och avvisade AI-förslag stannar utanför företagets underlag och matchning. Endast godkända relevanta fakta kan ingå enligt N19/F26; guiden ska hjälpa ungdomen förstå delningen utan att tillföra generell profilåtkomst.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1154,6 +1161,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Åtgärd: Behåll original-PDF och erbjud Få förbättringsförslag för struktur, tydlighet, upprepningar och saknade relevanta uppgifter. Ge konkreta frivilliga frågor utan att fylla i svar. Godkända kompletteringar kan läggas i profilen och användaren väljer om nytt grund-CV ska skapas. Återanvänd PDF-läsning och åtkomstkontroll.
 - Klar när: Originalet ersätts aldrig utan uttryckligt val. Saknade fakta blir förslag/frågor, inte publicerade antaganden. Oåtkomlig/oläsbar/skannad PDF hanteras tydligt utan falskt genomläsningsbesked. Samma granskningskrav som N19/N20 gäller; uppladdning kräver inte AI-genomläsning.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
+- Tillägg 2026-10-18: Uppladdat CV kan innehålla kontaktuppgifter/exakt bostadsadress. Samordna granskad dokumentdelning, tydlig information och förhandsvisning med N19/L09; dolda profilfält maskerar inte PDF-innehåll. Godkända kompletteringar ger inte generell företagsåtkomst till profilen.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1173,6 +1181,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - Branch/PR: —
 - Åtgärd: Ta bort profilvideo från ungdomens profil, profilbyggandets steg/framsteg, kandidatvyer och chattens val Dela profilvideo. Uppdatera texter och nästa-steg-länkar så CV följs av övriga profildelar utan videosteg. Stäng även gamla direktlänkar och backendmöjligheten att skapa/ersätta eller hämta profilvideo som del av produkten; enbart dold UI räcker inte. Behåll inspelning/uppladdning av separat chattvideo. Inventera befintliga profilfiler, profilpekare och gamla chattdelningar och definiera tydlig avveckling/städning med hänsyn till behörighet och rapporterat innehåll. Ingen blind radering av delad videolagring, chattar eller migrationshistorik.
 - Klar när: Profilvideo kan varken skapas, visas eller räknas som saknad i profil, kandidatvy eller profilguide. Gamla URL:er/API-vägar återinför inte funktionen. Separat chattinspelning/uppladdning/uppspelning fungerar fortsatt för rätt deltagare. Gamla profilvideodelningar har begriplig status och påverkar inte separata chattfiler. Datahantering/städning och faktisk verifiering dokumenteras.
+- Samordning 2026-10-18: Det jobbspecifika ansökningsunderlaget i F26/N19 får inte innehålla permanent profilvideo eller öppna generell profilåtkomst. Borttagningen ska gälla även backend/äldre direktvägar; separat frivillig ansökningsvideo hanteras av N23.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: Kodändring och verifiering; ingen profilvideo har tagits bort genom planuppdateringen.
@@ -1188,6 +1197,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - Branch/PR: —
 - Åtgärd: Företaget kan lägga till en kort jobbspecifik videoförfrågan med instruktioner i annonsen. Video är alltid frivillig och får inte vara ett absolut ansökningskrav, inte heller via framtida premium. Ungdomen kan spela in/ladda upp och granska före uttryckligt skickande, välja Avstå eller helt lämna förfrågan obesvarad. Ansökan skickas till företaget enligt ordinarie CV-/behörighetsregler oavsett video. Intresse/swipe får inte stoppas av ett videoval, inspelning, kameraavslag, misslyckad uppladdning eller avbruten navigering. Erbjud komplettering efter skickad ansökan, med diskret ingång/notis i befintligt ansökningsflöde. Gör ingen väntande-videostatus till spärr för företagsvisning, matchning eller chatt.
 - Klar när: Företagets instruktioner kan sparas, redigeras och ses av rätt sökande. Testa skicka med video, avstå, inget svar, kameran nekad, fel vid uppladdning och avbrott: ansökan skickas i samtliga fall när ordinarie ansökningskrav är uppfyllda, exakt en gång. Senare videokomplettering behåller samma ansökan utan dubbletter och blir tillgänglig endast för behörig mottagare. Ingen automatisk bortsortering, poängsänkning eller sämre ansökningsstatus för avstående/saknad video. Ingen AI-analys av video. Åtkomst, blockering, borttagning och eventuell chattreferens fungerar utan att återinföra permanent profilvideo.
+- Samordning 2026-10-18 (F26/N19): Visa bara video och svar som ungdomen uttryckligen delat för aktuell ansökan, även i API/databas och fillänkar. Ungdomen kan förhandsvisa delningen. Saknad video får inte automatiskt neka eller dölja ansökan eller påverka personlighetspoäng; ingen AI-analys av video. Ingen generell företagsåtkomst till jobbprofilen.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: Produktkod och verifiering. Återanvänd privat videohantering; besluta och dokumentera tydlig lagringstid för ansökningsvideo innan den aktiveras. Ingen premiumkoppling eller debitering beställd. N23 ersätter den äldre idén om obligatoriska videokrav; den frivilliga funktionen är nu beställd, inte bara en pausad premiumidé.
