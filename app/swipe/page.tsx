@@ -1,4 +1,5 @@
 "use client";
+import { jobCategoryFilterValues, jobMatchesCategory } from "@/lib/job-categories";
 
 import { getJobWorkplaces, jobMatchesCity } from "@/lib/job-workplaces";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
@@ -13,8 +14,6 @@ import { swipeJob } from "@/lib/matching";
 import { getSavedJobs, getYouthFlowState, saveApplicationDraft, setJobSaved } from "@/lib/youth-job-flow";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
-const EMPLOYMENT_FORMS = ["Heltid", "Deltid", "Sommarjobb", "Helgjobb", "Extraarbete", "Extra vid behov", "Praktik", "Engångsjobb"];
-const employmentFormKeys = new Set(EMPLOYMENT_FORMS.map((value) => value.toLocaleLowerCase("sv")));
 
 function uniqueSorted(values: string[]) {
   return [...new Map(values.map((value) => [value.trim().toLocaleLowerCase("sv"), value.trim()])).values()]
@@ -81,12 +80,12 @@ function SwipePageContent() {
     cities: uniqueSorted(jobs.flatMap(job => getJobWorkplaces(job).map(place => place.city))),
     // Older listings incorrectly copied employment type to category. Do not
     // surface those values under work categories.
-    categories: uniqueSorted(jobs.map((job) => job.category).filter((value) => !employmentFormKeys.has(value.trim().toLocaleLowerCase("sv")))),
+    categories: jobCategoryFilterValues(jobs),
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
   const filteredJobs = useMemo(() => jobs.filter((job) =>
     (!city || jobMatchesCity(job, city))
-    && (!category || job.category === category)
+    && jobMatchesCategory(job, category)
     && (!employmentType || job.employment_type.split(",").some((value) => value.trim().toLocaleLowerCase("sv") === employmentType.toLocaleLowerCase("sv"))),
   ), [category, city, employmentType, jobs]);
 

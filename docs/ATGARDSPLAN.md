@@ -67,7 +67,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
 | 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | För granskning | Vilgot / Codex |
-| 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | Ej påbörjad | — |
+| 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | För granskning | Codex |
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | Ej påbörjad | — |
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Ej påbörjad | — |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Ej påbörjad | — |
@@ -1075,15 +1075,15 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 13.1
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Codex
+- Branch/PR: `codex/n17-job-categories-20261018`, [PR #75](https://github.com/vilgotdidrikson/youth-job-mvp/pull/75), kodcommit `07be8228c0b83f2aeab380b13f01d4e939113b33`. Reservation publicerad före kodarbete.
 - Åtgärd: Behåll egen titel; föreslå rättningsbar gemensam jobbtyp från rollens titel/beskrivning, aldrig enbart företagets bransch. Använd stabila kategori-ID:n och synonymer i annons, profilönskemål och filter. Hantera äldre fria kategorier utan dataförlust, osäkra förslag och roller som ännu saknas.
 - Klar när: Cafémedarbetare, caféjobb och cafépersonal hittas genom samma val Caféarbete; barista behåller sin inriktning. Ekonom på café blir inte caféarbete. Rättat förslag bevaras vid redigering/kopia/omladdning; okänd roll försvinner inte från flödet.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Gemensam katalog med 15 stabila kategori-ID:n/synonymer, fri titel och rättningsbar valfri klassificering (högst tre roller). Rättat/uttryckligt tomt val bevaras vid AI, kopiering, redigering och omladdning. Samma begrepp används i profilönskemål, filter och synonymtolkning; originaltexter bevaras. Additiv migrering `20261018174543_n17_job_categories.sql` införd i DevStaging. Se [N17.md](N17.md).
+- Verifierat: Kategoritester med verkliga komponentcallbacks/discovery-logik, annonskopiering, arbetsplatser, företagsnavigation, matchning, profilflöde, följdfrågor och analysarbetare passerar; TypeScript och berörd ESLint passerar. DevStaging-rollbackprov verifierar kategorigränser, ägare/främmande användare, kompatibla profiler och sparning av ID:n/fritext. Säkerhetsrådgivare oförändrad (33 WARN, 8 INFO). Webpack-build passerar med 50 sidor. PR #75 publicerad mot dev.
+- Återstår / blockerare: Inloggad visuell kontroll av publicering, AI/rättning, kopia/omladdning, befintlig annonsredigering, profilönskemål och filter på mobil/dator. Försiktiga regler kan lämna äldre breda eller okända roller under Övriga jobb tills företaget rättar; ingen titel/fritext masskrivs om. N18:s sortering/paginering är separat.
 
 <a id="n18"></a>
 ### N18 Relevant och varierat jobbflöde

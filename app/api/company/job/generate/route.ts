@@ -1,10 +1,10 @@
+import { JOB_CATEGORIES, suggestJobCategories, categoryLabel } from "@/lib/job-categories";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { OPENAI_API_BASE_URL, openaiTextOptions } from "@/lib/openai-config";
 import { requireApiUser } from "@/lib/api-auth";
 
-const JOB_CATEGORIES = ["Café/restaurang", "Butik", "Barnomsorg", "Idrott", "Event", "Lager", "Leverans", "Kundtjänst", "Administration", "Handledare", "Sociala medier", "Övrigt"] as const;
 const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"] as const;
 
 interface JobInput {
@@ -37,26 +37,10 @@ function cleanList(value: unknown, maxItems: number): string[] {
   return [...new Set(source.map((item) => cleanText(item, "", 120)).filter(Boolean))].slice(0, maxItems);
 }
 
-function inferCategory(title: string, industry: string): (typeof JOB_CATEGORIES)[number] {
-  const value = `${title} ${industry}`.toLowerCase();
-  if (/café|cafe|restaurang|kök|servit/.test(value)) return "Café/restaurang";
-  if (/butik|sälj|handel/.test(value)) return "Butik";
-  if (/barn|förskol|barnvakt/.test(value)) return "Barnomsorg";
-  if (/idrott|tränare|sport/.test(value)) return "Idrott";
-  if (/event|mässa|festival/.test(value)) return "Event";
-  if (/lager|plock|logistik/.test(value)) return "Lager";
-  if (/leverans|bud|chaufför/.test(value)) return "Leverans";
-  if (/kundtjänst|support/.test(value)) return "Kundtjänst";
-  if (/admin|kontor|assistent/.test(value)) return "Administration";
-  if (/handled|ledare/.test(value)) return "Handledare";
-  if (/sociala medier|content|innehåll/.test(value)) return "Sociala medier";
-  return "Övrigt";
-}
-
 function fallback(title: string, industry: string, existing: JobInput) {
   const role = title || "medarbetare";
   return {
-    category: JOB_CATEGORIES.includes(existing.category as (typeof JOB_CATEGORIES)[number]) ? existing.category! : inferCategory(title, industry),
+    category: cleanText(existing.category,"",80) || suggestJobCategories(title,cleanText(existing.description)).ids.map(categoryLabel).join(" / "),
     employmentType: EMPLOYMENT_TYPES.includes(existing.employmentType as (typeof EMPLOYMENT_TYPES)[number]) ? existing.employmentType! : "Deltid",
     description: cleanText(existing.description) || `Vi söker en engagerad person till rollen som ${role}${industry ? ` inom ${industry}` : ""}. Beskriv arbetsuppgifter, arbetstider och vad ni erbjuder innan publicering.`,
     benefits: cleanList(existing.benefits, 5),
@@ -73,13 +57,12 @@ function fallback(title: string, industry: string, existing: JobInput) {
 function normalizeResult(raw: unknown, safeFallback: ReturnType<typeof fallback>) {
   const value = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   const rawProfile = value.matchProfile && typeof value.matchProfile === "object" ? value.matchProfile as Record<string, unknown> : {};
-  const category = cleanText(value.category);
   const employmentType = cleanText(value.employmentType);
   const benefits = cleanList(value.benefits, 5);
   const topTraits = cleanList(rawProfile.topTraits, 5);
 
   return {
-    category: JOB_CATEGORIES.includes(category as (typeof JOB_CATEGORIES)[number]) ? category : safeFallback.category,
+    category: safeFallback.category,
     employmentType: EMPLOYMENT_TYPES.includes(employmentType as (typeof EMPLOYMENT_TYPES)[number]) ? employmentType : safeFallback.employmentType,
     description: cleanText(value.description, safeFallback.description),
     benefits: benefits.length ? benefits : safeFallback.benefits,
@@ -144,7 +127,7 @@ ${JSON.stringify({
 
 Svara ENDAST med giltig JSON i exakt denna form:
 {
-  "category": "en av ${JOB_CATEGORIES.join(", ")}",
+  "category": "en av ${JOB_CATEGORIES.map(c=>c.label).join(", ")}",
   "employmentType": "en av ${EMPLOYMENT_TYPES.join(", ")}",
   "description": "kort, varm och tydlig annonstext på svenska",
   "benefits": ["högst 5 konkreta förmåner eller erbjudanden"],
@@ -158,6 +141,7 @@ Svara ENDAST med giltig JSON i exakt denna form:
 }
 
 Regler:
+- Jobbtypen bestäms från arbetsrollen, aldrig enbart från företagets bransch. Ett uttryckligt kategorival får inte ändras.
 - Hitta inte på adress, lön, ålderskrav, körkort, utbildning, språkkrav eller tidigare erfarenhet.
 - Gör inte personliga egenskaper till absoluta krav.
 - Hitta inte på förmåner, introduktion eller erbjudanden. Använd bara angivet underlag.

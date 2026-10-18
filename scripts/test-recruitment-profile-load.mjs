@@ -7,10 +7,10 @@ import ts from "typescript";
 
 const dir = mkdtempSync(resolve(".profile-load-tests-"));
 try {
-  for (const name of ["recruitment-profile", "recruitment-profile-loader"]) {
+  for (const name of ["job-categories", "recruitment-profile", "recruitment-profile-loader"]) {
     const compiled = ts.transpileModule(readFileSync(`lib/${name}.ts`, "utf8"), {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-    }).outputText.replace('"./recruitment-profile"', '"./recruitment-profile.mjs"');
+    }).outputText.replace('"./recruitment-profile"', '"./recruitment-profile.mjs"').replace('"./job-categories"', '"./job-categories.mjs"');
     writeFileSync(`${dir}/${name}.mjs`, compiled);
   }
   const { loadRecruitmentProfile } = await import(pathToFileURL(`${dir}/recruitment-profile-loader.mjs`));

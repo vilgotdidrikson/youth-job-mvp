@@ -1,3 +1,4 @@
+import { validJobCategoryIds, type JobCategoryId } from "./job-categories";
 /** Shared profile data and validation, reusable by a future mobile client. */
 export const DAYS = { mon: "Måndag", tue: "Tisdag", wed: "Onsdag", thu: "Torsdag", fri: "Fredag", sat: "Lördag", sun: "Söndag" };
 export const PERIODS = { day: "Dagtid", evening: "Kväll", night: "Natt", holidays: "Skollov" };
@@ -5,7 +6,7 @@ export const STRENGTHS = { service: "Kundbemötande", teamwork: "Samarbete", res
 export const LANGUAGE_LEVELS = ["Grundläggande", "God", "Mycket god", "Flytande", "Modersmål"];
 export interface RecruitmentProfile {
   availability: { days: string[]; periods: string[]; startDate: string; hours: string; notes?: string };
-  preferences: { roles: string[]; locations: string[]; travelMinutes: string; motivation: string };
+  preferences: { categoryIds?: JobCategoryId[]; roles: string[]; locations: string[]; travelMinutes: string; motivation: string };
   examples: { strength: string; context: string; action: string }[];
   qualifications: { licences: string[]; tools: string[]; languages: { language: string; level: string }[] };
 }
@@ -33,7 +34,7 @@ export function validateRecruitmentProfile(raw: unknown): RecruitmentProfile {
   if (!Array.isArray(data.examples) || data.examples.length > 5 || !Array.isArray(q.languages) || q.languages.length > 8) throw new Error("För många exempel eller språk.");
   const examples = data.examples.map(value => { const e = object(value), strength = text(e.strength, 30), context = text(e.context, 200), action = text(e.action, 1000); if (!strength || !context || !action) throw new Error("Ange både situation och vad du gjorde i exemplet."); return { strength, context, action }; });
   const languages = q.languages.map(value => { const l = object(value), language = text(l.language, 60), level = text(l.level, 30); if (!language || !level) throw new Error("Ange språk och nivå."); return { language, level }; });
-  return { availability: { days, periods, startDate, hours, ...(a.notes !== undefined ? {notes:text(a.notes,1000)} : {}) }, preferences: { roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
+  return { availability: { days, periods, startDate, hours, ...(a.notes !== undefined ? {notes:text(a.notes,1000)} : {}) }, preferences: { ...(p.categoryIds !== undefined ? {categoryIds: validJobCategoryIds(p.categoryIds,15)} : {}), roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
 }
 export function readRecruitmentProfile(raw: unknown): RecruitmentProfile {
   try { return validateRecruitmentProfile(raw); } catch { return emptyRecruitmentProfile(); }

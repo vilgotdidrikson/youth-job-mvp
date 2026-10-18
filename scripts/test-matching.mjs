@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 const tmp=mkdtempSync(resolve('.matching-tests-'));
 try {
- for(const name of ['recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
+ for(const name of ['job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
   let code=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   code=code.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
   writeFileSync(`${tmp}/${name}.mjs`,code);
