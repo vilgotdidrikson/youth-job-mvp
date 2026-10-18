@@ -21,7 +21,7 @@ Flera anställningslänkar pekade dessutom på ett jobb-ID, vilket kan välja en
 
 ## Databas och införande
 
-Ny avgränsad migration: `20261018104520_l04_reviewed_employment_snapshot.sql`, skapad med Supabase CLI. Den ersätter befintliga privata funktioner med bevarad autentisering, ägar-/blockeringskontroll, låsning, sökväg och behörigheter. Inga nya tabeller, privilegier eller säkerhetsundantag. Fakturering, rabatt och betalstatus förblir inaktiva.
+Ny avgränsad migration: `20261018105704_l04_reviewed_employment_snapshot.sql`, skapad med Supabase CLI. Den ersätter befintliga privata funktioner med bevarad autentisering, ägar-/blockeringskontroll, låsning, sökväg och behörigheter. Inga nya tabeller, privilegier eller säkerhetsundantag. Fakturering, rabatt och betalstatus förblir inaktiva.
 
 Inför frontend i dev först, vänta på godkänd driftsättning och applicera sedan endast denna nya migration i DevStaging. Äldre formulär utan granskade fakta får därefter hämta om uppgifterna. Ingen automatisk replay, ändrad äldre migrationshistorik eller produktionsändring ingår. Tidigare video-migrationsavstämning ligger kvar separat.
 
@@ -35,6 +35,15 @@ Inför frontend i dev först, vänta på godkänd driftsättning och applicera s
 
 ## Kvar
 
-L04 står kvar För granskning tills införande och verifieringsnivå är redovisade. Fysisk mobil/tangentbord ligger under L08. Fullt inloggat webbtest av båda rollerna och PDF-generering efter nya val återstår om ingen QA-session finns.
+L04 står kvar För granskning tills inloggat visuellt användarflöde har verifierats. Fysisk mobil/tangentbord ligger under L08. Fullt inloggat webbtest av båda rollerna och PDF-generering efter nya val återstår om ingen QA-session finns.
 
 F06:s framtida anställningsavgift är fortsatt blockerad av affärsbeslut: exakt belopp, fakturamottagare/uppgifter, avgiftsutlösande status och betalningsvillkor behöver fastställas innan en betald version byggs/aktiveras. Ingen avgift eller faktura har uppfunnits eller aktiverats i denna leverans. N16 kan utvecklas utifrån ungdomens godkända employment-record; det är nästa större punkt efter denna leverans.
+
+
+## Infört 2026-10-18
+
+- [PR #66](https://github.com/vilgotdidrikson/youth-job-mvp/pull/66) mergad till dev som `2da6ad7c6b1b9b2dafd011ddb35102f5917a7d0e`. Vercel dev har godkänt bygge.
+- Därefter applicerades endast den nya migrationen i DevStaging. Supabase gav den version 20261018105704; den nya lokala filens namn anpassas till denna faktiskt registrerade version med oförändrat SQL-innehåll. Inga äldre migrationsnamn eller historikrader ändras.
+- Alla 60 kontroller kördes om mot införda funktioner och passerade med rollback av all QA-data. Säkerhetsrådgivaren visar samma befintliga fynd som före införandet, inga nya.
+- Publicerad företagsprissida verifierad i webbläsaren: kostnadsfritt läge, ingen faktura av registreringen och inga inaktiva antalsgränser i kortet. Ungdomsprissidan fungerar fortfarande.
+- Testwebbläsaren har ingen inloggad session. Inga verkliga anställningar, nya konton, lösenord, betalningar eller mail har hanterats i den här leveransen. Testerna av andra roller, registrering/rättelse/ny granskning och notiser var isolerade databastester.
