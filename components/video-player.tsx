@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getProfileVideo, getVideo, videoPlaybackUrl } from "@/lib/video-client";
+import { getVideo, videoPlaybackUrl } from "@/lib/video-client";
 import { UiIcon } from "./ui-icon";
 import styles from "./video.module.css";
 
-export function VideoPlayer({userId,videoId,label="Presentationsvideo"}:{userId?:string;videoId?:string;label?:string}) {
+export function VideoPlayer({videoId,label="Videomeddelande"}:{videoId?:string;label?:string}) {
   const [url,setUrl]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(false);
   const generation=useRef(0);
   useEffect(()=>{generation.current++;setUrl("");setError("");setLoading(false);
     // Sequence counter invalidates requests; it is intentionally read on cleanup.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    return()=>{generation.current++;};},[userId,videoId]);
+    return()=>{generation.current++;};},[videoId]);
   const load=async()=>{
     const run=++generation.current;setLoading(true);setError("");setUrl("");
-    try{const video=videoId?await getVideo(videoId):userId?await getProfileVideo(userId):null;
+    try{const video=videoId?await getVideo(videoId):null;
       if(!video)throw new Error("Videon har tagits bort, saknas eller är inte tillgänglig för dig.");
       const src=await videoPlaybackUrl(video);if(run===generation.current)setUrl(src);
     }catch(reason){if(run===generation.current)setError(reason instanceof Error?reason.message:"Kunde inte spela upp videon.");}

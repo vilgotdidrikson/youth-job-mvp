@@ -56,7 +56,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 2 | [F01](#f01) | P1 | Gör profilbyggaren tillgänglig | Klar | Vilgot / Codex |
 | 3 | [F02](#f02) | P1 | Stoppa påhittade fakta i AI CV | Klar | Vilgot / Codex |
 | 4 | [F03](#f03) | P1 | Samordna CV text och strukturerade profilfakta | Klar | Vilgot / Codex |
-| 4.1 | [N22](#n22) | P1 | Ta bort permanent profilvideo | Pågår | Vilgot / Codex |
+| 4.1 | [N22](#n22) | P1 | Ta bort permanent profilvideo | För granskning | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Tidigare profilvideo – ersatt av N22, historik | För granskning | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
 | 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
@@ -1177,15 +1177,15 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 4.1
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n22-remove-profile-video-20261018`; reservation före kodarbete.
 - Åtgärd: Ta bort profilvideo från ungdomens profil, profilbyggandets steg/framsteg, kandidatvyer och chattens val Dela profilvideo. Uppdatera texter och nästa-steg-länkar så CV följs av övriga profildelar utan videosteg. Stäng även gamla direktlänkar och backendmöjligheten att skapa/ersätta eller hämta profilvideo som del av produkten; enbart dold UI räcker inte. Behåll inspelning/uppladdning av separat chattvideo. Inventera befintliga profilfiler, profilpekare och gamla chattdelningar och definiera tydlig avveckling/städning med hänsyn till behörighet och rapporterat innehåll. Ingen blind radering av delad videolagring, chattar eller migrationshistorik.
 - Klar när: Profilvideo kan varken skapas, visas eller räknas som saknad i profil, kandidatvy eller profilguide. Gamla URL:er/API-vägar återinför inte funktionen. Separat chattinspelning/uppladdning/uppspelning fungerar fortsatt för rätt deltagare. Gamla profilvideodelningar har begriplig status och påverkar inte separata chattfiler. Datahantering/städning och faktisk verifiering dokumenteras.
 - Samordning 2026-10-18: Det jobbspecifika ansökningsunderlaget i F26/N19 får inte innehålla permanent profilvideo eller öppna generell profilåtkomst. Borttagningen ska gälla även backend/äldre direktvägar; separat frivillig ansökningsvideo hanteras av N23.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: Kodändring och verifiering. Denna reservation omfattar N22; N23 och L12 byggs separat. Befintlig migrationshistorik ändras inte och ingen blind radering av videofiler görs.
+- Implementerat: Profil-/kandidatvideovyer, profilsteget och delningsvalet borttagna. Fem steg med kompatibel återupptagning; gamla direktlänkar monterar ingen media. Gamla delningar får avvecklingsmarkering. DevStaging-migration 20261018165208 stänger pekare, profilmetadata, Storage och nya profilvideodelningar även för gamla klienter. Separat chattvideo behålls. Befintliga två profilassets/två pekare/en delning och två chattassets är oförändrade; ingen bytesradering. Se docs/N22.md.
+- Verifierat: test:video-retirement (faktiska komponentcallbacks, simulerad transport), test:profile-video, test:profile-journey, matching, application-supplement och company-navigation passerar. TypeScript och webpack-bygge passerar (50 sidor). Riktad ESLint 0 fel/1 tidigare img-varning. Verkliga RLS-/triggertester passerar före/efter migration, alla fixture-skrivningar återställda. Befintliga säkerhets-WARN oförändrade; avsiktlig ny INFO för åtkomstindragen RLS-tabell utan policies dokumenterad.
+- Återstår / blockerare: Inloggat visuellt dev-test, fysisk kamera och verklig filuppspelning återstår. Ingen automatiserad gallring eller fullständig dataradering påstås; avstängda profilfiler och rapportreferenser hanteras avgränsat enligt L12. N23/L12 byggs separat. Äldre migrationshistorik orörd; signerade gamla länkar kan leva till ursprunglig TTL (högst fem minuter enligt klienten).
 
 <a id="n23"></a>
 ### N23 Frivillig videoförfrågan vid ansökan

@@ -1,5 +1,7 @@
 # Profilflöde och informationsöversyn – 2026-10-14
 
+**Uppföljning N22, 2026-10-18:** Profilvideo nedan beskriver den tidigare leveransen. Den är nu avvecklad i profil, kandidatvy och backend; aktuellt flöde har fem steg med CV följt av Vad jag söker. Se docs/N22.md och docs/VIDEO_TESTGUIDE.md för aktuell implementation och kvarvarande verifiering. Chattvideo behålls.
+
 Omfattning: ungdomens profil, CV, frivillig video och kompletterande jobbuppgifter. Ingen datamigrering eller ändring av behörigheter ingår.
 
 ## Informationskällor och användning

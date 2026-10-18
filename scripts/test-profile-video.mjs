@@ -37,7 +37,7 @@ try {
     assert.equal(validPath(bad, owner), false);
   }
   assert.equal(validPath(path, '.*'), false);
-  console.log('PASS: optional profile video format, size, duration boundaries and owner path validation. No live upload/access tests.');
+  console.log('PASS: shared chat-video format, size, duration boundaries and owner path validation. No live upload/access tests.');
 } finally {
   rmSync(dir, {recursive: true, force: true});
 }

@@ -1,7 +1,6 @@
 /** Ordered, reusable journey. Completion comes from saved data, never a UI click. */
 export const PROFILE_JOURNEY = [
   {key:"cv",title:"CV",description:"Erfarenhet, utbildning och språk",optional:false},
-  {key:"video",title:"Video",description:"En kort presentation",optional:true},
   {key:"preferences",title:"Vad jag söker",description:"Jobb, plats och motivation",optional:true},
   {key:"availability",title:"När jag kan jobba",description:"Dagar, tider och omfattning",optional:true},
   {key:"qualifications",title:"Kunskaper",description:"Kompletterande verktyg och behörigheter",optional:true},
@@ -16,9 +15,14 @@ export function nextProfileStep(current: ProfileJourneyStep): ProfileJourneyStep
 }
 export function profileStepUrl(step: ProfileJourneyStep): string {
   if(step==='cv')return '/youth/cv?return=build&edit=1';
-  if(step==='video')return '/video/record?return=build';
   return `/profile/develop?section=${step}&return=build`;
 }
 export function resumeProfileStep(saved: readonly string[]): ProfileJourneyStep {
   return PROFILE_JOURNEY.find(step=>!saved.includes(step.key))?.key??'cv';
+}
+
+/** Old saved video steps continue with preferences; no obsolete video screen. */
+export function restoredProfileStep(value: unknown): ProfileJourneyStep | null {
+  if(value === 'video') return 'preferences';
+  return isProfileJourneyStep(value) ? value : null;
 }
