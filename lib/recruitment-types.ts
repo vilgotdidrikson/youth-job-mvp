@@ -20,6 +20,44 @@ export interface VerifiedExperience {
   show_on_profile: boolean;
   include_in_cv: boolean;
 }
+
+/** Facts and decision actually displayed when the form was opened. */
+export function employmentSnapshot(employment: EmploymentRecord | null) {
+  return employment ? {
+    role_name: employment.role_name,
+    start_date: employment.start_date,
+    response: employment.response,
+  } : null;
+}
+
+export function employmentPresentation(employment: EmploymentRecord | null, company: boolean) {
+  if (!employment) return {
+    title: "Har rekryteringen lett till ett jobb?",
+    description: company
+      ? "Registrera befattning och startdatum när ni har kommit överens. Kandidaten granskar sedan uppgifterna innan anställningen blir bekräftad här."
+      : "Be arbetsgivaren registrera befattning och startdatum. Du får sedan granska uppgifterna innan anställningen blir bekräftad här.",
+    action: company ? "Registrera anställning" : "Be arbetsgivaren registrera anställningen",
+  };
+  if (employment.response === "approved") return {
+    title: "Anställning bekräftad",
+    description: "Arbetsgivaren och kandidaten har godkänt uppgifterna. Kandidaten väljer själv om erfarenheten ska visas på profilen och i CV:t.",
+    action: company ? null : "Ändra synlighet och CV",
+  };
+  if (employment.response === "disputed") return {
+    title: "Uppgifterna behöver rättas",
+    description: company
+      ? "Kandidaten har invänt mot uppgifterna. Stäm av befattning och startdatum och skicka en rättelse för ny granskning. Anställningen är inte bekräftad här."
+      : "Du har bett om en rättelse. När arbetsgivaren uppdaterar uppgifterna får du granska dem igen. Ingen verifierad erfarenhet visas under tiden.",
+    action: company ? "Rätta anställningsuppgifter" : "Granska uppgifterna",
+  };
+  return {
+    title: company ? "Inväntar kandidatens granskning" : "Granska din anställning",
+    description: company
+      ? "Uppgifterna är skickade till kandidaten. Anställningen blir bekräftad här först när kandidaten godkänner dem. Chatten finns kvar."
+      : "Arbetsgivaren har registrerat befattning och startdatum. Godkänn om uppgifterna stämmer eller be om en rättelse. Chatten finns kvar.",
+    action: company ? "Rätta anställningsuppgifter" : "Granska uppgifterna",
+  };
+}
 export interface RecruitmentRecord {
   match_id: string;
   job_id: string;
