@@ -82,7 +82,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
-| 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | Ej påbörjad | — |
+| 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | Pågår | Codex – video |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -1212,9 +1212,9 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - [ ] Klar
 - Prioritet: P1, före skarp lansering; 14-dagarsgallring krävs före aktivering av ansökningsvideo.
 - Global ordning: 22.1
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: Dokumentationsleverans `codex/l12-gdpr-retention-plan-20261018`. Implementationsbranch och ägare reserveras separat före kodarbete.
+- Status: Pågår (avgränsad videoleverans)
+- Ansvarig: Codex
+- Branch/PR: `codex/l12-video-retention-20261018`. Reservation före kodarbete; 14-dagars åtkomstgräns och gallring för chattvideo, med återanvändbar grund för N23. Övriga L12-kategorier och N23 aktiveras inte i denna leverans.
 - Beslut: Användaren har godkänt nedanstående produktpolicy. Tiderna är inte lagstadgade GDPR-frister eller en färdig juridisk bedömning. Ändamål, rättslig grund och nödvändighet ska dokumenteras per uppgiftskategori före införandet.
 - Beroenden/samordning: L02 (påminnelsemejl), L05 (åtkomst och rapporter), L06/N10 (kontoradering), L04 (anställningshistorik), F20 (integritetsinformation), F26/N19 (ansökningsunderlag), N12/N13/N22/N23 (video). Återanvänd befintlig raderingslogik och bevara andras pågående arbete.
 
