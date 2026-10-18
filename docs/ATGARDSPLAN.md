@@ -449,7 +449,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Åtgärd: Beskriv den avsedda avgiften, vad som utlöser den, vem som faktureras och när. Gör gratis konto och eventuell avgift vid anställning begripliga på prissidan och före anställningsregistrering. Förklara också en aktiv rekrytering och 20 kandidater, inklusive vad som händer vid gränsen.
 - Klar när: Företaget kan förstå hela prismodellen innan ett avgiftsutlösande steg. Visa bara gränser som faktiskt gäller.
 - Implementerat: Aktuell kostnadsfri version tydliggörs på prissidan och före registrering av anställning. Delad pristext anger att registreringen inte skapar en avgift/faktura nu. Inaktiva gränser för en rekrytering/20 kandidater borttagna från priskortet.
-- Verifierat: test:recruitment-review, TypeScript, riktad ESLint och fullständigt produktionsbygge passerar. Se docs/L04_F06_REVIEW.md.
+- Verifierat: test:recruitment-review, TypeScript, riktad ESLint och fullständigt produktionsbygge passerar. PR #66 införd i dev med godkänd driftsättning. Publicerad företagsprissida verifierad i webbläsaren: korrekt kostnadsfri information och inga inaktiva gränser. Se docs/L04_F06_REVIEW.md.
 - Återstår / blockerare: Framtida betald modell kräver beslutat belopp, avgiftsutlösare, fakturauppgifter och betalningsvillkor före aktivering. Nuvarande kostnadsfria läge kan införas utan dessa beslut.
 
 <a id="f08"></a>
@@ -901,12 +901,12 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Typ: Befintligt flöde / tidigare beslut som ska verifieras
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l04-recruitment-20261018`, reserverad före kodarbete 2026-10-18. L04: status, rättelse, samtidighet och båda rollerna. F06: korrekt information om nuvarande kostnadsfria läge; framtida avgiftsbeslut återstår.
+- Branch/PR: `codex/l04-recruitment-20261018`, [PR #66](https://github.com/vilgotdidrikson/youth-job-mvp/pull/66), införd i dev. Reserverad före kodarbete 2026-10-18. L04: status, rättelse, samtidighet och båda rollerna. F06: korrekt information om nuvarande kostnadsfria läge; framtida avgiftsbeslut återstår.
 - Åtgärd: Inventera redan byggt flöde för företagets registrering, ungdomens bekräftelse eller invändning, slutstatus och historik. Förtydliga skillnaden mellan väntande och bekräftad anställning. Koppla fakturering först till beslutad utlösande händelse. Kontrollera tidigare beslutad åtgärd mot utebliven registrering och eventuell profilmarkering för bekräftat jobb; bestäm eventuell belöning separat innan den utlovas. Samordna med F06/F17.
 - Klar när: Båda rollerna förstår och kan genomföra bekräftelse eller invändning. Status, historik och fakturautlösning överensstämmer; företaget kan inte ensamt skapa en felaktigt bekräftad anställning.
 - Implementerat: Registrering/rättelse/godkännande binds till faktiskt visad befattning, startdatum och svarsstatus. Konflikter kräver omhämtning; direkt dubbelklick och dubbelsparande efter hämtningsfel skyddas. Tydliga registrerad/väntande/invänd/bekräftad-lägen, separat profil/CV-samtycke och exakta matchlänkar i sammanfattningar/notiser/påminnelser. Befintliga behörigheter och inaktiv fakturering bevarade.
-- Verifierat: Reproducerad stale-approval-bugg före fix i QA-transaktion. 60 transaktionella DevStaging-kontroller med föreslagen migration passerar och rullas tillbaka. Faktiska formulärhandlers, referens-/länkval och recovery testas i test:recruitment-review. Befintliga recruitment/matching, TypeScript, riktad ESLint och webpack-produktionsbygge passerar.
-- Återstår / blockerare: Inför frontend i dev först, sedan endast den nya migrationen i DevStaging och kör testerna på nytt. Inloggad testwebbläsarsession saknas; visuellt end-to-end-test av båda rollerna och fysisk mobil är inte godkända. Se docs/L04_F06_REVIEW.md.
+- Verifierat: Reproducerad stale-approval-bugg före fix i QA-transaktion. 60 transaktionella DevStaging-kontroller passerar både före och efter införandet och rullas tillbaka. Dev-driftsättning av PR #66 har godkänd byggstatus; migration 20261018105704 införd enbart i DevStaging. Säkerhetsrådgivare: inga nya fynd. Faktiska formulärhandlers, referens-/länkval och recovery testas i test:recruitment-review. Befintliga recruitment/matching, TypeScript, riktad ESLint och webpack-produktionsbygge passerar.
+- Återstår / blockerare: Inloggad testwebbläsarsession saknas; visuellt end-to-end-test av båda rollerna och fysisk mobil är inte godkända. Se docs/L04_F06_REVIEW.md.
 
 <a id="l02"></a>
 ### L02 SMTP och tillförlitliga e-postutskick
