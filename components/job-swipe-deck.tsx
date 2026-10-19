@@ -1,5 +1,6 @@
 "use client";
 
+import { useJobImpression } from "@/hooks/use-job-impression";
 import { jobCities } from "@/lib/job-workplaces";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import styles from "./job-discovery.module.css";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 interface JobSwipeDeckProps {
+  onSeen?: (id: string) => Promise<void>;
   jobs: JobPost[];
   onDecision: (job: JobPost, decision: SwipeDecision) => Promise<void>;
   onSave: (job: JobPost, saved: boolean) => Promise<void>;
@@ -21,7 +23,7 @@ interface JobSwipeDeckProps {
   swipeHint: string;
 }
 
-export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
+export function JobSwipeDeck({ onSeen, jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
   const [dragX, setDragX] = useState(0);
   const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,6 +36,7 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
   const actionLock = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentJob = jobs[0];
+  const cardRef = useJobImpression(currentJob?.id, onSeen);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const resetDrag = () => { startX.current = null; activePointer.current = null; setDragX(0); };
@@ -61,7 +64,7 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
   const image = currentJob.image_url?.split(",")[0]?.trim();
   const saved = savedIds.has(currentJob.id);
   return <div className={styles.deck}>
-    <article className={styles.jobCard}
+    <article ref={cardRef} className={styles.jobCard}
       style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${dragX}px) rotate(${dragX * .025}deg)`, transition: startX.current !== null ? "none" : undefined }}
       onPointerDown={event => { if (busy || saving || actionLock.current || startX.current !== null || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("button,input,textarea,select")) return; activePointer.current = event.pointerId; startX.current = event.clientX; startY.current = event.clientY; suppressClick.current = false; }}
       onPointerMove={event => { if (startX.current !== null && event.pointerId === activePointer.current) { const dx=event.clientX-startX.current, dy=event.clientY-startY.current; if (Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.2) { suppressClick.current=true; event.currentTarget.setPointerCapture(event.pointerId); setDragX(dx); } } }}
@@ -71,10 +74,11 @@ export function JobSwipeDeck({ jobs, onDecision, onSave, savedIds, emptyTitle, e
       onPointerCancel={event => { if (event.pointerId === activePointer.current) resetDrag(); }} onLostPointerCapture={event => { if (event.pointerId === activePointer.current) resetDrag(); }}>
       {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority draggable={false} className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
       <div className={styles.imageShade}/>
-      <div className={styles.cardTop}><span className={styles.cardBadge}>{currentJob.is_boosted ? "Framhävd annons" : `${jobs.length} ${jobs.length === 1 ? "jobb" : "jobb att upptäcka"}`}</span><button className={styles.bookmark} type="button" aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet till senare"} aria-pressed={saved} disabled={saving || busy} onClick={() => void save()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button></div>
+      <div className={styles.cardTop}><span className={styles.cardBadge}>{`${jobs.length} ${jobs.length === 1 ? "jobb" : "jobb att upptäcka"}`}</span><button className={styles.bookmark} type="button" aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet till senare"} aria-pressed={saved} disabled={saving || busy} onClick={() => void save()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button></div>
       {Math.abs(dragX) > 20 && <span className={`${styles.swipeFeedback} ${dragX > 0 ? styles.feedbackYes : ""}`}>{dragX > 0 ? "Intresserad" : "Inte nu"}</span>}
       <div className={styles.cardContent}><p className={styles.company}>{currentJob.company_name || "Arbetsgivare"}</p><h2><Link href={`/jobb/${encodeURIComponent(currentJob.id)}`}>{currentJob.title}</Link></h2><div className={styles.cardChips}>{[jobCities(currentJob), currentJob.employment_type, currentJob.salary_per_hour].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div></div>
     </article>
+    {currentJob.discovery && <p className={styles.swipeHint}>{currentJob.discovery.reasons.length ? currentJob.discovery.reasons.join(" · ") : "Fler jobb att upptäcka – inga angivna önskemål behöver matcha för att du ska kunna söka."}</p>}
     <div className={styles.actions}>
       <button type="button" className={styles.action} disabled={busy || saving} onClick={() => decide("skip")}><span><UiIcon name="close"/></span><span>{skipLabel}</span></button>
       <button type="button" className={`${styles.action} ${styles.interested}`} disabled={busy || saving} onClick={() => decide("interested")}><span><UiIcon name="heart"/></span><span>{interestedLabel}</span></button>

@@ -96,6 +96,8 @@ export interface JobPost {
   publication_status?: "pending_verification" | "published";
   open_positions?: number;
   is_boosted?: boolean;
+  first_published_at?: string | null;
+  discovery?: { seen: boolean; score: number; reasons: string[] };
   created_at: string;
   min_age?: number | null;
   max_age?: number | null;

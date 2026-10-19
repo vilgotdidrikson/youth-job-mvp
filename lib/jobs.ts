@@ -257,6 +257,7 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
     is_boosted: row.is_boosted === true,
     created_at: normalizeJobString(row.created_at),
+    first_published_at: normalizeJobString(row.first_published_at) || null,
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
   };
@@ -334,6 +335,24 @@ async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
   }
 
   return normalizeJob(data as Record<string, unknown>);
+}
+
+// Keyset pages avoid the API's default row cap and premium ordering.
+export async function getDiscoveryJobs(): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  let cursor = "";
+  while (true) {
+    let query = getSupabaseClient().from("jobs").select("*")
+      .eq("status", "active").eq("is_active", true).eq("publication_status", "published")
+      .eq("job_kind", "employment").order("id").limit(200);
+    if (cursor) query = query.gt("id", cursor);
+    const { data, error } = await query;
+    if (error) throw new Error("Kunde inte hämta jobb. Försök igen.");
+    const rows = data ?? [];
+    jobs.push(...rows.map(row => normalizeJob(row)));
+    if (rows.length < 200) return jobs;
+    cursor = String(rows[rows.length - 1].id);
+  }
 }
 
 export async function getJobs(includeInactive = false): Promise<JobPost[]> {

@@ -1,11 +1,13 @@
 "use client";
-import { jobCategoryFilterValues, jobMatchesCategory } from "@/lib/job-categories";
+import { jobCategoryFilterValues } from "@/lib/job-categories";
 
-import { getJobWorkplaces, jobMatchesCity } from "@/lib/job-workplaces";
+import { getJobWorkplaces } from "@/lib/job-workplaces";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
+import { orderDiscoveryJobs } from "@/lib/job-discovery";
+import { dismissDiscoveryJob, recordJobImpression } from "@/lib/discovery-history";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
@@ -27,6 +29,8 @@ function SwipePageContent() {
   const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [jobs, setJobs] = useState<JobPost[]>([]);
+  const [decidedIds, setDecidedIds] = useState(new Set<string>());
+  const [pageEnd, setPageEnd] = useState(20);
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -54,10 +58,9 @@ function SwipePageContent() {
       try {
         const [feed, bookmarks] = await Promise.all([showingSaved ? Promise.resolve([]) : getSwipeJobs(), getSavedJobs()]);
         const data = showingSaved ? bookmarks : feed;
-        const requestedJobId = searchParams.get("job");
         if (active) {
           setSavedJobs(bookmarks);
-          setJobs(requestedJobId ? [...data].sort((a, b) => (a.id === requestedJobId ? -1 : b.id === requestedJobId ? 1 : 0)) : data);
+          setJobs(data); setDecidedIds(new Set()); setPageEnd(20);
           setError("");
         }
       } catch (loadError) {
@@ -83,30 +86,30 @@ function SwipePageContent() {
     categories: jobCategoryFilterValues(jobs),
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
-  const filteredJobs = useMemo(() => jobs.filter((job) =>
-    (!city || jobMatchesCity(job, city))
-    && jobMatchesCategory(job, category)
-    && (!employmentType || job.employment_type.split(",").some((value) => value.trim().toLocaleLowerCase("sv") === employmentType.toLocaleLowerCase("sv"))),
-  ), [category, city, employmentType, jobs]);
+  const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, { city, category, employmentType }, searchParams.get("job")), [category, city, employmentType, jobs, showingSaved, searchParams]);
+  const filteredJobs = orderedJobs.slice(0, showingSaved ? undefined : pageEnd).filter(job => !decidedIds.has(job.id));
+  const hasMore = !showingSaved && pageEnd < orderedJobs.length;
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
     if (pending.current.has(job.id)) return;
     pending.current.add(job.id); setPendingCount(pending.current.size);
     setError(""); setNotice("");
-    setJobs(current => current.filter(item => item.id !== job.id));
+    setDecidedIds(current => new Set([...current, job.id]));
     // Release the deck immediately; only show success once the server confirms it.
     void (async () => {
       try {
         if (!cvCompleted && decision === "interested") {
           await saveApplicationDraft(job.id); setDraftCount(count => count + 1);
           setNotice("Intresset är sparat. Skapa ditt CV under Profil för att skicka ansökan.");
-        } else if (cvCompleted) {
+        } else if (!cvCompleted) {
+          await dismissDiscoveryJob(job.id);
+        } else {
           await swipeJob(job.id, decision);
           if (decision === "interested") setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);
         }
         window.dispatchEvent(new Event("mnw-navigation-refresh"));
       } catch {
-        setJobs(current => current.some(item => item.id === job.id) ? current : [job, ...current]);
+        setDecidedIds(current => { const next = new Set(current); next.delete(job.id); return next; });
         setError(`Valet för ${job.title} kunde inte sparas. Jobbet finns kvar – försök igen.`);
       } finally { pending.current.delete(job.id); setPendingCount(pending.current.size); }
     })();
@@ -121,12 +124,13 @@ function SwipePageContent() {
     if (showingSaved && !saved) setJobs(current => current.filter(item => item.id !== job.id));
   };
   const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
+    setPageEnd(20);
     if (key === "city") setCity(value);
     else if (key === "category") setCategory(value);
     else setEmploymentType(value);
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
     <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }
