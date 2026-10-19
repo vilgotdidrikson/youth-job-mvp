@@ -51,6 +51,19 @@ Beslutad av Vilgot 2026-10-18. Detta är en byggspecifikation; status, reservati
 - Testa att AI-fel, okänd/låg bedömning och saknad video inte stoppar eller döljer ansökan och att ingen kandidatlista rangordnas av AI-resultat.
 - Status: beslutad byggspecifikation; ingen produktkod, filtrering eller dataflödesverifiering införs genom denna dokumentändring. Källstöd för kategorier och rekrytering (kontrollerat 2026-10-19): https://www.imy.se/verksamhet/dataskydd/det-har-galler-enligt-gdpr/introduktion-till-gdpr/personuppgifter/kansliga-personuppgifter/ ; https://www.imy.se/verksamhet/dataskydd/dataskydd-pa-olika-omraden/arbetsliv/rekryteringssystem-och-kompetensdatabaser/
 
+## Ungdomens kravinformation och kompletteringar (F12/F26/N19, beslut 2026-10-19)
+
+- Erbjud en frivillig öppningsbar vy med knappen **Se vad företaget söker**, i anslutning till ansökan och kompletteringsfrågorna. Visa vad bedömningen handlar om: exempelvis service/kundkontakt, relevant erfarenhet, språkkunskaper, tillgänglighet, startdatum och praktisk närhet till arbetsplatsen. Innehållet ska bygga på den aktuella annonsen och de faktiska bedömningsområdena; hitta inte på kriterier.
+- Den vanliga ungdomsvyn visar områden och begriplig kravinformation, inte personens exakta AI-bedömning, individuella stöd-/motsägelseomdömen, matchningsprocent, poäng, vikter eller interna bedömningströsklar. Ingen separat betygsvy eller knapp för fullständig individuell matchningsbedömning ingår i detta beslut. Håll arbetsgivarens beslutsunderlag separat.
+- Obligatoriska och praktiskt avgörande jobbkrav ska fortfarande vara tydliga och konkreta: exempelvis körkort, nödvändiga språkkunskaper eller vissa arbetstider. Gör inte sådana krav vaga för att dölja bedömningslogiken. Krav, meriter och sådant som kan läras på jobbet ska gå att skilja åt.
+- Koppla frivilliga kompletteringsfrågor till relevanta luckor i underlaget. Förklara konkret varför frågan behövs, exempelvis ”Företaget söker helgpersonal. Du har inte angett vilka dagar du kan arbeta.” eller ”Det framgår inte om du har erfarenhet av kundkontakt.” Fråga inte igen när ett aktuellt tydligt svar redan finns.
+- Använd inte formuleringar som ”svara för att matcha bättre” eller löften om högre poäng. Ett sanningsenligt svar kan visa stöd, en faktisk skillnad mot kravet eller fortsatt osäkerhet. Ingen global negativ etikett om personen; saknat underlag betyder inte dålig kandidat.
+- Ungdomen kan svara, rätta egna uppgifter eller avstå. Frågorna förblir frivilliga efter skickad ansökan och får inte blockera ansökan eller swipeflödet. Behåll källgrundning och godkännanderegler för nya/ändrade uppgifter.
+- Skilj denna kravinformation från valfri CV-feedback enligt N21: CV-feedback hjälper med text, struktur och beskrivningar; den är inte en individuell bedömning mot ett visst jobb.
+- Bevara N19:s förhandsvisning av verkligt delade uppgifter och insyn i vilka godkända källuppgifter som används av matchningen. Att den vanliga vyn inte visar den individuella AI-bedömningen får inte begränsa möjligheten att begära tillgång till personuppgifter, inklusive bedömningar som omfattas av rätten, eller få fel rättade enligt L13. Registerutdrag/rättelse hanteras separat från denna produktvy.
+- Verifiering före Klar: kontrollera att områden/frågor motsvarar rätt annons och aktuella profilfakta; att konkreta obligatoriska krav fortfarande framgår; att inga personliga poäng, exakta AI-omdömen eller interna vikter visas i denna vy; att kända uppgifter inte efterfrågas igen; och att svar/rättelse/avstående fungerar utan ansökningsspärr. Kontrollera separat delningsförhandsvisning, CV-feedback och L13:s tillgång/rättelse.
+- Status: beslutad byggspecifikation. Endast dokumentation uppdateras; ingen vy, kompletteringslogik eller rättighetsfunktion är implementerad eller webbverifierad genom denna ändring.
+
 ## Profilen är grunden; CV är ett urval (N19)
 
 | Del | Innehåll och användning |
