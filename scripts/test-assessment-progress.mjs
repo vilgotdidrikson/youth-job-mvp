@@ -68,7 +68,7 @@ assert.equal(nodes(render()).filter(node => node.props?.role === 'alert').length
 pendingResponse = new Response(JSON.stringify({ error: 'Tillfälligt fel' }), { status: 503 });
 await button().props.onClick(); await settle();
 assert.equal(button().props.children, 'Försök igen');
-assert.ok(nodes(render()).some(node => node.props?.className === 'candidate-assessment-summary'), 'Previous assessment survives update errors');
+assert.ok(nodes(render()).some(node => node.type === 'summary' && node.props.children === 'Sammanfattande matchgrad och täckning'), 'Previous assessment survives update errors');
 assert.ok(nodes(render()).some(node => node.props?.role === 'alert'));
 pendingResponse = new Response(JSON.stringify({ assessment: result }), { status: 200 });
 await button().props.onClick(); await settle();

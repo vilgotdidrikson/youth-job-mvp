@@ -6,9 +6,10 @@ import ts from 'typescript';
 const dir=mkdtempSync(resolve('.analysis-worker-tests-'));
 try {
  const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
- for(const name of ['job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
+ for(const name of ['matching-input-policy','trait-evidence','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
  writeFileSync(`${dir}/provider.mjs`,`export let offline=false;export function fail(value){offline=value;}export default class OpenAI{constructor(){this.chat={completions:{create:async()=>{if(offline)throw Error('private provider detail');return {choices:[{message:{content:JSON.stringify({criteria:[{id:'c1',status:'fulfilled',evidence:'Invented evidence must be discarded'}]})}}]};}}};}}`);
  writeFileSync(`${dir}/pdf-cv-source.mjs`,`export let status='none';export function setStatus(value){status=value;}export const pdfCvSource=async()=>({status,text:''});`);
+ writeFileSync(`${dir}/matching-provider.mjs`,compile('lib/matching-provider.ts').replace('from "openai"','from "./provider.mjs"'));
  writeFileSync(`${dir}/application-analysis-worker.mjs`,compile('lib/application-analysis-worker.ts').replace('from "openai"','from "./provider.mjs"'));
  const {processApplicationAnalysisJobs}=await import(pathToFileURL(`${dir}/application-analysis-worker.mjs`));
  const {emptyRecruitmentProfile}=await import(pathToFileURL(`${dir}/recruitment-profile.mjs`));

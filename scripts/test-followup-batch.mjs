@@ -11,7 +11,8 @@ try {
   const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   writeFileSync(join(dir,'job-categories.mjs'),compile('lib/job-categories.ts'));
   writeFileSync(join(dir,'recruitment-profile.mjs'),compile('lib/recruitment-profile.ts').replace('./job-categories','./job-categories.mjs'));
-  writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts').replace('./recruitment-profile','./recruitment-profile.mjs'));
+  writeFileSync(join(dir,'matching-input-policy.mjs'),compile('lib/matching-input-policy.ts'));
+  writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts').replace('./recruitment-profile','./recruitment-profile.mjs').replace('./matching-input-policy','./matching-input-policy.mjs'));
   writeFileSync(join(dir,'mocks.mjs'),`export const calls=[];
     export const source='Jag vill lära mig produktkunskap.';
     export let fail=false;
@@ -19,6 +20,8 @@ try {
     export class OpenAI{constructor(){this.chat={completions:{create:async(args)=>{calls.push(['ai',args]);if(fail)throw Error('offline');return {choices:[{message:{content:JSON.stringify({criteria:[],answers:[{id:'q1',evidence:source}]})}}]};}}};}}
     export const matchingCriteria=()=>[{id:'c0',label:'Kassa'}];
     export const criteriaRequiringAi=(criteria)=>criteria;
+    export const candidateSourceDetails=profile=>({text:candidateSource(profile),status:"minimized"});
+    export const requestMatchingEvidence=async(key,source,criteria,questions)=>{const result=await new OpenAI().chat.completions.create({criteria,questions,source});return JSON.parse(result.choices[0].message.content);};
     export const candidateSource=profile=>source+(profile.answers ? JSON.stringify(profile.answers):'');
     export const assessCandidate=()=>({criteria:[]});
     export const candidateAssessmentHash=value=>value.includes('Uppgift från profil/CV:') ? 'b'.repeat(64):'a'.repeat(64);
@@ -26,7 +29,7 @@ try {
     export const pdfCvSource=async()=>({status:'none',text:''});
     export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
     export const openaiTextOptions=()=>({model:'test',store:false});`);
-  const imports=`import {OpenAI,matchingCriteria,criteriaRequiringAi,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+  const imports=`import {OpenAI,requestMatchingEvidence,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
   writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
   const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
   const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));

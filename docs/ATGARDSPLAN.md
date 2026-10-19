@@ -69,7 +69,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | För granskning | Vilgot / Codex |
 | 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | För granskning | Codex |
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | För granskning | Codex |
-| 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Ej påbörjad | — |
+| 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Ej påbörjad | — |
 | 13.5 | [N20](#n20) | P2 | Textbaserad profilguide och diskret formulärhjälp | Ej påbörjad | — |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
@@ -1117,9 +1117,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 13.3
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Codex
+- Branch/PR: `codex/f26-evidence-review-20261019`, [PR #81](https://github.com/vilgotdidrikson/youth-job-mvp/pull/81), avgränsad leverans 1. Reservation publicerad före kodarbete.
 - Åtgärd: Granska faktiskt kriterieflöde, AI-instruktioner, regler, belägg och beräkning; F05 täckte teknisk leverans, inte detta kvalitetskrav. Ersätt den generella rutan Mer om kandidaten med jobbspecifikt ansökningsunderlag tillsammans med N19. Låt jobbkrav, relevanta belägg från godkända uppgifter och skillnaden stöd/uttrycklig motsägelse/okänd dominera. Eventuell matchprocent visas sekundärt tillsammans med täckningsgrad. Förstå likvärdiga formuleringar utan nya sakpåståenden. Märk egna exempel som självuppgivna, aldrig verifierade personlighetsomdömen eller personlighetspoäng. Använd bara relevant godkänt underlag; läck inte hela profilen genom AI-resultat. Ingen ansökan nekas eller döljs automatiskt på grund av matchningsgrad eller saknad video.
 - Klar när: Synonympar som punktlig/bra på att passa tider återges rättvist med självuppgivet belägg. Fotbollstränare ger inte automatiskt punktlighet, ansvar eller ledarskap. Saknad uppgift är okänd, inte underkänd. Kriterier/belägg är primära, eventuell procent sekundär med täckningsgrad; mer text ger inte i sig bättre poäng. Inaktuella/ogranskade/avvisade AI-förslag, råa textsamtal, orelaterade profiluppgifter och känsliga attribut används inte. Företagsunderlaget har rätt jobb-/ansökningsscope även via API/databas enligt L05; ungdomen ser vilka uppgifter som används. Testa låg/okänd matchning och ingen/nekad video: ansökan är fortsatt synlig och skickas enligt ordinarie behörighets-/CV-regler.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
@@ -1129,9 +1129,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Beslut 2026-10-19 – kravinformation för ungdomen: Ungdomens vanliga vy visar vad företaget söker och vilka områden bedömningen gäller, inte den individuella AI-bedömningen eller ett personligt betyg. Arbetsgivarens källgrundade bedömning enligt F26 bevaras. Konkreta obligatoriska jobbkrav ska vara synliga; interna vikter/trösklar behöver inte visas i produktvyn. Ingen separat fullständig bedömningsvy för ungdomen beställs. Tillgång till personuppgifter och rättelse enligt L13 hanteras separat och begränsas inte av detta visningsval. Fullständig specifikation: ”Ungdomens kravinformation och kompletteringar” i `docs/PROFIL_OCH_RELEVANS.md`.
 - Tillkommande klart-kriterium: Verifiera rätt annons/kravområden, synliga avgörande krav, neutrala frågor utan poänglöften, inga upprepade kända svar och frivillig komplettering utan spärr. Den vanliga vyn visar inte individuella AI-omdömen/poäng; delningsförhandsvisning och L13:s tillgång/rättelse bevaras.
 - Dokumentleverans: Vilgot / Codex, `codex/f12-criteria-insight-plan-20261019`. Endast plan/specifikation ändrade och genomlästa; ingen produktkod eller webbverifiering. Befintlig status och ansvar för implementation bevaras.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Första avgränsade F26-leveransen 2026-10-19: kriterier/belägg före sekundär matchgrad och täckning; självuppgivna synonymbelägg utan personlighetspoäng; gemensam lokal minimering före AI-anrop och gemensam leverantörsgräns; ingen tyst 14k/32k-kapning. Rensat underlag markeras begränsat och skapar inga nya automatiska frågor. Ny cache-engine 9 för nya beräkningar. Se `docs/F26.md` för exakt omfattning och begränsningar. Hela F26 förblir Pågår.
+- Verifierat: Produktionsbygge (50 routes), TypeScript, riktad ESLint, `test:matching-fairness`, `test:matching`, `test:followup-batch`, `test:assessment-progress`, bakgrundsanalysens testspecifikation och `test:application-supplement` passerar. Den exakta utgående SDK-payloaden fångas med fiktiva blandade texter och simulerad AI-klient; ingen verklig modell-/webbverifiering.
+- Återstår / blockerare: Samordnad N19-leverans för serverstyrt jobbspecifikt källurval, ersättning av Mer om kandidaten, delningsförhandsvisning och API/RPC/databas-/filgränser; full jobbkontext, geografisk uppskattning, gamla bedömningar/historik och ungdomens kravvy. Heuristisk minimering kan missa namn/okända indirekta känsliga uppgifter och får inte betraktas som ett fullständigt integritetsskydd; fortsatt metod- och rättelseverifiering krävs före lansering. Inloggade flöden, verklig modellbedömning, negativa åtkomsttester samt ansökan vid AI-fel/ingen video återstår.
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
