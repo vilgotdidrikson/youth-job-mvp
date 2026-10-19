@@ -19,7 +19,7 @@ export function verifiedApplicationAnswers(raw: unknown, questions: readonly { i
 export function applicationSourceInput(profile: Record<string, unknown>): string {
   // Exclude identity, birth date, images, document links and other irrelevant personal data.
   const structured = profile.cv_structured && typeof profile.cv_structured === "object" ? profile.cv_structured as Record<string, unknown> : {};
-  const sections = ["profile", "workExperience", "education", "skills", "languages", "certifications", "extracurriculars"];
+  const sections = ["profile", "workExperience", "education", "skills", "languages", "certifications", "extracurriculars", "projects", "otherExperience"];
   const render = (value: unknown, path: string): string[] => {
     if (typeof value === "string") return value.trim() ? [`${path}: ${value.trim()}`] : [];
     if (Array.isArray(value)) return value.flatMap((item, index) => render(item, `${path}[${index}]`));

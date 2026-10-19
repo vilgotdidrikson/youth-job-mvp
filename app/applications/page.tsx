@@ -1,4 +1,5 @@
 "use client";
+import { JobRequirementsInsight } from "@/components/job-requirements-insight";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -45,7 +46,9 @@ function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, i
     {item.status === "submitted" && <p className="application-sent-note"><UiIcon name="check" width="18"/>Företaget har fått din ansökan. Eventuella frågor är frivilliga.</p>}
     {stage && recruitmentLabels[stage.status] && <div className="application-recruitment-stage"><span>{recruitmentLabels[stage.status]}</span>{!["rejected","cancelled"].includes(stage.status) && <Link href={`/chats?job=${item.job_id}`}>Öppna meddelanden <UiIcon name="arrow" width="16"/></Link>}</div>}
     {pending && <p>Den här äldre ansökan är inte skickad ännu. Du kan skicka den direkt utan att svara på frågor. Eventuell komplettering görs efteråt.</p>}
+    <JobRequirementsInsight jobId={item.job_id}/>
     <ApplicationFollowupCard application={item} items={followups} initiallyOpen={initiallyOpen} onSaved={onFollowupsSaved} />
+    <Link className="application-job-link" href={`/applications/preview?job=${encodeURIComponent(item.job_id)}`}>Se och uppdatera delat underlag</Link>
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {message && <p role="status">{message}</p>}

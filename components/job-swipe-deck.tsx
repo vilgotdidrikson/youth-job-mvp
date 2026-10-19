@@ -84,6 +84,7 @@ export function JobSwipeDeck({ onSeen, jobs, onDecision, onSave, savedIds, empty
       <button type="button" className={`${styles.action} ${styles.interested}`} disabled={busy || saving} onClick={() => decide("interested")}><span><UiIcon name="heart"/></span><span>{interestedLabel}</span></button>
       <Link className={styles.action} href={`/jobb/${encodeURIComponent(currentJob.id)}`}><span><UiIcon name="info"/></span><span>Detaljer</span></Link>
     </div>
+    {currentJob && <p className={styles.swipeHint}>Ansökan delar ditt CV och praktiska uppgifter. <Link href={`/applications/preview?job=${encodeURIComponent(currentJob.id)}`}>Förhandsvisa och välj extra uppgifter</Link></p>}
     <p className={styles.swipeHint}>{busy ? "Sparar ditt val…" : swipeHint}</p>
     {actionError && <p role="alert" className={styles.error}>{actionError}</p>}
   </div>;

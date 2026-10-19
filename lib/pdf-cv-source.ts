@@ -21,7 +21,10 @@ export async function extractPdfText(bytes: Uint8Array): Promise<string> {
     for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex++) {
       const page = await pdf.getPage(pageIndex);
       const { items } = await page.getTextContent();
-      pages.push(items.flatMap((item) => "str" in item ? [item.str + (item.hasEOL ? "\n" : " ")] : []).join(""));
+      const pageText = items.flatMap((item) => "str" in item ? [item.str + (item.hasEOL ? "\n" : " ")] : []).join("");
+      // A partly scanned document must not be labelled fully read.
+      if (pageText.trim().length < 8) throw new Error("PDF page needs manual review");
+      pages.push(pageText);
       page.cleanup();
     }
     const text = pages.join("\n").replace(/[\t ]+/g, " ").trim();

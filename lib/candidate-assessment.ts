@@ -9,6 +9,7 @@ export interface AssessedCriterion extends MatchCriterion { status: CriterionSta
 export interface CandidateAssessment {
   inputStatus?: "minimized" | "review_required";
   policyVersion?: number;
+  disclosureRevision?: number;
   score: number | null;
   coverage: number;
   confidence: "low" | "medium" | "high";
@@ -71,4 +72,11 @@ export function assessCandidate(criteria: MatchCriterion[], raw: unknown, source
   const explanation = score === null ? "Inga viktade faktakriterier har kunnat bedömas. Läs tillgängliga belägg och CV och gör en egen bedömning."
     : `Underlaget täcker ${coverage} % av kriteriernas vikt.${gaps.length ? " Övriga kriterier saknar tillräcklig information." : ""} Arbetsgivaren fattar alltid beslutet.`;
   return { score, coverage, confidence, criteria: evaluated, strengths, gaps, conflicts, explanation, source: known ? results.length ? "ai" : "rules" : "insufficient" };
+}
+
+/** Internal context may be broad; company-visible facts must be grounded in both
+ * the actual provider source and the explicitly disclosed source. */
+export function assessDisclosedCandidate(criteria: MatchCriterion[], raw: unknown, internalSource: string, disclosedSource: string): CandidateAssessment {
+  const grounded = Array.isArray(raw) ? raw.filter(item => item && typeof item.evidence === "string" && internalSource.includes(item.evidence.trim())) : [];
+  return assessCandidate(criteria,grounded,disclosedSource);
 }
