@@ -157,11 +157,23 @@ function AnimatedHeroHeadline() {
   const visibleAccent = visibleText.slice(headline.title.length + 1);
   const isWritingAccent = visibleText.length > headline.title.length;
 
+  // Invisible copies of every headline share one grid cell with the typed text,
+  // so the heading always keeps the height of the longest headline and the
+  // buttons below never move or overlap, whatever the zoom level.
   return (
-    <h1 aria-label={`${headline.title} ${headline.accent}`}>
-      <span>{visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</span>
-      <br />
-      <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</em>
+    <h1 className="landing-bold-title" aria-label={`${headline.title} ${headline.accent}`}>
+      {heroHeadlines.map((item) => (
+        <span key={item.title} className="landing-bold-title-sizer" aria-hidden="true">
+          {item.title}
+          <br />
+          <em>{item.accent}</em>
+        </span>
+      ))}
+      <span aria-hidden="true">
+        {visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" />}
+        <br />
+        <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" />}</em>
+      </span>
     </h1>
   );
 }

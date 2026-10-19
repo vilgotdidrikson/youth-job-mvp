@@ -111,7 +111,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Ej påbörjad | — |
-| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Ej påbörjad | — |
+| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
@@ -802,11 +802,12 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 49
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/d05-landing-polish-20261019`; reserverad före kodarbete 2026-10-19 enligt användarens uttryckliga beställning om visuell finputs av startsidan.
 - Åtgärd: Lägg en statisk kort förklaring av ungdomsjobb och matchning i första vyn. Minska tomrum där det döljer nyttan. Låt eventuell skrivmaskinsanimation vara ett komplement och respektera reducerad rörelse.
 - Klar när: Besökaren förstår tjänsten utan att vänta på en animerad rubrik.
+- Tillägg 2026-10-19: Leveransen omfattar även visuell finputs av hela startsidan: justering, avstånd, färgpalett, typografi och responsiv layout. Befintlig struktur, innehåll och funktion bevaras. Delad marknadsnavigation kontrolleras även på /features och /pricing.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —

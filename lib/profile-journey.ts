@@ -3,7 +3,7 @@ export const PROFILE_JOURNEY = [
   {key:"cv",title:"CV",description:"Erfarenhet, utbildning och språk",optional:false},
   {key:"preferences",title:"Vad jag söker",description:"Jobb, plats och motivation",optional:true},
   {key:"availability",title:"När jag kan jobba",description:"Dagar, tider och omfattning",optional:true},
-  {key:"qualifications",title:"Kunskaper",description:"Kompletterande verktyg och behörigheter",optional:true},
+  {key:"qualifications",title:"Kunskaper",description:"Verktyg och behörigheter",optional:true},
   {key:"examples",title:"Egna exempel",description:"Visa något du har gjort",optional:true},
 ] as const;
 export type ProfileJourneyStep = typeof PROFILE_JOURNEY[number]["key"];
