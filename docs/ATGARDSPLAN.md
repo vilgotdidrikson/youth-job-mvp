@@ -83,6 +83,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
+| 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
+| 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -375,6 +377,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Gör det möjligt att ändra e-post genom säker verifiering och välja de notispreferenser som motsvarar fungerande kanaler. Lägg inte val för ännu otillgängliga mailutskick.
 - Klar när: Användaren kan hålla sin kontaktuppgift aktuell och styra befintliga notiser.
+- Tillägg 2026-10-19: Integritetssektionens export/rättelse/radering hanteras separat som P1 i L13 och ska inte skjutas till denna P3-punkt.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -618,6 +621,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Åtgärd: Lägg tydliga ingångar till befintlig integritetsinformation, AI-användning, villkor och kontakt på publika sidor och vid registrering samt konsekvent i båda rollerna. Förklara hur CV och profil används.
 - Klar när: Relevant information och hjälp är åtkomliga där användaren fattar beslut; den nödvändiga saktexten är genomgången.
 - Tillägg 2026-10-18: Förklara skillnaden mellan egen jobbprofil, jobbspecifikt delat ansökningsunderlag och uppgifter som används i matchningen. Förklara självuppgivna exempel, eventuell sekundär procent/täckningsgrad och kontaktuppgifter i uppladdade CV. Samordna med N19:s förhandsvisning; generell företagsåtkomst till profil får inte utlovas.
+- Tillägg 2026-10-19: Inställningar → Integritet och personuppgifter samlar automatisk export, rättelse, säker kontoradering och kontaktväg enligt L13. Rättighetsinformation och kontakt ska även kunna nås utan inloggning. Leverantörsuppgifter och AI-lagring ska bygga på verifieringen i L14, inte antaganden om kontonamn eller EU-region.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -989,6 +993,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Kontrollera registrering, verifieringsmejl, glömt lösenord, säkert lösenordsbyte, utloggning och utgången session. Inventera kontoradering och rätta eventuella luckor. Hantera privata dokument och video vid radering. Genomför känsliga tester med egna konton och enligt autentiseringsverktygets regler; begär aldrig lösenord i chatten. Utökade kontoval ligger i N10.
 - Klar när: Användaren kan återfå åtkomst och förstå fel utan att fastna. Sessioner och eventuell radering får det avsedda, verifierade resultatet.
+- Tillägg 2026-10-19: L13 preciserar säker självbetjäningsradering och ny autentisering före export/radering. Inventera och återanvänd befintlig raderingsfunktion; verifiera även återkallad åtkomst/sessioner och faktiska filer. Vanliga lagringstider i L12 är inte i sig skäl att neka tidigare radering.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1055,6 +1060,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Branch/PR: —
 - Åtgärd: Koppla vald domän och företagsanpassat Vercel-upplägg när det är dags för skarp lansering. Kontrollera separata dev-/produktionsmiljöer, variabler, autentiseringens redirect-adresser, e-postlänkar, tillämpliga migrationer och privata lagringsbehörigheter. Ordna felövervakning, ansvar för support och en konkret återställningsväg. Visa enbart priser och tjänster som gäller vid lanseringen.
 - Klar när: Skarp miljö är korrekt konfigurerad, kärnflödet röktestas på rätt domän och teamet kan upptäcka och återställa ett misslyckat släpp.
+- Tillägg 2026-10-19: L14 är lanseringsberoende för rätt avtalspart, Vercel Pro/DPA och granskade leverantörs-/AI-inställningar. Uppgradering eller ett nytt konto innebär inte automatiskt GDPR-efterlevnad.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1246,3 +1252,79 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - Implementerat 2026-10-18: Videodelens serverstyrda 14-dagars åtkomstgräns, 24 timmar för oskickade uppladdningar, skydd mot förlängning, operationstyrd Storage-hämtning utan nya signerade länkar, exakt utgångstid och neutral markering i spelaren. Gallringsarbetaren är nu driftsatt i DevStaging efter användarens uttryckliga godkännande av filtestet. Schemat förblir avstängt. Migrering `20261018170906_l12_video_retention.sql` införd i DevStaging. Se [L12_VIDEO.md](L12_VIDEO.md) för omfattning och begränsningar.
 - Verifierat: Lokala videotester, matchnings-/profilregressioner, TypeScript och berörd ESLint passerar. DevStaging-rollbacktester verifierar åtkomstgränser, tidsmutation, delade referenser, återtagning/återförsök, rapportundantag och metadata. SQL-test simulerar lyckad filradering. Separat godkänt verkligt test: två syntetiska filer uppladdade/raderade, borttagna filer ej hämtbara, metadata rensade och upprepning utan nya jobb. Ordinarie Edge-handler återställd till version 2; verkliga HTTP-prov ger 401 utan/fel token och 200 med rätt token. De fyra befintliga filerna/metadata är oförändrade och enabled=false. Samma 33 säkerhets-WARN; två förväntade INFO för stängda privata arbetartabeller. Webpack-byggnad passerar (50 sidor); PR #73 införd i dev (`3e1c771`), dev-deployment success. Uppföljningen ändrar bara verifieringsdokumentation.
 - Återstår / blockerare: Det tidigare automatiska granskningsavslaget är löst genom användarens uttryckliga godkännande och det verkliga filtestet passerar. Schemakonfiguration är fortfarande avstängd; verkligt transportfel/återförsök över tid återstår. Inloggat/visuellt HTTP-/uppspelningsprov, verklig samtidighet, rapportundantagens avgränsning, avvecklade profilfiler samt alla övriga L12-kategorier, rättslig grund och backupinventering återstår. N23 får inte aktiveras på basis av denna del.
+
+
+## Användarrättigheter och leverantörer – beställt 2026-10-19
+
+Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav och kontroller, inte införda funktioner eller verifierade kontoändringar. Inget nytt konto, abonnemang, leverantörsavtal eller datadelning aktiveras genom detta dokument. Pågående leveranser och L12:s status bevaras.
+
+<a id="l13"></a>
+### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- [ ] Klar
+- Prioritet: P1, före skarp lansering
+- Global ordning: 22.2
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: Implementationsägare/branch reserveras separat före kodarbete.
+- Beslut: Automatisk export är huvudlösningen, inte enbart ett manuellt ärende. Manuell hjälp finns som komplement för frågor, fel, avgränsningar och begäranden som kräver särskild bedömning.
+- Samordning: L05/L06 (behörighet, session och befintlig radering), L12 (gallring och undantag), F20 (information/kontakt), N19/F26 (profil och härledda bedömningar), N10 (övriga kontoval). Håll gemensam export-/raderingslogik återanvändbar för framtida mobilapp.
+
+#### Funktion och omfattning
+
+- Lägg Integritet och personuppgifter under Inställningar i båda rollerna. Ge ingångar till Ladda ned mina uppgifter, rättelse, Radera mitt konto och kontakt om integritet. En person utan åtkomst till sitt konto ska också kunna kontakta verksamheten; kräv inte enbart inloggad självbetjäning.
+- Export kräver ny autentisering med en säker metod som passar kontot. Kontrollera ägarskap/behörighet vid beställning och hämtning; skydda mot gissade export-ID:n och obehörig hämtning. Be inte användaren skicka lösenord, API-nycklar eller rutinmässigt ID-kopior i chatt/mejl.
+- Leverera en lättläst sammanställning, strukturerade uppgifter (exempelvis JSON) och relevanta befintliga filer. Inventera samtliga datakällor: konto, aktuell profil/CV, ansökningar och svar, matchningar, chattar, relevanta aktivitets-/statusuppgifter och personuppgifter i AI-bedömningar inklusive relevanta historiska versioner och privat arbetsmaterial som fortfarande behandlas. Exportera inte redan gallrade filer eller återskapa dem från backup för detta ändamål.
+- Registerutdrag är mer än att hämta CV eller göra en databasdump. Ta även med tillämplig information om ändamål, uppgiftskategorier, mottagare, lagringstider/kriterier, källor där relevant, rättigheter och klagomål till IMY samt information om profilering/automatiserade beslut i den utsträckning som krävs. Skilj rätten till tillgång från dataportabilitet; en JSON-fil uppfyller inte ensam alla informationskrav.
+- Bedöm andra personers rättigheter innan chattar, företagsanteckningar eller gemensamma underlag lämnas ut. Gör avgränsade maskeringar där det behövs; undanta inte all konversationshistorik slentrianmässigt och exportera aldrig andra personers hela profiler, hemligheter eller interna åtkomstnycklar.
+- Skapa exportpaket privat och tillfälligt, med kortlivad behörig hämtning och automatisk fysisk radering efter en dokumenterad kort tidsfrist. Bestäm exakt tidsfrist före införandet. Visa skapande, klart, fel och utgånget paket; tillåt nytt försök utan dubbla obegränsat kvarvarande paket. Skicka inte exportinnehåll till externa analys-/AI-tjänster för formatering. Logga minimala tekniska uppgifter, inte innehållet.
+- Rättelse: låt användaren redigera profil/CV och anmäla fel i matchningsunderlaget. Hantera uppdatering av härledda AI-bedömningar och eventuell information till mottagare enligt tillämpliga krav; gammal bedömning får inte fortsätta visas som aktuell efter rättat underlag.
+- Kontoradering: tydlig konsekvensbeskrivning och säker bekräftelse med ny autentisering. Återanvänd och granska befintlig funktion före ny implementation. Omfatta konto, sessioner/åtkomst, profil, CV, media, exportpaket och relaterade uppgifter som ska raderas. Enbart dold profil eller raderat Auth-konto räcker inte. Hantera delade data, säkerhetskopior och separat motiverat bevarande enligt L12; informera vad som eventuellt behålls, varför och hur länge. L12:s normala lagringstider är inte ett generellt hinder mot tidigare radering.
+- Erbjud kontakt för tillgång, rättelse, radering, begränsning, invändning och dataportabilitet där tillämpligt. Utse intern ansvarig och bevaka begäranden utan onödigt dröjsmål, normalt inom en månad. Automatiken får inte ersätta individuell prövning när det behövs. Verifiera identitet proportionerligt utan onödig insamling.
+
+#### Klar när
+
+- Jämför exporten mot en dokumenterad datainventering med fiktiva ungdoms-/företagskonton; profil/CV ensamt är inte godkänt. Kontrollera begriplig sammanställning, JSON, svenska tecken, filer och rättighetsinformation.
+- Negativa tester: anonym, annan ungdom, annat företag, utgången länk, gammal session, dubbla jobb, fel under skapande/hämtning och samtidig kontoradering. Inga tredjepartsuppgifter eller hemligheter läcker; tillfälliga paket städas faktiskt även efter fel.
+- Verifiera rättelse och hantering av inaktuella bedömningar samt självbetjäningsradering inklusive filer/åtkomst och dokumenterade undantag. Kontaktväg och intern rutin fungerar även när automatiken eller inloggningen inte gör det.
+- Implementerat: —
+- Verifierat: Dokumentationskrav genomgångna; ingen export/radering eller kontokonfiguration ändrad i denna leverans.
+- Återstår / blockerare: Datainventering, kontaktadress/ansvarig, exakt exportpaketsfrist, rättighetsbedömning, implementation och verifiering.
+
+<a id="l14"></a>
+### L14 Verifiera leverantörsavtal och produktionskonton
+
+- [ ] Klar
+- Prioritet: P1, före behandling av riktiga användaruppgifter i skarp tjänst
+- Global ordning: 22.3
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: Implementations-/kontrollägare reserveras separat.
+- Samordning: L10 (Vercel/lansering), L12 (lagring/backup), F20 (integritetstext), L13 (export/radering hos leverantörer). Slutlig avtalspart/personuppgiftsansvar för UF-verksamheten fastställs separat; kontots visningsnamn eller en framtida ägarandel avgör inte i sig GDPR-rollen.
+
+#### Känt från användaren – ännu inte kontoverifierat
+
+- Supabase, Vercel, OpenAI och Mapbox står i användarens namn; extern utvecklare har även owner-roll hos Supabase/Vercel. Separata personliga inloggningar, tvåfaktorsautentisering och minsta nödvändiga behörighet är målet; delade lösenord är inte ett teamupplägg. Utred behovet av dubbla owner-roller.
+- Produktionsdatabasen anges ligga i West EU (Ireland). Kontrollera primär lagring, filer, backup, supportåtkomst, CDN, loggar och underleverantörer separat; EU-region är inte en garanti att all behandling stannar inom EU/EES.
+- Vercel är Hobby och ska flyttas till Pro. Verifiera flytt och tillämpligt DPA före skarp behandling; kontrollera även tjänstevillkorens begränsning av Hobby till personlig icke kommersiell användning. Gratis tjänst innebär inte automatiskt icke kommersiell verksamhet.
+- Ny OpenAI-organisation/kundupplägg planeras, liksom flytt/separering av Mapbox. Ett nytt personligt inloggningskonto är inte i sig ett rättsligt krav; kontrollera rätt organisation/projekt, avtalspart, fakturering och åtkomst. Flytta/rotera projektnycklar säkert utan driftavbrott och håll dev/produktion separata.
+- Användaren uppger ingen separat besöksstatistik, felövervakning eller spårning. Verifiera kod, beroenden, plattformsinställningar, cookies och kartans nätverksanrop; tekniska loggar kan ändå behandla personuppgifter.
+- Användaren minns inte DPA-acceptans. Status är inte verifierad, inte konstaterat saknat avtal. Fastställ om DPA ingår i tillämpliga standardvillkor eller kräver separat anslutning; signera inte dubbelt av slentrian.
+
+#### Kontroller före lansering
+
+- Dokumentera per leverantör: tjänst och ändamål, datafält som skickas, roll(er), rätt kund/avtalspart, tillämpligt DPA med version/datum/acceptansunderlag, underleverantörer, behandlingsländer, överföringsmekanismer och eventuell ytterligare bedömning, åtkomst, lagring samt export-/raderingsmöjligheter. Publicerade standardavtal är inte bevis på att rätt avtal gäller för kontot.
+- Supabase: verifiera aktuellt avtal för respektive organisation, region och behandling utanför regionen. Vercel: verifiera Pro-kundupplägg/DPA, serverregioner och logginnehåll; abonnemangsbyte ensamt gör inte tjänsten GDPR-anpassad.
+- OpenAI: stäng av frivillig delning av indata/utdata, feedback och utvärderings-/finjusteringsdata för MatchnWorks produktionsprojekt. Rekommenderad produktionsinställning är API call logging avstängd; felsökning med fiktiva data kan ske avgränsat i dev. Kontrollera verklig effekt och aktuella villkor. Datadelning för träning, dashboardloggar, säkerhetsloggar och API-funktioners lagring är separata frågor; avstängd loggning innebär inte noll lagring.
+- Granska kodens AI-anrop, inklusive `store: false` där det stöds och passar funktionen, eventuell promptcache och andra lagringsfunktioner. Minimera skickade uppgifter; identitetsfält kan finnas i fri CV-/PDF-text trots att strukturerade fält utelämnas. Kontrollera logglagring, geografisk behandling och avtalsvillkor innan information till användare fastställs.
+- Egna felsökningsloggar ska prioritera request-ID, felkod, tid och annan minimal teknisk metadata; undvik CV-text, chattinnehåll, hemligheter och hela AI-payloads. Metadata kan också vara personuppgifter och behöver avgränsad åtkomst/lagring.
+- Mapbox: verifiera roll/DPA och vilka IP-, plats-, sök- och telemetriuppgifter som faktiskt skickas. Framtida mejlleverantör läggs till innan den används med riktiga uppgifter.
+- Referenser att återkontrollera vid genomförandet: https://supabase.com/legal/customer-resources/data-processing-addendum ; https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq ; https://vercel.com/legal/dpa ; https://vercel.com/docs/plans/hobby ; https://openai.com/policies/data-processing-addendum/ ; https://developers.openai.com/api/docs/guides/your-data ; https://www.mapbox.com/legal/dpa .
+
+#### Klar när
+
+- Avtals- och dataflödesförteckningen är genomgången mot faktiska konton, kod och inställningar. Konkreta luckor är lösta eller innebär dokumenterad lanseringsblockerare; rekommendationer får inte markeras som redan utförda.
+- Bekräfta rätt organisation/projekt, nycklarnas miljöseparering, åtkomst, Vercel Pro/DPA och OpenAI-inställningar utan att lägga hemligheter i dokument eller rapporter. Underbygg integritetstextens uppgifter om mottagare, träning, lagring och tredjeland.
+- Implementerat: —
+- Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
+- Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
