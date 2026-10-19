@@ -1102,7 +1102,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Global ordning: 13.2
 - Status: För granskning
 - Ansvarig: Codex
-- Branch/PR: `codex/n18-feed-relevance-20261019`, reserverad före kodarbete.
+- Branch/PR: `codex/n18-feed-relevance-20261019`, [PR #79](https://github.com/vilgotdidrikson/youth-job-mvp/pull/79). Reservation publicerad före kodarbete.
 - Åtgärd: Bygg vidare på N17: uttryckliga filter är hårda val; profilönskemål, plats och känd tillgänglighet ger mjuk prioritering. Ovisade annonser, publiceringstid och variation mellan företag styr därefter. Behåll spärrar för tidigare val/ansökningar; ingen automatisk återvisning/lyft vid anställning eller textredigering. Visa begriplig anledning till relevans.
 - Klar när: Tom profil kan upptäcka jobb och nybörjare utesluts inte för saknad erfarenhet. Filter respekteras, resultat/paginering är stabila, flera arbetsplatser räknas en gång och ett företag tar inte över flödet. Sparade jobb fungerar separat. Inga betalda lyft aktiveras.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
