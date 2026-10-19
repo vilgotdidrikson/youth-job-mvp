@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:matching": "node scripts/test-matching.mjs",
+    "test:matching-fairness": "node scripts/test-matching-fairness.mjs",
     "test:application-supplement": "node scripts/test-application-supplement.mjs",
     "test:followup-batch": "node scripts/test-followup-batch.mjs",
     "test:cv": "node scripts/test-cv-scenarios.mjs",
