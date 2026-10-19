@@ -208,7 +208,7 @@ export function renderStructuredCv(cv: StructuredCvData): string {
 
   section("UTBILDNING", cv.education.flatMap((item) => {
     const heading = compact([compact([item.program, item.school]).join(" - "), compact([item.startDate, item.endDate]).join(" - "), item.expectedGraduation ? `Planerad examen ${item.expectedGraduation}` : ""]).join(" | ");
-    return [heading, ...bullets([item.description ?? "", ...item.courses, ...item.projects, ...item.achievements, ...(item.description === undefined ? item.sourceNotes : [])], 3)].filter(Boolean);
+    return [heading, ...bullets([item.description ?? "", ...item.courses, ...item.projects, ...item.achievements, ...(item.description === undefined ? (item.sourceNotes ?? []) : [])], 3)].filter(Boolean);
   }));
 
   section("PROJEKT", cv.projects.flatMap((item) => [compact([item.name, item.role]).join(" - "), ...bullets([...(item.contributions.length ? item.contributions : [item.description ?? ""]), ...item.results], 3)].filter(Boolean)));
@@ -217,13 +217,7 @@ export function renderStructuredCv(cv: StructuredCvData): string {
   section("SPRÅK", bullets(cv.languages.map((language) => compact([language.name, language.level, language.abilities.join(", ")]).join(" - ")), 8));
   section("ÖVRIG ERFARENHET", cv.otherExperience.flatMap((item) => [compact([item.title, item.organization, item.period]).join(" | "), ...bullets(item.details, 3)].filter(Boolean)));
 
-  let wordCount = 0;
-  return output.map((line) => {
-    const words = line.split(/\s+/).filter(Boolean);
-    const remaining = Math.max(0, 500 - wordCount);
-    wordCount += Math.min(words.length, remaining);
-    return words.slice(0, remaining).join(" ");
-  }).filter((line, index, lines) => line || (index > 0 && lines[index - 1])).join("\n").trim();
+  return output.filter((line,index,lines)=>line || (index>0 && lines[index-1])).join("\n").trim();
 }
 
 export function appendInterviewAnswer(cv: StructuredCvData, area: keyof Omit<StructuredCvData, "personalInfo"> | "personalInfo", transcript: string): StructuredCvData {

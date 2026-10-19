@@ -6,7 +6,7 @@ import ts from 'typescript';
 const dir=mkdtempSync(resolve('.analysis-worker-tests-'));
 try {
  const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
- for(const name of ['matching-input-policy','trait-evidence','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
+ for(const name of ['application-disclosure','structured-cv','matching-job-context','matching-input-policy','trait-evidence','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
  writeFileSync(`${dir}/provider.mjs`,`export let offline=false;export function fail(value){offline=value;}export default class OpenAI{constructor(){this.chat={completions:{create:async()=>{if(offline)throw Error('private provider detail');return {choices:[{message:{content:JSON.stringify({criteria:[{id:'c1',status:'fulfilled',evidence:'Invented evidence must be discarded'}]})}}]};}}};}}`);
  writeFileSync(`${dir}/pdf-cv-source.mjs`,`export let status='none';export function setStatus(value){status=value;}export const pdfCvSource=async()=>({status,text:''});`);
  writeFileSync(`${dir}/matching-provider.mjs`,compile('lib/matching-provider.ts').replace('from "openai"','from "./provider.mjs"'));
@@ -17,8 +17,9 @@ try {
  const {setStatus}=await import(pathToFileURL(`${dir}/pdf-cv-source.mjs`));
  const profile=emptyRecruitmentProfile();profile.qualifications.licences=['B-körkort'];
  const jobs=[{jobId:'job',youthId:'youth',generation:7,lockToken:'lease',version:4,profile:{full_name:'Private identity excluded',recruitment_profile:profile},criteria:[{label:'B-körkort',required:true},{label:'React',required:true},{label:'Social',category:'trait'}]}];
+ const packet={identity:{full_name:'QA'},cv:{text:'Jag har B-körkort',structured:{},documents:[]},practical:{availability:{days:[],periods:[],startDate:'',hours:''}},profile_items:[]};
  const calls=[];let cached=null;
- const client={rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='claim_application_analysis_jobs'?jobs:name==='finish_application_analysis_job'?{completed:true}:null,error:null};},from:()=>({select(){return this;},eq(){return this;},maybeSingle:async()=>({data:cached,error:null})})};
+ const client={rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='claim_application_analysis_jobs'?jobs:name==='get_application_disclosure_for_worker'?packet:name==='finish_application_analysis_job'?{completed:true}:null,error:null};},from:()=>({select(){return this;},eq(){return this;},maybeSingle:async()=>({data:cached,error:null})})};
  assert.deepEqual(await processApplicationAnalysisJobs(client,'synthetic-test-key'),{processed:1,completed:1});
  let result=calls.find(([name])=>name==='finish_application_analysis_job')[1];
  assert.equal(result.p_generation,7);assert.equal(result.p_token,'lease');assert.equal(result.p_result.criteria[0].status,'fulfilled');assert.equal(result.p_result.criteria[1].status,'unknown');assert.equal(result.p_result.criteria[2].status,'unknown');assert.deepEqual(result.p_missing,['React']);

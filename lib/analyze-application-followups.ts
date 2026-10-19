@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { matchingJobContext } from "./matching-job-context";
 import { requestMatchingEvidence } from "./matching-provider";
 import { matchingCriteria, candidateSource, candidateSourceDetails, assessCandidate, criteriaRequiringAi } from "./candidate-assessment";
 import { candidateAssessmentHash } from "./candidate-assessment-hash";
@@ -19,8 +20,9 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
   catch { return { queued: 0, temporary: true, inputStatus: "review_required" }; }
   if (input.status === "review_required") return { queued: 0, inputStatus: input.status };
   const source = input.text;
+  const jobContext=matchingJobContext(context.profile ?? {});
   const key = process.env.OPENAI_API_KEY;
-  let hash = candidateAssessmentHash(source, criteria, pdf.status, context.profile_version);
+  let hash = candidateAssessmentHash(source, criteria, pdf.status, context.profile_version, input.status, Number(context.profile?.disclosure_revision ?? 0),jobContext);
   if (context.analysis_hash === hash) return { queued: 0, cached: true };
   if (!key) return { queued: 0, temporary: true };
   const leaseArgs = { p_job_id: jobId, p_youth_user_id: youthId, p_input_hash: hash };
@@ -37,7 +39,7 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
     const aiCriteria = criteriaRequiringAi(criteria, source);
     if (source && (aiCriteria.length || questions.length)) {
       try {
-        const result = await requestMatchingEvidence(key, source, aiCriteria, questions);
+        const result = await requestMatchingEvidence(key, source, aiCriteria, questions, jobContext);
         raw = result.criteria;
         staticEvidence = result.answers;
         if (!Array.isArray(raw)) return { queued: 0, temporary: true };
@@ -48,7 +50,7 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
       const { data:evidenceResult, error: evidenceError } = await client.rpc("apply_my_application_evidence_snapshot", {p_job_id:jobId,p_answers:answers,p_source_hash:hash,p_source_updated_at:context.source_updated_at});
       if (evidenceError) return {queued:0,temporary:true};
       if (evidenceResult?.stale) return {queued:0,stale:true};
-      hash = candidateAssessmentHash(candidateSource({...context.profile,answers:{...context.answers,...answers},pdf_cv_text:pdf.text}),criteria,pdf.status,context.profile_version);
+      hash = candidateAssessmentHash(candidateSource({...context.profile,answers:{...context.answers,...answers},pdf_cv_text:pdf.text}),criteria,pdf.status,context.profile_version, input.status, Number(context.profile?.disclosure_revision ?? 0),jobContext);
     }
     return await queueApplicationFollowups(client, jobId, youthId, context.profile_version, assessCandidate(criteria, raw, source), hash, context.source_updated_at, source);
   } finally {

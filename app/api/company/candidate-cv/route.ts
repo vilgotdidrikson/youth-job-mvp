@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { renderStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
+import { disclosedCvText, type ApplicationDisclosure } from "@/lib/application-disclosure";
 
 import { uploadedCvPath } from "@/lib/cv-document-path";
 import { requireApiUser } from "@/lib/api-auth";
-import { withVerifiedExperience, type VerifiedExperience } from "@/lib/recruitment-types";
+
 
 const SIGNED_URL_TTL_SECONDS = 5 * 60;
 
@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as { jobId?: unknown; youthUserId?: unknown } | null;
   if (!isUuid(body?.jobId) || !isUuid(body?.youthUserId)) return NextResponse.json({ error: "Ogiltig kandidat eller annons." }, { status: 400 });
 
-  const { data: youthProfile, error: profileError } = await userClient.rpc("get_candidate_assessment_input", {
+  const { data: youthProfile, error: profileError } = await userClient.rpc("get_application_disclosure", {
     p_job_id: body.jobId, p_youth_user_id: body.youthUserId,
   });
   if (profileError || !youthProfile) return NextResponse.json({ error: "Du saknar åtkomst till kandidatens CV." }, { status: 403 });
-  const path = uploadedCvPath(youthProfile?.documents, body.youthUserId);
+  const path = uploadedCvPath(youthProfile?.cv?.documents, body.youthUserId);
   if (path) {
     const { data, error } = await userClient.storage.from("youth-documents").createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
     if (error || !data?.signedUrl) return NextResponse.json({ error: "CV:t kunde inte hämtas. Det kan ha tagits bort av kandidaten." }, { status: 404 });
@@ -38,13 +38,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const storedText = typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text.trim() : "";
-  const structuredText = !storedText && youthProfile?.cv_structured
-    ? renderStructuredCv(youthProfile.cv_structured as StructuredCvData).trim()
-    : "";
-  const { data: experiences, error: experienceError } = await userClient.rpc("get_verified_experience", { p_youth_user_id: body.youthUserId, p_job_id: body.jobId });
-  if (experienceError) return NextResponse.json({ error: "Kunde inte läsa kandidatens bekräftade erfarenhet." }, { status: 503 });
-  const text = withVerifiedExperience(storedText || structuredText, (experiences ?? []) as VerifiedExperience[]);
+  const text = disclosedCvText(youthProfile as ApplicationDisclosure);
   if (!text) return NextResponse.json({ error: "Kandidaten har ännu inte skapat något CV." }, { status: 404 });
   return NextResponse.json({ kind: "text", text }, { headers: { "Cache-Control": "private, no-store" } });
 }

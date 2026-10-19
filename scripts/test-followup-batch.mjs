@@ -18,6 +18,7 @@ try {
     export let fail=false;
     export function setFailure(value){fail=value;}
     export class OpenAI{constructor(){this.chat={completions:{create:async(args)=>{calls.push(['ai',args]);if(fail)throw Error('offline');return {choices:[{message:{content:JSON.stringify({criteria:[],answers:[{id:'q1',evidence:source}]})}}]};}}};}}
+    export const matchingJobContext=()=>'';
     export const matchingCriteria=()=>[{id:'c0',label:'Kassa'}];
     export const criteriaRequiringAi=(criteria)=>criteria;
     export const candidateSourceDetails=profile=>({text:candidateSource(profile),status:"minimized"});
@@ -29,7 +30,7 @@ try {
     export const pdfCvSource=async()=>({status:'none',text:''});
     export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
     export const openaiTextOptions=()=>({model:'test',store:false});`);
-  const imports=`import {OpenAI,requestMatchingEvidence,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+  const imports=`import {OpenAI,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
   writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
   const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
   const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));
