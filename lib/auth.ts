@@ -8,6 +8,13 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+// 4xx answers (account already exists, wrong password, ...) are expected user
+// input errors that the form explains; only log real failures.
+function logUnexpectedAuthError(message: string, error: { status?: number }) {
+  if (error.status && error.status >= 400 && error.status < 500) return;
+  console.error(message, error);
+}
+
 export async function signUp(
   email: string,
   password: string,
@@ -25,7 +32,7 @@ export async function signUp(
   });
 
   if (error) {
-    console.error("Supabase sign up failed.", error);
+    logUnexpectedAuthError("Supabase sign up failed.", error);
     throw new Error(error.message);
   }
 
@@ -46,7 +53,7 @@ export async function signIn(email: string, password: string): Promise<Session> 
   });
 
   if (error) {
-    console.error("Supabase sign in failed.", error);
+    logUnexpectedAuthError("Supabase sign in failed.", error);
     throw new Error(error.message);
   }
 
