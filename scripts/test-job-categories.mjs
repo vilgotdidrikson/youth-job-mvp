@@ -73,19 +73,19 @@ assert.throws(()=>profileModule.validateRecruitmentProfile({...withIds,preferenc
 const empty=profileModule.emptyRecruitmentProfile();empty.preferences.roles=['söker caféjobb'];
 const jobs=[{...cafe,id:'one'},{...cafe,id:'two',title:'cafépersonal'},{...cafe,id:'three',title:'Barista'}, {...cafe,id:'finance',title:'Ekonom på café'}, {...cafe,id:'unknown',title:'Astronaut',category:''}, {...corrected,id:'corrected'}].map(j=>({...j,employment_type:'Deltid',city:'QA'}));
 jobs.unshift(...jobs.splice(3,3));
-const db={from(table){const chain={select(){return chain;},eq(){return chain;},maybeSingle(){return Promise.resolve({data:{recruitment_profile:empty},error:null});},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);}};return chain;}};
+const db={from(table){const chain={select(){return chain;},eq(){return chain;},order(){return chain;},limit(){return chain;},gt(){return chain;},maybeSingle(){return Promise.resolve({data:{recruitment_profile:empty},error:null});},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);}};return chain;}};
 const load=Module._load;
-Module._load=function(request,parent,...rest){if(request==='@/lib/auth')return{getCurrentUser:async()=>({id:'qa'}),getUserProfile:async()=>({role:'youth'})};if(request==='@/lib/jobs')return{getJobs:async()=>jobs};if(request==='@/lib/chat')return{};if(request==='@/lib/supabase')return{getSupabaseClient:()=>db};if(request.startsWith('@/'))return load.call(this,path.resolve(request.slice(2)),parent,...rest);return load.call(this,request,parent,...rest);};
+Module._load=function(request,parent,...rest){if(request==='@/lib/auth')return{getCurrentUser:async()=>({id:'qa'}),getUserProfile:async()=>({role:'youth'})};if(request==='@/lib/jobs')return{getDiscoveryJobs:async()=>jobs};if(request==='@/lib/chat')return{};if(request==='@/lib/supabase')return{getSupabaseClient:()=>db};if(request.startsWith('@/'))return load.call(this,path.resolve(request.slice(2)),parent,...rest);return load.call(this,request,parent,...rest);};
 try {
  const {getSwipeJobs}=require('../lib/feeds.ts');
- assert.deepEqual((await getSwipeJobs({category:'cafe'})).map(j=>j.id),['one','two','three']);
- assert.deepEqual((await getSwipeJobs({query:'söker caféjobb'})).map(j=>j.id),['one','two','three']);
- assert.deepEqual((await getSwipeJobs({query:'caféjobb'})).map(j=>j.id),['one','two','three']);
+ assert.deepEqual((await getSwipeJobs({category:'cafe'})).map(j=>j.id),['one','three','two']);
+ assert.deepEqual((await getSwipeJobs({query:'söker caféjobb'})).map(j=>j.id),['one','three','two']);
+ assert.deepEqual((await getSwipeJobs({query:'caféjobb'})).map(j=>j.id),['one','three','two']);
  assert.equal((await getSwipeJobs()).length,6,'Unknown/corrected roles remain discoverable');
- assert.deepEqual((await getSwipeJobs()).slice(0,3).map(j=>j.id),['one','two','three'],'Synonyms have equal soft preference priority');
+ assert.deepEqual((await getSwipeJobs()).slice(0,3).map(j=>j.id),['one','three','two'],'Synonyms have equal soft preference priority');
  assert.deepEqual((await getSwipeJobs({category:'unclassified'})).map(j=>j.id),['unknown']);
  empty.preferences.roles=[];empty.preferences.categoryIds=['cafe'];
- assert.deepEqual((await getSwipeJobs()).slice(0,3).map(j=>j.id),['one','two','three'],'Stored stable preference IDs contribute without a free-text role');
+ assert.deepEqual((await getSwipeJobs()).slice(0,3).map(j=>j.id),['one','three','two'],'Stored stable preference IDs contribute without a free-text role');
 }finally{Module._load=load;}
 const migration=readFileSync('supabase/migrations/'+(await import('node:fs')).readdirSync('supabase/migrations').find(f=>f.endsWith('_n17_job_categories.sql')),'utf8');
 for(const c of categories.JOB_CATEGORIES)assert.ok(migration.includes(`'${c.id}'`),'SQL allowlist must include '+c.id);

@@ -27,7 +27,8 @@
     "test:assessment-progress": "node scripts/test-assessment-progress.mjs",
     "test:recruitment-review": "node scripts/test-recruitment-review.mjs",
     "test:video-retention": "node scripts/test-video-retention.mjs",
-    "test:job-categories": "node scripts/test-job-categories.mjs"
+    "test:job-categories": "node scripts/test-job-categories.mjs",
+    "test:job-discovery": "node scripts/test-job-discovery.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
