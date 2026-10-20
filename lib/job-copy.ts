@@ -26,6 +26,11 @@ export const EMPTY_JOB_FORM: JobBuilderDraft = {
 /** Explicit editable-field allowlist: never copies recruitment identity or state. */
 export function createCopyJobDraft(job: JobPost, criteria: JobMatchProfile | null, newId = () => crypto.randomUUID()): JobBuilderDraft {
   const workplaces = getJobWorkplaces(job).map(place => ({ ...place, id: newId() }));
+  return { ...jobBuilderFields(job, criteria, workplaces), copiedFromTitle: job.title, copyReviewed: false };
+}
+
+/** The builder's editable fields for an existing listing; shared by copy (N15) and edit (N01). */
+export function jobBuilderFields(job: JobPost, criteria: JobMatchProfile | null, workplaces: JobWorkplace[]): JobBuilderDraft {
   const first = workplaces[0];
   return {
     ...EMPTY_JOB_FORM,
@@ -40,7 +45,6 @@ export function createCopyJobDraft(job: JobPost, criteria: JobMatchProfile | nul
     candidateQuestions: criteria?.candidate_questions.map(item => item.question) ?? [],
     matchRoleSummary: criteria?.role_summary ?? job.description,
     imageUrls: job.image_url.split(",").map(value => value.trim()).filter(Boolean),
-    copiedFromTitle: job.title, copyReviewed: false,
   };
 }
 export function draftSalary(form: JobBuilderDraft): string {

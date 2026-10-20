@@ -22,7 +22,7 @@ export function MobileNav() {
   ] : [{href:"/private",label:"Uppdrag",icon:"briefcase"},{href:"/chats",label:"Chattar",icon:"chat"},{href:"/notifications",label:"Aktivitet",icon:"activity"},{href:"/profile",label:"Profil",icon:"profile"}];
   return <nav className={`${styles.nav} ${pathname==="/chats"?styles.compact:""}`} aria-label="Huvudnavigation"><Link className={styles.brand} href={items[0].href}>MatchnWork</Link><div className={styles.links}>{items.map(item => {
     const selectedCompanyView = companyView(query.get("view"));
-    const active = pathname === item.href.split("?")[0] && (!item.view || selectedCompanyView === item.view || (selectedCompanyView === "skapa" && item.view === "annonser"));
+    const active = pathname === item.href.split("?")[0] && (!item.view || selectedCompanyView === item.view || ((selectedCompanyView === "skapa" || selectedCompanyView === "redigera") && item.view === "annonser"));
     return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined}><UiIcon name={item.icon}/><span>{item.label}</span></Link>;
   })}</div><Link className={styles.account} href={profile.role === "company" ? COMPANY_ROUTES.account : "/profile"} aria-label="Mitt konto"><UiIcon name="profile"/></Link></nav>;
 }
