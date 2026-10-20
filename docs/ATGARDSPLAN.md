@@ -79,7 +79,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Ej påbörjad | — |
-| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Pågår | Codex |
+| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
@@ -96,7 +96,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | Ej påbörjad | — |
-| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Pågår | Codex |
+| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
@@ -286,14 +286,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 32
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Codex
-- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20.
+- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20, [PR #85](https://github.com/vilgotdidrikson/youth-job-mvp/pull/85).
 - Åtgärd: Lägg en synlig Återuppta utkast-post bland företagets annonser med titel, aktuell del och senast sparat. Skilj utkast från publicerade, pausade och stängda annonser. Koppla till bildsparandet i F07.
 - Klar när: Ett sparat utkast går att hitta utan att välja Ny annons.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Separat utkastskort bland företagets annonser med titel, aktuellt steg, sparstatus, verkligt sparat datum och Återuppta utkast. Tydligt märkt inte publicerat och endast på denna enhet/webbläsare. Se docs/F07_N03.md.
+- Verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår. Inget inloggat webbprov påstås genomfört.
+- Återstår / blockerare: Inloggat driftsatt test av spara/omladdning/återupptagning/beskärning/kopia/publicering och fysisk mobil. Lokal webbläsarlagring kan rensas; ingen synkning mellan enheter utlovas. Ingen ny serverlagring, AI-data eller migration. Avgränsad leverans införs i dev innan Klar kan övervägas.
 
 <a id="n04"></a>
 ### N04 Öppna en läsbar företagsprofil från annonsen
@@ -514,14 +514,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 18
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Codex
-- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20.
+- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20, [PR #85](https://github.com/vilgotdidrikson/youth-job-mvp/pull/85).
 - Åtgärd: Spara omslagsbilden och beskärningen tillsammans med resten av annonsutkastet. Använd inte en generell Utkast sparat-bekräftelse om någon del saknas; ange då exakt vad som återstår att spara.
 - Klar när: Bild, text och praktiska uppgifter finns kvar när utkastet återöppnas efter omladdning.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Bildens beskurna bytes, text och steg sparas atomärt i ett lokalt kontobundet IndexedDB-utkast; autosparning, uttrycklig sparning, tydliga fel och bakåtkompatibel återläsning. Kopiering/publicering använder ordnad sparning/rensning. Se docs/F07_N03.md.
+- Verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår. Inget inloggat webbprov påstås genomfört.
+- Återstår / blockerare: Inloggat driftsatt test av spara/omladdning/återupptagning/beskärning/kopia/publicering och fysisk mobil. Lokal webbläsarlagring kan rensas; ingen synkning mellan enheter utlovas. Ingen ny serverlagring, AI-data eller migration. Avgränsad leverans införs i dev innan Klar kan övervägas.
 
 <a id="f13"></a>
 ### F13 Rätta status för väntande ansökningar

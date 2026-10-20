@@ -9,6 +9,7 @@ import { CandidateRecruitmentProfile } from "@/components/candidate-recruitment-
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useJobDraft } from "@/hooks/use-job-draft";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import "./company-design.css";
@@ -26,7 +27,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
 import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
-import { EMPTY_JOB_FORM as EMPTY_FORM, draftSalary, hasJobDraftContent, restoreJobBuilderDraft, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
+import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
 import { COMPANY_ROUTES, companyView } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
@@ -45,7 +46,7 @@ const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra v
 const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
 const REQUIREMENT_TIPS = ["Kan arbeta helger", "Tidigare erfarenhet", "B-körkort", "Svenska", "Kan börja omgående"];
 const TRAIT_TIPS = ["Ansvarstagande", "Punktlig", "Social", "Noggrann", "Serviceinriktad", "Nyfiken", "Samarbetsvillig"];
-const JOB_DRAFT_STORAGE_KEY = "employo-job-draft";
+
 
 
 type CandidateCv =
@@ -71,7 +72,8 @@ function CompanyPageContent() {
   const searchParams = useSearchParams();
   const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const hasCompanyAccess = profile?.role === "company";
-  const jobDraftStorageKey = `${JOB_DRAFT_STORAGE_KEY}:${user?.id ?? "signed-out"}`;
+  const jobDraft = useJobDraft(hasCompanyAccess ? user?.id : undefined);
+  const { form, setForm, files: jobImageFiles, setFiles: setJobImageFiles, previews: jobImagePreviews, step: builderStep, setStep: setBuilderStep, hydrated: draftHydrated } = jobDraft;
 
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
@@ -82,7 +84,6 @@ function CompanyPageContent() {
   const [jobActionId, setJobActionId] = useState<string | null>(null);
   const [candidateActionKey, setCandidateActionKey] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidateFilter, setCandidateFilter] = useState<"pending" | "all">("pending");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -101,10 +102,7 @@ function CompanyPageContent() {
   const [chatDraft, setChatDraft] = useState("");
   const candidateStartXRef = useRef<number | null>(null);
   const candidateFlyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [jobImageFiles, setJobImageFiles] = useState<File[]>([]);
-  const [jobImagePreviews, setJobImagePreviews] = useState<string[]>([]);
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
-  const [draftSaved, setDraftSaved] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [showCustomBenefit, setShowCustomBenefit] = useState(false);
@@ -112,9 +110,6 @@ function CompanyPageContent() {
   const [customBenefit, setCustomBenefit] = useState("");
   const [customRequirement, setCustomRequirement] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [builderStep, setBuilderStep] = useState<1 | 2 | 3>(1);
-  const [draftOwnerId, setDraftOwnerId] = useState<string | null>(null);
-  const draftHydrated = Boolean(user?.id) && draftOwnerId === user?.id;
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCategory,setEditingCategory]=useState<JobPost|null>(null);
   const [editingWorkplaces, setEditingWorkplaces] = useState<JobPost | null>(null);
@@ -125,33 +120,7 @@ function CompanyPageContent() {
   const copyLock = useRef(false);
   const [closingJob, setClosingJob] = useState<JobPost | null>(null);
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
-  const skipNextDraftSaveRef = useRef(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    setForm(EMPTY_FORM);
-    setJobImageFiles([]);
-    setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; });
-    setBuilderStep(1);
-    try {
-      const stored = window.localStorage.getItem(jobDraftStorageKey);
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as Partial<JobForm> | { form?: Partial<JobForm>; builderStep?: number };
-      const savedForm = ("form" in parsed ? parsed.form : parsed) as Partial<JobForm> | undefined;
-      if (savedForm && typeof savedForm === "object") setForm(restoreJobBuilderDraft(savedForm));
-      if ("builderStep" in parsed && (parsed.builderStep === 1 || parsed.builderStep === 2 || parsed.builderStep === 3)) setBuilderStep(parsed.builderStep);
-    } catch {
-      window.localStorage.removeItem(jobDraftStorageKey);
-    } finally {
-      setDraftOwnerId(user.id);
-    }
-  }, [jobDraftStorageKey, user?.id]);
-
-  useEffect(() => {
-    if (!draftHydrated) return;
-    if (skipNextDraftSaveRef.current) { skipNextDraftSaveRef.current = false; return; }
-    window.localStorage.setItem(jobDraftStorageKey, JSON.stringify({ form, builderStep }));
-  }, [builderStep, draftHydrated, form, jobDraftStorageKey]);
 
   const loadData = async (userId: string) => {
     try {
@@ -337,16 +306,11 @@ function CompanyPageContent() {
   const handleCopyJob = async () => {
     if (!copyingJob || copyLock.current || !user) return;
     copyLock.current = true; setCopyBusy(true); setCopyError("");
-    const ownerId = user.id;
     try {
       const copied = await loadOwnJobCopy(copyingJob.id);
       // Persist before replacing the visible form. Storage failure keeps the old draft intact.
-      window.localStorage.setItem(jobDraftStorageKey, JSON.stringify({ form: copied, builderStep: 1 }));
-      setForm(copied); setBuilderStep(1);
-      setJobImageFiles([]);
-      setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; });
+      await jobDraft.replace(copied);
       setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null);
-      setDraftOwnerId(ownerId);
       window.history.replaceState(null, "", COMPANY_ROUTES.create);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (reason) { setCopyError(reason instanceof Error ? reason.message : "Kunde inte kopiera annonsen. Ditt befintliga utkast finns kvar."); }
@@ -355,7 +319,7 @@ function CompanyPageContent() {
 
   const handleCreateJob = async (e: FormEvent) => {
     e.preventDefault();
-    if (busy || copyingJob) return;
+    if (busy || copyingJob || !draftHydrated) return;
     try { validateDraftPublication({ ...form, imagePending: form.imagePending && jobImageFiles.length === 0 }); } catch (reason) { setError(reason instanceof Error ? reason.message : "Granska annonsen."); return; }
     if (!form.employmentType) { setError("Välj en anställningsform."); return; }
     if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return; }
@@ -405,12 +369,8 @@ function CompanyPageContent() {
         // create a duplicate listing; flag only the profile for later repair.
         matchProfileWarning = "Annonsen skapades, men matchprofilen behöver kompletteras senare.";
       }
-      skipNextDraftSaveRef.current = true;
-      setForm(EMPTY_FORM);
-      setBuilderStep(1);
-      window.localStorage.removeItem(jobDraftStorageKey);
-      setJobImageFiles([]);
-      setJobImagePreviews((previews) => { previews.forEach((preview) => URL.revokeObjectURL(preview)); return []; });
+      try { await jobDraft.clear(); }
+      catch { matchProfileWarning = [matchProfileWarning, "Annonsen skapades, men det lokala utkastet kunde inte tas bort. Publicera inte samma utkast igen."].filter(Boolean).join(" "); }
       if (user) await loadData(user.id);
       window.history.replaceState(null, "", COMPANY_ROUTES.listings);
       if (matchProfileWarning) setError(matchProfileWarning);
@@ -475,12 +435,9 @@ function CompanyPageContent() {
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (busy || !draftHydrated) return;
-    window.localStorage.setItem(jobDraftStorageKey, JSON.stringify({ form, builderStep }));
-    if (form.imagePending) { setError("Texten är sparad. Den nya bilden sparas vid publicering och måste väljas igen om du laddar om sidan."); }
-    setDraftSaved(true);
-    window.setTimeout(() => setDraftSaved(false), 2500);
+    try { await jobDraft.saveNow(); } catch { /* The draft panel reports the exact storage failure. */ }
   };
 
   const handleAiGenerate = async () => {
@@ -542,10 +499,6 @@ function CompanyPageContent() {
   const useCroppedJobImage = (file: File) => {
     setForm(current => ({ ...current, imagePending: true }));
     setJobImageFiles([file]);
-    setJobImagePreviews((previews) => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview));
-      return [URL.createObjectURL(file)];
-    });
     setImageToCrop(null);
   };
 
@@ -829,7 +782,9 @@ function CompanyPageContent() {
       )}
 
       {/* ── NY ANNONS TAB ── */}
-      {tab === "skapa" && (
+      {tab === "skapa" && !draftHydrated && <p role="status">Öppnar ditt annonsutkast…</p>}
+      {(tab === "annonser" || tab === "skapa") && jobDraft.error && <p className="job-copy-notice" role="alert">{jobDraft.error} Dina ändringar är inte bekräftat sparade; behåll sidan öppen och försök igen.</p>}
+      {tab === "skapa" && draftHydrated && (
         <form
           className="job-builder job-builder-onboarding"
           onSubmit={(event) => {
@@ -917,15 +872,15 @@ function CompanyPageContent() {
                     <section className="card job-builder-section"><h2>Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
                     <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).length ? <div className="job-builder-image-grid">{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 4:3</span></>}</label></section>
                     {form.imagePending && jobImageFiles.length === 0 && <p className="job-copy-notice" role="alert">Den nya bilden behöver väljas igen efter omladdningen. Den sparade bilden visas tills dess.</p>}
-                    {(form.imageUrls.length > 0 || jobImageFiles.length > 0 || form.imagePending) && <div className="job-copy-image-actions"><button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; }); setForm(current => ({ ...current, imageUrls: [], imagePending: false })); }}>Ta bort bild</button>{form.imagePending && form.imageUrls.length > 0 && <button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setJobImagePreviews(previews => { previews.forEach(url => URL.revokeObjectURL(url)); return []; }); setForm(current => ({ ...current, imagePending: false })); }}>Behåll den sparade bilden</button>}</div>}
+                    {(form.imageUrls.length > 0 || jobImageFiles.length > 0 || form.imagePending) && <div className="job-copy-image-actions"><button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setForm(current => ({ ...current, imageUrls: [], imagePending: false })); }}>Ta bort bild</button>{form.imagePending && form.imageUrls.length > 0 && <button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setForm(current => ({ ...current, imagePending: false })); }}>Behåll den sparade bilden</button>}</div>}
                     {form.copiedFromTitle && <label className="job-copy-review"><input type="checkbox" checked={form.copyReviewed} onChange={event => setForm(current => ({ ...current, copyReviewed: event.target.checked }))}/><span>Jag har kontrollerat datum, lön och övriga villkor för den nya annonsen.</span></label>}
                   </>)}
                 </div>
                 {previewOpen && <JobPreviewDialog form={{ ...form, requirements: form.listingRequirements ?? form.requirements }} image={jobImageFiles.length ? jobImagePreviews[0] : form.imageUrls[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} onClose={() => setPreviewOpen(false)} />}
               </div>
               <div className="job-builder-actions">
-                {draftSaved && <span>{form.imagePending ? "Text sparad – bilden återstår" : "Utkast sparat"}</span>}
-                <button type="button" className="job-builder-save" onClick={handleSaveDraft}>Spara utkast</button>
+                <span role="status">{jobDraft.saveStatus === "saving" ? "Sparar utkast…" : jobDraft.saveStatus === "saved" ? "Utkast sparat på den här enheten" : ""}</span>
+                <button type="button" className="job-builder-save" disabled={!draftHydrated || busy} onClick={() => void handleSaveDraft()}>Spara utkast</button>
                 {builderStep > 1 && <button type="button" className="secondary-btn" onClick={() => moveToBuilderStep((builderStep - 1) as 1 | 2)}>Tillbaka</button>}
                 {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></>}
               </div>
@@ -937,6 +892,14 @@ function CompanyPageContent() {
       {/* ── ANNONSER TAB ── */}
       {tab === "annonser" && (
         <div>
+          {!draftHydrated ? <p role="status">Öppnar annonsutkast…</p> : hasJobDraftContent(form) && <article className="card company-draft-card">
+            <div><span className="chip">Utkast · inte publicerat</span><h2>{form.title.trim() || "Namnlöst annonsutkast"}</h2>
+            <p>Steg {builderStep} av 3 · {builderStep === 1 ? "Berätta om jobbet" : builderStep === 2 ? "Matchningsunderlag" : "Plats och praktiska detaljer"}</p>
+            <p role="status">{jobDraft.saveStatus === "saving" ? "Sparar ändringar…" : jobDraft.saveStatus === "error" ? "Senaste ändringarna kunde inte sparas" : jobDraft.savedAt ? `Senast sparat ${new Date(jobDraft.savedAt).toLocaleString("sv-SE")}` : "Tidigare textutkast – sparas när det öppnas"}</p>
+            <small>Finns på den här enheten och i den här webbläsaren. Publiceras först när du väljer Publicera annons.</small></div>
+            <button type="button" className="cta-btn" onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>Återuppta utkast</button>
+          </article>}
+
           {jobs.length === 0 ? (
             <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
               <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.75rem" }}>Inga annonser ännu</p>

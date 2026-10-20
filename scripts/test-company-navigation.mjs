@@ -51,6 +51,8 @@ assert.equal(linkDestination('app/company/onboarding/page.tsx', 'Gå till mitt k
 assert.equal(linkDestination('app/company/onboarding/page.tsx', 'Fortsätt skapa min jobbannons'), '/company?view=skapa');
 clickButton('app/company/page.tsx', 'Skapa din första annons');
 assert.deepEqual(calls.pop(), ['pushState', null, '', '/company?view=skapa']);
+clickButton('app/company/page.tsx', 'Återuppta utkast');
+assert.deepEqual(calls.pop(), ['pushState', null, '', '/company?view=skapa']);
 const page = readFileSync('app/company/page.tsx', 'utf8');
 assert.doesNotMatch(page, /setTab\(/, 'Company view may not have a second local source of truth');
 assert.match(page, /const tab = companyView\(searchParams\.get\("view"\)/);
