@@ -84,7 +84,7 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
       <div><p>Företagets grundprofil</p><h2>Så hittar vi rätt personer åt er</h2></div>
       <span>{completed === 6 ? "Komplett" : `${completed}/6 ifyllt`}</span>
     </header>
-    <p className="company-match-intro">Fyll i detta en gång. Informationen kombineras sedan med kraven för varje enskild annons.</p>
+    <p className="company-match-intro">Internt bedömningsstöd. Fyll i detta en gång. Informationen kombineras sedan med kraven för varje enskild annons; den exakta kriterielistan visas inte för den sökande.</p>
     <div className="company-match-progress" role="progressbar" aria-valuemin={0} aria-valuemax={6} aria-valuenow={completed} aria-label={`${progress} procent av matchprofilen är ifylld`}><i style={{ width: `${progress}%` }} /></div>
     <nav className="company-match-steps" aria-label="Delar i företagets matchprofil">
       {steps.map((step) => <button key={step.number} type="button" aria-current={activeStep === step.number ? "step" : undefined} className={activeStep === step.number ? "is-active" : ""} onClick={() => { setActiveStep(step.number); setMessage(""); }}><span>{step.number}</span>{step.label}</button>)}
@@ -92,7 +92,7 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
 
     <div className="company-match-fields">
       {activeStep === 1 && <>
-        <div className="company-match-step-copy"><strong>Kultur och arbetssätt</strong><p>Hjälp kandidaten förstå hur det faktiskt känns att arbeta hos er.</p></div>
+        <div className="company-match-step-copy"><strong>Kultur och arbetssätt</strong><p>Beskriv hur det faktiskt är att arbeta hos er som stöd för matchningen. Information som den sökande behöver ska också stå i annonsen.</p></div>
         <label>Hur skulle ni beskriva kulturen?<textarea className="input-field" rows={3} placeholder="T.ex. prestigelöst, högt tempo och nära samarbete" value={draft.culture_summary} onChange={(event) => setDraft((current) => ({ ...current, culture_summary: event.target.value }))} /></label>
         <label>Hur ser arbetsmiljön ut?<textarea className="input-field" rows={3} placeholder="Tempo, teamstorlek och hur ni arbetar tillsammans" value={draft.work_environment} onChange={(event) => setDraft((current) => ({ ...current, work_environment: event.target.value }))} /></label>
       </>}

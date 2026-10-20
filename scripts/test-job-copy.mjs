@@ -29,6 +29,9 @@ for(const openPositions of ['0','-1','1.5','NaN','99999999999999999','3']) {
 }
 assert.throws(()=>validateDraftPublication(restoreJobBuilderDraft({...EMPTY_JOB_FORM,copiedFromTitle:'Original',copyReviewed:false,openPositions:'0'})),/Granska/);
 assert.throws(()=>validateDraftPublication({...EMPTY_JOB_FORM,imagePending:true}),/bilden/);
+const legacy=restoreJobBuilderDraft({requirements:'Tidigare publikt krav',listingRequirements:null});
+legacy.requirements='Ändrat internt kriterium';assert.equal(legacy.listingRequirements,'Tidigare publikt krav');
+const fresh=restoreJobBuilderDraft({...EMPTY_JOB_FORM,requirements:'Endast internt'});assert.equal(fresh.listingRequirements,'');
 assert.equal(hasJobDraftContent(EMPTY_JOB_FORM),false);assert.equal(hasJobDraftContent({...EMPTY_JOB_FORM,category:'Butik'}),true);assert.equal(hasJobDraftContent({...EMPTY_JOB_FORM,imageUrls:['https://example.invalid/a.jpg']}),true);
 assert.equal(draftSalary({...EMPTY_JOB_FORM,salaryFrom:'120',salaryTo:'150'}),'120–150 kr/tim');
 let currentUser='company-a',role='company',reads=0,failCriteria=false,switchDuringLoad=false;

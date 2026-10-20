@@ -31,6 +31,9 @@ Module._load=function(name,parent,...rest){if(name==='@/lib/supabase')return{get
 try {
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
  const {ApplicationDisclosureView}=require('../components/application-disclosure-view.tsx');
+ const {PublicJobInformation}=require('../components/public-job-information.tsx');
+ const listing=renderToStaticMarkup(React.createElement(PublicJobInformation,{job:{title:'Publikt jobb',description:'Publika arbetsuppgifter',requirements:'Publikt körkortskrav',role_summary:'INTERNAL_ROLE',criteria:[{label:'INTERNAL_CRITERION'}],weighted_criteria:[{label:'INTERNAL_WEIGHT'}]}}));
+ assert.ok(listing.includes('Publika arbetsuppgifter'));assert.ok(listing.includes('Publikt körkortskrav'));assert.ok(!listing.includes('INTERNAL_'),'Rolling-deploy payloads cannot render internal criteria or role summary');
  const owner=renderToStaticMarkup(React.createElement(ApplicationDisclosureView,{packet:shared,youthPreview:true}));
  const company=renderToStaticMarkup(React.createElement(ApplicationDisclosureView,{packet:shared,youthPreview:false}));
  assert.equal(owner,company,'The same packet renders identically for the youth and company');assert.ok(owner.includes('Truckkort'));assert.ok(owner.includes('QA city'));

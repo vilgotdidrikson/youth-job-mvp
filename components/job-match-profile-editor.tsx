@@ -44,7 +44,7 @@ export function JobMatchProfileEditor({ jobId, title, onClose, onSaved }: { jobI
     <form className="company-match-modal-content job-match-editor" onSubmit={(event) => void save(event)}>
       <button type="button" className="company-match-modal-close" aria-label="Stäng kriterier" disabled={busy} onClick={onClose}>×</button>
       <h2>Matchkriterier</h2><p>{title}{profile ? ` · Version ${profile.profile_version}` : ""}</p>
-      <p>Nya kriterier används vid nästa bedömning. Befintliga ansökningsfrågor, svar och tidigare bedömningar behålls. Ändringar här uppdaterar matchningen; annonsens beskrivning ändras inte.</p>
+      <p>Används som internt bedömningsstöd. Den exakta kriterielistan visas inte för den sökande. Viktiga behörighetskrav och avgörande villkor ska också framgå i annonsen. Nya kriterier används vid nästa bedömning. Befintliga ansökningsfrågor, svar och tidigare bedömningar behålls. Ändringar här uppdaterar matchningen; annonsens beskrivning ändras inte.</p>
       {error && <p role="alert">{error}</p>}
       {loading ? <p>Läser matchprofil…</p> : <>
         <label>Rollbeskrivning<textarea autoFocus className="input-field" required maxLength={2000} rows={3} value={summary} disabled={busy} onChange={(event) => setSummary(event.target.value)} /></label>
