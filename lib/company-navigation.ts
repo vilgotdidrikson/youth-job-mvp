@@ -5,6 +5,10 @@ export const COMPANY_ROUTES = {
   account: "/profile?tab=settings",
 } as const;
 
+export function createdCompanyJobHref(jobId: string): string {
+  return `${COMPANY_ROUTES.listings}&created=${encodeURIComponent(jobId)}`;
+}
+
 export type CompanyView = "annonser" | "skapa" | "kandidater";
 
 /** The URL is the single source of truth, including client-side navigation. */
