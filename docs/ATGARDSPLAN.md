@@ -80,7 +80,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | För granskning | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
-| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
+| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Pågår | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
@@ -225,9 +225,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 19
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/n01-edit-published-job-20261020`; reserverad före kodarbete 2026-10-20. Återanvänder annonsbyggaren och befintliga separata redigerare (jobbtyp, arbetsplatser, matchkriterier). Ingen databasändring planerad.
 - Åtgärd: Ge en tydlig Redigera annons-ingång för titel, publik text, bild, lön och praktiska uppgifter. Återanvänd annonsbyggaren. Håll den publika informationen och matchkriterierna samordnade och förklara konsekvenser för befintliga ansökningar.
 - Klar när: Företaget kan korrigera annonsen utan att radera och skapa om den.
 - Implementerat: —
@@ -486,7 +486,7 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - Global ordning: 16
 - Status: För granskning
 - Ansvarig: Max / Claude
-- Branch/PR: `claude/f08-verification-status-20261020`; reserverad före kodarbete 2026-10-20. Bygger på F09 i dev (Codex lämnade F08:s underlag, handläggning och organisationsnummervalidering separat). Användarbeslut 2026-10-20: ingen fast handläggningstid utlovas, hjälpvägen är vägledning i appen tills en kontaktadress finns, och UF-företag behöver eget organisationsnummer (ingen databasändring).
+- Branch/PR: `claude/f08-verification-status-20261020`, [PR #87](https://github.com/vilgotdidrikson/youth-job-mvp/pull/87), mergad till dev `52ed570` 2026-10-20; reserverad före kodarbete 2026-10-20. Bygger på F09 i dev (Codex lämnade F08:s underlag, handläggning och organisationsnummervalidering separat). Användarbeslut 2026-10-20: ingen fast handläggningstid utlovas, hjälpvägen är vägledning i appen tills en kontaktadress finns, och UF-företag behöver eget organisationsnummer (ingen databasändring).
 - Åtgärd: Skilj Uppgifter saknas, Inskickat, Under granskning, Godkänt och Behöver kompletteras. Visa obligatoriska uppgifter, uppskattad handläggning och hjälpväg. Validera organisationsnummer på ett sätt som stödjer UF och hindrar uppenbart orimliga nummer från att framstå som giltiga.
 - Klar när: Företaget vet vad det behöver göra och om underlaget faktiskt är inskickat.
 - Implementerat: Gemensam, ramverksfri verifieringslogik med lägena Uppgifter saknas, Inskickat – under granskning, Behöver kompletteras och Godkänt (samt okänd status), härledda från sparade uppgifter. Ett statuskort med steg, obligatoriska uppgifter som saknas och hjälptext visas i företagsvyn, profilöversikten och Företagsuppgifter. Organisationsnumret kontrolleras med kontrollsiffra och rimliga siffergrupper; föreningar i 8-serien (UF-enheter) och enskild firma godkänns, och felet visas vid fältet. Kontaktperson kan redigeras i profilen. Godkända företag varnas innan ett ändrat nummer leder till ny granskning, och en ändring som bara gäller bindestreck startar ingen ny granskning. Profilen läser tillbaka lagrad status efter sparning och adminvyn flaggar nummer med fel kontrollsiffra. Ingen migration. Se docs/F08.md.
