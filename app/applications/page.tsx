@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
-import { getApplicationCompletions, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup, type FollowupAnalysisResult } from "@/lib/application-completions";
+import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup, type FollowupAnalysisResult } from "@/lib/application-completions";
 
 import { ApplicationFollowupCard } from "@/components/application-followup-card";
 import { UiIcon } from "@/components/ui-icon";
@@ -16,6 +16,8 @@ import { RecruitmentSummary } from "@/components/recruitment-summary";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {getYouthActivity,type YouthActivity} from "@/lib/youth-activity";
+import { activityWithoutApplication, applicationCounts, isUnsent, pendingInterestView } from "@/lib/application-overview";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
 
 const recruitmentLabels: Record<string,string> = {matched:"Ni har matchat",in_contact:"Kontakt pågår",interview:"Intervju",hired:"Anställd",rejected:"Avslutad",cancelled:"Avslutad"};
 import "./applications-design.css";
@@ -56,12 +58,39 @@ function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, i
   </article>;
 }
 
+/** Saved interest or a stage without an application row. Saved interest is never presented as sent. */
+function ActivityCard({ stage, hidden, cvCompleted, onSend }: { stage: YouthActivity; hidden: boolean; cvCompleted: boolean | null; onSend: (jobId: string) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const header = (label: string) => <header><div className="application-company-avatar">{stage.company.slice(0, 2).toUpperCase()}</div><div><p>{stage.company}</p><h2>{stage.title}</h2></div><span className="application-status">{label}</span></header>;
+  if (stage.status !== "draft") {
+    const active = recruitmentLabels[stage.status] && !["rejected", "cancelled"].includes(stage.status);
+    return <article className="card application-completion-card" hidden={hidden}>{header(recruitmentLabels[stage.status] || "Skickad")}<p>Ansökan finns kvar. Följ nästa steg här.</p><Link className="application-job-link" href={active ? `/chats?job=${stage.jobId}` : `/jobb/${stage.jobId}`}>Visa nästa steg<UiIcon name="arrow" width="16"/></Link></article>;
+  }
+  const view = pendingInterestView(stage, cvCompleted);
+  const send = async () => {
+    if (busy) return;
+    setBusy(true); setError("");
+    try { await onSend(stage.jobId); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Ansökan kunde inte skickas. Försök igen."); }
+    finally { setBusy(false); }
+  };
+  return <article id={`application-${stage.jobId}`} className="card application-completion-card application-pending-interest" hidden={hidden}>
+    {header(view.label)}
+    <p>{view.body}</p>
+    {view.showJobLink && <Link className="application-job-link" href={`/jobb/${stage.jobId}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>}
+    {error && <p role="alert" className="application-completion-error">{error}</p>}
+    {view.action === "complete_cv" && <div className="application-completion-actions"><Link className="cta-btn" href={`/youth/cv?job=${encodeURIComponent(stage.jobId)}&title=${encodeURIComponent(stage.title)}`}>Gör klart CV:t</Link></div>}
+    {view.action === "send" && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void send()}>{busy ? "Skickar…" : "Skicka ansökan"}</button></div>}
+  </article>;
+}
+
 function ApplicationsPageContent() {
   const { user, profile, status, error: sessionError } = useRequireAuth();
   const [items, setItems] = useState<ApplicationCompletion[]>([]);
   const [followups, setFollowups] = useState<ApplicationFollowup[]>([]);
   const [activity,setActivity] = useState<YouthActivity[]>([]);
-  const [tab, setTab] = useState<"all" | "questions">("all");
+  const [tab, setTab] = useState<"all" | "unsent" | "questions">("all");
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [checkNotice, setCheckNotice] = useState("");
@@ -71,6 +100,7 @@ function ApplicationsPageContent() {
   const savedRevision = useRef(0);
   const searchParams = useSearchParams();
   const selectedJob = searchParams.get("job");
+  const { cvCompleted, cvLoading } = useCvCompletion(userId, profile?.role === "youth");
   useEffect(() => {
     if (!userId || profile?.role !== "youth" || loading) return;
     let active = true;
@@ -102,23 +132,36 @@ function ApplicationsPageContent() {
   const needsAnswers = (item: ApplicationCompletion) => item.status === "submitted" && supplementQuestions(item,followups.filter(question=>question.job_id===item.job_id)).some(question=>question.status === "pending");
   const pending = items.filter(needsAnswers);
   const ordered = [...pending, ...items.filter((item) => !needsAnswers(item))].sort((a,b)=>a.job_id===selectedJob ? -1 : b.job_id===selectedJob ? 1 : 0);
-  const visible = tab === "questions" ? pending : ordered;
+  const extraActivity = activityWithoutApplication(activity, items);
+  const counts = applicationCounts(items, activity, needsAnswers);
+  const itemHidden = (item: ApplicationCompletion) => (tab === "questions" && !needsAnswers(item)) || (tab === "unsent" && !isUnsent(item));
+  const visibleCount = tab === "all" ? counts.all : tab === "unsent" ? counts.unsent : counts.questions;
+  const sendSavedInterest = async (jobId: string) => {
+    const sent = await prepareApplication(jobId);
+    savedRevision.current++;
+    const [data, stages] = await Promise.all([getApplicationCompletions(), getYouthActivity(userId!)]);
+    setItems(data); setActivity(stages);
+    setConfirmation(`Ansökan till ${sent.job_title} är skickad.`);
+    window.dispatchEvent(new Event("mnw-navigation-refresh"));
+    setChecking(true); setCheckNotice("");
+    void requestApplicationFollowups(jobId).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false));
+  };
   return <main className="mobile-shell application-completions-page">
-    <header className="applications-heading"><div><p className="application-eyebrow">Dina nästa steg</p><h1>Dina ansökningar</h1><p>Följ det du har skickat. Komplettera när det passar dig.</p></div><NotificationLink /></header>
+    <header className="applications-heading"><div><p className="application-eyebrow">Dina nästa steg</p><h1>Dina ansökningar</h1><p>Följ dina ansökningar och sparade intressen. Komplettera när det passar dig.</p></div><NotificationLink /></header>
     <div className="applications-layout"><section className="applications-content">
       <RecruitmentSummary />
-      <div className="applications-tabs"><button type="button" aria-pressed={tab === "all"} onClick={() => setTab("all")}>Alla <span>{items.length}</span></button><button type="button" aria-pressed={tab === "questions"} onClick={() => setTab("questions")}>Frivilliga frågor <span>{pending.filter(item=>item.status==='submitted').length}</span></button></div>
+      <div className="applications-tabs"><button type="button" aria-pressed={tab === "all"} onClick={() => setTab("all")}>Alla <span>{counts.all}</span></button>{(counts.unsent > 0 || tab === "unsent") && <button type="button" aria-pressed={tab === "unsent"} onClick={() => setTab("unsent")}>Inte skickade <span>{counts.unsent}</span></button>}<button type="button" aria-pressed={tab === "questions"} onClick={() => setTab("questions")}>Frivilliga frågor <span>{counts.questions}</span></button></div>
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
-      {!loading && tab === "all" && activity.filter(stage=>!items.some(item=>item.job_id===stage.jobId)).map(stage=><article className="card application-completion-card" key={stage.jobId}><header><div><p>{stage.company}</p><h2>{stage.title}</h2></div><span className="application-status">{stage.status==="draft" ? "Inte skickad ännu" : recruitmentLabels[stage.status] || "Skickad"}</span></header><p>{stage.status==="draft" ? "Ditt intresse är sparat. Gör klart CV:t så skickas ansökan." : "Ansökan finns kvar. Följ nästa steg här."}</p><Link className="application-job-link" href={stage.status==="draft" ? "/youth/cv" : recruitmentLabels[stage.status] && !["rejected","cancelled"].includes(stage.status) ? `/chats?job=${stage.jobId}` : `/jobb/${stage.jobId}`}>{stage.status==="draft" ? "Gör klart CV:t" : "Visa nästa steg"}<UiIcon name="arrow" width="16"/></Link></article>)}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={tab === "questions" && !needsAnswers(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
+      {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} />)}
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
         if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
       }} />)}
-      {!loading && visible.length === 0 && (tab === "questions" || activity.length === 0) && <section className="applications-empty"><UiIcon name={tab === "questions" ? "check" : "briefcase"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
+      {!loading && visibleCount === 0 && <section className="applications-empty"><UiIcon name={tab === "all" ? "briefcase" : "check"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : tab === "unsent" ? "Allt är skickat" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : tab === "unsent" ? "Du har inga sparade intressen som väntar på att skickas." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
     </section><aside className="applications-aside"><UiIcon name="info" width="24" /><h2>En ansökan, mer om dig</h2><p>Kompletteringsfrågorna utgår från just det här jobbets önskemål. Dina svar läggs till i ansökan du redan har skickat.</p><p>Du kan lämna en fråga obesvarad. Saknad information är aldrig ett automatiskt avslag.</p><Link href="/notifications">Till din aktivitet <UiIcon name="arrow" width="16" /></Link><Link href="/youth/cv">Se ditt CV <UiIcon name="arrow" width="16" /></Link></aside></div>
   </main>;
 }
