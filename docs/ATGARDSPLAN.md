@@ -25,6 +25,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 - Beslut och acceptanskriterier: `docs/PROFIL_OCH_RELEVANS.md`. Framtidsidéer finns i det befintliga dokumentet MatchnWork-Idebank.md; de aktiveras inte genom denna plan.
 - N16 ersätter det gamla kravet på antal tjänster och automatiskt lyft. N17 → N18 ger gemensamma jobbtyper före relevans; F26 granskar kärnmatchningen; N19 → N20/N21 ger gemensam profilgrund före nya AI-ingångar. Delordning 13.1–13.6 läggs före återstående ordinarie lista enligt beställningen; övriga uppgifters status ändras inte.
+- Reserverat före kodarbete 2026-10-20: F26/N19 avgränsad synlighetsändring, Codex, `codex/f26-public-job-information-20261020`. Ungdomsvyn visar enbart publicerat annonsinnehåll; interna kriterier/rollsammanfattningar/vikter förblir företags-/serverunderlag. Företaget får tydliga fasta avsnitt, inga synlighetsval per fält. Godkända egna källuppgifter och delningsförhandsvisning bevaras. Profil-/CV-utökning och nya AI-datafält inväntar separat GDPR-avstämning.
+
 - Reserverat före kodarbete: N16, Vilgot / Codex, `codex/n16-annonsflode-20261018`. Första leveransen omfattar bara slopat platskrav; övriga nya punkter reserveras separat vid byggstart.
 
 ### Profilflöde och informationsöversyn – beställt 2026-10-14
