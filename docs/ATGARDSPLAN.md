@@ -79,7 +79,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Ej påbörjad | — |
-| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Ej påbörjad | — |
+| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Pågår | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
@@ -96,7 +96,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | Ej påbörjad | — |
-| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Ej påbörjad | — |
+| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Pågår | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
@@ -125,6 +125,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
+
+Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
 ## Nya funktioner
 
@@ -284,9 +286,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 32
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Codex
+- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20.
 - Åtgärd: Lägg en synlig Återuppta utkast-post bland företagets annonser med titel, aktuell del och senast sparat. Skilj utkast från publicerade, pausade och stängda annonser. Koppla till bildsparandet i F07.
 - Klar när: Ett sparat utkast går att hitta utan att välja Ny annons.
 - Implementerat: —
@@ -512,9 +514,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 18
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Codex
+- Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20.
 - Åtgärd: Spara omslagsbilden och beskärningen tillsammans med resten av annonsutkastet. Använd inte en generell Utkast sparat-bekräftelse om någon del saknas; ange då exakt vad som återstår att spara.
 - Klar när: Bild, text och praktiska uppgifter finns kvar när utkastet återöppnas efter omladdning.
 - Implementerat: —
