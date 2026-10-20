@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { matchingJobContext } from "./matching-job-context";
 import { requestMatchingEvidence } from "./matching-provider";
 import { matchingCriteria, candidateSource, candidateSourceDetails, assessCandidate, criteriaRequiringAi } from "./candidate-assessment";
@@ -12,9 +13,17 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
   if (error || !context) return { queued: 0, error: "Kunde inte läsa ansökan." };
   if (!context.available) return { queued: 0, unavailable: true };
   if (context.question_batch_version === context.profile_version) return { queued: 0, cached: true };
+  // The user-scoped RPC above authorizes this exact application first. Internal
+  // criteria are then read only on the server, never returned to the youth client.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) return { queued: 0, temporary: true };
+  const server = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: matchProfile, error: criteriaError } = await server.from("job_match_profiles")
+    .select("weighted_criteria").eq("job_id", jobId).eq("profile_version", context.profile_version).eq("status", "approved").maybeSingle();
+  if (criteriaError || !matchProfile) return { queued: 0, temporary: true };
   const pdf = await pdfCvSource(client, context.profile?.documents, youthId);
   if (pdf.status === "unreadable") return { queued: 0, temporary: true };
-  const criteria = matchingCriteria(context.weighted_criteria);
+  const criteria = matchingCriteria(matchProfile.weighted_criteria);
   let input;
   try { input = candidateSourceDetails({ ...context.profile, pdf_cv_text: pdf.text }); }
   catch { return { queued: 0, temporary: true, inputStatus: "review_required" }; }

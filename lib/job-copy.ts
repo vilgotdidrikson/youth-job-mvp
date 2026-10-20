@@ -19,7 +19,7 @@ export interface JobBuilderDraft {
 export const EMPTY_JOB_FORM: JobBuilderDraft = {
   categoryIds: [], categoryManual: false, workplaces: [], title: "", city: "", address: "", postalCode: "", category: "", employmentType: "",
   minAge: "", maxAge: "", salaryFrom: "", salaryTo: "", salaryType: "timlön", salaryText: "",
-  description: "", benefits: "", requirements: "", listingRequirements: null, trainableRequirements: "", topTraits: "", candidateQuestions: [],
+  description: "", benefits: "", requirements: "", listingRequirements: "", trainableRequirements: "", topTraits: "", candidateQuestions: [],
   matchRoleSummary: "", aiGenerated: false, imageUrls: [], imagePending: false, copiedFromTitle: "", copyReviewed: false,
 };
 
@@ -63,6 +63,8 @@ export function hasJobDraftContent(form: JobBuilderDraft): boolean {
 export function restoreJobBuilderDraft(saved: Partial<JobBuilderDraft>): JobBuilderDraft {
   const editable = Object.fromEntries(Object.entries(saved).filter(([key]) => Object.hasOwn(EMPTY_JOB_FORM, key)));
   return { ...EMPTY_JOB_FORM, ...editable,
+    // Freeze the public requirements of legacy drafts before internal criteria are edited.
+    listingRequirements: typeof saved.listingRequirements === "string" ? saved.listingRequirements : saved.requirements ?? "",
     categoryIds: (()=>{try{return validJobCategoryIds(saved.categoryIds ?? []);}catch{return [];}})(),
     categoryManual: saved.categoryManual === true,
     imageUrls: Array.isArray(saved.imageUrls) ? saved.imageUrls.filter((url): url is string => typeof url === "string") : [],
