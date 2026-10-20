@@ -1,22 +1,52 @@
-.company-verification { --cv-accent:#6a4a00; --cv-bg:#fffaf0; --cv-border:#f0c36d; padding:1rem 1.15rem; margin-bottom:1rem; border:1px solid var(--cv-border); background:var(--cv-bg); color:#3d2f35; overflow-wrap:anywhere; }
-.company-verification.is-error { --cv-accent:#b42318; --cv-bg:#fff1f0; --cv-border:#ffd6d3; }
-.company-verification.is-neutral { --cv-accent:#36507a; --cv-bg:#f7f9fc; --cv-border:#d4dce9; }
-.company-verification.is-success { --cv-accent:#1a7f4b; --cv-bg:#f1faf5; --cv-border:#b6e8cf; }
-.company-verification-heading { display:flex; gap:.7rem; align-items:flex-start; }
-.company-verification-heading svg { flex-shrink:0; margin-top:.15rem; color:var(--cv-accent); }
-.company-verification-eyebrow { margin:0; font-size:.68rem; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--cv-accent); }
-.company-verification h2 { margin:.15rem 0 0; font-size:1rem; color:var(--cv-accent); }
-.company-verification > p { margin:.55rem 0 0; font-size:.84rem; line-height:1.6; }
-.company-verification-steps { display:flex; flex-wrap:wrap; gap:.4rem 1rem; list-style:none; margin:.8rem 0 0; padding:0; font-size:.78rem; color:#6f6268; }
-.company-verification-steps li { display:flex; align-items:center; gap:.4rem; }
-.company-verification-steps li > span { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; border:1.5px solid #c9bfc3; background:#fff; }
-.company-verification-steps li.is-done > span { border-color:var(--cv-accent); background:var(--cv-accent); color:#fff; }
-.company-verification-steps li.is-current { font-weight:600; color:var(--cv-accent); }
-.company-verification-steps li.is-current > span { border-color:var(--cv-accent); box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 9px var(--cv-accent); }
-.company-verification-missing { margin-top:.8rem; font-size:.82rem; }
-.company-verification-missing strong { color:var(--cv-accent); }
-.company-verification-missing ul { margin:.3rem 0 0; padding-left:1.1rem; line-height:1.6; }
-.company-verification-help { color:#6f6268; font-size:.78rem !important; }
-.company-verification-action { display:inline-block; margin-top:.8rem; padding:.55rem .8rem; font-size:.8rem; }
-.company-verification.is-compact .company-verification-steps { margin-top:.6rem; }
-.mnw-product .card.company-verification { border-color:var(--cv-border) !important; }
+/* Company verification card in the MatchnWork product palette. */
+.company-verification {
+  --cv-accent:#b84164; --cv-pill-bg:#fce9ef; --cv-pill-text:#b84164;
+  margin-bottom:1.25rem; padding:0; border:1px solid #f0d9e0; border-radius:22px; background:#fff; color:#4c303b;
+  box-shadow:0 5px 20px rgb(76 48 59 / .025); overflow:hidden; overflow-wrap:anywhere;
+  /* Layout follows the card's own width, so it also fits the narrow profile sidebar. */
+  container-type:inline-size;
+}
+.company-verification.is-submitted, .company-verification.is-unknown { --cv-accent:#896a76; --cv-pill-bg:#f6eef1; --cv-pill-text:#6f5560; }
+.company-verification.is-verified { --cv-accent:#2f7a55; --cv-pill-bg:#e8f5ee; --cv-pill-text:#2f7a55; }
+.company-verification.is-needs_completion { --cv-accent:#a73858; --cv-pill-bg:#fde4ea; --cv-pill-text:#a73858; border-color:#f3c9d5; }
+.mnw-product .card.company-verification { border-radius:22px !important; }
+.mnw-product .card.company-verification.is-needs_completion { border-color:#f3c9d5 !important; }
+
+.company-verification > summary { display:flex; align-items:center; gap:.85rem; padding:1rem 1.15rem; cursor:pointer; list-style:none; user-select:none; }
+.company-verification > summary::-webkit-details-marker { display:none; }
+.company-verification > summary:hover { background:#fffafb; }
+.company-verification-icon { display:grid; place-items:center; flex-shrink:0; width:36px; height:36px; border-radius:12px; color:var(--cv-accent); background:var(--cv-pill-bg); }
+.company-verification-heading { display:grid; gap:.1rem; min-width:0; flex:1; }
+.company-verification-heading small { color:#896a76; font-size:.7rem; font-weight:500; letter-spacing:.07em; text-transform:uppercase; }
+.company-verification-heading strong { color:#4c303b; font-size:.98rem; font-weight:550; letter-spacing:-.01em; }
+.company-verification-pill { flex-shrink:0; padding:.3rem .7rem; border-radius:999px; color:var(--cv-pill-text); background:var(--cv-pill-bg); font-size:.74rem; font-weight:500; white-space:nowrap; }
+.company-verification-toggle { display:grid; place-items:center; flex-shrink:0; width:32px; height:32px; border-radius:10px; color:#896a76; transition:transform .2s ease, background .2s ease; }
+.company-verification[open] .company-verification-toggle { transform:rotate(180deg); }
+@media (prefers-reduced-motion:reduce) { .company-verification-toggle { transition:none; } }
+.company-verification > summary:hover .company-verification-toggle { background:#fce9ef; color:#b84164; }
+
+.company-verification-body { padding:0 1.15rem 1.15rem calc(1.15rem + 36px + .85rem); }
+.company-verification-body > p { margin:0; color:#6f5560; font-size:.86rem; line-height:1.7; }
+
+.company-verification-steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.5rem; margin:1rem 0 0; padding:0; list-style:none; color:#896a76; font-size:.74rem; line-height:1.35; }
+.company-verification-steps li { display:grid; gap:.45rem; }
+.company-verification-steps li > span { display:block; height:5px; border-radius:999px; background:#f4dce5; }
+.company-verification-steps li.is-done > span { background:var(--cv-accent); }
+.company-verification-steps li.is-current { color:#4c303b; font-weight:550; }
+.company-verification-steps li.is-current > span { background:linear-gradient(90deg, var(--cv-accent) 0 50%, #f4dce5 50%); }
+
+.company-verification-missing { margin-top:1rem; padding:.8rem .95rem; border-radius:14px; background:#fffafb; border:1px solid #f0d9e0; font-size:.83rem; }
+.company-verification-missing strong { color:#4c303b; font-weight:550; }
+.company-verification-missing ul { margin:.35rem 0 0; padding-left:1.1rem; color:#6f5560; line-height:1.65; }
+.company-verification-missing li::marker { color:#b84164; }
+.company-verification-help { margin:.85rem 0 0 !important; color:#896a76 !important; font-size:.78rem !important; line-height:1.65 !important; }
+.mnw-product .company-verification-action, .company-verification-action { display:inline-flex !important; align-items:center; gap:.45rem; width:auto !important; min-height:40px !important; margin-top:1rem; padding:.5rem .95rem !important; font-size:.82rem; line-height:1.3; text-decoration:none; }
+
+/* Narrow cards (phones, profile sidebar): status under the title, text full width. */
+@container (max-width:560px) {
+  .company-verification > summary { flex-wrap:wrap; gap:.4rem .75rem; padding:.95rem 1rem; }
+  .company-verification-heading { flex:1 1 calc(100% - 36px - 32px - 1.5rem); }
+  .company-verification-pill { order:4; margin-left:calc(36px + .75rem); }
+  .company-verification-body { padding:0 1rem 1rem; }
+  .company-verification-steps { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:.8rem; }
+}

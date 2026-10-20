@@ -91,6 +91,10 @@ try {
   assert.match(missingHtml, /aria-current="step"/);
   assert.match(missingHtml, /får du en notis/);
   assert.match(missingHtml, /href="\/profile\?tab=details"/);
+  // Collapsible: native details/summary, open by default, status visible while minimized.
+  assert.match(missingHtml, /^<details[^>]*open=""/);
+  assert.match(missingHtml, /<summary>[\s\S]*Uppgifter saknas[\s\S]*Åtgärd krävs[\s\S]*Minimera[\s\S]*<\/summary>/);
+  assert.match(missingHtml, /is-missing/);
   const submittedHtml = render({ ...complete, verification_status: 'pending' }, { compact: true });
   assert.match(submittedHtml, /Inskickat – under granskning/);
   assert.match(submittedHtml, /Granskas av MatchnWork/);
