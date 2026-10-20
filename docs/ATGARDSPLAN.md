@@ -77,7 +77,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
-| 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
+| 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Pågår | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
@@ -484,9 +484,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 16
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f08-verification-status-20261020`; reserverad före kodarbete 2026-10-20. Bygger på F09 i dev (Codex lämnade F08:s underlag, handläggning och organisationsnummervalidering separat). Användarbeslut 2026-10-20: ingen fast handläggningstid utlovas, hjälpvägen är vägledning i appen tills en kontaktadress finns, och UF-företag behöver eget organisationsnummer (ingen databasändring).
 - Åtgärd: Skilj Uppgifter saknas, Inskickat, Under granskning, Godkänt och Behöver kompletteras. Visa obligatoriska uppgifter, uppskattad handläggning och hjälpväg. Validera organisationsnummer på ett sätt som stödjer UF och hindrar uppenbart orimliga nummer från att framstå som giltiga.
 - Klar när: Företaget vet vad det behöver göra och om underlaget faktiskt är inskickat.
 - Implementerat: —
