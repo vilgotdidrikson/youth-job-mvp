@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { jobPublicationAction } from "@/lib/job-publication";
+import { organizationNumberForSave, parseOrganizationNumber } from "@/lib/company-verification";
 import type { CompanyProfile } from "@/lib/types";
 import { COMPANY_ROUTES, createdCompanyJobHref } from "@/lib/company-navigation";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
@@ -56,6 +57,7 @@ export default function CompanyOnboardingPage() {
   const [companyName, setCompanyName] = useState("");
   const [administrator, setAdministrator] = useState("");
   const [organizationNumber, setOrganizationNumber] = useState("");
+  const [storedOrganizationNumber, setStoredOrganizationNumber] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
@@ -110,6 +112,7 @@ export default function CompanyOnboardingPage() {
           setIndustry(data.industry ?? "");
           setAdministrator(data.administrator ?? "");
           setOrganizationNumber(data.organization_number ?? "");
+          setStoredOrganizationNumber(data.organization_number ?? "");
         });
       return () => { active = false; };
     }
@@ -119,7 +122,8 @@ export default function CompanyOnboardingPage() {
     e.preventDefault();
     if (!companyName.trim()) { setError("Ange företagets namn."); return; }
     if (!industry.trim()) { setError("Ange företagets bransch."); return; }
-    if (!/^\d{6}-?\d{4}$/.test(organizationNumber.trim())) { setError("Ange ett giltigt organisationsnummer med 10 siffror."); return; }
+    const parsedOrganizationNumber = parseOrganizationNumber(organizationNumber);
+    if (!parsedOrganizationNumber.ok) { setError(parsedOrganizationNumber.error); return; }
     if (!administrator.trim()) { setError("Ange administratörens namn."); return; }
     setBusy(true);
     setError("");
@@ -130,7 +134,7 @@ export default function CompanyOnboardingPage() {
         .update({
           company_name: companyName.trim(),
           industry: industry.trim(),
-          organization_number: organizationNumber.trim(),
+          organization_number: organizationNumberForSave(storedOrganizationNumber, parsedOrganizationNumber.value),
           administrator: administrator.trim(),
           updated_at: new Date().toISOString(),
         })
@@ -232,7 +236,10 @@ export default function CompanyOnboardingPage() {
           if (profileQuestion < 3) {
             if (profileQuestion === 0 && !companyName.trim()) { setError("Ange företagets namn."); return; }
             if (profileQuestion === 1 && !industry.trim()) { setError("Ange företagets bransch."); return; }
-            if (profileQuestion === 2 && !/^\d{6}-?\d{4}$/.test(organizationNumber.trim())) { setError("Ange ett giltigt organisationsnummer med 10 siffror."); return; }
+            if (profileQuestion === 2) {
+              const parsed = parseOrganizationNumber(organizationNumber);
+              if (!parsed.ok) { setError(parsed.error); return; }
+            }
             setError("");
             setProfileQuestion((current) => current + 1);
             return;
@@ -285,7 +292,7 @@ export default function CompanyOnboardingPage() {
               onChange={(e) => setOrganizationNumber(e.target.value.replace(/[^0-9-]/g, ""))}
               required
               autoFocus
-            /><p style={{ margin: 0, color: "#737373", fontSize: ".82rem", lineHeight: 1.5 }}>Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras.</p></>}
+            /><p style={{ margin: 0, color: "#737373", fontSize: ".82rem", lineHeight: 1.5 }}>Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p></>}
 
             {profileQuestion === 3 && <><label htmlFor="company-onboarding-administrator" style={labelStyle}>Administratör *</label><input id="company-onboarding-administrator"
               className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
@@ -323,7 +330,7 @@ export default function CompanyOnboardingPage() {
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Er nästa rekrytering börjar nu.</h1>
           <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
-          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. Aktiva annonser blir synliga för ungdomar när företaget har godkänts. Pausade och stängda annonser förblir dolda.</p>
+          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>{verificationStatus === "verified" ? "Företaget är godkänt. Aktiva annonser blir synliga för ungdomar när du publicerar dem." : "Företagsuppgifterna är inskickade för granskning. MatchnWork granskar dem manuellt i den ordning de kommer in. Du kan skapa annonser direkt; aktiva annonser blir synliga för ungdomar när företaget har godkänts. Pausade och stängda annonser förblir dolda."}</p>
           <button type="button" className="cta-btn" onClick={() => setStep("matchprofil")}>Bygg företagets matchprofil</button>
           <Link className="secondary-btn" href={COMPANY_ROUTES.create} replace style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem", textDecoration: "none" }}>Fortsätt skapa min jobbannons</Link>
           <Link className="secondary-btn" href={COMPANY_ROUTES.account} replace style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem", textDecoration: "none" }}>Gå till mitt konto</Link>

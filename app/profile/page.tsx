@@ -25,6 +25,8 @@ import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { changePassword } from "@/lib/auth";
 import { UiIcon } from "@/components/ui-icon";
+import { CompanyVerificationStatus } from "@/components/company-verification-status";
+import { changeRequiresReverification, companyVerificationState, missingVerificationFields, organizationNumberForSave, parseOrganizationNumber, type VerificationProfileFields } from "@/lib/company-verification";
 import { VerifiedJobBadge } from "@/components/verified-job-badge";
 import { EmploymentExperiences } from "@/components/employment-experiences";
 import { useVerifiedExperience } from "@/hooks/use-verified-experience";
@@ -79,8 +81,10 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [companyCity, setCompanyCity] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
   const [companyOrganizationNumber, setCompanyOrganizationNumber] = useState("");
-  const [companyVerificationStatus, setCompanyVerificationStatus] = useState<"pending" | "verified" | "rejected">("pending");
-  const [companyVerificationReason, setCompanyVerificationReason] = useState("");
+  const [companyAdministrator, setCompanyAdministrator] = useState("");
+  const [organizationNumberTouched, setOrganizationNumberTouched] = useState(false);
+  // Verification is derived from what the database stored, never from unsaved form input.
+  const [savedCompany, setSavedCompany] = useState<VerificationProfileFields | null>(null);
   const [companyJobCount, setCompanyJobCount] = useState(0);
   const [loadedProfileKey, setLoadedProfileKey] = useState("");
   const [profileLoadError, setProfileLoadError] = useState("");
@@ -118,8 +122,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           setCompanyCity(cp?.city ?? "");
           setCompanyDescription(cp?.description ?? "");
           setCompanyOrganizationNumber(cp?.organization_number ?? "");
-          setCompanyVerificationStatus(cp?.verification_status === "verified" || cp?.verification_status === "rejected" ? cp.verification_status : "pending");
-          setCompanyVerificationReason(cp?.verification_rejection_reason ?? "");
+          setCompanyAdministrator(cp?.administrator ?? "");
+          setSavedCompany(cp ?? null);
           setCompanyJobCount((jobsResult.data ?? []).length);
         } else {
           const youthProfile = await getYouthProfile(user.id);
@@ -221,33 +225,55 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     }
   };
 
+  const storedOrganizationNumber = savedCompany?.organization_number ?? "";
+  const organizationNumberUnchanged = companyOrganizationNumber.replace(/[\s-]/g, "") === storedOrganizationNumber.replace(/[\s-]/g, "");
+  // An approved company may keep a number stored before checksum validation existed.
+  const organizationNumberCheck = !companyOrganizationNumber.trim() || (organizationNumberUnchanged && savedCompany?.verification_status === "verified")
+    ? null
+    : parseOrganizationNumber(companyOrganizationNumber);
+  const organizationNumberError = organizationNumberCheck && !organizationNumberCheck.ok ? organizationNumberCheck.error : "";
+  const reverificationNeeded = changeRequiresReverification(savedCompany, companyOrganizationNumber);
+
   const handleSaveCompanyProfile = async () => {
     if (!user?.id) return;
-    if (companyOrganizationNumber && !/^\d{6}-?\d{4}$/.test(companyOrganizationNumber.trim())) {
-      setError("Ange ett giltigt organisationsnummer med 10 siffror.");
+    if (organizationNumberError) {
+      setOrganizationNumberTouched(true);
+      setError(organizationNumberError);
       return;
     }
+    if (reverificationNeeded && !window.confirm("Om du ändrar organisationsnumret granskas företaget på nytt. Under granskningen kan ni inte granska kandidater, och nya annonser publiceras först efter nytt godkännande. Vill du spara ändringen?")) return;
+    const organizationNumber = !companyOrganizationNumber.trim()
+      ? null
+      : organizationNumberCheck?.ok ? organizationNumberForSave(storedOrganizationNumber, organizationNumberCheck.value) : storedOrganizationNumber;
+    const previousState = companyVerificationState(savedCompany);
     setSaving(true);
     setError("");
     try {
       const { getSupabaseClient } = await import("@/lib/supabase");
       const supabase = getSupabaseClient();
-      const { error: dbError } = await supabase
+      const { data: stored, error: dbError } = await supabase
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
-          organization_number: companyOrganizationNumber.trim() || null,
+          organization_number: organizationNumber,
+          administrator: companyAdministrator.trim(),
           city: companyCity.trim(),
           description: companyDescription.trim(),
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
-      if (dbError) throw new Error(dbError.message);
-      setSavedNote("Profil sparad.");
-      if (companyVerificationStatus !== "verified") {
-        setCompanyVerificationStatus("pending");
-        setCompanyVerificationReason("");
-      }
+        .eq("user_id", user.id)
+        .select("company_name, organization_number, administrator, verification_status, verification_submitted_at, verification_rejection_reason")
+        .single();
+      if (dbError || !stored) throw new Error(dbError?.message || "Kunde inte spara.");
+      setSavedCompany(stored);
+      setCompanyOrganizationNumber(stored.organization_number ?? "");
+      setOrganizationNumberTouched(false);
+      const nextState = companyVerificationState(stored);
+      setSavedNote(nextState === "submitted" && previousState !== "submitted"
+        ? "Uppgifterna är sparade och inskickade för granskning."
+        : nextState === "missing"
+          ? `Uppgifterna är sparade men inte inskickade. Saknas: ${missingVerificationFields(stored).join(", ")}.`
+          : "Profil sparad.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara.");
     } finally {
@@ -349,8 +375,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       <nav className="company-profile-tabs" aria-label="Delar av företagsprofilen">{([{id:"overview",label:"Översikt"},{id:"details",label:"Företagsuppgifter"},{id:"cv",label:"Matchprofil"},{id:"settings",label:"Inställningar"}] as const).map((item) => <button key={item.id} type="button" aria-pressed={profileTab === item.id} onClick={() => setProfileTab(item.id)}>{item.label}</button>)}</nav>
       {error && <p role="alert" className="company-profile-message is-error">{error}</p>}
       {savedNote && <p role="status" className="company-profile-message">{savedNote}</p>}
-      {profileTab === "overview" && <div className="company-profile-overview"><section className="card company-profile-about"><p className="company-profile-eyebrow">Om er</p><h2>Det här är {companyName || "ert företag"}</h2><p>{companyDescription || "Beskriv er verksamhet så att kandidater kan lära känna er. Lägg till en beskrivning under Företagsuppgifter."}</p><button type="button" className="company-profile-text-action" onClick={() => setProfileTab("details")}>Redigera företagsuppgifter <UiIcon name="arrow" width="16" /></button></section><aside><section className="card company-profile-status"><UiIcon name={companyVerificationStatus === "verified" ? "check" : "info"} width="24" /><h2>{companyVerificationStatus === "verified" ? "Verifierat företag" : companyVerificationStatus === "rejected" ? "Komplettera verifieringen" : "Verifiering pågår"}</h2><p>{companyVerificationStatus === "verified" ? "Era aktiva annonser kan publiceras för ungdomar." : companyVerificationStatus === "rejected" ? companyVerificationReason || "Kontrollera företagsuppgifterna och spara igen." : "Ni kan skapa annonser under tiden. De publiceras efter godkänd verifiering."}</p></section><Link className="card company-profile-job-count" href="/company?view=annonser"><strong>{companyJobCount}</strong><span>Aktiva annonser</span><UiIcon name="arrow" width="19" /></Link></aside><section className="card company-profile-culture"><UiIcon name="discover" width="25" /><div><h2>Vad gör er till en bra arbetsplats?</h2><p>Er matchprofil samlar kultur, värderingar och det ni erbjuder. Den återanvänds som grund för varje jobb.</p></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("cv")}>Visa matchprofil</button></section></div>}
+      {profileTab === "overview" && <div className="company-profile-overview"><section className="card company-profile-about"><p className="company-profile-eyebrow">Om er</p><h2>Det här är {companyName || "ert företag"}</h2><p>{companyDescription || "Beskriv er verksamhet så att kandidater kan lära känna er. Lägg till en beskrivning under Företagsuppgifter."}</p><button type="button" className="company-profile-text-action" onClick={() => setProfileTab("details")}>Redigera företagsuppgifter <UiIcon name="arrow" width="16" /></button></section><aside><CompanyVerificationStatus profile={savedCompany} compact action={{ onClick: () => setProfileTab("details"), label: "Visa vad som krävs" }} /><Link className="card company-profile-job-count" href="/company?view=annonser"><strong>{companyJobCount}</strong><span>Aktiva annonser</span><UiIcon name="arrow" width="19" /></Link></aside><section className="card company-profile-culture"><UiIcon name="discover" width="25" /><div><h2>Vad gör er till en bra arbetsplats?</h2><p>Er matchprofil samlar kultur, värderingar och det ni erbjuder. Den återanvänds som grund för varje jobb.</p></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("cv")}>Visa matchprofil</button></section></div>}
       {profileTab === "details" && <section className="company-profile-details"><header><h2>Företagsuppgifter</h2><p>Uppgifterna hjälper kandidater att lära känna er och används för företagsverifieringen.</p></header>
+        <CompanyVerificationStatus profile={savedCompany} />
         {/* Edit form */}
         <div className="card company-profile-form">
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
@@ -380,7 +407,25 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             placeholder="XXXXXX-XXXX"
             inputMode="numeric"
             value={companyOrganizationNumber}
+            aria-invalid={organizationNumberTouched && Boolean(organizationNumberError)}
+            aria-describedby="company-profile-organization-help"
+            onBlur={() => setOrganizationNumberTouched(true)}
             onChange={(e) => { setCompanyOrganizationNumber(e.target.value.replace(/[^0-9-]/g, "")); setSavedNote(""); }}
+          />
+          <div id="company-profile-organization-help" className="company-profile-field-help">
+            {organizationNumberTouched && organizationNumberError && <p role="alert" className="is-error">{organizationNumberError}</p>}
+            {reverificationNeeded && <p className="is-warning">Ändrat organisationsnummer skickas in för ny granskning när du sparar.</p>}
+            <p>Krävs för verifieringen. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p>
+          </div>
+
+          <label htmlFor="company-profile-administrator" style={labelStyle}>Kontaktperson (administratör)</label>
+          <input id="company-profile-administrator"
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="För- och efternamn"
+            autoComplete="name"
+            value={companyAdministrator}
+            onChange={(e) => { setCompanyAdministrator(e.target.value); setSavedNote(""); }}
           />
 
           <label htmlFor="company-profile-description" style={labelStyle}>Beskrivning</label>
