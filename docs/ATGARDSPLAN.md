@@ -87,7 +87,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
-| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
+| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Pågår | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
@@ -529,9 +529,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 23
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f13-pending-applications-20261020`; reserverad före kodarbete 2026-10-20. Avsteg från global ordning enligt användarens avgränsning 2026-10-20 (inga GDPR- eller domänberoende punkter): N02 (återkallad delning av ansökningsunderlag), L05 (GDPR-åtkomstkontroller) och L06 (e-post kräver SMTP/domän) hoppas över. Ingen databasändring planerad.
 - Åtgärd: Räkna väntande intresse konsekvent i Alla eller ge det en tydlig egen kategori. Visa Inte skickad ännu och vad som krävs för sändning. Ge annonslänk och korrekt knappstatus även innan CV är färdigt.
 - Klar när: En synlig väntande ansökan motsäger inte räknaren eller texten om redan skickade ansökningar.
 - Implementerat: —
