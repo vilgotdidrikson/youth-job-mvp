@@ -87,7 +87,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
-| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Ej påbörjad | — |
+| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | För granskning | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
@@ -529,14 +529,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 23
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f13-pending-applications-20261020`; reserverad före kodarbete 2026-10-20. Avsteg från global ordning enligt användarens avgränsning 2026-10-20 (inga GDPR- eller domänberoende punkter): N02 (återkallad delning av ansökningsunderlag), L05 (GDPR-åtkomstkontroller) och L06 (e-post kräver SMTP/domän) hoppas över. Ingen databasändring planerad.
 - Åtgärd: Räkna väntande intresse konsekvent i Alla eller ge det en tydlig egen kategori. Visa Inte skickad ännu och vad som krävs för sändning. Ge annonslänk och korrekt knappstatus även innan CV är färdigt.
 - Klar när: En synlig väntande ansökan motsäger inte räknaren eller texten om redan skickade ansökningar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Räknaren Alla omfattar varje visat kort, inklusive sparade intressen. Ny flik Inte skickade. Kortet för sparat intresse har företagsruta, status Inte skickad ännu, förklaring att intresset inte är skickat och skickas automatiskt när CV:t sparas så länge annonsen är öppen, länken Visa annons och knappen Gör klart CV:t (med jobbet förvalt). Om CV:t redan är klart visas Skicka ansökan för just det jobbet via befintliga prepareApplication. Pausade och stängda annonser visas som Tar inte emot ansökningar, utan CV-uppmaning. Annonssidan erbjuder inte längre Jag är intresserad igen vid sparat intresse. Logiken ligger i lib/application-overview.ts. Ingen migration. Se docs/F13.md.
+- Verifierat: test:application-overview (räknare, kategori, texter, stängd annons, skickaknapp, tillgänglighet via simulerad klient och koppling) samt regressionerna test:application-supplement, test:application-disclosure, test:followup-batch, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:profile-journey, test:job-edit och test:company-navigation passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel.
+- Återstår / blockerare: PR och införande i dev. Inloggat prov i driftsatt dev på mobil och dator med fiktiv QA-ungdom (sparat intresse utan CV, pausad annons, klart CV med kvarvarande intresse); inget webbtest har körts. Titeln på en dold annons visas som Jobbannons. Notiser och märken ingår i F14 och återkallelse i N02.
 
 <a id="f14"></a>
 ### F14 Gör notiser och lässtatus användbara

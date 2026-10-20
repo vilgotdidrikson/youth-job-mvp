@@ -3,15 +3,20 @@
 import { getSupabaseClient } from "@/lib/supabase";
 
 export type ActivityStatus = "draft" | "needs_completion" | "submitted" | "unavailable" | "matched" | "in_contact" | "interview" | "hired" | "rejected" | "cancelled";
-export interface YouthActivity { jobId: string; title: string; company: string; createdAt: string; status: ActivityStatus; pendingQuestions?: number }
-type Row = { job_id: string; created_at: string; status?: string; job_title?: string; company_name?: string; jobs?: { title: string; company_name: string } | { title: string; company_name: string }[] | null };
+export interface YouthActivity {
+  jobId: string; title: string; company: string; createdAt: string; status: ActivityStatus; pendingQuestions?: number;
+  /** For saved interest: whether the listing still accepts applications. RLS hides closed listings from youth. */
+  available?: boolean;
+}
+type JobRow = { title: string; company_name: string; status?: string; is_active?: boolean; publication_status?: string };
+type Row = { job_id: string; created_at: string; status?: string; job_title?: string; company_name?: string; jobs?: JobRow | JobRow[] | null };
 const matchStatuses: ActivityStatus[] = ["matched", "in_contact", "interview", "hired", "rejected", "cancelled"];
 
 /** Show each job once, with the furthest real stage taking precedence. */
 export async function getYouthActivity(userId: string): Promise<YouthActivity[]> {
   const client = getSupabaseClient();
   const results = await Promise.all([
-    client.from("youth_application_drafts").select("job_id,created_at,jobs(title,company_name)").eq("youth_user_id", userId).order("created_at", { ascending: false }).limit(50),
+    client.from("youth_application_drafts").select("job_id,created_at,jobs(title,company_name,status,is_active,publication_status)").eq("youth_user_id", userId).order("created_at", { ascending: false }).limit(50),
     client.from("swipe_actions").select("job_id,created_at,jobs(title,company_name)").eq("youth_user_id", userId).eq("decision", "interested").order("created_at", { ascending: false }).limit(50),
     client.from("application_completions").select("job_id,job_title,company_name,status,created_at").eq("youth_user_id", userId).order("created_at", { ascending: false }).limit(50),
     client.from("matches").select("job_id,status,created_at,jobs(title,company_name)").eq("youth_user_id", userId).order("created_at", { ascending: false }).limit(50),
@@ -24,7 +29,10 @@ export async function getYouthActivity(userId: string): Promise<YouthActivity[]>
       const status: ActivityStatus = source === 0 ? "draft" : source === 1 ? "submitted" : source === 2
         ? row.status === "needs_completion" || row.status === "unavailable" ? row.status : "submitted"
         : matchStatuses.includes(row.status as ActivityStatus) ? row.status as ActivityStatus : "matched";
-      byJob.set(row.job_id, { jobId: row.job_id, title: row.job_title || job?.title || "Jobbannons", company: row.company_name || job?.company_name || "Arbetsgivare", createdAt: row.created_at, status });
+      byJob.set(row.job_id, {
+        jobId: row.job_id, title: row.job_title || job?.title || "Jobbannons", company: row.company_name || job?.company_name || "Arbetsgivare", createdAt: row.created_at, status,
+        ...(source === 0 ? { available: Boolean(job && job.status === "active" && job.is_active !== false && job.publication_status === "published") } : {}),
+      });
     }
   });
   const { data: followups, error: followupError } = await client.from("application_followups").select("job_id").eq("youth_user_id", userId).eq("status", "pending");

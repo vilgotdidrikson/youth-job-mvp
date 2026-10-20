@@ -34,7 +34,8 @@
     "test:job-drafts": "node scripts/test-job-drafts.mjs",
     "test:job-publication": "node scripts/test-job-publication.mjs",
     "test:company-verification": "node scripts/test-company-verification.mjs",
-    "test:job-edit": "node scripts/test-job-edit.mjs"
+    "test:job-edit": "node scripts/test-job-edit.mjs",
+    "test:application-overview": "node scripts/test-application-overview.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
