@@ -10,6 +10,8 @@ import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "r
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useJobDraft } from "@/hooks/use-job-draft";
+import { useJobEditSession } from "@/hooks/use-job-edit-session";
+import { JOB_EDIT_CONSEQUENCES, jobEditCriteria, jobEditCriteriaChanged, jobEditReceipt, jobEditUpdates, jobEditVisibility, textListItems, withSavedPublicFields } from "@/lib/job-edit";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import "./company-design.css";
@@ -32,14 +34,14 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
-import { COMPANY_ROUTES, companyView, createdCompanyJobHref } from "@/lib/company-navigation";
+import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
 import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
 import { RecruitmentSummary } from "@/components/recruitment-summary";
 import { CandidateVerifiedJobBadge } from "@/components/verified-job-badge";
 import { reviewCandidate } from "@/lib/matching";
-import { createInitialJobMatchProfile } from "@/lib/match-profiles";
+import { createInitialJobMatchProfile, saveJobMatchProfile } from "@/lib/match-profiles";
 import { uploadJobImage } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
@@ -61,11 +63,6 @@ function toggleTextList(value: string, item: string): string {
   return items.includes(item) ? items.filter((entry) => entry !== item).join(", ") : [...items, item].join(", ");
 }
 
-function textListItems(value: string): string[] {
-  return value.split(/[,\n]+/).map((item) => item.trim()).filter(Boolean);
-}
-
-
 function formWorkplaces(form: JobForm): JobWorkplace[] {
   return Array.isArray(form.workplaces) && form.workplaces.length ? form.workplaces : [{ id: "00000000-0000-4000-8000-000000000001", name: "Huvudarbetsplats", address: form.address, postal_code: form.postalCode, city: form.city, longitude: null, latitude: null }];
 }
@@ -76,12 +73,18 @@ function CompanyPageContent() {
   const { user, profile, loading, status, error: sessionError } = useRequireAuth();
   const hasCompanyAccess = profile?.role === "company";
   const jobDraft = useJobDraft(hasCompanyAccess ? user?.id : undefined);
-  const { form, setForm, files: jobImageFiles, setFiles: setJobImageFiles, previews: jobImagePreviews, step: builderStep, setStep: setBuilderStep, hydrated: draftHydrated } = jobDraft;
 
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const tab = companyView(searchParams.get("view"), companyProfile?.verification_status === "verified");
+  // Editing a saved listing reuses the builder with its own in-memory form, never the local create draft.
+  const editing = tab === "redigera";
+  const jobEdit = useJobEditSession(hasCompanyAccess ? user?.id : undefined, editing ? searchParams.get("edit") : null);
+  const builder = editing ? jobEdit : jobDraft;
+  const { form, setForm, files: jobImageFiles, setFiles: setJobImageFiles, previews: jobImagePreviews, step: builderStep, setStep: setBuilderStep, hydrated: builderHydrated } = builder;
+  const draftHydrated = jobDraft.hydrated;
+  const [editReceipt, setEditReceipt] = useState("");
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobActionId, setJobActionId] = useState<string | null>(null);
@@ -320,17 +323,59 @@ function CompanyPageContent() {
     finally { copyLock.current = false; setCopyBusy(false); }
   };
 
+  /** Shared by publishing a new listing and saving edits to an existing one. */
+  const builderFormIsValid = (): boolean => {
+    try { validateDraftPublication({ ...form, imagePending: form.imagePending && jobImageFiles.length === 0 }); } catch (reason) { setError(reason instanceof Error ? reason.message : "Granska annonsen."); return false; }
+    if (!form.title.trim()) { setError("Fyll i en jobbtitel."); return false; }
+    if (!form.employmentType) { setError("Välj en anställningsform."); return false; }
+    if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return false; }
+    if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return false; }
+    if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return false; }
+    if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return false; }
+    try { validateJobWorkplaces(formWorkplaces(form)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera arbetsplatserna."); return false; }
+    if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan du sparar."); return false; }
+    return true;
+  };
+
+  const handleSaveJobEdit = async (e: { preventDefault(): void }) => {
+    e.preventDefault();
+    const job = jobEdit.job;
+    if (busy || !job || !user || !builderFormIsValid()) return;
+    setBusy(true);
+    setError("");
+    let imageUrls = form.imageUrls;
+    let listingChanged = false;
+    try {
+      imageUrls = jobImageFiles.length > 0 ? await Promise.all(jobImageFiles.map((file) => uploadJobImage(file))) : form.imageUrls;
+      const updates = jobEditUpdates(jobEdit.baseline, form, imageUrls);
+      listingChanged = Object.keys(updates).length > 0;
+      const savedJob = listingChanged ? await updateJob(job.id, updates) : job;
+      const criteriaChanged = jobEditCriteriaChanged(jobEdit.baseline, form);
+      if (criteriaChanged) {
+        try {
+          // The version check rejects the save if the criteria changed elsewhere since the editor opened.
+          await saveJobMatchProfile(jobEditCriteria(form, job.id), jobEdit.criteria?.profile_version ?? null);
+        } catch (reason) {
+          jobEdit.rebase(savedJob, withSavedPublicFields(jobEdit.baseline, form, imageUrls));
+          await loadData(user.id);
+          setError(`${listingChanged ? "Annonsen är sparad, men matchkriterierna" : "Matchkriterierna"} kunde inte sparas: ${reason instanceof Error ? reason.message : "försök igen."}`);
+          return;
+        }
+      }
+      await loadData(user.id);
+      setEditReceipt(jobEditReceipt(listingChanged, criteriaChanged));
+      window.history.pushState(null, "", COMPANY_ROUTES.listings);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunde inte spara ändringarna. Annonsen är oförändrad.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleCreateJob = async (e: FormEvent) => {
     e.preventDefault();
-    if (busy || copyingJob || !draftHydrated) return;
-    try { validateDraftPublication({ ...form, imagePending: form.imagePending && jobImageFiles.length === 0 }); } catch (reason) { setError(reason instanceof Error ? reason.message : "Granska annonsen."); return; }
-    if (!form.employmentType) { setError("Välj en anställningsform."); return; }
-    if (!form.description.trim()) { setError("Skriv en beskrivning av jobbet."); return; }
-    if (!form.city.trim()) { setError("Fyll i vilken stad jobbet finns i."); return; }
-    if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return; }
-    if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return; }
-    try { validateJobWorkplaces(formWorkplaces(form)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera arbetsplatserna."); return; }
-    if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan publicering."); return; }
+    if (busy || copyingJob || !draftHydrated || !builderFormIsValid()) return;
     setBusy(true);
     setError("");
     try {
@@ -577,11 +622,14 @@ function CompanyPageContent() {
 
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
-      {(tab === "annonser" || tab === "skapa") && <div className="company-workspace-tabs">
-        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { window.history.pushState(null, "", item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
+      {(tab === "annonser" || tab === "skapa" || editing) && <div className="company-workspace-tabs">
+        {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { if (editing && jobEdit.dirty && !window.confirm("Ändringarna i annonsen är inte sparade. Vill du lämna redigeringen?")) return; window.history.pushState(null, "", item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings); setError(""); setEditReceipt(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
       {tab === "annonser" && createdJob && <JobPublicationNotice job={createdJob}/>}
+      {tab === "annonser" && editReceipt && <section className="card job-publication-notice" role="status"><strong>Annonsen är uppdaterad</strong><p>{editReceipt}</p></section>}
+      {editing && jobEdit.error && <section className="card company-applicants-empty"><h1>Annonsen kunde inte öppnas</h1><p role="alert">{jobEdit.error}</p><button type="button" className="secondary-btn" onClick={jobEdit.retry}>Försök igen</button></section>}
+      {editing && !jobEdit.error && !builderHydrated && <p role="status">Öppnar annonsen för redigering…</p>}
       {error && (
         <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
           {error}
@@ -778,7 +826,7 @@ function CompanyPageContent() {
       {/* ── NY ANNONS TAB ── */}
       {tab === "skapa" && !draftHydrated && <p role="status">Öppnar ditt annonsutkast…</p>}
       {(tab === "annonser" || tab === "skapa") && jobDraft.error && <p className="job-copy-notice" role="alert">{jobDraft.error} Dina ändringar är inte bekräftat sparade; behåll sidan öppen och försök igen.</p>}
-      {tab === "skapa" && draftHydrated && (
+      {(tab === "skapa" || editing) && builderHydrated && (
         <form
           className="job-builder job-builder-onboarding"
           onSubmit={(event) => {
@@ -787,7 +835,7 @@ function CompanyPageContent() {
               moveToBuilderStep((builderStep + 1) as 2 | 3);
               return;
             }
-            void handleCreateJob(event);
+            void (editing ? handleSaveJobEdit(event) : handleCreateJob(event));
           }}
         >
           {(() => {
@@ -800,16 +848,16 @@ function CompanyPageContent() {
             ];
             return <>
               <header className="job-builder-heading">
-                <div><p>MatchnWork</p><h1>{form.copiedFromTitle ? "Granska din annonskopia" : "Skapa jobbannons"}</h1><span>Tre korta steg. Ni behåller kontrollen, medan MatchnWork använder svaren för att skapa rätt matchning.</span></div>
+                <div><p>MatchnWork</p><h1>{editing ? "Redigera annons" : form.copiedFromTitle ? "Granska din annonskopia" : "Skapa jobbannons"}</h1><span>{editing ? "Gå direkt till det steg du vill ändra och spara när du är klar. Annonsen behåller sin status, sina ansökningar och sina chattar." : "Tre korta steg. Ni behåller kontrollen, medan MatchnWork använder svaren för att skapa rätt matchning."}</span></div>
               </header>
-              <nav className="job-builder-steps" aria-label="Steg i annonsskapandet">
+              <nav className="job-builder-steps" aria-label={editing ? "Delar av annonsen" : "Steg i annonsskapandet"}>
                 {steps.map((step) => (
                   <button
                     key={step.number}
                     type="button"
                     className={builderStep === step.number ? "is-current" : builderStep > step.number ? "is-complete" : ""}
-                    onClick={() => { if (step.number <= builderStep) moveToBuilderStep(step.number); }}
-                    disabled={step.number > builderStep}
+                    onClick={() => { if (editing || step.number <= builderStep) moveToBuilderStep(step.number); }}
+                    disabled={!editing && step.number > builderStep}
                     aria-current={builderStep === step.number ? "step" : undefined}
                   >
                     <span>{builderStep > step.number ? "✓" : step.number}</span>
@@ -819,6 +867,7 @@ function CompanyPageContent() {
               </nav>
               <div className="job-builder-layout">
                 <div className="job-builder-form">
+                  {editing && jobEdit.job && <section className="job-copy-notice" role="status"><strong>Du redigerar {jobEdit.job.title}</strong><p>{jobEditVisibility(jobEdit.job)}</p><ul>{JOB_EDIT_CONSEQUENCES.map(item => <li key={item}>{item}</li>)}</ul><p>Osparade ändringar sparas inte som utkast. Ditt eget annonsutkast påverkas inte.</p></section>}
                   {form.copiedFromTitle && <section className="job-copy-notice" role="status"><strong>Kopia av {form.copiedFromTitle}</strong><p>Detta är ett nytt utkast. Originalets ansökningar, chattar och statistik följer inte med. Kontrollera datum, lön och övriga villkor innan du publicerar.</p></section>}
                   {builderStep === 1 && (
                     <section className="card job-builder-section job-builder-step-panel">
@@ -870,15 +919,21 @@ function CompanyPageContent() {
                     {form.copiedFromTitle && <label className="job-copy-review"><input type="checkbox" checked={form.copyReviewed} onChange={event => setForm(current => ({ ...current, copyReviewed: event.target.checked }))}/><span>Jag har kontrollerat datum, lön och övriga villkor för den nya annonsen.</span></label>}
                   </>)}
                 </div>
-                {previewOpen && <JobPreviewDialog form={{ ...form, requirements: form.listingRequirements ?? form.requirements }} image={jobImageFiles.length ? jobImagePreviews[0] : form.imageUrls[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} verificationStatus={verificationStatus} onClose={() => setPreviewOpen(false)} />}
+                {previewOpen && <JobPreviewDialog form={{ ...form, requirements: form.listingRequirements ?? form.requirements }} image={jobImageFiles.length ? jobImagePreviews[0] : form.imageUrls[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} verificationStatus={verificationStatus} editNote={editing && jobEdit.job ? `Förhandsvisningen visar dina ändringar. Inget sparas förrän du väljer Spara ändringar. ${jobEditVisibility(jobEdit.job)}` : undefined} onClose={() => setPreviewOpen(false)} />}
               </div>
-              {builderStep === 3 && <p className="job-builder-help" role="status">{publication.description}</p>}
-              <div className="job-builder-actions">
+              {builderStep === 3 && <p className="job-builder-help" role="status">{editing && jobEdit.job ? jobEditVisibility(jobEdit.job) : publication.description}</p>}
+              {editing ? <div className="job-builder-actions">
+                <span role="status">{jobEdit.dirty ? "Osparade ändringar" : "Inga ändringar ännu"}</span>
+                <button type="button" className="job-builder-save" disabled={busy} onClick={() => { if (jobEdit.dirty && !window.confirm("Ändringarna i annonsen är inte sparade. Vill du avbryta redigeringen?")) return; setError(""); window.history.pushState(null, "", COMPANY_ROUTES.listings); }}>Avbryt</button>
+                <button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button>
+                {builderStep < 3 && <button type="submit" className="secondary-btn">Nästa del</button>}
+                <button type="button" className="cta-btn" disabled={busy} onClick={(event) => void handleSaveJobEdit(event)}>{busy ? "Sparar ändringar…" : "Spara ändringar"}</button>
+              </div> : <div className="job-builder-actions">
                 <span role="status">{jobDraft.saveStatus === "saving" ? "Sparar utkast…" : jobDraft.saveStatus === "saved" ? "Utkast sparat på den här enheten" : ""}</span>
                 <button type="button" className="job-builder-save" disabled={!draftHydrated || busy} onClick={() => void handleSaveDraft()}>Spara utkast</button>
                 {builderStep > 1 && <button type="button" className="secondary-btn" onClick={() => moveToBuilderStep((builderStep - 1) as 1 | 2)}>Tillbaka</button>}
                 {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? publication.busyLabel : publication.label}</button></>}
-              </div>
+              </div>}
             </>;
           })()}
         </form>
@@ -887,7 +942,7 @@ function CompanyPageContent() {
       {/* ── ANNONSER TAB ── */}
       {tab === "annonser" && (
         <div>
-          {!draftHydrated ? <p role="status">Öppnar annonsutkast…</p> : hasJobDraftContent(form) && <article className="card company-draft-card">
+          {!draftHydrated ? <p role="status">Öppnar annonsutkast…</p> : hasJobDraftContent(jobDraft.form) && <article className="card company-draft-card">
             <div><span className="chip">Utkast · inte publicerat</span><h2>{form.title.trim() || "Namnlöst annonsutkast"}</h2>
             <p>Steg {builderStep} av 3 · {builderStep === 1 ? "Berätta om jobbet" : builderStep === 2 ? "Matchningsunderlag" : "Plats och praktiska detaljer"}</p>
             <p role="status">{jobDraft.saveStatus === "saving" ? "Sparar ändringar…" : jobDraft.saveStatus === "error" ? "Senaste ändringarna kunde inte sparas" : jobDraft.savedAt ? `Senast sparat ${new Date(jobDraft.savedAt).toLocaleString("sv-SE")}` : "Tidigare textutkast – sparas när det öppnas"}</p>
@@ -926,6 +981,7 @@ function CompanyPageContent() {
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
+                      <button type="button" className="cta-btn" disabled={isWorking || busy} onClick={() => { setError(""); setEditReceipt(""); window.history.pushState(null, "", editCompanyJobHref(job.id)); window.scrollTo({ top: 0 }); }} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Kopiera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera jobbtyp</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera arbetsplatser</button>
@@ -974,7 +1030,7 @@ function CompanyPageContent() {
           </div>
         </ModalDialog>
       )}
-      {copyingJob && <ModalDialog label="Kopiera annons" busy={copyBusy} onClose={() => { if (!copyBusy) setCopyingJob(null); }} className="job-copy-dialog"><h2>Kopiera annons</h2><p>Skapa ett nytt redigerbart utkast från ”{copyingJob.title}”. Originalet och dess kandidater finns kvar.</p>{hasJobDraftContent(form) && <p className="job-copy-notice">Du har redan ett annonsutkast på den här enheten. Om du fortsätter ersätts det med kopian.</p>}{copyError && <p role="alert">{copyError}</p>}<div><button type="button" className="cta-btn" disabled={copyBusy} onClick={() => void handleCopyJob()}>{copyBusy ? "Kopierar…" : hasJobDraftContent(form) ? "Ersätt utkast med kopia" : "Skapa annonskopia"}</button><button type="button" className="secondary-btn" disabled={copyBusy} onClick={() => setCopyingJob(null)}>Avbryt</button></div></ModalDialog>}
+      {copyingJob && <ModalDialog label="Kopiera annons" busy={copyBusy} onClose={() => { if (!copyBusy) setCopyingJob(null); }} className="job-copy-dialog"><h2>Kopiera annons</h2><p>Skapa ett nytt redigerbart utkast från ”{copyingJob.title}”. Originalet och dess kandidater finns kvar.</p>{hasJobDraftContent(jobDraft.form) && <p className="job-copy-notice">Du har redan ett annonsutkast på den här enheten. Om du fortsätter ersätts det med kopian.</p>}{copyError && <p role="alert">{copyError}</p>}<div><button type="button" className="cta-btn" disabled={copyBusy} onClick={() => void handleCopyJob()}>{copyBusy ? "Kopierar…" : hasJobDraftContent(jobDraft.form) ? "Ersätt utkast med kopia" : "Skapa annonskopia"}</button><button type="button" className="secondary-btn" disabled={copyBusy} onClick={() => setCopyingJob(null)}>Avbryt</button></div></ModalDialog>}
       {editingCategory && <JobCategoryEditor key={editingCategory.id} job={editingCategory} onClose={()=>setEditingCategory(null)} onSaved={updated=>{setJobs(current=>current.map(job=>job.id===updated.id?updated:job));setEditingCategory(null);}}/>}
       {editingWorkplaces && <JobWorkplaceEditor key={editingWorkplaces.id} job={editingWorkplaces} onClose={() => setEditingWorkplaces(null)} onSaved={updated => { setJobs(current => current.map(job => job.id === updated.id ? updated : job)); setEditingWorkplaces(null); }}/>}
       {editingCriteria && <JobMatchProfileEditor key={editingCriteria.id} jobId={editingCriteria.id} title={editingCriteria.title} onClose={closeCriteria} onSaved={() => { setEditingCriteria(null); setError(""); }} />}

@@ -80,7 +80,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | För granskning | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
-| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Pågår | Max / Claude |
+| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | För granskning | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
@@ -225,14 +225,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 19
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
-- Branch/PR: `claude/n01-edit-published-job-20261020`; reserverad före kodarbete 2026-10-20. Återanvänder annonsbyggaren och befintliga separata redigerare (jobbtyp, arbetsplatser, matchkriterier). Ingen databasändring planerad.
+- Branch/PR: `claude/n01-edit-published-job-20261020`; reserverad före kodarbete 2026-10-20. Återanvänder annonsbyggaren och befintliga separata redigerare (jobbtyp, arbetsplatser, matchkriterier). Ingen databasändring.
 - Åtgärd: Ge en tydlig Redigera annons-ingång för titel, publik text, bild, lön och praktiska uppgifter. Återanvänd annonsbyggaren. Håll den publika informationen och matchkriterierna samordnade och förklara konsekvenser för befintliga ansökningar.
 - Klar när: Företaget kan korrigera annonsen utan att radera och skapa om den.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Redigera annons på varje annonskort öppnar en adressstyrd redigeringsvy (`view=redigera&edit=<id>`). Den använder annonsbyggaren i alla tre delar, med fri navigering, förhandsvisning och sparning från valfri del. Redigeringen hålls i minnet, åtskild från det lokala annonsutkastet, och varnar för osparade ändringar. Endast ändrade publika fält sparas via befintliga updateJob (ägarkontroll, ingen ny geokodning av oförändrad plats, varken status- eller publiceringsfält). Matchkriterier sparas bara vid faktisk ändring, med versionskontroll. Arbetsplats-ID behålls. Om bara annonsen sparas visas det tydligt och nästa försök skickar endast det som återstår. Konsekvenser för synlighet, ansökningar, chattar, omgjord matchningsanalys, nya frågor och valda arbetsplatser visas i formuläret. Mappningen delas med N15:s kopiering, som behåller nya ID. Ingen migration. Se docs/N01.md.
+- Verifierat: test:job-edit (ändringsdiff, publik/intern separation, kriterieändring, nytt försök efter delvis sparning, texter, verklig updateJob-väg mot simulerad databas, nekat fel företag eller kontobyte samt isolerad koppling) och regressionerna test:job-copy, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:recruitment och test:recruitment-review passerar. TypeScript och produktionsbygge passerar. Riktad ESLint: 0 fel, befintliga img-varningar.
+- Återstår / blockerare: PR och införande i dev. Inloggat prov i driftsatt dev på mobil och dator med fiktivt QA-företag och QA-ansökan (publicerad, väntande och pausad annons, arbetsplatsändring på kartan, kriterieändring som gör om bedömningen); inget webbtest har körts. Annonsfälten saknar versionskontroll (den senaste sparningen vinner); äldre annonser utan postnummer eller anställningsform måste kompletteras före sparning; ersatta bilder tas inte bort från lagringen.
 
 <a id="n02"></a>
 ### N02 Återkalla ansökan och väntande intresse
