@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useAdminAccess } from "@/hooks/use-admin-access";
 import { getSupabaseClient } from "@/lib/supabase";
+import { parseOrganizationNumber } from "@/lib/company-verification";
 
 interface VerificationRequest {
   user_id: string;
@@ -80,6 +81,7 @@ export default function CompanyVerificationAdminPage() {
             <div><dt>Ort</dt><dd>{request.city || "Ej angiven"}</dd></div>
             <div><dt>Inskickad</dt><dd>{request.verification_submitted_at ? new Date(request.verification_submitted_at).toLocaleDateString("sv-SE") : "Datum saknas"}</dd></div>
           </dl>
+          {request.organization_number && !parseOrganizationNumber(request.organization_number).ok && <p className="admin-alert">Organisationsnumrets kontrollsiffra eller format stämmer inte. Kontrollera numret i Bolagsverkets eller Skatteverkets register innan du godkänner.</p>}
           {!request.organization_number && <p className="admin-alert">Företaget behöver komplettera sitt organisationsnummer innan det kan godkännas. Använd ”Begär komplettering” för att skicka en förklaring.</p>}
           <div className="admin-review-actions">
             <button type="button" className="cta-btn" disabled={actionId === request.user_id || !request.organization_number} onClick={() => void review(request, "verified")}>Godkänn företag</button>

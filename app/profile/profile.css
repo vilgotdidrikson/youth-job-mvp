@@ -179,3 +179,9 @@
 .mnw-profile-shortcut span {min-width:0;overflow-wrap:anywhere;}
 
 .mnw-profile .network-skill-list span {max-width:100%;overflow-wrap:anywhere;line-height:1.7;}
+
+.company-profile-field-help { margin:-.45rem 0 .95rem; }
+.company-profile-field-help p { margin:.25rem 0 0; color:#896a76; font-size:.76rem; line-height:1.55; }
+.company-profile-field-help p.is-error { color:#b42318; font-weight:600; }
+.company-profile-field-help p.is-warning { color:#6a4a00; font-weight:600; }
+.company-profile-details > .company-verification { margin:0 0 1rem; }

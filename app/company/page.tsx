@@ -17,6 +17,7 @@ import { draftJobCategories, categoryLabel, effectiveJobCategories } from "@/lib
 import { JobCategoryField } from "@/components/job-category-field";
 import { JobCategoryEditor } from "@/components/job-category-editor";
 import { JobPublicationNotice } from "@/components/job-publication-notice";
+import { CompanyVerificationStatus } from "@/components/company-verification-status";
 import { jobPublicationAction, jobPublicationState, jobPublicationLabel } from "@/lib/job-publication";
 import { JobPreviewDialog } from "@/components/job-preview-dialog";
 import { ModalDialog } from "@/components/modal-dialog";
@@ -546,19 +547,7 @@ function CompanyPageContent() {
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
-      {verificationStatus !== "verified" && (
-        <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: verificationStatus === "rejected" ? "#ffd6d3" : "#f0c36d", background: verificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }} role="status">
-          <strong style={{ color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
-            {verificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Företaget är inte godkänt ännu"}
-          </strong>
-          <p style={{ margin: ".35rem 0 0", color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00", fontSize: ".86rem", lineHeight: 1.5 }}>
-            {verificationStatus === "rejected"
-              ? companyProfile?.verification_rejection_reason || "Kontrollera företagsuppgifterna och skicka in dem igen."
-              : "Du kan skapa och hantera annonser. Aktiva annonser publiceras automatiskt när företaget har godkänts; pausade och stängda annonser förblir dolda."}
-          </p>
-          <Link href="/profile" className="secondary-btn" style={{ display: "inline-block", marginTop: ".75rem", padding: ".55rem .8rem", fontSize: ".8rem" }}>Kontrollera företagsuppgifter</Link>
-        </section>
-      )}
+      {verificationStatus !== "verified" && <CompanyVerificationStatus profile={companyProfile} compact action={{ href: "/profile?tab=details", label: "Kontrollera företagsuppgifter" }} />}
       {/* Match banner */}
       {matchedConvId && (
         <div style={{ borderRadius: 14, background: "#e8faf0", border: "1.5px solid #b6e8cf", padding: "1rem 1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
