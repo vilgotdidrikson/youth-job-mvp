@@ -30,7 +30,8 @@
     "test:recruitment-review": "node scripts/test-recruitment-review.mjs",
     "test:video-retention": "node scripts/test-video-retention.mjs",
     "test:job-categories": "node scripts/test-job-categories.mjs",
-    "test:job-discovery": "node scripts/test-job-discovery.mjs"
+    "test:job-discovery": "node scripts/test-job-discovery.mjs",
+    "test:job-drafts": "node scripts/test-job-drafts.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
@@ -53,6 +54,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "fake-indexeddb": "6.2.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
