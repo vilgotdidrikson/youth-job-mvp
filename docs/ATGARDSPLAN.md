@@ -78,7 +78,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Ej påbörjad | — |
-| 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Ej påbörjad | — |
+| 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Ej påbörjad | — |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
@@ -499,14 +499,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 17
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Codex
+- Branch/PR: `codex/f09-verification-publication-20261020`, reserverad före kodarbete 2026-10-20, [PR #86](https://github.com/vilgotdidrikson/youth-job-mvp/pull/86).
 - Åtgärd: Anpassa knapp, förhandsvisning och bekräftelse till om företaget är godkänt. Före godkännande ska det framgå om annonsen sparas eller väntar på publicering och om den publiceras automatiskt efter beslut.
 - Klar när: Ingen vy lovar omedelbar publicering när annonsen fortfarande väntar på verifiering.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Gemensamma verifieringsanpassade knappar, väntetexter och förhandsvisning i båda annonsvägarna. Bekräftelse i översikten utifrån faktisk serverstatus för den egna annonsen. Automatisk publicering efter godkännande förklaras med bevarad paus/stängning; lokala utkast skiljs från sparade väntande annonser. Okänd status framställs inte som publicerad. Se docs/F09.md.
+- Verifierat: test:job-publication med verklig rendering, test:company-navigation, test:job-copy, test:job-drafts, test:job-workplaces samt produktionsbygge/TypeScript (51 routes) passerar. Riktad ESLint utan fel, tre befintliga img-varningar. Verkligt rollbackprov i DevStaging verifierar publiceringsspärr, egen verifiering nekad, dold väntande annons, automatisk publicering vid adminbeslut och fortsatt dold paus/stängning.
+- Återstår / blockerare: Inloggat visuellt test i driftsatt dev på mobil/dator för status, förhandsvisning och bekräftelse återstår. Inga schema-, AI-, personuppgifts- eller produktionsändringar. F08:s verifieringsunderlag/handläggning ingår inte.
 
 <a id="f07"></a>
 ### F07 Bevara bilden i sparade annonsutkast

@@ -16,6 +16,8 @@ import "./company-design.css";
 import { draftJobCategories, categoryLabel, effectiveJobCategories } from "@/lib/job-categories";
 import { JobCategoryField } from "@/components/job-category-field";
 import { JobCategoryEditor } from "@/components/job-category-editor";
+import { JobPublicationNotice } from "@/components/job-publication-notice";
+import { jobPublicationAction, jobPublicationState, jobPublicationLabel } from "@/lib/job-publication";
 import { JobPreviewDialog } from "@/components/job-preview-dialog";
 import { ModalDialog } from "@/components/modal-dialog";
 import { UiIcon } from "@/components/ui-icon";
@@ -29,7 +31,7 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
-import { COMPANY_ROUTES, companyView } from "@/lib/company-navigation";
+import { COMPANY_ROUTES, companyView, createdCompanyJobHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
 import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
@@ -372,7 +374,7 @@ function CompanyPageContent() {
       try { await jobDraft.clear(); }
       catch { matchProfileWarning = [matchProfileWarning, "Annonsen skapades, men det lokala utkastet kunde inte tas bort. Publicera inte samma utkast igen."].filter(Boolean).join(" "); }
       if (user) await loadData(user.id);
-      window.history.replaceState(null, "", COMPANY_ROUTES.listings);
+      window.history.replaceState(null, "", createdCompanyJobHref(job.id));
       if (matchProfileWarning) setError(matchProfileWarning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -522,7 +524,9 @@ function CompanyPageContent() {
   </section></main>;
 
   const candidateFeed = feed;
-  const verificationStatus = companyProfile?.verification_status ?? "pending";
+  const verificationStatus = companyProfile?.verification_status;
+  const publication = jobPublicationAction(verificationStatus);
+  const createdJob = jobs.find(job => job.id === searchParams.get("created") && job.company_user_id === user?.id);
   const pendingCandidates = candidateFeed.filter((candidate) => !candidate.reviewDecision);
   const displayedCandidates = candidateFilter === "pending" ? pendingCandidates : candidateFeed;
   const filteredCandidates = filterCandidates(displayedCandidates, candidateSearch);
@@ -545,12 +549,12 @@ function CompanyPageContent() {
       {verificationStatus !== "verified" && (
         <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: verificationStatus === "rejected" ? "#ffd6d3" : "#f0c36d", background: verificationStatus === "rejected" ? "#fff1f0" : "#fffaf0" }} role="status">
           <strong style={{ color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00" }}>
-            {verificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Företagsverifiering pågår"}
+            {verificationStatus === "rejected" ? "Verifieringen behöver kompletteras" : "Företaget är inte godkänt ännu"}
           </strong>
           <p style={{ margin: ".35rem 0 0", color: verificationStatus === "rejected" ? "#b42318" : "#6a4a00", fontSize: ".86rem", lineHeight: 1.5 }}>
             {verificationStatus === "rejected"
               ? companyProfile?.verification_rejection_reason || "Kontrollera företagsuppgifterna och skicka in dem igen."
-              : "Du kan skapa och hantera annonser. De publiceras automatiskt när företaget har godkänts."}
+              : "Du kan skapa och hantera annonser. Aktiva annonser publiceras automatiskt när företaget har godkänts; pausade och stängda annonser förblir dolda."}
           </p>
           <Link href="/profile" className="secondary-btn" style={{ display: "inline-block", marginTop: ".75rem", padding: ".55rem .8rem", fontSize: ".8rem" }}>Kontrollera företagsuppgifter</Link>
         </section>
@@ -588,6 +592,7 @@ function CompanyPageContent() {
         {(["annonser", "skapa"] as const).map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => { window.history.pushState(null, "", item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings); setError(""); }}>{item === "skapa" ? <><UiIcon name="briefcase" width="17" />Ny annons</> : <>Mina annonser <span>{jobs.length}</span></>}</button>)}
       </div>}
 
+      {tab === "annonser" && createdJob && <JobPublicationNotice job={createdJob}/>}
       {error && (
         <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
           {error}
@@ -876,13 +881,14 @@ function CompanyPageContent() {
                     {form.copiedFromTitle && <label className="job-copy-review"><input type="checkbox" checked={form.copyReviewed} onChange={event => setForm(current => ({ ...current, copyReviewed: event.target.checked }))}/><span>Jag har kontrollerat datum, lön och övriga villkor för den nya annonsen.</span></label>}
                   </>)}
                 </div>
-                {previewOpen && <JobPreviewDialog form={{ ...form, requirements: form.listingRequirements ?? form.requirements }} image={jobImageFiles.length ? jobImagePreviews[0] : form.imageUrls[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} onClose={() => setPreviewOpen(false)} />}
+                {previewOpen && <JobPreviewDialog form={{ ...form, requirements: form.listingRequirements ?? form.requirements }} image={jobImageFiles.length ? jobImagePreviews[0] : form.imageUrls[0]} companyName={companyProfile?.company_name || "Ditt företag"} salary={salary} verificationStatus={verificationStatus} onClose={() => setPreviewOpen(false)} />}
               </div>
+              {builderStep === 3 && <p className="job-builder-help" role="status">{publication.description}</p>}
               <div className="job-builder-actions">
                 <span role="status">{jobDraft.saveStatus === "saving" ? "Sparar utkast…" : jobDraft.saveStatus === "saved" ? "Utkast sparat på den här enheten" : ""}</span>
                 <button type="button" className="job-builder-save" disabled={!draftHydrated || busy} onClick={() => void handleSaveDraft()}>Spara utkast</button>
                 {builderStep > 1 && <button type="button" className="secondary-btn" onClick={() => moveToBuilderStep((builderStep - 1) as 1 | 2)}>Tillbaka</button>}
-                {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? "Publicerar..." : "Publicera annons"}</button></>}
+                {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? publication.busyLabel : publication.label}</button></>}
               </div>
             </>;
           })()}
@@ -896,7 +902,7 @@ function CompanyPageContent() {
             <div><span className="chip">Utkast · inte publicerat</span><h2>{form.title.trim() || "Namnlöst annonsutkast"}</h2>
             <p>Steg {builderStep} av 3 · {builderStep === 1 ? "Berätta om jobbet" : builderStep === 2 ? "Matchningsunderlag" : "Plats och praktiska detaljer"}</p>
             <p role="status">{jobDraft.saveStatus === "saving" ? "Sparar ändringar…" : jobDraft.saveStatus === "error" ? "Senaste ändringarna kunde inte sparas" : jobDraft.savedAt ? `Senast sparat ${new Date(jobDraft.savedAt).toLocaleString("sv-SE")}` : "Tidigare textutkast – sparas när det öppnas"}</p>
-            <small>Finns på den här enheten och i den här webbläsaren. Publiceras först när du väljer Publicera annons.</small></div>
+            <small>Finns på den här enheten och i den här webbläsaren. Inget skickas till MatchnWork innan du väljer att spara inför publicering eller publicera annonsen.</small></div>
             <button type="button" className="cta-btn" onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>Återuppta utkast</button>
           </article>}
 
@@ -913,7 +919,8 @@ function CompanyPageContent() {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 const status = job.status ?? (job.is_active ? "active" : "paused");
                 const isWorking = jobActionId === job.id;
-                const awaitingVerification = job.publication_status === "pending_verification";
+                const publicState = jobPublicationState(job);
+                const awaitingVerification = publicState === "waiting";
                 return (
                   <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
                     <Link className="company-job-summary" href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
@@ -924,8 +931,8 @@ function CompanyPageContent() {
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
                       </div>
                     )}
-                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: awaitingVerification ? "#fff3d6" : status === "active" ? "#e8faf0" : "#f5f5f5", color: awaitingVerification ? "#6a4a00" : status === "active" ? "#1a7f4b" : "#a3a3a3" }}>
-                      {status === "active" ? (awaitingVerification ? "Inväntar verifiering" : "Publicerad") : status === "paused" ? "Pausad" : "Stängd"}
+                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: awaitingVerification ? "#fff3d6" : publicState === "published" ? "#e8faf0" : "#f5f5f5", color: awaitingVerification ? "#6a4a00" : publicState === "published" ? "#1a7f4b" : "#737373" }}>
+                      {jobPublicationLabel(job)}
                     </div>
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>

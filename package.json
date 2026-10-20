@@ -31,7 +31,8 @@
     "test:video-retention": "node scripts/test-video-retention.mjs",
     "test:job-categories": "node scripts/test-job-categories.mjs",
     "test:job-discovery": "node scripts/test-job-discovery.mjs",
-    "test:job-drafts": "node scripts/test-job-drafts.mjs"
+    "test:job-drafts": "node scripts/test-job-drafts.mjs",
+    "test:job-publication": "node scripts/test-job-publication.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",

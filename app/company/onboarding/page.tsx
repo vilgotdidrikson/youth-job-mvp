@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { COMPANY_ROUTES } from "@/lib/company-navigation";
+import { jobPublicationAction } from "@/lib/job-publication";
+import type { CompanyProfile } from "@/lib/types";
+import { COMPANY_ROUTES, createdCompanyJobHref } from "@/lib/company-navigation";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { UiIcon } from "@/components/ui-icon";
 import "./company-onboarding-design.css";
@@ -47,6 +49,8 @@ export default function CompanyOnboardingPage() {
   const [profileQuestion, setProfileQuestion] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState<CompanyProfile["verification_status"]>();
+  const publication = jobPublicationAction(verificationStatus);
 
   // Company profile form
   const [companyName, setCompanyName] = useState("");
@@ -97,6 +101,7 @@ export default function CompanyOnboardingPage() {
         .maybeSingle()
         .then(({ data }) => {
           if (!active || !data) return;
+          setVerificationStatus(data.verification_status);
           if (data.company_name?.trim() && data.industry?.trim() && data.administrator?.trim() && (data.organization_number?.trim() || data.verification_status === "verified")) {
             router.replace("/company?view=swipe");
             return;
@@ -120,7 +125,7 @@ export default function CompanyOnboardingPage() {
     setError("");
     try {
       const supabase = getSupabaseClient();
-      const { error: dbError } = await supabase
+      const { data: savedCompany, error: dbError } = await supabase
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
@@ -129,8 +134,9 @@ export default function CompanyOnboardingPage() {
           administrator: administrator.trim(),
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user!.id);
-      if (dbError) throw new Error(dbError.message);
+        .eq("user_id", user!.id).select("verification_status").single();
+      if (dbError || !savedCompany) throw new Error(dbError?.message || "Företagsuppgifterna kunde inte sparas.");
+      setVerificationStatus(savedCompany.verification_status);
       setStep("val");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte spara. Försök igen.");
@@ -148,7 +154,7 @@ export default function CompanyOnboardingPage() {
     setBusy(true);
     setError("");
     try {
-      await createJob({
+      const job = await createJob({
         title: jobTitle,
         city: jobCity || city,
         address: jobAddress,
@@ -164,7 +170,7 @@ export default function CompanyOnboardingPage() {
         min_age: jobMinAge ? parseInt(jobMinAge, 10) : null,
         max_age: jobMaxAge ? parseInt(jobMaxAge, 10) : null,
       });
-      router.replace("/company?view=swipe");
+      router.replace(createdCompanyJobHref(job.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
       setBusy(false);
@@ -317,7 +323,7 @@ export default function CompanyOnboardingPage() {
           <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
           <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Er nästa rekrytering börjar nu.</h1>
           <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
-          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. De blir synliga för ungdomar när företaget har verifierats.</p>
+          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>Du kan skapa annonser direkt. Aktiva annonser blir synliga för ungdomar när företaget har godkänts. Pausade och stängda annonser förblir dolda.</p>
           <button type="button" className="cta-btn" onClick={() => setStep("matchprofil")}>Bygg företagets matchprofil</button>
           <Link className="secondary-btn" href={COMPANY_ROUTES.create} replace style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem", textDecoration: "none" }}>Fortsätt skapa min jobbannons</Link>
           <Link className="secondary-btn" href={COMPANY_ROUTES.account} replace style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem", textDecoration: "none" }}>Gå till mitt konto</Link>
@@ -459,6 +465,7 @@ export default function CompanyOnboardingPage() {
             />
           </div>
 
+          <p role="status" style={{lineHeight:1.6}}>{publication.description}</p>
           <div style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
             <button
               type="button"
@@ -474,7 +481,7 @@ export default function CompanyOnboardingPage() {
               style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
               disabled={busy}
             >
-              {busy ? "Publicerar..." : "Publicera annons"}
+              {busy ? publication.busyLabel : publication.label}
             </button>
           </div>
         </form>

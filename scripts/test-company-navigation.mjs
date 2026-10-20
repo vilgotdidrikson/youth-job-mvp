@@ -74,7 +74,7 @@ const effectJs = ts.transpileModule(`const effect = ${initialEffect}; return eff
 let reads = 0, resolveRead;
 const database = { from() { reads++; return this; }, select() { return this; }, eq() { return this; }, maybeSingle() { return new Promise(resolve => { resolveRead = resolve; }); } };
 const noop = () => {};
-const runEffect = (step, role = 'company') => new Function('loading', 'user', 'profile', 'router', 'step', 'getSupabaseClient', 'setCompanyName', 'setIndustry', 'setAdministrator', 'setOrganizationNumber', effectJs)(false, {id:'fictional-owner'}, {role}, router, step, () => database, noop, noop, noop, noop);
+const runEffect = (step, role = 'company') => new Function('loading', 'user', 'profile', 'router', 'step', 'getSupabaseClient', 'setCompanyName', 'setIndustry', 'setAdministrator', 'setOrganizationNumber', 'setVerificationStatus', effectJs)(false, {id:'fictional-owner'}, {role}, router, step, () => database, noop, noop, noop, noop, noop);
 for (const step of ['val', 'matchprofil', 'annons']) assert.equal(runEffect(step), undefined);
 assert.equal(reads, 0, 'Completed onboarding choices must not trigger an entry redirect');
 const cleanup = runEffect('profil');
