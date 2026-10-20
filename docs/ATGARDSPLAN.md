@@ -61,7 +61,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
 | 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
-| 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | Ej påbörjad | — |
+| 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | För granskning | Vilgot / Codex |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
@@ -190,14 +190,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Prioritet: P1
 - Global ordning: 8
 - Typ: Ny uttryckligen beställd funktion
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n15-copy-job-20261015`, [PR #61](https://github.com/vilgotdidrikson/youth-job-mvp/pull/61), mergad till dev `26a71a1394eeb5895671a1f718817778e5687390`. Statusavstämning 2026-10-20: `codex/n15-status-review-20261020`.
 - Åtgärd: Lägg Kopiera annons i företagets annonsöversikt. Kopiera titel, text, bild, praktiska uppgifter, arbetsplatser och matchkriterier till ett nytt redigerbart utkast som öppnas i befintliga annonsbyggaren. Originalet ändras inte. Ansökningar, matchningar, chattar, anställningar, publiceringsstatus och gammal statistik ska inte följa med. Markera datum och tidsberoende uppgifter för ny granskning. Ny publicering följer vanlig verifiering och eventuella faktiska kontogränser.
 - Klar när: Företaget kan kopiera en egen aktiv, pausad eller stängd annons, granska/redigera och publicera kopian som en separat rekrytering utan att ändra originalet eller dess kandidater.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Kopiera annons från egen aktiv, pausad eller stängd annons till ett nytt redigerbart utkast. Text, bildreferenser, exakt lönetext, arbetsplatser med nya ID och matchkriterier följer med. Kandidater, chattar, statistik och originalets status följer inte med. Befintligt utkast skyddas med bekräftelse; tidsberoende villkor kräver ny granskning. Se docs/N15.md.
+- Verifierat: PR #61 är mergad och funktionen finns i aktuell dev. Förnyat 2026-10-20: `test:job-copy` och `test:job-workplaces` passerar, inklusive främmande ägare och kontobyte, gransknings-/bildspärr, originalets oföränderlighet och nya arbetsplats-ID. Tidigare leverans har dokumenterat godkänt TypeScript och produktionsbygge; de kördes inte om i denna dokumentationsavstämning.
+- Återstår / blockerare: Inloggat driftsatt webbtest av kopiering, återläsning och separat publicering samt fysisk mobilkontroll återstår. Ingen sådan kontroll påstås utförd. Tidigare status Ej påbörjad var inaktuell; ingen ny produktkod behövdes vid denna avstämning.
 
 <a id="n16"></a>
 ### N16 Slopa obligatoriskt platsantal och behåll manuell annonsstatus
