@@ -50,7 +50,7 @@ export function jobBuilderFields(job: JobPost, criteria: JobMatchProfile | null,
 export function draftSalary(form: JobBuilderDraft): string {
   if (form.salaryText.trim()) return form.salaryText.trim();
   const unit = form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period";
-  if (form.salaryFrom && form.salaryTo) return `${form.salaryFrom}–${form.salaryTo} kr/${unit}`;
+  if (form.salaryFrom && form.salaryTo) return form.salaryFrom === form.salaryTo ? `${form.salaryFrom} kr/${unit}` : `${form.salaryFrom}–${form.salaryTo} kr/${unit}`;
   if (form.salaryFrom) return `Från ${form.salaryFrom} kr/${unit}`;
   if (form.salaryTo) return `Upp till ${form.salaryTo} kr/${unit}`;
   return "";
