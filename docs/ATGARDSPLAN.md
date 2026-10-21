@@ -94,7 +94,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
-| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
+| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Pågår | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
@@ -599,9 +599,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 30
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f11-ai-job-fields-20261021`; reserverad före kodarbete 2026-10-21. Bygger på `claude/f10-f22-job-builder-fields-20261021` (återanvänder lönetolkning och fältregler i lib/job-fields.ts) och ska granskas och mergas efter den. Planerat: uttryckliga ålders- och löneuppgifter förs till fälten eller markeras för granskning, en sammanfattning av AI:s ändringar, AI-krav som arbetsgivaren inte angett blir förslag, och en vald anställningsform skrivs aldrig över. Ingen databasändring planerad.
 - Åtgärd: Överför uttryckliga ålders- och löneuppgifter till rätt fält eller markera att de behöver granskas. Sammanfatta AI:s ändringar och skilj arbetsform från absoluta krav; gör inte automatiskt varje önskemål till ett måste.
 - Klar när: Företaget kan se vilka fakta som används i text och matchning innan publicering.
 - Implementerat: —
