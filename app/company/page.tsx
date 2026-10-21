@@ -34,6 +34,8 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
+import { addMustHave, applyAiJobSuggestion, type AiJobReview, type AiJobSuggestion } from "@/lib/job-ai-review";
+import { JobAiReviewPanel } from "@/components/job-ai-review-panel";
 import { firstJobFieldError, jobFieldErrors, jobFieldStep, parseSalaryText, prefillCompanyCity, type JobFieldName } from "@/lib/job-fields";
 import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
@@ -112,6 +114,7 @@ function CompanyPageContent() {
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
+  const [aiReview, setAiReview] = useState<{ session: string; review: AiJobReview } | null>(null);
   const [showCustomBenefit, setShowCustomBenefit] = useState(false);
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
@@ -319,7 +322,7 @@ function CompanyPageContent() {
       const copied = await loadOwnJobCopy(copyingJob.id);
       // Persist before replacing the visible form. Storage failure keeps the old draft intact.
       await jobDraft.replace(copied);
-      setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null);
+      setAiMessage(""); setAiReview(null); setError(""); setPreviewOpen(false); setCopyingJob(null);
       window.history.replaceState(null, "", COMPANY_ROUTES.create);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (reason) { setCopyError(reason instanceof Error ? reason.message : "Kunde inte kopiera annonsen. Ditt befintliga utkast finns kvar."); }
@@ -437,6 +440,7 @@ function CompanyPageContent() {
         // create a duplicate listing; flag only the profile for later repair.
         matchProfileWarning = "Annonsen skapades, men matchprofilen behöver kompletteras senare.";
       }
+      setAiReview(null);
       try { await jobDraft.clear(); }
       catch { matchProfileWarning = [matchProfileWarning, "Annonsen skapades, men det lokala utkastet kunde inte tas bort. Publicera inte samma utkast igen."].filter(Boolean).join(" "); }
       if (user) await loadData(user.id);
@@ -513,6 +517,13 @@ function CompanyPageContent() {
     try { await jobDraft.saveNow(); } catch { /* The draft panel reports the exact storage failure. */ }
   };
 
+  const aiSession = editing ? `edit:${jobEdit.job?.id ?? ""}` : `create:${form.copiedFromTitle}`;
+  const shownAiReview = aiReview?.session === aiSession ? aiReview.review : null;
+  const addSuggestedRequirement = (item: string) => {
+    setForm(current => ({ ...current, requirements: addMustHave(current.requirements, item), listingRequirements: addMustHave(current.listingRequirements ?? current.requirements, item) }));
+    setAiReview(current => current && { ...current, review: { ...current.review, suggestedMustHaves: current.review.suggestedMustHaves.filter(entry => entry !== item) } });
+  };
+
   const handleAiGenerate = async () => {
     if (!form.title.trim()) {
       setError("Skriv en jobbtitel först.");
@@ -538,29 +549,12 @@ function CompanyPageContent() {
           benefits: form.benefits,
         }),
       });
-      const data = (await response.json()) as {
-        category?: string;
-        employmentType?: string;
-        description?: string;
-        benefits?: string[];
-        source?: "ai" | "fallback";
-        matchProfile?: { roleSummary?: string; mustHaves?: string[]; trainableRequirements?: string[]; topTraits?: string[]; candidateQuestions?: string[] };
-        error?: string;
-      };
+      const data = (await response.json()) as AiJobSuggestion & { error?: string };
       if (!response.ok) throw new Error(data.error || "Kunde inte skapa annonsen.");
-      setForm((previous) => ({
-        ...previous,
-        category: previous.category,
-        employmentType: data.employmentType || previous.employmentType,
-        description: data.description || previous.description,
-        matchRoleSummary: data.description || previous.matchRoleSummary,
-        benefits: data.benefits?.join(", ") || previous.benefits,
-        requirements: data.matchProfile?.mustHaves?.join(", ") || previous.requirements,
-        trainableRequirements: data.matchProfile?.trainableRequirements?.join(", ") || previous.trainableRequirements,
-        topTraits: data.matchProfile?.topTraits?.join(", ") || previous.topTraits,
-        candidateQuestions: data.matchProfile?.candidateQuestions?.slice(0, 3) || previous.candidateQuestions,
-        aiGenerated: data.source === "ai",
-      }));
+      // Computed from the form the request was built from; only changed fields are merged.
+      const { patch, review } = applyAiJobSuggestion(form, data);
+      setForm((previous) => ({ ...previous, ...patch }));
+      setAiReview({ session: aiSession, review });
       setAiMessage(data.source === "ai" ? "AI-förslaget är klart. Granska texten nu och matchprofilen i nästa steg." : "Ett grundförslag är klart. Granska texten och matchprofilen innan publicering.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -895,6 +889,7 @@ function CompanyPageContent() {
                 <div className="job-builder-form">
                   {editing && jobEdit.job && <section className="job-copy-notice" role="status"><strong>Du redigerar {jobEdit.job.title}</strong><p>{jobEditVisibility(jobEdit.job)}</p><ul>{JOB_EDIT_CONSEQUENCES.map(item => <li key={item}>{item}</li>)}</ul><p>Osparade ändringar sparas inte som utkast. Ditt eget annonsutkast påverkas inte.</p></section>}
                   {form.copiedFromTitle && <section className="job-copy-notice" role="status"><strong>Kopia av {form.copiedFromTitle}</strong><p>Detta är ett nytt utkast. Originalets ansökningar, chattar och statistik följer inte med. Kontrollera datum, lön och övriga villkor innan du publicerar.</p></section>}
+                  {shownAiReview && <JobAiReviewPanel review={shownAiReview} onAddRequirement={addSuggestedRequirement} onClose={() => setAiReview(null)} />}
                   {builderStep === 1 && (
                     <section className="card job-builder-section job-builder-step-panel">
                       <div className="job-builder-section-title">

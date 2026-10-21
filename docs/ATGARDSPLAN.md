@@ -94,7 +94,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
-| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Pågår | Max / Claude |
+| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | För granskning | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
@@ -599,14 +599,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 30
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/f11-ai-job-fields-20261021`; reserverad före kodarbete 2026-10-21. Bygger på `claude/f10-f22-job-builder-fields-20261021` (återanvänder lönetolkning och fältregler i lib/job-fields.ts) och ska granskas och mergas efter den. Planerat: uttryckliga ålders- och löneuppgifter förs till fälten eller markeras för granskning, en sammanfattning av AI:s ändringar, AI-krav som arbetsgivaren inte angett blir förslag, och en vald anställningsform skrivs aldrig över. Ingen databasändring planerad.
 - Åtgärd: Överför uttryckliga ålders- och löneuppgifter till rätt fält eller markera att de behöver granskas. Sammanfatta AI:s ändringar och skilj arbetsform från absoluta krav; gör inte automatiskt varje önskemål till ett måste.
 - Klar när: Företaget kan se vilka fakta som används i text och matchning innan publicering.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Uttrycklig ålder och lön läses enbart ur arbetsgivarens egen text, aldrig ur AI-texten, och förs till tomma fält. Ifyllda fält och kopierad lön skrivs aldrig över. Oklara uppgifter och avvikelser markeras som Behöver granskas. Bara krav som arbetsgivaren angett blir absoluta matchkrav; övriga AI-krav blir förslag med Lägg till som krav, som läggs till både i annonsen och i matchningen. En vald anställningsform skrivs aldrig över, och utan AI sätts inte längre Deltid. Prompten skiljer arbetsform och arbetstider från absoluta krav och behandlar inte önskemål som krav. Panelen Granska AI-förslaget före publicering delar upp ändringarna i annonsen (syns för sökande), överförda fält, matchningen (internt), föreslagna krav och sådant som behöver granskas. Logiken ligger i lib/job-ai-review.ts. Ingen migration och inga nya AI-anrop. Se docs/F11.md.
+- Verifierat: test:job-ai-review, som kör den verkliga apply-funktionen och routens normalizeResult och fallback. Regressionerna test:job-fields, test:job-categories, test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:company-navigation, test:matching och test:matching-fairness passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. test:openai-migration misslyckas redan i dev på lib/application-analysis-worker.ts (senast ändrad i F26/N19 #82); generate-routen uppfyller testets krav.
+- Återstår / blockerare: F10/F22 ska in i dev först, därefter PR och införande av F11. Inloggat prov med fiktivt QA-företag och AI-nyckel; AI-svaret har inte provats live och inget webbtest har körts. Faktaläsningen täcker vanliga svenska formuleringar; andra skrivsätt förs inte över.
 
 <a id="f22"></a>
 ### F22 Validera inmatning nära fälten
