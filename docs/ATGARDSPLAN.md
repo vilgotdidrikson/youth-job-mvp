@@ -91,11 +91,11 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
-| 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Ej påbörjad | — |
+| 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | Pågår | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Ej påbörjad | — |
-| 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | Ej påbörjad | — |
+| 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | Pågår | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
@@ -559,9 +559,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 27
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude – företagsdelen (stad från företaget, överföring av angiven lön). Ungdomsdelen (CV-guiden) tas inte: överlappar N19 och väntar på profil-/GDPR-avstämning.
+- Branch/PR: `claude/f10-f22-job-builder-fields-20261021`; reserverad före kodarbete 2026-10-21. Samlad leverans F10 (företagsdel) + F22 (annonsbyggaren): samma ålders- och lönefält. Avsteg från global ordning: F11 tas som egen leverans eftersom den ändrar AI-routen; N08, F12 och ungdomsdelen av F10 överlappar N19 (Codex, Pågår) och väntande profil-/GDPR-beslut. Ingen databasändring planerad.
 - Åtgärd: Förifyll CV-guiden med erfarenhet, utbildning och språk från profilen. Förifyll annonsens stad från företaget och erbjud överföring av uttryckligt angiven lön till lönefälten. Alla förslag ska kunna rättas.
 - Klar när: Användaren slipper skriva samma fakta två gånger och motstridiga värden blir synliga.
 - Implementerat: —
@@ -614,9 +614,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 31
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude – annonsbyggaren (lön, ålder, svenska fältfel). Datumhjälpen ligger i ungdomens onboarding/profil (F15/F18/N19) och rekryteringspanelen (L04) och samordnas separat.
+- Branch/PR: `claude/f10-f22-job-builder-fields-20261021`; reserverad före kodarbete 2026-10-21. Samlad leverans F10 (företagsdel) + F22 (annonsbyggaren): samma ålders- och lönefält. Avsteg från global ordning: F11 tas som egen leverans eftersom den ändrar AI-routen; N08, F12 och ungdomsdelen av F10 överlappar N19 (Codex, Pågår) och väntande profil-/GDPR-beslut. Ingen databasändring planerad.
 - Åtgärd: Hindra omvända löneintervall och orimliga åldersspann innan förhandsvisning och sparande. Ge begripliga svenska feltexter där appen styr dem och tydlig datumhjälp utan att förutsätta webbläsarens lokala format.
 - Klar när: Fel kan rättas vid rätt fält utan att en missvisande annons visas.
 - Implementerat: —
