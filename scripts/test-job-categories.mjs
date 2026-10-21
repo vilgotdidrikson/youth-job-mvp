@@ -39,7 +39,7 @@ function compile(file,imports={},extra='') {
  const code=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
  new Function('module','exports','require',code+extra)(module,module.exports,name=>imports[name]??require(name));return module.exports;
 }
-const route=compile('app/api/company/job/generate/route.ts',{'@/lib/job-categories':categories,'@/lib/api-auth':{},'@/lib/openai-config':{},'next/server':{}},'\nexports.fixture={fallback,normalizeResult};').fixture;
+const route=compile('app/api/company/job/generate/route.ts',{'@/lib/job-categories':categories,'@/lib/job-ai-review':require('../lib/job-ai-review.ts'),'@/lib/api-auth':{},'@/lib/openai-config':{},'next/server':{}},'\nexports.fixture={fallback,normalizeResult};').fixture;
 assert.equal(route.fallback('Ekonom på café','Café',{}).category,'Ekonomiarbete');
 assert.equal(route.fallback('Astronaut','Café',{}).category,'');
 const fallback=route.fallback('Barista','Café',{category:'Butiksarbete'});

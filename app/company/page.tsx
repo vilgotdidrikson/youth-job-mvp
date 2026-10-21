@@ -34,6 +34,9 @@ import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib
 import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
+import { addMustHave, applyAiJobSuggestion, type AiJobReview, type AiJobSuggestion } from "@/lib/job-ai-review";
+import { JobAiReviewPanel } from "@/components/job-ai-review-panel";
+import { firstJobFieldError, jobFieldErrors, jobFieldStep, parseSalaryText, prefillCompanyCity, type JobFieldName } from "@/lib/job-fields";
 import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
@@ -111,11 +114,14 @@ function CompanyPageContent() {
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
+  const [aiReview, setAiReview] = useState<{ session: string; review: AiJobReview } | null>(null);
   const [showCustomBenefit, setShowCustomBenefit] = useState(false);
   const [showCustomRequirement, setShowCustomRequirement] = useState(false);
   const [customBenefit, setCustomBenefit] = useState("");
   const [customRequirement, setCustomRequirement] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [shownFields, setShownFields] = useState<Partial<Record<JobFieldName, boolean>>>({});
+  const [cityPrefill, setCityPrefill] = useState("");
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCategory,setEditingCategory]=useState<JobPost|null>(null);
   const [editingWorkplaces, setEditingWorkplaces] = useState<JobPost | null>(null);
@@ -316,12 +322,28 @@ function CompanyPageContent() {
       const copied = await loadOwnJobCopy(copyingJob.id);
       // Persist before replacing the visible form. Storage failure keeps the old draft intact.
       await jobDraft.replace(copied);
-      setAiMessage(""); setError(""); setPreviewOpen(false); setCopyingJob(null);
+      setAiMessage(""); setAiReview(null); setError(""); setPreviewOpen(false); setCopyingJob(null);
       window.history.replaceState(null, "", COMPANY_ROUTES.create);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (reason) { setCopyError(reason instanceof Error ? reason.message : "Kunde inte kopiera annonsen. Ditt befintliga utkast finns kvar."); }
     finally { copyLock.current = false; setCopyBusy(false); }
   };
+
+  const fieldErrors = jobFieldErrors(form);
+  const fieldError = (field: JobFieldName) => shownFields[field] ? fieldErrors[field] : undefined;
+  const showField = (field: JobFieldName) => setShownFields(current => current[field] ? current : { ...current, [field]: true });
+  const fieldProps = (field: JobFieldName) => ({ id: `job-field-${field}`, "aria-invalid": fieldError(field) ? true : undefined, "aria-describedby": fieldError(field) ? `job-field-${field}-error` : undefined, onBlur: () => showField(field) });
+  /** Age and salary errors block preview, the next step and saving, and lead to the field. */
+  const fieldsAreValid = (fields: JobFieldName[] = ["minAge", "maxAge", "salaryFrom", "salaryTo"]): boolean => {
+    const first = firstJobFieldError(Object.fromEntries(fields.map(field => [field, fieldErrors[field]])));
+    if (!first) return true;
+    setShownFields(current => ({ ...current, ...Object.fromEntries(fields.map(field => [field, true])) }));
+    setError(first.message);
+    if (jobFieldStep(first.field) !== builderStep) setBuilderStep(jobFieldStep(first.field));
+    window.setTimeout(() => document.getElementById(`job-field-${first.field}`)?.focus(), 0);
+    return false;
+  };
+  const openPreview = () => { if (fieldsAreValid()) setPreviewOpen(true); };
 
   /** Shared by publishing a new listing and saving edits to an existing one. */
   const builderFormIsValid = (): boolean => {
@@ -333,6 +355,7 @@ function CompanyPageContent() {
     if (!form.address.trim()) { setError("Fyll i arbetsplatsens gatuadress."); return false; }
     if (!form.postalCode.trim()) { setError("Fyll i arbetsplatsens postnummer."); return false; }
     try { validateJobWorkplaces(formWorkplaces(form)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera arbetsplatserna."); return false; }
+    if (!fieldsAreValid()) return false;
     if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan du sparar."); return false; }
     return true;
   };
@@ -417,6 +440,7 @@ function CompanyPageContent() {
         // create a duplicate listing; flag only the profile for later repair.
         matchProfileWarning = "Annonsen skapades, men matchprofilen behöver kompletteras senare.";
       }
+      setAiReview(null);
       try { await jobDraft.clear(); }
       catch { matchProfileWarning = [matchProfileWarning, "Annonsen skapades, men det lokala utkastet kunde inte tas bort. Publicera inte samma utkast igen."].filter(Boolean).join(" "); }
       if (user) await loadData(user.id);
@@ -435,6 +459,7 @@ function CompanyPageContent() {
         if (!form.title.trim()) { setError("Fyll i en jobbtitel innan du går vidare."); return; }
         if (!form.description.trim()) { setError("Beskriv jobbet innan du går vidare."); return; }
         if (!form.employmentType) { setError("Välj en anställningsform innan du går vidare."); return; }
+        if (!fieldsAreValid(["minAge", "maxAge"])) return;
       }
       if (builderStep === 2 && nextStep === 3 && textListItems(form.topTraits).length > 5) {
         setError("Välj högst fem viktiga egenskaper.");
@@ -442,6 +467,10 @@ function CompanyPageContent() {
       }
     }
     setError("");
+    if (nextStep === 3) {
+      const prefilled = prefillCompanyCity(form, companyProfile?.city, editing);
+      if (prefilled !== form) { setForm(current => prefillCompanyCity(current, companyProfile?.city, editing)); setCityPrefill(prefilled.city); }
+    }
     setBuilderStep(nextStep);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -488,6 +517,13 @@ function CompanyPageContent() {
     try { await jobDraft.saveNow(); } catch { /* The draft panel reports the exact storage failure. */ }
   };
 
+  const aiSession = editing ? `edit:${jobEdit.job?.id ?? ""}` : `create:${form.copiedFromTitle}`;
+  const shownAiReview = aiReview?.session === aiSession ? aiReview.review : null;
+  const addSuggestedRequirement = (item: string) => {
+    setForm(current => ({ ...current, requirements: addMustHave(current.requirements, item), listingRequirements: addMustHave(current.listingRequirements ?? current.requirements, item) }));
+    setAiReview(current => current && { ...current, review: { ...current.review, suggestedMustHaves: current.review.suggestedMustHaves.filter(entry => entry !== item) } });
+  };
+
   const handleAiGenerate = async () => {
     if (!form.title.trim()) {
       setError("Skriv en jobbtitel först.");
@@ -513,29 +549,12 @@ function CompanyPageContent() {
           benefits: form.benefits,
         }),
       });
-      const data = (await response.json()) as {
-        category?: string;
-        employmentType?: string;
-        description?: string;
-        benefits?: string[];
-        source?: "ai" | "fallback";
-        matchProfile?: { roleSummary?: string; mustHaves?: string[]; trainableRequirements?: string[]; topTraits?: string[]; candidateQuestions?: string[] };
-        error?: string;
-      };
+      const data = (await response.json()) as AiJobSuggestion & { error?: string };
       if (!response.ok) throw new Error(data.error || "Kunde inte skapa annonsen.");
-      setForm((previous) => ({
-        ...previous,
-        category: previous.category,
-        employmentType: data.employmentType || previous.employmentType,
-        description: data.description || previous.description,
-        matchRoleSummary: data.description || previous.matchRoleSummary,
-        benefits: data.benefits?.join(", ") || previous.benefits,
-        requirements: data.matchProfile?.mustHaves?.join(", ") || previous.requirements,
-        trainableRequirements: data.matchProfile?.trainableRequirements?.join(", ") || previous.trainableRequirements,
-        topTraits: data.matchProfile?.topTraits?.join(", ") || previous.topTraits,
-        candidateQuestions: data.matchProfile?.candidateQuestions?.slice(0, 3) || previous.candidateQuestions,
-        aiGenerated: data.source === "ai",
-      }));
+      // Computed from the form the request was built from; only changed fields are merged.
+      const { patch, review } = applyAiJobSuggestion(form, data);
+      setForm((previous) => ({ ...previous, ...patch }));
+      setAiReview({ session: aiSession, review });
       setAiMessage(data.source === "ai" ? "AI-förslaget är klart. Granska texten nu och matchprofilen i nästa steg." : "Ett grundförslag är klart. Granska texten och matchprofilen innan publicering.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
@@ -840,6 +859,7 @@ function CompanyPageContent() {
         >
           {(() => {
             const salaryPeriod = form.salaryType === "timlön" ? "tim" : form.salaryType === "månadslön" ? "mån" : "period";
+            const salaryTransfer = form.salaryText ? parseSalaryText(form.salaryText) : null;
             const salary = draftSalary(form) || "Lön ej angiven";
             const steps = [
               { number: 1 as const, label: "Jobbet", description: "Roll och arbetsuppgifter" },
@@ -869,6 +889,7 @@ function CompanyPageContent() {
                 <div className="job-builder-form">
                   {editing && jobEdit.job && <section className="job-copy-notice" role="status"><strong>Du redigerar {jobEdit.job.title}</strong><p>{jobEditVisibility(jobEdit.job)}</p><ul>{JOB_EDIT_CONSEQUENCES.map(item => <li key={item}>{item}</li>)}</ul><p>Osparade ändringar sparas inte som utkast. Ditt eget annonsutkast påverkas inte.</p></section>}
                   {form.copiedFromTitle && <section className="job-copy-notice" role="status"><strong>Kopia av {form.copiedFromTitle}</strong><p>Detta är ett nytt utkast. Originalets ansökningar, chattar och statistik följer inte med. Kontrollera datum, lön och övriga villkor innan du publicerar.</p></section>}
+                  {shownAiReview && <JobAiReviewPanel review={shownAiReview} onAddRequirement={addSuggestedRequirement} onClose={() => setAiReview(null)} />}
                   {builderStep === 1 && (
                     <section className="card job-builder-section job-builder-step-panel">
                       <div className="job-builder-section-title">
@@ -880,7 +901,7 @@ function CompanyPageContent() {
                       <label htmlFor="job-builder-description" className="job-builder-label job-builder-description-label">Beskriv jobbet, vem ni söker och vad ni erbjuder *</label>
                       <textarea id="job-builder-description" rows={7} className="job-builder-textarea" placeholder="T.ex. Vi söker en social och punktlig person som kan arbeta helger i vår butik. Erfarenhet är inget krav eftersom vi lär upp på plats..." value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} required />
                       <label>Krav i annonsen<textarea className="job-builder-textarea" rows={3} value={form.listingRequirements ?? form.requirements} onChange={event => setForm(current => ({ ...current, listingRequirements: event.target.value }))}/><small>Visas i annonsen. Skriv konkreta krav, till exempel körkort eller nödvändiga arbetstider. Avgörande villkor ska framgå här eller i beskrivningen.</small></label>
-                      <div className="job-builder-age"><span>Åldersspann <em>(valfritt)</em></span><div><label>Ålder från<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 16" value={form.minAge} onChange={(e) => setForm((p) => ({ ...p, minAge: e.target.value }))} /></label><b>—</b><label>Ålder till<input className="input-field" type="number" min="13" max="30" placeholder="T.ex. 19" value={form.maxAge} onChange={(e) => setForm((p) => ({ ...p, maxAge: e.target.value }))} /></label></div></div>
+                      <div className="job-builder-age"><span>Åldersspann <em>(valfritt)</em></span><div><label>Ålder från<input className="input-field" inputMode="numeric" maxLength={2} placeholder="T.ex. 16" value={form.minAge} onChange={(e) => setForm((p) => ({ ...p, minAge: e.target.value }))} {...fieldProps("minAge")} /></label><b>—</b><label>Ålder till<input className="input-field" inputMode="numeric" maxLength={2} placeholder="T.ex. 19" value={form.maxAge} onChange={(e) => setForm((p) => ({ ...p, maxAge: e.target.value }))} {...fieldProps("maxAge")} /></label></div>{(["minAge", "maxAge"] as const).map(field => fieldError(field) && <p key={field} id={`job-field-${field}-error`} className="job-builder-field-error" role="alert">{fieldError(field)}</p>)}</div>
                       <JobCategoryField title={form.title} description={form.description} legacyCategory={form.category} value={draftJobCategories(form)} manual={form.categoryManual} disabled={busy||generatingAi} onChange={(categoryIds,categoryManual)=>setForm(current=>({...current,categoryIds,categoryManual}))}/>
                       <label className="job-builder-label" style={{ marginTop: "1rem" }}>Anställningsform *</label>
                       <div className="job-builder-chips">{EMPLOYMENT_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.employmentType === type} onClick={() => setForm((p) => ({ ...p, employmentType: p.employmentType === type ? "" : type }))} className={`chip ${form.employmentType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><label>Anställningsform – välj ovan eller skriv eget<input className="input-field" maxLength={80} value={form.employmentType} onChange={event=>setForm(current=>({...current,employmentType:event.target.value}))} placeholder="Egen anställningsform"/></label>
@@ -910,8 +931,9 @@ function CompanyPageContent() {
                       <p className="job-builder-eyebrow">Steg 3 av 3</p><h2>Plats och praktiska detaljer</h2><p className="job-builder-help">Slutför annonsen. Lön, förmåner och bild är valfria men gör annonsen mer attraktiv.</p>
                       <p className="job-builder-help">Du behöver inte bestämma hur många du vill anställa. Pausa eller avsluta annonsen när du är klar med rekryteringen.</p>
                       <JobWorkplaceFields value={formWorkplaces(form)} disabled={busy} onChange={workplaces => setForm(current => ({ ...current, workplaces, address: workplaces[0].address, postalCode: workplaces[0].postal_code, city: workplaces[0].city }))}/>
+                      {cityPrefill && formWorkplaces(form)[0].city === cityPrefill && <p className="job-builder-help" role="status">Orten är hämtad från er företagsprofil. Ändra den om jobbet finns någon annanstans.</p>}
                     </section>
-                    <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2>{form.salaryText && <label>Kopierad löneuppgift<input className="input-field" value={form.salaryText} onChange={event => setForm(current => ({ ...current, salaryText: event.target.value }))}/><small>Redigera texten här, eller fyll i beloppsfälten nedan för att ersätta den.</small></label>}<div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type, salaryText: "" }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value, salaryText: "" }))} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value, salaryText: "" }))} /></label><em>kr/{salaryPeriod}</em></div></section>
+                    <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2>{form.salaryText && <label>Kopierad löneuppgift<input className="input-field" value={form.salaryText} onChange={event => setForm(current => ({ ...current, salaryText: event.target.value }))}/><small>Redigera texten här, eller fyll i beloppsfälten nedan för att ersätta den.</small></label>}{form.salaryText && (salaryTransfer ? <div className="job-builder-transfer"><span>Texten anger {draftSalary({ ...form, ...salaryTransfer, salaryText: "" })}.</span><button type="button" className="secondary-btn" onClick={() => setForm(current => ({ ...current, ...salaryTransfer, salaryText: "" }))}>Fyll i lönefälten</button></div> : <p className="job-builder-help">Texten saknar ett tydligt belopp med enhet och kan inte fyllas i automatiskt.</p>)}<div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type, salaryText: "" }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value, salaryText: "" }))} {...fieldProps("salaryFrom")} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value, salaryText: "" }))} {...fieldProps("salaryTo")} /></label><em>kr/{salaryPeriod}</em></div>{(["salaryFrom", "salaryTo"] as const).map(field => fieldError(field) && <p key={field} id={`job-field-${field}-error`} className="job-builder-field-error" role="alert">{fieldError(field)}</p>)}</section>
                     <section className="card job-builder-section"><h2>Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
                     <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).length ? <div className="job-builder-image-grid">{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 4:3</span></>}</label></section>
                     {form.imagePending && jobImageFiles.length === 0 && <p className="job-copy-notice" role="alert">Den nya bilden behöver väljas igen efter omladdningen. Den sparade bilden visas tills dess.</p>}
@@ -925,14 +947,14 @@ function CompanyPageContent() {
               {editing ? <div className="job-builder-actions">
                 <span role="status">{jobEdit.dirty ? "Osparade ändringar" : "Inga ändringar ännu"}</span>
                 <button type="button" className="job-builder-save" disabled={busy} onClick={() => { if (jobEdit.dirty && !window.confirm("Ändringarna i annonsen är inte sparade. Vill du avbryta redigeringen?")) return; setError(""); window.history.pushState(null, "", COMPANY_ROUTES.listings); }}>Avbryt</button>
-                <button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button>
+                <button type="button" className="secondary-btn" onClick={openPreview}>Förhandsvisa</button>
                 {builderStep < 3 && <button type="submit" className="secondary-btn">Nästa del</button>}
                 <button type="button" className="cta-btn" disabled={busy} onClick={(event) => void handleSaveJobEdit(event)}>{busy ? "Sparar ändringar…" : "Spara ändringar"}</button>
               </div> : <div className="job-builder-actions">
                 <span role="status">{jobDraft.saveStatus === "saving" ? "Sparar utkast…" : jobDraft.saveStatus === "saved" ? "Utkast sparat på den här enheten" : ""}</span>
                 <button type="button" className="job-builder-save" disabled={!draftHydrated || busy} onClick={() => void handleSaveDraft()}>Spara utkast</button>
                 {builderStep > 1 && <button type="button" className="secondary-btn" onClick={() => moveToBuilderStep((builderStep - 1) as 1 | 2)}>Tillbaka</button>}
-                {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={() => setPreviewOpen(true)}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? publication.busyLabel : publication.label}</button></>}
+                {builderStep < 3 ? <button type="submit" className="cta-btn">Fortsätt</button> : <><button type="button" className="secondary-btn" onClick={openPreview}>Förhandsvisa</button><button type="submit" className="cta-btn" disabled={busy}>{busy ? publication.busyLabel : publication.label}</button></>}
               </div>}
             </>;
           })()}
