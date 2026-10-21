@@ -58,6 +58,10 @@
 .notification p { margin: 8px 0 10px; color: var(--muted); font-size: .8rem; line-height: 1.7; overflow-wrap: anywhere; }
 .dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #b84164; }
 .read { background: #fffcfd; }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.textButton { min-height: 40px; padding: 8px 4px; border: 0; color: var(--accent); background: transparent; font: inherit; font-size: .78rem; cursor: pointer; }
+.textButton:disabled { color: var(--muted); cursor: default; }
+.textButton:hover:not(:disabled) { text-decoration: underline; }
 .read .notificationIcon { color: var(--muted); background: #f4f0f2; }
 .error { padding: 16px; border-radius: 14px; color: #9c304f; background: #fff0f4; font-size: .85rem; }
 @media (max-width: 900px) and (min-width: 721px) { .page { padding-inline: 24px; } .layout { grid-template-columns: minmax(0,1fr) 230px; gap: 20px; } .cardTop { flex-wrap: wrap; } .badge { margin-left: 59px; } .cardFooter { flex-wrap: wrap; } }
