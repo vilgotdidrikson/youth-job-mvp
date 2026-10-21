@@ -15,6 +15,7 @@ import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { ReportDialog } from "@/components/report-dialog";
 import { ChatVideoComposer, VideoMessage } from "@/components/chat-video";
 import { blockConversationUser } from "@/lib/moderation";
+import { markMatchNotificationsRead } from "@/lib/notifications";
 import { UiIcon } from "@/components/ui-icon";
 import styles from "./chat.module.css";
 
@@ -81,6 +82,17 @@ function ChatsPageContent() {
     return () => { active = false; unsubscribe(); };
   },[selectedId,loadConversations,historyRetry]);
   useEffect(() => { bottomRef.current?.scrollIntoView({behavior:"instant",block:"nearest"}); },[messages]);
+  // An open, visible conversation has been seen: clear its match and message notices and badges.
+  const openMatchId = loadedId && loadedId === selectedId ? conversations.find(item => item.conv.id === loadedId)?.matchId : undefined;
+  const seenCount = messages.id === loadedId ? messages.items.length : 0;
+  useEffect(() => {
+    if(!user?.id || !openMatchId) return;
+    const userId = user.id, matchId = openMatchId;
+    const markSeen = () => { if(document.visibilityState === "visible") void markMatchNotificationsRead(userId,matchId).then(changed => { if(changed) window.dispatchEvent(new Event("mnw-navigation-refresh")); }); };
+    markSeen();
+    document.addEventListener("visibilitychange",markSeen);
+    return () => document.removeEventListener("visibilitychange",markSeen);
+  },[user?.id,openMatchId,seenCount]);
   const select = (id: string | null) => {
     if (id === selectedRef.current) return;
     selectedRef.current=id; setSelectedId(id); setLoadedId(""); setMessageError("");  setError("");

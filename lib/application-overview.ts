@@ -55,3 +55,11 @@ export function savedInterestAction(cvCompleted: boolean): { label: string; note
     ? { kind: "send", label: "Skicka ansökan", note: "Ditt intresse är sparat men inte skickat. Ditt CV är klart, så du kan skicka ansökan nu." }
     : { kind: "complete_cv", label: "Gör klart CV:t", note: "Ditt intresse är sparat men inte skickat. Ansökan skickas automatiskt när ditt CV är sparat." };
 }
+
+/** Discreet CV reminder in the notice list (F14): how many saved interests wait for the CV. */
+export function pendingInterestReminder(count: number): string {
+  if (count <= 0) return "Du kan upptäcka och spara jobb nu. Ett CV behövs innan ansökningarna skickas till företagen.";
+  return count === 1
+    ? "Du har 1 sparat intresse som inte är skickat till företaget ännu. Det skickas automatiskt när ditt CV är sparat, så länge annonsen är öppen."
+    : `Du har ${count} sparade intressen som inte är skickade till företagen ännu. De skickas automatiskt när ditt CV är sparat, så länge annonserna är öppna.`;
+}

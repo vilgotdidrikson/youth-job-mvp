@@ -88,7 +88,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | För granskning | Max / Claude |
-| 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Ej påbörjad | — |
+| 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | För granskning | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
@@ -544,14 +544,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 24
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f14-notifications-20261021`; reserverad före kodarbete 2026-10-21. Avsteg från global ordning enligt användarens avgränsning (inga GDPR- eller domänberoende punkter): N23 (väntar på L12-gallring), F04 (redan införd i dev av Vilgot / Codex, kortet ej uppdaterat; tas inte över), L03 (pris/villkor blockerade via F06 samt e-post), N02, L05, L06 och L12–L14. Planerad migration: notisernas innehåll, länk till exakt matchning och en oläst meddelandenotis per samtal.
 - Åtgärd: Skriv person eller företag och jobb i match- och meddelandenotiser. Öppna rätt konversation direkt. Återställ lässtatus och badges när motsvarande händelse är hanterad; skilj historiska händelser från kvarvarande uppgifter. Ge diskret CV-påminnelse för väntande intresse.
 - Klar när: Notiser leder till rätt ärende och signalerar bara det som fortfarande behöver uppmärksamhet.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Migration `20261021090000_f14_notification_context.sql`: `notifications.match_id` och ny trigger. Match- och meddelandenotiser namnger motparten och jobbet och öppnar exakt samtal (`/chats?match=`, `/chats?conversation=`). En matchning har högst en oläst meddelandenotis per mottagare. Statusnotisen anger företag, jobb och status. Kandidatintresset anger jobbet. Meddelandetext kopieras inte. Chatten markerar matchningens notiser som lästa när samtalet visas och sidan är synlig, och uppdaterar klockan och märket på Meddelanden. Notissidan delar upp Olästa och Tidigare, har Markera alla som lästa och typikoner. CV-påminnelsen anger antalet sparade intressen för öppna annonser, utan ny notis eller prick. Logiken ligger i lib/notifications.ts, lib/youth-activity.ts och lib/application-overview.ts. Ingen RLS-ändring. Se docs/F14.md.
+- Verifierat: test:notifications. Triggern körd på isolerad Postgres (PGlite) med fiktiva data: namn, länkar, en oläst meddelandenotis, statustext, reservord, kaskad och idempotent migration. Regressionerna test:application-overview, test:company-navigation, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:application-supplement, test:application-disclosure, test:followup-batch, test:profile-journey och test:job-edit passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel.
+- Återstår / blockerare: Migrationen är körd i DevStaging via SQL Editor 2026-10-21; kolumnen `notifications.match_id` är bekräftad via API, men den nya triggern är inte provad med en verklig händelse. PR och införande i dev. Inloggat prov i driftsatt dev med fiktiva QA-konton (namngiven match, ett oläst meddelande vid två meddelanden, märken som släcks via Meddelanden, Markera alla, CV-påminnelse); inget webbtest har körts. Övriga notistyper blir lästa vid klick eller Markera alla.
 
 <a id="f10"></a>
 ### F10 Återanvänd redan sparade uppgifter
