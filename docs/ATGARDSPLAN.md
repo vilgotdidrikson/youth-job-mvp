@@ -98,7 +98,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
-| 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
+| 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Pågår | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
@@ -656,9 +656,9 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 34
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f23-accessibility-20261022`; reserverad före kodarbete 2026-10-22. Avsteg från global ordning enligt användarens avgränsning (inga GDPR- eller domänberoende punkter): samma överhoppade punkter som F14, därtill N08 (överlappar pågående N19 för CV-skapandevägar och pausat CV-/profilarbete), F12 (profilåteranvändning inväntar GDPR-avstämning) och F20 (integritet). Ingen databasändring planerad.
 - Åtgärd: Använd radioval för ett enda rollval och korrekt semantik för flikar och flervalsknappar. Ge tydliga namn, synligt fokus, tangentbordsstyrning och konsekvent fokus vid öppning och stängning av dialoger.
 - Klar när: Rollval, filter och dialoger går att förstå och använda med tangentbord och hjälpmedel.
 - Implementerat: —
