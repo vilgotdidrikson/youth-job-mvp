@@ -7,6 +7,8 @@ import { useAdminAccess } from "@/hooks/use-admin-access";
 import { getRecruitmentRecords, recruitmentAction } from "@/lib/recruitment";
 import { needsRecruitmentReview, type RecruitmentRecord } from "@/lib/recruitment-types";
 import styles from "@/components/recruitment.module.css";
+import { TabList } from "@/components/tab-list";
+import { tabPanelProps } from "@/lib/tab-keyboard";
 
 const responseLabels = { pending: "Inväntar ungdomens granskning", approved: "Godkänd av båda", disputed: "Uppgifterna behöver rättas" };
 const reviewLabels = { open: "Öppet", reviewing: "Under granskning", resolved: "Löst", dismissed: "Avfärdat" };
@@ -55,7 +57,7 @@ export default function RecruitmentAdminPage() {
   if (!isAdmin) return <main className="mobile-shell"><p>Ingen administratörsåtkomst.</p></main>;
   const visible = items.filter(item => filter === "all" || (filter === "review" ? needsRecruitmentReview(item) || item.restriction !== "none" : !["resolved","dismissed"].includes(item.review_state ?? "") && (item.employment?.response === "pending" || item.requested_at || item.reminder_sent_at)));
   return <AdminShell title="Rekryteringsuppföljning" email={user?.email}><p>Granska uteblivna registreringar och motstridiga uppgifter. Inga fakturor eller begränsningar skapas automatiskt från en ungdoms rapport.</p>
-    <div className={styles.filters}>{([["review","Behöver följas upp"],["waiting","Inväntar svar"],["all","Alla rekryteringar"]] as const).map(([key,label]) => <button type="button" className="secondary-btn" aria-pressed={filter === key} key={key} onClick={() => setFilter(key)}>{label}</button>)}<button className="secondary-btn" type="button" onClick={() => void refresh().catch(reason => setError(reason instanceof Error ? reason.message : "Kunde inte uppdatera."))}>Uppdatera</button></div>
-    {error && <p role="alert" className={styles.error}>{error}</p>}{loading ? <p role="status">Hämtar rekryteringar…</p> : <div className={styles.adminList}>{visible.map(item => <ReviewCard key={`${item.match_id}:${item.restriction}:${item.review_state}`} item={item} refresh={refresh}/>)}{!visible.length && <section className={styles.adminCard}>Inga ärenden i den här vyn.</section>}</div>}
+    <div className={styles.filters}><TabList id="admin-recruitment" label="Visa rekryteringar" className={styles.filterTabs} itemClassName="secondary-btn" items={[{ value: "review", label: "Behöver följas upp" }, { value: "waiting", label: "Inväntar svar" }, { value: "all", label: "Alla rekryteringar" }]} value={filter} onChange={setFilter} /><button className="secondary-btn" type="button" onClick={() => void refresh().catch(reason => setError(reason instanceof Error ? reason.message : "Kunde inte uppdatera."))}>Uppdatera</button></div>
+    {error && <p role="alert" className={styles.error}>{error}</p>}{loading ? <p role="status">Hämtar rekryteringar…</p> : <div className={styles.adminList} {...tabPanelProps("admin-recruitment", filter)}>{visible.map(item => <ReviewCard key={`${item.match_id}:${item.restriction}:${item.review_state}`} item={item} refresh={refresh}/>)}{!visible.length && <section className={styles.adminCard}>Inga ärenden i den här vyn.</section>}</div>}
   </AdminShell>;
 }

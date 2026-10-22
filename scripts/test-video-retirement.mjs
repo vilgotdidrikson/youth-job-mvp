@@ -21,8 +21,10 @@ const user={id:'qa-owner'},profile={role:'youth'};
 let conversation=null,reads=0;const uploads=[],sends=[];
 const query={get:key=>key==='conversation'?conversation:key==='return'?'build':null};
 const Recorder=()=>null,Picker=()=>null;
+const tabKeyboard=compile('lib/tab-keyboard.ts');
 const studioImports=ui=>({
   react:ui.react,'next/link':dummy,'next/navigation':{useSearchParams:()=>query},
+  '@/lib/tab-keyboard':tabKeyboard,'@/components/tab-list':compile('components/tab-list.tsx',{'@/lib/tab-keyboard':tabKeyboard}),
   '@/hooks/use-require-auth':{useRequireAuth:()=>({user,profile,status:'ready'})},
   '@/components/auth-gate-message':{AuthGateMessage:dummy},
   '@/components/video-recorder':{VideoRecorder:Recorder},

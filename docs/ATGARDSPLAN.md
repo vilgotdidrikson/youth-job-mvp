@@ -98,7 +98,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
-| 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | Ej påbörjad | — |
+| 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
@@ -656,14 +656,14 @@ Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna a
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 34
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/f23-accessibility-20261022`; reserverad före kodarbete 2026-10-22. Avsteg från global ordning enligt användarens avgränsning (inga GDPR- eller domänberoende punkter): samma överhoppade punkter som F14, därtill N08 (överlappar pågående N19 för CV-skapandevägar och pausat CV-/profilarbete), F12 (profilåteranvändning inväntar GDPR-avstämning) och F20 (integritet). Ingen databasändring planerad.
 - Åtgärd: Använd radioval för ett enda rollval och korrekt semantik för flikar och flervalsknappar. Ge tydliga namn, synligt fokus, tangentbordsstyrning och konsekvent fokus vid öppning och stängning av dialoger.
 - Klar när: Rollval, filter och dialoger går att förstå och använda med tangentbord och hjälpmedel.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Rollvalet vid registrering är nativa radioknappar i fältgruppen ”Jag är...” med oförändrat utseende och synlig fokusram. Ny återanvändbar `TabList` (`components/tab-list.tsx`) med tangentbordslogik i `lib/tab-keyboard.ts` (piltangenter, Home/End, en tabbstopp, inaktiverade flikar hoppas över) och flikpaneler märkta med vald flik. Används för ungdomens och företagets profilflikar, ansökningarnas flikar, företagets Mina annonser/Ny annons (fortsatt URL-styrt), företagets ansökningsfilter, adminfiltret för rekryteringar och videosidans Spela in/Välj video. Kartans och förhandsvisningens vyväxlare samt flervalschips (annonsbyggaren, CV-hubben, matchprofil, tillgänglighet) är namngivna grupper; anställningsformens fristående label ersatt. `ModalDialog` återför fokus till öppnande kontroll när dialogen avmonteras. Global fokusram med nollspecificitet för ytor utan egen. Ingen databasändring.
+- Verifierat: TypeScript, riktad ESLint (inga nya varningar), produktionsbygge med webpack och 24 offline-testsviter passerar; `test:video-retirement` uppdaterad för nya moduler. Nytt `test:accessibility` testar tangentlogik, faktisk TabList och faktisk ModalDialog-fokusåtergång samt panel-/gruppmärkning; mutationskontroll bekräftar att testet fallerar utan fokusåtergång respektive tabbstoppsreserv. Tangentbordstest i Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (raderade efteråt): registreringens radioval, ungdomens profilflikar inklusive dialog som öppnas med Enter och stängs med Escape med fokus tillbaka, ansökningsflikar, företagets annonsflikar med URL-byte samt företagsprofilens flikar – 49/49 kontroller godkända, inga API-anrop.
+- Återstår / blockerare: PR och införande i dev. Test med verklig skärmläsare (VoiceOver/NVDA) och mobil har inte gjorts; adminfiltret, videosidans flikar och flervalschipsens grupper är kod-/källtestade men inte webbtestade. Filterdialogens beteende hör till F19.
 
 <a id="f15"></a>
 ### F15 Förenkla ungdomens första steg

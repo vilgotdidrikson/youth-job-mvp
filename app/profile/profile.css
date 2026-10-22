@@ -14,7 +14,7 @@
 .mnw-profile .network-profile-open span { color:var(--muted); font-size:.74rem; }
 .mnw-profile-tabs { display:flex; gap:5px; padding:5px; margin-bottom:24px; border-radius:16px; background:#fce9ef; }
 .mnw-profile-tabs button { flex:1; min-height:44px; padding:10px; border:0; border-radius:12px; color:var(--muted); background:transparent; font:inherit; font-size:.8rem; cursor:pointer; }
-.mnw-profile-tabs .is-active { color:var(--ink); background:white; box-shadow:0 2px 8px rgb(76 48 59 / .05); }
+.mnw-profile-tabs [aria-selected="true"] { color:var(--ink); background:white; box-shadow:0 2px 8px rgb(76 48 59 / .05); }
 .mnw-profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
 .mnw-profile-card { min-width:0; padding:26px; border:1px solid #f0d9e0; border-radius:22px; background:white; }
 .mnw-profile-card h2 { margin:0 0 16px; font-size:1.05rem; font-weight:550; }
@@ -96,7 +96,7 @@
 .company-profile-identity > button { margin-left:auto;align-self:center;white-space:nowrap;padding:10px 16px;font-size:.8rem; }
 .company-profile-tabs { display:flex;gap:3px;border-bottom:1px solid #f0d9e0;margin:20px 0 27px;overflow-x:auto; }
 .company-profile-tabs button { min-height:49px;padding:13px 21px;border:0;border-bottom:2px solid transparent;background:none;color:#896a76;white-space:nowrap;font-size:.84rem; }
-.company-profile-tabs button[aria-pressed="true"] { border-bottom-color:#b84164;color:#b84164; }
+.company-profile-tabs button[aria-selected="true"] { border-bottom-color:#b84164;color:#b84164; }
 .company-profile-overview { display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr);gap:24px;align-items:start; }
 .company-profile-overview > aside { display:grid;gap:20px; }
 .mnw-product :is(.company-profile-about,.company-profile-status,.company-profile-culture,.company-profile-account,.company-profile-session,.company-profile-form) { padding:27px; }

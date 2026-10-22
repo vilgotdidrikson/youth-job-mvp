@@ -100,9 +100,9 @@ export function CompanyMatchProfileForm({ userId, embedded = false }: { userId: 
       {activeStep === 2 && <>
         <div className="company-match-step-copy"><strong>Vad uppskattar ni hos människor?</strong><p>Välj förslag eller skriv egna. Detta är inte samma sak som absoluta jobbkrav.</p></div>
         <label>Viktigaste värderingarna<input className="input-field" placeholder="Separera med kommatecken" value={valuesText} onChange={(event) => setValuesText(event.target.value)} /></label>
-        <div className="company-match-chips">{VALUE_TIPS.map((tip) => { const selected = splitList(valuesText).includes(tip); return <button key={tip} type="button" aria-pressed={selected} className={selected ? "is-selected" : ""} onClick={() => setValuesText((current) => toggleListValue(current, tip))}>{tip}</button>; })}</div>
+        <div className="company-match-chips" role="group" aria-label="Förslag på värderingar">{VALUE_TIPS.map((tip) => { const selected = splitList(valuesText).includes(tip); return <button key={tip} type="button" aria-pressed={selected} className={selected ? "is-selected" : ""} onClick={() => setValuesText((current) => toggleListValue(current, tip))}>{tip}</button>; })}</div>
         <label>Egenskaper ni brukar uppskatta<input className="input-field" placeholder="Separera med kommatecken" value={traitsText} onChange={(event) => setTraitsText(event.target.value)} /></label>
-        <div className="company-match-chips">{TRAIT_TIPS.map((tip) => { const selected = splitList(traitsText).includes(tip); return <button key={tip} type="button" aria-pressed={selected} className={selected ? "is-selected" : ""} onClick={() => setTraitsText((current) => toggleListValue(current, tip))}>{tip}</button>; })}</div>
+        <div className="company-match-chips" role="group" aria-label="Förslag på egenskaper">{TRAIT_TIPS.map((tip) => { const selected = splitList(traitsText).includes(tip); return <button key={tip} type="button" aria-pressed={selected} className={selected ? "is-selected" : ""} onClick={() => setTraitsText((current) => toggleListValue(current, tip))}>{tip}</button>; })}</div>
       </>}
 
       {activeStep === 3 && <>
