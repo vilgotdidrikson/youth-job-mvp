@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfileJourneyHeader, ProfileStepComplete } from "./profile-journey";
+import { ProfileStepComplete } from "./profile-journey";
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
@@ -255,10 +255,11 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
   if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p></main>;
-  if (completed) return <main className="mobile-shell cv-hub">{inJourney && <ProfileJourneyHeader step="cv"/>}<h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
+  if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
-    <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>{jobNote}
+    
+    {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
+    {!inJourney && <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>}{jobNote}
     <h1>Skapa ditt CV</h1>
     <div className="cv-hub-options">
       <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på några frågor så skriver AI:n ett CV som du granskar. Cirka 3–5 min.</small></button>
@@ -267,7 +268,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <button className="cv-hub-back" onClick={() => setStep("start")}>← Tillbaka till valen</button>{jobNote}
     <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
@@ -275,7 +276,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
     <p className="cv-hub-lead">Välj en del i taget. Dina ändringar sparas här medan du arbetar och syns när du förhandsvisar CV:t.</p>
@@ -291,7 +292,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "preview") return <main className="mobile-shell cv-hub cv-hub-preview-page">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <h1>Granska ditt CV</h1>
     <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
@@ -307,7 +308,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   </main>;
 
   return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     {/* One compact row (back + question count) above a thin bar; the journey header above already shows the five profile steps. */}
     <div className="cv-hub-question-head">
       <div><button className="cv-hub-back" onClick={() => { if (returnToReview) { setReturnToReview(false); setStep("preview"); } else setStep(index <= 0 ? "start" : STEPS[index - 1]); }}>← {returnToReview ? "Tillbaka till förhandsvisningen" : "Tillbaka"}</button><span>Fråga {index + 1} av {STEPS.length}</span></div>

@@ -30,3 +30,4 @@
   .item svg { width:18px;height:18px; }
   .account { display:none; }
 }
+@media (max-width: 720px) { .nav.hideOnMobile { display: none; } }

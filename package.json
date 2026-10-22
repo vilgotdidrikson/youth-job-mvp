@@ -41,6 +41,7 @@
     "test:job-ai-review": "node scripts/test-job-ai-review.mjs",
     "test:notifications": "node scripts/test-notifications.mjs",
     "test:accessibility": "node scripts/test-accessibility.mjs",
+    "test:profile-steps": "node scripts/test-profile-steps.mjs",
     "test:platform-visuals": "node scripts/test-platform-visuals.mjs"
   },
   "dependencies": {
