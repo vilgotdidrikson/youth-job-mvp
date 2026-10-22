@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
@@ -29,9 +29,18 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "MatchnWork",
+  // Absolute URLs for the share image. Unset, Next.js uses the Vercel deployment URL.
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
+  title: { default: "MatchnWork", template: "%s · MatchnWork" },
   description:
     "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
+  applicationName: "MatchnWork",
+  openGraph: { siteName: "MatchnWork", locale: "sv_SE", type: "website" },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fffafb",
 };
 
 export default function RootLayout({
