@@ -19,7 +19,7 @@ export function StepHeader({ step }: { step: ProfileJourneyStep }) {
   const previous = PROFILE_JOURNEY[index - 1];
   return <div className={`${styles.header} ${styles.mobileOnly}`}>
     <div className={styles.headerTop}>
-      <Link className={styles.back} href={previous ? profileStepUrl(previous.key) : "/profile/build"} aria-label={previous ? `Föregående steg: ${previous.title}` : "Till profilbygget"}><UiIcon name="chevron-left" width="22" height="22" strokeWidth="2" /></Link>
+      {previous ? <Link className={styles.back} href={profileStepUrl(previous.key)} aria-label={`Föregående steg: ${previous.title}`}><UiIcon name="chevron-left" width="22" height="22" strokeWidth="2" /></Link> : <span className={styles.back} aria-hidden="true" />}
       <span className={styles.stepCount}>Steg {index + 1} av {PROFILE_JOURNEY.length}</span>
       <Link className={styles.pause} href={PAUSE_HREF} onClick={remember}>Pausa och fortsätt senare</Link>
     </div>

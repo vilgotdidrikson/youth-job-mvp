@@ -260,7 +260,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
     
-    <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>{jobNote}
+    {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
+    {!inJourney && <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>}{jobNote}
     <h1>Skapa ditt CV</h1>
     <div className="cv-hub-options">
       <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på några frågor så skriver AI:n ett CV som du granskar. Cirka 3–5 min.</small></button>
