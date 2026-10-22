@@ -128,6 +128,12 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
+Reserverat 2026-10-22: DA-01 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (landningssidans plattformsillustrationer är tomma under 1024px), Max / Claude, `claude/da01-platform-visuals-20261022`. Status: För granskning. Övriga DA-punkter är förslag och inte reserverade.
+  - Reproducerat: I webbläsare vid 375 och 800px var alla sex gradient-id dubblerade och samtliga fem synliga mobilillustrationer pekade på gradienter i den dolda desktopkolumnen; illustrationerna visades som tomma mörka rutor.
+  - Implementerat: `components/ui/platform-visuals.tsx` ger varje SVG-instans egna gradient-id via `useId()`. `platform-showcase.tsx`, text, logik och databas oförändrade. Nytt `test:platform-visuals` renderar alla fem illustrationer två gånger i samma dokument och kräver unika, URL-säkra id som bara refereras inom egen kopia.
+  - Verifierat: Testet passerar och fallerar på gamla koden. TypeScript, ESLint och produktionsbygge med webpack passerar. Chromium mot lokal dev-server vid 375, 800 och 1280px: inga dubblerade id, alla referenser lösta, inga synliga illustrationer med dold gradient, inga konsolfel; skärmbilder visar rosa gradienter i alla fem mobilillustrationer och oförändrad desktopvy.
+  - Återstår: PR och införande i dev, därefter kontroll i driftsatt dev. Ej provat i Safari/Firefox eller på fysisk mobil.
+
 ## Nya funktioner
 
 <a id="n11"></a>
