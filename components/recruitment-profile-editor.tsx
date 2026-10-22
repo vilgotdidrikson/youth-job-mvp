@@ -71,6 +71,8 @@ export function RecruitmentProfileEditor({embedded=false,onBusyChange,onDirtyCha
   const requested = PROFILE_SECTIONS.find(item => item.key === query.get("section"))?.key ?? null;
   const [selected, setSelected] = useState<ProfileSection | null>(embedded?null:requested), [message, setMessage] = useState("");
   const {cvCompleted}=useCvCompletion(user?.id,account?.role==="youth");
+  // "Ja, fortsätt" links to the next section on this same page, so the view follows the URL instead of keeping the previous step.
+  useEffect(()=>{if(!embedded){setSelected(requested);setCompleted(null);}},[requested,embedded]);
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError}/>;
   if (account?.role !== "youth") return <main className={styles.page}><h1>Det här är ungdomens profil</h1><Link href="/profile">Till din profil</Link></main>;
   const complete = completedProfileSections(state.profile);
