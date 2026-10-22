@@ -158,3 +158,6 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
   .actions .buttons { display: contents; }
   .embeddedPage .layout { padding: 0; }
 }
+
+/* The CV hub inside the step frame: the frame owns the page spacing. */
+.page .main .framed :global(.mobile-shell.cv-hub) { width: 100%; max-width: none; margin: 0; padding: 0; }

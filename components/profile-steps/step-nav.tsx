@@ -3,6 +3,10 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { PROFILE_JOURNEY, profileStepUrl, type ProfileJourneyStep } from "@/lib/profile-journey";
 import { useRememberProfileStep } from "../profile-journey";
+import { useSession } from "@/hooks/use-session";
+import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
+import { completedProfileSections } from "@/lib/recruitment-profile";
 import { UiIcon } from "../ui-icon";
 import styles from "./profile-steps.module.css";
 
@@ -41,7 +45,7 @@ export function StepRail({ step, done, info }: { step: ProfileJourneyStep; done:
 }
 
 /** Journey page for a step in the new design. CV facts sit in the rail on desktop; the form shows its own toggle on mobile. */
-export function ProfileStepPage({ step, done, cvFacts, children }: { step: ProfileJourneyStep; done: readonly ProfileJourneyStep[]; cvFacts?: string; children: ReactNode }) {
+export function ProfileStepPage({ step, done, cvFacts, children, as: Outer = "main" }: { step: ProfileJourneyStep; done: readonly ProfileJourneyStep[]; cvFacts?: string; children: ReactNode; as?: "main" | "div" }) {
   const [showCv, setShowCv] = useState(false);
   const info = cvFacts ? <div className={styles.info}>
     <strong>Redan i ditt CV</strong>
@@ -49,11 +53,21 @@ export function ProfileStepPage({ step, done, cvFacts, children }: { step: Profi
     <button type="button" aria-expanded={showCv} onClick={() => setShowCv(open => !open)}>{showCv ? "Dölj uppgifterna" : "Visa uppgifterna"}</button>
     {showCv && <p className={styles.cvFacts}>{cvFacts}</p>}
   </div> : undefined;
-  return <main className={styles.page}>
+  return <Outer className={styles.page}>
     <StepHeader step={step} />
     <div className={styles.layout}>
       <StepRail step={step} done={done} info={info} />
       <div className={styles.main}>{children}</div>
     </div>
-  </main>;
+  </Outer>;
+}
+
+/** Step frame for pages that are not the profile editor (the CV step): loads progress itself and wraps a page that has its own <main>. */
+export function JourneyStepFrame({ step, children }: { step: ProfileJourneyStep; children: ReactNode }) {
+  const { user, profile } = useSession();
+  const youth = profile?.role === "youth";
+  const state = useRecruitmentProfile(youth ? user?.id : undefined);
+  const { cvCompleted } = useCvCompletion(user?.id, youth);
+  const done = [...(cvCompleted ? ["cv" as const] : []), ...completedProfileSections(state.profile)] as ProfileJourneyStep[];
+  return <ProfileStepPage as="div" step={step} done={done}><div className={styles.framed}>{children}</div></ProfileStepPage>;
 }
