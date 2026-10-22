@@ -128,6 +128,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
+Reserverat 2026-10-22: DA-01 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (landningssidans plattformsillustrationer är tomma under 1024px), Max / Claude, `claude/da01-platform-visuals-20261022`. Status: Pågår. Endast `components/ui/platform-visuals.tsx`/`platform-showcase.tsx`; ingen text, logik eller databas ändras. Övriga DA-punkter är förslag och inte reserverade.
+
 ## Nya funktioner
 
 <a id="n11"></a>
