@@ -51,7 +51,7 @@
 .studioSurface :global(.cta-btn) { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px; }
 .modeTabs { display:flex;gap:6px;padding:5px;border-radius:13px;background:#f8f3f6;margin-bottom:20px; }
 .modeTabs button { display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:42px;border:0;border-radius:9px;background:transparent;color:#856576;font:inherit;font-size:.8rem;cursor:pointer; }
-.modeTabs button[aria-pressed=true] { background:white;box-shadow:0 2px 8px #4c233d0a;color:#663a50; }
+.modeTabs button[aria-selected=true] { background:white;box-shadow:0 2px 8px #4c233d0a;color:#663a50; }
 .cameraPlaceholder { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:310px;border-radius:17px;padding:30px 18px;background:#f9f3f6;text-align:center; }
 .cameraPlaceholder h2 { font-size:1.15rem;font-weight:500;margin:18px 0 8px;letter-spacing:-.02em; }
 .cameraPlaceholder p { max-width:280px;font-size:.83rem;line-height:1.6;color:#8c6b7c;margin:0 0 22px; }

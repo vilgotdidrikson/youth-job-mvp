@@ -10,6 +10,8 @@ import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, 
 
 import { ApplicationFollowupCard } from "@/components/application-followup-card";
 import { UiIcon } from "@/components/ui-icon";
+import { TabList } from "@/components/tab-list";
+import { tabPanelProps } from "@/lib/tab-keyboard";
 import { supplementQuestions } from "@/lib/application-supplement";
 import { NotificationLink } from "@/components/notification-link";
 import { RecruitmentSummary } from "@/components/recruitment-summary";
@@ -150,11 +152,12 @@ function ApplicationsPageContent() {
     <header className="applications-heading"><div><p className="application-eyebrow">Dina nästa steg</p><h1>Dina ansökningar</h1><p>Följ dina ansökningar och sparade intressen. Komplettera när det passar dig.</p></div><NotificationLink /></header>
     <div className="applications-layout"><section className="applications-content">
       <RecruitmentSummary />
-      <div className="applications-tabs"><button type="button" aria-pressed={tab === "all"} onClick={() => setTab("all")}>Alla <span>{counts.all}</span></button>{(counts.unsent > 0 || tab === "unsent") && <button type="button" aria-pressed={tab === "unsent"} onClick={() => setTab("unsent")}>Inte skickade <span>{counts.unsent}</span></button>}<button type="button" aria-pressed={tab === "questions"} onClick={() => setTab("questions")}>Frivilliga frågor <span>{counts.questions}</span></button></div>
+      <TabList id="applications" label="Visa ansökningar" className="applications-tabs" items={[{ value: "all", label: <>Alla <span>{counts.all}</span></> }, ...(counts.unsent > 0 || tab === "unsent" ? [{ value: "unsent" as const, label: <>Inte skickade <span>{counts.unsent}</span></> }] : []), { value: "questions", label: <>Frivilliga frågor <span>{counts.questions}</span></> }]} value={tab} onChange={setTab} />
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
+      <div className="applications-tab-panel" {...tabPanelProps("applications", tab)}>
       {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} />)}
       {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;
@@ -162,6 +165,7 @@ function ApplicationsPageContent() {
         if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
       }} />)}
       {!loading && visibleCount === 0 && <section className="applications-empty"><UiIcon name={tab === "all" ? "briefcase" : "check"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : tab === "unsent" ? "Allt är skickat" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : tab === "unsent" ? "Du har inga sparade intressen som väntar på att skickas." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
+      </div>
     </section><aside className="applications-aside"><UiIcon name="info" width="24" /><h2>En ansökan, mer om dig</h2><p>Kompletteringsfrågorna utgår från just det här jobbets önskemål. Dina svar läggs till i ansökan du redan har skickat.</p><p>Du kan lämna en fråga obesvarad. Saknad information är aldrig ett automatiskt avslag.</p><Link href="/notifications">Till din aktivitet <UiIcon name="arrow" width="16" /></Link><Link href="/youth/cv">Se ditt CV <UiIcon name="arrow" width="16" /></Link></aside></div>
   </main>;
 }

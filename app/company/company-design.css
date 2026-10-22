@@ -5,7 +5,7 @@
 .company-workspace-heading > span { color:#896a76;font-size:.9rem;line-height:1.7; }
 .company-workspace-tabs { display:flex;gap:6px;padding:5px;background:#fce9ef;border:1px solid #f0d9e0;border-radius:15px;width:fit-content;min-width:330px;margin-bottom:26px; }
 .company-workspace-tabs button { display:flex;align-items:center;justify-content:center;gap:9px;flex:1;min-height:44px;padding:10px 14px;background:transparent;border:0;border-radius:11px;color:#896a76;font-size:.83rem;font-weight:500;white-space:nowrap; }
-.company-workspace-tabs button[aria-pressed="true"] { background:white;color:#4c303b;box-shadow:0 3px 12px #4c303b08; }
+.company-workspace-tabs button[aria-selected="true"] { background:white;color:#4c303b;box-shadow:0 3px 12px #4c303b08; }
 .company-workspace-tabs span { background:#fce9ef;border-radius:7px;padding:2px 6px;font-size:.7rem; }
 .company-jobs-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px; }
 .mnw-product .company-jobs-grid .job-list-card { padding:25px!important;display:flex;flex-direction:column;min-width:0; }
@@ -63,7 +63,7 @@
 
 .company-application-tabs {display:flex;gap:5px;width:fit-content;max-width:100%;padding:5px;background:#fce9ef;border:1px solid #f0d9e0;border-radius:15px;margin:0 0 25px;}
 .company-application-tabs button {display:flex;align-items:center;gap:9px;min-height:44px;border:0;border-radius:11px;padding:10px 17px;color:#896a76;background:transparent;font:inherit;font-size:.81rem;cursor:pointer;}
-.company-application-tabs button[aria-pressed="true"] {background:white;color:#b84164;box-shadow:0 2px 8px #4c303b06;}
+.company-application-tabs button[aria-selected="true"] {background:white;color:#b84164;box-shadow:0 2px 8px #4c303b06;}
 .company-application-tabs button span {font-size:.67rem;min-width:20px;padding:2px 5px;border-radius:6px;background:#fffafb;}
 .company-application-reviewed {display:block;font-size:.65rem;font-style:normal;margin-top:4px;color:#b84164;}
 .company-reviewed-application {display:flex;align-items:flex-start;gap:12px;margin-top:24px;padding:18px;background:#fce9ef;border:1px solid #f0d9e0;border-radius:15px;}

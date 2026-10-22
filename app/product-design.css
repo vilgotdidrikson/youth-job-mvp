@@ -98,8 +98,8 @@
 .mnw-product .auth-input { height:52px;font-size:16px;padding:0 15px;margin-top:8px;box-shadow:none; }
 .mnw-product .auth-input:focus { border-color:#b84164;box-shadow:0 0 0 3px #b8416412; }
 .mnw-product .auth-role > div { gap:10px; }
-.mnw-product .auth-role button { min-height:49px;font-size:.83rem;border:1px solid #f0d9e0;border-radius:13px;background:#fffafb;color:#896a76;font-weight:500; }
-.mnw-product .auth-role button.auth-role-selected { background:#fce9ef;border-color:#b84164;color:#b84164; }
+.mnw-product .auth-role label { min-height:49px;font-size:.83rem;border:1px solid #f0d9e0;border-radius:13px;background:#fffafb;color:#896a76;font-weight:500; }
+.mnw-product .auth-role label.auth-role-selected { background:#fce9ef;border-color:#b84164;color:#b84164; }
 .mnw-product .auth-submit { min-height:50px;font-size:.9rem;justify-content:center;gap:10px;margin-top:25px; }
 .mnw-product .auth-submit span { background:#ffffff20;color:white;width:24px;height:24px;font-size:.95rem; }
 .mnw-product .auth-switch { font-size:.8rem;color:#b84164;font-weight:400;line-height:1.6; }

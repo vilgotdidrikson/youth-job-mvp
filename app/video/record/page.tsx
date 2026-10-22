@@ -8,6 +8,8 @@ import { AuthGateMessage } from "@/components/auth-gate-message";
 import { VideoRecorder } from "@/components/video-recorder";
 import { VideoPicker, VideoPreview, type SelectedVideo } from "@/components/video-picker";
 import { UiIcon } from "@/components/ui-icon";
+import { TabList } from "@/components/tab-list";
+import { tabPanelProps } from "@/lib/tab-keyboard";
 import { getSupabaseClient } from "@/lib/supabase";
 import { sendVideoMessage, uploadVideo, type YouthVideo } from "@/lib/video-client";
 import styles from "@/components/video.module.css";
@@ -55,8 +57,8 @@ function VideoStudio() {
     <div className={`${styles.studioGrid} ${selected?styles.studioReview:""}`}><section className={styles.studioSurface} aria-label="Spela in eller välj video">
       {!ready&&!error&&<p role="status">Förbereder…</p>}
       {phase==='done'?<><span className={styles.successMark}><UiIcon name="check" width="28"/></span>{selected&&<VideoPreview value={selected}/>}<Link className="cta-btn" href={back}>Till chatten<UiIcon name="arrow" width="18"/></Link></>:<>
-        {!selected&&<nav className={styles.modeTabs} aria-label="Välj videosätt"><button type="button" disabled={cameraBusy||busy} aria-pressed={mode==='record'} onClick={()=>setMode('record')}><UiIcon name="camera" width="18"/>Spela in</button><button type="button" disabled={cameraBusy||busy} aria-pressed={mode==='upload'} onClick={()=>setMode('upload')}><UiIcon name="upload" width="18"/>Välj video</button></nav>}
-        {selected&&mode==='record'?<VideoPreview value={selected}/>:mode==='record'?<VideoRecorder disabled={!ready||busy} onBusy={setCameraBusy} onRecorded={(file,duration)=>setSelected({file,duration})}/>:<VideoPicker value={selected} disabled={!ready||busy||!!pending.current} onChange={setSelected}/>}
+        {!selected&&<TabList id="video-mode" label="Välj videosätt" className={styles.modeTabs} items={[{value:'record',label:<><UiIcon name="camera" width="18"/>Spela in</>,disabled:cameraBusy||busy},{value:'upload',label:<><UiIcon name="upload" width="18"/>Välj video</>,disabled:cameraBusy||busy}]} value={mode} onChange={setMode}/>}
+        <div {...(selected?{}:tabPanelProps('video-mode',mode))}>{selected&&mode==='record'?<VideoPreview value={selected}/>:mode==='record'?<VideoRecorder disabled={!ready||busy} onBusy={setCameraBusy} onRecorded={(file,duration)=>setSelected({file,duration})}/>:<VideoPicker value={selected} disabled={!ready||busy||!!pending.current} onChange={setSelected}/>}</div>
         {selected&&<div className={styles.studioActions}><button type="button" className="cta-btn" disabled={busy} onClick={()=>void save()}>{phase==='uploading'?'Laddar upp…':phase==='saving'?'Skickar…':'Skicka video'}</button>{!pending.current&&<button type="button" className="secondary-btn" disabled={busy} onClick={()=>setSelected(null)}>{mode==='record'?'Spela in igen':'Välj annan'}</button>}{phase==='uploading'&&<button type="button" className="secondary-btn" onClick={()=>controller.current?.abort()}>Avbryt uppladdning</button>}</div>}
         <p className={styles.studioFootnote}>{selected?'Bara den här chatten får videon. Tillgänglig i 14 dagar efter skickandet; mottagaren kan hinna missa den.':'Högst 60 sekunder · Du väljer när inspelningen startar'}</p>
       </>}
