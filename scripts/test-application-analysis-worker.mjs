@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import ts from 'typescript';
+const dir=mkdtempSync(resolve('.analysis-worker-tests-'));
+try {
+ const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
+ for(const name of ['application-disclosure','structured-cv','matching-job-context','matching-input-policy','trait-evidence','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
+ writeFileSync(`${dir}/provider.mjs`,`export let offline=false;export function fail(value){offline=value;}export default class OpenAI{constructor(){this.chat={completions:{create:async()=>{if(offline)throw Error('private provider detail');return {choices:[{message:{content:JSON.stringify({criteria:[{id:'c1',status:'fulfilled',evidence:'Invented evidence must be discarded'}]})}}]};}}};}}`);
+ writeFileSync(`${dir}/pdf-cv-source.mjs`,`export let status='none';export function setStatus(value){status=value;}export const pdfCvSource=async()=>({status,text:''});`);
+ writeFileSync(`${dir}/matching-provider.mjs`,compile('lib/matching-provider.ts').replace('from "openai"','from "./provider.mjs"'));
+ writeFileSync(`${dir}/application-analysis-worker.mjs`,compile('lib/application-analysis-worker.ts').replace('from "openai"','from "./provider.mjs"'));
+ const {processApplicationAnalysisJobs}=await import(pathToFileURL(`${dir}/application-analysis-worker.mjs`));
+ const {emptyRecruitmentProfile}=await import(pathToFileURL(`${dir}/recruitment-profile.mjs`));
+ const {fail}=await import(pathToFileURL(`${dir}/provider.mjs`));
+ const {setStatus}=await import(pathToFileURL(`${dir}/pdf-cv-source.mjs`));
+ const profile=emptyRecruitmentProfile();profile.qualifications.licences=['B-körkort'];
+ const jobs=[{jobId:'job',youthId:'youth',generation:7,lockToken:'lease',version:4,profile:{full_name:'Private identity excluded',recruitment_profile:profile},criteria:[{label:'B-körkort',required:true},{label:'React',required:true},{label:'Social',category:'trait'}]}];
+ const packet={identity:{full_name:'QA'},cv:{text:'Jag har B-körkort',structured:{},documents:[]},practical:{availability:{days:[],periods:[],startDate:'',hours:''}},profile_items:[]};
+ const calls=[];let cached=null;
+ const client={rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='claim_application_analysis_jobs'?jobs:name==='get_application_disclosure_for_worker'?packet:name==='finish_application_analysis_job'?{completed:true}:null,error:null};},from:()=>({select(){return this;},eq(){return this;},maybeSingle:async()=>({data:cached,error:null})})};
+ assert.deepEqual(await processApplicationAnalysisJobs(client,'synthetic-test-key'),{processed:1,completed:1});
+ let result=calls.find(([name])=>name==='finish_application_analysis_job')[1];
+ assert.equal(result.p_generation,7);assert.equal(result.p_token,'lease');assert.equal(result.p_result.criteria[0].status,'fulfilled');assert.equal(result.p_result.criteria[1].status,'unknown');assert.equal(result.p_result.criteria[2].status,'unknown');assert.deepEqual(result.p_missing,['React']);
+ cached={result:result.p_result};calls.length=0;fail(true);
+ assert.equal((await processApplicationAnalysisJobs(client,'synthetic-test-key')).completed,1,'Cached data does not call an offline provider');
+ cached=null;calls.length=0;
+ assert.equal((await processApplicationAnalysisJobs(client,'synthetic-test-key')).completed,0);assert.ok(calls.some(([name])=>name==='fail_application_analysis_job'));assert.ok(!calls.some(([name])=>name==='finish_application_analysis_job'),'Failure must not cache invented gaps');
+ fail(false);setStatus('unreadable');calls.length=0;
+ await processApplicationAnalysisJobs(client,'synthetic-test-key');result=calls.find(([name])=>name==='finish_application_analysis_job')[1];assert.deepEqual(result.p_missing,[],'Unreadable PDFs must not trigger possibly duplicate questions');
+ setStatus('none');fail(true);calls.length=0;
+ jobs[0].criteria=[{label:'B-körkort',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'}];
+ assert.equal((await processApplicationAnalysisJobs(client,'synthetic-test-key')).completed,1,'Rules-only evidence succeeds without any provider call, even during an outage');
+ result=calls.find(([name])=>name==='finish_application_analysis_job')[1];assert.equal(result.p_result.score,100);assert.deepEqual(result.p_missing,[]);
+ console.log('PASS: automatic worker, source-grounded facts, manual trait review, cache reuse, outages, unreadable PDF and lease forwarding.');
+} finally {rmSync(dir,{recursive:true,force:true});}

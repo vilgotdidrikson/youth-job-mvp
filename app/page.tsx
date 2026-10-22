@@ -63,7 +63,7 @@ const platformItems: PlatformItem[] = [
     id: "ai",
     icon: "✦",
     title: "AI som känner dig",
-    body: "Vår AI hjälper dig skriva CV, formulera ett personligt brev och förbereda dig inför intervjuer.",
+    body: "Vår AI hjälper dig skriva CV och ställer kompletteringsfrågor när en ansökan saknar uppgifter.",
     visual: <AiVisual />,
   },
   {
@@ -103,10 +103,10 @@ const copy = {
   statsSource: "Källa: SCB / Ekonomifakta",
   platformTitleStart: "En plattform, ",
   platformTitleAccent: "hela vägen",
-  platformSub: "Employo är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
+  platformSub: "MatchnWork är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
   howTitle: "Tre steg. Inget krångel.",
   manifesto: "Potential syns inte alltid i ett tomt CV.",
-  manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
+  manifestoSub: "Därför hjälper MatchnWork unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
   footer: "En enklare väg från nyfiken till anställd.",
 };
 
@@ -157,11 +157,23 @@ function AnimatedHeroHeadline() {
   const visibleAccent = visibleText.slice(headline.title.length + 1);
   const isWritingAccent = visibleText.length > headline.title.length;
 
+  // Invisible copies of every headline share one grid cell with the typed text,
+  // so the heading always keeps the height of the longest headline and the
+  // buttons below never move or overlap, whatever the zoom level.
   return (
-    <h1 aria-label={`${headline.title} ${headline.accent}`}>
-      <span>{visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</span>
-      <br />
-      <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</em>
+    <h1 className="landing-bold-title" aria-label={`${headline.title} ${headline.accent}`}>
+      {heroHeadlines.map((item) => (
+        <span key={item.title} className="landing-bold-title-sizer" aria-hidden="true">
+          {item.title}
+          <br />
+          <em>{item.accent}</em>
+        </span>
+      ))}
+      <span aria-hidden="true">
+        {visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" />}
+        <br />
+        <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" />}</em>
+      </span>
     </h1>
   );
 }
@@ -256,7 +268,7 @@ export default function Home() {
         <footer className="landing-bold-footer">
           <div className="landing-bold-footer-brand">
             <span className="landing-logo">
-              <span className="landing-logo-mark">E</span>employo
+              <span className="landing-logo-mark" aria-hidden="true">M</span>MatchnWork
             </span>
             <p>{copy.footer}</p>
           </div>
@@ -265,7 +277,7 @@ export default function Home() {
             <Link href="/pricing">Priser</Link>
             <Link href="/login">Logga in</Link>
           </nav>
-          <span className="landing-bold-footer-copy">© 2026 Employo</span>
+          <span className="landing-bold-footer-copy">© 2026 MatchnWork</span>
         </footer>
       </div>
     </main>

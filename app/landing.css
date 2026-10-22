@@ -228,14 +228,26 @@
   text-transform: uppercase;
 }
 
+/* Sized so the longest headline ("En enklare väg till rätt") stays on one
+   line from tablet width up; the vh term keeps it in proportion on short,
+   zoomed-in viewports. */
 .landing-bold-hero h1 {
+  display: grid;
   margin: 0;
   color: var(--landing-ink);
-  font-size: clamp(4rem, 10vw, 8.6rem);
+  font-size: clamp(2.75rem, min(6.5vw, 12vh), 6.5rem);
   font-weight: 500;
   letter-spacing: -.045em;
-  line-height: .88;
-  transform: translateY(clamp(-5rem, -7vh, -2.5rem));
+  line-height: .92;
+}
+
+/* The typed headline and the invisible sizers share one cell. */
+.landing-bold-hero h1 > span {
+  grid-area: 1 / 1;
+}
+
+.landing-bold-title-sizer {
+  visibility: hidden;
 }
 
 .landing-bold-hero h1 em {
@@ -257,13 +269,10 @@
   50% { opacity: 0; }
 }
 
+/* In normal flow below the headline, so the two can never collide. */
 .landing-bold-actions {
-  position: absolute;
-  bottom: clamp(13rem, 34vh, 17rem);
-  left: 50%;
   justify-content: center;
-  margin-top: 0;
-  transform: translateX(-50%);
+  margin-top: clamp(2rem, 5vh, 3rem);
 }
 
 .landing-bold-actions .landing-bold-primary,
@@ -1002,11 +1011,9 @@
   }
 
   .landing-bold-hero h1 {
-    min-height: 2.9em;
     font-size: clamp(2.4rem, 11.5vw, 3.6rem);
     line-height: .95;
     letter-spacing: -.035em;
-    transform: none;
   }
 
   .landing-bold-actions {
@@ -1015,7 +1022,6 @@
     width: min(100%, 20rem);
     margin: 2.25rem auto 0;
     gap: .65rem;
-    transform: none;
   }
 
   .landing-bold-actions .landing-bold-primary,
@@ -1088,3 +1094,17 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-hero-caret { animation: none; }
 }
+
+/* Shared rose/plum navigation remains readable on the light canvas. */
+.landing-bold-nav,.landing-bold-footer { --landing-ink:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo,.landing-bold-language),.landing-bold-nav .landing-logo { color:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav .landing-bold-language { opacity:1; }
+.landing-bold-nav .landing-bold-language-active { color:var(--color-brand-strong)!important; }
+.landing-bold-nav .landing-logo { font-weight:550;letter-spacing:-.055em; }
+.landing-bold-nav :is(.landing-bold-language,.landing-bold-login) { font-weight:500; }
+.landing-bold-nav :is(a,button):focus-visible,.landing-bold-footer a:focus-visible { outline:3px solid var(--color-brand-strong);outline-offset:4px; }
+.landing-bold-nav .landing-bold-language:hover { color:var(--color-brand-strong)!important; }
+
+/* On the landing page the nav sits on the hero's dark edges: white text there.
+   /features and /pricing keep the dark text from the rules above. */
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo, .landing-bold-language) { color: #fff; }

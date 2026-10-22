@@ -9,6 +9,8 @@ import type {
   SaveYouthProfileInput,
   YouthProfile,
 } from "@/lib/types";
+import { reviewedCvPayload, cvReviewSnapshot, syncRecruitmentCvLanguages } from "./cv-fact-review";
+import { contactProfilePayload } from "./contact-profile";
 import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 
 const ONBOARDING_QUESTIONS = [
@@ -170,6 +172,12 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
   const user = await requireYouthUser();
   const supabase = getSupabaseClient();
   const existing = await getYouthProfile(user.id);
+  if (payload.cv_structured && existing) {
+    for (const key of ["cv_structured", "cv_text", "languages", "work_experience", "education", "strengths", "certificates", "extracurriculars"]) {
+      if (!(key in existing)) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+    }
+    if ("recruitment_profile" in existing) payload = { ...payload, recruitment_profile: syncRecruitmentCvLanguages(existing.recruitment_profile, existing.cv_structured, payload.cv_structured) } as SaveYouthProfileInput;
+  }
   const writablePayload = pickWritableKeys(
     {
       user_id: user.id,
@@ -206,6 +214,26 @@ export function normalizeFullName(value: string | null | undefined): string {
 
 export const MISSING_FULL_NAME_MESSAGE = "Skriv ditt fullständiga namn för att fortsätta.";
 
+export async function saveReviewedCvToProfile(text: string, cv: StructuredCvData, approval: string | null, generatedDocument?: import("./types").YouthDocument): Promise<YouthProfile> {
+  const payload = reviewedCvPayload(text, cv, approval);
+  const user = await requireYouthUser();
+  const existing = await getYouthProfile(user.id);
+  if (!existing) throw new Error("Profilen kunde inte hämtas. Din text finns kvar.");
+  for (const key of Object.keys(payload)) if (!(key in existing)) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+  const documents = (Array.isArray(existing.documents) ? existing.documents : []).filter((doc) => doc.type !== "generated_cv");
+  if (generatedDocument) documents.push(generatedDocument);
+  const client = getSupabaseClient();
+  const { data, error } = await client.from("youth_profiles").update({ ...payload, documents,
+    ...("recruitment_profile" in existing ? { recruitment_profile: syncRecruitmentCvLanguages(existing.recruitment_profile, existing.cv_structured, cv) } : {}),
+  }).eq("user_id", user.id).select("*").single();
+  if (error || !data) throw new Error(error?.message ?? "Kunde inte spara CV och profilfakta.");
+  return data as YouthProfile;
+}
+
+export async function saveYouthContactDetails(input: {name:string;dateOfBirth:string;address:string;postalCode:string;city:string}): Promise<YouthProfile> {
+  return persistYouthProfile(contactProfilePayload(input));
+}
+
 export async function saveYouthProfileDraft(input: {
   name: string;
   dateOfBirth: string;
@@ -219,18 +247,17 @@ export async function saveYouthProfileDraft(input: {
   certificates: string;
   extracurriculars: string;
 }): Promise<YouthProfile> {
+  const existing = await getYouthProfile();
+  // CV facts are edited and approved together in the CV editor. Account edits
+  // must not overwrite them with a stale copy of the separate profile form.
+  const cvFacts = existing?.cv_text?.trim() ? {} : { strengths: input.skills, work_experience: splitListFromText(input.experience), education: splitListFromText(input.education), languages: splitListFromText(input.languages), certificates: input.certificates || null, extracurriculars: input.extracurriculars || null };
   return persistYouthProfile({
     full_name: normalizeFullName(input.name) || null,
     date_of_birth: input.dateOfBirth || null,
     address: input.address || null,
     postal_code: input.postalCode || null,
     city: input.city || null,
-    strengths: input.skills,
-    work_experience: splitListFromText(input.experience),
-    education: splitListFromText(input.education),
-    languages: splitListFromText(input.languages),
-    certificates: input.certificates || null,
-    extracurriculars: input.extracurriculars || null,
+    ...cvFacts,
   });
 }
 
@@ -404,5 +431,6 @@ export async function completeYouthOnboarding(input: {
     onboarding_completed: true,
     cv_generated: (input.cv_text ?? "").trim().length > 0,
     cv_uploaded: input.cv_uploaded ?? false,
+    ...(input.cv_structured && input.cv_text ? reviewedCvPayload(input.cv_text, input.cv_structured, cvReviewSnapshot(input.cv_text, input.cv_structured)) : {}),
   });
 }

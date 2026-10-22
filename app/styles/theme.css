@@ -1,5 +1,5 @@
 /*
- * Employo colour system
+ * MatchnWork colour system
  *
  * This is the single source of truth for the UI palette. Adjust a token here
  * to update the shared look of the app without hunting down colour values.
@@ -12,14 +12,14 @@
   --color-surface-rose-strong: #fbd8e2;
   --color-border: #f0d9e0;
 
-  --color-text: #633f4b;
-  --color-text-rgb: 99, 63, 75;
+  --color-text: #4c303b;
+  --color-text-rgb: 76, 48, 59;
   --color-text-muted: #896a76;
   --color-text-subtle: #a57b88;
 
-  --color-brand: #dc6f8d;
-  --color-brand-strong: #ec7598;
-  --color-brand-hover: #d96886;
+  --color-brand: #b84164;
+  --color-brand-strong: #b84164;
+  --color-brand-hover: #a73858;
   --color-brand-soft: #f7c2ce;
   --color-on-brand: #ffffff;
   --color-cream: #ffe0c9;

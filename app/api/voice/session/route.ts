@@ -1,5 +1,7 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/api-auth";
+import { currentRealtimeModel } from "@/lib/openai-config";
 
 export const runtime = "nodejs";
 
@@ -21,7 +23,7 @@ const instructions = [
 
 const session = {
   type: "realtime",
-  model: process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime",
+  model: currentRealtimeModel(process.env.OPENAI_REALTIME_MODEL),
   output_modalities: ["audio"],
   instructions,
   max_output_tokens: 192,
@@ -47,6 +49,7 @@ const session = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-session", ["youth"]);
   if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;

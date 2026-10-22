@@ -1,79 +1,53 @@
 "use client";
 
+import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
+import { completedProfileSections } from "@/lib/recruitment-profile";
+import { useCvCompletion } from "@/hooks/use-cv-completion";
+import { ModalDialog } from "@/components/modal-dialog";
+import { RecruitmentProfileEditor } from "@/components/recruitment-profile-editor";
+
+import { BlockedContacts } from "@/components/blocked-contacts";
+import { PasswordInput } from "@/components/password-input";
+
+import { CvFactReview } from "@/components/cv-fact-review";
+import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
+import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MinimalProfileSection } from "@/components/profile/minimal-profile-section";
-import { ExperienceCard, ProfileHeader, SidebarCard, SkillList } from "@/components/profile/professional-profile";
+import { profileTabFromQuery, type ProfileTab } from "@/lib/company-navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
-import { getYouthProfile, saveYouthProfileDraft } from "@/lib/onboarding";
+import { getYouthProfile, saveYouthContactDetails, saveReviewedCvToProfile } from "@/lib/onboarding";
 import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
 import { authenticatedHeaders } from "@/lib/api-client";
+import { changePassword } from "@/lib/auth";
+import { UiIcon } from "@/components/ui-icon";
+import { CompanyVerificationStatus } from "@/components/company-verification-status";
+import { changeRequiresReverification, companyVerificationState, missingVerificationFields, organizationNumberForSave, parseOrganizationNumber, type VerificationProfileFields } from "@/lib/company-verification";
+import { VerifiedJobBadge } from "@/components/verified-job-badge";
+import { EmploymentExperiences } from "@/components/employment-experiences";
+import { useVerifiedExperience } from "@/hooks/use-verified-experience";
+import { withVerifiedExperience } from "@/lib/recruitment-types";
+import "./profile.css";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 
-interface YouthProfileForm {
-  name: string;
-  dateOfBirth: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  skills: string[];
-  experience: string;
-  education: string;
-  languages: string;
-  certificates: string;
-  extracurriculars: string;
+interface YouthProfileForm { name:string;dateOfBirth:string;address:string;postalCode:string;city:string }
+const initialForm:YouthProfileForm={name:"",dateOfBirth:"",address:"",postalCode:"",city:""};
+function mapProfileToForm(profile:YouthProfile|null,fallbackName:string):YouthProfileForm {
+ return {name:profile?.full_name?.trim()||fallbackName,dateOfBirth:profile?.date_of_birth??"",address:profile?.address??"",postalCode:profile?.postal_code??"",city:profile?.city??""};
 }
 
-const initialForm: YouthProfileForm = {
-  name: "",
-  dateOfBirth: "",
-  address: "",
-  postalCode: "",
-  city: "",
-  skills: [],
-  experience: "",
-  education: "",
-  languages: "",
-  certificates: "",
-  extracurriculars: "",
-};
 
-function normalizeStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
-function mapProfileToForm(profile: YouthProfile | null, fallbackName: string): YouthProfileForm {
-  if (!profile) {
-    return { ...initialForm, name: fallbackName };
-  }
-
-  const experienceList = normalizeStringArray(profile.work_experience);
-
-  return {
-    name: typeof profile.full_name === "string" && profile.full_name.trim() ? profile.full_name : fallbackName,
-    dateOfBirth: typeof profile.date_of_birth === "string" ? profile.date_of_birth : "",
-    address: typeof profile.address === "string" ? profile.address : "",
-    postalCode: typeof profile.postal_code === "string" ? profile.postal_code : "",
-    city: typeof profile.city === "string" ? profile.city : "",
-    skills: normalizeStringArray(profile.strengths),
-    experience: experienceList.join("\n"),
-    education: normalizeStringArray(profile.education).join("\n"),
-    languages: normalizeStringArray(profile.languages).join(", "),
-    certificates: typeof profile.certificates === "string" ? profile.certificates : "",
-    extracurriculars: typeof profile.extracurriculars === "string" ? profile.extracurriculars : "",
-  };
-}
-
-function hasContent(value: string) {
-  return value.trim().length > 0;
-}
-
-export default function ProfilePage() {
+function ProfilePageContent() {
+  const query=useSearchParams();
   const router = useRouter();
 const { user, profile, loading, logout, status, error: sessionError } = useRequireAuth();
+  const {cvCompleted} = useCvCompletion(user?.id,profile?.role === "youth");
+  const recruitment = useRecruitmentProfile(profile?.role === "youth" ? user?.id : undefined);
+  const verified = useVerifiedExperience(profile?.role === "youth" ? user?.id : undefined);
 
   const [form, setForm] = useState<YouthProfileForm>(initialForm);
   const [saving, setSaving] = useState(false);
@@ -84,78 +58,96 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [cvDocuments, setCvDocuments] = useState<YouthDocument[]>([]);
   const [editingCv, setEditingCv] = useState(false);
   const [cvEditText, setCvEditText] = useState("");
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [cvStructured, setCvStructured] = useState<StructuredCvData | null>(null);
+  const [storedCvStructured,setStoredCvStructured]=useState<StructuredCvData|null>(null);
+  const [cvApproval, setCvApproval] = useState<string | null>(null);
+  const cvApproved = cvStructured ? hasApprovedCv(cvApproval, cvEditText, cvStructured) : false;
+
+  const requestedProfileTab = profileTabFromQuery(query.get("tab"));
+  const [profileTab, setProfileTab] = useState<ProfileTab>(requestedProfileTab);
+  useEffect(() => { setProfileTab(requestedProfileTab); }, [requestedProfileTab]);
+  const [frame,setFrame]=useState<"cv"|"general"|null>(null);
+  const [frameBusy,setFrameBusy]=useState(false),[frameDirty,setFrameDirty]=useState(false);
   const [error, setError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // ── company profile state ──────────────────────────────────
   const [companyName, setCompanyName] = useState("");
   const [companyCity, setCompanyCity] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
+  const [companyOrganizationNumber, setCompanyOrganizationNumber] = useState("");
+  const [companyAdministrator, setCompanyAdministrator] = useState("");
+  const [organizationNumberTouched, setOrganizationNumberTouched] = useState(false);
+  // Verification is derived from what the database stored, never from unsaved form input.
+  const [savedCompany, setSavedCompany] = useState<VerificationProfileFields | null>(null);
   const [companyJobCount, setCompanyJobCount] = useState(0);
+  const [loadedProfileKey, setLoadedProfileKey] = useState("");
+  const [profileLoadError, setProfileLoadError] = useState("");
+  const [profileLoadRetry, setProfileLoadRetry] = useState(0);
+  const profileKey = `${user?.id ?? ""}:${profile?.role ?? ""}`;
 
   useEffect(() => {
-    if (!loading && user && profile?.role === "company") {
-      void (async () => {
-        try {
+    if (!user?.id || profile?.role !== "youth") return;
+    let active = true;
+    const refreshDocuments = () => { void getYouthProfile(user.id).then(data => { if (active) setCvDocuments(Array.isArray(data?.documents) ? data.documents : []); }).catch(() => {}); };
+    window.addEventListener("mnw-recruitment-refresh", refreshDocuments);
+    return () => { active = false; window.removeEventListener("mnw-recruitment-refresh", refreshDocuments); };
+  }, [user?.id, profile?.role]);
+
+  useEffect(() => {
+    if (loading || !user || (profile?.role !== "company" && profile?.role !== "youth")) return;
+    let active = true;
+    const key = `${user.id}:${profile.role}`;
+    setLoadedProfileKey("");
+    setProfileLoadError("");
+    void (async () => {
+      try {
+        if (profile.role === "company") {
           const { getSupabaseClient } = await import("@/lib/supabase");
           const supabase = getSupabaseClient();
           const [cpResult, jobsResult] = await Promise.all([
             supabase.from("company_profiles").select("*").eq("user_id", user.id).maybeSingle(),
             supabase.from("jobs").select("id").eq("company_user_id", user.id).eq("is_active", true),
           ]);
-          if (cpResult.data) {
-            setCompanyName((cpResult.data as Record<string, unknown>).company_name as string ?? "");
-            setCompanyCity((cpResult.data as Record<string, unknown>).city as string ?? "");
-            setCompanyDescription((cpResult.data as Record<string, unknown>).description as string ?? "");
-          }
+          if (cpResult.error) throw cpResult.error;
+          if (jobsResult.error) throw jobsResult.error;
+          if (!active) return;
+          const cp = cpResult.data;
+          setCompanyName(cp?.company_name ?? "");
+          setCompanyCity(cp?.city ?? "");
+          setCompanyDescription(cp?.description ?? "");
+          setCompanyOrganizationNumber(cp?.organization_number ?? "");
+          setCompanyAdministrator(cp?.administrator ?? "");
+          setSavedCompany(cp ?? null);
           setCompanyJobCount((jobsResult.data ?? []).length);
-          setError("");
-        } catch (loadError) {
-          setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda företagsprofilen.");
-        }
-      })();
-    }
-
-    if (!loading && user && profile?.role === "youth") {
-      const fallbackName = user.email?.split("@")[0] ?? "";
-
-      void (async () => {
-        try {
+        } else {
           const youthProfile = await getYouthProfile(user.id);
-          setForm(mapProfileToForm(youthProfile, fallbackName));
+          if (!active) return;
+          setForm(mapProfileToForm(youthProfile, user.email?.split("@")[0] ?? ""));
           const cv = typeof youthProfile?.cv_text === "string" ? youthProfile.cv_text : "";
           setGeneratedCv(cv);
           setCvEditText(cv);
+          setCvApproval(null);
+          setCvStructured(youthProfile?.cv_structured ?? structuredCvFromForm({ full_name: youthProfile?.full_name ?? "", city: youthProfile?.city ?? "", work_experience: (youthProfile?.work_experience ?? []).join("\n"), education: (youthProfile?.education ?? []).join("\n"), languages: (youthProfile?.languages ?? []).join(", ") }));
+          setStoredCvStructured(youthProfile?.cv_structured ?? structuredCvFromForm({ full_name: youthProfile?.full_name ?? "", city: youthProfile?.city ?? "", work_experience: (youthProfile?.work_experience ?? []).join("\n"), education: (youthProfile?.education ?? []).join("\n"), languages: (youthProfile?.languages ?? []).join(", ") }));
           setCvDocuments(Array.isArray(youthProfile?.documents) ? youthProfile.documents : []);
-          setError("");
-        } catch (loadError) {
-          console.error("Failed to load youth profile.", loadError);
-          setForm({ ...initialForm, name: fallbackName });
-          setGeneratedCv("");
-          setCvEditText("");
-          setCvDocuments([]);
-          setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda din profil.");
         }
-      })();
-    }
-  }, [loading, profile?.role, router, user]);
+        setError("");
+        setLoadedProfileKey(key);
+      } catch (loadError) {
+        if (!active) return;
+        setProfileLoadError(loadError instanceof Error ? loadError.message : "Kunde inte ladda profilen. Försök igen.");
+      }
+    })();
+    return () => { active = false; };
+  }, [loading, profile?.role, profileLoadRetry, user]);
 
-  const completedSections = useMemo(() => {
-    return {
-      personal: hasContent(form.name) && hasContent(form.dateOfBirth) && hasContent(form.address),
-      skills: form.skills.length > 0,
-      experience: hasContent(form.experience),
-      education: hasContent(form.education),
-      extras: hasContent(form.languages) || hasContent(form.certificates) || hasContent(form.extracurriculars),
-    };
-  }, [form]);
-
-  const completion = useMemo(() => {
-    const entries = Object.values(completedSections);
-    const completeCount = entries.filter(Boolean).length;
-    return Math.round((completeCount / entries.length) * 100);
-  }, [completedSections]);
+  const completedSectionCount = completedProfileSections(recruitment.profile).length;
 
   const generatedCvDocument = cvDocuments.find((document) => document.type === "generated_cv");
   const uploadedCvDocument = cvDocuments.find((document) => document.type === "cv");
@@ -165,9 +157,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveYouthProfileDraft(form);
-      setSavedNote("Profil sparad.");
-      setEditingProfile(false);
+      await saveYouthContactDetails(form);
+      setSavedNote("Dina kontaktuppgifter är sparade.");
       setError("");
     } catch (saveError) {
       console.error("Failed to save youth profile.", saveError);
@@ -179,23 +170,18 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   };
 
   const handleSaveCv = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !cvStructured) return;
+    if (!cvApproved) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
     setSaving(true);
     try {
       const pdfFile = await createCvPdfFile(cvEditText, form.name);
       const pdfUrl = await uploadYouthDocument(pdfFile);
-      const updatedDocuments = [
-        ...cvDocuments.filter((document) => document.type !== "generated_cv"),
-        { name: pdfFile.name, url: pdfUrl, type: "generated_cv" as const },
-      ];
-      const supabase = (await import("@/lib/supabase")).getSupabaseClient();
-      const { error: cvError } = await supabase
-        .from("youth_profiles")
-        .update({ cv_text: cvEditText, cv_generated: true, documents: updatedDocuments })
-        .eq("user_id", user.id);
-      if (cvError) throw new Error(cvError.message);
+      const savedCv = await saveReviewedCvToProfile(cvEditText, cvStructured, cvApproval, { name: pdfFile.name, url: pdfUrl, type: "generated_cv" });
       setGeneratedCv(cvEditText);
-      setCvDocuments(updatedDocuments);
+      setStoredCvStructured(cvStructured);
+      setForm(mapProfileToForm(savedCv as YouthProfile, form.name));
+      setSavedNote("CV och profilfakta sparade.");
+      setCvDocuments(Array.isArray(savedCv.documents) ? savedCv.documents : []);
       setEditingCv(false);
       setError("");
     } catch (saveError) {
@@ -239,24 +225,55 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     }
   };
 
+  const storedOrganizationNumber = savedCompany?.organization_number ?? "";
+  const organizationNumberUnchanged = companyOrganizationNumber.replace(/[\s-]/g, "") === storedOrganizationNumber.replace(/[\s-]/g, "");
+  // An approved company may keep a number stored before checksum validation existed.
+  const organizationNumberCheck = !companyOrganizationNumber.trim() || (organizationNumberUnchanged && savedCompany?.verification_status === "verified")
+    ? null
+    : parseOrganizationNumber(companyOrganizationNumber);
+  const organizationNumberError = organizationNumberCheck && !organizationNumberCheck.ok ? organizationNumberCheck.error : "";
+  const reverificationNeeded = changeRequiresReverification(savedCompany, companyOrganizationNumber);
+
   const handleSaveCompanyProfile = async () => {
     if (!user?.id) return;
+    if (organizationNumberError) {
+      setOrganizationNumberTouched(true);
+      setError(organizationNumberError);
+      return;
+    }
+    if (reverificationNeeded && !window.confirm("Om du ändrar organisationsnumret granskas företaget på nytt. Under granskningen kan ni inte granska kandidater, och nya annonser publiceras först efter nytt godkännande. Vill du spara ändringen?")) return;
+    const organizationNumber = !companyOrganizationNumber.trim()
+      ? null
+      : organizationNumberCheck?.ok ? organizationNumberForSave(storedOrganizationNumber, organizationNumberCheck.value) : storedOrganizationNumber;
+    const previousState = companyVerificationState(savedCompany);
     setSaving(true);
     setError("");
     try {
       const { getSupabaseClient } = await import("@/lib/supabase");
       const supabase = getSupabaseClient();
-      const { error: dbError } = await supabase
+      const { data: stored, error: dbError } = await supabase
         .from("company_profiles")
         .update({
           company_name: companyName.trim(),
+          organization_number: organizationNumber,
+          administrator: companyAdministrator.trim(),
           city: companyCity.trim(),
           description: companyDescription.trim(),
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
-      if (dbError) throw new Error(dbError.message);
-      setSavedNote("Profil sparad.");
+        .eq("user_id", user.id)
+        .select("company_name, organization_number, administrator, verification_status, verification_submitted_at, verification_rejection_reason")
+        .single();
+      if (dbError || !stored) throw new Error(dbError?.message || "Kunde inte spara.");
+      setSavedCompany(stored);
+      setCompanyOrganizationNumber(stored.organization_number ?? "");
+      setOrganizationNumberTouched(false);
+      const nextState = companyVerificationState(stored);
+      setSavedNote(nextState === "submitted" && previousState !== "submitted"
+        ? "Uppgifterna är sparade och inskickade för granskning."
+        : nextState === "missing"
+          ? `Uppgifterna är sparade men inte inskickade. Saknas: ${missingVerificationFields(stored).join(", ")}.`
+          : "Profil sparad.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara.");
     } finally {
@@ -266,13 +283,43 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await logout();
-    router.replace("/login");
+    setError("");
+    try {
+      await logout();
+      router.replace("/login");
+    } catch (logoutError) {
+      setError(logoutError instanceof Error ? logoutError.message : "Kunde inte logga ut.");
+      setLoggingOut(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    setPasswordMessage("");
+    if (!currentPassword) { setPasswordError("Ange ditt nuvarande lösenord."); return; }
+    if (newPassword.length < 8) { setPasswordError("Det nya lösenordet måste innehålla minst 8 tecken."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("De nya lösenorden matchar inte."); return; }
+
+    setChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Lösenordet har ändrats.");
+    } catch (changeError) {
+      setPasswordError(changeError instanceof Error ? changeError.message : "Kunde inte ändra lösenordet.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
-    const password = window.prompt("Skriv ditt lösenord för att permanent radera konto och uppladdade dokument.");
-    if (!password || !window.confirm("Är du säker? Detta kan inte ångras.")) return;
+    const password = window.prompt("Skriv ditt lösenord för att permanent radera kontot och all tillhörande data.");
+    const deletedData = profile?.role === "company"
+      ? "Kontot, företagsprofilen, alla annonser och bilder samt kandidaternas ansökningar, matchningar och chattar för era annonser raderas permanent."
+      : "Kontot, profilen, ansökningarna, matchningarna, chattarna och filerna raderas permanent.";
+    if (!password || !window.confirm(`${deletedData} Personer du har chattat med får veta att chatten har stängts. Anmälningar du har gjort sparas anonymt för säkerhetsgranskning. Detta kan inte ångras. Vill du fortsätta?`)) return;
     setDeletingAccount(true); setError("");
     try {
       const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ password }) });
@@ -284,6 +331,33 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (!user) return null;
+  if ((profile?.role === "youth" || profile?.role === "company") && loadedProfileKey !== profileKey) return <main className="mobile-shell profile-page mnw-profile"><section className="mnw-profile-card">{profileLoadError ? <><h1>Profilen kunde inte hämtas</h1><p role="alert">{profileLoadError}</p><button type="button" className="secondary-btn" onClick={() => setProfileLoadRetry((value) => value + 1)}>Försök igen</button></> : <p role="status">Hämtar din profil…</p>}</section></main>;
+
+  const accountSecurityCard = (
+    <section className="card" style={{ padding: "1.25rem", marginTop: "0.75rem", marginBottom: "0.75rem" }} aria-labelledby="password-settings-title">
+      <h2 id="password-settings-title" style={{ margin: 0, fontSize: "1rem", color: "#111" }}>Byt lösenord</h2>
+      <p style={{ margin: ".35rem 0 1rem", color: "#737373", fontSize: ".85rem" }}>Bekräfta ditt nuvarande lösenord innan du väljer ett nytt.</p>
+      <div style={{ display: "grid", gap: ".75rem" }}>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nuvarande lösenord
+          <PasswordInput autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Nytt lösenord
+          <PasswordInput autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
+          Bekräfta nytt lösenord
+          <PasswordInput autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
+        </label>
+      </div>
+      {passwordError && <p role="alert" style={{ margin: ".75rem 0 0", color: "#b42318", fontSize: ".84rem" }}>{passwordError}</p>}
+      {passwordMessage && <p role="status" style={{ margin: ".75rem 0 0", color: "#226a54", fontSize: ".84rem" }}>{passwordMessage}</p>}
+      <button type="button" className="secondary-btn" style={{ width: "100%", padding: ".8rem", marginTop: "1rem" }} disabled={changingPassword} onClick={() => void handleChangePassword()}>
+        {changingPassword ? "Ändrar lösenord..." : "Ändra lösenord"}
+      </button>
+    </section>
+  );
 
   if (profile?.role === "company") {
     const labelStyle: React.CSSProperties = {
@@ -296,42 +370,20 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       marginBottom: "0.35rem",
     };
 
-    return (
-      <main className="mobile-shell pb-20">
-        {/* Header */}
-        <div style={{ marginBottom: "1.5rem", paddingTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>Employo</p>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0" }}>
-            {companyName || "Företagsprofil"}
-          </h1>
-          <p style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#737373" }}>{user.email}</p>
-        </div>
-
-        {error && (
-          <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
-            {error}
-          </div>
-        )}
-        {savedNote && (
-          <div style={{ borderRadius: 10, background: "#e8faf0", border: "1px solid #b6e8cf", padding: "0.65rem 1rem", fontSize: "0.85rem", color: "#1a7f4b", marginBottom: "1rem" }}>
-            {savedNote}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="card" style={{ padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", gap: "1.5rem" }}>
-          <div>
-            <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#111", margin: 0, lineHeight: 1 }}>{companyJobCount}</p>
-            <p style={{ fontSize: "0.78rem", color: "#737373", marginTop: "0.2rem" }}>Aktiva annonser</p>
-          </div>
-        </div>
-
+    return <main className="mobile-shell mnw-company-profile">
+      <header className="company-profile-header"><div className="company-profile-cover" aria-hidden="true"/><div className="company-profile-identity"><span className="company-profile-avatar"><UiIcon name="briefcase" width="30" height="30" /></span><div><p>Företagsprofil</p><h1>{companyName || "Ert företag"}</h1><span>{companyCity || "Plats ej angiven"}</span></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("details")}>Redigera profil</button></div></header>
+      <nav className="company-profile-tabs" aria-label="Delar av företagsprofilen">{([{id:"overview",label:"Översikt"},{id:"details",label:"Företagsuppgifter"},{id:"cv",label:"Matchprofil"},{id:"settings",label:"Inställningar"}] as const).map((item) => <button key={item.id} type="button" aria-pressed={profileTab === item.id} onClick={() => setProfileTab(item.id)}>{item.label}</button>)}</nav>
+      {error && <p role="alert" className="company-profile-message is-error">{error}</p>}
+      {savedNote && <p role="status" className="company-profile-message">{savedNote}</p>}
+      {profileTab === "overview" && <div className="company-profile-overview"><section className="card company-profile-about"><p className="company-profile-eyebrow">Om er</p><h2>Det här är {companyName || "ert företag"}</h2><p>{companyDescription || "Beskriv er verksamhet så att kandidater kan lära känna er. Lägg till en beskrivning under Företagsuppgifter."}</p><button type="button" className="company-profile-text-action" onClick={() => setProfileTab("details")}>Redigera företagsuppgifter <UiIcon name="arrow" width="16" /></button></section><aside><CompanyVerificationStatus profile={savedCompany} compact action={{ onClick: () => setProfileTab("details"), label: "Visa vad som krävs" }} /><Link className="card company-profile-job-count" href="/company?view=annonser"><strong>{companyJobCount}</strong><span>Aktiva annonser</span><UiIcon name="arrow" width="19" /></Link></aside><section className="card company-profile-culture"><UiIcon name="discover" width="25" /><div><h2>Vad gör er till en bra arbetsplats?</h2><p>Er matchprofil samlar kultur, värderingar och det ni erbjuder. Den återanvänds som grund för varje jobb.</p></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("cv")}>Visa matchprofil</button></section></div>}
+      {profileTab === "details" && <section className="company-profile-details"><header><h2>Företagsuppgifter</h2><p>Uppgifterna hjälper kandidater att lära känna er och används för företagsverifieringen.</p></header>
+        <CompanyVerificationStatus profile={savedCompany} />
         {/* Edit form */}
-        <div className="card" style={{ padding: "1.25rem", marginBottom: "0.75rem" }}>
+        <div className="card company-profile-form">
           <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
 
-          <label style={labelStyle}>Företagsnamn</label>
-          <input
+          <label htmlFor="company-profile-name" style={labelStyle}>Företagsnamn</label>
+          <input id="company-profile-name"
             className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
             style={{ marginBottom: "0.85rem" }}
             placeholder="T.ex. Bergströms Bageri AB"
@@ -339,8 +391,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyName(e.target.value); setSavedNote(""); }}
           />
 
-          <label style={labelStyle}>Stad</label>
-          <input
+          <label htmlFor="company-profile-city" style={labelStyle}>Stad</label>
+          <input id="company-profile-city"
             className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
             style={{ marginBottom: "0.85rem" }}
             placeholder="T.ex. Stockholm"
@@ -348,8 +400,36 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
           />
 
-          <label style={labelStyle}>Beskrivning</label>
-          <textarea
+          <label htmlFor="company-profile-organization" style={labelStyle}>Organisationsnummer</label>
+          <input id="company-profile-organization"
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="XXXXXX-XXXX"
+            inputMode="numeric"
+            value={companyOrganizationNumber}
+            aria-invalid={organizationNumberTouched && Boolean(organizationNumberError)}
+            aria-describedby="company-profile-organization-help"
+            onBlur={() => setOrganizationNumberTouched(true)}
+            onChange={(e) => { setCompanyOrganizationNumber(e.target.value.replace(/[^0-9-]/g, "")); setSavedNote(""); }}
+          />
+          <div id="company-profile-organization-help" className="company-profile-field-help">
+            {organizationNumberTouched && organizationNumberError && <p role="alert" className="is-error">{organizationNumberError}</p>}
+            {reverificationNeeded && <p className="is-warning">Ändrat organisationsnummer skickas in för ny granskning när du sparar.</p>}
+            <p>Krävs för verifieringen. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p>
+          </div>
+
+          <label htmlFor="company-profile-administrator" style={labelStyle}>Kontaktperson (administratör)</label>
+          <input id="company-profile-administrator"
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="För- och efternamn"
+            autoComplete="name"
+            value={companyAdministrator}
+            onChange={(e) => { setCompanyAdministrator(e.target.value); setSavedNote(""); }}
+          />
+
+          <label htmlFor="company-profile-description" style={labelStyle}>Beskrivning</label>
+          <textarea id="company-profile-description"
             rows={4}
             className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
             style={{ marginBottom: "1rem" }}
@@ -369,34 +449,17 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           </button>
         </div>
 
-        {/* Quick link to job management */}
-        <button
-          type="button"
-          className="secondary-btn"
-          style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", marginBottom: "0.75rem", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-          onClick={() => router.push("/company")}
-        >
-          <span>Annonser &amp; kandidater</span>
-          <span style={{ color: "#a3a3a3" }}>→</span>
-        </button>
-
-        {/* Logout */}
-        <button
-          type="button"
-          className="secondary-btn"
-          style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem", color: "#c0392b", borderColor: "#ffd6d3" }}
-          disabled={loggingOut}
-          onClick={() => void handleLogout()}
-        >
-          {loggingOut ? "Loggar ut..." : "Logga ut"}
-        </button>
-        <button type="button" className="secondary-btn" style={{ width: "100%", padding: "0.875rem", marginTop: "0.75rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
-      </main>
-    );
+      </section>}
+      {profileTab === "cv" && <CompanyMatchProfileForm userId={user.id} />}
+      {profileTab === "settings" && <div className="company-profile-settings"><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><Link href="/privacy">Integritet och hur AI används <UiIcon name="arrow" width="16" /></Link></section>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button type="button" className="company-profile-delete" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></section></div>}
+    </main>;
   }
 
   if (profile?.role === "private") {
-    return <main className="mobile-shell"><h1>Privatperson</h1><p>Här kan du hantera ditt konto och dina uppdrag.</p><Link href="/private" className="cta-btn" style={{ display: "block", textAlign: "center" }}>Mina uppdrag</Link><Link href="/privacy" className="secondary-btn" style={{ display: "block", marginTop: ".75rem", textAlign: "center" }}>Integritet och AI</Link><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%" }} disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut..." : "Logga ut"}</button><button type="button" className="secondary-btn" style={{ marginTop: ".75rem", width: "100%", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button></main>;
+    return <main className="mobile-shell mnw-private-account"><header className="private-account-heading"><span><UiIcon name="profile" width="28" height="28" /></span><div><p>Ditt konto</p><h1>Din profil</h1><p>Här hanterar du ditt konto och dina engångsjobb.</p></div></header>
+      {error && <p role="alert" className="company-profile-message is-error">{error}</p>}{savedNote && <p role="status" className="company-profile-message">{savedNote}</p>}
+      <div className="private-account-layout"><section className="card private-account-overview"><h2>Allt på ett ställe</h2><p>{user.email}</p><Link href="/private"><span><UiIcon name="briefcase" />Mina uppdrag</span><UiIcon name="arrow" width="18" /></Link><Link href="/chats"><span><UiIcon name="chat" />Mina chattar</span><UiIcon name="arrow" width="18" /></Link><Link href="/privacy"><span><UiIcon name="info" />Integritet och AI</span><UiIcon name="arrow" width="18" /></Link></section>
+      <section className="private-account-security">{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card private-account-management"><h2>Kontohantering</h2><p>Logga ut när du är klar, eller avsluta ditt konto.</p><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button type="button" className="company-profile-delete" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></section></section></div></main>;
   }
 
   if (profile?.role !== "youth") {
@@ -410,234 +473,24 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     );
   }
 
-  const profileSections = (
-    <div className="minimal-profile-sections">
-      <MinimalProfileSection id="work-experience" eyebrow="01 — Erfarenhet" title="Erfarenhet" description="Jobb, hjälp hemma, volontärarbete eller annat du har gjort.">
-        <ExperienceCard title="Erfarenhet"><label className="minimal-profile-textarea"><span className="sr-only">Arbetslivserfarenhet</span><textarea value={form.experience} onChange={(e) => { setForm((p) => ({ ...p, experience: e.target.value })); setSavedNote(""); }} rows={6} placeholder="T.ex. barnvaktade för grannar, hjälpte i en butik..." /></label></ExperienceCard>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="education" eyebrow="02 — Utbildning" title="Utbildning" description="Skola, kurs eller annan utbildning som du har lagt till.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Utbildning</span><textarea value={form.education} onChange={(e) => { setForm((p) => ({ ...p, education: e.target.value })); setSavedNote(""); }} rows={5} placeholder="T.ex. Norra gymnasium, grundskolan" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="certificates" eyebrow="03 — Meriter" title="Licenser & certifikat" description="Certifikat, licenser och behörigheter du har fått.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Licenser och certifikat</span><textarea value={form.certificates} onChange={(e) => { setForm((p) => ({ ...p, certificates: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. HLR-certifikat eller körkort" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="awards" eyebrow="04 — Meriter" title="Utmärkelser & priser" description="Stipendier, fritidsmeriter och andra saker du är stolt över.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Utmärkelser och priser</span><textarea value={form.extracurriculars} onChange={(e) => { setForm((p) => ({ ...p, extracurriculars: e.target.value })); setSavedNote(""); }} rows={3} placeholder="T.ex. stipendium, tävling eller föreningsuppdrag" /></label>
-      </MinimalProfileSection>
-      <MinimalProfileSection id="languages" eyebrow="05 — Språk" title="Språk" description="Språk du kan använda i skolan, på jobbet eller i vardagen.">
-        <label className="minimal-profile-textarea"><span className="sr-only">Språk</span><textarea value={form.languages} onChange={(e) => { setForm((p) => ({ ...p, languages: e.target.value })); setSavedNote(""); }} rows={2} placeholder="T.ex. svenska, engelska" /></label>
-      </MinimalProfileSection>
-    </div>
-  );
-
-  return (
-    <main className="mobile-shell pb-20 profile-page network-profile-page">
-      <ProfileHeader name={form.name} location={form.city} completion={completion} onEdit={() => setShowProfileEditor(true)} />
-
-      {showProfileEditor && (
-        <div className="network-profile-modal-backdrop" role="presentation" onMouseDown={() => setShowProfileEditor(false)}>
-          <section className="network-profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onMouseDown={(event) => event.stopPropagation()}>
-            <div><h2 id="profile-editor-title">Redigera profil</h2><button type="button" aria-label="Stäng" onClick={() => setShowProfileEditor(false)}>×</button></div>
-            <p>Uppgifterna som tidigare visades under Om dig.</p>
-            <div className="minimal-profile-fields">
-              <label><span>Namn</span><input value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} /></label>
-              <label><span>Födelsedatum</span><input type="date" value={form.dateOfBirth} onChange={(e) => setForm((current) => ({ ...current, dateOfBirth: e.target.value }))} /></label>
-              <label><span>Adress</span><input value={form.address} onChange={(e) => setForm((current) => ({ ...current, address: e.target.value }))} /></label>
-              <label><span>Postnummer</span><input value={form.postalCode} onChange={(e) => setForm((current) => ({ ...current, postalCode: e.target.value }))} /></label>
-              <label><span>Ort</span><input value={form.city} onChange={(e) => setForm((current) => ({ ...current, city: e.target.value }))} /></label>
-            </div>
-            <footer><button type="button" onClick={() => setShowProfileEditor(false)}>Avbryt</button><button type="button" onClick={() => { void handleSave(); setShowProfileEditor(false); }} disabled={saving}>{saving ? "Sparar..." : "Spara"}</button></footer>
-          </section>
-        </div>
-      )}
-
-      <div className="network-profile-layout"><div className="network-profile-main">
-
-      {error && (
-        <p style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 0.85rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
-          {error}
-        </p>
-      )}
-
-      <section className="card" style={{ display: "grid", gap: ".55rem", padding: "1rem", marginBottom: "1rem" }} aria-label="CV-status">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem" }}>
-          <strong style={{ color: "#111" }}>CV-status</strong>
-          <span style={{ color: hasCv ? "#226a54" : "#6a4a00", fontSize: ".82rem", fontWeight: 700 }}>{hasCv ? "Klart" : "Inte klart"}</span>
-        </div>
-        <p style={{ margin: 0, color: "#737373", fontSize: ".85rem", lineHeight: 1.45 }}>{hasCv ? "Ditt CV kan ses av företag när du skickar en ansökan." : "Du kan utforska jobb, men behöver ett CV för att skicka en ansökan."}</p>
-        <Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn" style={{ display: "block", padding: ".7rem", textAlign: "center" }}>{hasCv ? "Redigera mitt CV" : "Fortsätt med mitt CV"}</Link>
-      </section>
-
-      {!hasCv && (
-        <section className="card" style={{ padding: "1rem", marginBottom: "1rem", borderColor: "#f0c36d", background: "#fffaf0" }}>
-          <strong style={{ color: "#6a4a00" }}>CV saknas</strong>
-          <p style={{ margin: ".35rem 0 .75rem", color: "#6a4a00", fontSize: ".88rem" }}>Du kan utforska jobb, men behöver ett CV för att skicka en ansökan.</p>
-          <Link href="/youth/cv" className="cta-btn" style={{ display: "inline-block" }}>Skapa ditt CV</Link>
-        </section>
-      )}
-
-      {hasCv ? (
-        /* ── CV EXISTS ─────────────────────────────── */
-        <>
-          {/* CV preview / editor */}
-          {hasGeneratedCv ? (
-          <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
-                Ditt CV
-              </p>
-              {!editingCv && (
-                <button
-                  type="button"
-                  onClick={() => { setCvEditText(generatedCv); setEditingCv(true); }}
-                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111111", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap", marginLeft: "1rem" }}
-                >
-                  Redigera
-                </button>
-              )}
-            </div>
-            {editingCv ? (
-              <>
-                <textarea
-                  value={cvEditText}
-                  onChange={(e) => setCvEditText(e.target.value)}
-                  rows={14}
-                  style={{
-                    width: "100%", boxSizing: "border-box", borderRadius: 10,
-                    border: "1.5px solid #e8e8e8", padding: "1rem",
-                    fontSize: "0.9rem", fontFamily: "inherit",
-                    resize: "vertical", color: "#111111", lineHeight: 1.6, outline: "none", transition: "border-color 0.15s ease",
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = "#111111"}
-                  onBlur={(e) => e.target.style.borderColor = "#e8e8e8"}
-                />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-                  <button type="button" onClick={() => void handleSaveCv()} disabled={saving} className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 700 }}>
-                    {saving ? "Sparar..." : "Spara CV"}
-                  </button>
-                  <button type="button" onClick={() => setEditingCv(false)} className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.9rem", fontWeight: 600 }}>
-                    Avbryt
-                  </button>
-                </div>
-              </>
-            ) : (
-              <pre style={{ margin: 0, borderRadius: 10, background: "#f9f9f9", border: "1px solid #e8e8e8", padding: "1rem", fontSize: "0.85rem", whiteSpace: "pre-wrap", color: "#333333", lineHeight: 1.7, maxHeight: "20rem", overflowY: "auto", fontFamily: "inherit" }}>
-                {generatedCv}
-              </pre>
-            )}
-            <div style={{ marginTop: "0.75rem" }}>
-              {generatedCvDocument ? (
-                <button type="button" onClick={() => void openYouthDocument(generatedCvDocument.url)} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna CV som PDF"}</button>
-              ) : (
-                <button type="button" onClick={() => void handleCreatePdfForExistingCv()} disabled={saving} className="secondary-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>
-                  {saving ? "Skapar PDF..." : "Spara CV som PDF"}
-                </button>
-              )}
-            </div>
-          </section>
-          ) : (
-            <section className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", margin: 0 }}>
-                Ditt CV
-              </p>
-              <p style={{ margin: "0.45rem 0 0", fontSize: "0.95rem", fontWeight: 700, color: "#111111" }}>Eget CV uppladdat</p>
-              <p style={{ margin: "0.35rem 0 0.8rem", fontSize: "0.84rem", lineHeight: 1.5, color: "#737373" }}>{"Ditt CV \u00e4r klart och du kan nu matchas med jobb."}</p>
-              {uploadedCvDocument && (
-                <button type="button" onClick={() => void openYouthDocument(uploadedCvDocument.url)} className="cta-btn" style={{ width: "100%", padding: "0.7rem", fontSize: "0.85rem" }}>{"\u00d6ppna uppladdat CV (PDF)"}</button>
-              )}
-            </section>
-          )}
-
-          {/* Edit profile toggle */}
-          {!editingProfile ? (
-            <button
-              type="button"
-              className="secondary-btn"
-              style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "1rem", fontWeight: 600 }}
-              onClick={() => setEditingProfile(true)}
-            >
-              Redigera profilinformation
-            </button>
-          ) : (
-            <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 1.5rem 0", paddingBottom: "1rem", borderBottom: "1px solid #e8e8e8" }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-                  Profilinformation
-                </p>
-                <button type="button" onClick={() => setEditingProfile(false)} style={{ fontSize: "0.8rem", fontWeight: 600, color: "#737373", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                  Avbryt
-                </button>
-              </div>
-              <div className="space-y-4">
-                {profileSections}
-              </div>
-              {savedNote && (
-                <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", margin: "1rem 0", fontWeight: 500 }}>
-                  ✓ {savedNote}
-                </p>
-              )}
-              <button type="button" className="cta-btn" style={{ width: "100%", padding: "1rem", fontSize: "0.9rem", marginTop: "1.5rem", fontWeight: 700 }} onClick={() => void handleSave()} disabled={saving}>
-                {saving ? "Sparar..." : "Spara profilinformation"}
-              </button>
-            </>
-          )}
-        </>
-      ) : (
-        /* ── NO CV YET ─────────────────────────────── */
-        <>
-          <section className="minimal-profile-status" aria-label="Profilens status">
-            <span>{completion}%</span>
-            <div><strong>{completion >= 70 ? "Nästan där." : "Börja med det viktigaste."}</strong><p>Varje detalj hjälper rätt arbetsgivare att hitta dig.</p></div>
-          </section>
-
-          <section className="card" style={{ padding: "1.25rem", marginTop: "1rem", background: "#fffaf5", borderColor: "#f5e8e0" }}>
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              Skapa ditt CV
-            </p>
-            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#737373", lineHeight: 1.5 }}>
-              Svara på enkla frågor och granska sedan exakt vad företag kommer att se.
-            </p>
-            <Link href="/youth/cv" className="cta-btn" style={{ marginTop: "1rem", display: "inline-block", padding: "0.85rem 1.25rem", fontSize: "0.9rem", fontWeight: 700 }}>
-              Skapa med guidat formulär
-            </Link>
-            <Link href="/voice-cv" className="secondary-btn" style={{ marginTop: ".6rem", display: "block", padding: ".75rem 1.25rem", fontSize: ".9rem", fontWeight: 700, textAlign: "center" }}>
-              Se fler sätt att skapa CV
-            </Link>
-          </section>
-
-          <div className="mt-5 space-y-4">
-            {profileSections}
-          </div>
-
-          {savedNote && (
-            <p style={{ borderRadius: 10, background: "#e8f8f1", border: "1px solid #b9e5d7", padding: "0.8rem 1rem", fontSize: "0.85rem", color: "#226a54", marginTop: "1rem", fontWeight: 500 }}>
-              ✓ {savedNote}
-            </p>
-          )}
-
-          <div className="minimal-profile-save">
-            <p>Dina ändringar sparas när du fortsätter.</p>
-            <button type="button" className="cta-btn" onClick={() => void handleSave()} disabled={saving}>{saving ? "Sparar..." : "Spara ändringar"}</button>
-          </div>
-        </>
-      )}
-
-      </div><aside className="network-profile-sidebar">
-        <SidebarCard title="Profilöversikt"><p>Håll din profil uppdaterad så att fler arbetsgivare kan hitta dig.</p><div className="network-sidebar-meter"><span style={{ width: `${completion}%` }} /></div><strong>{completion}% komplett</strong></SidebarCard>
-        <SidebarCard title="Kontaktuppgifter"><dl><div><dt>Ort</dt><dd>{form.city || "Lägg till ort"}</dd></div><div><dt>E-post</dt><dd>{user.email}</dd></div></dl></SidebarCard>
-        <SidebarCard title="Dina styrkor"><SkillList skills={form.skills} /></SidebarCard>
-      </aside></div>
-
-      <button
-        type="button"
-        className="secondary-btn"
-        style={{ marginTop: "2rem", width: "100%", padding: "1rem", fontSize: "0.9rem", marginBottom: "2rem", fontWeight: 600 }}
-        onClick={() => void handleLogout()}
-        disabled={loggingOut}
-      >
-        {loggingOut ? "Loggar ut..." : "Logga ut"}
-      </button>
-      <button type="button" className="secondary-btn" style={{ marginTop: "0.75rem", width: "100%", padding: "1rem", fontSize: "0.9rem", color: "#b42318" }} disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto..." : "Radera konto permanent"}</button>
-    </main>
-  );
+  const closeFrame=()=>{
+    if(saving||frameBusy)return;
+    if((frameDirty||editingCv)&&!window.confirm("Stäng utan att spara dina ändringar?"))return;
+    setFrame(null);setFrameDirty(false);setEditingCv(false);setCvEditText(generatedCv);setCvStructured(storedCvStructured);setCvApproval(null);
+  };
+  const openFrame=(next:"cv"|"general")=>{setFrame(next);setFrameDirty(false);setError("");setSavedNote("");};
+  return <main className="mobile-shell profile-page mnw-profile">
+    <header className="mnw-profile-compact-header"><span className="mnw-profile-small-avatar">{form.name.trim().charAt(0)||"?"}</span><div><p>Din profil</p><h1>{form.name||"Din profil"}</h1><span>{form.city||"Ort ej angiven"}</span></div><VerifiedJobBadge experiences={verified.items}/></header>
+    <nav className="mnw-profile-tabs" aria-label="Profilens delar">{([["overview","Översikt"],["work","Din jobbprofil"],["settings","Inställningar"]] as const).map(([value,label])=><button type="button" key={value} aria-pressed={profileTab===value} className={profileTab===value?"is-active":""} onClick={()=>setProfileTab(value)}>{label}</button>)}</nav>
+    {error&&!frame&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&!frame&&<p role="status" className="mnw-profile-success">{savedNote}</p>}
+    {profileTab==="overview"&&<div className="mnw-profile-grid"><section className="mnw-profile-card"><span className="mnw-profile-icon"><UiIcon name="profile"/></span><h2>Din jobbprofil, på ett ställe</h2><p>{hasCv||cvCompleted?"Ditt CV finns sparat. Övriga profildelar är frivilliga.":"Du kan upptäcka jobb nu och bygga din profil i din takt."}</p><div className="mnw-profile-buttons"><Link className="cta-btn" href="/profile/build">Bygg / fortsätt min profil</Link><button className="secondary-btn" type="button" onClick={()=>setProfileTab("work")}>Visa min jobbprofil</button></div></section><section className="mnw-profile-card"><h2>Dina genvägar</h2><Link className="mnw-profile-shortcut" href="/swipe?saved=1"><UiIcon name="bookmark"/><span><strong>Sparade jobb</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/applications"><UiIcon name="briefcase"/><span><strong>Dina ansökningar</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/chats"><UiIcon name="chat"/><span><strong>Dina samtal</strong></span><UiIcon name="arrow" width="18"/></Link></section></div>}
+    {profileTab==="work"&&<section className="mnw-job-profile"><header><div><h2>Din jobbprofil</h2><p>Öppna en del för att se eller ändra den.</p></div><Link className="secondary-btn" href="/profile/build">Bygg steg för steg</Link></header><div className="mnw-job-profile-parts">{([{key:"cv",title:"Mitt CV",description:hasCv?"Visa CV, redigera och öppna PDF":"Skapa ett CV eller ladda upp PDF",icon:"file"},{key:"general",title:"Min allmänna profil",description:`Vad jag söker, tillgänglighet och kunskaper · ${completedSectionCount} av 4 delar har uppgifter`,icon:"profile"}] as const).map(item=><button type="button" key={item.key} onClick={()=>openFrame(item.key)}><span className="mnw-profile-icon"><UiIcon name={item.icon}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><UiIcon name="arrow" width="19"/></button>)}</div><details className="mnw-profile-card mnw-profile-confirmed"><summary>Bekräftad erfarenhet</summary><EmploymentExperiences userId={user.id}/>{verified.error&&<p role="alert">{verified.error}</p>}</details></section>}
+    {profileTab === "settings" && <section className="mnw-profile-panel"><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section><details className="mnw-profile-card"><summary>Kontaktuppgifter</summary><p className="mnw-profile-muted">Kontaktuppgifter sparas separat från CV och jobbönskemål. Ändrar du namn eller ort, kontrollera även ditt sparade CV.</p><div className="mnw-profile-fields">{([["name","Fullständigt namn","text"],["dateOfBirth","Födelsedatum","date"],["address","Adress","text"],["postalCode","Postnummer","text"],["city","Ort","text"]] as const).map(([field,label,type])=><label className="mnw-profile-field" key={field}>{label}<input type={type} disabled={saving} value={form[field]} onChange={event=>{setForm(current=>({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div><div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving} onClick={()=>void handleSave()}>{saving?"Sparar…":"Spara kontaktuppgifter"}</button></div></details><details className="mnw-profile-card"><summary>Lösenord</summary>{accountSecurityCard}</details><details className="mnw-profile-card"><summary>Blockerade kontakter</summary><BlockedContacts key={user.id} userId={user.id}/></details><section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button className="mnw-profile-danger secondary-btn" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></div></section></section>}
+    {frame&&<ModalDialog label={frame==="cv"?"Mitt CV":"Min allmänna profil"} busy={saving||frameBusy} onClose={closeFrame} className="mnw-profile-frame"><header className="mnw-profile-frame-heading"><h2>{frame==="cv"?"Mitt CV":"Min allmänna profil"}</h2><button type="button" className="secondary-btn" disabled={saving||frameBusy} aria-label="Stäng profildelen" onClick={closeFrame}><UiIcon name="close"/></button></header>{error&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&<p role="status" className="mnw-profile-success">{savedNote}</p>}{frame==="cv"?<section className="mnw-profile-card mnw-profile-panel"><div className="mnw-profile-card-heading"><h3>Ditt CV</h3><Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn">{hasCv ? "Redigera i CV-byggaren" : "Skapa CV"}</Link></div>{hasGeneratedCv ? <><p className="mnw-profile-muted">Här är det CV du har sparat. Du kan redigera texten eller öppna en PDF.</p>{editingCv ? <><label className="mnw-profile-field">CV-text<textarea rows={14} disabled={saving} value={cvEditText} onChange={event => { setCvApproval(null); setCvEditText(event.target.value); }}/></label>{cvStructured && <CvFactReview text={cvEditText} cv={cvStructured} sourceText={generatedCv} approved={cvApproved} disabled={saving}
+      onApprove={(approved) => setCvApproval(approved ? cvReviewSnapshot(cvEditText, cvStructured) : null)}
+      onSync={(cv) => { setCvApproval(null); setCvStructured(cv); }}
+      onChange={(cv) => { setCvApproval(null); setCvStructured(cv); setCvEditText(renderStructuredCv(cv)); }} />}
+      <div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving || !cvApproved} onClick={() => void handleSaveCv()}>{saving ? "Sparar…" : "Spara CV"}</button><button className="secondary-btn" disabled={saving} onClick={() => {setEditingCv(false);setCvStructured(storedCvStructured);setCvEditText(generatedCv);setCvApproval(null);}}>Avbryt</button></div></> : <><pre className="mnw-profile-preview">{withVerifiedExperience(generatedCv, verified.items)}</pre><button className="mnw-profile-textlink" onClick={() => {setCvApproval(null);setCvEditText(generatedCv);setEditingCv(true);}}>Redigera CV-text</button></>}<div className="mnw-profile-buttons">{generatedCvDocument ? <button className="secondary-btn" onClick={() => void openYouthDocument(generatedCvDocument.url)}>Öppna CV som PDF</button> : <button className="secondary-btn" disabled={saving} onClick={() => void handleCreatePdfForExistingCv()}>{saving ? "Skapar PDF…" : "Spara CV som PDF"}</button>}</div></> : uploadedCvDocument ? <><p className="mnw-profile-muted">Ditt uppladdade CV finns sparat som PDF.</p><button className="cta-btn" onClick={() => void openYouthDocument(uploadedCvDocument.url)}>Öppna mitt PDF-CV</button></> : <p className="mnw-profile-muted">Svara på enkla frågor eller ladda upp en PDF för att komma igång.</p>}</section>:<RecruitmentProfileEditor embedded onBusyChange={setFrameBusy} onDirtyChange={setFrameDirty}/>}</ModalDialog>}
+  </main>;
 }
+export default function ProfilePage(){return <Suspense fallback={<main className="mobile-shell"><p role="status">Hämtar din profil…</p></main>}><ProfilePageContent/></Suspense>;}

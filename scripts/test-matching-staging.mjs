@@ -1,0 +1,47 @@
+// DevStaging only. Supply a local JSON file of disposable QA actors; never commit credentials.
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
+const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+assert.equal(new URL(url).hostname,'vwcfjvwfeatvuisojwrh.supabase.co','DevStaging only');
+const actors=JSON.parse(readFileSync(process.env.MATCHING_QA_ACTORS,'utf8'));
+const client=name=>{const actor=actors.find(a=>a.name===name);return createClient(url,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{accessToken:async()=>actor.token,auth:{persistSession:false,autoRefreshToken:false}});};
+const youth=client('youthA'),otherYouth=client('youthB'),company=client('companyA'),otherCompany=client('companyB');
+const id=name=>actors.find(a=>a.name===name).id;
+const ok=result=>{if(result.error) throw new Error(result.error.message);return result.data;};
+const job=process.env.MATCHING_QA_JOB ? JSON.parse(readFileSync(process.env.MATCHING_QA_JOB,'utf8')) : ok(await company.from('jobs').insert({company_user_id:id('companyA'),company_name:'QA MatchnWork',title:'QA matchning – raderas efter test',description:'Synthetic test listing',city:'Stockholm',status:'active',is_active:true,publication_status:'published'}).select('*').single());
+writeFileSync('/tmp/mnw-test-job.json',JSON.stringify(job));
+const profile={job_id:job.id,status:'approved',role_summary:'QA service',must_haves:['B-körkort','Kan arbeta helger'],weighted_criteria:[{label:'B-körkort',required:true,category:'must_have'},{label:'Kan arbeta helger',required:true,category:'must_have'}],candidate_questions:[{id:'q1',question:'Kan du arbeta helger?'}]};
+let current=ok(await company.from('job_match_profiles').upsert(profile).select('*').single());
+const originalVersion=current.profile_version;
+let application=ok(await youth.rpc('prepare_my_application',{p_job_id:job.id}));assert.equal(application.status,'needs_completion');
+assert.deepEqual(ok(await otherYouth.from('application_completions').select('*').eq('job_id',job.id)),[]);
+assert.deepEqual(ok(await company.from('application_completions').select('*').eq('job_id',job.id)),[]);
+// Criterion edits leave the already-created question snapshot intact.
+current=ok(await company.from('job_match_profiles').update({role_summary:'QA updated role',candidate_questions:[{id:'q1',question:'Ny fråga för nästa ansökan?'}]}).eq('job_id',job.id).eq('profile_version',originalVersion).select('*').single());assert.equal(current.profile_version,originalVersion+1);
+assert.deepEqual(ok(await company.from('job_match_profiles').update({role_summary:'Stale'}).eq('job_id',job.id).eq('profile_version',originalVersion).select('*')),[]);
+const unchanged=ok(await company.from('job_match_profiles').update({role_summary:current.role_summary}).eq('job_id',job.id).select('*').single());assert.equal(unchanged.profile_version,current.profile_version);
+const history=ok(await company.from('job_match_profile_versions').select('*').eq('job_id',job.id));assert.equal(history.length,2);
+assert.deepEqual(ok(await otherCompany.from('job_match_profile_versions').select('*').eq('job_id',job.id)),[]);
+assert.ok((await company.from('job_match_profile_versions').insert({job_id:job.id,profile_version:99,snapshot:{}})).error);
+assert.deepEqual(ok(await otherCompany.from('job_match_profiles').update({role_summary:'Unauthorized'}).eq('job_id',job.id).select('*')),[]);
+assert.deepEqual(ok(await youth.from('job_match_profiles').select('*').eq('job_id',job.id)),[]);
+application=ok(await youth.rpc('save_my_application_answers',{p_job_id:job.id,p_answers:{q1:'Jag kan arbeta helger.'},p_submit:false}));assert.equal(application.questions[0].question,'Kan du arbeta helger?');assert.equal(application.profile_version,originalVersion);
+ok(await company.from('jobs').update({status:'paused'}).eq('id',job.id));assert.ok((await youth.rpc('save_my_application_answers',{p_job_id:job.id,p_answers:{},p_submit:true})).error);
+ok(await company.from('jobs').update({status:'active'}).eq('id',job.id));
+application=ok(await youth.rpc('save_my_application_answers',{p_job_id:job.id,p_answers:{},p_submit:true}));assert.equal(application.status,'submitted');
+const retry=ok(await youth.rpc('save_my_application_answers',{p_job_id:job.id,p_answers:{q1:'Changed answer'},p_submit:true}));assert.equal(retry.answers.q1,application.answers.q1);
+assert.equal(ok(await company.from('application_completions').select('*').eq('job_id',job.id)).length,1);
+assert.ok((await otherCompany.rpc('get_candidate_assessment_input',{p_job_id:job.id,p_youth_user_id:id('youthA')})).error);
+assert.ok((await otherYouth.rpc('get_candidate_assessment_input',{p_job_id:job.id,p_youth_user_id:id('youthA')})).error);
+const path=id('youthA')+'/qa-matching-cv.pdf';
+ok(await youth.storage.from('youth-documents').upload(path,readFileSync('/tmp/mnw-qa-cv.pdf'),{contentType:'application/pdf',upsert:true}));
+ok(await youth.from('youth_profiles').update({documents:[{type:'cv',url:path}],cv_uploaded:true,cv_text:''}).eq('user_id',id('youthA')));
+assert.equal(ok(await company.rpc('get_candidate_assessment_input',{p_job_id:job.id,p_youth_user_id:id('youthA')})).documents[0].url,path);
+assert.ok(ok(await company.storage.from('youth-documents').download(path)).size>0);
+assert.ok((await otherCompany.storage.from('youth-documents').download(path)).error);
+assert.ok((await otherYouth.storage.from('youth-documents').download(path)).error);
+const anon=createClient(url,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false}});assert.ok((await anon.storage.from('youth-documents').download(path)).error);
+// Leave the synthetic application available for deployed API/UI checks; no real user data is changed.
+writeFileSync('/tmp/mnw-matching-test-state.json',JSON.stringify({jobId:job.id,path,youthId:id('youthA'),companyId:id('companyA')}));
+console.log('PASS: criterion versions, stale-write guard, no-op saves, immutable history, question snapshots, pending privacy, paused submission, idempotent send, youth/company isolation and private PDF access.');

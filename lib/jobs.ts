@@ -1,8 +1,10 @@
 "use client";
 
+import { validJobCategoryIds } from "@/lib/job-categories";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
 import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
 
@@ -12,11 +14,14 @@ const JOB_TABLE_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -37,11 +42,14 @@ const JOB_CREATE_INPUT_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -58,6 +66,9 @@ const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
 
 export interface CreateJobInput {
+  job_category_ids?: string[];
+  job_category_manual?: boolean;
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -84,6 +95,7 @@ export interface UpdateJobInput extends Partial<CreateJobInput> {
 }
 
 interface JobInsertPayload {
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -94,6 +106,8 @@ interface JobInsertPayload {
   salary_per_hour: string;
   employment_type: string;
   category: string;
+  job_category_ids: string[];
+  job_category_manual: boolean;
   requirements: string;
   benefits: string;
   company_name: string;
@@ -218,6 +232,7 @@ function assertValidInsertPayload(payload: Record<string, unknown>): void {
 function normalizeJob(row: Record<string, unknown>): JobPost {
   return {
     id: String(row.id ?? ""),
+    workplaces: Array.isArray(row.workplaces) ? row.workplaces as JobWorkplace[] : [],
     title: normalizeJobString(row.title),
     description: normalizeJobString(row.description),
     city: normalizeJobString(row.city),
@@ -228,6 +243,8 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     salary_per_hour: normalizeJobString(row.salary_per_hour),
     employment_type: normalizeJobString(row.employment_type),
     category: normalizeJobString(row.category),
+    job_category_ids: Array.isArray(row.job_category_ids) ? row.job_category_ids as string[] : [],
+    job_category_manual: row.job_category_manual === true,
     requirements: normalizeJobString(row.requirements),
     benefits: normalizeJobString(row.benefits),
     company_name: normalizeJobString(row.company_name),
@@ -236,9 +253,11 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     job_kind: row.job_kind === "private_task" ? "private_task" : "employment",
     is_active: typeof row.is_active === "boolean" ? row.is_active : true,
     status: row.status === "paused" || row.status === "closed" ? row.status : "active",
+    publication_status: row.publication_status === "pending_verification" || row.publication_status === "published" ? row.publication_status : undefined,
     open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
     is_boosted: row.is_boosted === true,
     created_at: normalizeJobString(row.created_at),
+    first_published_at: normalizeJobString(row.first_published_at) || null,
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
   };
@@ -261,6 +280,7 @@ async function assertCompanyUser(): Promise<{ id: string; email: string | null }
 
 function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown> {
   return stripUndefinedValues({
+    workplaces: updates.workplaces,
     title: updates.title,
     description: updates.description,
     city: updates.city,
@@ -271,6 +291,8 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     salary_per_hour: updates.salary_per_hour,
     employment_type: updates.employment_type,
     category: updates.category,
+    job_category_ids: updates.job_category_ids === undefined ? undefined : validJobCategoryIds(updates.job_category_ids),
+    job_category_manual: updates.job_category_manual,
     requirements: updates.requirements,
     benefits: updates.benefits,
     company_name: updates.company_name,
@@ -313,6 +335,24 @@ async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
   }
 
   return normalizeJob(data as Record<string, unknown>);
+}
+
+// Keyset pages avoid the API's default row cap and premium ordering.
+export async function getDiscoveryJobs(): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  let cursor = "";
+  while (true) {
+    let query = getSupabaseClient().from("jobs").select("*")
+      .eq("status", "active").eq("is_active", true).eq("publication_status", "published")
+      .eq("job_kind", "employment").order("id").limit(200);
+    if (cursor) query = query.gt("id", cursor);
+    const { data, error } = await query;
+    if (error) throw new Error("Kunde inte hämta jobb. Försök igen.");
+    const rows = data ?? [];
+    jobs.push(...rows.map(row => normalizeJob(row)));
+    if (rows.length < 200) return jobs;
+    cursor = String(rows[rows.length - 1].id);
+  }
 }
 
 export async function getJobs(includeInactive = false): Promise<JobPost[]> {
@@ -378,7 +418,8 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
 export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   assertAllowedJobCreateInput(toRecord(jobData));
 
-  const hasAddress = Boolean(jobData.address?.trim());
+  const workplaces = jobData.workplaces ? await resolveWorkplaces(jobData.workplaces) : undefined;
+  const hasAddress = Boolean(jobData.address?.trim()) || Boolean(workplaces?.length);
   const hasCoordinates = validCoordinates(jobData.longitude, jobData.latitude);
   if (!hasAddress && !hasCoordinates) {
     throw new Error("Ange en arbetsplatsadress eller giltiga koordinater.");
@@ -388,15 +429,16 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   }
 
   const companyUser = await assertCompanyUser();
-  const coordinates = hasCoordinates
+  const coordinates = workplaces?.[0] ?? (hasCoordinates
     ? { longitude: jobData.longitude, latitude: jobData.latitude }
     : await geocodeJobLocation({
       address: jobData.address,
       postalCode: jobData.postal_code,
       city: jobData.city,
-    });
+    }));
 
   const payload: JobInsertPayload = {
+    ...(workplaces ? { workplaces } : {}),
     title: jobData.title,
     description: jobData.description,
     city: jobData.city,
@@ -406,7 +448,9 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     latitude: coordinates?.latitude ?? null,
     salary_per_hour: jobData.salary_per_hour,
     employment_type: jobData.employment_type,
-    category: jobData.category ?? jobData.employment_type,
+    category: jobData.category ?? "",
+    job_category_ids: validJobCategoryIds(jobData.job_category_ids ?? []),
+    job_category_manual: jobData.job_category_manual === true,
     requirements: jobData.requirements ?? "",
     benefits: jobData.benefits ?? "",
     company_name: jobData.company_name ?? companyUser.email ?? "Company",
@@ -441,6 +485,9 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
   }
 
   const payload = buildJobUpdatePayload(updates);
+  if (updates.workplaces) {
+    payload.workplaces = await resolveWorkplaces(updates.workplaces);
+  }
 
   const hasExplicitCoordinates = updates.longitude !== undefined || updates.latitude !== undefined;
   if (hasExplicitCoordinates && !validCoordinates(updates.longitude, updates.latitude)) {
@@ -489,4 +536,13 @@ export async function getCompanyJobs(companyUserId?: string, includeInactive = t
   const ownerId = companyUserId ?? (await assertCompanyUser()).id;
   const jobs = await getJobs(includeInactive);
   return jobs.filter((job) => job.company_user_id === ownerId);
+}
+
+async function resolveWorkplaces(input: JobWorkplace[]): Promise<JobWorkplace[]> {
+  return Promise.all(validateJobWorkplaces(input).map(async place => {
+    const coordinates = place.longitude !== null && place.latitude !== null
+      ? { longitude: place.longitude, latitude: place.latitude }
+      : await geocodeJobLocation({ address: place.address, postalCode: place.postal_code, city: place.city });
+    return { ...place, longitude: coordinates?.longitude ?? null, latitude: coordinates?.latitude ?? null };
+  }));
 }

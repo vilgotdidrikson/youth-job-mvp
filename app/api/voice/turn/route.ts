@@ -1,12 +1,13 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { CV_INTERVIEW_AREAS } from "@/lib/cv-interview";
 import { appendInterviewAnswer, createEmptyStructuredCv, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 import { COMPLETE_QUESTION, INTERVIEW_INSTRUCTIONS, INTERVIEW_QUESTIONS, interviewDecisionSchema, remainingQuestions, selectNextQuestion, type InterviewProgress, type InterviewTurn } from "@/lib/voice-interview";
 import { requireApiUser } from "@/lib/api-auth";
+import { openaiResponseOptions } from "@/lib/openai-config";
 
 export const runtime = "nodejs";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "", timeout: 25_000, maxRetries: 1 });
 interface InterviewState extends InterviewProgress {
   lastQuestion?: string;
   structuredCv: StructuredCvData;
@@ -26,14 +27,18 @@ function reply(state: InterviewState, next: ReturnType<typeof selectNextQuestion
   state.lastQuestion = question.text;
   const legacy = structuredCvToLegacy(state.structuredCv);
   return NextResponse.json({ transcript, state, structured: state.structuredCv, complete: !next, nextQuestion: question.text,
-    audioUrl: `/api/voice/speech?id=${question.id}&v=2`,
+    audioUrl: `/api/voice/speech?id=${question.id}&v=3`,
     answers: { strengths: legacy.strengths.join("\n"), languages: legacy.languages.join("\n"), work_experience: legacy.workExperience.join("\n"), education: legacy.education.join("\n"), certificates: legacy.certificates.join("\n") },
   });
 }
 export async function POST(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-turn", ["youth"]);
   if ("response" in auth) return auth.response;
-  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Röstintervjun är inte tillgänglig just nu." }, { status: 503 });
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: "Röstintervjun är inte tillgänglig just nu." }, { status: 503 });
+
+  const openai = new OpenAI({ apiKey, timeout: 25_000, maxRetries: 1 });
   try {
     const form = await request.formData();
     const rawState = form.get("state");
@@ -56,7 +61,10 @@ export async function POST(request: NextRequest) {
     const audio = form.get("audio");
     if (!(audio instanceof File) || audio.size < 100) return NextResponse.json({ error: "Ingen inspelning kunde tas emot. Svara igen." }, { status: 400 });
     if (audio.size > 8_000_000) return NextResponse.json({ error: "Svaret är för långt. Dela upp det i kortare svar." }, { status: 413 });
-    const transcription = await openai.audio.transcriptions.create({ file: audio, model: "gpt-4o-mini-transcribe", language: "sv" }, { signal: request.signal });
+    const transcriptionRequest = { file: audio, model: "gpt-transcribe" };
+    const transcription = await openai.audio.transcriptions.create(transcriptionRequest, {
+      signal: request.signal, body: { ...transcriptionRequest, languages: ["sv"] },
+    });
     const transcript = transcription.text.trim();
     if (transcript.length < 2) return NextResponse.json({ error: "Jag hörde inget tydligt svar. Försök igen." }, { status: 422 });
     state.conversation.push({ question: state.lastQuestion ?? "", answer: transcript });
@@ -64,10 +72,10 @@ export async function POST(request: NextRequest) {
     state.answerCounts[state.currentArea] = (state.answerCounts[state.currentArea] ?? 0) + 1;
     const remaining = remainingQuestions(state);
     const response = await openai.responses.create({
-      model: process.env.OPENAI_VOICE_INTERVIEW_MODEL ?? "gpt-4o-mini", store: false,
+      ...openaiResponseOptions(1200, process.env.OPENAI_VOICE_INTERVIEW_MODEL),
       instructions: INTERVIEW_INSTRUCTIONS,
       input: JSON.stringify({ source: state.structuredCv, conversation: state.conversation, questions: INTERVIEW_QUESTIONS, allowed: remaining.map((question) => question.id) }),
-      text: { format: { type: "json_schema", name: "interview_decision", strict: true, schema: interviewDecisionSchema(remaining.map((question) => question.id)) } }, max_output_tokens: 1200, temperature: 0,
+      text: { format: { type: "json_schema", name: "interview_decision", strict: true, schema: interviewDecisionSchema(remaining.map((question) => question.id)) } },
     }, { signal: request.signal });
     if (response.status !== "completed") throw new Error("Incomplete interview decision");
     const decision = JSON.parse(response.output_text) as { coverage: Record<string, boolean>; next_question_id: string };

@@ -1,4 +1,10 @@
 -- Free company accounts may keep one active recruitment listing at a time.
+-- The lifecycle migration follows this file, but this trigger itself depends on
+-- jobs.status. Create the column here so a fresh database can apply migrations
+-- in chronological order.
+alter table public.jobs
+  add column if not exists status text not null default 'active';
+
 create or replace function public.enforce_company_active_job_limit()
 returns trigger
 language plpgsql

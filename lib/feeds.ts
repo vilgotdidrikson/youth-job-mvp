@@ -1,126 +1,35 @@
 "use client";
 
+import { orderDiscoveryJobs, prepareDiscoveryJob, type DiscoveryFilters } from "./job-discovery";
+import { readDiscoveryIds } from "./discovery-history";
+export type { DiscoveryFilters } from "./job-discovery";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getMyConversations as getChatConversations } from "@/lib/chat";
-import { getCompanyJobs as getOwnedCompanyJobs, getJobs } from "@/lib/jobs";
+import { getCompanyJobs as getOwnedCompanyJobs, getDiscoveryJobs } from "@/lib/jobs";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { CandidateFeedItem, JobInterest, JobPost, YouthProfile } from "@/lib/types";
 
-function normalizeStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
-function scoreJobForYouth(job: JobPost, profile: YouthProfile | null): number {
-  if (!profile) {
-    return 0;
-  }
-
-  const desiredRoles = normalizeStringArray(profile.target_roles ?? profile.desired_roles);
-  const preferences = normalizeStringArray(profile.working_time ?? profile.employment_preferences);
-  const haystack = [
-    job.title,
-    job.description,
-    job.employment_type,
-    job.category,
-    job.requirements,
-    job.benefits,
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  let score = 0;
-
-  for (const role of desiredRoles) {
-    if (haystack.includes(role.toLowerCase())) {
-      score += 3;
-    }
-  }
-
-  if (profile.city && profile.city.toLowerCase() === job.city.toLowerCase()) {
-    score += 2;
-  }
-
-  const employmentTypes = job.employment_type
-    .toLowerCase()
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  if (employmentTypes.some((empType) => preferences.some((p) => p.toLowerCase().includes(empType)))) {
-    score += 1;
-  }
-
-  return score;
-}
-
-export interface DiscoveryFilters { query?: string; city?: string; category?: string; employmentType?: string; }
-
 export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobPost[]> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
-
-  if (!user || profile?.role !== "youth") {
-    throw new Error("Swipe jobs is only available for youth accounts.");
-  }
-
-  const supabase = getSupabaseClient();
-  const [{ data: interestRows, error: interestError }, { data: draftRows, error: draftError }, youthProfileResult, jobs] = await Promise.all([
-    supabase.from("swipe_actions").select("job_id").eq("youth_user_id", user.id),
-    supabase.from("youth_application_drafts").select("job_id").eq("youth_user_id", user.id),
-    supabase.from("youth_profiles").select("*").eq("user_id", user.id).maybeSingle(),
-    getJobs(false),
+  if (!user || profile?.role !== "youth") throw new Error("Swipe jobs is only available for youth accounts.");
+  const [swipes, drafts, dismissed, seen, youth, jobs] = await Promise.all([
+    readDiscoveryIds("swipe_actions", user.id), readDiscoveryIds("youth_application_drafts", user.id),
+    readDiscoveryIds("youth_job_dismissals", user.id), readDiscoveryIds("youth_job_impressions", user.id),
+    getSupabaseClient().from("youth_profiles").select("age,city,desired_roles,employment_preferences,recruitment_profile").eq("user_id", user.id).maybeSingle(),
+    getDiscoveryJobs(),
   ]);
-
-  if (interestError) {
-    logSupabaseError("swipe_actions.select.mine", interestError, { userId: user.id });
-    throw new Error(getSupabaseErrorMessage(interestError, "Unable to fetch existing swipe actions."));
-  }
-
-  if (draftError) {
-    logSupabaseError("youth_application_drafts.select.mine", draftError, { userId: user.id });
-    throw new Error(getSupabaseErrorMessage(draftError, "Unable to fetch saved applications."));
-  }
-
-  if (youthProfileResult.error) {
-    logSupabaseError("youth_cv_profiles.select.mine", youthProfileResult.error, { userId: user.id });
-    throw new Error(getSupabaseErrorMessage(youthProfileResult.error, "Unable to fetch youth profile."));
-  }
-
-  // A pre-CV application is private, but it is still a completed choice in
-  // the discovery feed. Keep it out after reload without exposing it to a company.
-  const swipedJobIds = new Set([
-    ...(interestRows ?? []).map((row) => String(row.job_id)),
-    ...(draftRows ?? []).map((row) => String(row.job_id)),
-  ]);
-  const youthProfile = (youthProfileResult.data ?? null) as YouthProfile | null;
-
-  const filteredJobs = jobs
-    .filter((job) => {
-      if (swipedJobIds.has(job.id)) return false;
-      const needle = filters.query?.trim().toLowerCase();
-      if (needle && ![job.title, job.description, job.company_name, job.category].join(" ").toLowerCase().includes(needle)) return false;
-      if (filters.city?.trim() && job.city.toLowerCase() !== filters.city.trim().toLowerCase()) return false;
-      if (filters.category?.trim() && job.category.toLowerCase() !== filters.category.trim().toLowerCase()) return false;
-      if (filters.employmentType?.trim() && !job.employment_type.toLowerCase().includes(filters.employmentType.trim().toLowerCase())) return false;
-      const age = youthProfile?.age;
-      if (typeof age === "number") {
-        if (typeof job.min_age === "number" && age < job.min_age) return false;
-        if (typeof job.max_age === "number" && age > job.max_age) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => scoreJobForYouth(b, youthProfile) - scoreJobForYouth(a, youthProfile));
-
-  // Keep the existing relevance order intact within both groups. A boost only
-  // moves its own active listing ahead of otherwise equally discovered jobs.
-  return [
-    ...filteredJobs.filter((job) => job.is_boosted === true),
-    ...filteredJobs.filter((job) => job.is_boosted !== true),
-  ];
+  if (youth.error) throw new Error("Kunde inte hämta dina jobbönskemål.");
+  const youthProfile = youth.data as YouthProfile | null;
+  return orderDiscoveryJobs(jobs.filter(job => {
+    if (swipes.has(job.id) || drafts.has(job.id) || dismissed.has(job.id)) return false;
+    const age = youthProfile?.age;
+    return typeof age !== "number" || !((typeof job.min_age === "number" && age < job.min_age) || (typeof job.max_age === "number" && age > job.max_age));
+  }).map(job => prepareDiscoveryJob(job, youthProfile, seen.has(job.id))), filters);
 }
 
-export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedItem[]> {
+export async function getCandidatesForJob(jobId: string, options?: { includeReviewed?: boolean }): Promise<CandidateFeedItem[]> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
@@ -138,7 +47,7 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
       .eq("decision", "interested"),
     supabase
       .from("company_interest_actions")
-      .select("youth_user_id")
+      .select("youth_user_id,decision")
       .eq("job_id", jobId)
       .eq("company_user_id", user.id),
   ]);
@@ -171,10 +80,10 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     throw new Error("You can only review candidates for your own jobs.");
   }
 
-  const reviewedIds = new Set((reviewsResult.data ?? []).map((row) => String(row.youth_user_id)));
+  const reviewed = new Map((reviewsResult.data ?? []).map((row) => [String(row.youth_user_id), row.decision]));
   const interestedIds = (interestsResult.data ?? [])
     .map((row) => String((row as JobInterest).youth_user_id))
-    .filter((id) => !reviewedIds.has(id));
+    .filter((id) => options?.includeReviewed || !reviewed.has(id));
 
   if (!interestedIds.length) {
     return [];
@@ -190,14 +99,19 @@ export async function getCandidatesForJob(jobId: string): Promise<CandidateFeedI
     throw new Error(getSupabaseErrorMessage(youthProfileError, "Unable to fetch youth profiles."));
   }
 
+  const { data: completions, error: completionError } = await supabase.from("application_completions").select("*").eq("job_id", jobId).eq("status", "submitted");
+  if (completionError) throw new Error("Kunde inte hämta kompletteringssvaren.");
+  const completionMap = new Map((completions ?? []).map((item) => [String(item.youth_user_id), item]));
   const profileMap = new Map<string, YouthProfile>();
   for (const row of (youthProfiles ?? []) as YouthProfile[]) {
     profileMap.set(row.user_id, row);
   }
 
-  return interestedIds.map((youthUserId) => ({
+  return interestedIds.filter((id) => profileMap.has(id)).map((youthUserId) => ({
     youthUserId,
+    reviewDecision: reviewed.get(youthUserId) === "interested" ? "interested" : reviewed.get(youthUserId) === "skip" ? "skip" : undefined,
     profile: profileMap.get(youthUserId) ?? null,
+    application: completionMap.get(youthUserId) ?? null,
     job,
   }));
 }

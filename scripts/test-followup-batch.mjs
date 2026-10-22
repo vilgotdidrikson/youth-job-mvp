@@ -1,0 +1,76 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import ts from 'typescript';
+const dir=mkdtempSync(join(tmpdir(),'mnw-question-batch-'));
+const previousKey=process.env.OPENAI_API_KEY;
+const previousServiceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+try {
+  process.env.OPENAI_API_KEY='synthetic-test-key';
+  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-server-key';
+  const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+  writeFileSync(join(dir,'job-categories.mjs'),compile('lib/job-categories.ts'));
+  writeFileSync(join(dir,'recruitment-profile.mjs'),compile('lib/recruitment-profile.ts').replace('./job-categories','./job-categories.mjs'));
+  writeFileSync(join(dir,'matching-input-policy.mjs'),compile('lib/matching-input-policy.ts'));
+  writeFileSync(join(dir,'evidence.mjs'),compile('lib/application-evidence.ts').replace('./recruitment-profile','./recruitment-profile.mjs').replace('./matching-input-policy','./matching-input-policy.mjs'));
+  writeFileSync(join(dir,'mocks.mjs'),`export const calls=[];
+    export const source='Jag vill lära mig produktkunskap.';
+    export let fail=false;
+    export function setFailure(value){fail=value;}
+    export class OpenAI{constructor(){this.chat={completions:{create:async(args)=>{calls.push(['ai',args]);if(fail)throw Error('offline');return {choices:[{message:{content:JSON.stringify({criteria:[],answers:[{id:'q1',evidence:source}]})}}]};}}};}}
+    export let criteriaReads=0;
+    export const createClient=()=>{criteriaReads++;return {from:()=>({select:()=>({eq(){return this;},maybeSingle:async()=>({data:{weighted_criteria:[{label:'SERVER_ONLY'}]}})})})};};
+    export const matchingJobContext=()=>'';
+    export const matchingCriteria=(raw)=>{if(raw[0]?.label!=='SERVER_ONLY')throw Error('Must use server-side criteria');return [{id:'c0',label:'Kassa'}];};
+    export const criteriaRequiringAi=(criteria)=>criteria;
+    export const candidateSourceDetails=profile=>({text:candidateSource(profile),status:"minimized"});
+    export const requestMatchingEvidence=async(key,source,criteria,questions)=>{const result=await new OpenAI().chat.completions.create({criteria,questions,source});return JSON.parse(result.choices[0].message.content);};
+    export const candidateSource=profile=>source+(profile.answers ? JSON.stringify(profile.answers):'');
+    export const assessCandidate=()=>({criteria:[]});
+    export const candidateAssessmentHash=value=>value.includes('Uppgift från profil/CV:') ? 'b'.repeat(64):'a'.repeat(64);
+    export const queueApplicationFollowups=async(...args)=>{calls.push(['queue',args]);return {queued:1};};
+    export const pdfCvSource=async()=>({status:'none',text:''});
+    export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
+    export const openaiTextOptions=()=>({model:'test',store:false});`);
+  const imports=`import {createClient,OpenAI,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+  writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
+  const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
+  const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));
+  let batchVersion=null,stale=false,denied=false;
+  const rpc=[];
+  const client={rpc:async(name,args)=>{
+    rpc.push([name,args]);
+    if(name==='get_my_application_followup_input') return denied?{error:Error('denied')}:{data:{available:true,weighted_criteria:[{label:'UNTRUSTED_CLIENT_CRITERIA'}],profile:{},profile_version:2,question_batch_version:batchVersion,questions:[{id:'q1',question:'Vad vill du lära dig?'}],answers:{},source_updated_at:'2026-10-06T00:00:00Z'}};
+    if(name==='claim_application_followup_analysis') return {data:{claimed:true}};
+    if(name==='consume_api_quota') return {data:true};
+    if(name==='apply_my_application_evidence_snapshot') return {data:{stale}};
+    return {data:{}};
+  }};
+  assert.deepEqual(await analyzeApplicationFollowups(client,'job','youth'),{queued:1});
+  assert.equal(mocks.calls.filter(([name])=>name==='ai').length,1,'Static and criterion checks must share one provider call');
+  assert.equal(rpc.find(([name])=>name==='apply_my_application_evidence_snapshot')[1].p_answers.q1,'Uppgift från profil/CV: '+mocks.source);
+  assert.equal(mocks.calls.find(([name])=>name==='queue')[1][5],'b'.repeat(64),'Cache hash must include the newly published literal evidence');
+  assert.equal(rpc.at(-1)[0],'release_application_followup_analysis');
+  batchVersion=2;mocks.calls.length=0;rpc.length=0;
+  assert.deepEqual(await analyzeApplicationFollowups(client,'job','youth'),{queued:0,cached:true});
+  assert.equal(mocks.calls.length,0,'Answering a completed batch must not run AI or queue more questions');
+  batchVersion=null;stale=true;mocks.calls.length=0;rpc.length=0;
+  assert.deepEqual(await analyzeApplicationFollowups(client,'job','youth'),{queued:0,stale:true});
+  assert.equal(mocks.calls.filter(([name])=>name==='queue').length,0);
+  assert.equal(rpc.at(-1)[0],'release_application_followup_analysis');
+  stale=false;mocks.setFailure(true);mocks.calls.length=0;
+  assert.deepEqual(await analyzeApplicationFollowups(client,'job','youth'),{queued:0,temporary:true});
+  assert.equal(mocks.calls.filter(([name])=>name==='queue').length,0,'An outage must not invent missing facts');
+  denied=true;const reads=mocks.criteriaReads;
+  assert.deepEqual(await analyzeApplicationFollowups(client,'other-job','youth'),{queued:0,error:'Kunde inte läsa ansökan.'});
+  assert.equal(mocks.criteriaReads,reads,'Unauthorized application cannot trigger a privileged criterion read');
+  denied=false;delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  assert.deepEqual(await analyzeApplicationFollowups(client,'job','youth'),{queued:0,temporary:true});
+  console.log('PASS: server-only criteria after application authorization, missing-key fallback, one combined AI pass, literal CV evidence, stable batch, stale-source and outage guards.');
+} finally {
+  if(previousKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=previousKey;
+  if(previousServiceKey===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=previousServiceKey;
+  rmSync(dir,{recursive:true,force:true});
+}

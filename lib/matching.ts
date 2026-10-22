@@ -4,6 +4,7 @@ import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getJobById } from "@/lib/jobs";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { prepareApplication } from "@/lib/application-completions";
 import { hasCompletedCv } from "@/lib/cv-completion";
 import type { CandidateReview, JobInterest, MatchRecord, SwipeDecision } from "@/lib/types";
 
@@ -154,6 +155,7 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
 }
 
 export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
+  if (direction === "interested") { await prepareApplication(jobId); return null; }
   const { user } = await getAuthenticatedUser("youth");
   const { data: youthProfile, error: profileError } = await getSupabaseClient()
     .from("youth_profiles")
@@ -179,6 +181,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw new Error("Den här annonsen tar inte emot nya ansökningar.");
   }
 
+
   try {
     await upsertJobInterestRecord({
       youth_user_id: user.id,
@@ -196,11 +199,7 @@ export async function swipeJob(jobId: string, direction: SwipeDecision): Promise
     throw reason;
   }
 
-  if (direction !== "interested") {
-    return null;
-  }
-
-  return getExistingMatch(jobId, user.id, job.company_user_id);
+  return null;
 }
 
 export async function reviewCandidate(
@@ -250,6 +249,9 @@ export async function getMyMatches(): Promise<MatchRecord[]> {
 }
 
 export async function updateMatchStatus(matchId: string, status: MatchStatus): Promise<MatchRecord> {
+  if (status === "hired") {
+    return markMatchHired(matchId);
+  }
   const { user, profile } = await getAuthenticatedUser();
   if (profile?.role !== "company" && profile?.role !== "private") {
     throw new Error("Only task owners can update candidate status.");
@@ -268,4 +270,10 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus): P
     throw new Error(getSupabaseErrorMessage(error, "Unable to update candidate status."));
   }
   return data as MatchRecord;
+}
+
+/** Legacy lifecycle calls must use the employment form with role/start date. */
+export async function markMatchHired(matchId: string): Promise<MatchRecord> {
+  void matchId;
+  throw new Error("Registrera befattning och startdatum i chatten för att markera kandidaten som anställd.");
 }
