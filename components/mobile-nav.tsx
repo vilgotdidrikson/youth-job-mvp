@@ -11,9 +11,11 @@ import styles from "./youth-navigation.module.css";
 export function MobileNav() {
   const pathname = usePathname(), query = useSearchParams();
   const { profile } = useSession();
-  if(!profile || ["/","/login","/signup","/auth","/forgot-password","/reset-password","/pricing","/features","/privacy","/velaris-preview"].includes(pathname) || pathname.startsWith("/admin") || pathname.includes("onboarding") || pathname.startsWith("/youth/cv") || pathname.startsWith("/youth/get-started")) return null;
+  // The CV step of the profile journey keeps the main navigation on desktop, like the other steps.
+  const cvJourney = pathname === "/youth/cv" && query.get("return") === "build" && !query.get("job");
+  if(!profile || ["/","/login","/signup","/auth","/forgot-password","/reset-password","/pricing","/features","/privacy","/velaris-preview"].includes(pathname) || pathname.startsWith("/admin") || pathname.includes("onboarding") || (pathname.startsWith("/youth/cv") && !cvJourney) || pathname.startsWith("/youth/get-started")) return null;
   // Profile steps in the new design have their own bottom action bar on mobile (docs/profilbygget/SPEC.md).
-  if(profile.role === "youth") return <YouthNavigation pathname={pathname} hideOnMobile={pathname === "/profile/develop" && query.get("return") === "build" && query.get("section") === "preferences"}/>;
+  if(profile.role === "youth") return <YouthNavigation pathname={pathname} hideOnMobile={cvJourney || (pathname === "/profile/develop" && query.get("return") === "build" && query.get("section") === "preferences")}/>;
   const items: {href:string; label:string; icon:IconName; view?:string}[] = profile.role === "company" ? [
     {href:COMPANY_ROUTES.listings, label:"Annonser", icon:"briefcase",view:"annonser"},
     {href:COMPANY_ROUTES.candidates,label:"Kandidater",icon:"discover",view:"kandidater"},
