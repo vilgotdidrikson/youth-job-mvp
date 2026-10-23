@@ -2,6 +2,7 @@
 
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from "@/lib/supabase-errors";
 import type { Profile, Role } from "@/lib/types";
 
 function normalizeEmail(email: string): string {
@@ -9,9 +10,14 @@ function normalizeEmail(email: string): string {
 }
 
 // 4xx answers (account already exists, wrong password, ...) are expected user
-// input errors that the form explains; only log real failures.
+// input errors that the form explains, and a lost connection is not a bug;
+// only log real failures as errors.
 function logUnexpectedAuthError(message: string, error: { status?: number }) {
   if (error.status && error.status >= 400 && error.status < 500) return;
+  if (isNetworkError(error)) {
+    console.warn(message, error);
+    return;
+  }
   console.error(message, error);
 }
 
@@ -33,7 +39,7 @@ export async function signUp(
 
   if (error) {
     logUnexpectedAuthError("Supabase sign up failed.", error);
-    throw new Error(error.message);
+    throw new Error(getSupabaseErrorMessage(error, error.message));
   }
 
   if (!data.user?.id) {
@@ -54,7 +60,7 @@ export async function signIn(email: string, password: string): Promise<Session> 
 
   if (error) {
     logUnexpectedAuthError("Supabase sign in failed.", error);
-    throw new Error(error.message);
+    throw new Error(getSupabaseErrorMessage(error, error.message));
   }
 
   if (!data.session) {
@@ -115,6 +121,9 @@ export async function getCurrentUser(): Promise<User | null> {
   } = await supabase.auth.getUser();
 
   if (error) {
+    // Without a server answer the stored session may still be valid; keep it
+    // so the user is not signed out by a dropped connection.
+    if (isNetworkError(error)) throw new Error(NETWORK_ERROR_MESSAGE);
     // A browser may retain a stale local session after a token was revoked.
     // Treat it as signed out so UI state agrees with protected API routes.
     await supabase.auth.signOut({ scope: "local" });
@@ -139,6 +148,7 @@ export async function getUserProfile(userId?: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) {
+    if (isNetworkError(error)) throw new Error(NETWORK_ERROR_MESSAGE);
     console.error("Failed to load the current user's profile row.", error);
     throw new Error(error.message);
   }

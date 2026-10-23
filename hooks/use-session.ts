@@ -4,7 +4,7 @@ import { createContext, createElement, useCallback, useContext, useEffect, useRe
 import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
-import { getSupabaseErrorMessage } from "@/lib/supabase-errors";
+import { getSupabaseErrorMessage, isNetworkError } from "@/lib/supabase-errors";
 import { sessionUserForEvent } from "@/lib/session-events";
 import type { Profile } from "@/lib/types";
 
@@ -96,7 +96,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (!nextProfile) throw new Error("Kontouppgifterna kunde inte hämtas. Försök igen.");
         updateProfile(nextProfile);
       } catch (sessionError) {
-        console.error("Failed to synchronize the Supabase session in the client.", sessionError);
+        (isNetworkError(sessionError) ? console.warn : console.error)("Failed to synchronize the Supabase session in the client.", sessionError);
 
         if (!isMountedRef.current) {
           return;
