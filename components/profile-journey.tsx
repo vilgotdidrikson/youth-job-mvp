@@ -5,9 +5,13 @@ import { PROFILE_JOURNEY, nextProfileStep, profileStepUrl, type ProfileJourneySt
 import { UiIcon } from "./ui-icon";
 import styles from "./profile-journey.module.css";
 
-export function ProfileJourneyHeader({step}:{step:ProfileJourneyStep}) {
+/** "Pausa och fortsätt senare": remembers the step so the profile can offer to resume it. */
+export function useRememberProfileStep(step:ProfileJourneyStep) {
   const {user}=useSession();
-  const remember=()=>{if(user)try{localStorage.setItem(`mnw-profile-resume:${user.id}`,step);}catch{/* Optional navigation hint only. */}};
+  return ()=>{if(user)try{localStorage.setItem(`mnw-profile-resume:${user.id}`,step);}catch{/* Optional navigation hint only. */}};
+}
+export function ProfileJourneyHeader({step}:{step:ProfileJourneyStep}) {
+  const remember=useRememberProfileStep(step);
   const index=PROFILE_JOURNEY.findIndex(item=>item.key===step);
   return <section className={styles.progress} aria-label="Profilbyggets steg"><div className={styles.progressTop}><span>Din jobbprofil · Steg {index+1} av {PROFILE_JOURNEY.length}</span><Link onClick={remember} href="/profile?tab=work">Pausa och fortsätt senare</Link></div><ol>{PROFILE_JOURNEY.map((item,i)=><li key={item.key} aria-current={item.key===step?'step':undefined} className={i===index?styles.current:''}><span>{i+1}</span>{item.title}</li>)}</ol></section>;
 }

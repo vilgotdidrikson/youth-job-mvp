@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { UiIcon } from "@/components/ui-icon";
 import "./privacy-design.css";
+
+export const metadata: Metadata = { title: "Integritet och AI" };
 
 export default function PrivacyPage() {
   return <main className="mnw-privacy-page">

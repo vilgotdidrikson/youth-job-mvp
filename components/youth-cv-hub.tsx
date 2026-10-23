@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfileJourneyHeader, ProfileStepComplete } from "./profile-journey";
+import { ProfileStepComplete } from "./profile-journey";
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
@@ -62,7 +62,6 @@ function draftFromProfile(profile: YouthProfile): Draft {
     program: cv.education[0]?.program ?? "",
     graduation: cv.education[0]?.expectedGraduation ?? cv.education[0]?.endDate ?? "",
     experience: cv.workExperience.map((item) => [item.role, item.employer, item.startDate, item.endDate, item.duration, ...item.responsibilities].filter(Boolean).join(" – ")).join("\n"),
-    noExperience: cv.workExperience.length === 0,
     skills: cv.skills.map((item) => item.name).join(", "),
     languages: cv.languages.map((item) => [item.name, item.level].filter(Boolean).join(" – ")).join(", "),
     merits: cv.certifications.map((item) => item.name).filter(Boolean).join(", "),
@@ -75,7 +74,6 @@ function draftFromProfile(profile: YouthProfile): Draft {
     about: (profile.strengths ?? []).join(", "),
     school: (profile.education ?? []).join("\n"),
     experience: (profile.work_experience ?? []).join("\n"),
-    noExperience: !(profile.work_experience ?? []).length,
     skills: (profile.strengths ?? []).join(", "),
     languages: (profile.languages ?? []).join(", "),
     merits: [profile.certificates, profile.extracurriculars].filter(Boolean).join("\n"),
@@ -257,10 +255,11 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
   if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p></main>;
-  if (completed) return <main className="mobile-shell cv-hub">{inJourney && <ProfileJourneyHeader step="cv"/>}<h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
+  if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
-    <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>{jobNote}
+    
+    {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
+    {!inJourney && <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>}{jobNote}
     <h1>Skapa ditt CV</h1>
     <div className="cv-hub-options">
       <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på några frågor så skriver AI:n ett CV som du granskar. Cirka 3–5 min.</small></button>
@@ -269,7 +268,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <button className="cv-hub-back" onClick={() => setStep("start")}>← Tillbaka till valen</button>{jobNote}
     <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
@@ -277,7 +276,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
     <p className="cv-hub-lead">Välj en del i taget. Dina ändringar sparas här medan du arbetar och syns när du förhandsvisar CV:t.</p>
@@ -293,7 +292,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
   if (step === "preview") return <main className="mobile-shell cv-hub cv-hub-preview-page">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <h1>Granska ditt CV</h1>
     <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
@@ -309,7 +308,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   </main>;
 
   return <main className="mobile-shell cv-hub">
-    {inJourney && <ProfileJourneyHeader step="cv"/>}
+    
     {/* One compact row (back + question count) above a thin bar; the journey header above already shows the five profile steps. */}
     <div className="cv-hub-question-head">
       <div><button className="cv-hub-back" onClick={() => { if (returnToReview) { setReturnToReview(false); setStep("preview"); } else setStep(index <= 0 ? "start" : STEPS[index - 1]); }}>← {returnToReview ? "Tillbaka till förhandsvisningen" : "Tillbaka"}</button><span>Fråga {index + 1} av {STEPS.length}</span></div>
@@ -318,7 +317,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <div className="cv-hub-form">
       {step === "about" && <><p>Till exempel vad du gillar, hur du är och vad du vill lära dig.</p><textarea aria-label="Kort om mig" autoFocus rows={6} value={draft.about} onChange={(event) => update("about", event.target.value)} placeholder="Skriv kort om dig själv" /></>}
       {step === "education" && <><p>Valfritt.</p><input aria-label="Skola" value={draft.school} onChange={(event) => update("school", event.target.value)} placeholder="Skola" /><input aria-label="Program eller inriktning" value={draft.program} onChange={(event) => update("program", event.target.value)} placeholder="Program eller inriktning" /><label>Planerad examen<select value={draft.graduation} onChange={(event) => update("graduation", event.target.value)}><option value="">Välj år (valfritt)</option>{YEARS.map((year) => <option key={year}>{year}</option>)}</select></label></>}
-      {step === "experience" && <><p>Skriv <strong>när, var, vad och hur länge</strong>. T.ex. “Sommaren 2025 hjälpte jag i mammas café i fyra veckor, tog beställningar och höll rent.”</p><textarea aria-label="Erfarenhet" rows={7} disabled={draft.noExperience} value={draft.experience} onChange={(event) => update("experience", event.target.value)} placeholder="Berätta om jobb, praktik, ansvar hemma eller förening" /><label className="cv-hub-check"><input type="checkbox" checked={draft.noExperience} onChange={(event) => update("noExperience", event.target.checked)} /> Jag har ingen erfarenhet ännu</label></>}
+      {/* The box is only ever ticked by the person; an empty profile is not the same as "no experience". */}
+      {step === "experience" && <><label className="cv-hub-check"><input type="checkbox" checked={draft.noExperience} onChange={(event) => update("noExperience", event.target.checked)} /> Jag har ingen erfarenhet ännu</label>{draft.noExperience ? <div className="cv-hub-check-note" role="status"><strong>Du behöver inte skriva något här.</strong><span> Det är helt okej att inte ha jobbat än. Gå vidare till nästa steg.{draft.experience.trim() ? " Det du har skrivit sparas inte så länge rutan är ikryssad." : ""}</span></div> : <textarea aria-label="Erfarenhet" rows={7} value={draft.experience} onChange={(event) => update("experience", event.target.value)} placeholder="Berätta om jobb, praktik, ansvar hemma eller förening" />}</>}
       {step === "skills" && <><p>Skriv eller välj bland förslagen – bara sådant du faktiskt kan.</p><textarea aria-label="Kompetenser" rows={4} value={draft.skills} onChange={(event) => update("skills", event.target.value)} placeholder="T.ex. Jag är bra på att möta kunder och har använt Excel i skolan" /><Chips label="Förslag på kompetenser" values={SKILLS} selected={draft.skills} onPick={(chip) => update("skills", draft.skills.split(",").map((item) => item.trim()).includes(chip) ? draft.skills.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.skills, chip))} /></>}
       {step === "languages" && <><p>Skriv fritt eller tryck på ett språk.</p><input aria-label="Språk" value={draft.languages} onChange={(event) => update("languages", event.target.value)} placeholder="T.ex. svenska, engelska" /><Chips label="Förslag på språk" values={LANGUAGES} selected={draft.languages} onPick={(chip) => update("languages", draft.languages.split(",").map((item) => item.trim()).includes(chip) ? draft.languages.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.languages, chip))} /></>}
       {step === "merits" && <><p>Valfritt: körkort, certifikat, förening eller en länk som visar mer om dig.</p><textarea aria-label="Meriter och certifikat" rows={4} value={draft.merits} onChange={(event) => update("merits", event.target.value)} placeholder="T.ex. HLR-utbildning, ledare i en förening" /><input aria-label="LinkedIn-länk" type="url" value={draft.linkedin} onChange={(event) => update("linkedin", event.target.value)} placeholder="LinkedIn-länk (valfritt)" /><input aria-label="Portfolio eller hemsida" type="url" value={draft.portfolio} onChange={(event) => update("portfolio", event.target.value)} placeholder="Portfolio, GitHub eller egen hemsida (valfritt)" /><input aria-label="Annan länk" type="url" value={draft.otherLink} onChange={(event) => update("otherLink", event.target.value)} placeholder="Annan länk, t.ex. ett projekt (valfritt)" /></>}
