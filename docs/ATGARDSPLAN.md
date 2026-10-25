@@ -73,7 +73,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | För granskning | Codex |
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Pågår | Codex |
-| 13.5 | [N20](#n20) | P2 | Textbaserad profilguide och diskret formulärhjälp | Ej påbörjad | — |
+| 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
@@ -104,7 +104,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
-| 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
+| 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
@@ -378,14 +378,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 40
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n07-undo-discovery-20261025`; [PR #103](https://github.com/vilgotdidrikson/youth-job-mvp/pull/103), implementation `74f30c6f`. Reserverad före kodarbete 2026-10-25. Avsteg: kvarstående profil-/AI-/GDPR-punkter inväntar avstämning, SMTP/fakturering och F17 inväntar domän-/prisberoenden; inga andra ägares uppgifter tas över.
 - Åtgärd: Lägg en diskret Ångra efter Inte nu så att ett oavsiktligt bortval kan tas tillbaka utan att lämna upptäcktsflödet.
 - Klar när: Ett feltryck döljer inte ett intressant jobb utan enkel återväg.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Diskret Ångra efter bekräftat Inte nu; samma privata historik med/utan CV. Senaste val i aktuell vy, skrivkö i klickordning, versions-/dubbelklicksskydd och ny behörighetsstyrd flödeshämtning före återställt kort. Bevarar filter, visningshistorik och bokmärken. Ändrar aldrig ansökningar, återkallelser eller matchningar. Migration 20261025201656 införd endast i DevStaging; publik invoker-wrapper och ägarkontrollerad privat funktion. Se docs/N07.md.
+- Verifierat: 33 transaktionella SQL-kontroller före/efter införande med återställda testdata. test:discovery-undo kör verklig hook, transport och sidhandlers med simulerad miljö (kö, sena svar, dubbelklick, skrivfel och läsfel efter lyckad ångring). test:job-discovery, test:application-withdrawal, test:application-overview, TypeScript, riktad ESLint och webpack-bygge passerar. Säkerhetsrådgivarens fynd/antal oförändrade.
+- Återstår / blockerare: Inloggad visuell acceptans på dator/mobil, tangentbord, sista kortet, sidgräns och annan öppen flik. Inga verkligt samtidiga databasanslutningar eller betald TinyFish-körning.
 
 <a id="n06"></a>
 ### N06 Utöka jobbsökningen med relevanta val
@@ -1228,8 +1228,11 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Verifierat: Produktionsbygge (51 routes), TypeScript, riktad ESLint, `test:application-disclosure` och relevanta matching-/fråge-/profil-/CV-regressioner passerar. Rollbacktest i faktisk DevStaging verifierar samma företag/ungdomspaket, ägande och negativa åtkomster, versions-/stale-skydd, nästlade privata anteckningar/bilagor, alternativ jobbhistorik och Storage-predikat. Rådgivare körda; privata tabellens RLS utan klientpolicy och nya oanvända FK-index är avsiktliga informationsnotiser.
 - Återstår / blockerare: Hela N19 förblir Pågår. Fullständig separering mellan alla godkända profilfakta och CV-urval återstår; nuvarande CV-synkning är inte ett generellt profilfaktaarkiv. Tillförlitlig postnummerbaserad närhet, inloggad mobil/dator, verkliga filnedladdningar, modell-/minimeringsverifiering och L09:s PDF-layout återstår. Live-testet `test:cv` kunde inte köras utan lokal API-server (ECONNREFUSED); räknas inte som godkänt. Se detaljer i `docs/N19.md`.
 
+
+- Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
+
 <a id="n20"></a>
-### N20 Textbaserad profilguide och diskret formulärhjälp
+### N20 Bygg hela jobbprofilen med chatt eller formulär
 
 - [ ] Klar
 - Prioritet: P2
@@ -1244,6 +1247,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
+
+
+- Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
 
 <a id="n21"></a>
 ### N21 Valfri genomläsning av uppladdat CV
