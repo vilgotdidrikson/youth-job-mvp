@@ -9,6 +9,7 @@ import {
   youthFeatures,
 } from "@/lib/features-data";
 import { MarketingNav } from "@/components/marketing-nav";
+import { MarketingFooter } from "@/components/marketing-footer";
 import "../landing.css";
 import "./features.css";
 
@@ -105,10 +106,7 @@ export default function FeaturesPage() {
         <Link href="/signup" className="landing-bold-primary">Kom igång</Link>
       </section>
 
-      <footer className="landing-bold-footer">
-        <span>© 2026 MatchnWork</span>
-        <span>En enklare väg från nyfiken till anställd.</span>
-      </footer>
+      <MarketingFooter />
     </main>
   );
 }

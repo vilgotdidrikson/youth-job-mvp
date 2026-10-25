@@ -11,6 +11,7 @@ import {
 } from "@/lib/pricing-data";
 import { CURRENT_COMPANY_OFFER } from "@/lib/current-offer";
 import { MarketingNav } from "@/components/marketing-nav";
+import { MarketingFooter } from "@/components/marketing-footer";
 import "../landing.css";
 import "./pricing.css";
 
@@ -84,10 +85,7 @@ export default function PricingPage() {
         </section>
       )}
 
-      <footer className="landing-bold-footer">
-        <span>© 2026 MatchnWork</span>
-        <span>En enklare väg från nyfiken till anställd.</span>
-      </footer>
+      <MarketingFooter />
     </main>
   );
 }

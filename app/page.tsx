@@ -1,10 +1,9 @@
 "use client";
 
-import { BrandLogo } from "@/components/brand-logo";
-
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MarketingNav } from "@/components/marketing-nav";
+import { MarketingFooter } from "@/components/marketing-footer";
 import { useAppDestination } from "@/hooks/use-app-destination";
 import Velaris from "@/components/ui/velaris";
 import { NumberTicker } from "@/components/ui/number-ticker";
@@ -109,7 +108,6 @@ const copy = {
   howTitle: "Tre steg. Inget krångel.",
   manifesto: "Potential syns inte alltid i ett tomt CV.",
   manifestoSub: "Därför hjälper MatchnWork unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
-  footer: "En enklare väg från nyfiken till anställd.",
 };
 
 const heroHeadlines = [
@@ -267,20 +265,7 @@ export default function Home() {
           </Reveal>
         </section>
 
-        <footer className="landing-bold-footer">
-          <div className="landing-bold-footer-brand">
-            <span className="landing-logo">
-              <BrandLogo tone="light"/>
-            </span>
-            <p>{copy.footer}</p>
-          </div>
-          <nav className="landing-bold-footer-links" aria-label="Sidfotsnavigation">
-            <Link href="/features">Funktioner</Link>
-            <Link href="/pricing">Priser</Link>
-            <Link href="/login">Logga in</Link>
-          </nav>
-          <span className="landing-bold-footer-copy">© 2026 MatchnWork</span>
-        </footer>
+        <MarketingFooter />
       </div>
     </main>
   );
