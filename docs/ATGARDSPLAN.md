@@ -380,7 +380,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Global ordning: 40
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/n07-undo-discovery-20261025`; reserverad före kodarbete 2026-10-25. Avsteg: kvarstående profil-/AI-/GDPR-punkter inväntar avstämning, SMTP/fakturering och F17 inväntar domän-/prisberoenden; inga andra ägares uppgifter tas över.
+- Branch/PR: `codex/n07-undo-discovery-20261025`; [PR #103](https://github.com/vilgotdidrikson/youth-job-mvp/pull/103), implementation `74f30c6f`. Reserverad före kodarbete 2026-10-25. Avsteg: kvarstående profil-/AI-/GDPR-punkter inväntar avstämning, SMTP/fakturering och F17 inväntar domän-/prisberoenden; inga andra ägares uppgifter tas över.
 - Åtgärd: Lägg en diskret Ångra efter Inte nu så att ett oavsiktligt bortval kan tas tillbaka utan att lämna upptäcktsflödet.
 - Klar när: Ett feltryck döljer inte ett intressant jobb utan enkel återväg.
 - Implementerat: Diskret Ångra efter bekräftat Inte nu; samma privata historik med/utan CV. Senaste val i aktuell vy, skrivkö i klickordning, versions-/dubbelklicksskydd och ny behörighetsstyrd flödeshämtning före återställt kort. Bevarar filter, visningshistorik och bokmärken. Ändrar aldrig ansökningar, återkallelser eller matchningar. Migration 20261025201656 införd endast i DevStaging; publik invoker-wrapper och ägarkontrollerad privat funktion. Se docs/N07.md.
