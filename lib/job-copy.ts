@@ -1,3 +1,4 @@
+import { EMPTY_PRACTICAL_FORM, practicalForm, restorePracticalForm, type JobPracticalForm } from "./job-practical";
 import { validJobCategoryIds } from "./job-categories";
 import { getJobWorkplaces, type JobWorkplace } from "./job-workplaces";
 import type { JobPost } from "./types";
@@ -15,12 +16,14 @@ export interface JobBuilderDraft {
   matchRoleSummary: string; aiGenerated: boolean;
   imageUrls: string[]; imagePending: boolean;
   copiedFromTitle: string; copyReviewed: boolean;
+  practical: JobPracticalForm;
 }
 export const EMPTY_JOB_FORM: JobBuilderDraft = {
   categoryIds: [], categoryManual: false, workplaces: [], title: "", city: "", address: "", postalCode: "", category: "", employmentType: "",
   minAge: "", maxAge: "", salaryFrom: "", salaryTo: "", salaryType: "timlön", salaryText: "",
   description: "", benefits: "", requirements: "", listingRequirements: "", trainableRequirements: "", topTraits: "", candidateQuestions: [],
   matchRoleSummary: "", aiGenerated: false, imageUrls: [], imagePending: false, copiedFromTitle: "", copyReviewed: false,
+  practical: EMPTY_PRACTICAL_FORM,
 };
 
 /** Explicit editable-field allowlist: never copies recruitment identity or state. */
@@ -45,6 +48,7 @@ export function jobBuilderFields(job: JobPost, criteria: JobMatchProfile | null,
     candidateQuestions: criteria?.candidate_questions.map(item => item.question) ?? [],
     matchRoleSummary: criteria?.role_summary ?? job.description,
     imageUrls: job.image_url.split(",").map(value => value.trim()).filter(Boolean),
+    practical: practicalForm(job.practical_details ?? {}),
   };
 }
 export function draftSalary(form: JobBuilderDraft): string {
@@ -72,5 +76,6 @@ export function restoreJobBuilderDraft(saved: Partial<JobBuilderDraft>): JobBuil
     categoryIds: (()=>{try{return validJobCategoryIds(saved.categoryIds ?? []);}catch{return [];}})(),
     categoryManual: saved.categoryManual === true,
     imageUrls: Array.isArray(saved.imageUrls) ? saved.imageUrls.filter((url): url is string => typeof url === "string") : [],
+    practical: restorePracticalForm(saved.practical),
   };
 }

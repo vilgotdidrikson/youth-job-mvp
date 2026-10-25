@@ -102,7 +102,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
-| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
+| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
@@ -350,14 +350,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 38
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning som för N04. Planerad migration (godkänd av användaren i samma insats): ny kolumn `jobs.practical_details jsonb` med objektkontroll; inga RLS-ändringar. Samordning: annonsbyggaren och redigeringen (N01/F10/F22, Max / Claude) och N17 (Codex) berörs; matchningens jobbkontext (F26, Codex) ändras inte.
 - Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag utan krav på platsantal enligt det reviderade N16-beslutet. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
 - Klar när: Ungdomen kan jämföra arbetstid och tidsram utan att leta i fri text.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Migration `20261025140000_n05_job_practical_details.sql`: kolumn `jobs.practical_details jsonb not null default '{}'` med objekt- och storlekskontroll; inga RLS- eller dataändringar. Regler, tolerant inläsning, utkaståterställning och visningstext i `lib/job-practical.ts`. Annonsbyggarens steg 3 har rutan Tid och period (`components/job-practical-fields.tsx`): start (så snart som möjligt, datum, flexibel, Ej bestämt), timmar per vecka från–till, när på veckan (vardagar dagtid, kvällar, helger), anställningsperiod (tills vidare, tidsbegränsad till datum, Ej bestämt) och sista ansökningsdag. Allt är valfritt; Ej bestämt visas inte. Ofullständiga datum, timmar utanför 1–60, slut före start och en ny sista ansökningsdag som passerat stoppar publicering/sparning med fokus på fältet; vid redigering behålls en redan passerad dag. Uppgifterna följer med i förhandsvisning, kopiering, redigering (bara vid ändring) och lokala utkast, och visas i Snabb överblick på annonssidan (passerad sista dag markeras). Annonsen pausas inte automatiskt. `createJob` skickar fältet bara när det har innehåll, så annonser utan uppgifter fungerar även innan migrationen finns i en miljö.
+- Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint (inga nya problem), nytt `test:job-practical` samt `test:job-fields`, `test:job-copy`, `test:job-edit`, `test:job-workplaces`, `test:recruitment`, `test:job-discovery`, `test:company-navigation` och `test:accessibility`. Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktivt verifierat företag och fiktiv ungdom (raderade efteråt), 15/15: Ej bestämt förvalt, saknat startdatum stoppar publicering med fokus, förhandsvisningen visar uppgifterna, publicerad annons har exakt rätt `practical_details` i databasen, redigering förifyller och sparar ändrade timmar, inga sidfel; ungdom ser Start, Omfattning, Anställningsperiod och Sista ansökningsdag i Snabb överblick vid 375 och 1280 px utan horisontell scroll. Två fel hittades och rättades under verifieringen: fältet saknades i insert-/uppdateringsobjektet i `lib/jobs.ts`, och datumetiketterna flöt på samma rad.
+- Återstår / blockerare: Migrationen måste köras före koden vid införande i dev och i master-projektet före release. Kontroll i driftsatt dev. Uppgifterna används inte av matchningen (F26, Codex) eller i swipekortet; det kan bli en uppföljning.
 
 <a id="n07"></a>
 ### N07 Ångra det senaste bortvalet i swipe

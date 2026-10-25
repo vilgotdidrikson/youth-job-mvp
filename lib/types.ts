@@ -71,6 +71,8 @@ export interface CompanyProfile {
 }
 
 export interface JobPost {
+  /** Structured start, hours, times, period and last application day (N05). */
+  practical_details?: import("./job-practical").JobPracticalDetails;
   job_category_ids?: string[];
   job_category_manual?: boolean;
   workplaces?: import("./job-workplaces").JobWorkplace[];

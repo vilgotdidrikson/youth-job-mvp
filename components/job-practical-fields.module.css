@@ -1,0 +1,4 @@
+.date { display: grid; gap: .4rem; margin: .35rem 0 1rem; color: var(--text-secondary); font-size: .75rem; font-weight: 700; }
+.date em { font-style: normal; font-weight: 400; }
+.date small { color: var(--text-tertiary); font-size: .72rem; font-weight: 400; line-height: 1.5; }
+.date input { max-width: 22rem; }
