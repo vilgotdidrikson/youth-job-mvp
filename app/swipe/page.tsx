@@ -7,7 +7,8 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
 import { orderDiscoveryJobs } from "@/lib/job-discovery";
-import { dismissDiscoveryJob, recordJobImpression } from "@/lib/discovery-history";
+import { dismissDiscoveryJob, recordJobImpression, undoDiscoveryDismissal } from "@/lib/discovery-history";
+import { useDiscoveryUndo } from "@/hooks/use-discovery-undo";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
@@ -38,8 +39,14 @@ function SwipePageContent() {
   const [category, setCategory] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const pending = useRef(new Set<string>());
+  const decisionWrites = useRef<Promise<void>>(Promise.resolve());
   const [pendingCount, setPendingCount] = useState(0);
   const [draftCount, setDraftCount] = useState(0);
+  const { lastSkip, begin: beginUndoChoice, clear: clearUndo } = useDiscoveryUndo();
+  const undoLock = useRef(false);
+  const [undoing, setUndoing] = useState(false);
+  const [restoredId, setRestoredId] = useState<string | null>(null);
+  const feedGeneration = useRef(0);
 
   const [savedJobs, setSavedJobs] = useState<JobPost[]>([]);
   const showingSaved = searchParams.get("saved") === "1";
@@ -53,6 +60,8 @@ function SwipePageContent() {
 
   useEffect(() => {
     if (loading || cvLoading || !user || profile?.role !== "youth") return;
+    const generation = ++feedGeneration.current;
+    clearUndo(); setRestoredId(null);
     let active = true;
     const load = async () => {
       try {
@@ -70,11 +79,11 @@ function SwipePageContent() {
       }
     };
     void load();
-    return () => { active = false; };
-  }, [cvLoading, loading, profile?.role, searchParams, showingSaved, user]);
+    return () => { active = false; feedGeneration.current = generation + 1; };
+  }, [clearUndo, cvLoading, loading, profile?.role, searchParams, showingSaved, user]);
 
   useEffect(() => {
-    const protect = (event: BeforeUnloadEvent) => { if (pending.current.size) { event.preventDefault(); event.returnValue = ""; } };
+    const protect = (event: BeforeUnloadEvent) => { if (pending.current.size || undoLock.current) { event.preventDefault(); event.returnValue = ""; } };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
   }, []);
@@ -86,33 +95,70 @@ function SwipePageContent() {
     categories: jobCategoryFilterValues(jobs),
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
-  const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, { city, category, employmentType }, searchParams.get("job")), [category, city, employmentType, jobs, showingSaved, searchParams]);
+  const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, { city, category, employmentType }, restoredId ?? searchParams.get("job")), [category, city, employmentType, jobs, restoredId, showingSaved, searchParams]);
   const filteredJobs = orderedJobs.slice(0, showingSaved ? undefined : pageEnd).filter(job => !decidedIds.has(job.id));
   const hasMore = !showingSaved && pageEnd < orderedJobs.length;
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
-    if (pending.current.has(job.id)) return;
+    if (pending.current.has(job.id) || undoLock.current) return;
+    const confirmUndoChoice = beginUndoChoice();
+    const generation = feedGeneration.current;
+    setRestoredId(null);
     pending.current.add(job.id); setPendingCount(pending.current.size);
     setError(""); setNotice("");
     setDecidedIds(current => new Set([...current, job.id]));
     // Release the deck immediately; only show success once the server confirms it.
-    void (async () => {
+    const previousWrite = decisionWrites.current;
+    const write = (async () => {
+      await previousWrite;
       try {
-        if (!cvCompleted && decision === "interested") {
+        if (generation !== feedGeneration.current) return;
+        if (decision === "skip") {
+          const token = await dismissDiscoveryJob(job.id);
+          confirmUndoChoice(job, token);
+        } else if (!cvCompleted) {
           await saveApplicationDraft(job.id); setDraftCount(count => count + 1);
           setNotice("Intresset är sparat. Skapa ditt CV under Profil för att skicka ansökan.");
-        } else if (!cvCompleted) {
-          await dismissDiscoveryJob(job.id);
         } else {
           await swipeJob(job.id, decision);
           if (decision === "interested") setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);
         }
         window.dispatchEvent(new Event("mnw-navigation-refresh"));
       } catch {
+        if (generation !== feedGeneration.current) return;
         setDecidedIds(current => { const next = new Set(current); next.delete(job.id); return next; });
         setError(`Valet för ${job.title} kunde inte sparas. Jobbet finns kvar – försök igen.`);
       } finally { pending.current.delete(job.id); setPendingCount(pending.current.size); }
     })();
+    decisionWrites.current = write.catch(() => {});
+  };
+
+  const handleUndo = async () => {
+    if (!lastSkip || pending.current.size || undoLock.current) return;
+    const generation = feedGeneration.current;
+    undoLock.current = true; setUndoing(true); setError(""); setNotice("");
+    try {
+      await undoDiscoveryDismissal(lastSkip.job.id, lastSkip.token);
+      if (generation !== feedGeneration.current) return;
+      clearUndo();
+      // Fetch eligibility again: never revive a paused/blocked/applied job from
+      // a stale card. Undo changes only discovery history, never an application.
+      try {
+        const feed = showingSaved ? await getSavedJobs() : await getSwipeJobs();
+        if (generation !== feedGeneration.current) return;
+        setJobs(feed); setDecidedIds(new Set()); setPageEnd(20);
+        setRestoredId(lastSkip.job.id);
+        setNotice(feed.some(job => job.id === lastSkip.job.id)
+          ? "Bortvalet är ångrat. Dina filter gäller fortfarande."
+          : "Bortvalet är ångrat. Annonsen är inte tillgänglig i det här flödet just nu.");
+      } catch {
+        if (generation !== feedGeneration.current) return;
+        setNotice("Bortvalet är ångrat. Ladda om sidan för att hämta jobben igen.");
+      }
+    } catch (reason) {
+      if (generation !== feedGeneration.current) return;
+      setError(reason instanceof Error ? reason.message : "Kunde inte ångra bortvalet.");
+    } finally { undoLock.current = false; setUndoing(false); }
   };
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
@@ -130,7 +176,7 @@ function SwipePageContent() {
     else setEmploymentType(value);
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
     <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }

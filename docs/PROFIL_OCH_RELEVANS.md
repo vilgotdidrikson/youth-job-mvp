@@ -124,8 +124,15 @@ Före Klar ska testfall visa rätt underlag för rätt ansökan och neka anonym,
 - Verifiera faktisk PDF: kort/tunt/långt innehåll, svenska tecken, kontaktuppgifter, sidbrytningar och inga klippta meningar. Tvinga inte in onödiga uppgifter för att fylla en mall.
 - Referens för allmänna råd: https://arbetsformedlingen.se/for-arbetssokande/cv-ansokan-och-intervju/skriva-cv (läst 2026-10-18; 1–2 sidor, relevans och anpassning). Detta är ett produktförslag baserat på råd, ingen certifiering.
 
-## Textguide och hjälp i formulär (N20)
+## Bygg hela jobbprofilen med chatt eller formulär (N19/N20)
 
+Beslut 2026-10-25: profilbygget är helheten; CV:t är ett resultat av samma godkända fakta. N19 äger profilgrunden, N20 de två ingångarna och samtalet. Beslutet ändrar inte befintliga dataskyddsberoenden eller innebär att chatten redan är implementerad.
+
+- Startval: **Bygg med AI-chatt** eller **Fyll i själv**. Formuläret har strukturerade frågor och fungerar utan AI. Byt metod under arbetet utan omstart, dubbla faktakällor eller förlorade ändringar; pågående förslag förblir ogranskade.
+- Samtalet täcker hela jobbprofilen: jobbönskemål, erfarenheter från arbete/skola/fritid, utbildning, kunskaper, språk, egna exempel och relevanta praktiska uppgifter. Fråga bara efter sådant som behövs och inte redan är känt. Följ samma fält-/dataskyddsregler som formuläret; samla inte extra personuppgifter för att chatten är fri.
+- Visa **Det här har vi fått med hittills** som en redigerbar sammanställning under samtalet, öppningsbar på mobil utan att tappa konversation eller tangentbordsfokus. Skilj befintliga godkända fakta från nya förslag.
+- Avsluta med **Din jobbprofil** och **Ditt CV**, med tydliga val att rätta, välja CV-urval, godkänna eller fortsätta senare. Profilen behåller relevanta godkända detaljer som inte ryms i det korta CV:t. Att avsluta chatten är inte ett godkännande eller en ansökan.
+- Acceptans: skapa, pausa, återuppta och byt metod i båda riktningarna med befintliga uppgifter, ändrade fakta och avvisade förslag; ingen dubblett, dataförlust eller tyst publicering. Verifiera samma resultat i profil, CV och verkligt delat ansökningsunderlag, samt mobil med tangentbord och fel/avbrott. Granskning gäller aktuell version och återställs efter ändring.
 - Textsamtal med en kort fråga åt gången, öppna relevanta följdfrågor och möjlighet att hoppa över, pausa, återuppta och avsluta med utkast. Återfråga inte redan besvarat. Håll flera erfarenheter åtskilda.
 - Exempel: ”Jag var fotbollstränare” → ”Vad ansvarade du för?” → ”Jag planerade träningar och ledde tolv barn” → redigerbart förslag med just dessa uppgifter. En föreslagen lärdom eller egenskap måste bekräftas uttryckligt; användaren får ändra eller avvisa.
 - I formulär: diskret Hjälp mig utveckla texten under aktuellt avsnitt. Hjälp/följdfråga på samma plats; ingen kedja av popups eller avbrott medan användaren skriver. Manual inmatning fungerar utan AI.

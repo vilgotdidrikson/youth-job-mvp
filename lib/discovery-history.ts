@@ -24,4 +24,12 @@ async function record(table: "youth_job_impressions" | "youth_job_dismissals", j
   if (error) throw new Error("Kunde inte spara jobbvalet.");
 }
 export const recordJobImpression = (jobId: string) => record("youth_job_impressions", jobId);
-export const dismissDiscoveryJob = (jobId: string) => record("youth_job_dismissals", jobId);
+export async function dismissDiscoveryJob(jobId: string): Promise<string> {
+  const { data, error } = await getSupabaseClient().rpc("set_my_discovery_dismissal", { p_job_id: jobId, p_undo_token: null });
+  if (error || typeof data?.undo_token !== "string") throw new Error("Kunde inte spara bortvalet.");
+  return data.undo_token;
+}
+export async function undoDiscoveryDismissal(jobId: string, token: string): Promise<void> {
+  const { data, error } = await getSupabaseClient().rpc("set_my_discovery_dismissal", { p_job_id: jobId, p_undo_token: token });
+  if (error || data?.status !== "restored") throw new Error("Bortvalet kunde inte ångras. Det kan ha ändrats i en annan flik. Ladda om och försök igen.");
+}
