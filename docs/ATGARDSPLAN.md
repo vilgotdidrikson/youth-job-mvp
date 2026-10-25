@@ -81,7 +81,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | För granskning | Max / Claude |
-| 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Ej påbörjad | — |
+| 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Pågår | Vilgot / Codex |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
@@ -268,9 +268,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 20
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n02-withdraw-application-20261025`; reserverad före kodarbete 2026-10-25. Återkallelse av väntande intresse och skickad ansökan; GDPR-/AI-utbyggnad och gallring ingår inte.
 - Åtgärd: Ge ungdomar möjlighet att ta bort väntande intresse innan automatisk sändning och återkalla en skickad ansökan med tydlig status. Visa vad som händer med en eventuell match eller chatt.
 - Klar när: Användaren kan ändra sig och får ingen oavsiktligt skickad ansökan.
 - Implementerat: —
