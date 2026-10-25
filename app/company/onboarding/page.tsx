@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import Link from "next/link";
 import { jobPublicationAction } from "@/lib/job-publication";
 import { organizationNumberForSave, parseOrganizationNumber } from "@/lib/company-verification";
@@ -228,7 +230,7 @@ export default function CompanyOnboardingPage() {
       <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
-      <header className="company-onboarding-brand"><Link href="/">MatchnWork</Link><span>För företag</span></header>
+      <header className="company-onboarding-brand"><Link href="/"><BrandLogo/></Link><span>För företag</span></header>
       {step === "profil" && <aside className="company-onboarding-intro"><span className="company-onboarding-mark"><UiIcon name="briefcase" width="29" height="29" /></span><p>Er nästa kollega börjar här</p><h2>Berätta lite om ert företag.</h2><span>Fyra korta frågor gör ert konto redo. Sedan kan ni skapa en annons i lugn och ro.</span></aside>}
       {/* ── STEP 1: Company profile ── */}
       {step === "profil" && (

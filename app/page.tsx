@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MarketingNav } from "@/components/marketing-nav";
@@ -268,7 +270,7 @@ export default function Home() {
         <footer className="landing-bold-footer">
           <div className="landing-bold-footer-brand">
             <span className="landing-logo">
-              <span className="landing-logo-mark" aria-hidden="true">M</span>MatchnWork
+              <BrandLogo tone="light"/>
             </span>
             <p>{copy.footer}</p>
           </div>

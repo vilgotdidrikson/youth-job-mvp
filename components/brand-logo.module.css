@@ -1,0 +1,6 @@
+.logo { display:inline-flex; align-items:center; gap:.45em; vertical-align:middle; white-space:nowrap; line-height:1; font:inherit; }
+.mark { display:block; flex-shrink:0; width:1.8em; height:1.8em; max-width:none; object-fit:contain; border-radius:.25em; background:#000; }
+.name { font:inherit; color:inherit; letter-spacing:inherit; }
+.light { color:var(--color-white); }
+.dark { color:var(--color-text); }
+.inherit { color:inherit; }

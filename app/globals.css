@@ -11,7 +11,6 @@
 .admin-page { min-height: 100svh; color: var(--color-text); background: radial-gradient(circle at 88% 7%, var(--color-surface-soft) 0, transparent 26rem), var(--color-canvas); }
 .admin-topbar { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 5.75rem; padding: 1rem clamp(1.25rem, 5vw, 5rem); border-bottom: 1px solid rgb(240 217 224 / .8); background: rgb(255 250 251 / .9); backdrop-filter: blur(18px); }
 .admin-brand { display: flex; align-items: center; gap: .55rem; width: fit-content; color: var(--color-text); text-decoration: none; }
-.admin-brand > span { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .65rem .65rem .65rem .2rem; color: var(--color-white); background: var(--color-brand); font-size: .88rem; font-weight: 900; }
 .admin-brand strong { font-size: 1.05rem; letter-spacing: -.06em; }
 .admin-brand small { margin-left: .15rem; padding: .24rem .46rem; border-radius: 999px; color: var(--color-brand); background: var(--color-rose); font-size: .62rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .admin-desktop-nav { display: flex; align-items: center; gap: .25rem; padding: .3rem; border: 1px solid var(--color-border); border-radius: 999px; background: rgb(255 255 255 / .75); }
@@ -1253,3 +1252,5 @@ button,
 .job-match-editor small { font-size: .8rem; font-weight: 400; color: #666; }
 .job-match-editor details { padding: .7rem 0; border-top: 1px solid #e8e8e8; }
 .job-match-editor summary { cursor: pointer; font-weight: 600; }
+
+.auth-brand { display:block; width:fit-content; margin:0 auto 24px; color:var(--color-text); font-size:1.35rem; font-weight:550; text-decoration:none; }

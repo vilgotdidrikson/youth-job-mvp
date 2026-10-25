@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import { PasswordInput } from "@/components/password-input";
 
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
@@ -146,7 +148,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   const isSignup = mode === "signup";
   return (
-    <main className="auth-page">
+    <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link>
       <section className={`auth-layout auth-layout-form-only ${!isSignup ? "auth-layout-login" : ""}`}>
         <div className="auth-form-stack">
           <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true">←</span><span>Tillbaka</span></button>

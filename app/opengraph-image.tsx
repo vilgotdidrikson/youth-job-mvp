@@ -8,7 +8,7 @@ export const contentType = "image/png";
 
 // Shared link preview (iMessage, Snapchat, Instagram and others). Rendered once at build time.
 export default async function OpenGraphImage() {
-  const mark = `data:image/svg+xml;base64,${(await readFile(join(process.cwd(), "app/icon.svg"))).toString("base64")}`;
+  const mark = `data:image/png;base64,${(await readFile(join(process.cwd(), "public/brand/matchnwork-logo.png"))).toString("base64")}`;
   return new ImageResponse(
     (
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", height: "100%", padding: "72px 80px", color: "#ffffff", background: "radial-gradient(circle at 85% 15%, #b84164 0%, rgba(184,65,100,0) 55%), radial-gradient(circle at 10% 110%, #dc6f8d 0%, rgba(220,111,141,0) 45%), #241419" }}>
