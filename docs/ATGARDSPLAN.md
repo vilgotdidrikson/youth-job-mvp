@@ -108,7 +108,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
-| 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
+| 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Pågår | Vilgot / Codex |
 | 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
@@ -780,9 +780,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 43
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f24-map-fallback-20261025`; reserverad före kodarbete 2026-10-25. Nästa fristående punkt efter N06; kvarstående profil/AI/GDPR-, SMTP- och prisberoenden hoppas över enligt tidigare avgränsning. Endast kartans presentation/felhantering, inga databas-/AI-/profiländringar.
 - Åtgärd: När kartan inte kan visas, ersätt den stora tomma kartyta med jobbkort eller en fungerande lista och tydlig växling mellan vyerna. Behåll relevanta filter och resultat.
 - Klar när: Kartfel hindrar inte fortsatt jobbupptäckt och lämnar inte huvuddelen av sidan tom.
 - Implementerat: —
