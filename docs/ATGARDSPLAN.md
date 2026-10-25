@@ -64,7 +64,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | För granskning | Vilgot / Codex |
-| 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
+| 9 | [F04](#f04) | P1 | Rätta företagets första navigation | För granskning | Vilgot / Codex (kod), Max / Claude (verifiering) |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
@@ -101,8 +101,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
-| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
-| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
+| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
+| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
@@ -137,6 +137,11 @@ Reserverat 2026-10-22: Profilbygget leverans 1 enligt `docs/profilbygget/SPEC.md
   - Rättat på användarens begäran 2026-10-23: CV-steget i resan (`/youth/cv?return=build`) saknade huvudnavigationen (Upptäck, Ansökningar …) även på desktop, eftersom hela `/youth/cv` var undantagen i `components/mobile-nav.tsx`. Nu visas den på desktop som i steg 2–5 och designen, och döljs på mobil som i steg 2. CV-sidan utanför resan eller med jobbkoppling är oförändrad (ingen navigation). Kontrollerat med TypeScript, riktad ESLint, produktionsbygge och `test:profile-journey`. Webbtestat i Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälligt fiktivt QA-konto (raderat efteråt), 10/10: 1280 px (navigation med Upptäck/Ansökningar, stegmeny kvar, ingen överlappning, ingen horisontell scroll), 375 px (navigation dold, ingen horisontell scroll) samt oförändrat beteende för CV utanför resan och steg 2. Inte kontrollerat i driftsatt dev.
   - Fynd utanför leveransen: Versionskonflikt fungerar inte i DevStaging. En sparning med inaktuell version svarar efter 125 s med HTTP 504 ”upstream request timeout” i stället för 40001, så användaren ser ”Sparar…” i två minuter och sedan det generella felet. Gäller alla profilsteg och kräver databasändring (felkoden 40001 i `save_my_recruitment_profile`, sannolikt omförsök i API-lagret); inte ändrat här.
   - Återstår: Avstämning med Vilgot, PR och införande i dev, kontroll i driftsatt dev. Infoytan ”Redan i ditt CV” och grön bock för CV är inte webbtestade (QA-kontot saknade CV). Öppna beslut i SPEC: korta eller fulla jobbetiketter, förval för resväg, förslag för ”Vill lära mig”, och om ”Hoppa över” ska gå till nästa steg (nu som tidigare till profilbygget).
+
+Reserverat 2026-10-25 (uttrycklig beställning): Profilbygget leverans 3 och 4 enligt `docs/profilbygget/SPEC.md` – steg 4 (Kunskaper) och steg 5 (Egna exempel) i ny design. Steg 3 (leverans 2) hoppas över på användarens begäran. Max / Claude, branch `Max`. Status: För granskning (inte committat, ingen PR). Ändrar `components/recruitment-profile-editor.tsx` (section qualifications och examples), nya stegkomponenter i `components/profile-steps/` och konstanter i `lib/profile-steps.ts`; `lib/recruitment-profile.ts`, RPC och databas ändras inte. Samordning: profilflödet ägs av F15/F16/F18 (Vilgot / Codex); avstämning behövs före merge, som för leverans 1.
+  - Implementerat: Steg 4 (`components/profile-steps/qualifications-step.tsx`): rubrik ”Vad kan du?”, körkort/behörigheter och verktyg som TagInput med förslag och räknare (max 8 respektive 12, bredvid varandra på desktop), CV-språk skrivskyddat i rosa yta med ”Ändra i CV:t”, extra språk med nivå som enval-chips (tidigare fritextnivå behålls som eget chip), ”+ Ett språk till” inom max 8. Steg 5 (`examples-step.tsx`): tips med glödlampa (i stegmenyn på desktop i resan), sparade exempel som kompakt rad med ”Ändra”, nytt exempel i kort med brand-kant, styrka som enval-chips med ”+ Eget” (max 30 tecken), situation och egen insats med hjälptext, ”+ Ett exempel till (X av 5)”, primärknapp ”Spara och bli klar”. Text kvar i taggfälten sparas, tomma exempelkort och tomma språkrader sparas inte, påbörjat exempel utan styrka ger ”Välj vad exemplet visar.”. Konstanter och hjälpfunktioner i `lib/profile-steps.ts`, ikonen `bulb` i `ui-icon.tsx`, valfritt `tip` i `ProfileStepPage`. Nederkantsmenyn döljs nu på mobil även i steg 4 och 5 i resan (den täckte stegets fasta knapprad). Rättat i delade komponenter: förslagschips i TagInput saknade chip-stil, och formuläret sträcktes ut vertikalt när stegmenyn var högre än innehållet.
+  - Verifierat: TypeScript, produktionsbygge, `test:profile-steps` (utökat med steg 4/5 och sparkontraktet), `test:profile-journey` och `test:accessibility`. Riktad ESLint utan nya problem (ett befintligt fel om setState i effekt på rad 87 i redigeraren finns redan i dev). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med tillfälligt fiktivt QA-konto med CV-språk (raderat efteråt), 31/31: 375 px (rubrik, CV-språk, ingen horisontell scroll, förslag och Enter blir taggar, räknare, nivå med piltangent, fast primärknapp 52 px, varning vid Hoppa över, sparning till mellanskärmen med kontrollerade värden i databasen inklusive text kvar i verktygsfältet; tips och tomt kort, felmeddelande för påbörjat exempel, eget val, räknare, borttaget kort, sparat exempel i databasen), 1280 px (taggkort bredvid varandra, förslag med chip-ram, sparade värden, stegmeny, ingen horisontell scroll, sparat exempel som rad, tips bara i stegmenyn, Ändra öppnar kortet) och utanför resan (rubrik som h2, Avbryt/”Spara den här delen”, tips i formuläret, sparning). Inga konsolfel.
+  - Återstår: Commit, PR och införande i dev, kontroll i driftsatt dev. Inbäddat läge på `/profile` är inte klickat igenom (samma formulärväg som fristående sidan, som är testad). Versionskonflikt inte testad (känt DevStaging-fel, se leverans 1). Öppet beslut i SPEC: vilka förslag som ska finnas för behörigheter och verktyg (nu designfilernas exempel).
 
 Reserverat 2026-10-22: DA-01 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (landningssidans plattformsillustrationer är tomma under 1024px), Max / Claude, `claude/da01-platform-visuals-20261022`, [PR #95](https://github.com/vilgotdidrikson/youth-job-mvp/pull/95), mergad till dev `50d6a49`. Status: Klar. Övriga DA-punkter är förslag och inte reserverade om inget annat anges nedan.
   - Reproducerat: I webbläsare vid 375 och 800px var alla sex gradient-id dubblerade och samtliga fem synliga mobilillustrationer pekade på gradienter i den dolda desktopkolumnen; illustrationerna visades som tomma mörka rutor.
@@ -329,14 +334,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 37
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning enligt användarens avgränsning (inga GDPR-, domän- eller betalningsberoende punkter): samma överhoppade punkter som F14 och F23 (N23, L03, N02, L05, L06, L12–L14, N08, F12, F20). Planerad migration (godkänd av användaren): säker läsfunktion med utvalda publika företagsfält för företag med synlig annons; RLS på `company_profiles` öppnas inte.
 - Åtgärd: Gör företagskortet öppningsbart och visa verksamhetsbeskrivning, ort, verifiering och relevant arbetsplatsinformation. Ge en tydlig väg tillbaka till jobbet. Återanvänd uppgifter företaget redan fyllt i.
 - Klar när: Ungdomen kan bedöma arbetsgivaren innan den visar intresse.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Migration `20261025120000_n04_job_company_profile.sql`: `private.get_job_company_profile` (security definer, `search_path=''`) med publik invoker-wrapper `public.get_job_company_profile`, bara för inloggade. Den speglar annonsens synlighetsregel (ägaren eller aktiv publicerad annons), respekterar blockeringar och lämnar bara ut namn, bransch, beskrivning, ort, storlek, logga, webbplats, verifiering och antal öppna jobb. Administratör, organisationsnummer, adress, sociala länkar och matchprofil (internt bedömningsstöd) lämnas aldrig ut; RLS och tabeller oförändrade. Logik och säker länkhantering (bara http/https) i `lib/company-public-profile.ts`. Annonssidan har ett företagskort direkt under rubriken (`components/job-company-card.tsx`) med Om företaget som öppnar en dialog med beskrivning, verifiering, öppna jobb och webbplats och knappen Tillbaka till jobbet; det gamla statiska företagskortet (bara desktop) är ersatt. Kortet visas för inloggade; utan profil visas bara namnet.
+- Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, nytt `test:company-public-profile` (länkar, publik form, migrationens fält, synlighet, blockering, inga RLS-ändringar), `test:accessibility` och `test:job-discovery`. Mot DevStaging med fiktiva konton och annonser (raderade efteråt), 28/28: ungdom läser publik profil med exakt de publika fälten och utan skyddade värden; stängd annons ger ingen profil; ägaren kan läsa via egen stängd annons; utloggad nekas; ungdom kan fortfarande inte läsa `company_profiles` direkt; blockerat företag visas inte. Chromium vid 375 och 1280 px: kortet före Om jobbet, ingen horisontell scroll, dialog med beskrivning, webbplats och öppna jobb, inga skyddade uppgifter i sidan, Tillbaka till jobbet och Escape stänger och fokus återgår, inga sidfel.
+- Återstår / blockerare: Införande i dev och migrationen i master-projektet före release (samordnas). Kontroll i driftsatt dev. Logga ej provad med riktig bild (QA-företaget saknade logga).
 
 <a id="n05"></a>
 ### N05 Lägg till strukturerade praktiska jobbuppgifter
@@ -344,14 +350,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 38
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning som för N04. Planerad migration (godkänd av användaren i samma insats): ny kolumn `jobs.practical_details jsonb` med objektkontroll; inga RLS-ändringar. Samordning: annonsbyggaren och redigeringen (N01/F10/F22, Max / Claude) och N17 (Codex) berörs; matchningens jobbkontext (F26, Codex) ändras inte.
 - Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag utan krav på platsantal enligt det reviderade N16-beslutet. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
 - Klar när: Ungdomen kan jämföra arbetstid och tidsram utan att leta i fri text.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Migration `20261025140000_n05_job_practical_details.sql`: kolumn `jobs.practical_details jsonb not null default '{}'` med objekt- och storlekskontroll; inga RLS- eller dataändringar. Regler, tolerant inläsning, utkaståterställning och visningstext i `lib/job-practical.ts`. Annonsbyggarens steg 3 har rutan Tid och period (`components/job-practical-fields.tsx`): start (så snart som möjligt, datum, flexibel, Ej bestämt), timmar per vecka från–till, när på veckan (vardagar dagtid, kvällar, helger), anställningsperiod (tills vidare, tidsbegränsad till datum, Ej bestämt) och sista ansökningsdag. Allt är valfritt; Ej bestämt visas inte. Ofullständiga datum, timmar utanför 1–60, slut före start och en ny sista ansökningsdag som passerat stoppar publicering/sparning med fokus på fältet; vid redigering behålls en redan passerad dag. Uppgifterna följer med i förhandsvisning, kopiering, redigering (bara vid ändring) och lokala utkast, och visas i Snabb överblick på annonssidan (passerad sista dag markeras). Annonsen pausas inte automatiskt. `createJob` skickar fältet bara när det har innehåll, så annonser utan uppgifter fungerar även innan migrationen finns i en miljö.
+- Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint (inga nya problem), nytt `test:job-practical` samt `test:job-fields`, `test:job-copy`, `test:job-edit`, `test:job-workplaces`, `test:recruitment`, `test:job-discovery`, `test:company-navigation` och `test:accessibility`. Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktivt verifierat företag och fiktiv ungdom (raderade efteråt), 15/15: Ej bestämt förvalt, saknat startdatum stoppar publicering med fokus, förhandsvisningen visar uppgifterna, publicerad annons har exakt rätt `practical_details` i databasen, redigering förifyller och sparar ändrade timmar, inga sidfel; ungdom ser Start, Omfattning, Anställningsperiod och Sista ansökningsdag i Snabb överblick vid 375 och 1280 px utan horisontell scroll. Två fel hittades och rättades under verifieringen: fältet saknades i insert-/uppdateringsobjektet i `lib/jobs.ts`, och datumetiketterna flöt på samma rad.
+- Återstår / blockerare: Migrationen måste köras före koden vid införande i dev och i master-projektet före release. Kontroll i driftsatt dev. Uppgifterna används inte av matchningen (F26, Codex) eller i swipekortet; det kan bli en uppföljning.
 
 <a id="n07"></a>
 ### N07 Ångra det senaste bortvalet i swipe
@@ -467,14 +474,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 9
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex (kod, commits `8a1bdf2` och `e1db40a` i dev 2026-10-15, se `docs/F04.md`); Max / Claude (verifiering, reserverad 2026-10-25)
+- Branch/PR: verifiering på branch `Max`. Koden är redan införd i dev men kortet uppdaterades aldrig. Ingen ny kod planeras om inte verifieringen hittar fel.
 - Åtgärd: Säkerställ att Gå till mitt konto går till kontot och att Skapa din första annons samt Ny annons öppnar annonsbyggaren direkt. Rätt destination ska fungera även efter nyregistrering utan omladdning.
 - Klar när: Varje startknapp leder till den vy som etiketten utlovar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Knapparnas destinationer infördes av Vilgot / Codex 2026-10-15 (`8a1bdf2`, `e1db40a`). Rättat vid verifieringen 2026-10-25 (Max / Claude): företagets onboarding läser in sparade företagsuppgifter igen när sessionen uppdateras, och skrev då över det som redan skrivits med tomma värden. Organisationsnumret försvann efter ifyllning och nyregistrerade företag kom inte vidare till startknapparna. Inlästa värden fyller nu bara tomma fält (`app/company/onboarding/page.tsx`).
+- Verifierat: `test:company-navigation`, TypeScript och riktad ESLint (inga nya problem). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktiva företagskonton registrerade via formuläret `/signup?role=company` och påhittade organisationsnummer (raderade efteråt), vid 1280 och 375 px, 14/14 två körningar i rad: registrering leder till onboarding; efter onboarding öppnar Gå till mitt konto kontot (`/profile?tab=settings`, ”Ditt konto”), Fortsätt skapa min jobbannons, Skapa din första annons och Ny annons öppnar annonsbyggaren (”Berätta om jobbet”), alla utan omladdning (markör i `window` kvar); inga sidfel. Före rättningen föll samma test på organisationsnumret i båda körningarna.
+- Återstår / blockerare: Commit med rättningen i dev och kontroll i driftsatt dev, därefter Klar.
 
 <a id="f05"></a>
 ### F05 Gör matchningsanalysen begriplig och användbar

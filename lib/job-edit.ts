@@ -6,6 +6,7 @@ import { draftSalary, jobBuilderFields, type JobBuilderDraft } from "./job-copy"
 import { draftJobCategories } from "./job-categories";
 import { getJobWorkplaces } from "./job-workplaces";
 import { jobPublicationState } from "./job-publication";
+import { practicalPayload } from "./job-practical";
 import type { InitialJobMatchProfileInput } from "./job-match-criteria";
 import type { JobMatchProfile } from "./match-profiles";
 import type { JobPost } from "./types";
@@ -33,6 +34,7 @@ function publicFields(form: JobBuilderDraft, imageUrls: string[]) {
     category: form.category,
     job_category_ids: draftJobCategories(form),
     job_category_manual: form.categoryManual,
+    practical_details: practicalPayload(form.practical),
     workplaces: form.workplaces.map(({ id, name, address, postal_code, city }) => ({ id, name, address, postal_code, city })),
   };
 }

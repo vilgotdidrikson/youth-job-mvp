@@ -36,10 +36,6 @@
 .secondary:hover { background: #fce9ef; }
 .actionNote { margin: 12px 0 0; color: var(--muted); text-align: center; font-size: .72rem; line-height: 1.65; }
 .status { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 14px; margin: 0; border-radius: 14px; color: #226a54; background: #edf6f0; text-align: center; font-size: .84rem; }
-.employer { display: flex; align-items: center; gap: 12px; padding: 22px; border: 1px solid #f0d9e0; border-radius: 22px; background: #fff; }
-.employer > span { display: grid; flex-shrink: 0; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: white; background: var(--ink); font-size: .75rem; }
-.employer strong { font-size: .88rem; font-weight: 550; }
-.employer p { margin: 5px 0 0; color: var(--muted); font-size: .76rem; }
 .mobileAction { display: none; }
 .report { padding-top: 12px; border-top: 1px solid #f0d9e0; }
 .error { padding: 16px; margin-top: 20px; border-radius: 14px; color: #9c304f; background: #fff0f4; font-size: .85rem; }
@@ -65,7 +61,7 @@
   .aside { position: static; }
   .facts { grid-template-columns: 1fr 1fr; margin-bottom: 0; }
   .panel { padding: 20px; border-radius: 20px; }
-  .desktopAction, .employer { display: none; }
+  .desktopAction { display: none; }
   .mobileAction { display: block; position: fixed; z-index: 80; inset-inline: 0; bottom: calc(73px + env(safe-area-inset-bottom)); max-width: 480px; margin-inline: auto; padding: 12px 18px; border-top: 1px solid #f0d9e0; background: rgb(255 250 251 / .98); backdrop-filter: blur(12px); }
   .mobileAction p:not(.status) { margin: 8px 0 0; color: var(--muted); font-size: .7rem; line-height: 1.4; text-align: center; }
 }

@@ -14,13 +14,14 @@ type Form = { fullName: string; dateOfBirth: string; city: string; postalCode: s
 const emptyForm: Form = { fullName: "", dateOfBirth: "", city: "", postalCode: "" };
 
 export function ShortYouthOnboarding() {
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, logout } = useSession();
   const router = useRouter();
   const [form, setForm] = useState<Form>(emptyForm);
   const [step, setStep] = useState(0);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -56,10 +57,17 @@ export function ShortYouthOnboarding() {
     finally { setSaving(false); }
   };
 
+  // /login sends a signed-in user back here, so leave this session before switching account.
+  const switchToLogin = async () => {
+    setSwitching(true);
+    await logout();
+    router.replace("/login");
+  };
+
   if (!ready) return <main className="mnw-onboarding"><p role="status">Hämtar dina uppgifter…</p></main>;
-  return <main className="mnw-onboarding"><Link href="/" className="mnw-onboarding-brand">MatchnWork</Link><div className="mnw-onboarding-layout"><aside className="mnw-onboarding-intro"><span className="mnw-onboarding-mark"><UiIcon name="discover" width="36" height="36"/></span><p>Ditt nästa steg börjar här</p><h1>Små steg.<br/>Nya möjligheter.</h1><p>Vi lär känna dig lite, så att du kan börja upptäcka jobb nära dig.</p><div className="mnw-onboarding-reassurance"><UiIcon name="info"/><span>Du kan utforska jobb först och göra klart ditt CV senare.</span></div></aside><section className="mnw-onboarding-card"><header><span>Steg {step + 1} av 2</span><p>{step === 0 ? "Om dig" : "Din plats"}</p></header><div className="mnw-onboarding-progress" role="progressbar" aria-label="Onboarding" aria-valuemin={0} aria-valuemax={2} aria-valuenow={step + 1}><span style={{width:`${(step + 1) * 50}%`}}/></div><h2>{step === 0 ? "Vad heter du?" : "Var vill du börja?"}</h2><p className="mnw-onboarding-lead">{step === 0 ? "Börja med ditt fullständiga namn och födelsedatum." : "Ort och postnummer hjälper oss att visa jobb som är relevanta för dig."}</p>
+  return <main className="mnw-onboarding"><header className="mnw-onboarding-top"><Link href="/" className="mnw-onboarding-brand">MatchnWork</Link><p className="mnw-onboarding-switch"><span>Har du redan ett konto? </span><button type="button" disabled={switching || saving} onClick={() => void switchToLogin()}>Logga in</button></p></header><div className="mnw-onboarding-layout"><section className="mnw-onboarding-card"><header><span>Steg {step + 1} av 2</span><p>{step === 0 ? "Om dig" : "Din plats"}</p></header><div className="mnw-onboarding-progress" role="progressbar" aria-label="Onboarding" aria-valuemin={0} aria-valuemax={2} aria-valuenow={step + 1}><span style={{width:`${(step + 1) * 50}%`}}/></div><h2>{step === 0 ? "Vad heter du?" : "Var vill du börja?"}</h2><p className="mnw-onboarding-lead">{step === 0 ? "Börja med ditt fullständiga namn och födelsedatum." : "Ort och postnummer hjälper oss att visa jobb som är relevanta för dig."}</p>
     <form onSubmit={event => {event.preventDefault();if(saving)return;const values=new FormData(event.currentTarget);const submittedForm=step === 0 ? {...form,fullName:String(values.get("fullName") ?? ""),dateOfBirth:String(values.get("dateOfBirth") ?? "")} : {...form,city:String(values.get("city") ?? ""),postalCode:String(values.get("postalCode") ?? "")};setForm(submittedForm);if(step === 0){if(normalizeFullName(submittedForm.fullName) && submittedForm.dateOfBirth){setError("");setStep(1);}else setError("Fyll i fullständigt namn och födelsedatum.");}else void save(submittedForm);}}>
     {step === 0 ? <><label>Fullständigt namn<input name="fullName" value={form.fullName} onChange={event => setForm({...form,fullName:event.target.value})} autoComplete="name" placeholder="Förnamn och efternamn" autoFocus required/></label><label>Födelsedatum<input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={event => setForm({...form,dateOfBirth:event.target.value})} autoComplete="bday" required/></label></> : <><label>Ort<input name="city" value={form.city} onChange={event => setForm({...form,city:event.target.value})} autoComplete="address-level2" placeholder="Till exempel Stockholm" autoFocus required/></label><label>Postnummer<input name="postalCode" inputMode="numeric" value={form.postalCode} onChange={event => setForm({...form,postalCode:event.target.value})} autoComplete="postal-code" placeholder="123 45" required/></label></>}
     {error && <p className="mnw-onboarding-error" role="alert">{error}</p>}
-    <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Spara och fortsätt"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
+    <footer>{step > 0 && <button className="secondary-btn" type="button" disabled={saving} onClick={() => {setError("");setStep(0);}}><UiIcon name="arrow" width="18" style={{transform:"rotate(180deg)"}}/>Tillbaka</button>}<button className="cta-btn" type="submit" disabled={saving}>{saving ? "Sparar…" : step === 0 ? "Fortsätt" : "Spara och fortsätt"}<UiIcon name="arrow" width="18"/></button></footer></form></section></div></main>;
 }
