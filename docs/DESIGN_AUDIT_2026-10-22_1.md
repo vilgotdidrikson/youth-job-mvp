@@ -236,6 +236,9 @@ Suggested order: DA-01 and DA-02 first (small, visible, independent). Then DA-04
 <a id="da-13"></a>
 ### DA-13 Pricing: the main call to action looks secondary
 
+- **Implementation update — 2026-10-25 (för granskning, branch `claude/da13-pricing-primary-cta-20261025`):** `PricingPlan` in `lib/pricing-data.ts` has an optional `highlighted` flag, set on the only youth plan and the only company plan. `app/pricing/page.tsx` adds `pricing-cta-highlighted` to that plan's "Kom igång gratis", so it is a filled brand button; a matching hover rule keeps it filled (`--color-brand-hover`) instead of falling back to the light outline hover. Below 720px the grid's bottom padding is 2rem and the footer's top margin 1rem, so the card-to-footer gap drops from 121px to 48px; the desktop spacing is unchanged. Prices, texts and links are unchanged (F06 untouched).
+- **Verified:** TypeScript, ESLint on `app/pricing` and `lib/pricing-data.ts`, production build (webpack); `check:design-tokens` reports the same counts as dev. Chromium against a local production build at 375px and 1280px, both tabs, 34/34: one highlighted CTA with unchanged text and link, brand fill with white text (contrast ≥ 4.5:1, also on hover), mobile gap ≤ 60px, desktop gap ≥ 80px, no horizontal scroll, no page errors.
+
 - **Seen:** On `/pricing` (youth tab), the only plan's "Kom igång gratis" is a white outlined button. `.pricing-cta-highlighted` exists in `app/pricing/pricing.css` but is never applied. On mobile there is a large empty gap between the card and the footer. Do not change the price explanation itself; that belongs to F06, which is blocked.
 - **Fix:** Apply the highlighted style to the recommended plan (add a `highlighted` flag to the plan data in `lib/pricing-data.ts`), and tighten the bottom spacing.
 

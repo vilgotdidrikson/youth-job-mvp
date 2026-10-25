@@ -63,7 +63,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link href={plan.ctaHref} className="pricing-cta">
+            <Link href={plan.ctaHref} className={plan.highlighted ? "pricing-cta pricing-cta-highlighted" : "pricing-cta"}>
               {plan.cta}
             </Link>
           </article>
