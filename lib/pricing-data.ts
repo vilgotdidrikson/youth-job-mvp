@@ -8,6 +8,8 @@ export interface PricingPlan {
   features: string[];
   cta: string;
   ctaHref: string;
+  /** Recommended plan: its call to action gets the primary button style (DA-13). */
+  highlighted?: boolean;
 }
 
 export const pricingAudiences: { id: PricingAudience; label: string }[] = [
@@ -35,6 +37,7 @@ export const pricingPlans: Record<PricingAudience, PricingPlan[]> = {
       ],
       cta: "Kom igång gratis",
       ctaHref: "/signup",
+      highlighted: true,
     },
   ],
   company: [
@@ -50,6 +53,7 @@ export const pricingPlans: Record<PricingAudience, PricingPlan[]> = {
       ],
       cta: "Kom igång gratis",
       ctaHref: "/signup?role=company",
+      highlighted: true,
     },
   ],
 };
