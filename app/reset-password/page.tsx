@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { PasswordInput } from "@/components/password-input";
 
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import { FormEvent, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { updatePassword } from "@/lib/auth";
@@ -63,7 +64,7 @@ export default function ResetPasswordPage() {
   };
 
   return <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link><section className="auth-layout auth-layout-form-only auth-layout-login"><div className="auth-form-stack">
-    <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true">←</span><span>Till inloggning</span></Link>
+    <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true"><UiIcon name="chevron-left" width="18" height="18" /></span><span>Till inloggning</span></Link>
     <form className="auth-card auth-card-login" onSubmit={submit}>
       <div className="auth-card-heading"><h1>Välj nytt lösenord</h1><p>{checkingLink ? "Verifierar återställningslänken..." : ready ? "Ange ett nytt lösenord för ditt konto." : message ? "Ditt lösenord har uppdaterats." : "Öppna sidan via länken i återställningsmejlet."}</p></div>
       {ready && <div className="auth-fields">
@@ -72,9 +73,9 @@ export default function ResetPasswordPage() {
       </div>}
       {error && <p role="alert" className="auth-message auth-error">{error}</p>}
       {message && <p role="status" className="auth-message auth-success">{message}</p>}
-      {ready && !message && <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Sparar..." : "Spara nytt lösenord"}<span aria-hidden="true">↗</span></button>}
-      {!checkingLink && !ready && !message && <Link href="/forgot-password" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Begär en ny länk<span aria-hidden="true">↗</span></Link>}
-      {message && <Link href="/login" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Logga in<span aria-hidden="true">↗</span></Link>}
+      {ready && !message && <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Sparar..." : "Spara nytt lösenord"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>}
+      {!checkingLink && !ready && !message && <Link href="/forgot-password" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Begär en ny länk<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></Link>}
+      {message && <Link href="/login" className="auth-submit" style={{ textDecoration: "none", textAlign: "center" }}>Logga in<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></Link>}
     </form>
   </div></section></main>;
 }

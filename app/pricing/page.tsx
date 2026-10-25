@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import {
   enterprisePlan,
   pricingAudiences,
@@ -59,7 +60,7 @@ export default function PricingPage() {
             <ul className="pricing-features">
               {plan.features.map((feature) => (
                 <li key={feature}>
-                  <span aria-hidden="true">✓</span>{feature}
+                  <span aria-hidden="true"><UiIcon name="check" width="16" height="16" strokeWidth="2.2" /></span>{feature}
                 </li>
               ))}
             </ul>

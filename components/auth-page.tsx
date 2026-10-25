@@ -6,6 +6,7 @@ import { PasswordInput } from "@/components/password-input";
 
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
@@ -151,7 +152,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
     <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link>
       <section className={`auth-layout auth-layout-form-only ${!isSignup ? "auth-layout-login" : ""}`}>
         <div className="auth-form-stack">
-          <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true">←</span><span>Tillbaka</span></button>
+          <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true"><UiIcon name="chevron-left" width="18" height="18" /></span><span>Tillbaka</span></button>
           <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
           <div className="auth-card-heading"><h1>{isSignup ? "Skapa konto" : "Logga in"}</h1><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
           {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div>{([["youth", "Arbetssökande"], ["company", "Företag"]] as const).map(([value, label]) => <label key={value} className={role === value ? "auth-role-selected" : ""}><input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />{label}</label>)}</div></fieldset>}
@@ -163,7 +164,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           </div>
           {error && <p className="auth-message auth-error" role="alert">{error}</p>}
           {message && <p className="auth-message auth-success" role="status">{message}</p>}
-          <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true">↗</span></button>
+          <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>
           {isSignup && <p className="auth-privacy-note">Läs hur vi hanterar dina uppgifter i <Link href="/privacy">Integritet och AI</Link>.</p>}
           <button type="button" className="auth-switch" onClick={() => { setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
           </form>

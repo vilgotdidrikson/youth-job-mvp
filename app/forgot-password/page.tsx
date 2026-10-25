@@ -3,6 +3,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import { FormEvent, useState } from "react";
 import { requestPasswordReset } from "@/lib/auth";
 
@@ -24,13 +25,13 @@ export default function ForgotPasswordPage() {
   };
 
   return <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link><section className="auth-layout auth-layout-form-only auth-layout-login"><div className="auth-form-stack">
-    <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true">←</span><span>Till inloggning</span></Link>
+    <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true"><UiIcon name="chevron-left" width="18" height="18" /></span><span>Till inloggning</span></Link>
     <form className="auth-card auth-card-login" onSubmit={submit}>
       <div className="auth-card-heading"><h1>Återställ lösenord</h1><p>Ange e-postadressen till ditt konto så skickar vi en återställningslänk.</p></div>
       <div className="auth-fields"><label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label></div>
       {error && <p role="alert" className="auth-message auth-error">{error}</p>}
       {message && <p role="status" className="auth-message auth-success">{message}</p>}
-      <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Skickar..." : "Skicka återställningslänk"}<span aria-hidden="true">↗</span></button>
+      <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Skickar..." : "Skicka återställningslänk"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>
     </form>
   </div></section></main>;
 }
