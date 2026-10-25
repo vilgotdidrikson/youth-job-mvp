@@ -27,5 +27,5 @@ export function MobileNav() {
     const selectedCompanyView = companyView(query.get("view"));
     const active = pathname === item.href.split("?")[0] && (!item.view || selectedCompanyView === item.view || ((selectedCompanyView === "skapa" || selectedCompanyView === "redigera") && item.view === "annonser"));
     return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined}><UiIcon name={item.icon}/><span>{item.label}</span></Link>;
-  })}</div><Link className={styles.account} href={profile.role === "company" ? COMPANY_ROUTES.account : "/profile"} aria-label="Mitt konto"><UiIcon name="profile"/></Link></nav>;
+  })}</div></nav>;
 }

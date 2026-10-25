@@ -88,5 +88,6 @@ resolveRead({data:{company_name:'Fictional company',industry:'Test',administrato
 await Promise.resolve();
 assert.deepEqual(calls.pop(), ['replace', '/company?view=swipe'], 'Returning completed accounts keep their existing entry redirect');
 const nav = readFileSync('components/mobile-nav.tsx', 'utf8');
-assert.match(nav, /profile\.role === "company" \? COMPANY_ROUTES\.account : "\/profile"/);
-console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, preserved youth account destination.');
+assert.match(nav, /\{href:"\/profile",label:"Profil",icon:"profile"\}/);
+assert.doesNotMatch(nav, /className=\{styles\.account\}/, 'The duplicate account icon must be absent');
+console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, single profile link.');
