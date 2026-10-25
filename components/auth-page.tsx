@@ -164,6 +164,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           {error && <p className="auth-message auth-error" role="alert">{error}</p>}
           {message && <p className="auth-message auth-success" role="status">{message}</p>}
           <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true">↗</span></button>
+          {isSignup && <p className="auth-privacy-note">Läs hur vi hanterar dina uppgifter i <Link href="/privacy">Integritet och AI</Link>.</p>}
           <button type="button" className="auth-switch" onClick={() => { setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
           </form>
         </div>
