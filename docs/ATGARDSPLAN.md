@@ -955,9 +955,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Rätta 1 ansökningar, blandade versaler och tekniska uttryck. Använd samma MatchnWork-namn och avsedd kontaktadress. Anpassa Tillbaka till Upptäck för företaget. Beskriv kort onboarding och manuell CV-väg korrekt; precisera lönecheck-löftet om tjänsten inte följer hela vägen.
 - Klar när: Etiketter, produktlöften och kontaktvägar är konsekventa och sakligt riktiga.
 - Tillägg från designaudit 2026-10-25 (DA-07 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam logotypkomponent (`components/brand-logo.tsx`, varianter full/märke och ljus/mörk) som används i marknadsnavigering och sidfot, på autentiseringssidorna, `/privacy`, ungdoms- och företagsnavigeringen och admin.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Uppladdad original-PNG bevarad i public/brand. Gemensam BrandLogo i marknadsnavigation/sidfot, autentisering, onboarding, integritet, ungdoms-/företagsnavigation, Upptäck och admin. Ikonpipeline och delningsbild använder samma original; favicon 16/32/48, Apple 180, manifest 192/512 och maskbar 512.
+- Verifierat: Originalfil oförändrad, ikonstorlekar/ICO-ramar och renderbar SVG kontrollerade. TypeScript, produktionsbygge, riktad ESLint utan fel (två befintliga img-varningar), test:accessibility, test:job-search, test:company-navigation och test:profile-journey passerar. Lokal produktionsserver: 200/rätt MIME för original, favicon, SVG, Apple, manifest och delningsbild; loggan finns i HTML för startsida/funktioner/priser/integritet.
+- Återstår / blockerare: D07 förblir Pågår eftersom övrig mikrocopy inte ingår. Visuell acceptans i dev, inloggade ytor och fysisk mobil/appinstallation återstår; lokalt saknas installerad Chromium. DA-02:s tidigare ägare/status och övriga verifiering bevaras.
 
 <a id="d08"></a>
 ### D08 Gör tomvyer och sidbredder konsekventa
@@ -1634,7 +1634,6 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
-
 
 <a id="n24"></a>
 ### N24 Företagets egna kompletteringsfrågor före matchning

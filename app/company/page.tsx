@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import { JobWorkplaceFields } from "@/components/job-workplace-fields";
 import { JobWorkplaceEditor } from "@/components/job-workplace-editor";
 import { WorkplacePreference } from "@/components/workplace-preference";
@@ -876,7 +878,7 @@ function CompanyPageContent() {
             ];
             return <>
               <header className="job-builder-heading">
-                <div><p>MatchnWork</p><h1>{editing ? "Redigera annons" : form.copiedFromTitle ? "Granska din annonskopia" : "Skapa jobbannons"}</h1><span>{editing ? "Gå direkt till det steg du vill ändra och spara när du är klar. Annonsen behåller sin status, sina ansökningar och sina chattar." : "Tre korta steg. Ni behåller kontrollen, medan MatchnWork använder svaren för att skapa rätt matchning."}</span></div>
+                <div><p><BrandLogo/></p><h1>{editing ? "Redigera annons" : form.copiedFromTitle ? "Granska din annonskopia" : "Skapa jobbannons"}</h1><span>{editing ? "Gå direkt till det steg du vill ändra och spara när du är klar. Annonsen behåller sin status, sina ansökningar och sina chattar." : "Tre korta steg. Ni behåller kontrollen, medan MatchnWork använder svaren för att skapa rätt matchning."}</span></div>
               </header>
               <nav className="job-builder-steps" aria-label={editing ? "Delar av annonsen" : "Steg i annonsskapandet"}>
                 {steps.map((step) => (

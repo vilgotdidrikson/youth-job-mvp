@@ -1,3 +1,5 @@
+
+import { BrandLogo } from "@/components/brand-logo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { UiIcon } from "@/components/ui-icon";
@@ -7,7 +9,7 @@ export const metadata: Metadata = { title: "Integritet och AI" };
 
 export default function PrivacyPage() {
   return <main className="mnw-privacy-page">
-    <header className="mnw-privacy-nav"><Link href="/">MatchnWork</Link><Link href="/profile">Till profilen <UiIcon name="arrow" width="16" /></Link></header>
+    <header className="mnw-privacy-nav"><Link href="/"><BrandLogo/></Link><Link href="/profile">Till profilen <UiIcon name="arrow" width="16" /></Link></header>
     <div className="mnw-privacy-heading"><span><UiIcon name="info" width="28" height="28" /></span><p>Din information</p><h1>Integritet och AI</h1><p>Här beskriver vi hur din profil, ditt CV och dina ansökningssvar används i MatchnWork.</p></div>
     <div className="mnw-privacy-layout"><aside aria-label="På den här sidan"><strong>På den här sidan</strong><a href="#profile-data">Profil och ansökan</a><a href="#documents">Dina dokument</a><a href="#ai-cv">AI-CV</a><a href="#followups">Kompletteringsfrågor</a><a href="#delete-account">Radera konto</a><a href="#videos">Video</a><a href="#reports">Anmälningar</a></aside><article>
       <section id="profile-data"><h2>Profil och ansökan</h2><p>MatchnWork använder dina profiluppgifter och ditt CV för att visa relevanta jobb och låta annonsägare granska kandidater som har visat intresse.</p></section>

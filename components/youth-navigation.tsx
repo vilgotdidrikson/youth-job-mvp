@@ -1,4 +1,6 @@
 "use client";
+
+import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
 import { UiIcon, type IconName } from "./ui-icon";
 import styles from "./youth-navigation.module.css";
@@ -15,7 +17,7 @@ const items: { href: string; label: string; icon: IconName; routes: string[] }[]
 export function YouthNavigation({ pathname, hideOnMobile = false }: { pathname: string; hideOnMobile?: boolean }) {
   const indicators=useNavigationIndicators();
   return <nav className={`${styles.nav} ${pathname==="/chats"?styles.compact:""} ${hideOnMobile?styles.hideOnMobile:""}`} aria-label="Huvudnavigation">
-    <Link href="/swipe" className={styles.brand} aria-label="MatchnWork – upptäck jobb">MatchnWork</Link>
+    <Link href="/swipe" className={styles.brand} aria-label="MatchnWork – upptäck jobb"><BrandLogo/></Link>
     <div className={styles.links}>{items.map(item => {
       const active = item.routes.some(route => route.endsWith("/") ? pathname.startsWith(route) : pathname === route);
       const attention=item.href==="/applications" ? indicators.questions : item.href==="/chats" ? indicators.messages : false;

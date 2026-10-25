@@ -1,7 +1,7 @@
 .mnw-product[data-onboarding="true"] .company-profile-onboarding { display:grid!important;grid-template-columns:minmax(0,.85fr) minmax(0,1fr);gap:40px;max-width:1080px!important;align-items:center;padding:40px 32px 80px!important; }
 .company-onboarding-brand { grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px; }
 .company-onboarding-brand a { font-size:1.45rem;letter-spacing:-.055em;font-weight:550;color:var(--color-brand);text-decoration:none; }
-.company-onboarding-brand span { font-size:.75rem;color:var(--color-text-muted);border:1px solid var(--color-border);border-radius:10px;padding:7px 11px;background:white; }
+.company-onboarding-brand > span { font-size:.75rem;color:var(--color-text-muted);border:1px solid var(--color-border);border-radius:10px;padding:7px 11px;background:white; }
 .company-onboarding-intro { display:grid;gap:18px;max-width:360px;padding:15px 15px 15px 0; }
 .company-onboarding-mark { display:grid;place-items:center;border-radius:23px;width:74px;height:74px;background:var(--color-rose);color:var(--color-brand); }
 .company-onboarding-intro > p { font-size:.73rem;letter-spacing:.06em;text-transform:uppercase;color:var(--color-brand);font-weight:600;margin:0; }

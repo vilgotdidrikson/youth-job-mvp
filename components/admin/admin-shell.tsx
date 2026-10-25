@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -17,7 +19,7 @@ export function AdminShell({ title, eyebrow = "Adminpanel", email, children }: {
   return (
     <main className="admin-page">
       <header className="admin-topbar">
-        <Link href="/admin" className="admin-brand"><span>M</span><strong>MatchnWork</strong><small>Admin</small></Link>
+        <Link href="/admin" className="admin-brand"><BrandLogo/><small>Admin</small></Link>
         <nav className="admin-desktop-nav" aria-label="Adminnavigation">
           {links.map((link) => {
             const active = link.href === "/admin" ? pathname === link.href : pathname.startsWith(link.href);
