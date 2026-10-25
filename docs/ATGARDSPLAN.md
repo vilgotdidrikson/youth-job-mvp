@@ -782,7 +782,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Global ordning: 43
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/f24-map-fallback-20261025`; reserverad före kodarbete 2026-10-25. Nästa fristående punkt efter N06; kvarstående profil/AI/GDPR-, SMTP- och prisberoenden hoppas över enligt tidigare avgränsning. Endast kartans presentation/felhantering, inga databas-/AI-/profiländringar.
+- Branch/PR: `codex/f24-map-fallback-20261025`; [PR #106](https://github.com/vilgotdidrikson/youth-job-mvp/pull/106), implementation `7897c669`. Reserverad före kodarbete 2026-10-25. Nästa fristående punkt efter N06; kvarstående profil/AI/GDPR-, SMTP- och prisberoenden hoppas över enligt tidigare avgränsning. Endast kartans presentation/felhantering, inga databas-/AI-/profiländringar.
 - Åtgärd: När kartan inte kan visas, ersätt den stora tomma kartyta med jobbkort eller en fungerande lista och tydlig växling mellan vyerna. Behåll relevanta filter och resultat.
 - Klar när: Kartfel hindrar inte fortsatt jobbupptäckt och lämnar inte huvuddelen av sidan tom.
 - Implementerat: Kartfel ger automatiskt full listvy med samma filtrerade jobb, antal och länkar på dator/mobil. Felkartan avmonteras; användaren kan försöka igen med ny instans eller växla vy manuellt även på dator. Stöd för start-/WebGL-/behörighetsfel, timeout, tappad kontext och saknade kartpositioner. Fokus återgår bara om det låg i kartan; jobbhämtningsfel har eget återförsök. Ingen databas-/AI-/profiländring. Se docs/F24.md.
