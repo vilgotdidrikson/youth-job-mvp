@@ -26,7 +26,7 @@ console.log('PASS discovery undo: real hook ordering/reset, server-confirmed tok
 const pageSlots=[];let pageCursor=0,firstRender=true;const effects=[];
 const pageReact={
  useRef(value){const i=pageCursor++;return pageSlots[i]??={current:value};},
- useState(value){const i=pageCursor++;if(!(i in pageSlots))pageSlots[i]=value;return[pageSlots[i],v=>{pageSlots[i]=typeof v==='function'?v(pageSlots[i]):v;}];},
+ useState(value){const i=pageCursor++;if(!(i in pageSlots))pageSlots[i]=typeof value==='function'?value():value;return[pageSlots[i],v=>{pageSlots[i]=typeof v==='function'?v(pageSlots[i]):v;}];},
  useCallback(fn){const i=pageCursor++;return pageSlots[i]??=fn;},
  useMemo(fn){return fn();},useEffect(fn){if(firstRender)effects.push(fn);},Suspense:()=>null,
 };
@@ -39,6 +39,7 @@ const deps={
  'next/navigation':{useRouter:()=>({replace(){}}),useSearchParams:()=>({get(){return null;}})},
  '@/components/job-discovery':{JobDiscovery:'discovery'},'@/components/auth-gate-message':{},
  '@/lib/job-discovery':{orderDiscoveryJobs:jobs=>jobs},
+ '@/lib/job-search':{readSearchFilters:()=>({query:'',city:'',category:'',employmentType:'',workTime:'',nearbyCity:'',radiusKm:'',onlyKnown:''})},
  '@/lib/discovery-history':{
   dismissDiscoveryJob:async id=>{writes.push(id);if(id==='a')await new Promise(r=>releaseSkip=r);return id+'-token';},
   undoDiscoveryDismissal:async id=>{writes.push('undo-'+id);await new Promise(r=>releaseUndo=r);if(undoFail)throw Error('offline');},

@@ -105,7 +105,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
-| 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
+| 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
 | 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
@@ -393,14 +393,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 41
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n06-discovery-filters-20261025`; [PR #104](https://github.com/vilgotdidrikson/youth-job-mvp/pull/104), implementation `12cd8052`. Reserverad före kodarbete 2026-10-25. Fritext, N05-arbetstid och lokalt uppskattat avstånd från vald orts centrum; inga bostads-/GPS-/AI-data eller databasändringar. Kvarstående profil/GDPR/SMTP/prisberoenden och andra ägares uppgifter hoppas över enligt tidigare avgränsning.
 - Åtgärd: Börja med textsökning och ett användbart val för närhet eller pendling samt arbetstid. Lägg därefter till lön och ålder om underlaget stödjer pålitlig filtrering. Koppla arbetstidsfilter till N05 och behåll lätt återställning.
 - Klar när: Ungdomen hittar relevanta jobb utan att behöva öppna varje annons; okända uppgifter hanteras tydligt.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Sökfält med synonym-/flerordssökning, N05-arbetstider och lokalt uppskattad fågelväg från vald orts centrum (12 referensorter, 5/10/25/50 km). Jobb med okänd vald uppgift kan behållas och märks, flera arbetsplatser hanteras utan dubblett. Filter före paginering, totalräknare, tydlig rensning och bibehållna sökval mellan kort/karta. Ångra behåller filtren. Inga nya profil-/GPS-/AI-data, databas- eller behörighetsändringar. Se docs/N06.md.
+- Verifierat: test:job-search kör verklig filterlogik/avstånd/URL och renderar faktisk filterkomponent med simulerad React. Synonymer, extra ord, svenska tecken, okända uppgifter, fleradresser, koordinatgränser, direktlänk, 45 resultat över sidgränser och rensning. test:job-discovery, test:discovery-undo, test:job-practical, test:job-workplaces och test:job-categories passerar, liksom TypeScript, riktad ESLint och webpack-bygge.
+- Återstår / blockerare: Inloggad visuell dator-/mobilacceptans, tangentbord/dialog, tomt resultat, sidgräns och växling kort–karta med sökval. Lön/ålder enligt planens därefter-del inväntar pålitligt strukturerat underlag och produktavstämning. Avstånd är en uppskattning från centrum, inte faktisk pendlingstid; inga nya platsdata samlas in.
 
 <a id="n09"></a>
 ### N09 Spara CV utkast på kontot

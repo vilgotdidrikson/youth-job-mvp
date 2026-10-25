@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
+import { readSearchFilters } from "@/lib/job-search";
 import { orderDiscoveryJobs } from "@/lib/job-discovery";
 import { dismissDiscoveryJob, recordJobImpression, undoDiscoveryDismissal } from "@/lib/discovery-history";
 import { useDiscoveryUndo } from "@/hooks/use-discovery-undo";
@@ -35,9 +36,7 @@ function SwipePageContent() {
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [city, setCity] = useState("");
-  const [category, setCategory] = useState("");
-  const [employmentType, setEmploymentType] = useState("");
+  const [filters, setFilters] = useState(() => readSearchFilters(searchParams));
   const pending = useRef(new Set<string>());
   const decisionWrites = useRef<Promise<void>>(Promise.resolve());
   const [pendingCount, setPendingCount] = useState(0);
@@ -62,6 +61,7 @@ function SwipePageContent() {
     if (loading || cvLoading || !user || profile?.role !== "youth") return;
     const generation = ++feedGeneration.current;
     clearUndo(); setRestoredId(null);
+    setFilters(readSearchFilters(searchParams));
     let active = true;
     const load = async () => {
       try {
@@ -95,7 +95,7 @@ function SwipePageContent() {
     categories: jobCategoryFilterValues(jobs),
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
-  const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, { city, category, employmentType }, restoredId ?? searchParams.get("job")), [category, city, employmentType, jobs, restoredId, showingSaved, searchParams]);
+  const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, filters, restoredId ?? searchParams.get("job")), [filters, jobs, restoredId, showingSaved, searchParams]);
   const filteredJobs = orderedJobs.slice(0, showingSaved ? undefined : pageEnd).filter(job => !decidedIds.has(job.id));
   const hasMore = !showingSaved && pageEnd < orderedJobs.length;
 
@@ -171,12 +171,13 @@ function SwipePageContent() {
   };
   const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
     setPageEnd(20);
-    if (key === "city") setCity(value);
-    else if (key === "category") setCategory(value);
-    else setEmploymentType(value);
+    setFilters(current => ({ ...current, [key]: value,
+      ...(key === "nearbyCity" ? { radiusKm: value ? current.radiusKm || "25" : "" } : {}),
+      ...(key === "radiusKm" && !value ? { nearbyCity: "" } : {}),
+    }));
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={{ city, category, employmentType }} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={filters} resultCount={orderedJobs.filter(job => !decidedIds.has(job.id)).length} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
     <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }
