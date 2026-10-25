@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type IconName = "camera" | "play" | "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off" | "chevron-left" | "plus" | "lock";
+export type IconName = "camera" | "play" | "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off" | "chevron-left" | "plus" | "lock" | "bulb";
 const paths: Record<IconName, React.ReactNode> = {
   camera: <><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3Z"/></>,
   play: <path d="m9 5 10 7-10 7Z"/>,
@@ -27,6 +27,7 @@ const paths: Record<IconName, React.ReactNode> = {
   "chevron-left": <path d="m15 18-6-6 6-6"/>,
   plus: <path d="M12 5v14M5 12h14"/>,
   lock: <><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></>,
+  bulb: <><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></>,
 };
 
 export function UiIcon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
