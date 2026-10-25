@@ -490,6 +490,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: Tydliga lägen Beräknar/Klart/Kunde inte uppdateras, tid för färdigt underlag, synliga hämtningsfel, begränsad väntan och direkt återförsök via befintligt behörighetskontrollerat API. Tidigare underlag bevaras vid fel och tillstånd isoleras vid kandidatbyte.
 - Verifierat: Lokalt test:assessment-progress (observer och faktiska komponentcallbacks), test:matching och test:company-navigation passerar. TypeScript passerar. Kompletteringsregression, riktad ESLint utan varningar och webpack-produktionsbygge passerar. Autentiserad QA-ansökan i driftsatt dev går från väntande kö till direkt Beräknar → Klart med läsbart underlag och tidpunkt. Upprepad uppdatering fungerar och bevarar cachetid. Se docs/F05.md.
 - Återstår / begränsningar: Inga blockerare för F05:s kriterium. Timeout/nätverksfel är simulerade regressioner. QA-annonsen saknar bedömbara kriterier; inget nytt live-OpenAI-resultat påstås verifierat. Fysisk mobilkontroll ligger kvar under L08. Ingen databasändring.
+- Uppföljning F05-UI (2026-10-25): Pågår, Codex, `codex/f05-duplicate-candidate-keys-20261025`. Rätta den rapporterade React-varningen om samma nyckel på två syskonpaneler i företagets kandidatvy. Denna reservation gäller bara nycklarna och ändrar inte F05:s tidigare verifiering eller status. Kod, lokal kontroll och användarflöde redovisas efter rättningen.
 
 <a id="f06"></a>
 ### F06 Förklara pris och anställningsavgift
