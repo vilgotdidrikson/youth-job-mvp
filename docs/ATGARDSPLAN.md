@@ -94,6 +94,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
+| 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | Ej påbörjad | — |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | För granskning | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
@@ -119,7 +120,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
 | 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
 | 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Ej påbörjad | — |
-| 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Ej påbörjad | — |
+| 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
 | 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Ej påbörjad | — |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
@@ -948,9 +949,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 55
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex – logotillägg
+- Branch/PR: `codex/d07-brand-logo-n24-plan-20261025`; reserverad före kodarbete 2026-10-25 på uttrycklig beställning. Endast gemensam logotyp och avgränsad uppdatering av DA-02:s ikon-/delningsbildskällor; Max/Claudes övriga DA-02-arbete och status bevaras. Övrig D07-mikrocopy ingår inte.
 - Åtgärd: Rätta 1 ansökningar, blandade versaler och tekniska uttryck. Använd samma MatchnWork-namn och avsedd kontaktadress. Anpassa Tillbaka till Upptäck för företaget. Beskriv kort onboarding och manuell CV-väg korrekt; precisera lönecheck-löftet om tjänsten inte följer hela vägen.
 - Klar när: Etiketter, produktlöften och kontaktvägar är konsekventa och sakligt riktiga.
 - Tillägg från designaudit 2026-10-25 (DA-07 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam logotypkomponent (`components/brand-logo.tsx`, varianter full/märke och ljus/mörk) som används i marknadsnavigering och sidfot, på autentiseringssidorna, `/privacy`, ungdoms- och företagsnavigeringen och admin.
@@ -1633,3 +1634,21 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
+
+
+<a id="n24"></a>
+### N24 Företagets egna kompletteringsfrågor före matchning
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 29.1, samordnas med F12/N19.
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: Planbeslut 2026-10-25, `codex/d07-brand-logo-n24-plan-20261025`; ingen implementation reserverad.
+- Åtgärd: Lägg Ställ en kompletteringsfråga på en befintlig skickad ansökan. Företaget kan skriva en egen jobbrelevant fråga till just den sökanden utan att matcha eller öppna fri chatt. Skilj från annonsens befintliga högst tre ansökningsfrågor och automatiska kompletteringar. Ungdomen får en notis/länk till rätt ansökan och svarar eller avstår under Ansökningar. Företaget läser uttryckligen skickade svar i samma jobbspecifika ansökningsunderlag.
+- Regler: Endast ansvarigt företag och rätt inskickad ansökan, med ägar-/mottagarkontroll även i API/RPC/RLS. Ingen allmän kandidatkontakt eller profilåtkomst. Stoppa nya frågor/svar vid återkallad ansökan eller blockerad kontakt och följ befintlig annonsstatus-/delningshantering. En fråga, ett svar eller avstående skapar aldrig matchning; inget svar/låg matchgrad/saknad video får dölja eller neka ansökan. Bevara versions-/källsammanhang och redan delade svar.
+- Profilåteranvändning: Följ F12/N19 – fråga efter svar om ungdomen vill spara granskade generella fakta i profilen för återanvändning. Inget förvalt ja, inget sparande vid nej/uteblivet val och ingen automatisk delning till andra företag eller omskrivning av CV/skickade ansökningar.
+- Klar när: Företag skickar fråga före matchning, rätt ungdom får notis, kan svara/avstå, och rätt företag kan läsa svaret utan att match/chatt har skapats. Inga upprepade kända frågor eller tysta profiluppdateringar; följ upp inaktuell/motstridig uppgift. Verifiera anonym, fel företag, fel jobb/ungdom, återkallelse/blockering, dubbelklick/återförsök, versionskonflikter och notisens lässtatus på dator/mobil.
+- Återstår före implementation: Bestäm och dokumentera begränsningar för antal/längd/takt, hantering av obesvarade/ersatta frågor, annonsens stängning och rapportering av olämpliga frågor. Återanvänd befintliga fråge-/notis-/delningsflöden och håll AI utanför manuell frågesändning. Dataskyddsavstämning samordnas med N19/F12/L05.
+- Implementerat: —
+- Verifierat: Endast plantext genomläst; ingen produktfunktion eller databasändring genom detta beslut.
