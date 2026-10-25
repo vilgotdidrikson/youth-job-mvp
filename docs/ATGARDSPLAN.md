@@ -475,6 +475,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
+- Uppföljning F04-UI (2026-10-25): Pågår, Codex, `codex/f04-remove-duplicate-profile-icon-20261025`. Ta bort den separata profilikonen längst till höger i huvudnavigationen för företag och privata konton; den intilliggande Profil-länken leder till samma sida. Denna avgränsade uppföljning ändrar inte status eller ägare för F04:s huvudsakliga startflöde.
 
 <a id="f05"></a>
 ### F05 Gör matchningsanalysen begriplig och användbar
