@@ -10,7 +10,7 @@ const steps = require('../lib/profile-steps.ts');
 const { JOB_CATEGORIES, preferredJobCategories } = require('../lib/job-categories.ts');
 const { validateRecruitmentProfile, emptyRecruitmentProfile } = require('../lib/recruitment-profile.ts');
 Module._load = load;
-const { roleChoices, toggleCategoryRole, addRoles, addListItems, removeListItem, categoryForRole, isStandardTravel, appendSuggestion, JOB_CATEGORY_SHORT_LABELS, PRIMARY_JOB_CATEGORY_IDS, MAX_ROLES } = steps;
+const { roleChoices, toggleCategoryRole, addRoles, addListItems, removeListItem, categoryForRole, isStandardTravel, appendSuggestion, JOB_CATEGORY_SHORT_LABELS, PRIMARY_JOB_CATEGORY_IDS, MAX_ROLES, MAX_LICENCES, MAX_TOOLS, LICENCE_SUGGESTIONS, TOOL_SUGGESTIONS, emptyExample, isBlankExample, strengthKey, strengthLabel, examplesToSave } = steps;
 
 // Every category has a short label; 10 are shown before "Visa alla 15".
 assert.deepEqual(Object.keys(JOB_CATEGORY_SHORT_LABELS).sort(), JOB_CATEGORIES.map(c => c.id).sort());
@@ -65,6 +65,28 @@ const stepRoles = addRoles(toggleCategoryRole(toggleCategoryRole([], 'cafe'), 'e
 const clean = validateRecruitmentProfile({ ...profile, preferences: { roles: stepRoles, categoryIds: preferredJobCategories(stepRoles), locations: addListItems([], 'Solna, Sundbyberg', 8), travelMinutes: '60', motivation: appendSuggestion('', 'Kundservice') } });
 assert.deepEqual(clean.preferences, { categoryIds: ['cafe', 'events'], roles: ['Caféarbete', 'Eventarbete', 'Fritidsledare'], locations: ['Solna', 'Sundbyberg'], travelMinutes: '60', motivation: 'Kundservice' });
 
+// Step 4: tag limits mirror validation (8 licences, 12 tools); suggestions stay within the limits.
+assert.equal(addListItems([], LICENCE_SUGGESTIONS.join(','), MAX_LICENCES).length, LICENCE_SUGGESTIONS.length);
+assert.equal(addListItems(Array.from({ length: 12 }, (_, i) => `Verktyg ${i}`), 'Excel', MAX_TOOLS).length, 12, 'A full tool list takes no more');
+const q = validateRecruitmentProfile({ ...emptyRecruitmentProfile(), qualifications: { licences: addListItems(['B-körkort'], 'HLR-utbildning', MAX_LICENCES), tools: addListItems([], TOOL_SUGGESTIONS.join(','), MAX_TOOLS), languages: [{ language: 'Spanska', level: 'God' }] } });
+assert.deepEqual(q.qualifications.licences, ['B-körkort', 'HLR-utbildning']);
+assert.equal(q.qualifications.tools.length, TOOL_SUGGESTIONS.length);
+
+// Step 5: strengths save as keys, own wording stays, blank cards are dropped and started ones must be complete.
+assert.equal(strengthKey('Ansvar'), 'responsibility');
+assert.equal(strengthKey(' ansvar '), 'responsibility');
+assert.equal(strengthKey('Tålamod'), 'Tålamod');
+assert.equal(strengthKey('x'.repeat(40)).length, 30);
+assert.equal(strengthLabel('teamwork'), 'Samarbete');
+assert.equal(strengthLabel('Tålamod'), 'Tålamod');
+assert.ok(isBlankExample(emptyExample()));
+assert.ok(isBlankExample({ strength: '', context: '  ', action: '' }));
+const done = { strength: 'responsibility', context: 'Kiosk på fotbollscupen', action: 'Jag tog beställningar.' };
+assert.deepEqual(examplesToSave([emptyExample(), done]), { examples: [done], error: null });
+assert.equal(examplesToSave([{ ...done, strength: '' }]).error, 'Välj vad exemplet visar.');
+assert.equal(examplesToSave([{ ...done, action: '' }]).error, 'Ange både situation och vad du gjorde i exemplet.');
+assert.deepEqual(validateRecruitmentProfile({ ...emptyRecruitmentProfile(), examples: examplesToSave([done, { ...done, strength: 'Tålamod' }]).examples }).examples.map(e => e.strength), ['responsibility', 'Tålamod']);
+
 // The editor keeps the protected save contract and only swaps the preferences markup.
 const editor = readFileSync('components/recruitment-profile-editor.tsx', 'utf8');
 assert.match(editor, /rpc\("save_my_recruitment_profile", \{ p_section: section, p_value: clean\[section\], p_expected_version: version \}\)/);
@@ -76,4 +98,8 @@ assert.match(editor, /addRoles\(commaList\(roles\),pendingRole\)/, 'Text still i
 assert.match(editor, /addListItems\(commaList\(locations\),pendingLocation,MAX_LOCATIONS\)/, 'Text still in the place field is saved');
 assert.doesNotMatch(editor, /Skilj olika områden med kommatecken/, 'Old free-text job field is gone');
 assert.match(editor, /setCompleted\(selected\)/, 'ProfileStepComplete still follows a saved journey step');
-console.log('PASS profile steps: chips save full category labels, own wording kept, limits of 8, tags, travel options, learning suggestions, validated output, protected save contract.');
+assert.match(editor, /addListItems\(commaList\(licences\),pendingLicence,MAX_LICENCES\)/, 'Text still in the licence field is saved');
+assert.match(editor, /addListItems\(commaList\(tools\),pendingTool,MAX_TOOLS\)/, 'Text still in the tool field is saved');
+assert.match(editor, /if\(section==="examples"&&examples\.error\)throw new Error\(examples\.error\)/, 'A started example must be complete');
+assert.doesNotMatch(editor, /Lägg till ett exempel<\/button>/, 'Old example markup is gone');
+console.log('PASS profile steps: chips save full category labels, own wording kept, limits of 8, tags, travel options, learning suggestions, step 4 tags and languages, step 5 examples, validated output, protected save contract.');

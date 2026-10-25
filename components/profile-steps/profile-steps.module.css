@@ -1,5 +1,5 @@
 /* Profile builder design (docs/profilbygget/SPEC.md). Tokens live here until DA-04 moves them to theme.css. */
-.page, .card, .chips, .tagInput, .segmented, .stepper, .tile, .actions, .header, .rail, .cvToggle, .lockNote, .title {
+.page, .card, .chips, .tagInput, .segmented, .stepper, .tile, .actions, .header, .rail, .cvToggle, .lockNote, .title, .tip, .savedRow, .dashedButton, .tagSuggestions {
   --pb-canvas: #fffafb; --pb-surface: #ffffff; --pb-rose: #fce9ef; --pb-rose-track: #f4dce5; --pb-border: #f0d9e0;
   --pb-divider: #f6e4ea; --pb-dashed: #e3b9c7; --pb-ring: #e7c9d3; --pb-ink: #4c303b; --pb-muted: #7f616d;
   --pb-brand: #b84164; --pb-brand-on-rose: #9c304f; --pb-success: #21855d; --pb-success-soft: #e8f5ee;
@@ -10,7 +10,7 @@
 /* Journey page: step header + content on mobile, step rail + form on desktop. Breakpoint follows the app (720px). */
 .page { min-height: 100svh; background: var(--pb-canvas); font-family: var(--font-inter), Arial, sans-serif; }
 .layout { display: grid; gap: 18px; padding: 24px 20px 140px; }
-.main { display: grid; gap: 18px; min-width: 0; }
+.main { display: grid; align-content: start; gap: 18px; min-width: 0; }
 
 .title { display: grid; gap: 8px; }
 /* .mnw-product h1 forces weight 500 with !important; the design asks for 600. */
@@ -52,8 +52,8 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 .cvFacts { margin: 0; padding: 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-surface); font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--pb-ink); }
 
 /* Step form: the fieldset disables every control while saving. */
-.stepForm { display: grid; gap: 18px; min-width: 0; }
-.fieldset { display: grid; gap: 18px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.stepForm { display: grid; align-content: start; gap: 18px; min-width: 0; }
+.fieldset { display: grid; align-content: start; gap: 18px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .fieldset:disabled { opacity: .7; }
 
 /* FormCard */
@@ -74,12 +74,12 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 
 /* ChipGroup */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chips .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 999px; background: var(--pb-surface); color: var(--pb-ink); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.chips .chip, .tagSuggestions .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 999px; background: var(--pb-surface); color: var(--pb-ink); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 .chips .chip[aria-pressed="true"], .chips .chip[aria-checked="true"] { border: 1.5px solid var(--pb-brand); background: var(--pb-rose); color: var(--pb-brand-on-rose); font-weight: 600; }
-.chips .chip:disabled { cursor: not-allowed; opacity: .45; }
+.chips .chip:disabled, .tagSuggestions .chip:disabled { cursor: not-allowed; opacity: .45; }
 .chips .chip.dashed { border: 1.5px dashed var(--pb-dashed); background: transparent; color: var(--pb-brand); font-weight: 600; }
 .chips .chip.more { color: var(--pb-brand); font-weight: 600; }
-.chips .suggestion { min-height: 44px; padding: 0 12px; font-size: 13px; font-weight: 400; }
+.chips .suggestion, .tagSuggestions .suggestion { min-height: 44px; padding: 0 12px; font-size: 13px; font-weight: 400; }
 
 /* TagInput */
 .tagInput { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 52px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); cursor: text; }
@@ -126,6 +126,44 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 .lockNote svg { flex-shrink: 0; margin-top: 2px; }
 .error { margin: 0; padding: 12px 14px; border-radius: 14px; background: #fff1f3; color: #a12c4c; font-size: 14px; }
 
+/* Shared form pieces for steps 4 and 5 */
+.card input.input { box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; }
+.chips .chip.small { font-size: 13px; }
+.dashedButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 16px; border: 1.5px dashed var(--pb-dashed); border-radius: 14px; background: transparent; color: var(--pb-brand); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dashedButton span { font-weight: 500; color: var(--pb-muted); }
+.dashedButton:disabled { opacity: .5; cursor: not-allowed; }
+.textButton { min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--pb-brand); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.iconButton { position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--pb-muted); cursor: pointer; }
+.iconButton::before { content: ""; position: absolute; inset: -6px; }
+
+/* Step 4: two tag cards (side by side on desktop) and languages */
+.pair { display: grid; gap: 18px; min-width: 0; }
+.cvLanguages { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: var(--pb-rose); }
+.cvLanguagesHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
+.cvLanguagesHead a { display: inline-flex; align-items: center; min-height: 32px; color: var(--pb-brand); font-weight: 600; text-decoration: none; }
+.cvLanguage { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.cvLanguage strong { font-weight: 600; }
+.cvLanguage span { color: var(--pb-muted); text-align: right; }
+.languageList { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.languageRow { display: flex; flex-direction: column; gap: 10px; }
+.languageRow + .languageRow { padding-top: 14px; border-top: 1px solid var(--pb-divider); }
+.languageRowHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Step 5: tip, saved rows and the example card */
+.tip { display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--pb-rose); color: var(--pb-ink); font-size: 14px; line-height: 1.5; }
+.tip svg { flex-shrink: 0; margin-top: 1px; color: var(--pb-brand); }
+.rail .tip { border: 1px solid var(--pb-border); border-radius: 18px; background: var(--pb-surface); color: var(--pb-muted); font-size: 13px; }
+.savedRow { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--pb-border); border-radius: 20px; background: var(--pb-surface); }
+.savedIcon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--pb-success-soft); color: var(--pb-success); }
+.savedText { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.savedText span { font-size: 13px; font-weight: 600; color: var(--pb-brand); }
+.savedText strong { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.card.exampleCard { gap: 16px; border: 1.5px solid var(--pb-brand); }
+.exampleCardHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -10px -10px -6px 0; }
+.kicker { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--pb-brand); }
+.card .exampleLabel { font-size: 15px; font-weight: 600; color: var(--pb-ink); }
+.addExample { min-height: 48px; border-radius: 16px; }
+
 @media (min-width: 721px) {
   .mobileOnly { display: none !important; }
   .header { display: none; }
@@ -146,6 +184,15 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
   .tagInput input.tagField { min-width: 90px; height: 32px; font-size: 15px; }
   .segmented button { font-size: 13px; }
   .collapsed .collapsible:not([aria-pressed="true"]) { display: none; }
+  .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .pair .card { padding: 22px; }
+  .pair .card .cardTitle { font-size: 16px; }
+  .card input.input { min-height: 48px; font-size: 15px; }
+  .languagesWithCv { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 24px; }
+  .languageList .dashedButton { align-self: flex-start; min-height: 44px; border-radius: 12px; font-size: 13px; }
+  .addExample { justify-self: start; min-height: 44px; padding: 0 14px; border-radius: 12px; }
+  .savedIcon { display: none; }
+  .savedRow { padding: 16px 18px; }
   .actions { justify-content: space-between; gap: 16px; padding-top: 4px; }
   .actions.fixed { position: static; padding: 4px 0 0; border: 0; background: none; }
   .actions .actionNote { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pb-muted); }

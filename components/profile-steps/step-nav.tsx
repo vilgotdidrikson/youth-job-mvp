@@ -45,14 +45,15 @@ export function StepRail({ step, done, info }: { step: ProfileJourneyStep; done:
 }
 
 /** Journey page for a step in the new design. CV facts sit in the rail on desktop; the form shows its own toggle on mobile. */
-export function ProfileStepPage({ step, done, cvFacts, children, as: Outer = "main" }: { step: ProfileJourneyStep; done: readonly ProfileJourneyStep[]; cvFacts?: string; children: ReactNode; as?: "main" | "div" }) {
+export function ProfileStepPage({ step, done, cvFacts, tip, children, as: Outer = "main" }: { step: ProfileJourneyStep; done: readonly ProfileJourneyStep[]; cvFacts?: string; tip?: ReactNode; children: ReactNode; as?: "main" | "div" }) {
   const [showCv, setShowCv] = useState(false);
-  const info = cvFacts ? <div className={styles.info}>
+  const facts = cvFacts ? <div className={styles.info}>
     <strong>Redan i ditt CV</strong>
     <p>Det du skrivit i CV:t används automatiskt. Här lägger du bara till det som saknas.</p>
     <button type="button" aria-expanded={showCv} onClick={() => setShowCv(open => !open)}>{showCv ? "Dölj uppgifterna" : "Visa uppgifterna"}</button>
     {showCv && <p className={styles.cvFacts}>{cvFacts}</p>}
   </div> : undefined;
+  const info = facts || tip ? <>{tip}{facts}</> : undefined;
   return <Outer className={styles.page}>
     <StepHeader step={step} />
     <div className={styles.layout}>
