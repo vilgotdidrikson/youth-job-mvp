@@ -38,6 +38,8 @@ import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuil
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
 import { addMustHave, applyAiJobSuggestion, type AiJobReview, type AiJobSuggestion } from "@/lib/job-ai-review";
 import { JobAiReviewPanel } from "@/components/job-ai-review-panel";
+import { firstPracticalError, localIsoDate, practicalErrors, practicalPayload } from "@/lib/job-practical";
+import { JobPracticalFields } from "@/components/job-practical-fields";
 import { firstJobFieldError, jobFieldErrors, jobFieldStep, parseSalaryText, prefillCompanyCity, type JobFieldName } from "@/lib/job-fields";
 import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
@@ -123,6 +125,7 @@ function CompanyPageContent() {
   const [customRequirement, setCustomRequirement] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [shownFields, setShownFields] = useState<Partial<Record<JobFieldName, boolean>>>({});
+  const [practicalShowAll, setPracticalShowAll] = useState(false);
   const [cityPrefill, setCityPrefill] = useState("");
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCategory,setEditingCategory]=useState<JobPost|null>(null);
@@ -359,6 +362,9 @@ function CompanyPageContent() {
     try { validateJobWorkplaces(formWorkplaces(form)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera arbetsplatserna."); return false; }
     if (!fieldsAreValid()) return false;
     if (generatingAi) { setError("Vänta tills AI-förslaget är klart innan du sparar."); return false; }
+    // A new last application day may not have passed; an edited listing keeps whatever it already had.
+    const practical = firstPracticalError(practicalErrors(form.practical, editing ? undefined : localIsoDate()));
+    if (practical) { setPracticalShowAll(true); setError(practical.message); if (builderStep !== 3) setBuilderStep(3); window.setTimeout(() => document.getElementById(`job-practical-${practical.field}`)?.focus(), 0); return false; }
     return true;
   };
 
@@ -425,6 +431,7 @@ function CompanyPageContent() {
         image_url: imageUrls.join(","),
         min_age: form.minAge ? parseInt(form.minAge, 10) : null,
         max_age: form.maxAge ? parseInt(form.maxAge, 10) : null,
+        practical_details: practicalPayload(form.practical),
       });
       let matchProfileWarning = "";
       try {
@@ -934,6 +941,7 @@ function CompanyPageContent() {
                       <JobWorkplaceFields value={formWorkplaces(form)} disabled={busy} onChange={workplaces => setForm(current => ({ ...current, workplaces, address: workplaces[0].address, postalCode: workplaces[0].postal_code, city: workplaces[0].city }))}/>
                       {cityPrefill && formWorkplaces(form)[0].city === cityPrefill && <p className="job-builder-help" role="status">Orten är hämtad från er företagsprofil. Ändra den om jobbet finns någon annanstans.</p>}
                     </section>
+                    <JobPracticalFields value={form.practical} onChange={practical => setForm(current => ({ ...current, practical }))} today={editing ? undefined : localIsoDate()} showAll={practicalShowAll} disabled={busy} />
                     <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2>{form.salaryText && <label>Kopierad löneuppgift<input className="input-field" value={form.salaryText} onChange={event => setForm(current => ({ ...current, salaryText: event.target.value }))}/><small>Redigera texten här, eller fyll i beloppsfälten nedan för att ersätta den.</small></label>}{form.salaryText && (salaryTransfer ? <div className="job-builder-transfer"><span>Texten anger {draftSalary({ ...form, ...salaryTransfer, salaryText: "" })}.</span><button type="button" className="secondary-btn" onClick={() => setForm(current => ({ ...current, ...salaryTransfer, salaryText: "" }))}>Fyll i lönefälten</button></div> : <p className="job-builder-help">Texten saknar ett tydligt belopp med enhet och kan inte fyllas i automatiskt.</p>)}<div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type, salaryText: "" }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value, salaryText: "" }))} {...fieldProps("salaryFrom")} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value, salaryText: "" }))} {...fieldProps("salaryTo")} /></label><em>kr/{salaryPeriod}</em></div>{(["salaryFrom", "salaryTo"] as const).map(field => fieldError(field) && <p key={field} id={`job-field-${field}-error`} className="job-builder-field-error" role="alert">{fieldError(field)}</p>)}</section>
                     <section className="card job-builder-section"><h2 id="job-benefits-label">Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips" role="group" aria-labelledby="job-benefits-label">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
                     <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).length ? <div className="job-builder-image-grid">{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 4:3</span></>}</label></section>

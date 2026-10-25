@@ -1,0 +1,24 @@
+{
+  "hex": 555,
+  "fontSizes": 140,
+  "radii": 57,
+  "fontWeights": 10,
+  "hexPerFile": {
+    "app/applications/applications-design.css": 9,
+    "app/chats/chat.module.css": 48,
+    "app/company/company-design.css": 18,
+    "app/globals.css": 293,
+    "app/jobb/[jobId]/job-detail.module.css": 6,
+    "app/notifications/activity.module.css": 9,
+    "app/product-design.css": 15,
+    "app/profile/profile.css": 19,
+    "components/company-verification-status.css": 14,
+    "components/job-discovery.module.css": 11,
+    "components/password-input.module.css": 1,
+    "components/profile-journey.module.css": 16,
+    "components/profile-steps/profile-steps.module.css": 2,
+    "components/recruitment-profile.module.css": 11,
+    "components/recruitment.module.css": 26,
+    "components/video.module.css": 57
+  }
+}

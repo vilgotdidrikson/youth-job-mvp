@@ -7,6 +7,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
 import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
+import { readPracticalDetails } from "@/lib/job-practical";
 
 const JOB_TABLE_FIELDS = [
   "title",
@@ -34,6 +35,7 @@ const JOB_TABLE_FIELDS = [
   "created_at",
   "min_age",
   "max_age",
+  "practical_details",
 ] as const;
 
 const JOB_CREATE_INPUT_FIELDS = [
@@ -58,6 +60,7 @@ const JOB_CREATE_INPUT_FIELDS = [
   "open_positions",
   "min_age",
   "max_age",
+  "practical_details",
 ] as const;
 
 const JOB_UPDATE_INPUT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "is_active", "status"] as const;
@@ -87,6 +90,7 @@ export interface CreateJobInput {
   open_positions?: number | null;
   min_age?: number | null;
   max_age?: number | null;
+  practical_details?: import("@/lib/job-practical").JobPracticalDetails;
 }
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {
@@ -119,6 +123,7 @@ interface JobInsertPayload {
   open_positions: number;
   min_age?: number | null;
   max_age?: number | null;
+  practical_details?: import("@/lib/job-practical").JobPracticalDetails;
 }
 
 function normalizeJobString(value: unknown): string {
@@ -260,6 +265,7 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     first_published_at: normalizeJobString(row.first_published_at) || null,
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
+    practical_details: readPracticalDetails(row.practical_details),
   };
 }
 
@@ -303,6 +309,7 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     open_positions: updates.open_positions,
     min_age: updates.min_age,
     max_age: updates.max_age,
+    practical_details: updates.practical_details === undefined ? undefined : readPracticalDetails(updates.practical_details),
   });
 }
 
@@ -466,6 +473,9 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   // the 20260518 migration has been applied to the Supabase project.
   if (jobData.min_age != null) payload.min_age = jobData.min_age;
   if (jobData.max_age != null) payload.max_age = jobData.max_age;
+  // Same for practical details (N05): an empty value is the column default.
+  const practical = readPracticalDetails(jobData.practical_details);
+  if (Object.keys(practical).length) payload.practical_details = practical;
 
   return insertJobRow(payload);
 }

@@ -43,6 +43,9 @@
     "test:notifications": "node scripts/test-notifications.mjs",
     "test:accessibility": "node scripts/test-accessibility.mjs",
     "test:profile-steps": "node scripts/test-profile-steps.mjs",
+    "test:company-public-profile": "node scripts/test-company-public-profile.mjs",
+    "test:job-practical": "node scripts/test-job-practical.mjs",
+    "check:design-tokens": "node scripts/check-design-tokens.mjs",
     "test:platform-visuals": "node scripts/test-platform-visuals.mjs"
   },
   "dependencies": {
