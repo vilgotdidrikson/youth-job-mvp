@@ -1,7 +1,9 @@
 # MatchnWork design and optimization audit — 2026-10-22
 
 **Base:** `dev` at `f7ecece` (2026-10-21). Deployed dev: https://youth-job-mvp-dev.vercel.app
-**Status:** Proposal. Nothing in this file is reserved, implemented or verified. Follow `AGENTS.md` before coding: reserve the item in `docs/ATGARDSPLAN.md`, work on your own branch from current `dev`, and report real verification.
+**Status:** Historical findings and proposals from 2026-10-22, with implementation updates below. Current ownership and delivery status are tracked in `docs/ATGARDSPLAN.md`. Follow `AGENTS.md` before coding: reserve the item, work on your own branch from current `dev`, and report real verification.
+
+**Logo update — 2026-10-25:** Vilgot supplied the new MatchnWork logo, now implemented across the site's existing brand surfaces in dev through [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merge `ccf94bf`. DA-07's shared logo and DA-02's favicon/app/share-image assets use this artwork. The previous inconsistent logos and starter favicon are historical findings, not outstanding implementation tasks. Visual acceptance and physical mobile installation remain separate checks; this update does not close unrelated audit items.
 
 ## How to use this file
 
@@ -27,12 +29,12 @@ Several findings touch items that already exist or are in progress. Those are ma
 | ID | Priority | Area | Finding |
 |---|---|---|---|
 | [DA-01](#da-01) | P1 | Landing | Illustrations in the platform section render as empty dark boxes below 1024px |
-| [DA-02](#da-02) | P1 | Brand / SEO | Default Next.js favicon; no app icons, manifest, share image or page titles |
+| [DA-02](#da-02) | P1 | Brand / SEO | New supplied logo implemented in favicon, app icons and share image; remaining acceptance/metadata checks tracked below |
 | [DA-03](#da-03) | P1 | Landing | The first screen shows no product and no static explanation |
 | [DA-04](#da-04) | P2 | Design system | Colour tokens exist but are bypassed, duplicated and drifting |
 | [DA-05](#da-05) | P2 | Design system | No type, radius or weight scale (93 font sizes, 47 radii) |
 | [DA-06](#da-06) | P2 | Accessibility | Subtle and muted text fail WCAG AA contrast on some surfaces |
-| [DA-07](#da-07) | P2 | Brand | Logo appears in five different forms and is missing on auth pages |
+| [DA-07](#da-07) | P2 | Brand | Shared supplied logo implemented across brand surfaces, including auth; visual acceptance remains |
 | [DA-08](#da-08) | P2 | Marketing | Three different footers; none links to privacy |
 | [DA-09](#da-09) | P2 | Privacy page | Logged-out visitors get "Till profilen"; draft legal note is public |
 | [DA-10](#da-10) | P2 | Performance | Full-screen WebGL background runs non-stop and ignores reduced motion |
@@ -61,15 +63,21 @@ Suggested order: DA-01 and DA-02 first (small, visible, independent). Then DA-04
 - **Done when:** All five illustrations show their pink gradients at 375px, 800px and 1280px, and `document.querySelectorAll('[id="ai-grad"]').length` is never above 1.
 
 <a id="da-02"></a>
-### DA-02 Default favicon, no app icons, no share image, one title for every page
+### DA-02 Favicon, app icons, share image and page titles
+
+- **Implementation update — 2026-10-25:** The uploaded original `public/brand/matchnwork-logo.png` is preserved unchanged. `scripts/generate-brand-icons.mjs` derives the favicon (16/32/48px), SVG icon, Apple icon (180px), manifest icons (192/512px) and padded maskable icon (512px) from it. The Open Graph image uses the same original. Included in [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merged to dev as `ccf94bf`; approved dev deployment. Do not replace it with the former generated M mark.
+- **Actually verified:** Original bytes, icon dimensions, ICO frames, renderable SVG, production build and local HTTP 200/correct MIME for logo, favicon, SVG, Apple icon, manifest and share image. Deployed dev logo and favicon match the delivered files byte-for-byte.
+- **Still to verify:** Visual desktop/mobile acceptance, installed mobile icon and real social link previews; this update does not claim all page-title/metadata acceptance is complete. Existing DA-02 ownership/status in the action plan is preserved.
+
+**Original audit finding (2026-10-22):**
 
 - **Seen:** `app/favicon.ico` is the unchanged create-next-app favicon (25,931 bytes), so browser tabs and bookmarks show the Next.js/Vercel mark. `public/` still holds the starter SVG (`file.svg`). There is no `apple-icon`, no web manifest and no `theme-color`, so "Lägg till på hemskärmen" gets a screenshot instead of an icon. All pages share the title "MatchnWork" and there is no Open Graph image, so a link shared on Snapchat, Instagram or iMessage has no preview.
 - **Fix:**
-  1. Add `app/icon.svg` (the M mark on `--color-brand`), `app/apple-icon.png` (180×180) and replace `app/favicon.ico`. Delete `public/file.svg`.
+  1. Use the supplied MatchnWork logo in `app/icon.svg`, `app/apple-icon.png` (180×180) and `app/favicon.ico`; retain the original source and generate size variants with the shared script. The earlier M-mark proposal has been superseded.
   2. Add `app/manifest.ts` with name, short_name, `theme_color: "#b84164"`, `background_color: "#fffafb"` and the icons. Add `export const viewport = { themeColor: "#fffafb" }` in `app/layout.tsx`.
   3. Add `app/opengraph-image.tsx` (1200×630, brand gradient, headline and logo).
   4. Use a title template in `app/layout.tsx` (`title: { default: "MatchnWork", template: "%s · MatchnWork" }`) and per-page titles such as "Funktioner", "Priser", "Logga in", "Skapa konto" and "Integritet och AI". This needs DA-11 for the pages that are currently fully client-rendered.
-- **Done when:** The tab shows the M icon, a shared link to `/` shows the image and the right title in a link previewer, and every public page has its own title.
+- **Done when:** The tab shows the supplied MatchnWork logo, a shared link to `/` shows the image and the right title in a link previewer, and every public page has its own title.
 
 <a id="da-03"></a>
 ### DA-03 The first screen shows no product
@@ -159,12 +167,18 @@ Suggested order: DA-01 and DA-02 first (small, visible, independent). Then DA-04
 - **Done when:** All body text meets 4.5:1 on its actual background, checked with Lighthouse or axe on the public pages and a sample of logged-in pages.
 
 <a id="da-07"></a>
-### DA-07 The logo appears in five forms
+### DA-07 Shared supplied logo across the site
 
 **Coordinate with D07.**
 
+- **Implemented in dev — 2026-10-25:** Vilgot's supplied logo replaces the previous M marks and text-only logos through the shared `components/brand-logo.tsx`. Used in marketing navigation/footer, login/signup/password recovery, privacy, youth/company navigation, discovery, youth/company onboarding, the listing builder and admin. Component options are `variant="full" | "mark"` and `tone="inherit" | "light" | "dark"`. Full mode combines the supplied artwork with the MatchnWork name; mark mode gives the image its accessible name. The original artwork and colours are unchanged.
+- **Delivery:** [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merge `ccf94bf`, deployed to dev. The same artwork also supplies DA-02's browser/app/share-image assets.
+- **Verification:** TypeScript, targeted ESLint without errors, production build and accessibility/search/navigation/profile regressions pass. Public page HTML references the supplied logo; local production HTTP checks pass. Visual acceptance on desktop/mobile and authenticated surfaces remains; no browser screenshots or physical installation are claimed. Other D07 copy tasks remain open.
+
+**Original audit finding (2026-10-22):**
+
 - **Seen:** The landing nav and footer use the M mark plus wordmark. `/privacy` uses a pink text-only wordmark. The auth pages (`/login`, `/signup`, `/forgot-password`) have no logo at all, only "← Tillbaka". Admin uses a mark with an asymmetric radius, and the mobile discovery header uses a text-only brand *(from code)*.
-- **Fix:** Create `components/brand-logo.tsx` with `variant="full" | "mark"` and `tone="ink" | "light"`, built on the existing `.landing-logo` markup. Use it in the marketing nav and footer, on the auth pages (centred above the card, linking to `/`), on `/privacy`, in the youth and company navigation, and in admin.
+- **Fix:** Create `components/brand-logo.tsx` with `variant="full" | "mark"` and `tone="inherit" | "light" | "dark"`, using the supplied original PNG rather than reconstructing an M mark. Use it in the marketing nav and footer, on the auth pages (centred above the card, linking to `/`), on `/privacy`, in the youth and company navigation, and in admin.
 - **Done when:** One component draws the logo everywhere, and every public page shows it.
 
 <a id="da-08"></a>
