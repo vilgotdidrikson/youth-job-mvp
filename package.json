@@ -37,6 +37,7 @@
     "test:company-verification": "node scripts/test-company-verification.mjs",
     "test:job-edit": "node scripts/test-job-edit.mjs",
     "test:application-overview": "node scripts/test-application-overview.mjs",
+    "test:application-withdrawal": "node scripts/test-application-withdrawal.mjs",
     "test:job-fields": "node scripts/test-job-fields.mjs",
     "test:job-ai-review": "node scripts/test-job-ai-review.mjs",
     "test:notifications": "node scripts/test-notifications.mjs",

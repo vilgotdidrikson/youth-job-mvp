@@ -32,6 +32,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<JobPost | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
+  const [withdrawn, setWithdrawn] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false), [needsCompletion, setNeedsCompletion] = useState(false);
   const [saved, setSaved] = useState(false), [showCvPrompt, setShowCvPrompt] = useState(false), [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false), [loadedJobId, setLoadedJobId] = useState("");
@@ -52,6 +53,7 @@ export default function JobDetailPage() {
       if (!active) return;
       if (application.error || completion.error || draft.error || bookmark.error) { setActionError("Kunde inte läsa din ansökningsstatus. Ladda om sidan för att försöka igen."); return; }
       setHasDraft(Boolean(draft.data));
+      setWithdrawn(completion.data?.status === "withdrawn");
       setAlreadyApplied(Boolean(application.data) || completion.data?.status === "submitted");
       setNeedsCompletion(completion.data?.status === "needs_completion"); setSaved(Boolean(bookmark.data)); setLoadedJobId(params.jobId);
     });
@@ -77,7 +79,7 @@ export default function JobDetailPage() {
     finally { setBusy(false); }
   };
   const startApplication = async () => {
-    if (busy || cvLoading || loadedJobId !== params.jobId) return;
+    if (busy || withdrawn || cvLoading || loadedJobId !== params.jobId) return;
     setBusy(true); setActionError("");
     try {
       if (!acceptsApplications) throw new Error("Den här annonsen tar inte emot nya ansökningar.");
@@ -90,8 +92,8 @@ export default function JobDetailPage() {
   };
   // Saved interest is not sent; never offer "Jag är intresserad" again as if nothing happened.
   const savedInterest = hasDraft && !alreadyApplied && !needsCompletion && acceptsApplications && !cvLoading ? savedInterestAction(cvCompleted) : null;
-  const actionNote = savedInterest ? savedInterest.note : !cvCompleted && !alreadyApplied ? "Ditt intresse sparas tills CV:t är klart." : "Ansökan skickas direkt. Följ den under Ansökningar.";
-  const action = alreadyApplied ? <p className={styles.status}><UiIcon name="check"/>Ditt intresse är skickat</p> : needsCompletion ? <Link href="/applications" className={styles.primary}>Komplettera din ansökan <UiIcon name="arrow"/></Link> : savedInterest?.kind === "complete_cv" ? <Link href={`/youth/cv?job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title)}`} className={styles.primary}>{savedInterest.label} <UiIcon name="arrow"/></Link> : savedInterest ? <button type="button" className={styles.primary} disabled={busy || loadedJobId !== params.jobId} onClick={() => void startApplication()}>{busy ? "Skickar…" : savedInterest.label}</button> : acceptsApplications ? <button type="button" className={styles.primary} disabled={busy || cvLoading || loadedJobId !== params.jobId} onClick={() => void startApplication()}><UiIcon name="heart"/>{busy ? "Sparar…" : "Jag är intresserad"}</button> : <p className={styles.status}>Nya ansökningar är stängda</p>;
+  const actionNote = withdrawn ? "Din ansökan är återkallad och skickas inte igen automatiskt." : savedInterest ? savedInterest.note : !cvCompleted && !alreadyApplied ? "Ditt intresse sparas tills CV:t är klart." : "Ansökan skickas direkt. Följ den under Ansökningar.";
+  const action = withdrawn ? <Link href="/applications" className={styles.primary}>Ansökan återkallad</Link> : alreadyApplied ? <p className={styles.status}><UiIcon name="check"/>Ditt intresse är skickat</p> : needsCompletion ? <Link href="/applications" className={styles.primary}>Komplettera din ansökan <UiIcon name="arrow"/></Link> : savedInterest?.kind === "complete_cv" ? <Link href={`/youth/cv?job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title)}`} className={styles.primary}>{savedInterest.label} <UiIcon name="arrow"/></Link> : savedInterest ? <button type="button" className={styles.primary} disabled={busy || loadedJobId !== params.jobId} onClick={() => void startApplication()}>{busy ? "Skickar…" : savedInterest.label}</button> : acceptsApplications ? <button type="button" className={styles.primary} disabled={busy || cvLoading || loadedJobId !== params.jobId} onClick={() => void startApplication()}><UiIcon name="heart"/>{busy ? "Sparar…" : "Jag är intresserad"}</button> : <p className={styles.status}>Nya ansökningar är stängda</p>;
   return <main className={styles.page}>
     <Link href="/swipe" className={styles.back}><UiIcon name="arrow"/>Tillbaka till Upptäck</Link>
     <div className={styles.layout}><article className={styles.article}>

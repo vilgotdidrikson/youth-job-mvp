@@ -13,13 +13,14 @@ export interface ApplicationCompletion {
   questions: ApplicationQuestion[];
   answers: Record<string, string>;
   omitted_question_ids?: string[];
-  status: "needs_completion" | "submitted" | "unavailable";
+  status: "needs_completion" | "submitted" | "unavailable" | "withdrawn";
+  withdrawn_at?: string | null;
   analysis_source_hash?: string | null;
   created_at: string;
   submitted_at: string | null;
 }
 
-export async function submitApplicationAction(action: "prepare" | "answers" | "drafts", values: Record<string, unknown> = {}) {
+export async function submitApplicationAction(action: "prepare" | "answers" | "drafts" | "withdraw", values: Record<string, unknown> = {}) {
   const response = await fetch("/api/youth/applications/submit", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ action, ...values }) });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Kunde inte spara ansökan. Försök igen.");
@@ -33,6 +34,7 @@ export async function prepareApplication(jobId: string): Promise<ApplicationComp
     ? saveApplicationAnswers(jobId, application.answers, true)
     : application;
   const result = await sent;
+  if(result.status === "withdrawn") throw new Error("Du har återkallat den här ansökan. Den skickas inte igen automatiskt.");
   if(result.status !== "submitted") throw new Error("Ansökan är inte skickad. Annonsen tar inte emot ansökningar just nu.");
   return result;
 }

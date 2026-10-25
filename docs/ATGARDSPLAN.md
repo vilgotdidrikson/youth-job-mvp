@@ -81,7 +81,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | För granskning | Max / Claude |
-| 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | Pågår | Vilgot / Codex |
+| 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | För granskning | Vilgot / Codex |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
@@ -268,14 +268,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 20
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n02-withdraw-application-20261025`; reserverad före kodarbete 2026-10-25. Återkallelse av väntande intresse och skickad ansökan; GDPR-/AI-utbyggnad och gallring ingår inte.
 - Åtgärd: Ge ungdomar möjlighet att ta bort väntande intresse innan automatisk sändning och återkalla en skickad ansökan med tydlig status. Visa vad som händer med en eventuell match eller chatt.
 - Klar när: Användaren kan ändra sig och får ingen oavsiktligt skickad ansökan.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Bekräftad återkallelse av privat intresse eller skickad ansökan i Ansökningar, tydlig Återkallad-historik och korrekta räknare. Transaktionell ägarkontrollerad RPC samt databasguard för gamla utkast-/ansöknings-/matchskrivningar; återkallat skickas inte igen automatiskt. Aktivt intresse tas bort, företagets nya underlagsåtkomst upphör via befintliga regler, match avslutas och chatthistorik blir skrivskyddad. Företaget får återkallelsenotis endast för redan skickat. Registrerad anställning skyddas och hanteras via rättelseflödet. Migration 20261025123102 införd enbart i DevStaging. Se docs/N02.md.
+- Verifierat: 38 transaktionella DevStaging-kontroller före/efter införande, med rollback av QA-data: roll/ägarskap, privat/skickat/pausat, gamla klienter och CV-sändning, statuskonflikt, idempotens, kandidatåtkomst, avslutad match, läsbar historik och nekad sändning i båda rollerna, analyskö och anställningsskydd. test:application-withdrawal (verklig UI-handler och API med simulerad transport) samt application-overview, application-disclosure, application-supplement, recruitment-review, notifications, job-discovery, matching, recruitment och profile-journey passerar. TypeScript, riktad ESLint och webpack-produktionsbygge passerar. Säkerhetsrådgivaren har oförändrade fynd.
+- Återstår / blockerare: Inloggat visuellt dev-prov på dator/mobil, native dialog/fokus, flera öppna flikar och verkligt samtidiga transaktioner är inte slutverifierade. Ingen ny betald webbläsarkörning gjord. Ny aktiv ansökan efter återkallelse ingår inte; gammal begäran/CV-sparande får inte återaktivera. Redan hämtade underlag/fillänkar kan inte tas tillbaka. Ingen GDPR-/AI-utbyggnad, gallring eller produktionsändring.
 
 <a id="n13"></a>
 ### N13 Spela in presentationsvideo direkt

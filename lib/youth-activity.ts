@@ -2,7 +2,7 @@
 
 import { getSupabaseClient } from "@/lib/supabase";
 
-export type ActivityStatus = "draft" | "needs_completion" | "submitted" | "unavailable" | "matched" | "in_contact" | "interview" | "hired" | "rejected" | "cancelled";
+export type ActivityStatus = "draft" | "needs_completion" | "submitted" | "unavailable" | "withdrawn" | "matched" | "in_contact" | "interview" | "hired" | "rejected" | "cancelled";
 export interface YouthActivity {
   jobId: string; title: string; company: string; createdAt: string; status: ActivityStatus; pendingQuestions?: number;
   /** For saved interest: whether the listing still accepts applications. RLS hides closed listings from youth. */
@@ -30,8 +30,9 @@ export async function getYouthActivity(userId: string): Promise<YouthActivity[]>
     for (const row of (result.data ?? []) as unknown as Row[]) {
       const job = Array.isArray(row.jobs) ? row.jobs[0] : row.jobs;
       const status: ActivityStatus = source === 0 ? "draft" : source === 1 ? "submitted" : source === 2
-        ? row.status === "needs_completion" || row.status === "unavailable" ? row.status : "submitted"
+        ? row.status === "needs_completion" || row.status === "unavailable" || row.status === "withdrawn" ? row.status : "submitted"
         : matchStatuses.includes(row.status as ActivityStatus) ? row.status as ActivityStatus : "matched";
+      if (source === 3 && byJob.get(row.job_id)?.status === "withdrawn") continue;
       byJob.set(row.job_id, {
         jobId: row.job_id, title: row.job_title || job?.title || "Jobbannons", company: row.company_name || job?.company_name || "Arbetsgivare", createdAt: row.created_at, status,
         ...(source === 0 ? { available: listingOpen(job) } : {}),
