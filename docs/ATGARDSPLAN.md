@@ -73,7 +73,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | För granskning | Codex |
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Pågår | Codex |
-| 13.5 | [N20](#n20) | P2 | Textbaserad profilguide och diskret formulärhjälp | Ej påbörjad | — |
+| 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
@@ -104,7 +104,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
-| 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
+| 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Pågår | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | Ej påbörjad | — |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
@@ -378,9 +378,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 40
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n07-undo-discovery-20261025`; reserverad före kodarbete 2026-10-25. Avsteg: kvarstående profil-/AI-/GDPR-punkter inväntar avstämning, SMTP/fakturering och F17 inväntar domän-/prisberoenden; inga andra ägares uppgifter tas över.
 - Åtgärd: Lägg en diskret Ångra efter Inte nu så att ett oavsiktligt bortval kan tas tillbaka utan att lämna upptäcktsflödet.
 - Klar när: Ett feltryck döljer inte ett intressant jobb utan enkel återväg.
 - Implementerat: —
@@ -1229,7 +1229,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Återstår / blockerare: Hela N19 förblir Pågår. Fullständig separering mellan alla godkända profilfakta och CV-urval återstår; nuvarande CV-synkning är inte ett generellt profilfaktaarkiv. Tillförlitlig postnummerbaserad närhet, inloggad mobil/dator, verkliga filnedladdningar, modell-/minimeringsverifiering och L09:s PDF-layout återstår. Live-testet `test:cv` kunde inte köras utan lokal API-server (ECONNREFUSED); räknas inte som godkänt. Se detaljer i `docs/N19.md`.
 
 <a id="n20"></a>
-### N20 Textbaserad profilguide och diskret formulärhjälp
+- Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
+
+### N20 Bygg hela jobbprofilen med chatt eller formulär
 
 - [ ] Klar
 - Prioritet: P2
@@ -1246,6 +1248,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Återstår / blockerare: —
 
 <a id="n21"></a>
+- Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
+
 ### N21 Valfri genomläsning av uppladdat CV
 
 - [ ] Klar
