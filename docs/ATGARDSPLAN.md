@@ -127,9 +127,9 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | För granskning | Max / Claude |
-| 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Ej påbörjad | — |
-| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | Ej påbörjad | — |
-| 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | Ej påbörjad | — |
+| 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
+| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
+| 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | För granskning | Max / Claude |
 | 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Ej påbörjad | — |
 | 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
 | 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Ej påbörjad | — |
@@ -1464,16 +1464,16 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 63
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-04), som har fynd, filer och mått.
 - Åtgärd: Bestäm värdena i `app/styles/theme.css` (ett värde för `--color-surface-soft` och de saknade tokens som används), ta bort tokenblocket på `.mnw-product` och lokala `--ink`/`--muted`/`--rose`/`--accent`, ersätt hex-värden fil för fil med början i chatten (avvikande palett) och `product-design.css`, och lägg till ett kontrollskript som larmar om antalet hex-värden utanför `theme.css` ökar.
 - Klar när: Bara `theme.css` definierar färgvärden (undantag: SVG-illustrationer och kartan), chattens palett stämmer med resten och tokenkontrollen körs.
 - Samordning / beroenden: Görs före DA-05 och DA-06. Profilbyggets tokens i `components/profile-steps/profile-steps.module.css` flyttas hit när DA-04 införs.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Nya tokens i `app/styles/theme.css` (`--color-rose`, `--color-rose-track`, `--color-brand-accent`, `--color-brand-on-rose`, `--color-divider`, `--color-dashed`, `--color-ring`, `--color-plum-900`, `--color-success-strong`, `--color-text-muted-strong`, `--color-warning`, `--color-warning-soft`, `--color-white`). Tokenblocket på `.mnw-product` borttaget; produktytor som använde den överskrivna `--color-surface-soft` använder nu `--color-rose` (samma rosa som förut), marknadssidorna behåller `--color-surface-soft`. Lokala `--ink`/`--muted`/`--rose`/`--accent` borttagna ur modulerna och profilbyggets `--pb-*` pekar på theme-tokens. 727 hexvärden som exakt motsvarade en token ersatta med `var(--…)` i 27 filer (vitt efter sammanhang: bakgrund `--color-surface`, annars `--color-white`). Chattens avvikande palett (`#4e3341`, `#927887`, `#ac4066`) följer nu brand-paletten. Kontrollskript `scripts/check-design-tokens.mjs` (`npm run check:design-tokens`) med baslinje `scripts/design-token-baseline.json` som underkänner fler färgvärden per fil eller fler olika textstorlekar, radier och vikter.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade.
+- Återstår / blockerare: 555 färgvärden utanför `theme.css` återstår (från cirka 1 280), främst äldre neutrala gråtoner och enstaka värden i `globals.css`, `video.module.css`, chatten och äldre vyer, samt inline-färger i TSX. Att mappa dem mot paletten ändrar utseendet och görs vy för vy tillsammans med DA-12; sänk baslinjen med `--update` efter varje migrering. Kontroll i driftsatt dev.
 
 <a id="da-05"></a>
 ### DA-05 Inför skala för typografi, vikter, radier och skuggor
@@ -1481,16 +1481,16 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 64
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-05), som har fynd, filer och mått.
 - Åtgärd: Lägg till skalan för textstorlekar, vikter, radier och skuggor i `theme.css` enligt förslaget i audit-dokumentet och migrera till den tillsammans med DA-04.
 - Klar när: Ny och ändrad CSS använder bara skalans värden, och antalet olika textstorlekar och radier minskar för varje migrerad fil (mäts med DA-04:s kontrollskript).
 - Samordning / beroenden: Beroende: DA-04.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`..
+- Återstår / blockerare: Migrering av befintliga värden till skalan sker när filer ändras och i DA-12; antalet ska minska för varje migrerad fil. Kontroll i driftsatt dev.
 
 <a id="da-06"></a>
 ### DA-06 Rätta textfärger som inte klarar WCAG AA
@@ -1498,16 +1498,16 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 65
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-06), som har fynd, filer och mått.
 - Åtgärd: Gör `--color-text-muted` mörkare (`#7f616d`), använd `--color-text-subtle` bara för ikoner, kanter, platshållare och stor text, och höj minsta textstorlek till 12px (DA-16).
 - Klar när: All brödtext når 4.5:1 mot sin faktiska bakgrund, kontrollerat med Lighthouse eller axe på publika sidor och ett urval inloggade sidor.
 - Samordning / beroenden: Samordna med F23 (tillgänglighet) och L08. Beroende: DA-04.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: `--color-text-muted` mörkare (`#896a76` → `#7f616d`), även där värdet tidigare var hårdkodat. `--color-text-subtle` används inte längre för brödtext (ögonbryn, statistikkälla, prisnot, bottenmeny, byggarens etiketter och hjälptexter flyttade till dämpad text); kvar bara för platshållare och dekorativa tecken. Därtill rättat: profilhuvudets initial och grå texter, annonsbyggarens ögonbryn, startsidans copyrightrad och funktionssidans ögonbryn på rosa.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade. Kontrastskanning (egen Playwright-kontroll av varje synlig textnod mot dess faktiska bakgrund; liten text 4.5:1, stor text 3:1) på samma 15 sidor vid 375 px: 33 text under AA före, 2 efter. De två återstående är inga brödtextfel: startsidans vita logotyp ligger på WebGL-gradienten som skannern inte kan läsa, och tankstrecket mellan ålders-/lönefälten är dekorativt.
+- Återstår / blockerare: Ingen Lighthouse/axe-körning (verktygen finns inte här). Startsidans logotyp mot gradienten bedöms i D05. Kontroll i driftsatt dev.
 
 <a id="da-11"></a>
 ### DA-11 Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta

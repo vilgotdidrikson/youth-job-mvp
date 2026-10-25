@@ -1,6 +1,6 @@
-.card { border:1px solid #ecdee4;border-radius:22px;padding:24px;background:#fff;margin-block:16px;color:#482b38;min-width:0; }
+.card { border:1px solid #ecdee4;border-radius:22px;padding:24px;background:var(--color-surface);margin-block:16px;color:#482b38;min-width:0; }
 .studio :global(.cta-btn),.videoDialog :global(.cta-btn) { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 20px;border:0;border-radius:13px;background:#ad3f62;color:white;font:inherit;font-size:.85rem;cursor:pointer;text-decoration:none; }
-.studio :global(.secondary-btn),.videoDialog :global(.secondary-btn),.messageOptions :global(.secondary-btn) { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid #e5d6df;border-radius:12px;background:#fff;color:#785067;font:inherit;font-size:.8rem;cursor:pointer; }
+.studio :global(.secondary-btn),.videoDialog :global(.secondary-btn),.messageOptions :global(.secondary-btn) { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid #e5d6df;border-radius:12px;background:var(--color-surface);color:#785067;font:inherit;font-size:.8rem;cursor:pointer; }
 .cardHeading { display:flex;align-items:center;gap:14px;margin-bottom:18px; }
 .cardHeading > div { flex:1; }
 .card h2 { margin:0;font-size:1.1rem;font-weight:600;letter-spacing:-.025em; }
@@ -26,18 +26,18 @@
 .playCard { display:flex;align-items:center;gap:14px;width:100%;min-width:190px;text-align:left;padding:22px;background:linear-gradient(135deg,#f6e7ee,#eeeaf4);border:1px solid #e5d3df;border-radius:16px;color:#57384c;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer; }
 .playCard small { display:block;margin-top:4px;font-size:.72rem;font-weight:400;color:#86677c; }
 .playCircle { width:46px;height:46px;display:grid;place-items:center;flex-shrink:0;border-radius:50%;background:white;box-shadow:0 3px 14px #60385012;color:#a33b60; }
-.chatTools { flex-shrink:0;padding:8px 22px 0;background:#fff; }
+.chatTools { flex-shrink:0;padding:8px 22px 0;background:var(--color-surface); }
 .videoToolbar { display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px; }
 .videoToolbar a,.videoToolbar button { display:inline-flex;align-items:center;gap:6px;border:0;border-radius:9px;color:#88506a;background:transparent;font:inherit;font-size:.74rem;min-height:40px;padding:8px 10px;text-decoration:none;cursor:pointer; }
 .videoToolbar a:hover,.videoToolbar button:hover { background:#f8edf2; }
-.videoDialog { border:1px solid #eadce3;border-radius:24px;background:#fff;padding:24px;width:min(560px,calc(100vw - 32px));max-height:88dvh;overflow-y:auto;color:#4c303e;box-shadow:0 24px 100px #3e142033; }
+.videoDialog { border:1px solid #eadce3;border-radius:24px;background:var(--color-surface);padding:24px;width:min(560px,calc(100vw - 32px));max-height:88dvh;overflow-y:auto;color:#4c303e;box-shadow:0 24px 100px #3e142033; }
 .dialogHeading { display:flex;align-items:center;justify-content:space-between;gap:16px; }
 .dialogHeading h2 { font-size:1.2rem;margin:0; }
 .closeButton { display:grid;place-items:center;border:0;border-radius:50%;width:44px;height:44px;background:#faf2f5;color:#66354c;cursor:pointer; }
 .videoMessage { min-width:210px;max-width:420px; }
 .messageOptions { position:relative;display:flex;justify-content:flex-end; }
 .messageOptions summary { cursor:pointer;list-style:none;display:grid;place-items:center;min-height:36px;width:44px;font-weight:600; }
-.messageOptions > div { display:grid;gap:8px;padding:10px;background:#fff;border:1px solid #e9dce2;border-radius:12px;color:#583044; }
+.messageOptions > div { display:grid;gap:8px;padding:10px;background:var(--color-surface);border:1px solid #e9dce2;border-radius:12px;color:#583044; }
 .studio { max-width:1120px;margin:0 auto;padding:114px 28px 80px;color:#4c303e; }
 .backLink { display:inline-flex;gap:8px;align-items:center;min-height:44px;color:#8c6c7b;font-size:.8rem;text-decoration:none; }
 .backLink svg { transform:rotate(180deg); }
@@ -47,7 +47,7 @@
 .studioHeading p { color:#8c7380;font-size:.92rem;line-height:1.6;margin:0; }
 .studioGrid { display:grid;grid-template-columns:minmax(0,1.7fr) minmax(240px,1fr);gap:28px;align-items:start; }
 .studioReview { grid-template-columns:minmax(0,680px);justify-content:center; }
-.studioSurface { background:#fff;border:1px solid #eadce4;border-radius:26px;padding:24px;min-width:0; }
+.studioSurface { background:var(--color-surface);border:1px solid #eadce4;border-radius:26px;padding:24px;min-width:0; }
 .studioSurface :global(.cta-btn) { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px; }
 .modeTabs { display:flex;gap:6px;padding:5px;border-radius:13px;background:#f8f3f6;margin-bottom:20px; }
 .modeTabs button { display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:42px;border:0;border-radius:9px;background:transparent;color:#856576;font:inherit;font-size:.8rem;cursor:pointer; }
@@ -55,7 +55,7 @@
 .cameraPlaceholder { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:310px;border-radius:17px;padding:30px 18px;background:#f9f3f6;text-align:center; }
 .cameraPlaceholder h2 { font-size:1.15rem;font-weight:500;margin:18px 0 8px;letter-spacing:-.02em; }
 .cameraPlaceholder p { max-width:280px;font-size:.83rem;line-height:1.6;color:#8c6b7c;margin:0 0 22px; }
-.cameraOutline { display:grid;place-items:center;width:66px;height:66px;border:1px solid #ead7e2;border-radius:23px;background:#fff;color:#a25b7c;font-size:30px; }
+.cameraOutline { display:grid;place-items:center;width:66px;height:66px;border:1px solid #ead7e2;border-radius:23px;background:var(--color-surface);color:#a25b7c;font-size:30px; }
 .cameraFrame { position:relative;overflow:hidden;border-radius:17px;background:#201c24; }
 .cameraFrame .video { margin:0;border-radius:0;max-height:56vh;min-height:240px; }
 .readyBadge,.recordingBadge { position:absolute;bottom:16px;left:16px;padding:9px 13px;border-radius:30px;background:#fffef2ed;color:#59424b;font-size:.7rem; }
