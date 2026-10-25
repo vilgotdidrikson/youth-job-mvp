@@ -14,8 +14,12 @@
 
   --color-text: #4c303b;
   --color-text-rgb: 76, 48, 59;
-  --color-text-muted: #896a76;
+  /* Darkened from #896a76 so muted body text meets WCAG AA on canvas and rose (DA-06). */
+  --color-text-muted: #7f616d;
+  --color-text-muted-strong: #765563;
+  /* Icons, borders, placeholders and large text only: 3.5:1 on canvas, too light for body text. */
   --color-text-subtle: #a57b88;
+  --color-white: #ffffff;
 
   --color-brand: #b84164;
   --color-brand-strong: #b84164;
@@ -23,13 +27,47 @@
   --color-brand-soft: #f7c2ce;
   --color-on-brand: #ffffff;
   --color-cream: #ffe0c9;
+  --color-brand-accent: #dc6f8d;
+  --color-brand-on-rose: #9c304f;
+  /* The product's soft pink. --color-surface-soft stays lighter on the marketing pages. */
+  --color-rose: #fce9ef;
+  --color-rose-track: #f4dce5;
+  --color-divider: #f6e4ea;
+  --color-dashed: #e3b9c7;
+  --color-ring: #e7c9d3;
+  --color-plum-900: #241419;
 
   --color-success: #21855d;
   --color-success-soft: #eef9f3;
   --color-success-border: #b9e5d7;
+  --color-success-strong: #226a54;
   --color-danger: #c0392b;
   --color-danger-soft: #fff1f0;
   --color-danger-border: #ffd6d3;
+  --color-warning: #7c5b08;
+  --color-warning-soft: #fff5d9;
+
+  /* Type, weight, shape and elevation scale (DA-05). New and touched CSS uses only these values. */
+  --text-xs: .75rem;   /* 12px, the minimum for visible text */
+  --text-sm: .875rem;  /* 14px */
+  --text-md: 1rem;     /* 16px, body and every input (avoids iOS zoom) */
+  --text-lg: 1.25rem;
+  --text-xl: 1.6rem;
+  --text-2xl: clamp(1.9rem, 4vw, 2.6rem);
+  --text-display: clamp(2.6rem, 7vw, 4.5rem);
+  --tracking-tight: -.04em;
+  --tracking-display: -.055em;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --radius-sm: 10px;
+  --radius-md: 14px;   /* buttons, inputs */
+  --radius-lg: 22px;   /* cards */
+  --radius-xl: 28px;   /* hero cards, dialogs */
+  --radius-pill: 999px;
+  --shadow-sm: 0 5px 20px rgb(var(--color-text-rgb) / .03);
+  --shadow-md: 0 18px 32px rgb(var(--color-text-rgb) / .09);
 
   /* Existing component aliases, kept while the app is gradually refactored. */
   --bg: var(--color-canvas);

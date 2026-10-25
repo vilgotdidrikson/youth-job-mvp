@@ -1,5 +1,5 @@
 .company-verification { --cv-accent:#6a4a00; --cv-bg:#fffaf0; --cv-border:#f0c36d; padding:1rem 1.15rem; margin-bottom:1rem; border:1px solid var(--cv-border); background:var(--cv-bg); color:#3d2f35; overflow-wrap:anywhere; }
-.company-verification.is-error { --cv-accent:#b42318; --cv-bg:#fff1f0; --cv-border:#ffd6d3; }
+.company-verification.is-error { --cv-accent:#b42318; --cv-bg:var(--color-danger-soft); --cv-border:var(--color-danger-border); }
 .company-verification.is-neutral { --cv-accent:#36507a; --cv-bg:#f7f9fc; --cv-border:#d4dce9; }
 .company-verification.is-success { --cv-accent:#1a7f4b; --cv-bg:#f1faf5; --cv-border:#b6e8cf; }
 .company-verification-heading { display:flex; gap:.7rem; align-items:flex-start; }
@@ -9,10 +9,10 @@
 .company-verification > p { margin:.55rem 0 0; font-size:.84rem; line-height:1.6; }
 .company-verification-steps { display:flex; flex-wrap:wrap; gap:.4rem 1rem; list-style:none; margin:.8rem 0 0; padding:0; font-size:.78rem; color:#6f6268; }
 .company-verification-steps li { display:flex; align-items:center; gap:.4rem; }
-.company-verification-steps li > span { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; border:1.5px solid #c9bfc3; background:#fff; }
-.company-verification-steps li.is-done > span { border-color:var(--cv-accent); background:var(--cv-accent); color:#fff; }
+.company-verification-steps li > span { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; border:1.5px solid #c9bfc3; background:var(--color-surface); }
+.company-verification-steps li.is-done > span { border-color:var(--cv-accent); background:var(--cv-accent); color:var(--color-white); }
 .company-verification-steps li.is-current { font-weight:600; color:var(--cv-accent); }
-.company-verification-steps li.is-current > span { border-color:var(--cv-accent); box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 9px var(--cv-accent); }
+.company-verification-steps li.is-current > span { border-color:var(--cv-accent); box-shadow:inset 0 0 0 3px var(--color-white), inset 0 0 0 9px var(--cv-accent); }
 .company-verification-missing { margin-top:.8rem; font-size:.82rem; }
 .company-verification-missing strong { color:var(--cv-accent); }
 .company-verification-missing ul { margin:.3rem 0 0; padding-left:1.1rem; line-height:1.6; }

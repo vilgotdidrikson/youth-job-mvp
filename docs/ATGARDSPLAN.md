@@ -125,6 +125,18 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
+| 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
+| 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | För granskning | Max / Claude |
+| 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
+| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
+| 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | För granskning | Max / Claude |
+| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Ej påbörjad | — |
+| 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
+| 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Ej påbörjad | — |
+| 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Ej påbörjad | — |
+| 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Ej påbörjad | — |
+| 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Ej påbörjad | — |
+| 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
@@ -681,6 +693,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Klar när: Relevant information och hjälp är åtkomliga där användaren fattar beslut; den nödvändiga saktexten är genomgången.
 - Tillägg 2026-10-18: Förklara skillnaden mellan egen jobbprofil, jobbspecifikt delat ansökningsunderlag och uppgifter som används i matchningen. Förklara självuppgivna exempel, eventuell sekundär procent/täckningsgrad och kontaktuppgifter i uppladdade CV. Samordna med N19:s förhandsvisning; generell företagsåtkomst till profil får inte utlovas.
 - Tillägg 2026-10-19: Inställningar → Integritet och personuppgifter samlar automatisk export, rättelse, säker kontoradering och kontaktväg enligt L13. Rättighetsinformation och kontakt ska även kunna nås utan inloggning. Leverantörsuppgifter och AI-lagring ska bygga på verifieringen i L14, inte antaganden om kontonamn eller EU-region.
+- Tillägg från designaudit 2026-10-25 (DA-08, DA-09 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam marknadssidfot med länk till Integritet på alla publika sidor och en rad under skapa konto-knappen; `/privacy` visar marknadsnavigering för utloggade och profillänk bara med session. Notisen om juridisk granskning tas bort med den slutliga policyn (L10/L14).
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -864,6 +877,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Lägg en statisk kort förklaring av ungdomsjobb och matchning i första vyn. Minska tomrum där det döljer nyttan. Låt eventuell skrivmaskinsanimation vara ett komplement och respektera reducerad rörelse.
 - Klar när: Besökaren förstår tjänsten utan att vänta på en animerad rubrik.
 - Tillägg 2026-10-19: Leveransen omfattar även visuell finputs av hela startsidan: justering, avstånd, färgpalett, typografi och responsiv layout. Befintlig struktur, innehåll och funktion bevaras. Delad marknadsnavigation kontrolleras även på /features och /pricing.
+- Tillägg från designaudit 2026-10-25 (DA-03, DA-10, DA-17 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): visa produkten i första vyn (ett tydligt fiktivt swipekort i telefonram), låt skrivmaskinen animera bara sista ordet med statisk rubrik för skärmläsare och reducerad rörelse, flytta eller anpassa arbetslöshetsstatistiken till målgruppen; stoppa WebGL-bakgrunden när hjälten inte syns, när fliken är dold och vid reducerad rörelse; avsluta startsidan med Kom igång och För företag.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -939,6 +953,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Branch/PR: —
 - Åtgärd: Rätta 1 ansökningar, blandade versaler och tekniska uttryck. Använd samma MatchnWork-namn och avsedd kontaktadress. Anpassa Tillbaka till Upptäck för företaget. Beskriv kort onboarding och manuell CV-väg korrekt; precisera lönecheck-löftet om tjänsten inte följer hela vägen.
 - Klar när: Etiketter, produktlöften och kontaktvägar är konsekventa och sakligt riktiga.
+- Tillägg från designaudit 2026-10-25 (DA-07 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam logotypkomponent (`components/brand-logo.tsx`, varianter full/märke och ljus/mörk) som används i marknadsnavigering och sidfot, på autentiseringssidorna, `/privacy`, ungdoms- och företagsnavigeringen och admin.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
@@ -1402,3 +1417,213 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: —
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
+
+## Designaudit 2026-10-22 – kort
+
+Kort skapade 2026-10-25 från [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md). Audit-dokumentet har fynd, filer och mått; korten nedan har status och ansvar. Följ AGENTS.md och reservera ett kort innan arbetet börjar. Ordningen följer audit-dokumentets förslag: DA-04 → DA-05 → DA-06 som ett designsystemblock, DA-12 parallellt en vy i taget, därefter P3-punkterna. Korten är placerade sist i den gemensamma ordningen (61–72) och kan prioriteras om.
+
+Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort utan ligger som tillägg där: DA-03, DA-10 och DA-17 i [D05](#d05), DA-07 i [D07](#d07), DA-08 och DA-09 i [F20](#f20).
+
+<a id="da-01"></a>
+### DA-01 Landningssidans illustrationer är tomma under 1024px
+
+- [x] Klar
+- Prioritet: P1
+- Global ordning: 61
+- Status: Klar
+- Ansvarig: Max / Claude
+- Branch/PR: `claude/da01-platform-visuals-20261022`, [PR #95](https://github.com/vilgotdidrikson/youth-job-mvp/pull/95), mergad till dev `50d6a49`.
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-01), som har fynd, filer och mått.
+- Åtgärd: Ge varje SVG-instans i plattformssektionen egna gradient-id så att mobilillustrationerna inte pekar på gradienter i den dolda desktopkolumnen.
+- Klar när: Alla fem mobilillustrationer visar sina gradienter vid 375 och 800px; inga dubblerade id.
+- Samordning / beroenden: Se reservationen DA-01 under Gemensam prioriteringsordning (implementation, test och verifiering i driftsatt dev 2026-10-22).
+- Implementerat: Se Branch/PR.
+- Verifierat: Se Branch/PR.
+- Återstår / blockerare: —
+
+<a id="da-02"></a>
+### DA-02 Favicon, appikoner, delningsbild och sidtitlar
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 62
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`, se reservationen DA-02 under Gemensam prioriteringsordning.
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-02), som har fynd, filer och mått.
+- Åtgärd: Ersätt standardfavicon, lägg till appikoner, manifest och delningsbild samt egna sidtitlar för publika sidor.
+- Klar när: Varje publik sida har egen titel, ikon-, manifest- och delningslänkar fungerar och pekar på publikt nåbara adresser.
+- Samordning / beroenden: Kontroll i driftsatt dev (inklusive att `og:image` är publikt nåbar) återstår; se reservationen.
+- Implementerat: Se Branch/PR.
+- Verifierat: Se Branch/PR.
+- Återstår / blockerare: Se Samordning.
+
+<a id="da-04"></a>
+### DA-04 Samla färgtokens och ta bort hårdkodade och drivande färger
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 63
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-04), som har fynd, filer och mått.
+- Åtgärd: Bestäm värdena i `app/styles/theme.css` (ett värde för `--color-surface-soft` och de saknade tokens som används), ta bort tokenblocket på `.mnw-product` och lokala `--ink`/`--muted`/`--rose`/`--accent`, ersätt hex-värden fil för fil med början i chatten (avvikande palett) och `product-design.css`, och lägg till ett kontrollskript som larmar om antalet hex-värden utanför `theme.css` ökar.
+- Klar när: Bara `theme.css` definierar färgvärden (undantag: SVG-illustrationer och kartan), chattens palett stämmer med resten och tokenkontrollen körs.
+- Samordning / beroenden: Görs före DA-05 och DA-06. Profilbyggets tokens i `components/profile-steps/profile-steps.module.css` flyttas hit när DA-04 införs.
+- Implementerat: Nya tokens i `app/styles/theme.css` (`--color-rose`, `--color-rose-track`, `--color-brand-accent`, `--color-brand-on-rose`, `--color-divider`, `--color-dashed`, `--color-ring`, `--color-plum-900`, `--color-success-strong`, `--color-text-muted-strong`, `--color-warning`, `--color-warning-soft`, `--color-white`). Tokenblocket på `.mnw-product` borttaget; produktytor som använde den överskrivna `--color-surface-soft` använder nu `--color-rose` (samma rosa som förut), marknadssidorna behåller `--color-surface-soft`. Lokala `--ink`/`--muted`/`--rose`/`--accent` borttagna ur modulerna och profilbyggets `--pb-*` pekar på theme-tokens. 727 hexvärden som exakt motsvarade en token ersatta med `var(--…)` i 27 filer (vitt efter sammanhang: bakgrund `--color-surface`, annars `--color-white`). Chattens avvikande palett (`#4e3341`, `#927887`, `#ac4066`) följer nu brand-paletten. Kontrollskript `scripts/check-design-tokens.mjs` (`npm run check:design-tokens`) med baslinje `scripts/design-token-baseline.json` som underkänner fler färgvärden per fil eller fler olika textstorlekar, radier och vikter.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade.
+- Återstår / blockerare: 555 färgvärden utanför `theme.css` återstår (från cirka 1 280), främst äldre neutrala gråtoner och enstaka värden i `globals.css`, `video.module.css`, chatten och äldre vyer, samt inline-färger i TSX. Att mappa dem mot paletten ändrar utseendet och görs vy för vy tillsammans med DA-12; sänk baslinjen med `--update` efter varje migrering. Kontroll i driftsatt dev.
+
+<a id="da-05"></a>
+### DA-05 Inför skala för typografi, vikter, radier och skuggor
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 64
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-05), som har fynd, filer och mått.
+- Åtgärd: Lägg till skalan för textstorlekar, vikter, radier och skuggor i `theme.css` enligt förslaget i audit-dokumentet och migrera till den tillsammans med DA-04.
+- Klar när: Ny och ändrad CSS använder bara skalans värden, och antalet olika textstorlekar och radier minskar för varje migrerad fil (mäts med DA-04:s kontrollskript).
+- Samordning / beroenden: Beroende: DA-04.
+- Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`..
+- Återstår / blockerare: Migrering av befintliga värden till skalan sker när filer ändras och i DA-12; antalet ska minska för varje migrerad fil. Kontroll i driftsatt dev.
+
+<a id="da-06"></a>
+### DA-06 Rätta textfärger som inte klarar WCAG AA
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 65
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-06), som har fynd, filer och mått.
+- Åtgärd: Gör `--color-text-muted` mörkare (`#7f616d`), använd `--color-text-subtle` bara för ikoner, kanter, platshållare och stor text, och höj minsta textstorlek till 12px (DA-16).
+- Klar när: All brödtext når 4.5:1 mot sin faktiska bakgrund, kontrollerat med Lighthouse eller axe på publika sidor och ett urval inloggade sidor.
+- Samordning / beroenden: Samordna med F23 (tillgänglighet) och L08. Beroende: DA-04.
+- Implementerat: `--color-text-muted` mörkare (`#896a76` → `#7f616d`), även där värdet tidigare var hårdkodat. `--color-text-subtle` används inte längre för brödtext (ögonbryn, statistikkälla, prisnot, bottenmeny, byggarens etiketter och hjälptexter flyttade till dämpad text); kvar bara för platshållare och dekorativa tecken. Därtill rättat: profilhuvudets initial och grå texter, annonsbyggarens ögonbryn, startsidans copyrightrad och funktionssidans ögonbryn på rosa.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade. Kontrastskanning (egen Playwright-kontroll av varje synlig textnod mot dess faktiska bakgrund; liten text 4.5:1, stor text 3:1) på samma 15 sidor vid 375 px: 33 text under AA före, 2 efter. De två återstående är inga brödtextfel: startsidans vita logotyp ligger på WebGL-gradienten som skannern inte kan läsa, och tankstrecket mellan ålders-/lönefälten är dekorativt.
+- Återstår / blockerare: Ingen Lighthouse/axe-körning (verktygen finns inte här). Startsidans logotyp mot gradienten bedöms i D05. Kontroll i driftsatt dev.
+
+<a id="da-11"></a>
+### DA-11 Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 66
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-11), som har fynd, filer och mått.
+- Åtgärd: Gör `app/page.tsx`, `app/features/page.tsx` och `app/pricing/page.tsx` till serverkomponenter med egen `metadata` och flytta bara de interaktiva delarna till små klientkomponenter. Flytta importen av Mapbox-CSS från `app/globals.css` till kartkomponenten.
+- Klar när: Sidorna visar sin text utan JavaScript, har egen metadata och Mapbox-CSS laddas bara på sidor med karta. Lighthouse mobil jämförs före och efter i driftsatt dev.
+- Samordning / beroenden: Samordna startsidan med D05.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-12"></a>
+### DA-12 Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 67
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-12), som har fynd, filer och mått.
+- Åtgärd: Migrera en vy i taget till en CSS-modul med DA-04/DA-05-tokens och ta bort motsvarande `!important`- och `[style*=]`-överskrivningar i `app/product-design.css` i samma PR. Börja med `app/company/page.tsx` och ta `components/youth-onboarding-flow.tsx` sist.
+- Klar när: Varje migrerad vy saknar inline-färger och -avstånd, och dess överskrivningar är borta ur `product-design.css`.
+- Samordning / beroenden: Löper parallellt med DA-04/DA-05, en vy per leverans. Berör filer som ägs av andra punkter; samordna per vy.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-13"></a>
+### DA-13 Gör prissidans huvudknapp till primär knapp
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 68
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-13), som har fynd, filer och mått.
+- Åtgärd: Använd den markerade stilen för den rekommenderade planen (flagga `highlighted` i `lib/pricing-data.ts`) och minska tomrummet under kortet på mobil. Ändra inte prisförklaringen.
+- Klar när: Rekommenderad plan har primär knapp och mobilvyn saknar stort tomrum.
+- Samordning / beroenden: Prisförklaringen hör till F06 (blockerad).
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-14"></a>
+### DA-14 Rätta autentiseringssidornas kort, pil och textsymboler
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 69
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-14), som har fynd, filer och mått.
+- Åtgärd: Under 480px: ta bort kortets ram och skugga så att formuläret använder hela bredden. Visa logotypen ovanför rubriken (DA-07/D07). Ta bort ”↗” på skickaknapparna eller använd `UiIcon name="arrow"`, och ersätt textsymboler med `UiIcon` på marknads- och autentiseringssidorna.
+- Klar när: Formulären använder hela bredden på mobil, och inga knappar visar en symbol som antyder extern länk.
+- Samordning / beroenden: Rollvalet lämnas till F23.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-15"></a>
+### DA-15 Korta och variera funktionssidan
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 70
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-15), som har fynd, filer och mått.
+- Åtgärd: Ge varje funktion en egen ikon, gruppera korten i två kolumner från 640px och inled varje målgruppsavsnitt med en riktig produktbild i stället för ett tolfte kort. Alternativt slå ihop sidan med startsidan och prissidan.
+- Klar när: Funktionssidan har varierade ikoner, kortare scroll på mobil och visar produkten.
+- Samordning / beroenden: Samordna produktbild med D05.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-16"></a>
+### DA-16 Större text och tryckytor på mobil
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 71
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-16), som har fynd, filer och mått.
+- Åtgärd: Gör varje tryckbart element minst 44×44px (padding räcker) och använd aldrig mindre än 12px för synlig text, bland annat i sidfötter, upptäck-filter, CV-banner och kortchips.
+- Klar när: Inga tryckytor under 44px och ingen synlig text under 12px vid 375px på publika sidor och upptäck.
+- Samordning / beroenden: Samordna med L08 och DA-06.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-18"></a>
+### DA-18 Ska utloggade besökare kunna se publicerade jobb?
+
+- [ ] Klar
+- Prioritet: Beslut
+- Global ordning: 72
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-18), som har fynd, filer och mått.
+- Åtgärd: Besluta om en skrivskyddad förhandsvisning av några publicerade annonser för utloggade (utan ansökan). Gäller bara publicerat annonsinnehåll, aldrig ungdomsdata.
+- Klar när: Ett dokumenterat produkt- och integritetsbeslut finns. Kod påbörjas först efter beslutet.
+- Samordning / beroenden: Beslutas tillsammans med F26/N19, som definierar vilken jobbinformation som är publik.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —

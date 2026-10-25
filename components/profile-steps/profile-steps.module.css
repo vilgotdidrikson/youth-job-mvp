@@ -1,8 +1,8 @@
-/* Profile builder design (docs/profilbygget/SPEC.md). Tokens live here until DA-04 moves them to theme.css. */
+/* Profile builder design (docs/profilbygget/SPEC.md). Short local names for the theme tokens (DA-04). */
 .page, .card, .chips, .tagInput, .segmented, .stepper, .tile, .actions, .header, .rail, .cvToggle, .lockNote, .title, .tip, .savedRow, .dashedButton, .tagSuggestions {
-  --pb-canvas: #fffafb; --pb-surface: #ffffff; --pb-rose: #fce9ef; --pb-rose-track: #f4dce5; --pb-border: #f0d9e0;
-  --pb-divider: #f6e4ea; --pb-dashed: #e3b9c7; --pb-ring: #e7c9d3; --pb-ink: #4c303b; --pb-muted: #7f616d;
-  --pb-brand: #b84164; --pb-brand-on-rose: #9c304f; --pb-success: #21855d; --pb-success-soft: #e8f5ee;
+  --pb-canvas: var(--color-canvas); --pb-surface: var(--color-surface); --pb-rose: var(--color-rose); --pb-rose-track: var(--color-rose-track); --pb-border: var(--color-border);
+  --pb-divider: var(--color-divider); --pb-dashed: var(--color-dashed); --pb-ring: var(--color-ring); --pb-ink: var(--color-text); --pb-muted: var(--color-text-muted);
+  --pb-brand: var(--color-brand); --pb-brand-on-rose: var(--color-brand-on-rose); --pb-success: var(--color-success); --pb-success-soft: var(--color-success-soft);
   --pb-shadow-segment: 0 2px 8px rgb(76 48 59 / .12);
   color: var(--pb-ink);
 }
@@ -37,7 +37,7 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 .rail ol a[aria-current="step"] { background: var(--pb-rose); color: var(--pb-ink); font-weight: 600; }
 .rail .marker { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; box-sizing: border-box; border: 1.5px solid var(--pb-ring); border-radius: 50%; font-size: 12px; font-weight: 600; }
 .rail .markerDone { border: 0; background: var(--pb-success-soft); color: var(--pb-success); }
-.rail .markerCurrent { border: 0; background: var(--pb-brand); color: #ffffff; font-weight: 700; }
+.rail .markerCurrent { border: 0; background: var(--pb-brand); color: var(--color-white); font-weight: 700; }
 .rail .railPause { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--pb-muted); font-size: 14px; font-weight: 500; }
 .rail .info { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid var(--pb-border); border-radius: 18px; background: var(--pb-surface); }
 .rail .info strong { font-size: 13px; font-weight: 600; }
@@ -69,7 +69,7 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 .card textarea.textarea { box-sizing: border-box; width: 100%; padding: 12px 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; }
 .card .inlineAdd { display: flex; gap: 8px; width: 100%; }
 .card .inlineAdd input { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; }
-.card .inlineAdd button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--pb-brand); color: #ffffff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.card .inlineAdd button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--pb-brand); color: var(--color-white); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .card .inlineAdd button:disabled { opacity: .5; }
 
 /* ChipGroup */
@@ -118,7 +118,7 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 .actions { display: flex; align-items: center; gap: 12px; }
 .actions.fixed { position: fixed; z-index: 80; inset-inline: 0; bottom: 0; padding: 14px 20px calc(14px + max(16px, env(safe-area-inset-bottom))); border-top: 1px solid var(--pb-border); background: rgb(255 250 251 / .96); }
 .actions .secondary { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border: 0; background: none; color: var(--pb-muted); font: inherit; font-size: 15px; font-weight: 500; text-decoration: none; cursor: pointer; }
-.actions .primary { flex: 1; display: grid; place-items: center; min-height: 52px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--pb-brand); color: #ffffff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.actions .primary { flex: 1; display: grid; place-items: center; min-height: 52px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--pb-brand); color: var(--color-white); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 .actions .primary:disabled, .actions .secondary:disabled { opacity: .6; cursor: progress; }
 .actions .actionNote { display: none; }
 

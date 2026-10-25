@@ -45,7 +45,7 @@
 }
 
 .pricing-switch button.pricing-switch-selected {
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
 }
 
@@ -101,7 +101,7 @@
   left: 2rem;
   padding: .35rem .9rem;
   border-radius: 999px;
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
   font-size: .68rem;
   font-weight: 800;
@@ -124,7 +124,7 @@
 
 .pricing-price span {
   margin-left: .25rem;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -174,7 +174,7 @@
 
 .pricing-cta-highlighted {
   border-color: var(--color-brand);
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
 }
 
@@ -182,7 +182,7 @@
   max-width: 32rem;
   margin: -1rem auto 2rem;
   padding: 0 1.5rem;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: .82rem;
   text-align: center;
 }
