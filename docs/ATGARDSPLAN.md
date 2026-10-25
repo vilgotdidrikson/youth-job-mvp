@@ -101,7 +101,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
-| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Ej påbörjad | — |
+| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Ej påbörjad | — |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | Ej påbörjad | — |
@@ -334,14 +334,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 37
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning enligt användarens avgränsning (inga GDPR-, domän- eller betalningsberoende punkter): samma överhoppade punkter som F14 och F23 (N23, L03, N02, L05, L06, L12–L14, N08, F12, F20). Planerad migration (godkänd av användaren): säker läsfunktion med utvalda publika företagsfält för företag med synlig annons; RLS på `company_profiles` öppnas inte.
 - Åtgärd: Gör företagskortet öppningsbart och visa verksamhetsbeskrivning, ort, verifiering och relevant arbetsplatsinformation. Ge en tydlig väg tillbaka till jobbet. Återanvänd uppgifter företaget redan fyllt i.
 - Klar när: Ungdomen kan bedöma arbetsgivaren innan den visar intresse.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Migration `20261025120000_n04_job_company_profile.sql`: `private.get_job_company_profile` (security definer, `search_path=''`) med publik invoker-wrapper `public.get_job_company_profile`, bara för inloggade. Den speglar annonsens synlighetsregel (ägaren eller aktiv publicerad annons), respekterar blockeringar och lämnar bara ut namn, bransch, beskrivning, ort, storlek, logga, webbplats, verifiering och antal öppna jobb. Administratör, organisationsnummer, adress, sociala länkar och matchprofil (internt bedömningsstöd) lämnas aldrig ut; RLS och tabeller oförändrade. Logik och säker länkhantering (bara http/https) i `lib/company-public-profile.ts`. Annonssidan har ett företagskort direkt under rubriken (`components/job-company-card.tsx`) med Om företaget som öppnar en dialog med beskrivning, verifiering, öppna jobb och webbplats och knappen Tillbaka till jobbet; det gamla statiska företagskortet (bara desktop) är ersatt. Kortet visas för inloggade; utan profil visas bara namnet.
+- Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, nytt `test:company-public-profile` (länkar, publik form, migrationens fält, synlighet, blockering, inga RLS-ändringar), `test:accessibility` och `test:job-discovery`. Mot DevStaging med fiktiva konton och annonser (raderade efteråt), 28/28: ungdom läser publik profil med exakt de publika fälten och utan skyddade värden; stängd annons ger ingen profil; ägaren kan läsa via egen stängd annons; utloggad nekas; ungdom kan fortfarande inte läsa `company_profiles` direkt; blockerat företag visas inte. Chromium vid 375 och 1280 px: kortet före Om jobbet, ingen horisontell scroll, dialog med beskrivning, webbplats och öppna jobb, inga skyddade uppgifter i sidan, Tillbaka till jobbet och Escape stänger och fokus återgår, inga sidfel.
+- Återstår / blockerare: Införande i dev och migrationen i master-projektet före release (samordnas). Kontroll i driftsatt dev. Logga ej provad med riktig bild (QA-företaget saknade logga).
 
 <a id="n05"></a>
 ### N05 Lägg till strukturerade praktiska jobbuppgifter
