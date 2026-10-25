@@ -64,7 +64,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | För granskning | Vilgot / Codex |
-| 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Ej påbörjad | — |
+| 9 | [F04](#f04) | P1 | Rätta företagets första navigation | För granskning | Vilgot / Codex (kod), Max / Claude (verifiering) |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
 | 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
@@ -472,14 +472,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 9
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex (kod, commits `8a1bdf2` och `e1db40a` i dev 2026-10-15, se `docs/F04.md`); Max / Claude (verifiering, reserverad 2026-10-25)
+- Branch/PR: verifiering på branch `Max`. Koden är redan införd i dev men kortet uppdaterades aldrig. Ingen ny kod planeras om inte verifieringen hittar fel.
 - Åtgärd: Säkerställ att Gå till mitt konto går till kontot och att Skapa din första annons samt Ny annons öppnar annonsbyggaren direkt. Rätt destination ska fungera även efter nyregistrering utan omladdning.
 - Klar när: Varje startknapp leder till den vy som etiketten utlovar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Knapparnas destinationer infördes av Vilgot / Codex 2026-10-15 (`8a1bdf2`, `e1db40a`). Rättat vid verifieringen 2026-10-25 (Max / Claude): företagets onboarding läser in sparade företagsuppgifter igen när sessionen uppdateras, och skrev då över det som redan skrivits med tomma värden. Organisationsnumret försvann efter ifyllning och nyregistrerade företag kom inte vidare till startknapparna. Inlästa värden fyller nu bara tomma fält (`app/company/onboarding/page.tsx`).
+- Verifierat: `test:company-navigation`, TypeScript och riktad ESLint (inga nya problem). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktiva företagskonton registrerade via formuläret `/signup?role=company` och påhittade organisationsnummer (raderade efteråt), vid 1280 och 375 px, 14/14 två körningar i rad: registrering leder till onboarding; efter onboarding öppnar Gå till mitt konto kontot (`/profile?tab=settings`, ”Ditt konto”), Fortsätt skapa min jobbannons, Skapa din första annons och Ny annons öppnar annonsbyggaren (”Berätta om jobbet”), alla utan omladdning (markör i `window` kvar); inga sidfel. Före rättningen föll samma test på organisationsnumret i båda körningarna.
+- Återstår / blockerare: Commit med rättningen i dev och kontroll i driftsatt dev, därefter Klar.
 - Uppföljning F04-UI (2026-10-25): För granskning, Codex, `codex/f04-remove-duplicate-profile-icon-20261025`, [utkast PR #99](https://github.com/vilgotdidrikson/youth-job-mvp/pull/99), kodcommit `f144efb` (reservation `db8312a`). Den separata profilikonen längst till höger i huvudnavigationen för företag och privata konton är borttagen; intilliggande Profil-länk finns kvar. Oanvänd ikon-CSS är borttagen och navigationstestets förväntan uppdaterad. Lokalt verifierat: `test:company-navigation`, `tsc --noEmit`, riktad ESLint och `git diff --check` passerar. Inloggat användarflöde och driftsatt dev är ännu inte verifierade; granskning/merge återstår. F04:s huvudsakliga startflöde behåller sin status och ägare.
 
 <a id="f05"></a>
