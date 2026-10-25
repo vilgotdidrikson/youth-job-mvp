@@ -197,6 +197,9 @@ Suggested order: DA-01 and DA-02 first (small, visible, independent). Then DA-04
 
 **Coordinate with F20.**
 
+- **Implementation update — 2026-10-25 (för granskning, branch `claude/da09-privacy-public-20261025`):** `/privacy` now uses the shared `MarketingNav` and `MarketingFooter` for every visitor; the page's own header is removed. "Tillbaka till profilen" at the end of the policy is rendered by `app/privacy/privacy-profile-link.tsx` only when `useSession` has a user, so logged-out visitors see no profile link. Signed-in visitors get "Gå till appen" from the shared nav. The page stays a server component with its metadata. The legal-review note is unchanged and remains tracked under L10/L14.
+- **Verified:** TypeScript, ESLint on `app/privacy`, `test:accessibility` and a production build (webpack). Chromium against a local production build, logged out, at 375px and 1280px, 26/26: shared nav and footer present, no profile link or "profilen" text, footer privacy link, title "Integritet och AI · MatchnWork", heading below the nav, legal note still shown, no horizontal scroll, mobile and desktop login/signup actions, no page errors. Not verified with a signed-in account (no QA account used), in Safari/Firefox or on a physical phone.
+
 - **Seen:** `/privacy` is public, but its header and footer link to "Till profilen" and "Tillbaka till profilen". A logged-out visitor gets sent to login. The page also shows publicly that the policy must be legally reviewed before production. That's fine on dev, but it needs to be gone or replaced before launch.
 - **Fix:** Use the shared marketing nav and footer (DA-07, DA-08) for logged-out visitors, and keep the profile link only when there is a session (`useSession`). Track the legal-review note under L10/L14 so it is removed together with the final policy.
 - **Files:** `app/privacy/page.tsx`

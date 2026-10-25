@@ -1,15 +1,18 @@
 
-import { BrandLogo } from "@/components/brand-logo";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { MarketingFooter } from "@/components/marketing-footer";
+import { MarketingNav } from "@/components/marketing-nav";
 import { UiIcon } from "@/components/ui-icon";
+import { PrivacyProfileLink } from "./privacy-profile-link";
+import "../landing.css";
 import "./privacy-design.css";
 
 export const metadata: Metadata = { title: "Integritet och AI" };
 
 export default function PrivacyPage() {
   return <main className="mnw-privacy-page">
-    <header className="mnw-privacy-nav"><Link href="/"><BrandLogo/></Link><Link href="/profile">Till profilen <UiIcon name="arrow" width="16" /></Link></header>
+    <MarketingNav />
+    <div className="mnw-privacy-content">
     <div className="mnw-privacy-heading"><span><UiIcon name="info" width="28" height="28" /></span><p>Din information</p><h1>Integritet och AI</h1><p>Här beskriver vi hur din profil, ditt CV och dina ansökningssvar används i MatchnWork.</p></div>
     <div className="mnw-privacy-layout"><aside aria-label="På den här sidan"><strong>På den här sidan</strong><a href="#profile-data">Profil och ansökan</a><a href="#documents">Dina dokument</a><a href="#ai-cv">AI-CV</a><a href="#followups">Kompletteringsfrågor</a><a href="#delete-account">Radera konto</a><a href="#videos">Video</a><a href="#reports">Anmälningar</a></aside><article>
       <section id="profile-data"><h2>Profil och ansökan</h2><p>MatchnWork använder dina profiluppgifter och ditt CV för att visa relevanta jobb och låta annonsägare granska kandidater som har visat intresse.</p></section>
@@ -19,7 +22,9 @@ export default function PrivacyPage() {
       <section id="delete-account"><h2>Radera konto</h2><p>Du kan permanent radera konto, profil, ansökningar, matchningar, chattar och uppladdade dokument från din profil. Raderar ett företag sitt konto försvinner även dess annonser och tillhörande ansökningar och chattar. Detta går inte att ångra.</p></section>
       <section id="videos"><h2>Video i chatten</h2><p>Video är frivillig och används inte för AI-analys eller matchpoäng. En skickad video blir otillgänglig efter 14 dagar från skickandet, oavsett om mottagaren hunnit se den. Utgångstiden visas vid videon. Saknad eller utgången video döljer inte din ansökan.</p><p>I den här utvecklingsversionen är automatisk filradering ännu inte aktiverad. Åtkomsten stängs ändå efter 14 dagar för skickade videor och efter 24 timmar för oskickade uppladdningar. Filradering och återförsök ska verifieras innan funktionen lanseras. Anmäld video kan behöva behållas separat för säkerhetsgranskning; vanlig uppspelning stängs ändå vid utgångstiden.</p><p>Kopior som någon redan har laddat ned kan inte återkallas av tjänsten. Mottagaren ansvarar för sin vidare hantering.</p></section>
       <section id="reports"><h2>Anmälningar</h2><p>Anmälningar till moderering och det anmälda innehållet sparas för säkerhetsgranskning i upp till 12 månader efter att ärendet avslutats, även om något av kontona raderas. Anmälarens identitet tas då bort.</p></section>
-      <footer><p>Den slutliga integritetspolicyn och kontaktuppgifterna måste juridiskt granskas av MatchnWork före produktion.</p><Link href="/profile">Tillbaka till profilen <UiIcon name="arrow" width="16" /></Link></footer>
+      <footer><p>Den slutliga integritetspolicyn och kontaktuppgifterna måste juridiskt granskas av MatchnWork före produktion.</p><PrivacyProfileLink /></footer>
     </article></div>
+    </div>
+    <MarketingFooter />
   </main>;
 }
