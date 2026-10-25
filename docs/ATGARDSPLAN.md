@@ -108,7 +108,7 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
-| 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | Ej påbörjad | — |
+| 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | För granskning | Vilgot / Codex |
 | 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
@@ -780,14 +780,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 43
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f24-map-fallback-20261025`; [PR #106](https://github.com/vilgotdidrikson/youth-job-mvp/pull/106), implementation `7897c669`. Reserverad före kodarbete 2026-10-25. Nästa fristående punkt efter N06; kvarstående profil/AI/GDPR-, SMTP- och prisberoenden hoppas över enligt tidigare avgränsning. Endast kartans presentation/felhantering, inga databas-/AI-/profiländringar.
 - Åtgärd: När kartan inte kan visas, ersätt den stora tomma kartyta med jobbkort eller en fungerande lista och tydlig växling mellan vyerna. Behåll relevanta filter och resultat.
 - Klar när: Kartfel hindrar inte fortsatt jobbupptäckt och lämnar inte huvuddelen av sidan tom.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Kartfel ger automatiskt full listvy med samma filtrerade jobb, antal och länkar på dator/mobil. Felkartan avmonteras; användaren kan försöka igen med ny instans eller växla vy manuellt även på dator. Stöd för start-/WebGL-/behörighetsfel, timeout, tappad kontext och saknade kartpositioner. Fokus återgår bara om det låg i kartan; jobbhämtningsfel har eget återförsök. Ingen databas-/AI-/profiländring. Se docs/F24.md.
+- Verifierat: test:map-fallback kör faktiska komponenter med simulerad React/Mapbox/DOM/transport: saknad nyckel/WebGL, kastade startfel, timeout/403, lyckad stil, tile-fel, kontextförlust, resize/städning, bibehållna filter/resultat, återförsök/fokus och datafel/tomt resultat. test:job-search, test:job-discovery, test:job-workplaces, test:accessibility, TypeScript, riktad ESLint och webpack-bygge passerar.
+- Återstår / blockerare: Inloggad visuell acceptans i dev på dator/mobil med blockerade kartanrop/avstängt WebGL, scroll, tangentbord/fokus, återförsök och faktisk grafikåterställning. Lokalt saknas installerad Chromium; ingen betald TinyFish eller verklig Mapbox-felkörning.
 
 <a id="f25"></a>
 ### F25 Slå samman likvärdiga förmåner

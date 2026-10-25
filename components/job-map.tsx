@@ -25,6 +25,8 @@ interface JobMapProps {
   userCoordinates: Coordinates | null;
   selectedJobId?: string | null;
   onJobSelect?: (id: string | null) => void;
+  active?: boolean;
+  onUnavailable?: (message: string | null) => void;
 }
 
 const STOCKHOLM: Coordinates = { longitude: 18.0686, latitude: 59.3293 };
@@ -181,7 +183,7 @@ function pinTileMarkup(job: JobPost): string {
   return `<span class="job-map-pin-tile"><span class="job-map-pin-initials">${escapeHtml(companyInitials(job.company_name))}</span>${source ? `<img src="${escapeHtml(source)}" alt="" loading="lazy" decoding="async" />` : ""}</span>`;
 }
 
-export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect }: JobMapProps) {
+export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, active = true, onUnavailable }: JobMapProps) {
   const router = useRouter();
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -195,12 +197,20 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect }: Jo
   const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const locatedJobs = useMemo(() => jobs.flatMap((job) => getJobWorkplaces(job).flatMap(place => {
-    const hasPreciseCoordinates = typeof place.longitude === "number" && typeof place.latitude === "number";
+    const hasPreciseCoordinates = typeof place.longitude === "number" && Number.isFinite(place.longitude) && Math.abs(place.longitude) <= 180
+      && typeof place.latitude === "number" && Number.isFinite(place.latitude) && Math.abs(place.latitude) <= 90;
     const coordinates = hasPreciseCoordinates ? { longitude: place.longitude!, latitude: place.latitude! } : getCityCoordinates(place.city);
     return coordinates ? [{ job: { ...job, address: place.address, postal_code: place.postal_code, city: place.city }, workplaceId: place.id, coordinates, hasPreciseCoordinates }] : [];
   })), [jobs]);
 
   const jobClusters = useMemo(() => clusterNearbyJobs(locatedJobs), [locatedJobs]);
+  const unavailable = !token ? "Kartan är inte tillgänglig just nu."
+    : jobs.length > 0 && locatedJobs.length === 0 ? "Jobben saknar en plats som kan visas på kartan."
+    : mapError || null;
+  useEffect(() => { onUnavailable?.(unavailable); }, [onUnavailable, unavailable]);
+  useEffect(() => {
+    if (active && mapReady) mapRef.current?.resize();
+  }, [active, mapReady]);
   const activeClusterId = selectedJobId === undefined ? localClusterId : jobClusters.find(cluster => cluster.id === localClusterId && cluster.jobs.some(item => item.job.id === selectedJobId))?.id ?? jobClusters.find(cluster => cluster.jobs.some(item => item.job.id === selectedJobId))?.id ?? null;
   useEffect(() => {
     const selected = locatedJobs.find(item => item.job.id === selectedJobId);
@@ -211,30 +221,45 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect }: Jo
   useEffect(() => {
     if (!token || !mapContainer.current || mapRef.current) return;
 
-    if (!mapboxgl.supported()) {
-      queueMicrotask(() => setMapError("Din webbläsare saknar stöd för WebGL, som behövs för att visa kartan."));
+    const container = mapContainer.current;
+    let instance: mapboxgl.Map | null = null;
+    try {
+      if (!mapboxgl.supported()) {
+        queueMicrotask(() => setMapError("Din webbläsare saknar stöd för WebGL, som behövs för att visa kartan."));
+        return;
+      }
+      mapboxgl.accessToken = token;
+      container.replaceChildren();
+      instance = new mapboxgl.Map({
+        container,
+        style: process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12",
+        center: [STOCKHOLM.longitude, STOCKHOLM.latitude],
+        zoom: 5.3,
+        pitch: 0,
+      });
+      instance.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
+    } catch {
+      try { instance?.remove(); } catch { /* Partially initialized map. */ }
+      container.replaceChildren();
+      queueMicrotask(() => setMapError("Kartan kunde inte startas. Jobben finns kvar i listan."));
       return;
     }
-
-    mapboxgl.accessToken = token;
-    const container = mapContainer.current;
-    container.replaceChildren();
-    const map = new mapboxgl.Map({
-      container,
-      style: process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12",
-      center: [STOCKHOLM.longitude, STOCKHOLM.latitude],
-      zoom: 5.3,
-      pitch: 0,
-    });
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
-    let styleLoaded = false;
+    const map = instance;
+    const canvas = map.getCanvas();
+    const contextLost = (event: Event) => {
+      event.preventDefault();
+      setMapError("Kartan tappade grafikstödet. Jobben finns kvar i listan.");
+    };
+    canvas.addEventListener("webglcontextlost", contextLost);
+    let mapLoaded = false;
     const loadTimeout = window.setTimeout(() => {
-      if (!styleLoaded) setMapError("Kartan svarade inte. Du kan fortfarande utforska jobben i listan.");
+      if (!mapLoaded) setMapError("Kartan svarade inte. Du kan fortfarande utforska jobben i listan.");
     }, 15000);
-
-    map.once("style.load", () => {
-      styleLoaded = true;
+    map.once("load", () => {
+      mapLoaded = true;
       window.clearTimeout(loadTimeout);
+    });
+    map.once("style.load", () => {
       // Recolours whatever style is configured into the paper palette. Set
       // NEXT_PUBLIC_MAPBOX_KEEP_STYLE_COLORS=true to keep a hand-made style's
       // own colours instead.
@@ -245,7 +270,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect }: Jo
     map.on("error", (event) => {
       const message = event.error?.message || "Kartan kunde inte laddas.";
       const status = (event.error as Error & { status?: number }).status;
-      if (status === 401 || status === 403 || /unauthorized|forbidden|access token|style.*not found/i.test(message)) {
+      if (!mapLoaded || status === 401 || status === 403 || /unauthorized|forbidden|access token|style.*not found|webgl|context lost/i.test(message)) {
         setMapError("Kartan kunde inte visas just nu. Jobben finns kvar i listan.");
       }
     });
@@ -256,6 +281,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect }: Jo
       markersRef.current = [];
       popupRef.current?.remove();
       window.clearTimeout(loadTimeout);
+      canvas.removeEventListener("webglcontextlost", contextLost);
       map.remove();
       container.replaceChildren();
       mapRef.current = null;
