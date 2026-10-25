@@ -108,10 +108,11 @@ export default function CompanyOnboardingPage() {
             router.replace("/company?view=swipe");
             return;
           }
-          setCompanyName(data.company_name ?? "");
-          setIndustry(data.industry ?? "");
-          setAdministrator(data.administrator ?? "");
-          setOrganizationNumber(data.organization_number ?? "");
+          // The read repeats when the session refreshes; never overwrite what has already been typed.
+          setCompanyName(current => current || (data.company_name ?? ""));
+          setIndustry(current => current || (data.industry ?? ""));
+          setAdministrator(current => current || (data.administrator ?? ""));
+          setOrganizationNumber(current => current || (data.organization_number ?? ""));
           setStoredOrganizationNumber(data.organization_number ?? "");
         });
       return () => { active = false; };
