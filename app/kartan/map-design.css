@@ -35,7 +35,7 @@
 .mnw-map-list.mnw-map-list { overscroll-behavior:contain; }
 .mnw-map-list + .mnw-map-canvas .job-map-token-message { background:var(--color-canvas); border-color:var(--color-border); color:var(--color-text-muted); }
 .mnw-map-list .is-selected button:focus-visible,.mnw-map button:focus-visible { outline:3px solid var(--color-brand); outline-offset:-3px; }
-@media(min-width:721px) { .mnw-map-list .mnw-map-job { display:block; } .mnw-map-switch { display:none; } }
+@media(min-width:721px) { .mnw-map-list .mnw-map-job { display:block; }  }
 @media(max-width:720px) {
  .mnw-map.map-page { max-width:480px; padding:24px 18px calc(100px + env(safe-area-inset-bottom)); }
  .mnw-map-heading { display:block; margin-bottom:20px; }
@@ -60,3 +60,13 @@
 .mnw-map-job footer {padding-block:4px;}
 .mnw-map-job footer span {min-width:0;overflow-wrap:anywhere;line-height:1.6;}
 .mnw-map-switch button {min-height:44px;}
+
+/* A real list view on every viewport; no empty canvas reserves desktop space. */
+.mnw-map-view-list .mnw-map-workspace { display:block; height:auto; min-height:0; }
+.mnw-map-view-list .mnw-map-canvas { display:none; }
+.mnw-map-view-list .mnw-map-list { max-height:none; overflow:visible; }
+.mnw-map-view-list .mnw-map-list .mnw-map-job { display:block; }
+.mnw-map-view-list .mnw-map-job > p { margin:8px 14px; font-size:.85rem; line-height:1.5; color:var(--color-text-muted); }
+.mnw-map-fallback { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px; margin-bottom:20px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-rose); }
+.mnw-map-fallback p { flex:1; min-width:180px; margin:0; color:var(--color-text); font-size:.9rem; line-height:1.6; }
+.mnw-map-fallback button, .mnw-map-retry-jobs { min-height:44px; padding:10px 14px; color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); font:inherit; cursor:pointer; }
