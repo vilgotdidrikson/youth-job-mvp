@@ -951,7 +951,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Global ordning: 55
 - Status: Pågår
 - Ansvarig: Vilgot / Codex – logotillägg
-- Branch/PR: `codex/d07-brand-logo-n24-plan-20261025`; reserverad före kodarbete 2026-10-25 på uttrycklig beställning. Endast gemensam logotyp och avgränsad uppdatering av DA-02:s ikon-/delningsbildskällor; Max/Claudes övriga DA-02-arbete och status bevaras. Övrig D07-mikrocopy ingår inte.
+- Branch/PR: `codex/d07-brand-logo-n24-plan-20261025`; [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), implementation `bb04598d`. Reserverad före kodarbete 2026-10-25 på uttrycklig beställning. Endast gemensam logotyp och avgränsad uppdatering av DA-02:s ikon-/delningsbildskällor; Max/Claudes övriga DA-02-arbete och status bevaras. Övrig D07-mikrocopy ingår inte.
 - Åtgärd: Rätta 1 ansökningar, blandade versaler och tekniska uttryck. Använd samma MatchnWork-namn och avsedd kontaktadress. Anpassa Tillbaka till Upptäck för företaget. Beskriv kort onboarding och manuell CV-väg korrekt; precisera lönecheck-löftet om tjänsten inte följer hela vägen.
 - Klar när: Etiketter, produktlöften och kontaktvägar är konsekventa och sakligt riktiga.
 - Tillägg från designaudit 2026-10-25 (DA-07 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam logotypkomponent (`components/brand-logo.tsx`, varianter full/märke och ljus/mörk) som används i marknadsnavigering och sidfot, på autentiseringssidorna, `/privacy`, ungdoms- och företagsnavigeringen och admin.
