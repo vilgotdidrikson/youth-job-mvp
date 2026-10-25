@@ -328,6 +328,7 @@
 }
 
 .features-process-step b {
+  display: inline-flex;
   color: var(--color-text-muted);
   font-weight: 400;
 }

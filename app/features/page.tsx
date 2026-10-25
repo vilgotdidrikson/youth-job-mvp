@@ -99,7 +99,7 @@ export default function FeaturesPage() {
           {processSteps.map((step, index) => (
             <span key={step} className="features-process-step">
               {step}
-              {index < processSteps.length - 1 && <b aria-hidden="true">→</b>}
+              {index < processSteps.length - 1 && <b aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></b>}
             </span>
           ))}
         </div>

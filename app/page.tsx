@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import { useEffect, useState } from "react";
 import { MarketingNav } from "@/components/marketing-nav";
 import { MarketingFooter } from "@/components/marketing-footer";
@@ -197,7 +198,7 @@ export default function Home() {
         <div className="landing-bold-actions">
           {isAuthenticated ? (
             <Link href={destination ?? "/login"} className="landing-bold-primary">
-              Gå till appen<span aria-hidden="true">→</span>
+              Gå till appen<span aria-hidden="true"><UiIcon name="arrow" width=".75em" height=".75em" /></span>
             </Link>
           ) : (
             <>
@@ -209,7 +210,7 @@ export default function Home() {
                 {copy.secondary}
               </Link>
               <Link href="/signup" className="landing-bold-primary">
-                {copy.primary}<span aria-hidden="true">→</span>
+                {copy.primary}<span aria-hidden="true"><UiIcon name="arrow" width=".75em" height=".75em" /></span>
               </Link>
             </>
           )}
