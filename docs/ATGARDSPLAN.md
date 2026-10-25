@@ -475,7 +475,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
-- Uppföljning F04-UI (2026-10-25): För granskning, Codex, `codex/f04-remove-duplicate-profile-icon-20261025`, kodcommit `f144efb` (reservation `db8312a`). Den separata profilikonen längst till höger i huvudnavigationen för företag och privata konton är borttagen; intilliggande Profil-länk finns kvar. Oanvänd ikon-CSS är borttagen och navigationstestets förväntan uppdaterad. Lokalt verifierat: `test:company-navigation`, `tsc --noEmit`, riktad ESLint och `git diff --check` passerar. Inloggat användarflöde och driftsatt dev är ännu inte verifierade; granskning/merge återstår. F04:s huvudsakliga startflöde behåller sin status och ägare.
+- Uppföljning F04-UI (2026-10-25): För granskning, Codex, `codex/f04-remove-duplicate-profile-icon-20261025`, [utkast PR #99](https://github.com/vilgotdidrikson/youth-job-mvp/pull/99), kodcommit `f144efb` (reservation `db8312a`). Den separata profilikonen längst till höger i huvudnavigationen för företag och privata konton är borttagen; intilliggande Profil-länk finns kvar. Oanvänd ikon-CSS är borttagen och navigationstestets förväntan uppdaterad. Lokalt verifierat: `test:company-navigation`, `tsc --noEmit`, riktad ESLint och `git diff --check` passerar. Inloggat användarflöde och driftsatt dev är ännu inte verifierade; granskning/merge återstår. F04:s huvudsakliga startflöde behåller sin status och ägare.
 
 <a id="f05"></a>
 ### F05 Gör matchningsanalysen begriplig och användbar
