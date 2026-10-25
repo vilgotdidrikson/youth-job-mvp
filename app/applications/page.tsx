@@ -20,6 +20,8 @@ import { Suspense } from "react";
 import {getYouthActivity,type YouthActivity} from "@/lib/youth-activity";
 import { activityWithoutApplication, applicationCounts, isUnsent, pendingInterestView } from "@/lib/application-overview";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
+import { WithdrawApplicationButton } from "@/components/withdraw-application-button";
+import { canWithdrawApplication, withdrawalCopy, type WithdrawalResult } from "@/lib/application-withdrawal";
 
 const recruitmentLabels: Record<string,string> = {matched:"Ni har matchat",in_contact:"Kontakt pågår",interview:"Intervju",hired:"Anställd",rejected:"Avslutad",cancelled:"Avslutad"};
 import "./applications-design.css";
@@ -30,11 +32,12 @@ function analysisNotice(results: FollowupAnalysisResult[]): string {
   return "";
 }
 
-function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, initiallyOpen, stage }: { stage?:YouthActivity; initiallyOpen:boolean; hidden: boolean; item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (application:ApplicationCompletion, items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
+function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, initiallyOpen, stage, onWithdrawn }: { onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage?:YouthActivity; initiallyOpen:boolean; hidden: boolean; item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (application:ApplicationCompletion, items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const pending = item.status === "needs_completion";
+  if (item.status === "withdrawn") return <article id={`application-${item.job_id}`} hidden={hidden} className="card application-completion-card"><header><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">Återkallad</span></header><p>Ansökan eller det sparade intresset är återkallat och skickas inte igen automatiskt. En eventuell match är avslutad och chatten är skrivskyddad.</p>{item.withdrawn_at && <p>Återkallad {new Date(item.withdrawn_at).toLocaleDateString("sv-SE")}</p>}</article>;
   const save = async (submit: boolean) => {
     if (busy) return;
     setBusy(true); setError(""); setMessage("");
@@ -57,17 +60,20 @@ function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, i
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {message && <p role="status">{message}</p>}
     {pending && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void save(true)}>{busy ? "Skickar…" : "Skicka ansökan direkt"}</button></div>}
+    {canWithdrawApplication(item.status, stage?.status) && <div className="application-completion-actions"><WithdrawApplicationButton jobId={item.job_id} title={item.job_title} submitted={item.status === "submitted" || Boolean(item.submitted_at)} disabled={busy} onBusyChange={setBusy} onWithdrawn={result => onWithdrawn(item.job_id, result)}/></div>}
   </article>;
 }
 
 /** Saved interest or a stage without an application row. Saved interest is never presented as sent. */
-function ActivityCard({ stage, hidden, cvCompleted, onSend }: { stage: YouthActivity; hidden: boolean; cvCompleted: boolean | null; onSend: (jobId: string) => Promise<void> }) {
+function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage: YouthActivity; hidden: boolean; cvCompleted: boolean | null; onSend: (jobId: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const header = (label: string) => <header><div className="application-company-avatar">{stage.company.slice(0, 2).toUpperCase()}</div><div><p>{stage.company}</p><h2>{stage.title}</h2></div><span className="application-status">{label}</span></header>;
+  const withdraw = <WithdrawApplicationButton jobId={stage.jobId} title={stage.title} submitted={stage.status !== "draft"} disabled={busy} onBusyChange={setBusy} onWithdrawn={result => onWithdrawn(stage.jobId, result)}/>;
+  if (stage.status === "withdrawn") return <article className="card application-completion-card" hidden={hidden}>{header("Återkallad")}<p>Intresset är återkallat och skickas inte igen automatiskt.</p></article>;
   if (stage.status !== "draft") {
     const active = recruitmentLabels[stage.status] && !["rejected", "cancelled"].includes(stage.status);
-    return <article className="card application-completion-card" hidden={hidden}>{header(recruitmentLabels[stage.status] || "Skickad")}<p>Ansökan finns kvar. Följ nästa steg här.</p><Link className="application-job-link" href={active ? `/chats?job=${stage.jobId}` : `/jobb/${stage.jobId}`}>Visa nästa steg<UiIcon name="arrow" width="16"/></Link></article>;
+    return <article className="card application-completion-card" hidden={hidden}>{header(recruitmentLabels[stage.status] || "Skickad")}<p>Ansökan finns kvar. Följ nästa steg här.</p><Link className="application-job-link" href={active ? `/chats?job=${stage.jobId}` : `/jobb/${stage.jobId}`}>Visa nästa steg<UiIcon name="arrow" width="16"/></Link>{stage.status !== "hired" && withdraw}</article>;
   }
   const view = pendingInterestView(stage, cvCompleted);
   const send = async () => {
@@ -84,6 +90,7 @@ function ActivityCard({ stage, hidden, cvCompleted, onSend }: { stage: YouthActi
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {view.action === "complete_cv" && <div className="application-completion-actions"><Link className="cta-btn" href={`/youth/cv?job=${encodeURIComponent(stage.jobId)}&title=${encodeURIComponent(stage.title)}`}>Gör klart CV:t</Link></div>}
     {view.action === "send" && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void send()}>{busy ? "Skickar…" : "Skicka ansökan"}</button></div>}
+    <div className="application-completion-actions">{withdraw}</div>
   </article>;
 }
 
@@ -138,6 +145,18 @@ function ApplicationsPageContent() {
   const counts = applicationCounts(items, activity, needsAnswers);
   const itemHidden = (item: ApplicationCompletion) => (tab === "questions" && !needsAnswers(item)) || (tab === "unsent" && !isUnsent(item));
   const visibleCount = tab === "all" ? counts.all : tab === "unsent" ? counts.unsent : counts.questions;
+  const withdrawn = (jobId: string, result: WithdrawalResult) => {
+    savedRevision.current++;
+    setItems(current => current.map(item => item.job_id === jobId ? { ...item, status: "withdrawn", withdrawn_at: result.withdrawn_at } : item));
+    setActivity(current => current.map(stage => stage.jobId === jobId ? { ...stage, status: "withdrawn" } : stage));
+    setFollowups(current => current.filter(item => item.job_id !== jobId));
+    setConfirmation(withdrawalCopy(result.was_submitted).confirmation);
+    window.dispatchEvent(new Event("mnw-navigation-refresh"));
+    const revision = savedRevision.current;
+    void Promise.all([getApplicationCompletions(),getYouthActivity(userId!)]).then(([data,stages]) => {
+      if (revision === savedRevision.current) { setItems(data); setActivity(stages); }
+    }).catch(() => setError("Återkallelsen är sparad, men listan kunde inte hämtas igen. Ladda om sidan för aktuell historik."));
+  };
   const sendSavedInterest = async (jobId: string) => {
     const sent = await prepareApplication(jobId);
     savedRevision.current++;
@@ -158,8 +177,8 @@ function ApplicationsPageContent() {
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
       <div className="applications-tab-panel" {...tabPanelProps("applications", tab)}>
-      {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} />)}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
+      {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} onWithdrawn={withdrawn} />)}
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
         if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }

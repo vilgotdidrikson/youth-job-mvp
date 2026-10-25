@@ -29,6 +29,8 @@ assert.equal(isUnsent(activity[1]), true);
 assert.equal(isUnsent(activity[3]), false);
 assert.equal(isUnsent(items[2]), true);
 assert.equal(isUnsent(items[0]), false);
+assert.equal(isUnsent({job_id:'withdrawn',status:'withdrawn'}),false);
+assert.deepEqual(applicationCounts([{job_id:'withdrawn',status:'withdrawn'}],[],()=>false),{all:1,unsent:0,questions:0});
 
 // Saved interest is never presented as sent, and states what sending requires.
 const noCv = pendingInterestView({ available: true }, false);
@@ -87,6 +89,9 @@ try {
   // A later real interest wins over the draft and is not marked as saved interest.
   assert.equal(result['later-sent'].status, 'submitted');
   assert.equal(result['later-sent'].available, undefined);
+  tables.application_completions=[{job_id:'later-sent',job_title:'QA',company_name:'QA',status:'withdrawn',created_at:'7'}];
+  tables.matches=[{job_id:'later-sent',status:'cancelled',created_at:'6'}];
+  assert.equal((await getYouthActivity('youth-a')).find(item=>item.jobId==='later-sent').status,'withdrawn','withdrawn history takes precedence over cancelled match');
 } finally { Module._load = load; }
 
 // Wiring: tabs use the shared counts and the job page no longer re-offers "Jag är intresserad" for saved interest.

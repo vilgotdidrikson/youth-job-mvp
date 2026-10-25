@@ -18,6 +18,8 @@ import { blockConversationUser } from "@/lib/moderation";
 import { markMatchNotificationsRead } from "@/lib/notifications";
 import { UiIcon } from "@/components/ui-icon";
 import styles from "./chat.module.css";
+import { chatIsReadOnly } from "@/lib/application-withdrawal";
+import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 
 interface ConvDisplay { conv: ConversationSummary; otherName: string; jobTitle?: string; status: string; matchId?: string }
 const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: "Anställning registrerad", rejected: "Avslutad", cancelled: "Avslutad" };
@@ -67,6 +69,7 @@ function ChatsPageContent() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte läsa dina chattar."); if(showLoading) setListState("error"); }
   }, [requestedJob,requestedConversation,requestedMatch]);
   useEffect(() => { if(user && !cvLoading && (profile?.role !== "youth" || cvCompleted)) void loadConversations(); },[user,profile?.role,cvLoading,cvCompleted,loadConversations]);
+  useEffect(() => { if (!user) return; return subscribeVisibleRefresh(() => loadConversations(false)); }, [user,loadConversations]);
   useEffect(() => {
     if(!selectedId) return;
     let active = true;
@@ -101,7 +104,7 @@ function ChatsPageContent() {
   const handleSend = async (event: FormEvent) => {
     event.preventDefault();
     const id = selectedId, text = id ? drafts[id]?.trim() : "";
-    if(!id || !text || loadedId !== id || sendLock.current) return;
+    if(!id || !text || loadedId !== id || sendLock.current || chatIsReadOnly(conversations.find(item => item.conv.id === id)?.status || "")) return;
     sendLock.current=true; setSending(true); setMessageError("");
     try {
       await sendMessage(id,text);
@@ -142,8 +145,9 @@ function ChatsPageContent() {
 
       {messageError && <div className={styles.error}><p role="alert">{messageError}</p><button type="button" className={styles.secondary} disabled={sending} onClick={retryMessages}>Hämta meddelanden igen</button></div>}
 
+      {chatIsReadOnly(selected.status) ? <p className={styles.messageNote} role="status">Rekryteringen är avslutad. Chatthistoriken finns kvar att läsa, men ni kan inte skicka fler meddelanden.</p> : <>
       {user&&profile?.role==='youth'&&loadedId===selectedId&&<ChatVideoComposer key={selected.conv.id} conversationId={selected.conv.id} userId={user.id} onSent={()=>{retryMessages();void loadConversations(false);}}/>}
-      <form className={styles.composer} onSubmit={handleSend}><label><span className="sr-only">Meddelande till {selected.otherName}</span><textarea ref={composerRef} rows={1} value={drafts[selected.conv.id] || ""} onChange={event => {const input=event.currentTarget;input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;const value=input.value;try{sessionStorage.setItem(`mnw-chat-draft:${user?.id}:${selected.conv.id}`,value);}catch{/* Storage may be disabled. */}setDrafts(current => ({...current,[selected.conv.id]:value}));}} onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing&&window.matchMedia("(pointer:fine)").matches){event.preventDefault();event.currentTarget.form?.requestSubmit();}}} placeholder="Skriv ett meddelande…" disabled={sending || loadedId !== selectedId}/></label><button type="submit" aria-label={sending ? "Skickar meddelande" : "Skicka meddelande"} disabled={sending || loadedId !== selectedId || !drafts[selected.conv.id]?.trim()}><UiIcon name="arrow"/></button></form>
+      <form className={styles.composer} onSubmit={handleSend}><label><span className="sr-only">Meddelande till {selected.otherName}</span><textarea ref={composerRef} rows={1} value={drafts[selected.conv.id] || ""} onChange={event => {const input=event.currentTarget;input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;const value=input.value;try{sessionStorage.setItem(`mnw-chat-draft:${user?.id}:${selected.conv.id}`,value);}catch{/* Storage may be disabled. */}setDrafts(current => ({...current,[selected.conv.id]:value}));}} onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing&&window.matchMedia("(pointer:fine)").matches){event.preventDefault();event.currentTarget.form?.requestSubmit();}}} placeholder="Skriv ett meddelande…" disabled={sending || loadedId !== selectedId}/></label><button type="submit" aria-label={sending ? "Skickar meddelande" : "Skicka meddelande"} disabled={sending || loadedId !== selectedId || !drafts[selected.conv.id]?.trim()}><UiIcon name="arrow"/></button></form></>}
     </> : <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Ett samtal kan bli nästa steg</h2><p>Välj en matchning i inkorgen för att läsa eller skriva ett meddelande.</p></div>}</section></div>
   </main>;
 }
