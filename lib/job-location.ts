@@ -24,9 +24,12 @@ const SWEDISH_CITY_COORDINATES: Record<string, Coordinates> = {
   umeå: { longitude: 20.263, latitude: 63.8258 },
 };
 
+/** Named reference points for a local, approximate distance filter. */
+export const SEARCH_ORIGIN_CITIES = Object.keys(SWEDISH_CITY_COORDINATES).map(city => city[0].toLocaleUpperCase("sv-SE") + city.slice(1));
+
 function fallbackCityCoordinates(city?: string | null): Coordinates | null {
   const cityKey = city?.trim().toLocaleLowerCase("sv-SE");
-  return cityKey ? SWEDISH_CITY_COORDINATES[cityKey] ?? null : null;
+  return cityKey && Object.prototype.hasOwnProperty.call(SWEDISH_CITY_COORDINATES, cityKey) ? SWEDISH_CITY_COORDINATES[cityKey] : null;
 }
 
 /**

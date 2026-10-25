@@ -1,5 +1,6 @@
 "use client";
 
+import { searchDetailLabels, type JobSearchFilters } from "@/lib/job-search";
 import { useJobImpression } from "@/hooks/use-job-impression";
 import { jobCities } from "@/lib/job-workplaces";
 import Image from "next/image";
@@ -10,7 +11,7 @@ import styles from "./job-discovery.module.css";
 import type { JobPost, SwipeDecision } from "@/lib/types";
 
 interface JobSwipeDeckProps {
-  disabled?: boolean;
+  searchFilters?: JobSearchFilters; disabled?: boolean;
   onSeen?: (id: string) => Promise<void>;
   jobs: JobPost[];
   onDecision: (job: JobPost, decision: SwipeDecision) => Promise<void>;
@@ -24,7 +25,7 @@ interface JobSwipeDeckProps {
   swipeHint: string;
 }
 
-export function JobSwipeDeck({ disabled = false, onSeen, jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
+export function JobSwipeDeck({ searchFilters, disabled = false, onSeen, jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
   const [dragX, setDragX] = useState(0);
   const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -79,6 +80,7 @@ export function JobSwipeDeck({ disabled = false, onSeen, jobs, onDecision, onSav
       {Math.abs(dragX) > 20 && <span className={`${styles.swipeFeedback} ${dragX > 0 ? styles.feedbackYes : ""}`}>{dragX > 0 ? "Intresserad" : "Inte nu"}</span>}
       <div className={styles.cardContent}><p className={styles.company}>{currentJob.company_name || "Arbetsgivare"}</p><h2><Link href={`/jobb/${encodeURIComponent(currentJob.id)}`}>{currentJob.title}</Link></h2><div className={styles.cardChips}>{[jobCities(currentJob), currentJob.employment_type, currentJob.salary_per_hour].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div></div>
     </article>
+    {searchFilters && searchDetailLabels(currentJob, searchFilters).map(label => <p className={styles.swipeHint} key={label}>{label}</p>)}
     {currentJob.discovery && <p className={styles.swipeHint}>{currentJob.discovery.reasons.length ? currentJob.discovery.reasons.join(" · ") : "Fler jobb att upptäcka – inga angivna önskemål behöver matcha för att du ska kunna söka."}</p>}
     <div className={styles.actions}>
       <button type="button" className={styles.action} disabled={disabled || busy || saving} onClick={() => decide("skip")}><span><UiIcon name="close"/></span><span>{skipLabel}</span></button>

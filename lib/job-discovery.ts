@@ -1,17 +1,26 @@
-import { effectiveJobCategories, jobMatchesCategory, preferredJobCategories, roleCategoryIds } from "./job-categories";
+import { categoryLabel, effectiveJobCategories, jobMatchesCategory, preferredJobCategories, roleCategoryIds } from "./job-categories";
 import { jobMatchesCity } from "./job-workplaces";
 import { readRecruitmentProfile } from "./recruitment-profile";
+import { matchesPracticalSearch, normalizeSearchText, type JobSearchFilters } from "./job-search";
+import { readPracticalDetails, WORK_TIMES } from "./job-practical";
 import type { JobPost, YouthProfile } from "./types";
 
-export interface DiscoveryFilters { query?: string; city?: string; category?: string; employmentType?: string; }
+export type DiscoveryFilters = JobSearchFilters;
 const normalize = (value: string) => value.trim().toLocaleLowerCase("sv");
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 export function matchesDiscoveryFilters(job: JobPost, filters: DiscoveryFilters): boolean {
-  const needle = normalize(filters.query ?? "");
-  return (!needle || (roleCategoryIds(needle).length ? jobMatchesCategory(job, needle) : normalize([job.title, job.description, job.company_name, job.category].join(" ")).includes(needle)))
+  const query = normalizeSearchText((filters.query ?? "").slice(0, 200))
+    .replace(/^(?:vi soker |soker jobb (?:inom|som) |soker |jobb (?:inom|som) |medarbetare (?:pa|till) |personal (?:pa|till) )/, "");
+  const terms = query.split(/\s+/).filter(Boolean);
+  const text = normalizeSearchText([job.title, job.description, job.company_name, job.category, job.requirements,
+    ...effectiveJobCategories(job).map(categoryLabel),
+    ...(readPracticalDetails(job.practical_details).times?.map(time => WORK_TIMES[time]) ?? []),
+  ].join(" "));
+  return terms.every(term => roleCategoryIds(term).length > 0 ? jobMatchesCategory(job, term) : text.includes(term))
     && (!filters.city || jobMatchesCity(job, filters.city))
     && (!filters.category || jobMatchesCategory(job, filters.category))
-    && (!filters.employmentType || job.employment_type.split(",").some(value => normalize(value) === normalize(filters.employmentType!)));
+    && (!filters.employmentType || job.employment_type.split(",").some(value => normalize(value) === normalize(filters.employmentType!)))
+    && matchesPracticalSearch(job, filters);
 }
 export function prepareDiscoveryJob(job: JobPost, profile: YouthProfile | null, seen: boolean): JobPost {
   const recruitment = readRecruitmentProfile(profile?.recruitment_profile);
