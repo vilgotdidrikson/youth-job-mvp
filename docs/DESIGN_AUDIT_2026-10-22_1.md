@@ -29,6 +29,10 @@ This is a visual direction for the existing tasks, not a replacement roadmap or 
 
 Cross-references describe coordination, not a reservation or status change. Apply the visual checks below when a relevant view is already being changed; do not reopen completed functional tasks solely because the reference was added.
 
+**Further clarification from Vilgot — 2026-10-26:** Keep the demo and future affected product views simple: fewer competing text elements, fewer tiny secondary labels, and no repeated explanation panels or decorative statistics. Use a small, readable type scale and clear primary actions. Ready-made demo ads and recruitment examples should be immediately explorable; visitors may also edit and create their own. Preserve required status, evidence, error and consent information. The latest expanded demo is not a mandate to copy every control into the product.
+
+**Ad context:** [N25 in the action plan](ATGARDSPLAN.md#n25) records the requested ad-first candidate flow: select an owned ad, then show that ad's submitted applications and job-specific evidence. Coordinate with N03/F04, F05/F26/N19 and DA-12 without taking over their active work or changing their status. This is a planned product change; a simulated demo does not verify the real flow.
+
 ### What the comparison establishes
 
 The audit's consistency and accessibility work supports this direction, but fixing tokens alone does not produce the demo's clarity. The visual goal also needs to govern page composition, information priority, spacing and the visual treatment of controls.
