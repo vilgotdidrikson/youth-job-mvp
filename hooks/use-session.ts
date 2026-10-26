@@ -108,16 +108,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));
         }
       } finally {
-        refreshPromiseRef.current = null;
-
         if (isMountedRef.current && showLoading) {
           setLoading(false);
         }
       }
     })();
 
-    refreshPromiseRef.current = refreshTask;
-    return refreshTask;
+    // Cleared in a later microtask, after the assignment below. A refresh without
+    // any await (the signed-out initial session) finishes synchronously, and
+    // clearing it inside the task left a settled promise here, so every later
+    // refresh, including the one after SIGNED_IN, reused it and never loaded
+    // the profile.
+    const trackedTask = refreshTask.finally(() => {
+      if (refreshPromiseRef.current === trackedTask) refreshPromiseRef.current = null;
+    });
+    refreshPromiseRef.current = trackedTask;
+    return trackedTask;
   }, [updateProfile, updateUser]);
 
   useEffect(() => {
