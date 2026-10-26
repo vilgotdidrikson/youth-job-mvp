@@ -19,6 +19,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ## Gemensam prioriteringsordning
 
+### Designreferens från företagsdemon – beställt 2026-10-26
+
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch: `codex/design-demo-reference-20261026`.
+- Omfattning: Dokumentera användarens önskade designriktning (stilren, clean och informativ) med den nya företagsdemon som konkret referens. Jämför auditplanen med aktuell dev-kod och observerad frontend. Endast dokumentation; ingen frontendimplementation eller övertagning av D05, DA-04–DA-06 eller andra pågående punkter.
+- Reserverat före ändringen: detta tillägg publiceras separat innan jämförelsen läggs in i auditdokumentet. Befintlig prioritering, ägare och status förblir oförändrade.
+
 ### Reviderad produktinriktning – beställt 2026-10-18
 
 - Beslutat dokumenttillägg: Ersätt Mer om kandidaten med jobbspecifikt ansökningsunderlag enligt F26/N19 och docs/PROFIL_OCH_RELEVANS.md. Visa granskat CV, relevanta direkt läsbara praktiska fakta, källgrundade kriterier/belägg och uttryckligen delade ansökningssvar/frivillig video. Ingen generell företagsåtkomst till jobbprofilen, inte heller via API/databas. Ungdomen får förhandsvisa delningen och matchningens uppgiftsunderlag. Exakt bostadsadress utesluts från strukturerat underlag; arbetsplatsens adresser i annons/karta bevaras. Kontaktuppgifter i original-CV måste uppmärksammas. Beslutet är inte implementerat eller säkerhetsverifierat genom denna dokumentuppdatering (`codex/f26-n19-application-plan-20261018`).
