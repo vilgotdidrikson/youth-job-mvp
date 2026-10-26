@@ -4,10 +4,10 @@ import ts from 'typescript';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 function compile(file, imports = {}) {
-  const module = { exports: {} };
+  const testModule = { exports: {} };
   const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-  new Function('module', 'exports', 'require', code)(module, module.exports, name => imports[name] ?? require(name));
-  return module.exports;
+  new Function('module', 'exports', 'require', code)(testModule, testModule.exports, name => imports[name] ?? require(name));
+  return testModule.exports;
 }
 const progress = compile('lib/assessment-progress.ts');
 const { observeAssessment, assessmentDeadline } = progress;
@@ -46,6 +46,7 @@ const component = compile('components/candidate-assessment-panel.tsx', {
   react,
   '@/lib/api-client': { authenticatedHeaders: async () => ({}) },
   '@/lib/assessment-progress': progress,
+  './candidate-assessment-history': { CandidateAssessmentHistory: () => null },
   '@/lib/supabase': { getSupabaseClient: () => ({ rpc: () => ({ abortSignal: async () => ({ data: { status: 'pending' } }) }) }) },
   '@/lib/application-completions': { getApplicationFollowups: async () => { if (followupFails) throw new Error('followups unavailable'); return []; } },
   '@/lib/visible-refresh': { subscribeVisibleRefresh: () => () => {} },
