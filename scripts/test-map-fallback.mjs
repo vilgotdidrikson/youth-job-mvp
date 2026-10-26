@@ -29,6 +29,7 @@ function mapCase({token='qa-token',unsupported=false,throwSupport=false,throwCon
   if(name==='react')return hooks.react;
   if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'fragment'};
   if(name==='mapbox-gl')return{default:mapbox};
+  if(name==='mapbox-gl/dist/mapbox-gl.css')return{};
   if(name==='next/navigation')return{useRouter:()=>({push(){}})};
   if(name.startsWith('@/lib/'))return require('../lib/'+name.split('/').at(-1)+'.ts');
   throw Error(name);

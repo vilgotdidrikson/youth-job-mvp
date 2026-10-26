@@ -1,9 +1,13 @@
+"use client";
+
 import { useId } from "react";
 
 /**
  * Gradient ids must be unique per rendered SVG. PlatformShowcase renders each visual twice
  * (desktop column and mobile list); with shared ids the mobile copy resolved to the gradient
- * inside the hidden desktop column and painted nothing.
+ * inside the hidden desktop column and painted nothing. The module is a client module so
+ * that each copy is its own client instance with its own id, also when the elements come
+ * from a server component.
  */
 function useSvgId() {
   const base = useId().replace(/[^\w-]/g, "");

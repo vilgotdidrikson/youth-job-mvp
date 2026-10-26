@@ -19,7 +19,7 @@
 .contact { display:flex;align-items:center;gap:12px;width:100%;padding:16px 12px;margin-bottom:4px;border:1px solid transparent;border-radius:13px;text-align:left;color:var(--color-text);background:var(--color-surface); }
 .contact:hover { background:#fcf7f9; }
 .contactActive { background:#f8edf2;border-color:#f1dfe7; }
-.avatar { display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:15px;background:#f2e5ec;color:#99647e;font-size:.78rem;font-weight:500; }
+.avatar { display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:15px;background:#f2e5ec;color:var(--color-text-muted-strong);font-size:.78rem;font-weight:500; }
 .contactActive .avatar { background:#a94a6c;color:white; }
 .contactText { display:grid;flex:1;min-width:0;gap:5px; }
 .contactText strong { font-size:.83rem;font-weight:600; }

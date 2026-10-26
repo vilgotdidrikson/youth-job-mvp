@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import mapboxgl from "mapbox-gl";
+// Loaded here instead of globally, so only routes with a map download it.
+import "mapbox-gl/dist/mapbox-gl.css";
 import { getJobWorkplaces } from "@/lib/job-workplaces";
 import { getCityCoordinates, type Coordinates } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";

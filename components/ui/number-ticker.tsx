@@ -20,7 +20,9 @@ export function NumberTicker({
   duration = 1600,
   className,
 }: NumberTickerProps) {
-  const [display, setDisplay] = useState(0);
+  // The server HTML shows the final value, so it is readable without JavaScript;
+  // the count-up restarts from zero once the number scrolls into view.
+  const [display, setDisplay] = useState(value);
   const spanRef = useRef<HTMLSpanElement | null>(null);
   const hasAnimated = useRef(false);
 

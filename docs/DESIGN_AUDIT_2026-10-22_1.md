@@ -275,6 +275,9 @@ Original audit sequencing advice (subject to current action-plan status and glob
 <a id="da-11"></a>
 ### DA-11 Client-rendered marketing pages and a global Mapbox stylesheet
 
+- **Implementation update — 2026-10-26 (för granskning, branch `Max`):** `/`, `/features` and `/pricing` are server components with their own `metadata`; the title-only segment layouts are removed. The interactive parts are `app/landing-hero.tsx` (typed headline and session-aware buttons) and `app/pricing/pricing-plans.tsx` (audience switch and plans). The headline starts fully written, `NumberTicker` server-renders its final value, and a `<noscript>` style shows the scroll-revealed text without JavaScript. `platform-visuals.tsx` is a client module so each copy keeps its own SVG ids (otherwise DA-01 returns). The Mapbox CSS is imported in `components/job-map.tsx`, and the map control rule's specificity is raised because Mapbox now loads after the app CSS. Copy and animations are otherwise unchanged.
+- **Verified:** TypeScript, ESLint, production build (webpack), `test:accessibility`, `test:map-fallback`, `test:local-fonts`. Local production builds before/after in Chromium: screenshots of `/`, `/features`, `/pricing`, `/login` at 375px and 1280px are pixel-identical; without JavaScript the landing page now shows its headline, stats and manifesto; no Mapbox stylesheet on `/`, `/features`, `/pricing`, `/login`, `/signup` or `/privacy`. Not yet done: Lighthouse mobile before/after on deployed dev, and a signed-in visual check of `/kartan`.
+
 - **Seen (code):**
   - `app/page.tsx`, `app/features/page.tsx` and `app/pricing/page.tsx` all start with `"use client"`. All of their text is rendered by JavaScript, they cannot export `metadata` (blocking DA-02), and the first meaningful paint waits for the JS bundle.
   - `app/globals.css` line 1 imports `mapbox-gl/dist/mapbox-gl.css`, so every page, including the landing page and login, downloads the map stylesheet.
