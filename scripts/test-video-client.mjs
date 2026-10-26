@@ -22,6 +22,8 @@ const db={
   },storage:{from:()=>storage},auth:{getSession:async()=>({data:{session:{access_token:'test-only-not-a-real-token'}}})},
 };
 globalThis.__videoTestDb=db;
+const originalFetch=globalThis.fetch;
+globalThis.fetch=async(url,options)=>{calls.push(['playback',url,options]);const reply=replies.shift();return reply?.error?new Response(null,{status:404}):new Response(reply?.data??new Blob(['qa']));};
 try{
   writeFileSync(join(dir,'policy.mjs'),ts.transpileModule(readFileSync('lib/profile-video.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText);
   let code=ts.transpileModule(readFileSync('lib/video-client.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText;
@@ -39,7 +41,8 @@ try{
   reset({data:{...video,conversation_id:null},error:null});assert.equal(await getVideo(id),null);
   reset();await assert.rejects(videoPlaybackUrl({...video,conversation_id:null}),/Ogiltig/);assert.equal(calls.length,0);
   reset();await assert.rejects(videoPlaybackUrl({...video,storage_path:'https://example.org/a.mp4'}),/Ogiltig/);assert.equal(calls.length,0);
-  reset({data:new Blob(['qa']),error:null});const src=await videoPlaybackUrl(video);assert.ok(src.startsWith('blob:'));URL.revokeObjectURL(src);assert.equal(calls[0][0],'download');
+  reset({data:new Blob(['qa']),error:null});const src=await videoPlaybackUrl(video);assert.ok(src.startsWith('blob:'));URL.revokeObjectURL(src);assert.equal(calls[0][0],'playback');assert.equal(calls[0][1],'/api/videos/playback');assert.equal(calls[0][2].cache,'no-store');assert.deepEqual(JSON.parse(calls[0][2].body),{videoId:id});
+  reset({error:{code:'denied'}});await assert.rejects(videoPlaybackUrl(video),/behörighet/);
   reset();await assert.rejects(videoPlaybackUrl({...video,expires_at:new Date(Date.now()-1).toISOString()}),/tillgänglig/);assert.equal(calls.length,0);
   reset({data:[{id}],error:null});assert.equal(await revokeVideo(video),true);assert.equal(calls[0][1],'update');assert.ok(!calls.some(c=>c[0]==='remove'),'Only server cleanup removes bytes');
   reset({data:[],error:null});await assert.rejects(revokeVideo(video));assert.ok(!calls.some(c=>c[0]==='remove'));
@@ -58,4 +61,4 @@ try{
   const aborted=new AbortController();reset({error:null},{data:[{id}],error:null},{error:null});uploadCallback=async()=>aborted.abort();
   await assert.rejects(uploadVideo(file,30,owner,"conversation",aborted.signal));assert.ok(calls.some(c=>c[1]==='update'),'Late abort revokes asset before cleanup');
   console.log('PASS video client: authenticated downloads and expiry, invalid paths and retired profile rejection, lost responses, idempotent sends, failed/aborted uploads and cleanup. Transport simulated.');
-}finally{delete globalThis.__videoTestDb;rmSync(dir,{recursive:true,force:true});}
+}finally{globalThis.fetch=originalFetch;delete globalThis.__videoTestDb;rmSync(dir,{recursive:true,force:true});}

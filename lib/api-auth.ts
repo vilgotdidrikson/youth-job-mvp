@@ -12,6 +12,7 @@ const limits = {
   "application-submit": 60,
   "candidate-analyze": 30,
   "candidate-cv": 60,
+  "video-playback": 60,
 } as const;
 
 export type ProtectedEndpoint = keyof typeof limits;

@@ -54,7 +54,9 @@
     "test:company-public-profile": "node scripts/test-company-public-profile.mjs",
     "test:job-practical": "node scripts/test-job-practical.mjs",
     "check:design-tokens": "node scripts/check-design-tokens.mjs",
-    "test:platform-visuals": "node scripts/test-platform-visuals.mjs"
+    "test:platform-visuals": "node scripts/test-platform-visuals.mjs",
+    "test:moderation": "node scripts/test-moderation-client.mjs",
+    "test:video-playback": "node scripts/test-video-playback.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
