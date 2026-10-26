@@ -10,17 +10,6 @@
 .company-onboarding-form { min-width:0; }
 .mnw-product .company-onboarding-form h1 { font-size:1.8rem!important; }
 .mnw-product .company-onboarding-form .profile-question-card { padding:28px!important; }
-.company-onboarding-form .profile-question-card > label { text-transform:none!important;letter-spacing:0!important;font-size:.8rem!important;font-weight:500!important;margin-bottom:10px!important;color:var(--color-text)!important; }
-.company-onboarding-form .profile-question-card input { min-height:54px;background:var(--color-canvas)!important;border-radius:13px!important;font-size:16px!important;padding:14px!important; }
-.company-onboarding-progress { height:6px!important;background:var(--color-rose-track)!important; }
-.company-onboarding-progress > div { background:var(--color-brand)!important; }
-.mnw-product .company-onboarding-chip { min-height:44px;border:1px solid var(--color-border)!important;border-radius:11px!important;padding:9px 13px!important;background:white!important;color:var(--color-text-muted)!important;font-size:.78rem!important; }
-.mnw-product .company-onboarding-chip[aria-pressed="true"] { background:var(--color-rose)!important;border-color:var(--color-brand)!important;color:var(--color-brand)!important; }
-.company-onboarding-complete { gap:14px;min-height:70svh!important; }
-.company-onboarding-complete h1 { font-size:2.6rem!important;line-height:1.15!important;max-width:500px;margin:0!important; }
-.company-onboarding-complete > p { font-size:.9rem!important;line-height:1.8!important;color:var(--color-text-muted)!important;margin:0!important; }
-.company-onboarding-complete > p:first-child { color:var(--color-brand)!important;font-size:.72rem!important;letter-spacing:.08em!important; }
-.company-onboarding-complete > button { font-size:.9rem!important;margin-top:5px!important;min-height:50px!important; }
 @media(max-width:720px) {
  .mnw-product[data-onboarding="true"] .company-profile-onboarding { display:block!important;padding:25px 20px 50px!important;max-width:480px!important; }
  .company-onboarding-brand { margin-bottom:35px; }
@@ -30,12 +19,37 @@
  .company-onboarding-intro > span:last-child { font-size:.81rem; }
  .mnw-product .company-onboarding-form h1 { font-size:1.5rem!important; }
  .mnw-product .company-onboarding-form .profile-question-card { padding:21px!important; }
- .company-onboarding-complete h1 { font-size:2.1rem!important; }
 }
 
 .mnw-product[data-onboarding="true"] {height:auto!important;overflow:visible!important;}
 .mnw-product[data-onboarding="true"] .company-onboarding {height:auto!important;min-height:100dvh;overflow:visible!important;align-content:start;}
 .mnw-product[data-onboarding="true"] .company-onboarding-complete {min-height:0!important;padding:24px 0 60px;}
-.company-onboarding-complete > button {width:min(100%,31rem);}
 
 .company-onboarding.company-profile-onboarding > form {height:auto!important;min-height:0!important;}
+
+/* DA-12: former inline styles of app/company/onboarding/page.tsx. Tokens and DA-05 scale only. */
+.company-onboarding-question-head { margin-bottom:1.75rem;padding-top:.5rem; }
+.company-onboarding-question-head h1 { margin:0;color:var(--color-text);font-weight:500;letter-spacing:-.04em; }
+.company-onboarding-count { margin:.9rem 0 0;color:var(--color-text-muted);font-size:var(--text-xs);font-weight:700; }
+.company-onboarding-progress { height:6px;margin-top:.55rem;overflow:hidden;border-radius:999px;background:var(--color-rose-track); }
+.company-onboarding-progress > div { height:100%;border-radius:999px;background:var(--color-brand);transition:width .25s ease; }
+.company-onboarding-error { margin-bottom:1rem;padding:.75rem 1rem;border:1px solid var(--color-danger-border);border-radius:10px;background:var(--color-danger-soft);color:var(--color-danger);font-size:var(--text-sm); }
+.company-onboarding-form .company-onboarding-label { display:block;margin-bottom:10px;color:var(--color-text);font-size:var(--text-sm);font-weight:500; }
+/* Background needs !important to beat the shared onboarding input rule in product-design.css. */
+.company-onboarding-form .profile-question-card .company-onboarding-input { display:block;width:100%;min-height:54px;margin-bottom:.85rem;padding:14px;border:1px solid var(--color-border);border-radius:13px;background:var(--color-canvas)!important;font-size:16px; }
+.company-onboarding-chips { display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.85rem; }
+.mnw-product .company-onboarding-chip { min-height:44px;padding:9px 13px;border:1px solid var(--color-border);border-radius:11px;background:white;color:var(--color-text-muted);font-size:var(--text-xs);font-weight:500;cursor:pointer; }
+.mnw-product .company-onboarding-chip[aria-pressed="true"] { border-color:var(--color-brand);background:var(--color-rose);color:var(--color-brand); }
+.company-onboarding-help { margin:0;color:var(--color-text-muted);font-size:var(--text-sm);line-height:1.5; }
+.company-onboarding-form .profile-actions { display:flex;gap:.6rem;padding-top:1rem; }
+.mnw-product .company-onboarding-form .profile-actions :is(.cta-btn,.secondary-btn) { padding:.9rem;font-size:var(--text-sm); }
+.mnw-product .company-onboarding-form .profile-actions .cta-btn { flex:1; }
+
+/* Completion: the three choices share one size, so the primary action leads. */
+.company-onboarding-complete { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center; }
+.company-onboarding-complete h1 { max-width:500px;margin:0;color:var(--color-text);letter-spacing:-.06em; }
+.company-onboarding-complete > p { max-width:31rem;margin:0;color:var(--color-text-muted);font-size:var(--text-sm);line-height:1.8; }
+.company-onboarding-complete > p:first-child { color:var(--color-brand);font-size:var(--text-xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase; }
+.mnw-product .company-onboarding-complete > :is(button,a) { display:flex;align-items:center;justify-content:center;width:min(100%,31rem);min-height:50px;padding:12px 20px;font-size:var(--text-sm);text-decoration:none; }
+.mnw-product .company-onboarding-complete > button { margin-top:5px; }
+@media (prefers-reduced-motion: reduce) { .company-onboarding-progress > div { transition:none; } }

@@ -584,9 +584,9 @@ function CompanyPageContent() {
 
   if (!hasCompanyAccess) {
     return (
-      <main className="mobile-shell" style={{ paddingTop: "2rem" }}>
-        <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-          <p style={{ fontWeight: 700, color: "#111" }}>Den här sidan är för företagskonton.</p>
+      <main className="mobile-shell company-access-denied">
+        <div className="card company-access-card">
+          <p>Den här sidan är för företagskonton.</p>
         </div>
       </main>
     );
@@ -625,16 +625,15 @@ function CompanyPageContent() {
       {verificationStatus !== "verified" && <CompanyVerificationStatus profile={companyProfile} compact action={{ href: "/profile?tab=details", label: "Kontrollera företagsuppgifter" }} />}
       {/* Match banner */}
       {matchedConvId && (
-        <div style={{ borderRadius: 14, background: "#e8faf0", border: "1.5px solid #b6e8cf", padding: "1rem 1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>🎉</span>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1a7f4b", margin: "0 0 0.15rem" }}>Det blev en match!</p>
-            <p style={{ fontSize: "0.82rem", color: "#2d7a52", margin: 0 }}>Ni kan nu chatta med varandra.</p>
+        <div className="company-match-banner">
+          <span className="company-match-banner-icon">🎉</span>
+          <div className="company-match-banner-text">
+            <p>Det blev en match!</p>
+            <p>Ni kan nu chatta med varandra.</p>
           </div>
           <button
             type="button"
-            className="cta-btn"
-            style={{ flexShrink: 0, padding: "0.5rem 0.85rem", fontSize: "0.82rem", background: "#1a7f4b" }}
+            className="cta-btn company-match-banner-chat"
             onClick={() => router.push(`/chats?conversation=${matchedConvId}`)}
           >
             Chatta →
@@ -642,7 +641,7 @@ function CompanyPageContent() {
           <button
             type="button"
             onClick={() => setMatchedConvId(null)}
-            style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer", color: "#a3a3a3", fontSize: "1rem", padding: "0.25rem" }}
+            className="company-match-banner-close"
             aria-label="Stäng"
           >
             ✕
@@ -659,7 +658,7 @@ function CompanyPageContent() {
       {editing && jobEdit.error && <section className="card company-applicants-empty"><h1>Annonsen kunde inte öppnas</h1><p role="alert">{jobEdit.error}</p><button type="button" className="secondary-btn" onClick={jobEdit.retry}>Försök igen</button></section>}
       {editing && !jobEdit.error && !builderHydrated && <p role="status">Öppnar annonsen för redigering…</p>}
       {error && (
-        <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
+        <div className="company-error-banner">
           {error}
         </div>
       )}
@@ -785,13 +784,13 @@ function CompanyPageContent() {
               {!selectedCandidate && <section className="card company-applicants-empty"><h2>{selectedCandidateId ? "Ansökan är inte tillgänglig" : "Ingen kandidat att visa"}</h2><p>{selectedCandidateId ? "Välj en annan kandidat i listan för att fortsätta." : "Prova ett annat namn eller jobb för att hitta en ansökan."}</p></section>}
               {selectedCandidate && <article className="company-candidate-profile card">
                 <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
-                <section aria-label="Kandidatens CV"><button type="button" className="cta-btn" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv} style={{ width: "100%", padding: "0.8rem 1rem" }}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" style={{ color: "#b42318", marginTop: ".55rem" }}>{uploadedCvError}</p>}</section>
+                <section aria-label="Kandidatens CV"><button type="button" className="cta-btn company-candidate-cv-button" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" className="company-candidate-cv-error">{uploadedCvError}</p>}</section>
                 <WorkplacePreference key={`workplace:${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} job={selectedCandidate.job} youthId={selectedCandidate.youthUserId} readOnly/>
                 <CandidateRecruitmentProfile key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthId={selectedCandidate.youthUserId}/><CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
                 {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
                   const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
                   const isDeciding = candidateActionKey === actionKey;
-                  return <section aria-label="Beslut om ansökan" style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e8e8e8" }}>
+                  return <section aria-label="Beslut om ansökan" className="company-candidate-decision">
                     <button
                       type="button"
                       className="secondary-btn"
@@ -801,7 +800,6 @@ function CompanyPageContent() {
                           void handleApplicantDecision(selectedCandidate, "skip");
                         }
                       }}
-                      style={{ flex: 1, padding: "0.8rem" }}
                     >
                       {isDeciding ? "Sparar..." : "Neka"}
                     </button>
@@ -810,7 +808,6 @@ function CompanyPageContent() {
                       className="cta-btn"
                       disabled={isDeciding}
                       onClick={() => void handleApplicantDecision(selectedCandidate, "interested")}
-                      style={{ flex: 1, padding: "0.8rem" }}
                     >
                       {isDeciding ? "Sparar..." : "Acceptera"}
                     </button>
@@ -913,7 +910,7 @@ function CompanyPageContent() {
                       <label>Krav i annonsen<textarea className="job-builder-textarea" rows={3} value={form.listingRequirements ?? form.requirements} onChange={event => setForm(current => ({ ...current, listingRequirements: event.target.value }))}/><small>Visas i annonsen. Skriv konkreta krav, till exempel körkort eller nödvändiga arbetstider. Avgörande villkor ska framgå här eller i beskrivningen.</small></label>
                       <div className="job-builder-age"><span>Åldersspann <em>(valfritt)</em></span><div><label>Ålder från<input className="input-field" inputMode="numeric" maxLength={2} placeholder="T.ex. 16" value={form.minAge} onChange={(e) => setForm((p) => ({ ...p, minAge: e.target.value }))} {...fieldProps("minAge")} /></label><b>—</b><label>Ålder till<input className="input-field" inputMode="numeric" maxLength={2} placeholder="T.ex. 19" value={form.maxAge} onChange={(e) => setForm((p) => ({ ...p, maxAge: e.target.value }))} {...fieldProps("maxAge")} /></label></div>{(["minAge", "maxAge"] as const).map(field => fieldError(field) && <p key={field} id={`job-field-${field}-error`} className="job-builder-field-error" role="alert">{fieldError(field)}</p>)}</div>
                       <JobCategoryField title={form.title} description={form.description} legacyCategory={form.category} value={draftJobCategories(form)} manual={form.categoryManual} disabled={busy||generatingAi} onChange={(categoryIds,categoryManual)=>setForm(current=>({...current,categoryIds,categoryManual}))}/>
-                      <p id="job-employment-type-label" className="job-builder-label" style={{ marginTop: "1rem" }}>Anställningsform *</p>
+                      <p id="job-employment-type-label" className="job-builder-label company-builder-spaced">Anställningsform *</p>
                       <div className="job-builder-chips" role="group" aria-labelledby="job-employment-type-label">{EMPLOYMENT_TYPES.map((type) => <button key={type} type="button" aria-pressed={form.employmentType === type} onClick={() => setForm((p) => ({ ...p, employmentType: p.employmentType === type ? "" : type }))} className={`chip ${form.employmentType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><label>Anställningsform – välj ovan eller skriv eget<input className="input-field" maxLength={80} value={form.employmentType} onChange={event=>setForm(current=>({...current,employmentType:event.target.value}))} placeholder="Egen anställningsform"/></label>
                     </section>
                   )}
@@ -929,7 +926,7 @@ function CompanyPageContent() {
                         <div><h3 id="job-requirements-label">Absoluta krav <span>(valfritt)</span></h3><p className="job-builder-field-help">Ange bara sådant kandidaten måste uppfylla från start.</p><div className="job-builder-chips" role="group" aria-labelledby="job-requirements-label">{[...new Set([...REQUIREMENT_TIPS, ...textListItems(form.requirements)])].map((tip) => { const selected = textListItems(form.requirements).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomRequirement((visible) => !visible)}>+ Eget krav</button></div>{showCustomRequirement && <div className="job-builder-custom"><input aria-label="Eget krav" className="input-field" placeholder="Skriv eget krav" value={customRequirement} onChange={(e) => setCustomRequirement(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customRequirement.trim()) { setForm((p) => ({ ...p, requirements: toggleTextList(p.requirements, customRequirement.trim()) })); setCustomRequirement(""); setShowCustomRequirement(false); } }}>Lägg till</button></div>}</div>
                         <div><h3 id="job-traits-label">Viktigaste egenskaperna <span>(välj högst 5)</span></h3><div className="job-builder-chips" role="group" aria-labelledby="job-traits-label">{[...new Set([...TRAIT_TIPS, ...textListItems(form.topTraits)])].map((tip) => { const selected = textListItems(form.topTraits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => toggleTrait(tip)} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}</div></div>
                       </div>
-                      <div className="job-builder-fields" style={{ marginTop: "1rem" }}>
+                      <div className="job-builder-fields company-builder-spaced">
                         <label>Vad kan personen lära sig på plats?<textarea className="input-field" rows={3} placeholder="T.ex. kassasystem, produktkunskap, rutiner" value={form.trainableRequirements} onChange={(e) => setForm((p) => ({ ...p, trainableRequirements: e.target.value }))} /></label>
                       </div>
                       {form.candidateQuestions.length > 0 && <div className="job-builder-ai-questions"><div><strong>Kompletteringsfrågor vid behov</strong><p>Granska förslagen. Frågorna visas som frivillig komplettering efter att ansökan skickats. Alla frågor är valfria.</p></div>{form.candidateQuestions.map((question, index) => <label key={index}>Fråga {index + 1}<div><input className="input-field" value={question} onChange={(event) => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.map((item, itemIndex) => itemIndex === index ? event.target.value : item) }))} /><button type="button" aria-label={`Ta bort fråga ${index + 1}`} onClick={() => setForm((current) => ({ ...current, candidateQuestions: current.candidateQuestions.filter((_, itemIndex) => itemIndex !== index) }))}>×</button></div></label>)}</div>}
@@ -984,9 +981,9 @@ function CompanyPageContent() {
           </article>}
 
           {jobs.length === 0 ? (
-            <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
-              <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.75rem" }}>Inga annonser ännu</p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>
+            <div className="card company-jobs-empty">
+              <p>Inga annonser ännu</p>
+              <button type="button" className="cta-btn" onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>
                 Skapa din första annons
               </button>
             </div>
@@ -999,30 +996,30 @@ function CompanyPageContent() {
                 const publicState = jobPublicationState(job);
                 const awaitingVerification = publicState === "waiting";
                 return (
-                  <article key={job.id} className="card job-list-card" style={{ padding: "1rem 1.1rem" }}>
-                    <Link className="company-job-summary" href={`/jobb/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                  <article key={job.id} className="card job-list-card">
+                    <Link className="company-job-summary" href={`/jobb/${job.id}`}>
                     <div className="company-job-heading"><span className="company-job-icon"><UiIcon name="briefcase" width="23" /></span><h2>{job.title}</h2></div>
-                    <p style={{ fontSize: "0.82rem", color: "#737373" }}>{[jobCities(job), effectiveJobCategories(job).map(categoryLabel).join(" / ") || job.category, agePart].filter(Boolean).join(" · ")}</p>
+                    <p className="company-job-meta">{[jobCities(job), effectiveJobCategories(job).map(categoryLabel).join(" / ") || job.category, agePart].filter(Boolean).join(" · ")}</p>
                     {job.employment_type && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>
+                      <div className="company-job-chips">
                         {job.employment_type.split(",").map((t) => (<span key={t} className="chip">{t.trim()}</span>))}
                       </div>
                     )}
-                    <div style={{ display: "inline-block", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: awaitingVerification ? "#fff3d6" : publicState === "published" ? "#e8faf0" : "#f5f5f5", color: awaitingVerification ? "#6a4a00" : publicState === "published" ? "#1a7f4b" : "#737373" }}>
+                    <div className="company-job-status" data-state={awaitingVerification ? "waiting" : publicState === "published" ? "published" : "other"}>
                       {jobPublicationLabel(job)}
                     </div>
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: ".45rem", marginTop: ".8rem" }}>
-                      <button type="button" className="cta-btn" disabled={isWorking || busy} onClick={() => { setError(""); setEditReceipt(""); window.history.pushState(null, "", editCompanyJobHref(job.id)); window.scrollTo({ top: 0 }); }} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera annons</button>
-                      <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Kopiera annons</button>
-                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera jobbtyp</button>
-                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera arbetsplatser</button>
-                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Redigera matchkriterier</button>
-                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Återaktivera</button>}
-                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Pausa</button>}
-                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setClosingJob(job)} style={{ padding: ".5rem .7rem", fontSize: ".78rem" }}>Stäng rekrytering</button>}
-                      <button type="button" disabled={isWorking} onClick={() => void handleDeleteJob(job)} style={{ padding: ".5rem .7rem", border: 0, color: "#b42318", background: "transparent", font: "inherit", fontSize: ".78rem", fontWeight: 700, cursor: isWorking ? "wait" : "pointer" }}>{isWorking ? "Sparar..." : "Ta bort"}</button>
+                    <div className="company-job-actions">
+                      <button type="button" className="cta-btn" disabled={isWorking || busy} onClick={() => { setError(""); setEditReceipt(""); window.history.pushState(null, "", editCompanyJobHref(job.id)); window.scrollTo({ top: 0 }); }}>Redigera annons</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }}>Kopiera annons</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)}>Redigera jobbtyp</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
+                      <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)}>Redigera matchkriterier</button>
+                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>Återaktivera</button>}
+                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")}>Pausa</button>}
+                      {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setClosingJob(job)}>Stäng rekrytering</button>}
+                      <button type="button" className="company-job-delete" disabled={isWorking} onClick={() => void handleDeleteJob(job)}>{isWorking ? "Sparar..." : "Ta bort"}</button>
                     </div>
                   </article>
                 );
