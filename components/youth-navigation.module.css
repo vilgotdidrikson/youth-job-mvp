@@ -1,7 +1,7 @@
 .nav { position: fixed; z-index: 90; bottom: 0; inset-inline: 0; height:calc(66px + env(safe-area-inset-bottom)); padding:10px 12px calc(11px + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); background: rgb(255 250 251 / .96); color: var(--color-text); backdrop-filter: blur(16px); }
 .brand, .account { display: none; }
 .links { display: flex; justify-content: space-around; max-width: 34rem; margin: auto; }
-.item { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: .35rem; min-height: 44px; color: var(--color-text-muted); text-decoration: none; font-size: .68rem; transition: color 180ms, background 180ms; }
+.item { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: .35rem; min-height: 44px; color: var(--color-text-muted); text-decoration: none; font-size: var(--text-xs); transition: color 180ms, background 180ms; }
 .item.active { color: var(--color-brand); }
 .icon { position:relative;display:flex; }
 .dot { position:absolute;top:-3px;right:-4px;width:9px;height:9px;border:2px solid var(--color-canvas);background:var(--color-brand);border-radius:50%; }

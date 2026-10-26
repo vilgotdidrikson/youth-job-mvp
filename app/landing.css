@@ -159,7 +159,7 @@
   font-size: 1.02rem;
 }
 
-.landing-bold-nav .landing-logo { font-size: 1.5rem; }
+.landing-bold-nav .landing-logo { min-height: 44px; font-size: 1.5rem; }
 .landing-bold-nav .landing-logo-mark { width: 2.2rem; height: 2.2rem; font-size: 1.15rem; }
 
 .landing-bold-primary {
@@ -492,7 +492,7 @@
 .landing-bold-stats-source {
   margin: clamp(2.5rem, 5vw, 3.5rem) 0 0;
   color: var(--color-text-muted);
-  font-size: .68rem;
+  font-size: var(--text-xs);
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -956,6 +956,11 @@
 }
 
 .landing-bold-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   color: rgba(255, 255, 255, .78);
   font-size: .85rem;
   font-weight: 600;
@@ -971,7 +976,7 @@
   padding-top: 2rem;
   border-top: 1px solid rgba(255, 255, 255, .14);
   color: rgba(255, 255, 255, .64);
-  font-size: .72rem;
+  font-size: var(--text-xs);
 }
 
 @media (max-width: 900px) {
@@ -1072,7 +1077,7 @@
     grid-column: 1;
     justify-content: center;
   }
-  .landing-bold-footer-links { flex-wrap: wrap; gap: 1.25rem; }
+  .landing-bold-footer-links { flex-wrap: wrap; gap: .25rem 1rem; }
   .landing-bold-footer-brand p { margin-inline: auto; }
   .landing-bold-footer-copy { padding-top: 1.5rem; }
 }
@@ -1081,12 +1086,12 @@
   .landing-bold-nav-actions-mobile { gap: .4rem; }
 
   .landing-bold-nav-actions-mobile .landing-bold-primary {
-    min-height: 2.55rem;
+    min-height: 2.75rem;
     padding: 0 .85rem;
     font-size: .82rem;
   }
 
-  .landing-bold-hamburger { width: 2.55rem; height: 2.55rem; }
+  .landing-bold-hamburger { width: 2.75rem; height: 2.75rem; }
 
   .landing-bold-hero h1 { font-size: clamp(2.1rem, 11vw, 2.8rem); }
 }
