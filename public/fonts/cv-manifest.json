@@ -1,0 +1,17 @@
+{
+  "source": "inter-latin.woff2",
+  "sourceSha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+  "license": "inter-OFL.txt",
+  "faces": [
+    {
+      "file": "cv-inter-regular.ttf",
+      "weight": 400,
+      "sha256": "676e402ad8e0335b8a311783633f4dc4f208a94d4ea5039bf9d80e54fca90828"
+    },
+    {
+      "file": "cv-inter-semibold.ttf",
+      "weight": 600,
+      "sha256": "fa45f211a0404eac2cc88fff2179cefd03de95bd42f8a2bbf7457c32efbef9eb"
+    }
+  ]
+}
