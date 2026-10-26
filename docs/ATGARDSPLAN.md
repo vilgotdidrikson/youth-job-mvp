@@ -151,10 +151,10 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
 | 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | För granskning | Max / Claude |
-| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Ej påbörjad | — |
+| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Pågår | Max / Claude |
 | 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
-| 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Ej påbörjad | — |
-| 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Ej påbörjad | — |
+| 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Klar | William / Claude |
+| 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
 | 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Ej påbörjad | — |
 | 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Ej påbörjad | — |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
@@ -1560,9 +1560,9 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 66
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-26 enligt användarens beställning att genomföra kort från designauditen. Startsidans innehåll, animationer och D05:s tillägg (DA-03, DA-10, DA-17) ingår inte; bara uppdelning i server- och klientkomponenter. Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-11), som har fynd, filer och mått.
 - Åtgärd: Gör `app/page.tsx`, `app/features/page.tsx` och `app/pricing/page.tsx` till serverkomponenter med egen `metadata` och flytta bara de interaktiva delarna till små klientkomponenter. Flytta importen av Mapbox-CSS från `app/globals.css` till kartkomponenten.
 - Klar när: Sidorna visar sin text utan JavaScript, har egen metadata och Mapbox-CSS laddas bara på sidor med karta. Lighthouse mobil jämförs före och efter i driftsatt dev.
@@ -1591,36 +1591,36 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-13"></a>
 ### DA-13 Gör prissidans huvudknapp till primär knapp
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 68
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Klar
+- Ansvarig: William / Claude
+- Branch/PR: [PR #111](https://github.com/vilgotdidrikson/youth-job-mvp/pull/111), merge `ba70209`. Statusen synkad 2026-10-26 från audit-dokumentet, där genomförande och verifiering i driftsatt dev redovisas (commit `2c92874`).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-13), som har fynd, filer och mått.
 - Åtgärd: Använd den markerade stilen för den rekommenderade planen (flagga `highlighted` i `lib/pricing-data.ts`) och minska tomrummet under kortet på mobil. Ändra inte prisförklaringen.
 - Klar när: Rekommenderad plan har primär knapp och mobilvyn saknar stort tomrum.
 - Samordning / beroenden: Prisförklaringen hör till F06 (blockerad).
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Se implementationsuppdateringen under [DA-13 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-13).
+- Verifierat: Enligt audit-dokumentet: TypeScript, ESLint, produktionsbygge och Chromium-kontroll vid 375 och 1280 px, lokalt och i driftsatt dev efter merge.
+- Återstår / blockerare: Ej kontrollerat i Safari/Firefox eller på fysisk telefon.
 
 <a id="da-14"></a>
 ### DA-14 Rätta autentiseringssidornas kort, pil och textsymboler
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 69
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Klar
+- Ansvarig: William / Claude
+- Branch/PR: [PR #112](https://github.com/vilgotdidrikson/youth-job-mvp/pull/112), merge `8c2be47`. Statusen synkad 2026-10-26 från audit-dokumentet, där genomförande och verifiering i driftsatt dev redovisas (commit `2c92874`).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-14), som har fynd, filer och mått.
 - Åtgärd: Under 480px: ta bort kortets ram och skugga så att formuläret använder hela bredden. Visa logotypen ovanför rubriken (DA-07/D07). Ta bort ”↗” på skickaknapparna eller använd `UiIcon name="arrow"`, och ersätt textsymboler med `UiIcon` på marknads- och autentiseringssidorna.
 - Klar när: Formulären använder hela bredden på mobil, och inga knappar visar en symbol som antyder extern länk.
 - Samordning / beroenden: Rollvalet lämnas till F23.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Se implementationsuppdateringen under [DA-14 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-14).
+- Verifierat: Enligt audit-dokumentet: TypeScript, ESLint, produktionsbygge och Chromium-kontroll vid 375 och 1280 px, lokalt och i driftsatt dev efter merge.
+- Återstår / blockerare: Ej kontrollerat i Safari/Firefox eller på fysisk telefon.
 
 <a id="da-15"></a>
 ### DA-15 Korta och variera funktionssidan
