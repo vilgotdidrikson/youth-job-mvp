@@ -13,7 +13,6 @@ import "./landing.css";
 
 export const metadata: Metadata = {
   title: { absolute: "MatchnWork" },
-  alternates: { canonical: "/" },
 };
 
 const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
