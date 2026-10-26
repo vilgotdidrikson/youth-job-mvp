@@ -1227,6 +1227,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
 
+- Avgränsad fortsättning reserverad 2026-10-26, Vilgot / Codex, `codex/n19-disclosure-view-20261026`: gemensamma ansökningsunderlagets layout/komponenter och begränsad CV-hämtning med återförsök. Samordnas med F26 och DA-12 i just denna komponent. Ingen databas-/delningsändring och inget övertagande av DA-04–DA-06; övriga N19-delar/status bevaras.
+
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 13.4
