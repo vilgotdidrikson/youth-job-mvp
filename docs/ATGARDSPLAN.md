@@ -21,11 +21,14 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 ### Designreferens från företagsdemon – beställt 2026-10-26
 
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch: `codex/design-demo-reference-20261026`.
-- Omfattning: Dokumentera användarens önskade designriktning (stilren, clean och informativ) med den nya företagsdemon som konkret referens. Jämför auditplanen med aktuell dev-kod och observerad frontend. Endast dokumentation; ingen frontendimplementation eller övertagning av D05, DA-04–DA-06 eller andra pågående punkter.
-- Reserverat före ändringen: detta tillägg publiceras separat innan jämförelsen läggs in i auditdokumentet. Befintlig prioritering, ägare och status förblir oförändrade.
+- Omfattning: Dokumentera användarens önskade designriktning (stilren, clean och informativ) med företagsdemon som konkret referens. Endast dokumentation; befintlig prioritering, ägare och status för övriga punkter är oförändrade.
+- Reserverat före ändringen: publicerad dokumentreservation `4b20447`; ingen frontendimplementation eller övertagning av D05, DA-04–DA-06 eller andra pågående punkter.
+- Levererat: [Jämförelse och designriktning i auditplanen](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction), implementation av dokumenttillägget `35b2dd9`. Beskriver hierarki, neutrala arbetsytor med återhållna rosa accenter, kontextuell hjälp, tydliga nästa steg och hur detta samordnas med befintliga punkter. Företagsvyn är första referens inom DA-12 utan att ändra globala ordningen. Demons mindre text/tryckytor, kortare formulär och simulerade regler ska inte kopieras till produkten.
+- Faktiskt kontrollerat: aktuell audit/åtgärdsplan och relevanta frontendfiler; driftsatt dev-startsida och /features visuellt; demo och dess tidigare webbtest i denna session. Dokumentkontroll bekräftar att allt ursprungligt auditinnehåll är oförändrat och att interna uppgiftslänkar/ankare är giltiga.
+- Begränsning: /company krävde inloggning; jämförelsen av inloggade produktvyer bygger på kod. Ingen ny inloggad visuell acceptans, inget produktbygge eller funktionstest påstås. Dokumentet är ett designunderlag, inte genomförd frontendmigrering.
 
 ### Reviderad produktinriktning – beställt 2026-10-18
 
