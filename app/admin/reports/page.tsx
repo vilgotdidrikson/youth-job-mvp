@@ -1,146 +1,91 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useAdminAccess } from "@/hooks/use-admin-access";
-import { getSupabaseClient } from "@/lib/supabase";
 import { VideoPlayer } from "@/components/video-player";
+import { createLatestRead, type ReadState } from "@/lib/latest-read";
+import { getModerationCasework, reviewModerationCase, type ModerationCase, type ModerationStatus } from "@/lib/reports";
+import styles from "./reports.module.css";
 
-interface ModerationReport {
-  id: string;
-  reporter_user_id: string | null;
-  target_type: "job" | "conversation" | "message" | "user";
-  target_id: string;
-  reason: "scam" | "harassment" | "discrimination" | "inappropriate" | "privacy" | "other";
-  details: string | null;
-  status: "open" | "reviewing" | "resolved" | "dismissed";
-  created_at: string;
-  target_summary: string;
-  target_snapshot: Record<string, unknown> | null;
-}
-
-type SnapshotMessage = { sender_user_id?: string; message_text?: string; created_at?: string };
-
-const shortId = (value: unknown) => (typeof value === "string" ? `${value.slice(0, 8)}…` : "okänd");
-
-// Evidence captured when the report was submitted, so it survives account deletion.
-function snapshotLines(report: ModerationReport): string[] {
-  const snapshot = report.target_snapshot;
-  if (!snapshot) return [];
-  if (report.target_type === "message") return [`${shortId(snapshot.sender_user_id)}: ${String(snapshot.message_text ?? "")}`];
-  if (report.target_type === "conversation") {
-    const messages = Array.isArray(snapshot.messages) ? snapshot.messages as SnapshotMessage[] : [];
-    return messages.map((message) => `${shortId(message.sender_user_id)}: ${message.message_text ?? ""}`);
-  }
-  if (report.target_type === "job") return [String(snapshot.title ?? ""), String(snapshot.description ?? "")].filter(Boolean);
-  return [`${String(snapshot.display_name ?? "Namn saknas")} (${String(snapshot.role ?? "okänd roll")})`];
-}
-
-const reasonLabels: Record<ModerationReport["reason"], string> = {
-  scam: "Misstänkt bedrägeri",
-  harassment: "Trakasserier eller hot",
-  discrimination: "Diskriminering",
-  inappropriate: "Olämpligt innehåll",
-  privacy: "Personuppgifter eller integritet",
-  other: "Annat",
-};
-
-const statusLabels: Record<ModerationReport["status"], string> = {
-  open: "Ny",
-  reviewing: "Granskas",
-  resolved: "Åtgärdad",
-  dismissed: "Avslutad",
-};
+const reasonLabels = { scam: "Misstänkt bedrägeri", harassment: "Trakasserier eller hot", discrimination: "Diskriminering", inappropriate: "Olämpligt innehåll", privacy: "Personuppgifter eller integritet", other: "Annat" };
+const statusLabels = { open: "Ny", reviewing: "Granskas", resolved: "Åtgärdad", dismissed: "Avslutad" };
+const targetLabels = { job: "Jobbannons", conversation: "Konversation", message: "Meddelande", user: "Användare" };
 
 export default function ModerationReportsPage() {
-  const { user, status, error: sessionError, adminReady, isAdmin } = useAdminAccess();
-  const [reports, setReports] = useState<ModerationReport[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionId, setActionId] = useState<string | null>(null);
+  const access = useAdminAccess();
+  if (access.status !== "ready" || !access.adminReady) return <AuthGateMessage status={access.status === "ready" ? "checking" : access.status} error={access.error} />;
+  if (access.adminError) return <main className="mobile-shell"><p role="alert">{access.adminError}</p><button type="button" className="secondary-btn" onClick={access.retryAdmin}>Försök igen</button></main>;
+  if (!access.isAdmin || !access.user) return <main className="mobile-shell"><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i MatchnWorks adminlista.</p></main>;
+  return <Casework key={access.user.id} email={access.user.email} />;
+}
+
+function Casework({ email }: {email?: string | null}) {
+  const [state, setState] = useState<ReadState<ModerationCase[]>>({status: "loading"});
+  const [filter, setFilter] = useState<"active" | "all" | "closed">("active");
+  const [decision, setDecision] = useState<{report: ModerationCase; status: Exclude<ModerationStatus, "open">} | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  const loadReports = useCallback(async () => {
-    setLoading(true);
-    const { data, error: loadError } = await getSupabaseClient().rpc("get_moderation_reports");
-    if (loadError) {
-      setError(loadError.code === "42501" ? "Du har inte administratörsåtkomst." : "Kunde inte hämta anmälningar.");
-      setReports([]);
-    } else {
-      setError("");
-      setReports((data ?? []) as ModerationReport[]);
-    }
-    setLoading(false);
-  }, []);
-
+  const [message, setMessage] = useState("");
+  const reader = useRef<ReturnType<typeof createLatestRead<ModerationCase[]>> | null>(null);
+  const lock = useRef(false);
+  const active = useRef(true);
   useEffect(() => {
-    if (!adminReady || !isAdmin) return;
-    const timeoutId = window.setTimeout(() => void loadReports(), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [adminReady, isAdmin, loadReports]);
+    active.current = true;
+    const current = createLatestRead<ModerationCase[]>({ read: (_, signal) => getModerationCasework(signal), update: setState,
+      errorMessage: "Anmälningarna kunde inte hämtas. Försök igen." });
+    reader.current = current; void current.load();
+    return () => { active.current = false; current.stop(); reader.current = null; };
+  }, []);
+  async function saveDecision() {
+    if (!decision || lock.current || !active.current || state.status !== "ready" || !state.value.some(r => r.id === decision.report.id && r.status === decision.report.status)) return;
+    lock.current = true; setBusy(true); setError(""); setMessage("");
+    try {
+      await reviewModerationCase(decision.report, decision.status, note);
+      if (!active.current) return;
+      setDecision(null); setNote(""); setMessage("Beslutet är sparat."); await reader.current?.load();
+    } catch (reason) {
+      if (active.current) { setError(reason instanceof Error ? reason.message : "Beslutet kunde inte sparas."); await reader.current?.load(); }
+    } finally { lock.current = false; if (active.current) setBusy(false); }
+  }
+  const reports = state.status === "ready" ? state.value : [];
+  const shown = reports.filter(r => filter === "all" || (filter === "active") === ["open", "reviewing"].includes(r.status));
+  const decisionCurrent = state.status === "ready" && !!decision && reports.some(r => r.id === decision.report.id && r.status === decision.report.status);
+  return <AdminShell title="Anmälningar" eyebrow="Moderering" email={email}>
+    <div className={styles.toolbar}><label>Visa <select value={filter} onChange={e => setFilter(e.target.value as typeof filter)}><option value="active">Aktiva ärenden</option><option value="closed">Avslutade ärenden</option><option value="all">Alla ärenden</option></select></label><button type="button" className="secondary-btn" disabled={busy || state.status === "loading"} onClick={() => void reader.current?.load()}>Uppdatera</button></div>
+    {message && <p role="status">{message}</p>}{error && <p className="admin-alert admin-alert-error" role="alert">{error}</p>}
+    {decision && <form className={styles.decision} aria-label="Beslut i anmälningsärende" onSubmit={event => { event.preventDefault(); void saveDecision(); }}>
+      <h2>{statusLabels[decision.status]} · {decision.report.target_summary}</h2>
+      <p>Ärende {decision.report.id.slice(0,8)}</p>
+      {state.status === "ready" && !decisionCurrent && <p role="alert">Ärendet har ändrats. Avbryt och öppna det aktuella ärendet i listan.</p>}
+      <label htmlFor="resolution-note">Beslutsanteckning (valfritt)</label><textarea id="resolution-note" autoFocus className="input-field" rows={3} maxLength={2000} value={note} disabled={busy} onChange={e => setNote(e.target.value)} />
+      <p>Anteckningen sparas för administratörer. Anmälaren får en generell notis när ärendet avslutas.</p>
+      <div className={styles.actions}><button type="button" className="secondary-btn" disabled={busy} onClick={() => { if (lock.current) return; setDecision(null); setNote(""); setError(""); }}>Avbryt</button><button type="submit" className="cta-btn" disabled={busy || !decisionCurrent}>{busy ? "Sparar…" : "Spara beslut"}</button></div>
+    </form>}
+    {state.status === "loading" ? <p role="status">Hämtar anmälningar…</p> : state.status === "error" ? <section className="admin-empty"><p role="alert">{state.message}</p><button type="button" className="secondary-btn" disabled={busy} onClick={() => void reader.current?.load()}>Försök igen</button></section> : !shown.length ? <section className="admin-empty"><h2>Inga ärenden i den här vyn</h2></section> : <div className="admin-verification-list">{shown.map(report => <article key={report.id} className="admin-verification-card">
+      <header className={styles.heading}><div><h2>{report.target_summary}</h2><p>{targetLabels[report.target_type]} · {reasonLabels[report.reason]}</p></div><span className="admin-status">{statusLabels[report.status]}</span></header>
+      <p className={styles.meta}>Inskickad <time dateTime={report.created_at}>{new Date(report.created_at).toLocaleString("sv-SE")}</time> · Ärende {report.id.slice(0,8)}</p>
+      {report.details && <p className={styles.text}>{report.details}</p>}
+      <details className={styles.evidence}><summary>Sparat underlag</summary><Evidence report={report} /></details>
+      {report.reviewed_at && <section className={styles.outcome}><h3>Sparat beslut</h3><p><time dateTime={report.reviewed_at}>{new Date(report.reviewed_at).toLocaleString("sv-SE")}</time>{report.reviewed_by_user_id && ` · Handläggare ${report.reviewed_by_user_id.slice(0,8)}`}</p><p className={styles.text}>{report.resolution_note || "Ingen beslutsanteckning."}</p></section>}
+      {["open","reviewing"].includes(report.status) && <div className={styles.actions}>{(report.status === "open" ? ["reviewing","resolved","dismissed"] as const : ["resolved","dismissed"] as const).map(status => <button key={status} type="button" className={status === "resolved" ? "cta-btn" : "secondary-btn"} disabled={busy} onClick={() => { if (lock.current) return; setDecision({report,status}); setNote(""); setError(""); setMessage(""); }}>{status === "reviewing" ? "Påbörja granskning" : status === "resolved" ? "Markera åtgärdad" : "Avsluta utan åtgärd"}</button>)}</div>}
+    </article>)}</div>}
+  </AdminShell>;
+}
 
-  const review = async (report: ModerationReport, nextStatus: "reviewing" | "resolved" | "dismissed") => {
-    const note = nextStatus === "reviewing"
-      ? null
-      : window.prompt(nextStatus === "resolved" ? "Beskriv kort vilken åtgärd som har vidtagits (valfritt):" : "Ange varför ärendet avslutas (valfritt):")?.trim() || null;
-
-    setActionId(report.id);
-    setError("");
-    const { error: reviewError } = await getSupabaseClient().rpc("review_moderation_report", {
-      p_report_id: report.id,
-      p_status: nextStatus,
-      p_resolution_note: note,
-    });
-    if (reviewError) setError(reviewError.message || "Kunde inte uppdatera ärendet.");
-    else await loadReports();
-    setActionId(null);
-  };
-
-  if (status !== "ready" || !adminReady) return <AuthGateMessage status={status === "ready" ? "checking" : status} error={sessionError} />;
-  if (!isAdmin) return <main className="mobile-shell"><section className="card" style={{ padding: "1.25rem" }}><h1>Ingen administratörsåtkomst</h1><p>Kontot finns inte i MatchnWorks adminlista.</p></section></main>;
-
-  const activeCount = reports.filter((report) => report.status === "open" || report.status === "reviewing").length;
-
-  return (
-    <AdminShell title="Anmälningar" eyebrow="Moderering" email={user?.email}>
-      <div className="admin-list-intro"><p>Granska rapporterat innehåll och dokumentera beslut. Innehåll tas inte bort automatiskt.</p><span>{activeCount} aktiva</span></div>
-      {error && <p className="admin-alert admin-alert-error" role="alert">{error}</p>}
-      {loading ? (
-        <section className="admin-empty"><span>○</span><strong>Hämtar anmälningar...</strong></section>
-      ) : reports.length === 0 ? (
-        <section className="admin-empty"><span>✓</span><strong>Inga anmälningar</strong><p>Det finns inga ärenden att granska.</p></section>
-      ) : (
-        <div className="admin-verification-list">
-          {reports.map((report) => (
-            <article key={report.id} className="admin-verification-card" style={{ opacity: report.status === "resolved" || report.status === "dismissed" ? 0.72 : 1 }}>
-              <div className="admin-verification-heading">
-                <div><span className="admin-company-avatar">!</span><div><h2>{report.target_summary}</h2><p>{reasonLabels[report.reason]}</p></div></div>
-                <span className={report.status === "dismissed" ? "admin-status admin-status-rejected" : "admin-status"}>{statusLabels[report.status]}</span>
-              </div>
-              <dl className="admin-company-details">
-                <div><dt>Typ</dt><dd>{report.target_type}</dd></div>
-                <div><dt>Anmälare</dt><dd>{report.reporter_user_id ? `${report.reporter_user_id.slice(0, 8)}…` : "Raderat konto"}</dd></div>
-                <div><dt>Inskickad</dt><dd>{new Date(report.created_at).toLocaleString("sv-SE")}</dd></div>
-              </dl>
-              {report.details && <p style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7", lineHeight: 1.5 }}>{report.details}</p>}
-              {typeof report.target_snapshot?.video_id==='string'&&<><VideoPlayer videoId={report.target_snapshot.video_id} label="Anmäld video"/><p>Videoreferensen sparades vid anmälan. En borttagen video kan inte spelas upp.</p></>}
-              {snapshotLines(report).length > 0 && (
-                <details style={{ padding: ".8rem", borderRadius: 10, background: "#f7f7f7" }}>
-                  <summary style={{ cursor: "pointer", fontWeight: 600 }}>Sparat innehåll vid anmälan</summary>
-                  {snapshotLines(report).map((line, index) => <p key={index} style={{ margin: ".5rem 0 0", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{line}</p>)}
-                </details>
-              )}
-              {(report.status === "open" || report.status === "reviewing") && (
-                <div className="admin-review-actions">
-                  {report.status === "open" && <button type="button" className="secondary-btn" disabled={actionId === report.id} onClick={() => void review(report, "reviewing")}>Påbörja granskning</button>}
-                  <button type="button" className="cta-btn" disabled={actionId === report.id} onClick={() => void review(report, "resolved")}>Markera åtgärdad</button>
-                  <button type="button" className="secondary-btn" disabled={actionId === report.id} onClick={() => void review(report, "dismissed")}>Avsluta utan åtgärd</button>
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-      )}
-    </AdminShell>
-  );
+function Evidence({report}: {report: ModerationCase}) {
+  const snapshot = report.target_snapshot;
+  if (!snapshot) return <p>Inget sparat underlag finns.</p>;
+  const messages = report.target_type === "conversation" && Array.isArray(snapshot.messages) ? snapshot.messages : [];
+  const videos = new Set([...(typeof snapshot.video_id === "string" ? [snapshot.video_id] : []),...(Array.isArray(snapshot.video_ids) ? snapshot.video_ids.filter((id): id is string => typeof id === "string") : [])]);
+  return <div className={styles.evidenceBody}>
+    {report.target_type === "job" && <><h3>{String(snapshot.title ?? "Jobbannons")}</h3><p className={styles.text}>{String(snapshot.description ?? "")}</p></>}
+    {report.target_type === "message" && <p className={styles.text}>{String(snapshot.message_text ?? "")}</p>}
+    {report.target_type === "user" && <p>{String(snapshot.display_name ?? "Namn saknas")}</p>}
+    {messages.map((m, index) => <p className={styles.text} key={index}>{typeof m.sender_user_id === "string" && <strong>{m.sender_user_id.slice(0,8)}: </strong>}{String(m.message_text ?? "")}</p>)}
+    {[...videos].map(id => <VideoPlayer key={id} videoId={id} label="Anmäld video" />)}
+    {!!videos.size && <p>Utgångna eller borttagna videor kan inte spelas upp här.</p>}
+  </div>;
 }

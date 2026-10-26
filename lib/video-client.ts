@@ -26,9 +26,15 @@ export async function getVideo(id: string): Promise<YouthVideo | null> {
 export async function videoPlaybackUrl(video: YouthVideo): Promise<string> {
   if (videoHasExpired(video.expires_at) || video.deleted_at) throw new Error("Videon är inte längre tillgänglig.");
   if (!video.conversation_id || !video.storage_path || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
-  const { data, error } = await getSupabaseClient().storage.from(policy.bucket).download(video.storage_path, {}, { cache: "no-store" });
-  if (error || !data) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
-  // The JWT is checked on every download. No reusable Storage bearer URL.
+  const { data: { session } } = await getSupabaseClient().auth.getSession();
+  if (!session) throw new Error("Logga in igen för att se videon.");
+  const response = await fetch("/api/videos/playback", {
+    method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ videoId: video.id }), cache: "no-store", signal: AbortSignal.timeout(45000),
+  });
+  if (!response.ok) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
+  const data = await response.blob();
+  // The server rechecks current RLS before returning bytes; no cached bearer URL.
   if (videoHasExpired(video.expires_at)) throw new Error("Videon är inte längre tillgänglig.");
   return URL.createObjectURL(data);
 }

@@ -93,7 +93,8 @@ begin
  set local role authenticated;
  if not exists(select 1 from public.youth_videos where id=chat) then raise exception 'FAIL chat recipient cannot read'; end if;
  if exists(select 1 from public.youth_videos where id in(legacy,draft)) then raise exception 'FAIL retired/draft recipient leak'; end if;
- if (select count(*) from storage.objects where bucket_id='youth-profile-videos' and name in(p_path,c_path))<>1 then raise exception 'FAIL storage scope'; end if;
+ if exists(select 1 from storage.objects where bucket_id='youth-profile-videos' and name in(p_path,c_path)) then raise exception 'FAIL direct storage bypass'; end if;
+ if not private.can_read_youth_video(chat) then raise exception 'FAIL authorized playback scope'; end if;
  if not exists(select 1 from public.messages where id=shared and video_kind='profile') then raise exception 'FAIL old message lost'; end if;
  update public.youth_videos set revoked_at=now() where id=chat;
  get diagnostics affected=row_count;

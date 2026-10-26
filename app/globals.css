@@ -1253,3 +1253,5 @@ button,
 .job-match-editor summary { cursor: pointer; font-weight: 600; }
 
 .auth-brand { display:flex; align-items:center; min-height:44px; width:fit-content; margin:0 auto 24px; color:var(--color-text); font-size:1.35rem; font-weight:550; text-decoration:none; }
+/* Reporting reuses the product's readable type scale and controls. */
+.mnw-report-content .report-description{color:var(--color-text-muted);line-height:1.7}.mnw-report-content .report-field{display:grid;gap:.5rem;margin-top:1rem;font-weight:var(--weight-semibold)}.mnw-report-content .report-optional{color:var(--color-text-muted);font-weight:var(--weight-regular)}.mnw-report-content .report-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}.mnw-report-content .report-actions button{flex:1;min-height:44px}.mnw-report-content .report-close{width:100%;min-height:44px}

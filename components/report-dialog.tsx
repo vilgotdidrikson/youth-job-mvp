@@ -1,7 +1,7 @@
 "use client";
 
 import { ModalDialog } from "./modal-dialog";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { submitReport, type ReportReason, type ReportTargetType } from "@/lib/reports";
 
 const reasons: { value: ReportReason; label: string }[] = [
@@ -13,7 +13,7 @@ const reasons: { value: ReportReason; label: string }[] = [
   { value: "other", label: "Annat" },
 ];
 
-export function ReportDialog({
+function ReportForm({
   targetType,
   targetId,
   label = "Anmäl",
@@ -26,27 +26,32 @@ export function ReportDialog({
   const [reason, setReason] = useState<ReportReason>("inappropriate");
   const [details, setDetails] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
   const close = () => {
-    if (submitting) return;
+    if (submittingRef.current) return;
     setOpen(false);
     setError("");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submittingRef.current || !active.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setError("");
     try {
       await submitReport({ targetType, targetId, reason, details });
-      setSent(true);
-      setDetails("");
+      if (active.current) { setSent(true); setDetails(""); }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Kunde inte skicka anmälan.");
+      if (active.current) setError(submitError instanceof Error ? submitError.message : "Kunde inte skicka anmälan.");
     } finally {
-      setSubmitting(false);
+      submittingRef.current = false;
+      if (active.current) setSubmitting(false);
     }
   };
 
@@ -61,25 +66,25 @@ export function ReportDialog({
             {sent ? (
               <>
                 <h2 id="report-dialog-title">Anmälan är skickad</h2>
-                <p style={{ color: "#5f6368", lineHeight: 1.5 }}>MatchnWorks administratörer granskar ärendet. Du får en notis när granskningen är klar.</p>
-                <button type="button" className="cta-btn" style={{ width: "100%" }} onClick={close}>Stäng</button>
+                <p className="report-description">MatchnWorks administratörer granskar ärendet. Du får en notis när granskningen är klar.</p>
+                <button type="button" className="cta-btn report-close" onClick={close}>Stäng</button>
               </>
             ) : (
               <form onSubmit={handleSubmit}>
                 <h2 id="report-dialog-title">Anmäl innehåll</h2>
-                <p style={{ color: "#5f6368", lineHeight: 1.5 }}>Välj den anledning som bäst beskriver problemet. Missbruka inte anmälningsfunktionen.</p>
-                <label style={{ display: "grid", gap: ".4rem", marginTop: "1rem", fontWeight: 700 }}>
+                <p className="report-description">Välj den anledning som bäst beskriver problemet. Missbruka inte anmälningsfunktionen.</p>
+                <label className="report-field">
                   Anledning
                   <select className="input-field" value={reason} onChange={(event) => setReason(event.target.value as ReportReason)}>
                     {reasons.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </label>
-                <label style={{ display: "grid", gap: ".4rem", marginTop: ".85rem", fontWeight: 700 }}>
-                  Beskriv problemet <span style={{ color: "#737373", fontWeight: 500 }}>(valfritt)</span>
+                <label className="report-field">
+                  Beskriv problemet <span className="report-optional">(valfritt)</span>
                   <textarea className="input-field" rows={5} maxLength={2000} value={details} onChange={(event) => setDetails(event.target.value)} />
                 </label>
                 {error && <p className="auth-message auth-error" role="alert">{error}</p>}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".7rem", marginTop: "1rem" }}>
+                <div className="report-actions">
                   <button type="button" className="secondary-btn" disabled={submitting} onClick={close}>Avbryt</button>
                   <button type="submit" className="cta-btn" disabled={submitting}>{submitting ? "Skickar..." : "Skicka anmälan"}</button>
                 </div>
@@ -90,4 +95,8 @@ export function ReportDialog({
       )}
     </>
   );
+}
+
+export function ReportDialog(props: {targetType: ReportTargetType; targetId: string; label?: string}) {
+  return <ReportForm key={JSON.stringify([props.targetType, props.targetId])} {...props} />;
 }
