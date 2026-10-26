@@ -1252,4 +1252,4 @@ button,
 .job-match-editor details { padding: .7rem 0; border-top: 1px solid #e8e8e8; }
 .job-match-editor summary { cursor: pointer; font-weight: 600; }
 
-.auth-brand { display:block; width:fit-content; margin:0 auto 24px; color:var(--color-text); font-size:1.35rem; font-weight:550; text-decoration:none; }
+.auth-brand { display:flex; align-items:center; min-height:44px; width:fit-content; margin:0 auto 24px; color:var(--color-text); font-size:1.35rem; font-weight:550; text-decoration:none; }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/features-data";
 import { MarketingNav } from "@/components/marketing-nav";
 import { MarketingFooter } from "@/components/marketing-footer";
+import { CandidatePreview, SwipeCardPreview } from "@/components/marketing-product-preview";
 import "../landing.css";
 import "./features.css";
 
@@ -29,28 +30,38 @@ export default function FeaturesPage() {
       <section className="features-section">
         <h2>Ditt nästa jobb börjar här.</h2>
         <p className="features-section-eyebrow">För ungdomar</p>
-        <div className="features-grid features-grid-3">
-          {youthFeatures.map((feature) => (
-            <article key={feature.title} className="features-card">
-              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
-          ))}
+        <div className="features-audience">
+          <div className="features-audience-visual"><SwipeCardPreview /></div>
+          <div className="features-grid">
+            {youthFeatures.map((feature) => (
+              <article key={feature.title} className="features-card">
+                <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="24" height="24" /></span>
+                <div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="features-section features-section-tinted">
         <h2>Hitta rätt ungdom snabbare.</h2>
         <p className="features-section-eyebrow">För företag</p>
-        <div className="features-grid features-grid-4">
-          {companyFeatures.map((feature) => (
-            <article key={feature.title} className="features-card features-card-compact">
-              <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="27" height="27" /></span>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
-          ))}
+        <div className="features-audience">
+          <div className="features-audience-visual"><CandidatePreview /></div>
+          <div className="features-grid">
+            {companyFeatures.map((feature) => (
+              <article key={feature.title} className="features-card">
+                <span className="features-icon" aria-hidden="true"><UiIcon name={feature.icon} width="24" height="24" /></span>
+                <div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -59,7 +70,7 @@ export default function FeaturesPage() {
           <h2>AI som gör jobbsökandet enklare.</h2>
           <ul className="features-ai-list">
             {aiCapabilities.map((item) => (
-              <li key={item}><span aria-hidden="true">✦</span>{item}</li>
+              <li key={item}><span aria-hidden="true"><UiIcon name="check" width="15" height="15" strokeWidth="2.2" /></span>{item}</li>
             ))}
           </ul>
         </div>
@@ -82,16 +93,16 @@ export default function FeaturesPage() {
             <span className="features-match-label">Ungdom</span>
             <p>Profil, erfarenhet, intressen, tillgänglighet</p>
           </div>
-          <span className="features-match-arrow" aria-hidden="true">↓</span>
+          <span className="features-match-arrow" aria-hidden="true"><UiIcon name="arrow" width="20" height="20" /></span>
           <div className="features-match-node features-match-node-ai">
             <span className="features-match-label">AI-matchning</span>
           </div>
-          <span className="features-match-arrow" aria-hidden="true">↓</span>
+          <span className="features-match-arrow" aria-hidden="true"><UiIcon name="arrow" width="20" height="20" /></span>
           <div className="features-match-node">
             <span className="features-match-label">Företag</span>
             <p>Jobb, krav, plats, arbetstider</p>
           </div>
-          <span className="features-match-arrow" aria-hidden="true">↓</span>
+          <span className="features-match-arrow" aria-hidden="true"><UiIcon name="arrow" width="20" height="20" /></span>
           <div className="features-match-result">Match</div>
         </div>
       </section>
