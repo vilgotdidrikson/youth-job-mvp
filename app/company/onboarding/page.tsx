@@ -193,17 +193,6 @@ export default function CompanyOnboardingPage() {
       onClick={onClick}
       className="company-onboarding-chip"
       aria-pressed={selected}
-      style={{
-        padding: "0.35rem 0.75rem",
-        borderRadius: 999,
-        fontSize: "0.82rem",
-        fontWeight: 500,
-        border: "1.5px solid",
-        borderColor: selected ? "#111" : "#e8e8e8",
-        background: selected ? "#111" : "#f5f5f5",
-        color: selected ? "#fff" : "#555",
-        cursor: "pointer",
-      }}
     >
       {label}
     </button>
@@ -249,26 +238,25 @@ export default function CompanyOnboardingPage() {
           }
           void handleSaveProfile(e);
         }}>
-          <div style={{ marginBottom: "1.75rem", paddingTop: "0.5rem" }}>
-            <h1 style={{ fontSize: "1.9rem", fontWeight: 500, letterSpacing: "-0.04em", color: "#111", margin: 0 }}>
+          <div className="company-onboarding-question-head">
+            <h1>
               {profileQuestions[profileQuestion]}
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "#a3a3a3", fontWeight: 700, margin: "0.9rem 0 0" }}>{profileQuestion + 1} / 4</p>
-            <div className="company-onboarding-progress" role="progressbar" aria-label="Företagets onboarding" aria-valuemin={0} aria-valuemax={4} aria-valuenow={profileQuestion + 1} style={{ height: 4, marginTop: "0.55rem", overflow: "hidden", borderRadius: 999, background: "#e8e8e8" }}>
-              <div style={{ width: `${((profileQuestion + 1) / 4) * 100}%`, height: "100%", borderRadius: 999, background: "#111111", transition: "width 0.25s ease" }} />
+            <p className="company-onboarding-count">{profileQuestion + 1} / 4</p>
+            <div className="company-onboarding-progress" role="progressbar" aria-label="Företagets onboarding" aria-valuemin={0} aria-valuemax={4} aria-valuenow={profileQuestion + 1}>
+              <div style={{ width: `${((profileQuestion + 1) / 4) * 100}%` }} />
             </div>
           </div>
 
           {error && (
-            <div role="alert" style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
+            <div role="alert" className="company-onboarding-error">
               {error}
             </div>
           )}
 
-          <div className="card profile-question-card" style={{ padding: "1.25rem" }}>
-            {profileQuestion === 0 && <><label htmlFor="company-onboarding-companyName" style={labelStyle}>Företagsnamn *</label><input id="company-onboarding-companyName"
-              className="h-14 w-full rounded-xl border border-[#e8e8e8] px-4 text-base"
-              style={{ marginBottom: "0.85rem" }}
+          <div className="card profile-question-card">
+            {profileQuestion === 0 && <><label htmlFor="company-onboarding-companyName" className="company-onboarding-label">Företagsnamn *</label><input id="company-onboarding-companyName"
+              className="company-onboarding-input"
               placeholder="Företagets registrerade namn"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
@@ -276,30 +264,27 @@ export default function CompanyOnboardingPage() {
               autoFocus
             /></>}
 
-            {profileQuestion === 1 && <><label htmlFor="company-onboarding-industry" style={labelStyle}>Bransch *</label><input id="company-onboarding-industry"
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
+            {profileQuestion === 1 && <><label htmlFor="company-onboarding-industry" className="company-onboarding-label">Bransch *</label><input id="company-onboarding-industry"
+              className="company-onboarding-input"
               placeholder="T.ex. IT, Bygg eller Restaurang"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
               required
               autoFocus
-            /><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
+            /><div className="company-onboarding-chips">{INDUSTRY_TIPS.map((item) => chipBtn(item, industry === item, () => setIndustry(item)))}</div></>}
 
-            {profileQuestion === 2 && <><label htmlFor="company-onboarding-organizationNumber" style={labelStyle}>Organisationsnummer *</label><input id="company-onboarding-organizationNumber"
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
+            {profileQuestion === 2 && <><label htmlFor="company-onboarding-organizationNumber" className="company-onboarding-label">Organisationsnummer *</label><input id="company-onboarding-organizationNumber"
+              className="company-onboarding-input"
               placeholder="XXXXXX-XXXX"
               inputMode="numeric"
               value={organizationNumber}
               onChange={(e) => setOrganizationNumber(e.target.value.replace(/[^0-9-]/g, ""))}
               required
               autoFocus
-            /><p style={{ margin: 0, color: "#737373", fontSize: ".82rem", lineHeight: 1.5 }}>Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p></>}
+            /><p className="company-onboarding-help">Vi använder organisationsnumret för att verifiera företaget innan annonserna publiceras. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p></>}
 
-            {profileQuestion === 3 && <><label htmlFor="company-onboarding-administrator" style={labelStyle}>Administratör *</label><input id="company-onboarding-administrator"
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
+            {profileQuestion === 3 && <><label htmlFor="company-onboarding-administrator" className="company-onboarding-label">Administratör *</label><input id="company-onboarding-administrator"
+              className="company-onboarding-input"
               placeholder="För- och efternamn"
               value={administrator}
               onChange={(e) => setAdministrator(e.target.value)}
@@ -320,23 +305,23 @@ export default function CompanyOnboardingPage() {
             {profileQuestion === 7 && <div><p style={{ margin: "0 0 1rem", color: "#63777b", fontSize: "0.9rem", lineHeight: 1.5 }}>En komplett profil hjälper kandidater att lära känna ert företag.</p><label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", padding: "1.5rem", border: "1.5px dashed #d7dfd6", borderRadius: 12, cursor: uploadingLogo ? "wait" : "pointer", color: "#63777b", background: "rgba(255,255,255,.55)" }}><input type="file" accept="image/png,image/jpeg" style={{ display: "none" }} disabled={uploadingLogo} onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; setLogoName(file.name); setUploadingLogo(true); setError(""); void uploadJobImage(file).then(setLogoUrl).catch((uploadError) => setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp logotypen.")).finally(() => setUploadingLogo(false)); }} />{logoUrl ? <img src={logoUrl} alt="Företagslogotyp" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 10 }} /> : <span style={{ fontSize: "1.7rem" }}>↑</span>}<strong>{uploadingLogo ? "Laddar upp..." : logoName || "Lägg till logotyp"}</strong><span style={{ fontSize: "0.78rem" }}>PNG eller JPG · valfritt</span></label><div style={{ display: "grid", gap: "0.7rem", marginTop: "1rem" }}><input className="input-field" type="url" placeholder="Webbplats" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} /><input className="input-field" type="url" placeholder="LinkedIn" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Instagram" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Facebook" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} /><input className="input-field" type="url" placeholder="TikTok" value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} /><input className="input-field" type="url" placeholder="X" value={xUrl} onChange={(e) => setXUrl(e.target.value)} /></div></div>}
           </div>
 
-          <div className="profile-actions" style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem" }}>
-            {profileQuestion > 0 && <button type="button" className="secondary-btn" style={{ padding: "0.9rem" }} onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
-            <button type="submit" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 3 ? "Spara och fortsätt →" : "Nästa →"}</button>
+          <div className="profile-actions">
+            {profileQuestion > 0 && <button type="button" className="secondary-btn" onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
+            <button type="submit" className="cta-btn" disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 3 ? "Spara och fortsätt →" : "Nästa →"}</button>
           </div>
         </form>
       )}
 
       {/* ── STEP 2: Choice ── */}
       {step === "val" && (
-        <div className="company-onboarding-complete" style={{ display: "flex", minHeight: "calc(100svh - 6.25rem)", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-          <p style={{ margin: 0, color: "#737373", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
-          <h1 style={{ margin: "0.75rem 0", color: "#111", fontSize: "clamp(3.2rem, 10vw, 4.5rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Er nästa rekrytering börjar nu.</h1>
-          <p style={{ maxWidth: "31rem", margin: "0 0 .75rem", color: "#555", fontSize: "1.3rem", lineHeight: 1.55 }}>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
-          <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "#6a4a00", fontSize: ".95rem", lineHeight: 1.5 }}>{verificationStatus === "verified" ? "Företaget är godkänt. Aktiva annonser blir synliga för ungdomar när du publicerar dem." : "Företagsuppgifterna är inskickade för granskning. MatchnWork granskar dem manuellt i den ordning de kommer in. Du kan skapa annonser direkt; aktiva annonser blir synliga för ungdomar när företaget har godkänts. Pausade och stängda annonser förblir dolda."}</p>
+        <div className="company-onboarding-complete">
+          <p>Välkommen till MatchnWork</p>
+          <h1>Er nästa rekrytering börjar nu.</h1>
+          <p>Bygg först er gemensamma matchprofil: kultur, värderingar och vad ni erbjuder. Den återanvänds i era annonser. Ni kan också börja med en annons och fylla i profilen senare.</p>
+          <p>{verificationStatus === "verified" ? "Företaget är godkänt. Aktiva annonser blir synliga för ungdomar när du publicerar dem." : "Företagsuppgifterna är inskickade för granskning. MatchnWork granskar dem manuellt i den ordning de kommer in. Du kan skapa annonser direkt; aktiva annonser blir synliga för ungdomar när företaget har godkänts. Pausade och stängda annonser förblir dolda."}</p>
           <button type="button" className="cta-btn" onClick={() => setStep("matchprofil")}>Bygg företagets matchprofil</button>
-          <Link className="secondary-btn" href={COMPANY_ROUTES.create} replace style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: "1.2rem", textDecoration: "none" }}>Fortsätt skapa min jobbannons</Link>
-          <Link className="secondary-btn" href={COMPANY_ROUTES.account} replace style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: "1.15rem", textDecoration: "none" }}>Gå till mitt konto</Link>
+          <Link className="secondary-btn" href={COMPANY_ROUTES.create} replace>Fortsätt skapa min jobbannons</Link>
+          <Link className="secondary-btn" href={COMPANY_ROUTES.account} replace>Gå till mitt konto</Link>
         </div>
       )}
 
