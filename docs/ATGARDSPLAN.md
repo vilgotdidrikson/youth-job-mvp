@@ -25,7 +25,7 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 
 ### Designreferens från företagsdemon – beställt 2026-10-26
 
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
 - Branch: `codex/design-demo-reference-20261026`.
 - Omfattning: Dokumentera användarens önskade designriktning (stilren, clean och informativ) med företagsdemon som konkret referens. Endast dokumentation; befintlig prioritering, ägare och status för övriga punkter är oförändrade.
@@ -36,6 +36,8 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 - Förtydligande 2026-10-26: Designreferensen vägleder utförandet av befintliga uppgifter och ersätter ingen tidigare plan. Se [avstämningen mot befintliga mål](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction). Denna fil styr fortsatt global ordning, beroenden, ansvar, status och produktbeslut; auditens tekniska kriterier och tillgänglighetskrav gäller fortsatt. Inga nya lanseringskrav eller återöppnade klara funktionskort införs.
 - Avstämt: DA-04–DA-06 (befintliga tokens/skalor/kontrast), DA-12 (företagsvyn först, en vy per leverans), D05/DA-15 (marknadsstruktur), D07/D08/F20 (text, tomvyer och hjälp), F04/F05/F26/N19 (navigation och underlag), N16/N23/N24/L04 (produktregler) samt DA-16/F23/L08 (mobil och tillgänglighet). Befintliga mål, ordningsnummer, ägare och status är bevarade.
 - Begränsning: /company krävde inloggning; jämförelsen av inloggade produktvyer bygger på kod. Ingen ny inloggad visuell acceptans, inget produktbygge eller funktionstest påstås. Dokumentet är ett designunderlag, inte genomförd frontendmigrering.
+
+- Infört i dev: [PR #114](https://github.com/vilgotdidrikson/youth-job-mvp/pull/114), merge `f041f38`. Visuell precisering och löpande designprincip införda; ingen frontendändring i den PR:n.
 
 ### Reviderad produktinriktning – beställt 2026-10-18
 
@@ -1226,6 +1228,12 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Avgränsad fortsättning reserverad 2026-10-26, Vilgot / Codex, `codex/n19-disclosure-view-20261026`: gemensamma ansökningsunderlagets layout/komponenter och begränsad CV-hämtning med återförsök. Samordnas med F26 och DA-12 i just denna komponent. Ingen databas-/delningsändring och inget övertagande av DA-04–DA-06; övriga N19-delar/status bevaras.
+- Leverans 2026-10-26: Gemensam CSS-modul för ansökningsunderlagets rubriker, CV, praktiska fakta, valda uppgifter och svar; samma innehållskomponent för ungdom/företag. CV-hämtning har 15 s tidsgräns, dubbelklicksspärr, återförsök, stängt popupfönster vid fel/avbrott och skydd mot sen navigering efter byte av underlag. Befintlig CV-åtkomst, 5 min signerad länk och originalfilsvarning bevaras; inga nya databasregler.
+- Verifiering av denna leverans: `test:cv-document`, `test:application-disclosure`, `test:matching-fairness`, `test:assessment-progress`, TypeScript, riktad ESLint och webpack-produktionsbygge passerar. CV-testet kör faktisk dokumentöppningslogik med simulerat fönster/transport: lyckat svar, blockerad popup, nekat svar, uteblivet/sent svar, avbrott, saknad URL, stängt fönster och nytt försök. Ingen verklig filnedladdning eller inloggad webbverifiering påstås.
+- Begränsning för denna leverans: Chromium saknas och nedladdningen gav ogiltigt arkiv; visuell kontroll vid 375/768/1280 px och fysisk mobil återstår. `check:design-tokens` underkänns redan på aktuell dev (562 färgliteraler mot baslinje 555, radier 58 mot 57). Den nya CSS-modulen tillför inga färgliteraler eller råa storleks-/vikt-/radievärden; kontrollen räknar även fyra nytillkomna referenser till befintliga texttokens och två vikttokens som nya värden. Baslinje/kontrollskript och andra ägares CSS är inte ändrade. N19 förblir Pågår.
+
 
 - [ ] Klar
 - Prioritet: P2
