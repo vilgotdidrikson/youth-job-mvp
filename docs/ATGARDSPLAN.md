@@ -1229,6 +1229,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
 
+- Fortsättning reserverad 2026-10-26, Vilgot / Codex, `codex/n19-disclosure-loading-20261026`: kandidat-/jobbisolerad läsning av befintligt delningsunderlag, begränsad laddning och återförsök i företagsvy och ungdomens förhandsvisning. Misslyckat byte av delningsval ska inte lämna gamla val skickbara. Återanvänder befintliga RPC/behörigheter; inga nya personfält, AI-anrop eller databasändringar. Profilarkiv/N20 och nya AI-dataflöden inväntar befintlig GDPR-avstämning enligt planen.
+
 - Avgränsad fortsättning reserverad 2026-10-26, Vilgot / Codex, `codex/n19-disclosure-view-20261026`: gemensamma ansökningsunderlagets layout/komponenter och begränsad CV-hämtning med återförsök. Samordnas med F26 och DA-12 i just denna komponent. Ingen databas-/delningsändring och inget övertagande av DA-04–DA-06; övriga N19-delar/status bevaras.
 - Leverans 2026-10-26: Gemensam CSS-modul för ansökningsunderlagets rubriker, CV, praktiska fakta, valda uppgifter och svar; samma innehållskomponent för ungdom/företag. CV-hämtning har 15 s tidsgräns, dubbelklicksspärr, återförsök, stängt popupfönster vid fel/avbrott och skydd mot sen navigering efter byte av underlag. Befintlig CV-åtkomst, 5 min signerad länk och originalfilsvarning bevaras; inga nya databasregler.
 - Verifiering av denna leverans: `test:cv-document`, `test:application-disclosure`, `test:matching-fairness`, `test:assessment-progress`, TypeScript, riktad ESLint och webpack-produktionsbygge passerar. CV-testet kör faktisk dokumentöppningslogik med simulerat fönster/transport: lyckat svar, blockerad popup, nekat svar, uteblivet/sent svar, avbrott, saknad URL, stängt fönster och nytt försök. Ingen verklig filnedladdning eller inloggad webbverifiering påstås.
@@ -1677,3 +1679,4 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Återstår före implementation: Bestäm och dokumentera begränsningar för antal/längd/takt, hantering av obesvarade/ersatta frågor, annonsens stängning och rapportering av olämpliga frågor. Återanvänd befintliga fråge-/notis-/delningsflöden och håll AI utanför manuell frågesändning. Dataskyddsavstämning samordnas med N19/F12/L05.
 - Implementerat: —
 - Verifierat: Endast plantext genomläst; ingen produktfunktion eller databasändring genom detta beslut.
+
