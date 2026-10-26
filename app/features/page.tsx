@@ -1,5 +1,4 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import { UiIcon } from "@/components/ui-icon";
 import {
@@ -13,6 +12,10 @@ import { MarketingFooter } from "@/components/marketing-footer";
 import "../landing.css";
 import "./features.css";
 
+const heroBody = "MatchnWork samlar hela vägen från första swipe till första arbetsdagen – för ungdomar och företag.";
+
+export const metadata: Metadata = { title: "Funktioner", description: heroBody };
+
 export default function FeaturesPage() {
   return (
     <main className="features-page">
@@ -20,7 +23,7 @@ export default function FeaturesPage() {
 
       <section className="features-hero">
         <h1>Hitta jobb. Hitta personal. Enklare.</h1>
-        <p>MatchnWork samlar hela vägen från första swipe till första arbetsdagen – för ungdomar och företag.</p>
+        <p>{heroBody}</p>
       </section>
 
       <section className="features-section">

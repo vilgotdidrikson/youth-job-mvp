@@ -151,7 +151,7 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
 | 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | För granskning | Max / Claude |
-| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Pågår | Max / Claude |
+| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | För granskning | Max / Claude |
 | 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
 | 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Klar | William / Claude |
 | 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
@@ -1560,16 +1560,16 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 66
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-26 enligt användarens beställning att genomföra kort från designauditen. Startsidans innehåll, animationer och D05:s tillägg (DA-03, DA-10, DA-17) ingår inte; bara uppdelning i server- och klientkomponenter. Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-11), som har fynd, filer och mått.
 - Åtgärd: Gör `app/page.tsx`, `app/features/page.tsx` och `app/pricing/page.tsx` till serverkomponenter med egen `metadata` och flytta bara de interaktiva delarna till små klientkomponenter. Flytta importen av Mapbox-CSS från `app/globals.css` till kartkomponenten.
 - Klar när: Sidorna visar sin text utan JavaScript, har egen metadata och Mapbox-CSS laddas bara på sidor med karta. Lighthouse mobil jämförs före och efter i driftsatt dev.
 - Samordning / beroenden: Samordna startsidan med D05.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: `app/page.tsx`, `app/features/page.tsx` och `app/pricing/page.tsx` är serverkomponenter med egen `metadata` (startsidan: titel och canonical; funktioner/priser: titel och beskrivning från befintlig sidtext). Segmentlayouterna som bara satte titlar är borttagna. Klientdelar: `app/landing-hero.tsx` (animerad rubrik och sessionsberoende knappar) och `app/pricing/pricing-plans.tsx` (kundtypsväxeln med planer); bakgrund, plattformsvisning, tidslinje och räknare var redan klientkomponenter. Startsidans rubrik börjar fullt utskriven så att serverns HTML visar den, `NumberTicker` serverrenderar slutvärdet, och en `<noscript>`-stil visar scrollanimerad text utan JavaScript. `components/ui/platform-visuals.tsx` är en klientmodul så att mobil- och desktopkopian får egna SVG-id:n (annars återkom DA-01-felet). Mapbox-CSS importeras i `components/job-map.tsx` i stället för `app/globals.css`; kartkontrollernas regel fick högre specificitet eftersom Mapbox-CSS nu laddas efter appens CSS. `test:map-fallback` stubbar CSS-importen. Texter, länkar och animationer i övrigt är oförändrade.
+- Verifierat: TypeScript, ESLint (inga nya varningar), produktionsbygge (webpack), `test:accessibility`, `test:map-fallback` och `test:local-fonts`. Lokala produktionsbyggen före och efter i Chromium: skärmbilder av `/`, `/features`, `/pricing`, `/login` och `/kartan` (omdirigering) vid 375 och 1280 px är pixelidentiska (0,00 %); utan JavaScript visar startsidan nu rubriken, statistikrubriken, siffrorna (24,9 % och 206 500) och manifestet, som tidigare saknades; funktions- och prissidan oförändrade. Mapbox-CSS finns inte i någon stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy`, bara i `/kartan`s chunk. Prisväxeln byter rubrik och visar företagsavsnitten, rubrikanimationen skriver nästa rubrik, räknarna når slutvärdet och inga sidfel. Kartkontrollerna behåller appens radie och knappstorlek när Mapbox-CSS laddas efter appens CSS (kontrollerat med byggets stilmallar, inte med inloggad karta). `check:design-tokens` fallerar redan på dev av andra punkters filer (`applications-design.css`, `brand-logo.module.css`); den här ändringen tillför inga nya värden.
+- Återstår / blockerare: Lighthouse mobil före och efter i driftsatt dev efter merge, samt visuell kontroll av `/kartan` med fiktivt QA-konto. Ändringen är bara på branch `Max` och ännu inte införd i dev.
 
 <a id="da-12"></a>
 ### DA-12 Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar
