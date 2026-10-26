@@ -31,6 +31,7 @@
     "test:job-workplaces": "node scripts/test-job-workplaces.mjs",
     "test:job-copy": "node scripts/test-job-copy.mjs",
     "test:company-navigation": "node scripts/test-company-navigation.mjs",
+    "test:assessment-history": "node scripts/test-assessment-history.mjs",
     "test:assessment-progress": "node scripts/test-assessment-progress.mjs",
     "test:recruitment-review": "node scripts/test-recruitment-review.mjs",
     "test:video-retention": "node scripts/test-video-retention.mjs",

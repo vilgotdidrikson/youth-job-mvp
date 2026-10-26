@@ -9,6 +9,8 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { assessmentDeadline, observeAssessment } from "@/lib/assessment-progress";
 
+import { CandidateAssessmentHistory } from "./candidate-assessment-history";
+
 const CONFIDENCE = { low: "Begränsat underlag", medium: "Delvis underlag", high: "Gott underlag" };
 const STATUS = { fulfilled: "Stöd i underlaget", unfulfilled: "Uttrycklig motsägelse", unknown: "Okänd uppgift – tillräckligt belägg saknas" };
 
@@ -24,7 +26,6 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
   const [temporary, setTemporary] = useState(false);
   const [followups, setFollowups] = useState<ApplicationFollowup[]>([]);
   const [followupMessage, setFollowupMessage] = useState("");
-  const [history, setHistory] = useState<{ id: string; job_profile_version: number; result: CandidateAssessment; created_at: string }[] | null>(null);
   const [automaticStatus, setAutomaticStatus] = useState("");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const observer = useRef<ReturnType<typeof observeAssessment> | null>(null);
@@ -56,11 +57,6 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
     const stopRefresh = subscribeVisibleRefresh(watch.refresh);
     return () => { watch.stop(); stopRefresh(); };
   }, [jobId, youthUserId]);
-  const loadHistory = async () => {
-    const { data, error } = await getSupabaseClient().from("candidate_assessments").select("id,job_profile_version,result,created_at")
-      .eq("job_id", jobId).eq("youth_user_id", youthUserId).order("created_at", { ascending: false }).limit(20);
-    if (error) setError("Kunde inte läsa tidigare bedömningar."); else setHistory(data ?? []);
-  };
   const request = useRef<AbortController | null>(null);
   const followupRevision = useRef(0);
   useEffect(() => {
@@ -122,7 +118,7 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
     {application && application.questions.length > 0 && <div className="candidate-application-answers"><h3>Ansökningsfrågor</h3>{application.questions.map((question) => <div key={question.id}><strong>{question.question}</strong><p>{application.answers[question.id]?.trim() || "Uppgift saknas"}</p></div>)}</div>}
     {followupMessage && <p role="status" className="candidate-followup-notice">{followupMessage}</p>}
     {followups.length > 0 && <section className="candidate-application-answers"><h3>Individuella kompletteringar</h3><p>Skickade svar ingår i nästa uppdatering av matchningsunderlaget.</p>{followups.map((item) => <div key={item.id}><strong>{item.question}</strong><p>{item.status === "answered" ? item.answer : item.status === "skipped" ? "Uppgift saknas – kandidaten valde att inte svara" : "Frågan har skickats. Inv väntar svar.".replace("Inv väntar", "Inväntar")}</p></div>)}</section>}
-    <details onToggle={(event) => { if (event.currentTarget.open && history === null) void loadHistory(); }}><summary>Tidigare bedömningar</summary>{history?.length === 0 && <p>Inga sparade bedömningar ännu.</p>}{history?.map((item) => <details key={item.id}><summary>Kriterieversion {item.job_profile_version} · {new Date(item.created_at).toLocaleString("sv-SE")}</summary><p>{item.result.explanation}</p><ul>{item.result.criteria.map((criterion) => <li key={criterion.id} data-status={criterion.status}><strong>{criterion.label}</strong><span>{STATUS[criterion.status]}</span>{criterion.evidence && <blockquote>{criterion.evidence}</blockquote>}</li>)}</ul></details>)}</details>
+    <CandidateAssessmentHistory jobId={jobId} youthId={youthUserId} revision={updatedAt} />
     <p className="candidate-assessment-note">Bedömningen visar vilket underlag som finns. Saknade uppgifter räknas inte som avslag. Ni fattar alltid beslutet själva.</p>
   </section>;
 }
