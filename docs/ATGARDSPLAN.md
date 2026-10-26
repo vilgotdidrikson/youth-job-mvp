@@ -130,7 +130,7 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | För granskning | Vilgot / Codex |
 | 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
-| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Ej påbörjad | — |
+| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Ej påbörjad | — |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Ej påbörjad | — |
@@ -1101,15 +1101,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P2
 - Global ordning: 45
 - Typ: Verifiering och eventuell designförbättring
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l09-cv-pdf-layout-20261026`, [PR #117](https://github.com/vilgotdidrikson/youth-job-mvp/pull/117); reserverad före kodarbete. Avgränsat till befintlig CV-export, textbevarande, sidbrytningar och visuell PDF-kontroll med fiktiva uppgifter. Tidigare profil-/AI-/GDPR-, SMTP-, pris- och andra ägares pågående punkter inväntar sina beroenden. Ingen utökning av data-/AI-flöden eller åtkomstregler; inloggad fil-/uppladdningsverifiering i hela L09 återstår separat.
 - Åtgärd: Kontrollera uppladdat PDF-CV, behörig visning före match och exporterat CV. Granska faktisk PDF-layout med kort och långt innehåll, sidbrytningar, svenska tecken och läsbarhet. En startad nedladdning räcker inte som layoutverifiering.
 - Klar när: Uppladdat och genererat CV kan öppnas av rätt användare och PDF:en är läsbar utan klippt text eller felaktiga sidbrytningar.
 - Tillägg 2026-10-18 (N19/N21): Förhandsvisa den faktiskt delade CV-versionen, även uppladdad original-PDF med mejl, telefon eller bostadsadress. Förklara att sådant innehåll blir synligt i dokumentet och låt ungdomen byta/rätta filen före delning; dold kontaktsektion räcker inte. Påstå inte automatisk PDF-maskning. Testa behörighet och att dokumentet motsvarar delningsförhandsvisningen; detta tillägg är inte verifierat ännu.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Separat ren PDF-mall och texttolkning som bevarar fristående rubriker och inledande profiltext; namn från exportens namnargument utan att ta bort avvikande första textrad. Rubrik och inledande styckerader hålls ihop, långa namn radbryts utan automatisk avstavning, sida/antal och namn på fortsättningssidor. Inbäddad Inter (statiska 400/600 från befintlig licensierad font) och 11 pt brödtext med återhållna varumärkesfärger. PDF-motorn laddas först vid export. Exporterna körs i ordning med förnyad glyphdata så upprepade/samtidiga exporter inte kan förvanska extraherbar text. Auth och hämtning av verifierad erfarenhet bevaras.
+- Verifierat: Före/efter-PDF:er med fiktiv Åsa Öberg; tidigare förlust av fristående PROFIL/SPRÅK/ENSAMRUBRIK och felaktig jättestor namnrubrik reproducerad. test:cv-pdf kör riktiga PDF-exporter och PDF.js: 1, 2 och 4 sidor, svenska tecken, långa namn/URL:er, samtliga slutmarkörer, text-/sidgränser, inga ensamma avsnittsrubriker, upprepade och parallella exporter, auth-/historikfel och tomtext. Fontintegritet och licens kontrolleras. Slutliga korta/rubrikseparerade PDF:er samt alla fyra stressidor renderade med Poppler och granskade visuellt; jämförelse även med PDFium. Inter är inbäddat enligt pdffonts. test:application-disclosure, test:cv-quality, test:local-fonts, riktad ESLint och standardbygge med TypeScript passerar.
+- Återstår / blockerare: Inloggat dev-flöde för verklig uppladdning, originalfil, delad CV-version och före-match-åtkomst; negativ API-/Storage-verifiering i fullständigt användarflöde och faktisk fontladdning/export i avsedda webbläsare. De lokala PDF-proverna och simulerad auth/historik är inte dessa tester. L09 förblir Pågår; inga databas-/RLS-/AI-ändringar.
 
 <a id="l08"></a>
 ### L08 Verifiera mobil, tangentbord och kartinteraktion

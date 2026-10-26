@@ -17,3 +17,14 @@ Fonts are distributed under SIL Open Font License 1.1; see `inter-OFL.txt` and
 Run `npm run test:local-fonts` to check integrity and declarations. When updating
 fonts, review the upstream license, preserve script coverage and fallback metrics,
 and verify the visual result before updating the integrity manifest.
+
+## PDF faces
+
+`cv-inter-regular.ttf` (400) and `cv-inter-semibold.ttf` (600) are static instances
+of the pinned Inter Latin WOFF2, for embedding in CV exports. WOFF2 variable-font
+subsetting is not supported reliably by the PDF renderer. The derivative faces
+retain the source license/copyright and have distinct static PostScript names.
+See `cv-manifest.json` for integrity and source identity. Regenerate using
+`python scripts/generate-cv-pdf-fonts.py` with fontTools and Node.js installed;
+no network download is used. Review the generated PDFs and update the manifest
+only when deliberately replacing these faces. The web-font assets are unchanged.
