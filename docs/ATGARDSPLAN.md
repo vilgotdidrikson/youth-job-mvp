@@ -97,33 +97,33 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
-| 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | För granskning | Max / Claude |
+| 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
-| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | För granskning | Max / Claude |
+| 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Klar | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | För granskning | Vilgot / Codex |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Ej påbörjad | — |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
-| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | För granskning | Max / Claude |
-| 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | För granskning | Max / Claude |
+| 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
+| 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Ej påbörjad | — |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
 | 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | Ej påbörjad | — |
-| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | För granskning | Max / Claude |
+| 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
-| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | För granskning | Max / Claude |
-| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | För granskning | Max / Claude |
+| 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Klar | Max / Claude |
+| 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Klar | Max / Claude |
 | 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
@@ -147,7 +147,7 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
-| 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | För granskning | Max / Claude |
+| 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
 | 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | För granskning | Max / Claude |
@@ -288,17 +288,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n01"></a>
 ### N01 Redigera hela publicerade annonsen
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 19
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/n01-edit-published-job-20261020`; reserverad före kodarbete 2026-10-20. Återanvänder annonsbyggaren och befintliga separata redigerare (jobbtyp, arbetsplatser, matchkriterier). Ingen databasändring.
 - Åtgärd: Ge en tydlig Redigera annons-ingång för titel, publik text, bild, lön och praktiska uppgifter. Återanvänd annonsbyggaren. Håll den publika informationen och matchkriterierna samordnade och förklara konsekvenser för befintliga ansökningar.
 - Klar när: Företaget kan korrigera annonsen utan att radera och skapa om den.
 - Implementerat: Redigera annons på varje annonskort öppnar en adressstyrd redigeringsvy (`view=redigera&edit=<id>`). Den använder annonsbyggaren i alla tre delar, med fri navigering, förhandsvisning och sparning från valfri del. Redigeringen hålls i minnet, åtskild från det lokala annonsutkastet, och varnar för osparade ändringar. Endast ändrade publika fält sparas via befintliga updateJob (ägarkontroll, ingen ny geokodning av oförändrad plats, varken status- eller publiceringsfält). Matchkriterier sparas bara vid faktisk ändring, med versionskontroll. Arbetsplats-ID behålls. Om bara annonsen sparas visas det tydligt och nästa försök skickar endast det som återstår. Konsekvenser för synlighet, ansökningar, chattar, omgjord matchningsanalys, nya frågor och valda arbetsplatser visas i formuläret. Mappningen delas med N15:s kopiering, som behåller nya ID. Ingen migration. Se docs/N01.md.
-- Verifierat: test:job-edit (ändringsdiff, publik/intern separation, kriterieändring, nytt försök efter delvis sparning, texter, verklig updateJob-väg mot simulerad databas, nekat fel företag eller kontobyte samt isolerad koppling) och regressionerna test:job-copy, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:recruitment och test:recruitment-review passerar. TypeScript och produktionsbygge passerar. Riktad ESLint: 0 fel, befintliga img-varningar.
-- Återstår / blockerare: PR och införande i dev. Inloggat prov i driftsatt dev på mobil och dator med fiktivt QA-företag och QA-ansökan (publicerad, väntande och pausad annons, arbetsplatsändring på kartan, kriterieändring som gör om bedömningen); inget webbtest har körts. Annonsfälten saknar versionskontroll (den senaste sparningen vinner); äldre annonser utan postnummer eller anställningsform måste kompletteras före sparning; ersatta bilder tas inte bort från lagringen.
+- Verifierat: test:job-edit (ändringsdiff, publik/intern separation, kriterieändring, nytt försök efter delvis sparning, texter, verklig updateJob-väg mot simulerad databas, nekat fel företag eller kontobyte samt isolerad koppling) och regressionerna test:job-copy, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:recruitment och test:recruitment-review passerar. TypeScript och produktionsbygge passerar. Riktad ESLint: 0 fel, befintliga img-varningar. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 21/21: Redigera annons öppnar `view=redigera&edit=<id>` med vilken annons som redigeras och konsekvenser; byggaren är förifylld; ändrad titel (dator och mobil) och tillagd arbetstid sparas; status, publicering, beskrivning, ort och arbetsplats-ID är oförändrade; ungdomen ser ändringarna på annonssidan; inga sidfel. Iakttagelser: på mobil har stegknapparna bara 1/2/3 som tillgängligt namn, och konsekvensrutan fyller hela första skärmen.
+- Återstår / blockerare: Annonsfälten saknar versionskontroll (den senaste sparningen vinner); ersatta bilder tas inte bort från lagringen.
 
 <a id="n02"></a>
 ### N02 Återkalla ansökan och väntande intresse
@@ -364,34 +364,34 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n04"></a>
 ### N04 Öppna en läsbar företagsprofil från annonsen
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 37
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning enligt användarens avgränsning (inga GDPR-, domän- eller betalningsberoende punkter): samma överhoppade punkter som F14 och F23 (N23, L03, N02, L05, L06, L12–L14, N08, F12, F20). Planerad migration (godkänd av användaren): säker läsfunktion med utvalda publika företagsfält för företag med synlig annons; RLS på `company_profiles` öppnas inte.
 - Åtgärd: Gör företagskortet öppningsbart och visa verksamhetsbeskrivning, ort, verifiering och relevant arbetsplatsinformation. Ge en tydlig väg tillbaka till jobbet. Återanvänd uppgifter företaget redan fyllt i.
 - Klar när: Ungdomen kan bedöma arbetsgivaren innan den visar intresse.
 - Implementerat: Migration `20261025120000_n04_job_company_profile.sql`: `private.get_job_company_profile` (security definer, `search_path=''`) med publik invoker-wrapper `public.get_job_company_profile`, bara för inloggade. Den speglar annonsens synlighetsregel (ägaren eller aktiv publicerad annons), respekterar blockeringar och lämnar bara ut namn, bransch, beskrivning, ort, storlek, logga, webbplats, verifiering och antal öppna jobb. Administratör, organisationsnummer, adress, sociala länkar och matchprofil (internt bedömningsstöd) lämnas aldrig ut; RLS och tabeller oförändrade. Logik och säker länkhantering (bara http/https) i `lib/company-public-profile.ts`. Annonssidan har ett företagskort direkt under rubriken (`components/job-company-card.tsx`) med Om företaget som öppnar en dialog med beskrivning, verifiering, öppna jobb och webbplats och knappen Tillbaka till jobbet; det gamla statiska företagskortet (bara desktop) är ersatt. Kortet visas för inloggade; utan profil visas bara namnet.
 - Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint, nytt `test:company-public-profile` (länkar, publik form, migrationens fält, synlighet, blockering, inga RLS-ändringar), `test:accessibility` och `test:job-discovery`. Mot DevStaging med fiktiva konton och annonser (raderade efteråt), 28/28: ungdom läser publik profil med exakt de publika fälten och utan skyddade värden; stängd annons ger ingen profil; ägaren kan läsa via egen stängd annons; utloggad nekas; ungdom kan fortfarande inte läsa `company_profiles` direkt; blockerat företag visas inte. Chromium vid 375 och 1280 px: kortet före Om jobbet, ingen horisontell scroll, dialog med beskrivning, webbplats och öppna jobb, inga skyddade uppgifter i sidan, Tillbaka till jobbet och Escape stänger och fokus återgår, inga sidfel.
-- Återstår / blockerare: Införande i dev och migrationen i master-projektet före release (samordnas). Kontroll i driftsatt dev. Logga ej provad med riktig bild (QA-företaget saknade logga).
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, nytt `test:company-public-profile` (länkar, publik form, migrationens fält, synlighet, blockering, inga RLS-ändringar), `test:accessibility` och `test:job-discovery`. Mot DevStaging med fiktiva konton och annonser (raderade efteråt), 28/28: ungdom läser publik profil med exakt de publika fälten och utan skyddade värden; stängd annons ger ingen profil; ägaren kan läsa via egen stängd annons; utloggad nekas; ungdom kan fortfarande inte läsa `company_profiles` direkt; blockerat företag visas inte. Chromium vid 375 och 1280 px: kortet före Om jobbet, ingen horisontell scroll, dialog med beskrivning, webbplats och öppna jobb, inga skyddade uppgifter i sidan, Tillbaka till jobbet och Escape stänger och fokus återgår, inga sidfel. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 2×10: företagskortet visas under rubriken; Om företaget öppnar en dialog med namn, bransch, ort, storlek, verifiering, beskrivning, 1 öppet jobb och https-länk till webbplatsen (ny flik, noopener); organisationsnummer och kontaktperson visas inte; Tillbaka till jobbet stänger dialogen och återför fokus; inga sidfel.
+- Återstår / blockerare: Migrationen ska köras i master-projektet före release (samordnas). Logga ej provad med riktig bild.
 
 <a id="n05"></a>
 ### N05 Lägg till strukturerade praktiska jobbuppgifter
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 38
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25. Avsteg från global ordning som för N04. Planerad migration (godkänd av användaren i samma insats): ny kolumn `jobs.practical_details jsonb` med objektkontroll; inga RLS-ändringar. Samordning: annonsbyggaren och redigeringen (N01/F10/F22, Max / Claude) och N17 (Codex) berörs; matchningens jobbkontext (F26, Codex) ändras inte.
 - Åtgärd: Komplettera annonsen med start eller flexibelt startläge, schema eller omfattning, anställningsperiod, sista ansökningsdag utan krav på platsantal enligt det reviderade N16-beslutet. Håll det enkelt och tillåt Ej bestämt där det är rimligt.
 - Klar när: Ungdomen kan jämföra arbetstid och tidsram utan att leta i fri text.
 - Implementerat: Migration `20261025140000_n05_job_practical_details.sql`: kolumn `jobs.practical_details jsonb not null default '{}'` med objekt- och storlekskontroll; inga RLS- eller dataändringar. Regler, tolerant inläsning, utkaståterställning och visningstext i `lib/job-practical.ts`. Annonsbyggarens steg 3 har rutan Tid och period (`components/job-practical-fields.tsx`): start (så snart som möjligt, datum, flexibel, Ej bestämt), timmar per vecka från–till, när på veckan (vardagar dagtid, kvällar, helger), anställningsperiod (tills vidare, tidsbegränsad till datum, Ej bestämt) och sista ansökningsdag. Allt är valfritt; Ej bestämt visas inte. Ofullständiga datum, timmar utanför 1–60, slut före start och en ny sista ansökningsdag som passerat stoppar publicering/sparning med fokus på fältet; vid redigering behålls en redan passerad dag. Uppgifterna följer med i förhandsvisning, kopiering, redigering (bara vid ändring) och lokala utkast, och visas i Snabb överblick på annonssidan (passerad sista dag markeras). Annonsen pausas inte automatiskt. `createJob` skickar fältet bara när det har innehåll, så annonser utan uppgifter fungerar även innan migrationen finns i en miljö.
 - Införd i DevStaging: migrationen kördes av användaren i SQL Editor 2026-10-25 (inte i CLI-historiken).
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint (inga nya problem), nytt `test:job-practical` samt `test:job-fields`, `test:job-copy`, `test:job-edit`, `test:job-workplaces`, `test:recruitment`, `test:job-discovery`, `test:company-navigation` och `test:accessibility`. Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktivt verifierat företag och fiktiv ungdom (raderade efteråt), 15/15: Ej bestämt förvalt, saknat startdatum stoppar publicering med fokus, förhandsvisningen visar uppgifterna, publicerad annons har exakt rätt `practical_details` i databasen, redigering förifyller och sparar ändrade timmar, inga sidfel; ungdom ser Start, Omfattning, Anställningsperiod och Sista ansökningsdag i Snabb överblick vid 375 och 1280 px utan horisontell scroll. Två fel hittades och rättades under verifieringen: fältet saknades i insert-/uppdateringsobjektet i `lib/jobs.ts`, och datumetiketterna flöt på samma rad.
-- Återstår / blockerare: Migrationen måste köras före koden vid införande i dev och i master-projektet före release. Kontroll i driftsatt dev. Uppgifterna används inte av matchningen (F26, Codex) eller i swipekortet; det kan bli en uppföljning.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint (inga nya problem), nytt `test:job-practical` samt `test:job-fields`, `test:job-copy`, `test:job-edit`, `test:job-workplaces`, `test:recruitment`, `test:job-discovery`, `test:company-navigation` och `test:accessibility`. Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktivt verifierat företag och fiktiv ungdom (raderade efteråt), 15/15: Ej bestämt förvalt, saknat startdatum stoppar publicering med fokus, förhandsvisningen visar uppgifterna, publicerad annons har exakt rätt `practical_details` i databasen, redigering förifyller och sparar ändrade timmar, inga sidfel; ungdom ser Start, Omfattning, Anställningsperiod och Sista ansökningsdag i Snabb överblick vid 375 och 1280 px utan horisontell scroll. Två fel hittades och rättades under verifieringen: fältet saknades i insert-/uppdateringsobjektet i `lib/jobs.ts`, och datumetiketterna flöt på samma rad. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px: annonsbyggarens Tid och period stoppar timmar till < från, över 60 timmar och passerad sista ansökningsdag vid fältet; publicerad annons sparar start, timmar, helger, tills vidare och sista dag i `practical_details` (dator och mobil); Snabb överblick på annonssidan visar uppgifterna; tillagd kvällstid via redigering syns för ungdomen.
+- Återstår / blockerare: Migrationen ska köras i master-projektet före release (samordnas). Uppgifterna används inte av matchningen (F26) eller i swipekortet.
 
 <a id="n07"></a>
 ### N07 Ångra det senaste bortvalet i swipe
@@ -513,7 +513,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Säkerställ att Gå till mitt konto går till kontot och att Skapa din första annons samt Ny annons öppnar annonsbyggaren direkt. Rätt destination ska fungera även efter nyregistrering utan omladdning.
 - Klar när: Varje startknapp leder till den vy som etiketten utlovar.
 - Implementerat: Knapparnas destinationer infördes av Vilgot / Codex 2026-10-15 (`8a1bdf2`, `e1db40a`). Rättat vid verifieringen 2026-10-25 (Max / Claude): företagets onboarding läser in sparade företagsuppgifter igen när sessionen uppdateras, och skrev då över det som redan skrivits med tomma värden. Organisationsnumret försvann efter ifyllning och nyregistrerade företag kom inte vidare till startknapparna. Inlästa värden fyller nu bara tomma fält (`app/company/onboarding/page.tsx`). Rättat vid verifieringen i driftsatt dev 2026-10-26 (Max / Claude): efter inloggning via `/login` fastnade företagets (och ungdomens) målsida på Kontrollerar session... tills sidan laddades om. `refresh()` i `hooks/use-session.ts` delar en pågående körning via en referens, men en körning utan `await` (utloggad startsession) rensade referensen innan den sattes, så ett avslutat löfte låg kvar och refresh efter `SIGNED_IN` hämtade aldrig profilen. Referensen rensas nu i en senare mikrouppgift. Felet fanns sedan `d41bd1b` (2026-09-29); registrering påverkades inte eftersom den gör en full navigering.
-- Verifierat: `test:company-navigation`, TypeScript och riktad ESLint (inga nya problem). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktiva företagskonton registrerade via formuläret `/signup?role=company` och påhittade organisationsnummer (raderade efteråt), vid 1280 och 375 px, 14/14 två körningar i rad: registrering leder till onboarding; efter onboarding öppnar Gå till mitt konto kontot (`/profile?tab=settings`, ”Ditt konto”), Fortsätt skapa min jobbannons, Skapa din första annons och Ny annons öppnar annonsbyggaren (”Berätta om jobbet”), alla utan omladdning (markör i `window` kvar); inga sidfel. Före rättningen föll samma test på organisationsnumret i båda körningarna.
+- Verifierat: `test:company-navigation`, TypeScript och riktad ESLint (inga nya problem). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med fiktiva företagskonton registrerade via formuläret `/signup?role=company` och påhittade organisationsnummer (raderade efteråt), vid 1280 och 375 px, 14/14 två körningar i rad: registrering leder till onboarding; efter onboarding öppnar Gå till mitt konto kontot (`/profile?tab=settings`, ”Ditt konto”), Fortsätt skapa min jobbannons, Skapa din första annons och Ny annons öppnar annonsbyggaren (”Berätta om jobbet”), alla utan omladdning (markör i `window` kvar); inga sidfel. Före rättningen föll samma test på organisationsnumret i båda körningarna. Driftsatt dev 2026-10-26 (Max / Claude), Playwright/Chromium med sex fiktiva företag registrerade via `/signup?role=company` (raderade efteråt), vid 375 och 1280 px: registrering leder till onboarding; namn, bransch, organisationsnummer och kontaktperson sparas; Fortsätt skapa min jobbannons, Skapa din första annons och Ny annons öppnar annonsbyggaren, Gå till mitt konto öppnar Ditt konto, utan omladdning och utan sidfel. Inloggning via `/login` fastnade däremot på Kontrollerar session... för både företag och ungdom tills omladdning; reproducerat lokalt, rättat på branch `Max` (`efc34fd`) och provat lokalt mot DevStaging: företag landar i annonsvyn, ungdom med CV i Upptäck och ungdom utan CV i onboarding, utan omladdning. `test:session-events`, TypeScript och ESLint utan fel.
 - Återstår / blockerare: Inloggningsrättningen (branch `Max`) ska in i dev; därefter kontroll av inloggning och startknappar i driftsatt dev, sedan Klar.
 
 <a id="f05"></a>
@@ -549,17 +549,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f08"></a>
 ### F08 Tydliggör verifieringsunderlag och handläggning
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 16
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/f08-verification-status-20261020`, [PR #87](https://github.com/vilgotdidrikson/youth-job-mvp/pull/87), mergad till dev `52ed570` 2026-10-20; reserverad före kodarbete 2026-10-20. Bygger på F09 i dev (Codex lämnade F08:s underlag, handläggning och organisationsnummervalidering separat). Användarbeslut 2026-10-20: ingen fast handläggningstid utlovas, hjälpvägen är vägledning i appen tills en kontaktadress finns, och UF-företag behöver eget organisationsnummer (ingen databasändring).
 - Åtgärd: Skilj Uppgifter saknas, Inskickat, Under granskning, Godkänt och Behöver kompletteras. Visa obligatoriska uppgifter, uppskattad handläggning och hjälpväg. Validera organisationsnummer på ett sätt som stödjer UF och hindrar uppenbart orimliga nummer från att framstå som giltiga.
 - Klar när: Företaget vet vad det behöver göra och om underlaget faktiskt är inskickat.
 - Implementerat: Gemensam, ramverksfri verifieringslogik med lägena Uppgifter saknas, Inskickat – under granskning, Behöver kompletteras och Godkänt (samt okänd status), härledda från sparade uppgifter. Ett statuskort med steg, obligatoriska uppgifter som saknas och hjälptext visas i företagsvyn, profilöversikten och Företagsuppgifter. Organisationsnumret kontrolleras med kontrollsiffra och rimliga siffergrupper; föreningar i 8-serien (UF-enheter) och enskild firma godkänns, och felet visas vid fältet. Kontaktperson kan redigeras i profilen. Godkända företag varnas innan ett ändrat nummer leder till ny granskning, och en ändring som bara gäller bindestreck startar ingen ny granskning. Profilen läser tillbaka lagrad status efter sparning och adminvyn flaggar nummer med fel kontrollsiffra. Ingen migration. Se docs/F08.md.
-- Verifierat: test:company-verification (validering, statuslägen, ingen utlovad handläggningstid, varning om ny granskning, serverrenderat statuskort) samt regressionerna test:job-publication, test:company-navigation, test:job-copy, test:job-drafts, test:job-workplaces, test:recruitment, test:recruitment-review och test:profile-journey passerar. TypeScript och produktionsbygge passerar. Riktad ESLint: 0 fel, 2 befintliga img-varningar.
-- Återstår / blockerare: PR till dev och inloggat visuellt prov i driftsatt dev på mobil och dator för varje företagsläge med fiktiva QA-konton; inget webbtest har körts. Kontrollsiffran kontrolleras inte av databasen (kräver samordnad migration). Kontaktadress och eventuell handläggningstid är öppna produktbeslut.
+- Verifierat: test:company-verification (validering, statuslägen, ingen utlovad handläggningstid, varning om ny granskning, serverrenderat statuskort) samt regressionerna test:job-publication, test:company-navigation, test:job-copy, test:job-drafts, test:job-workplaces, test:recruitment, test:recruitment-review och test:profile-journey passerar. TypeScript och produktionsbygge passerar. Riktad ESLint: 0 fel, 2 befintliga img-varningar. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 26/26: företagsvyn visar Uppgifter saknas, Inskickat – under granskning (med datum) och Behöver kompletteras (med adminens skäl) med länk till Företagsuppgifter; godkänt företag ser inget statuskort; för kort nummer och fel kontrollsiffra ger fel vid fältet (aria-invalid) och sparas inte; UF-nummer i 8-serien godtas; komplett sparning ger Inskickat – under granskning, kvar efter omladdning; ingen horisontell scroll. Iakttagelser (inte blockerande): statuskortet i företagsvyn säger ”Fyll i uppgifterna nedan” fast fälten finns under Företagsuppgifter, och stegindikatorn ser ut som radioknappar.
+- Återstår / blockerare: Kontaktadress och eventuell handläggningstid är öppna produktbeslut. Kontrollsiffran kontrolleras inte av databasen (kräver samordnad migration).
 
 <a id="f09"></a>
 ### F09 Anpassa publicering till verifieringsstatus
@@ -594,31 +594,31 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f13"></a>
 ### F13 Rätta status för väntande ansökningar
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 23
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/f13-pending-applications-20261020`; reserverad före kodarbete 2026-10-20. Avsteg från global ordning enligt användarens avgränsning 2026-10-20 (inga GDPR- eller domänberoende punkter): N02 (återkallad delning av ansökningsunderlag), L05 (GDPR-åtkomstkontroller) och L06 (e-post kräver SMTP/domän) hoppas över. Ingen databasändring planerad.
 - Åtgärd: Räkna väntande intresse konsekvent i Alla eller ge det en tydlig egen kategori. Visa Inte skickad ännu och vad som krävs för sändning. Ge annonslänk och korrekt knappstatus även innan CV är färdigt.
 - Klar när: En synlig väntande ansökan motsäger inte räknaren eller texten om redan skickade ansökningar.
 - Implementerat: Räknaren Alla omfattar varje visat kort, inklusive sparade intressen. Ny flik Inte skickade. Kortet för sparat intresse har företagsruta, status Inte skickad ännu, förklaring att intresset inte är skickat och skickas automatiskt när CV:t sparas så länge annonsen är öppen, länken Visa annons och knappen Gör klart CV:t (med jobbet förvalt). Om CV:t redan är klart visas Skicka ansökan för just det jobbet via befintliga prepareApplication. Pausade och stängda annonser visas som Tar inte emot ansökningar, utan CV-uppmaning. Annonssidan erbjuder inte längre Jag är intresserad igen vid sparat intresse. Logiken ligger i lib/application-overview.ts. Ingen migration. Se docs/F13.md.
-- Verifierat: test:application-overview (räknare, kategori, texter, stängd annons, skickaknapp, tillgänglighet via simulerad klient och koppling) samt regressionerna test:application-supplement, test:application-disclosure, test:followup-batch, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:profile-journey, test:job-edit och test:company-navigation passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel.
-- Återstår / blockerare: PR och införande i dev. Inloggat prov i driftsatt dev på mobil och dator med fiktiv QA-ungdom (sparat intresse utan CV, pausad annons, klart CV med kvarvarande intresse); inget webbtest har körts. Titeln på en dold annons visas som Jobbannons. Notiser och märken ingår i F14 och återkallelse i N02.
+- Verifierat: test:application-overview (räknare, kategori, texter, stängd annons, skickaknapp, tillgänglighet via simulerad klient och koppling) samt regressionerna test:application-supplement, test:application-disclosure, test:followup-batch, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:profile-journey, test:job-edit och test:company-navigation passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 22/22: ungdom utan CV med sparat intresse (öppen och pausad annons) ser Alla 2 och Inte skickade 2; öppen annons visar Inte skickad ännu, förklaring, Visa annons och Gör klart CV:t (länk med jobbet förvalt); pausad visar Tar inte emot ansökningar utan CV-uppmaning; inget kort säger Skickad; annonssidan erbjuder inte Jag är intresserad igen utan förklarar att intresset är sparat; inga sidfel.
+- Återstår / blockerare: Titeln på en dold annons visas som Jobbannons (RLS). Skicka ansökan för ungdom med klart CV och sparat intresse provades inte i webbläsaren.
 
 <a id="f14"></a>
 ### F14 Gör notiser och lässtatus användbara
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 24
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/f14-notifications-20261021`; reserverad före kodarbete 2026-10-21. Avsteg från global ordning enligt användarens avgränsning (inga GDPR- eller domänberoende punkter): N23 (väntar på L12-gallring), F04 (redan införd i dev av Vilgot / Codex, kortet ej uppdaterat; tas inte över), L03 (pris/villkor blockerade via F06 samt e-post), N02, L05, L06 och L12–L14. Planerad migration: notisernas innehåll, länk till exakt matchning och en oläst meddelandenotis per samtal.
 - Åtgärd: Skriv person eller företag och jobb i match- och meddelandenotiser. Öppna rätt konversation direkt. Återställ lässtatus och badges när motsvarande händelse är hanterad; skilj historiska händelser från kvarvarande uppgifter. Ge diskret CV-påminnelse för väntande intresse.
 - Klar när: Notiser leder till rätt ärende och signalerar bara det som fortfarande behöver uppmärksamhet.
 - Implementerat: Migration `20261021090000_f14_notification_context.sql`: `notifications.match_id` och ny trigger. Match- och meddelandenotiser namnger motparten och jobbet och öppnar exakt samtal (`/chats?match=`, `/chats?conversation=`). En matchning har högst en oläst meddelandenotis per mottagare. Statusnotisen anger företag, jobb och status. Kandidatintresset anger jobbet. Meddelandetext kopieras inte. Chatten markerar matchningens notiser som lästa när samtalet visas och sidan är synlig, och uppdaterar klockan och märket på Meddelanden. Notissidan delar upp Olästa och Tidigare, har Markera alla som lästa och typikoner. CV-påminnelsen anger antalet sparade intressen för öppna annonser, utan ny notis eller prick. Logiken ligger i lib/notifications.ts, lib/youth-activity.ts och lib/application-overview.ts. Ingen RLS-ändring. Se docs/F14.md.
-- Verifierat: test:notifications. Triggern körd på isolerad Postgres (PGlite) med fiktiva data: namn, länkar, en oläst meddelandenotis, statustext, reservord, kaskad och idempotent migration. Regressionerna test:application-overview, test:company-navigation, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:application-supplement, test:application-disclosure, test:followup-batch, test:profile-journey och test:job-edit passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel.
+- Verifierat: test:notifications. Triggern körd på isolerad Postgres (PGlite) med fiktiva data: namn, länkar, en oläst meddelandenotis, statustext, reservord, kaskad och idempotent migration. Regressionerna test:application-overview, test:company-navigation, test:job-discovery, test:matching, test:recruitment, test:recruitment-review, test:application-supplement, test:application-disclosure, test:followup-batch, test:profile-journey och test:job-edit passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 15/15: meddelande- och matchnotiser namnger företag och jobb; klick på meddelandenotisen öppnar exakt samtal (`/chats?conversation=`) med meddelandet; notiserna markeras lästa i databasen och märket på Meddelanden försvinner; notislistan har inga olästa kvar; CV-påminnelsen för ungdom utan CV anger 1 sparat intresse (bara öppna annonser); inga sidfel.
 - Verifierat i dev 2026-10-21 (efter merge #92): `test:notifications:staging` mot DevStaging med tillfälliga, fiktiva QA-konton (företag, ungdom, admin) som raderas efteråt; inga rester kvar. 21/21 kontroller passerar med verkliga triggrar, RLS och sessioner:
   - Kandidatintresset nämner jobbet.
   - Matchnotiserna namnger motparten och jobbet och länkar till exakt matchning.
@@ -629,7 +629,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
   - Statusnotisen nämner företag, jobb och status.
   - Markera alla fungerar, och meddelandetext kopieras aldrig in i notiser.
   - Driftsatt dev (youth-job-mvp-dev.vercel.app) levererar nya notissidan och chattens läsmarkering.
-- Återstår / blockerare: Visuellt klickprov i webbläsare (notis öppnar rätt samtal, pricken försvinner, mobilvy). Ingen webbläsare har använts i testet.
+- Återstår / blockerare: —
 
 <a id="f10"></a>
 ### F10 Återanvänd redan sparade uppgifter
@@ -643,8 +643,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Förifyll CV-guiden med erfarenhet, utbildning och språk från profilen. Förifyll annonsens stad från företaget och erbjud överföring av uttryckligt angiven lön till lönefälten. Alla förslag ska kunna rättas.
 - Klar när: Användaren slipper skriva samma fakta två gånger och motstridiga värden blir synliga.
 - Implementerat: Företagsdelen: en ny annons får ort från företagsprofilen när den når steg 3, med synlig förklaring. Redigerade och kopierade annonser, ifylld ort och tillagda arbetsplatser skrivs aldrig över. Sparad lönetext som anger belopp och enhet uttryckligen (till exempel 120–145 kr/tim, Från 130 kr/h eller 25 000 kr/mån) kan föras över till lönefälten med Fyll i lönefälten efter en förhandsvisning. Vag text lämnas orörd. Samma belopp visas som 130 kr/tim. Logiken ligger i lib/job-fields.ts. Ingen migration. Se docs/F10-F22.md.
-- Verifierat: test:job-fields. Regressionerna test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:application-overview och test:matching passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Inget webbtest har körts.
-- Återstår / blockerare: PR och införande i dev. Inloggat prov med fiktivt QA-företag (ny annons får företagets ort, kopierad lön fylls i). Ungdomsdelen (förifylld CV-guide) är inte gjord: den överlappar N19 och väntar på profil-/GDPR-avstämning.
+- Verifierat: test:job-fields. Regressionerna test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:application-overview och test:matching passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Inget webbtest har körts. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px (företagsdelen): ny annons får ort Stockholm från företagsprofilen med förklaringen; vid redigering skrivs orten inte över och förklaringen visas inte; sparad lönetext 130–150 kr/tim förs till lönefälten (130/150) med Fyll i lönefälten.
+- Återstår / blockerare: Ungdomsdelen (förifylld CV-guide) är inte gjord: den överlappar N19 och väntar på profil-/GDPR-avstämning. Företagsdelen är verifierad i driftsatt dev.
 
 <a id="f12"></a>
 ### F12 Förbättra kompletteringsfrågornas innehåll
@@ -674,17 +674,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f11"></a>
 ### F11 Visa vad AI överför till annonsfälten
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 30
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/f11-ai-job-fields-20261021`; reserverad före kodarbete 2026-10-21. Bygger på `claude/f10-f22-job-builder-fields-20261021` (återanvänder lönetolkning och fältregler i lib/job-fields.ts) och ska granskas och mergas efter den. Planerat: uttryckliga ålders- och löneuppgifter förs till fälten eller markeras för granskning, en sammanfattning av AI:s ändringar, AI-krav som arbetsgivaren inte angett blir förslag, och en vald anställningsform skrivs aldrig över. Ingen databasändring planerad.
 - Åtgärd: Överför uttryckliga ålders- och löneuppgifter till rätt fält eller markera att de behöver granskas. Sammanfatta AI:s ändringar och skilj arbetsform från absoluta krav; gör inte automatiskt varje önskemål till ett måste.
 - Klar när: Företaget kan se vilka fakta som används i text och matchning innan publicering.
 - Implementerat: Uttrycklig ålder och lön läses enbart ur arbetsgivarens egen text, aldrig ur AI-texten, och förs till tomma fält. Ifyllda fält och kopierad lön skrivs aldrig över. Oklara uppgifter och avvikelser markeras som Behöver granskas. Bara krav som arbetsgivaren angett blir absoluta matchkrav; övriga AI-krav blir förslag med Lägg till som krav, som läggs till både i annonsen och i matchningen. En vald anställningsform skrivs aldrig över, och utan AI sätts inte längre Deltid. Prompten skiljer arbetsform och arbetstider från absoluta krav och behandlar inte önskemål som krav. Panelen Granska AI-förslaget före publicering delar upp ändringarna i annonsen (syns för sökande), överförda fält, matchningen (internt), föreslagna krav och sådant som behöver granskas. Logiken ligger i lib/job-ai-review.ts. Ingen migration och inga nya AI-anrop. Se docs/F11.md.
-- Verifierat: test:job-ai-review, som kör den verkliga apply-funktionen och routens normalizeResult och fallback. Regressionerna test:job-fields, test:job-categories, test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:company-navigation, test:matching och test:matching-fairness passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. test:openai-migration misslyckas redan i dev på lib/application-analysis-worker.ts (senast ändrad i F26/N19 #82); generate-routen uppfyller testets krav.
-- Återstår / blockerare: F10/F22 ska in i dev först, därefter PR och införande av F11. Inloggat prov med fiktivt QA-företag och AI-nyckel; AI-svaret har inte provats live och inget webbtest har körts. Faktaläsningen täcker vanliga svenska formuleringar; andra skrivsätt förs inte över.
+- Verifierat: test:job-ai-review, som kör den verkliga apply-funktionen och routens normalizeResult och fallback. Regressionerna test:job-fields, test:job-categories, test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:company-navigation, test:matching och test:matching-fairness passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. test:openai-migration misslyckas redan i dev på lib/application-analysis-worker.ts (senast ändrad i F26/N19 #82); generate-routen uppfyller testets krav. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, ett riktigt AI-anrop: panelen Granska AI-förslaget före publicering delar upp I annonsen, Överfört till fälten från er egen text (ålder 16–19, lön 135 kr/tim) och I matchningen; åldersfälten fylldes; vald anställningsform (Heltid) behölls; meriterande butikserfarenhet blev inget krav; inga sidfel. Iakttagelse: arbetsgivarens ”Du måste kunna jobba helger” blev en frivillig kompletteringsfråga, inte ett matchkrav, i linje med att prompten skiljer arbetstider från absoluta krav; värt ett produktbeslut.
+- Återstår / blockerare: Faktaläsningen täcker vanliga svenska formuleringar; andra skrivsätt förs inte över.
 
 <a id="f22"></a>
 ### F22 Validera inmatning nära fälten
@@ -698,8 +698,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Hindra omvända löneintervall och orimliga åldersspann innan förhandsvisning och sparande. Ge begripliga svenska feltexter där appen styr dem och tydlig datumhjälp utan att förutsätta webbläsarens lokala format.
 - Klar när: Fel kan rättas vid rätt fält utan att en missvisande annons visas.
 - Implementerat: Annonsbyggaren: ålder 13–30 år och lön i hela kronor kontrolleras, liksom omvända intervall och orimlig tim- eller månadslön. Svenska fel visas vid fältet med aria-invalid och role=alert. Förhandsvisa, nästa steg, publicering och sparade ändringar stoppas, och formuläret går till fältet med felet. Åldersfälten använder appens text i stället för webbläsarens felbubbla. Logiken ligger i lib/job-fields.ts. Ingen migration. Se docs/F10-F22.md.
-- Verifierat: test:job-fields. Regressionerna test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:application-overview och test:matching passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Inget webbtest har körts.
-- Återstår / blockerare: PR och införande i dev. Inloggat prov med fiktivt QA-företag på dator och mobil. Datumhjälpen är inte gjord: datumfälten finns i ungdomens onboarding/profil (F15/F18/N19) och i rekryteringspanelen (L04) och samordnas med ägarna. Företagets onboardingformulär för annons går inte att nå och har inte ändrats.
+- Verifierat: test:job-fields. Regressionerna test:job-copy, test:job-edit, test:job-drafts, test:job-publication, test:job-workplaces, test:job-categories, test:company-navigation, test:company-verification, test:application-overview och test:matching passerar. TypeScript och produktionsbygge passerar. Riktad ESLint utan fel. Inget webbtest har körts. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, annonsbyggaren: ålder under 13 och omvänt åldersspann stoppas vid fältet med svensk text, aria-invalid och fokus på fältet; omvänd lön stoppar förhandsvisningen; för hög timlön (2 500 kr) stoppas; fel annons publiceras inte; korrekt annons publiceras med ålder 16–20. Iakttagelse: en orimligt låg lön (5 kr/tim) godtas och publicerades i provet (raderad direkt); reglerna har bara en övre gräns.
+- Återstår / blockerare: Datumhjälpen är inte gjord (datumfälten ägs av F15/F18/N19 och L04). Besluta om en nedre lönegräns. Annonsbyggarens del är verifierad i driftsatt dev.
 
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
@@ -731,8 +731,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Åtgärd: Använd radioval för ett enda rollval och korrekt semantik för flikar och flervalsknappar. Ge tydliga namn, synligt fokus, tangentbordsstyrning och konsekvent fokus vid öppning och stängning av dialoger.
 - Klar när: Rollval, filter och dialoger går att förstå och använda med tangentbord och hjälpmedel.
 - Implementerat: Rollvalet vid registrering är nativa radioknappar i fältgruppen ”Jag är...” med oförändrat utseende och synlig fokusram. Ny återanvändbar `TabList` (`components/tab-list.tsx`) med tangentbordslogik i `lib/tab-keyboard.ts` (piltangenter, Home/End, en tabbstopp, inaktiverade flikar hoppas över) och flikpaneler märkta med vald flik. Används för ungdomens och företagets profilflikar, ansökningarnas flikar, företagets Mina annonser/Ny annons (fortsatt URL-styrt), företagets ansökningsfilter, adminfiltret för rekryteringar och videosidans Spela in/Välj video. Kartans och förhandsvisningens vyväxlare samt flervalschips (annonsbyggaren, CV-hubben, matchprofil, tillgänglighet) är namngivna grupper; anställningsformens fristående label ersatt. `ModalDialog` återför fokus till öppnande kontroll när dialogen avmonteras. Global fokusram med nollspecificitet för ytor utan egen. Ingen databasändring.
-- Verifierat: TypeScript, riktad ESLint (inga nya varningar), produktionsbygge med webpack och 24 offline-testsviter passerar; `test:video-retirement` uppdaterad för nya moduler. Nytt `test:accessibility` testar tangentlogik, faktisk TabList och faktisk ModalDialog-fokusåtergång samt panel-/gruppmärkning; mutationskontroll bekräftar att testet fallerar utan fokusåtergång respektive tabbstoppsreserv. Tangentbordstest i Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (raderade efteråt): registreringens radioval, ungdomens profilflikar inklusive dialog som öppnas med Enter och stängs med Escape med fokus tillbaka, ansökningsflikar, företagets annonsflikar med URL-byte samt företagsprofilens flikar – 49/49 kontroller godkända, inga API-anrop.
-- Återstår / blockerare: PR och införande i dev. Test med verklig skärmläsare (VoiceOver/NVDA) och mobil har inte gjorts; adminfiltret, videosidans flikar och flervalschipsens grupper är kod-/källtestade men inte webbtestade. Filterdialogens beteende hör till F19.
+- Verifierat: TypeScript, riktad ESLint (inga nya varningar), produktionsbygge med webpack och 24 offline-testsviter passerar; `test:video-retirement` uppdaterad för nya moduler. Nytt `test:accessibility` testar tangentlogik, faktisk TabList och faktisk ModalDialog-fokusåtergång samt panel-/gruppmärkning; mutationskontroll bekräftar att testet fallerar utan fokusåtergång respektive tabbstoppsreserv. Tangentbordstest i Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (raderade efteråt): registreringens radioval, ungdomens profilflikar inklusive dialog som öppnas med Enter och stängs med Escape med fokus tillbaka, ansökningsflikar, företagets annonsflikar med URL-byte samt företagsprofilens flikar – 49/49 kontroller godkända, inga API-anrop. Verifierat i driftsatt dev 2026-10-26 (Max / Claude): Playwright/Chromium mot https://youth-job-mvp-dev.vercel.app (DevStaging) med tillfälliga fiktiva QA-konton och QA-annonser (alla raderade efteråt, kontrollerat: 0 kvar), vid 375 och 1280 px, 10/10 med tangentbord: rollvalet är en radiogrupp ”Jag är...” där piltangent byter roll och fokus syns; ansökningarnas flikar har ett tabbstopp och piltangenter/Home/End som väljer flik, panelen är märkt med vald flik; företagsdialogen öppnas med fokus inuti och Escape återför fokus till Om företaget.
+- Återstår / blockerare: Test med verklig skärmläsare (VoiceOver/NVDA) och fysisk mobil återstår; adminfiltret och videosidans flikar är inte webbtestade. På mobil saknar annonsbyggarens stegknappar beskrivande namn (bara 1/2/3).
 
 <a id="f15"></a>
 ### F15 Förenkla ungdomens första steg
@@ -1489,10 +1489,10 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-02"></a>
 ### DA-02 Favicon, appikoner, delningsbild och sidtitlar
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 62
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`, se reservationen DA-02 under Gemensam prioriteringsordning.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-02), som har fynd, filer och mått.
@@ -1500,8 +1500,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Klar när: Varje publik sida har egen titel, ikon-, manifest- och delningslänkar fungerar och pekar på publikt nåbara adresser.
 - Samordning / beroenden: Kontroll i driftsatt dev (inklusive att `og:image` är publikt nåbar) återstår; se reservationen.
 - Implementerat: Se Branch/PR.
-- Verifierat: Se Branch/PR.
-- Återstår / blockerare: Se Samordning.
+- Verifierat: Se Branch/PR. Verifierat i driftsatt dev 2026-10-26 (Max / Claude), Chromium vid 375 px, 54/54: egen titel på `/`, `/features`, `/pricing`, `/login`, `/signup`, `/forgot-password` och `/privacy` (sju olika); favicon, SVG-ikon, Apple-ikon, manifest och delningsbild svarar 200 med rätt typ på publik adress; manifestets ikoner svarar 200.
+- Återstår / blockerare: Fysisk mobil/appinstallation är inte provad.
 
 <a id="da-04"></a>
 ### DA-04 Samla färgtokens och ta bort hårdkodade och drivande färger
@@ -1534,8 +1534,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Klar när: Ny och ändrad CSS använder bara skalans värden, och antalet olika textstorlekar och radier minskar för varje migrerad fil (mäts med DA-04:s kontrollskript).
 - Samordning / beroenden: Beroende: DA-04.
 - Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar.
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`..
-- Återstår / blockerare: Migrering av befintliga värden till skalan sker när filer ändras och i DA-12; antalet ska minska för varje migrerad fil. Kontroll i driftsatt dev.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`.. Kontroll i driftsatt dev 2026-10-26: inloggade och publika sidor renderar utan avvikelser i proven ovan. `check:design-tokens` fallerar på dev av senare ändringar i andra punkters filer (`app/applications/applications-design.css` +6 färger, `components/brand-logo.module.css`, fler textstorlekar och vikter), så kriteriet om att ny CSS bara använder skalan är inte uppfyllt i dev.
+- Återstår / blockerare: Samordna med ägarna av `applications-design.css` (N19) och `brand-logo.module.css` (D07) så att de nya värdena använder skalan, och sänk baslinjen. Migrering av äldre värden sker i DA-12.
 
 <a id="da-06"></a>
 ### DA-06 Rätta textfärger som inte klarar WCAG AA
@@ -1551,8 +1551,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Klar när: All brödtext når 4.5:1 mot sin faktiska bakgrund, kontrollerat med Lighthouse eller axe på publika sidor och ett urval inloggade sidor.
 - Samordning / beroenden: Samordna med F23 (tillgänglighet) och L08. Beroende: DA-04.
 - Implementerat: `--color-text-muted` mörkare (`#896a76` → `#7f616d`), även där värdet tidigare var hårdkodat. `--color-text-subtle` används inte längre för brödtext (ögonbryn, statistikkälla, prisnot, bottenmeny, byggarens etiketter och hjälptexter flyttade till dämpad text); kvar bara för platshållare och dekorativa tecken. Därtill rättat: profilhuvudets initial och grå texter, annonsbyggarens ögonbryn, startsidans copyrightrad och funktionssidans ögonbryn på rosa.
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade. Kontrastskanning (egen Playwright-kontroll av varje synlig textnod mot dess faktiska bakgrund; liten text 4.5:1, stor text 3:1) på samma 15 sidor vid 375 px: 33 text under AA före, 2 efter. De två återstående är inga brödtextfel: startsidans vita logotyp ligger på WebGL-gradienten som skannern inte kan läsa, och tankstrecket mellan ålders-/lönefälten är dekorativt.
-- Återstår / blockerare: Ingen Lighthouse/axe-körning (verktygen finns inte här). Startsidans logotyp mot gradienten bedöms i D05. Kontroll i driftsatt dev.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade. Kontrastskanning (egen Playwright-kontroll av varje synlig textnod mot dess faktiska bakgrund; liten text 4.5:1, stor text 3:1) på samma 15 sidor vid 375 px: 33 text under AA före, 2 efter. De två återstående är inga brödtextfel: startsidans vita logotyp ligger på WebGL-gradienten som skannern inte kan läsa, och tankstrecket mellan ålders-/lönefälten är dekorativt. axe color-contrast i driftsatt dev 2026-10-26 (Max / Claude) med fiktiva QA-konton (raderade): publika sidor 7/7 utan anmärkning; inloggade sidor för ungdom (swipe, ansökningar, notiser, chattar, profil, annons) och företag (annonser, annonsbyggare, företagsuppgifter, chattar, notiser) vid 375 och 1280 px utan anmärkning utom chattens avatar-initialer, 3,8:1 vid 12,5 px. Rättat på branch `Max` (`--color-text-muted-strong`, 5,3:1); axe utan anmärkning på `/chats` lokalt efter rättningen.
+- Återstår / blockerare: Rättningen av avatar-initialerna ska in i dev och kontrolleras där. Startsidans logotyp mot gradienten bedöms i D05.
 
 <a id="da-11"></a>
 ### DA-11 Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta
