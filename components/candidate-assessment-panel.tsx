@@ -62,8 +62,9 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
   useEffect(() => {
     let active = true;
     const revisions = followupRevision;
+    const initialRevision = followupRevision.current;
     void getApplicationFollowups(jobId).then((items) => {
-      if (active) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
+      if (active && initialRevision === followupRevision.current) setFollowups(items.filter((item) => item.youth_user_id === youthUserId));
     }).catch(() => {});
     const unsubscribe = subscribeVisibleRefresh(async () => {
       if (request.current && !request.current.signal.aborted) return;

@@ -40,15 +40,15 @@ const aborted = new AbortController(); aborted.abort();
 await assert.rejects(assessmentDeadline(new Promise(() => {}), aborted.signal), /lång tid/);
 
 // Execute actual component handlers with deterministic hook/transport boundaries.
-const slots = [], effects = []; let index = 0, pendingResponse, followupFails = false;
-const react = { useState(initial) { const i = index++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = value; }]; }, useRef(initial) { const i = index++; return slots[i] ??= { current: initial }; }, useEffect(fn) { index++; if (!effects.length) effects.push(fn); } };
+const slots = [], effects = [], registeredEffects = new Set(), pendingFollowups = []; let index = 0, pendingResponse, followupFails = false, deferFollowups = false;
+const react = { useState(initial) { const i = index++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = value; }]; }, useRef(initial) { const i = index++; return slots[i] ??= { current: initial }; }, useEffect(fn) { const slot = index++; if (!registeredEffects.has(slot)) { registeredEffects.add(slot); effects.push(fn); } } };
 const component = compile('components/candidate-assessment-panel.tsx', {
   react,
   '@/lib/api-client': { authenticatedHeaders: async () => ({}) },
   '@/lib/assessment-progress': progress,
   './candidate-assessment-history': { CandidateAssessmentHistory: () => null },
   '@/lib/supabase': { getSupabaseClient: () => ({ rpc: () => ({ abortSignal: async () => ({ data: { status: 'pending' } }) }) }) },
-  '@/lib/application-completions': { getApplicationFollowups: async () => { if (followupFails) throw new Error('followups unavailable'); return []; } },
+  '@/lib/application-completions': { getApplicationFollowups: async () => { if (deferFollowups) return new Promise(resolve => pendingFollowups.push(resolve)); if (followupFails) throw new Error('followups unavailable'); return []; } },
   '@/lib/visible-refresh': { subscribeVisibleRefresh: () => () => {} },
 });
 const props = { jobId: 'qa-job', youthUserId: 'qa-youth' };
@@ -59,7 +59,7 @@ const nodes = root => !root || typeof root !== 'object' ? [] : [root, ...(Array.
 const button = () => nodes(render()).find(node => node.type === 'button');
 globalThis.document = { visibilityState: 'visible' };
 globalThis.fetch = async () => pendingResponse;
-render(); const cleanup = effects[0](); await settle();
+render(); const cleanups = effects.map(effect => effect()); await settle();
 assert.equal(button().props.disabled, false, 'Pending background jobs must not disable manual recovery');
 pendingResponse = new Response(JSON.stringify({ assessment: result, createdAt: '2026-10-15T14:00:00Z', cached: true }), { status: 200 });
 followupFails = true;
@@ -74,5 +74,18 @@ assert.ok(nodes(render()).some(node => node.props?.role === 'alert'));
 pendingResponse = new Response(JSON.stringify({ assessment: result }), { status: 200 });
 await button().props.onClick(); await settle();
 assert.equal(nodes(render()).filter(node => node.props?.role === 'alert').length, 0);
-cleanup();
+for (const cleanup of cleanups) cleanup?.();
+// A slow initial read may not replace the new read after manual analysis.
+slots.length = 0; effects.length = 0; registeredEffects.clear(); deferFollowups = true; followupFails = false;
+render(); const raceCleanups = effects.map(effect => effect()); await settle();
+assert.equal(pendingFollowups.length, 1);
+pendingResponse = new Response(JSON.stringify({ assessment: result }), { status: 200 });
+await button().props.onClick(); await settle(); assert.equal(pendingFollowups.length, 2);
+const followup = { id: 'qa-question', job_id: props.jobId, youth_user_id: props.youthUserId, question: 'När kan du börja?', status: 'answered', answer: 'Nästa vecka' };
+pendingFollowups[1]([followup]); await settle();
+const visibleAnswers = () => nodes(render()).filter(node => node.type === 'p').map(node => node.props.children).flat(Infinity).join(' ');
+assert.match(visibleAnswers(), /Nästa vecka/);
+pendingFollowups[0]([{...followup, status: 'pending', answer: null}]); await settle();
+assert.match(visibleAnswers(), /Nästa vecka/, 'A late initial read cannot replace newer answered followups with an old pending question');
+for (const cleanup of raceCleanups) cleanup?.();
 console.log('PASS: completed, queue, bounded wait, offline, terminal failure, enqueue failure, cancellation, hung RPC, actual manual recovery, cache date, follow-up isolation, preserved results and successful retry.');
