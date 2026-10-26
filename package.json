@@ -10,6 +10,7 @@
     "test:matching": "node scripts/test-matching.mjs",
     "test:matching-fairness": "node scripts/test-matching-fairness.mjs",
     "test:cv-document": "node scripts/test-cv-document.mjs",
+    "test:disclosure-loading": "node scripts/test-disclosure-loading.mjs",
     "test:application-disclosure": "node scripts/test-application-disclosure.mjs",
     "test:application-supplement": "node scripts/test-application-supplement.mjs",
     "test:followup-batch": "node scripts/test-followup-batch.mjs",
