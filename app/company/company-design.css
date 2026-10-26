@@ -8,7 +8,7 @@
 .company-workspace-tabs button[aria-selected="true"] { background:white;color:var(--color-text);box-shadow:0 3px 12px #4c303b08; }
 .company-workspace-tabs span { background:var(--color-rose);border-radius:7px;padding:2px 6px;font-size:.7rem; }
 .company-jobs-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px; }
-.mnw-product .company-jobs-grid .job-list-card { padding:25px!important;display:flex;flex-direction:column;min-width:0; }
+.mnw-product .company-jobs-grid .job-list-card { padding:25px;display:flex;flex-direction:column;min-width:0; }
 .company-job-summary { display:block;flex:1; }
 .company-job-heading { display:flex;gap:13px;align-items:center;margin-bottom:17px; }
 .company-job-heading h2 { font-size:1.13rem;line-height:1.5;margin:0;font-weight:500; }
@@ -97,8 +97,6 @@
 .candidate-assessment-panel summary {min-height:44px;padding:10px 0;line-height:1.6;cursor:pointer;}
 .company-reviewed-application {flex-wrap:wrap;}
 .company-reviewed-application .secondary-btn {min-height:44px;white-space:normal;}
-.mnw-company-workspace > div:has(> button[aria-label="Stäng"]) {flex-wrap:wrap;}
-.mnw-company-workspace > div:has(> button[aria-label="Stäng"]) button {min-height:44px;}
 
 .job-workplace-fields{border:0;padding:0;min-width:0;display:grid;gap:1rem}.job-workplace-fields>legend{font-weight:700;margin-bottom:.5rem}.job-workplace-fields>p,.job-workplace-fields>small{color:#68645f;font-size:.88rem}.job-workplace-fields>section{padding:1rem;border:1px solid #e8e2da;border-radius:16px}.job-workplace-fields header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}.job-workplace-fields>.secondary-btn{justify-self:start}.job-workplace-fields input{width:100%;min-width:0}.workplace-editor{max-width:700px;padding:1.5rem;max-height:85dvh;overflow:auto}.workplace-editor h2{margin-bottom:1rem}.workplace-editor-actions{display:flex;gap:.75rem;margin-top:1rem}
 
@@ -109,3 +107,41 @@
 .company-draft-card{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;padding:1.25rem;margin-bottom:1.25rem;border:1px dashed #b97b93}.company-draft-card h2{margin:.65rem 0 .4rem;overflow-wrap:anywhere}.company-draft-card p{margin:.3rem 0;color:#665b60}.company-draft-card small{display:block;margin-top:.65rem;color:#665b60}.company-draft-card button{min-height:44px;flex-shrink:0}@media(max-width:640px){.company-draft-card{align-items:stretch;flex-direction:column}.company-draft-card button{width:100%}}
 
 .job-publication-notice{padding:1rem 1.25rem;margin-bottom:1.25rem;border:1px solid #d4dce9;background:#f7f9fc;overflow-wrap:anywhere}.job-publication-notice p{margin:.4rem 0 0;line-height:1.6}
+
+/* DA-12: former inline styles of app/company/page.tsx. Tokens and DA-05 scale only.
+   Selectors carry .mnw-company-workspace so they outrank the shared .mnw-product button and card rules,
+   as the inline styles did. */
+.mnw-product .company-access-denied { padding-top:2rem; }
+.mnw-product .company-access-card { padding:1.25rem;text-align:center; }
+.company-access-card p,.company-jobs-empty p { font-weight:700;color:var(--color-text); }
+
+.company-match-banner { display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin-bottom:1rem;padding:1rem 1.1rem;border:1.5px solid var(--color-success-border);border-radius:var(--radius-md);background:var(--color-success-soft); }
+.company-match-banner-icon { flex-shrink:0;font-size:var(--text-lg); }
+.company-match-banner-text { flex:1; }
+.company-match-banner-text p { margin:0;color:var(--color-success-strong);font-size:var(--text-sm); }
+.company-match-banner-text p:first-child { margin-bottom:.15rem;font-size:var(--text-md);font-weight:700; }
+.mnw-company-workspace .company-match-banner-chat { flex-shrink:0;min-height:44px;padding:.5rem .85rem;font-size:var(--text-sm); }
+.company-match-banner-close { flex-shrink:0;min-height:44px;padding:.25rem;border:0;background:none;color:var(--color-text-muted);font-size:var(--text-md);cursor:pointer; }
+
+.company-error-banner { margin-bottom:1rem;padding:.75rem 1rem;border:1px solid var(--color-danger-border);border-radius:10px;background:var(--color-danger-soft);color:var(--color-danger);font-size:var(--text-sm); }
+
+.mnw-company-workspace .company-candidate-cv-button { width:100%;padding:.8rem 1rem; }
+.mnw-company-workspace .company-candidate-profile .company-candidate-cv-error { margin-top:.55rem;color:var(--color-danger); }
+.mnw-company-workspace .company-candidate-profile .company-candidate-decision { display:flex;gap:.6rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--color-divider); }
+.mnw-company-workspace .company-candidate-decision button { flex:1;padding:.8rem; }
+
+.mnw-company-workspace .company-builder-spaced { margin-top:1rem; }
+
+.mnw-company-workspace .company-jobs-empty { padding:2rem;text-align:center; }
+.company-jobs-empty p { margin-bottom:.75rem; }
+.mnw-company-workspace .company-jobs-empty .cta-btn { padding:.75rem 1.5rem;font-size:var(--text-sm); }
+.company-job-summary { color:inherit;text-decoration:none; }
+.company-job-meta { color:var(--color-text-muted);font-size:var(--text-sm); }
+.company-job-chips { display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem; }
+.company-job-status { display:inline-block;margin-top:.5rem;padding:.15rem .55rem;border-radius:999px;color:var(--color-text-muted);background:var(--color-rose);font-size:var(--text-xs);font-weight:600; }
+.company-job-status[data-state="published"] { color:var(--color-success-strong);background:var(--color-success-soft); }
+.company-job-status[data-state="waiting"] { color:var(--color-warning);background:var(--color-warning-soft); }
+.company-job-actions { display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.8rem; }
+.mnw-company-workspace .company-job-actions button { padding:.5rem .7rem;font-size:var(--text-xs); }
+.mnw-company-workspace .company-job-actions .company-job-delete { border:0;color:var(--color-danger);background:transparent;font:inherit;font-size:var(--text-xs);font-weight:700;cursor:pointer; }
+.mnw-company-workspace .company-job-actions .company-job-delete:disabled { cursor:wait; }
