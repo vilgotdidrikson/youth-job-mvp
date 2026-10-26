@@ -320,11 +320,15 @@ Original audit sequencing advice (subject to current action-plan status and glob
 <a id="da-15"></a>
 ### DA-15 The features page is long and repetitive
 
+- **Reserved — 2026-10-26 (pågår):** William / Claude, branch `claude/da15-da16-mobile-features-20261026`. Scope: distinct icons per feature, two-column grid from 640px and one product visual per audience section on `/features`, in the demo design direction. No copy, pricing or landing (D05) changes.
+
 - **Seen:** `/features` is twelve visually identical white cards stacked on mobile. The same sparkle icon is used for "Swipea jobb", "Smart jobbmatchning" and "AI-matchning", and an info icon stands for "AI-screening". Most of the content repeats the landing page.
 - **Fix:** Give each feature its own icon, group the cards into a two-column grid from 640px, and lead each audience section with one real product visual (the same swipe card as DA-03 for youth, and the candidate view for companies) instead of a twelfth card. Alternatively, merge the page into the landing page and pricing.
 
 <a id="da-16"></a>
 ### DA-16 Small text and touch targets on mobile
+
+- **Reserved — 2026-10-26 (pågår):** William / Claude, branch `claude/da15-da16-mobile-features-20261026`. Scope: 44px touch targets and 12px minimum text in the marketing footer, discovery filter chips, CV banner, card chips and the landing source line. Size-only CSS changes; D05's landing work and F23's role choice and dialogs are not touched.
 
 - **Seen:** At 375px the footer links are 20px tall, and the logo link is 32px tall. In discovery *(from code)* the filter chips are 34px tall, the CV banner text is .71rem (11.4px) and the card chips are .68rem (10.9px). On the landing page the source line is 10.9px.
 - **Fix:** Make every tappable element at least 44×44px (padding is enough; the visual size can stay). Never go below `--text-xs` (12px) for visible text.
