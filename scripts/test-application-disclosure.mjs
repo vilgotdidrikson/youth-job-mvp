@@ -4,6 +4,7 @@ import {createRequire,Module} from 'node:module';
 import path from 'node:path';
 import ts from 'typescript';
 const require=createRequire(import.meta.url);
+Module._extensions['.css']=(module)=>{module.exports={__esModule:true,default:new Proxy({}, {get:(_,name)=>String(name)})};};
 for(const extension of ['.ts','.tsx'])Module._extensions[extension]=(module,file)=>module._compile(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
 const {emptyRecruitmentProfile}=require('../lib/recruitment-profile.ts');
 const {createEmptyStructuredCv,renderStructuredCv}=require('../lib/structured-cv.ts');
