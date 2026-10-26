@@ -17,7 +17,25 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 - Efter varje arbetsinsats: ange ändringar, verkligt genomförd verifiering, återstående begränsningar och länk till PR/commit. Skriv inte att webbflöden verifierats om bara bygg/typecheck har körts.
 - Beroenden har företräde: gemensamma profilfakta före förifyllning, strukturerade jobbuppgifter före detaljerade filter. Vid avsteg dokumenteras orsaken.
 
+## Design inom varje leverans
+
+Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner och knappar byggs. Återanvänd gemensamma komponenter/tokens och gör avgränsad designputs på det som berörs, enligt relevanta designkort. Den större designmigreringen följer befintlig ordning; inga nya vägledningskrav eller orelaterade ombyggnader införs. Se även AGENTS.md.
+
 ## Gemensam prioriteringsordning
+
+### Designreferens från företagsdemon – beställt 2026-10-26
+
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch: `codex/design-demo-reference-20261026`.
+- Omfattning: Dokumentera användarens önskade designriktning (stilren, clean och informativ) med företagsdemon som konkret referens. Endast dokumentation; befintlig prioritering, ägare och status för övriga punkter är oförändrade.
+- Reserverat före ändringen: publicerad dokumentreservation `4b20447`; ingen frontendimplementation eller övertagning av D05, DA-04–DA-06 eller andra pågående punkter.
+- Levererat: [Jämförelse och designriktning i auditplanen](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction), implementation av dokumenttillägget `35b2dd9`. Beskriver hierarki, neutrala arbetsytor med återhållna rosa accenter, typografi, luft, diskreta kanter/skuggor och hur detta samordnas med befintliga punkter. Företagsvyn är första referens inom DA-12 utan att ändra globala ordningen. Demons mindre text/tryckytor, kortare formulär och simulerade regler ska inte kopieras till produkten.
+- Faktiskt kontrollerat: aktuell audit/åtgärdsplan och relevanta frontendfiler; driftsatt dev-startsida och /features visuellt; demo och dess tidigare webbtest i denna session. Dokumentkontroll bekräftar att allt ursprungligt auditinnehåll är oförändrat och att interna uppgiftslänkar/ankare är giltiga.
+- Användarens precisering 2026-10-26: Det är demons visuella design som är referensen: layout, typografi, luft, gruppering, ytor och återhållna rosa accenter. Informativ betyder väl presenterad befintlig information. Tillägget inför inget krav på mer vägledning, förklaringspaneler eller guidade steg. Tidigare planerade hjälptexter, validering och tomvyer behåller sin ursprungliga omfattning.
+- Förtydligande 2026-10-26: Designreferensen vägleder utförandet av befintliga uppgifter och ersätter ingen tidigare plan. Se [avstämningen mot befintliga mål](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction). Denna fil styr fortsatt global ordning, beroenden, ansvar, status och produktbeslut; auditens tekniska kriterier och tillgänglighetskrav gäller fortsatt. Inga nya lanseringskrav eller återöppnade klara funktionskort införs.
+- Avstämt: DA-04–DA-06 (befintliga tokens/skalor/kontrast), DA-12 (företagsvyn först, en vy per leverans), D05/DA-15 (marknadsstruktur), D07/D08/F20 (text, tomvyer och hjälp), F04/F05/F26/N19 (navigation och underlag), N16/N23/N24/L04 (produktregler) samt DA-16/F23/L08 (mobil och tillgänglighet). Befintliga mål, ordningsnummer, ägare och status är bevarade.
+- Begränsning: /company krävde inloggning; jämförelsen av inloggade produktvyer bygger på kod. Ingen ny inloggad visuell acceptans, inget produktbygge eller funktionstest påstås. Dokumentet är ett designunderlag, inte genomförd frontendmigrering.
 
 ### Reviderad produktinriktning – beställt 2026-10-18
 
@@ -1545,7 +1563,7 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-12), som har fynd, filer och mått.
 - Åtgärd: Migrera en vy i taget till en CSS-modul med DA-04/DA-05-tokens och ta bort motsvarande `!important`- och `[style*=]`-överskrivningar i `app/product-design.css` i samma PR. Börja med `app/company/page.tsx` och ta `components/youth-onboarding-flow.tsx` sist.
 - Klar när: Varje migrerad vy saknar inline-färger och -avstånd, och dess överskrivningar är borta ur `product-design.css`.
-- Samordning / beroenden: Löper parallellt med DA-04/DA-05, en vy per leverans. Berör filer som ägs av andra punkter; samordna per vy.
+- Samordning / beroenden: Löper parallellt med DA-04/DA-05, en vy per leverans. Berör filer som ägs av andra punkter; samordna per vy. Visuell riktning: [företagsdemons hierarki och gruppering](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction), inom befintlig omfattning och med auditens visuella kontroller vid vymigrering. Befintliga produktregler, navigation och tillgänglighetskrav bevaras.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —

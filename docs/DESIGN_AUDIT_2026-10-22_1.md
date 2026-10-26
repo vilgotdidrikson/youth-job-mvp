@@ -5,11 +5,70 @@
 
 **Logo update — 2026-10-25:** Vilgot supplied the new MatchnWork logo, now implemented across the site's existing brand surfaces in dev through [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merge `ccf94bf`. DA-07's shared logo and DA-02's favicon/app/share-image assets use this artwork. The previous inconsistent logos and starter favicon are historical findings, not outstanding implementation tasks. Visual acceptance and physical mobile installation remain separate checks; this update does not close unrelated audit items.
 
+<a id="demo-design-direction"></a>
+## Design direction from the employer demo — 2026-10-26
+
+**User direction:** Vilgot identified the new employer demo as the visual direction for MatchnWork: “stilren, clean men samtidigt informativ”. Treat the demo as the concrete reference for layout, typography, spacing, surfaces and restrained styling when implementing the existing design tasks.
+
+**Clarification from Vilgot — 2026-10-26:** The reference is the visual design itself: clean composition, balanced spacing, readable typography, grouped information, subtle borders/shadows and restrained pink accents. “Informative” means that existing information is well presented. It does not introduce a requirement for more guidance, explanatory panels or a guided step-by-step experience. Existing help, validation and empty-state tasks retain their original scope.
+
+**Reference:** [MatchnWork employer demo](https://matchnwork-foretagsdemo.peachygleam129.chatgpt.site), source version `c76b4bcef58250380555e41553a222c900de22c7`. The demo is a separate, fictional walkthrough. Its present owner-only access and the product's access controls are separate from this design decision.
+
+### Relationship to the existing plans
+
+This is a visual direction for the existing tasks, not a replacement roadmap or a new launch requirement. `docs/ATGARDSPLAN.md` remains authoritative for global order, dependencies, ownership, delivery status and product decisions. The audit retains its original findings and technical acceptance criteria; implementation updates describe which findings remain current. The demo guides presentation within that scope. If its simplified walkthrough conflicts with a product rule or accessibility requirement, follow the product plan and adapt the presentation.
+
+| Existing scope | How the direction applies | What stays in place |
+|---|---|---|
+| DA-04 → DA-05 → DA-06 | Use the existing palette and scales to create calm surfaces and readable hierarchy. | Current owners, token consolidation, contrast requirements and outstanding verification. No new palette or second design system. |
+| DA-12 | Use the company view, already first in this task, to demonstrate the direction while migrating styles. | One view per delivery, removal of matching overrides, coordination with active work; no wholesale redesign or navigation replacement. |
+| D08, D07 and F20 | Use consistent spacing, typography and visual grouping for existing content. | Existing widths, truthful copy, privacy/help access and task priorities. |
+| D05 / DA-03 / DA-10 / DA-17, DA-15 | Use the same restrained visual language and varied composition within the planned marketing work. | Existing performance, reduced-motion and content goals; no requirement to rebuild marketing as the demo workspace. |
+| F04, F05, F26/N19, N16, N23/N24 and L04 | Present navigation, candidate evidence, questions and recruitment states clearly. | Correct destinations; job-specific sharing and evidence; manual ad status without mandatory position counts/automatic promotion; voluntary video; questions before matching under N24; separate pending/confirmed recruitment states. The demo neither changes these rules nor marks planned features implemented. |
+| DA-16, F23 and L08 | Preserve clarity on small screens and with keyboard navigation. | Existing text, input and touch-target minimums, contrast, focus and separate physical-device checks. |
+
+Cross-references describe coordination, not a reservation or status change. Apply the visual checks below when a relevant view is already being changed; do not reopen completed functional tasks solely because the reference was added.
+
+### What the comparison establishes
+
+The audit's consistency and accessibility work supports this direction, but fixing tokens alone does not produce the demo's clarity. The visual goal also needs to govern page composition, information priority, spacing and the visual treatment of controls.
+
+| Area | Current frontend / audit evidence | Direction to carry from the demo | Existing work |
+|---|---|---|---|
+| Page structure | The company source already has workspace headings, tabs and a candidate list/detail view. It is therefore an existing foundation, not a missing feature. Global overrides still influence the presentation. | A stable workspace shell, a clear page title and one main work area. Related information is visually grouped. | DA-12, D08; coordinate company navigation with F04. |
+| Information hierarchy | `product-design.css` sets product h1 weight to 500 with `!important`; company CSS also uses relatively similar weights for headings, names and details. | Make the page title, candidate name, section heading, supporting fact and status clearly distinguishable. Establish this through the existing type scale and whitespace, not a new font size for each component. | DA-05, DA-12. |
+| Colour and surfaces | `theme.css` already contains the shared rose/plum palette, muted text changes and the type/radius/weight scale. Original DA-04–DA-06 findings must be read alongside their newer action-plan updates. | Predominantly neutral canvas and white work surfaces; use pink for the active location, primary action and selected content. Use subtle borders, restrained shadows and consistent corner radii to separate content without visual clutter. | DA-04–DA-06. |
+| Actions and forms | The real ad builder has three steps, optional salary/benefits/image fields, draft recovery and publication restrictions. | Use consistent button hierarchy, aligned fields, balanced spacing and a distinct visual treatment for review/confirmation. Retain existing help and error handling. Preserve all real fields and rules. The demo's shorter form and mandatory example salary are not new product requirements. | DA-12; preserve existing form, draft and publication work. |
+| Candidate information | The real source already exposes evidence, unknown information, CV, answers and assessment progress/error/retry states. | Group identity and practical facts first; place readable criteria with their evidence next; retain CV and decisions in predictable locations. Keep unknown information neutral and distinguish a fact from a conclusion. | DA-12, F05, F26/N19. |
+| Marketing | Browser inspection of current dev shows the landing hero with an animated headline and CTA, but no immediate static product explanation or product view. The features page still presents many similarly styled feature cards. | Demonstrate the product and its benefit early with clearly fictional examples. Vary the information structure and remove repetition. Marketing can retain its own composition while sharing the product's visual language. | D05 / DA-03, DA-15, DA-17. |
+| Mobile and accessibility | The product already defines a 12px visible-text minimum, 16px form inputs and 44px touch targets. The demo CSS includes 9–11px labels and several smaller controls. | Preserve the clean grouping and responsive flow, but meet the product's size, contrast, keyboard and focus requirements. Do not copy the demo CSS verbatim. | DA-06, DA-16, F23, L08. |
+
+### Application rules for the next design changes
+
+1. **Use the company workspace as the first reference implementation during DA-12.** Bring the ad list/builder, candidate review and recruitment status into the same visual language, one bounded view at a time. Keep existing work ownership and the global action-plan order; this comparison does not reserve another person's implementation.
+2. **Work through shared primitives.** Reuse `theme.css` and shared navigation, icons, dialogs and controls. Add only justified missing semantic components (for example a page header, work panel or status badge). Remove the matching legacy overrides in the same view migration.
+3. **Prioritise visual composition.** Establish a consistent hierarchy through typography, alignment, whitespace, surfaces and button styling. Present existing information clearly without adding demo-style guidance or extra explanatory content. Preserve necessary job information, evidence, warnings and recovery actions.
+4. **Adapt the walkthrough to the real product.** The demo's numbered four-step sidebar is a meeting narrative, not a decision to replace the app's navigation. The product must still support multiple jobs, returning employers, asynchronous answers and chats, and real verification/permission states. Use truthful counts and timestamps. Planned demo features remain planned until separately implemented and verified.
+5. **Apply the same principles to youth views with their own interaction patterns.** This direction does not replace the youth swipe flow or mobile navigation with a company-style desktop workspace.
+
+### Acceptance when a view is migrated
+
+- Review it next to the demo for hierarchy, grouping, restrained use of pink and the clarity of the main action. Exact pixel identity is not the goal.
+- Verify populated, empty, loading, failed/retry and completed states; also long names, long job titles and actual assessment evidence. A static happy-path screenshot is insufficient.
+- Check at 375px and 1280px, plus a constrained intermediate width. Maintain at least 12px visible text, 16px form inputs and 44px touch targets; measure actual contrast and test keyboard/focus order. Physical mobile and on-screen-keyboard testing remain separately reportable.
+- Preserve authentication, visibility, job-specific sharing, ad lifecycle and recruitment logic. A visual migration must not silently introduce the demo's simulated business behaviour.
+
+### Verification and limits of this comparison
+
+Read the current audit and action plan, plus `app/styles/theme.css`, `app/product-design.css`, `app/company/page.tsx`, `app/company/company-design.css`, `components/company-match-profile-form.tsx`, `components/candidate-assessment-panel.tsx`, `app/chats/chat.module.css`, `components/youth-navigation.module.css` and `app/page.tsx`. Compared them with the demo's source and the demo's visually checked desktop/375px walkthrough from this session.
+
+Viewed current deployed dev `/` and `/features` in the browser. `/company` required login, so this comparison's observations about authenticated product screens are **from code**, not a new signed-in visual acceptance test. No frontend, database or demo-access changes are made by this documentation update. Existing task owners/statuses and the audit's historical evidence remain intact. No build or functional tests are claimed for this documentation-only comparison.
+
 ## How to use this file
 
-Work through the items one at a time, in the order of the table below. Each item says where the problem is, what to change, and how to check it. To hand an item to an AI agent in VS Code, a prompt like this works:
+Use `docs/ATGARDSPLAN.md` for the current global work order and dependencies. The table below groups audit findings by priority; it is not a separate execution queue. Each item says where the problem is, what to change, and how to check it. To hand an item to an AI agent in VS Code, a prompt like this works:
 
-> Read `AGENTS.md`, `docs/ATGARDSPLAN.md` and item DA-01 in `docs/DESIGN_AUDIT_2026-10-22.md`. Implement only DA-01 on a new branch from `dev`. Do not change copy, business logic or other items. Run lint, TypeScript and a production build, then check the result at 375px and 1280px width and report what you actually verified.
+> Read `AGENTS.md`, `docs/ATGARDSPLAN.md` and item DA-01 in `docs/DESIGN_AUDIT_2026-10-22_1.md`. Implement only DA-01 on a new branch from `dev`. Do not change copy, business logic or other items. Run lint, TypeScript and a production build, then check the result at 375px and 1280px width and report what you actually verified.
 
 Several findings touch items that already exist or are in progress. Those are marked **Coordinate with** and should be added to the existing item rather than started separately:
 
@@ -47,7 +106,7 @@ Several findings touch items that already exist or are in progress. Those are ma
 | [DA-17](#da-17) | P3 | Landing | The page ends without a call to action |
 | [DA-18](#da-18) | Decision | Product | Logged-out visitors cannot see a single job |
 
-Suggested order: DA-01 and DA-02 first (small, visible, independent). Then DA-04 → DA-05 → DA-06 as one design-system block, because the later visual fixes get much easier once tokens are in place. DA-12 runs alongside, one legacy view at a time.
+Original audit sequencing advice (subject to current action-plan status and global order): DA-01 and DA-02 first (small, visible, independent). Then DA-04 → DA-05 → DA-06 as one design-system block, because the later visual fixes get much easier once tokens are in place. DA-12 runs alongside, one legacy view at a time.
 
 ---
 

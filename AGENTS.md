@@ -25,3 +25,7 @@ Använd tydligt fiktiva QA-konton i dev för användartester. Hantera inte rikti
 ## Omfattning för den aktuella insatsen
 
 Användaren har godkänt fortsatt kodarbete enligt den globala prioriteringslistan. Arbeta i avgränsade leveranser: en större punkt eller flera små sammanhängande punkter, följt av publicering och verifiering. Reservera varje punkt innan arbetet börjar och redovisa faktisk verifiering innan nästa leverans.
+
+## Design vid löpande utveckling
+
+Nya och ändrade funktioner, knappar och komponenter ska från början följa designriktningen i `docs/DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction` och relevanta befintliga designuppgifter. Återanvänd gemensamma komponenter, färgtokens och typografisk skala. Förbättra layout, luft, hierarki och kontroller inom den berörda vyn när funktionalitet byggs; större omtag ligger kvar i ordinarie designplan. Detta är en visuell riktning, inget krav på fler guider eller hjälptexter. Bevara produktregler, tillgänglighet och andra uppgifters ägarskap.
