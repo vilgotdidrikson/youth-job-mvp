@@ -21,6 +21,8 @@ För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering 
 
 Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner och knappar byggs. Återanvänd gemensamma komponenter/tokens och gör avgränsad designputs på det som berörs, enligt relevanta designkort. Den större designmigreringen följer befintlig ordning; inga nya vägledningskrav eller orelaterade ombyggnader införs. Se även AGENTS.md.
 
+Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga annonser/rekryteringsdelar att öppna direkt och fri möjlighet att prova egna ändringar. Målbilden är fortsatt simplistisk: minska onödiga textelement, små etiketter, upprepad kontext och kontroller utan tydligt syfte. Detta preciserar designutförandet, inte befintliga produktregler eller övriga uppgifters status. Annonsbaserad kandidatvisning dokumenteras separat i [N25](#n25); produktbygget är pausat enligt användarens aktuella avgränsning.
+
 ## Gemensam prioriteringsordning
 
 ### Designreferens från företagsdemon – beställt 2026-10-26
@@ -118,6 +120,7 @@ Beslutat 2026-10-26: Följ auditens visuella målbild även när nya funktioner 
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
+| 32.1 | [N25](#n25) | P2 | Välj annons före kandidatgranskning | Ej påbörjad | — |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
@@ -1690,3 +1693,20 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Implementerat: —
 - Verifierat: Endast plantext genomläst; ingen produktfunktion eller databasändring genom detta beslut.
 
+
+<a id="n25"></a>
+### N25 Välj annons före kandidatgranskning
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 32.1, samordnas med N03/F04, F05/F26/N19 och DA-12.
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: Planbeslut 2026-10-26, `codex/n25-ad-candidates-plan-20261026`; ingen produktimplementation reserverad.
+- Åtgärd: Låt företaget först välja en egen annons i annonsöversikten och därefter granska endast de kandidater som har skickat en ansökan till den annonsen. Visa annonsens titel som tydlig kontext och en enkel väg tillbaka till annonserna. Ett generellt kandidatregister eller en blandad lista över alla annonser ska inte vara standardingången. Behåll eventuell samlad översikt enbart som ett uttryckligt separat val om det behövs.
+- Avgränsning: Samma ungdom kan söka flera annonser; varje ansökan, CV-/delningsunderlag, fråga, matchning, konversation och anställningsstatus behåller sitt jobb- och ansökningssammanhang. Annonsbyte ska rensa föregående kandidat och inaktuellt underlag direkt. Senare inkomna svar får inte visas under fel annons. Utkast och annonser utan sökande får begripliga tomvyer; pausade/stängda annonser behåller behörig historik enligt befintliga regler.
+- Regler: Återanvänd befintliga jobb-/ansökningsrelationer och ägar-/åtkomstkontroller även i API/RPC/RLS. Ett UI-filter är inte en behörighetsgräns. Ingen kandidat får falla bort på grund av låg matchgrad, saknad AI-bedömning, okänd uppgift eller utebliven frivillig video. Återkallade ansökningar och blockerad kontakt följer redan beslutade regler i F26/N19/N24.
+- Design: En vald annons, en tydlig kandidatlista och ett läsbart ansökningsunderlag. Få textnivåer, rymliga kontroller och återhållna etiketter; undvik upprepade kontextpaneler, småtexter och statistik som inte hjälper den aktuella uppgiften. Samordna med auditens [visuella riktning](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction), DA-05/DA-12/DA-16. Förenkling får inte dölja nödvändigt samtycke, status, källa, fel eller åtkomstinformation.
+- Klar när: Företaget kan välja mellan minst två egna annonser och får rätt sökande, antal och ansökningsunderlag per annons, inklusive samma ungdom på två jobb. Annonsbyte, tom annons, direktlänk/omladdning, snabb växling med sena svar och återgång fungerar på dator/mobil med tangentbord. Fel företag, anonym, fel jobb-/ansöknings-ID och återkallad åtkomst är negativt testade. Befintliga CV-, matchnings-, chatt- och anställningsflöden behåller rätt sammanhang.
+- Implementerat: Ingen produktkod genom detta planbeslut. Den separata företagsdemon illustrerar annonsval med fiktiva sökande per annons och färdiga exempel; den utgör inte verifiering av produktens backend eller åtkomst.
+- Verifierat: Plantext avstämd mot F04/F05, N03, F26/N19/N24 och DA-12. Befintliga prioriteringar, ägare och status ändras inte. Produktimplementation och användartester återstår.
