@@ -61,7 +61,9 @@
     "test:company-questions": "node scripts/test-company-questions.mjs",
     "test:manual-cv": "node scripts/test-manual-cv.mjs",
     "test:ad-candidates": "node scripts/test-ad-candidates.mjs",
-    "test:data-retention": "node scripts/test-data-retention-client.mjs"
+    "test:data-retention": "node scripts/test-data-retention-client.mjs",
+    "test:auth-email": "node scripts/test-auth-email.mjs",
+    "check:auth-email": "node scripts/check-auth-email.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
