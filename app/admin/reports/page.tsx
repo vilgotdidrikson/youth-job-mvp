@@ -11,7 +11,7 @@ import styles from "./reports.module.css";
 
 const reasonLabels = { scam: "Misstänkt bedrägeri", harassment: "Trakasserier eller hot", discrimination: "Diskriminering", inappropriate: "Olämpligt innehåll", privacy: "Personuppgifter eller integritet", other: "Annat" };
 const statusLabels = { open: "Ny", reviewing: "Granskas", resolved: "Åtgärdad", dismissed: "Avslutad" };
-const targetLabels = { job: "Jobbannons", conversation: "Konversation", message: "Meddelande", user: "Användare" };
+const targetLabels = { job: "Jobbannons", conversation: "Konversation", message: "Meddelande", user: "Användare", application_question: "Kompletteringsfråga" };
 
 export default function ModerationReportsPage() {
   const access = useAdminAccess();
@@ -83,6 +83,7 @@ function Evidence({report}: {report: ModerationCase}) {
   return <div className={styles.evidenceBody}>
     {report.target_type === "job" && <><h3>{String(snapshot.title ?? "Jobbannons")}</h3><p className={styles.text}>{String(snapshot.description ?? "")}</p></>}
     {report.target_type === "message" && <p className={styles.text}>{String(snapshot.message_text ?? "")}</p>}
+    {report.target_type === "application_question" && <p className={styles.text}>{String(snapshot.question ?? "")}</p>}
     {report.target_type === "user" && <p>{String(snapshot.display_name ?? "Namn saknas")}</p>}
     {messages.map((m, index) => <p className={styles.text} key={index}>{typeof m.sender_user_id === "string" && <strong>{m.sender_user_id.slice(0,8)}: </strong>}{String(m.message_text ?? "")}</p>)}
     {[...videos].map(id => <VideoPlayer key={id} videoId={id} label="Anmäld video" />)}

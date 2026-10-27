@@ -64,6 +64,7 @@ export async function analyzeApplications(jobId?: string): Promise<number> {
 
 
 export interface ApplicationFollowup {
+  question_source?: "automatic" | "company"; asked_by?: string | null; request_key?: string | null;
   id: string; job_id: string; youth_user_id: string; criterion_label: string; question: string;
   job_profile_version: number; status: "pending" | "answered" | "skipped"; answer: string; created_at: string; answered_at: string | null;
 }

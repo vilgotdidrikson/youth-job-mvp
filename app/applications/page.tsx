@@ -59,7 +59,7 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     {stage && recruitmentLabels[stage.status] && <div className="application-recruitment-stage"><span>{recruitmentLabels[stage.status]}</span>{!["rejected","cancelled"].includes(stage.status) && <Link href={`/chats?job=${item.job_id}`}>Öppna meddelanden <UiIcon name="arrow" width="16"/></Link>}</div>}
     {pending && <p>Den här äldre ansökan är inte skickad ännu. Du kan skicka den direkt utan att svara på frågor. Eventuell komplettering görs efteråt.</p>}
     <JobRequirementsInsight jobId={item.job_id}/>
-    <ApplicationFollowupCard application={item} items={followups} initiallyOpen={initiallyOpen} onSaved={onFollowupsSaved} />
+    <ApplicationFollowupCard manualReadOnly={Boolean(retention?.closed_at)} application={item} items={followups} initiallyOpen={initiallyOpen} onSaved={onFollowupsSaved} />
     <Link className="application-job-link" href={`/applications/preview?job=${encodeURIComponent(item.job_id)}`}>Se och uppdatera delat underlag</Link>
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
     {error && <p role="alert" className="application-completion-error">{error}</p>}
@@ -146,7 +146,7 @@ function ApplicationsPageContent() {
   }, [userId, profile?.role]);
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (profile?.role !== "youth") return <main className="mobile-shell"><p>Den här sidan är för ungdomskonton.</p></main>;
-  const needsAnswers = (item: ApplicationCompletion) => !retentionByJob.get(item.job_id)?.expired && item.status === "submitted" && supplementQuestions(item,followups.filter(question=>question.job_id===item.job_id)).some(question=>question.status === "pending");
+  const needsAnswers = (item: ApplicationCompletion) => !retentionByJob.get(item.job_id)?.expired && item.status === "submitted" && supplementQuestions(item,followups.filter(question=>question.job_id===item.job_id)).some(question=>question.status === "pending" && !(question.source === "company" && retentionByJob.get(item.job_id)?.closed_at));
   const pending = items.filter(needsAnswers);
   const ordered = [...pending, ...items.filter((item) => !needsAnswers(item))].sort((a,b)=>a.job_id===selectedJob ? -1 : b.job_id===selectedJob ? 1 : 0);
   const extraActivity = activityWithoutApplication(activity, items).filter(stage => !retentionByJob.get(stage.jobId)?.expired);

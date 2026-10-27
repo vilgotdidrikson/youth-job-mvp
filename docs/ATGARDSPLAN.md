@@ -116,7 +116,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | För granskning | Vilgot / Codex |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
-| 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | Ej påbörjad | — |
+| 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | För granskning | Vilgot / Codex |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
@@ -1697,16 +1697,19 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 29.1, samordnas med F12/N19.
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: Planbeslut 2026-10-25, `codex/d07-brand-logo-n24-plan-20261025`; ingen implementation reserverad.
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n24-company-questions-20261027`, reserverad före kodarbete från dev `e05bd3a`. Kärnleverans: manuell fråga, frivilligt svar/avstående, notis och rapportering med befintlig ansöknings-/gallringsgrund. Profilåteranvändning inväntar fortsatt F12/N19:s dataskyddsbeslut; inga nya AI-anrop vid frågesändning.
 - Åtgärd: Lägg Ställ en kompletteringsfråga på en befintlig skickad ansökan. Företaget kan skriva en egen jobbrelevant fråga till just den sökanden utan att matcha eller öppna fri chatt. Skilj från annonsens befintliga högst tre ansökningsfrågor och automatiska kompletteringar. Ungdomen får en notis/länk till rätt ansökan och svarar eller avstår under Ansökningar. Företaget läser uttryckligen skickade svar i samma jobbspecifika ansökningsunderlag.
 - Regler: Endast ansvarigt företag och rätt inskickad ansökan, med ägar-/mottagarkontroll även i API/RPC/RLS. Ingen allmän kandidatkontakt eller profilåtkomst. Stoppa nya frågor/svar vid återkallad ansökan eller blockerad kontakt och följ befintlig annonsstatus-/delningshantering. En fråga, ett svar eller avstående skapar aldrig matchning; inget svar/låg matchgrad/saknad video får dölja eller neka ansökan. Bevara versions-/källsammanhang och redan delade svar.
 - Profilåteranvändning: Följ F12/N19 – fråga efter svar om ungdomen vill spara granskade generella fakta i profilen för återanvändning. Inget förvalt ja, inget sparande vid nej/uteblivet val och ingen automatisk delning till andra företag eller omskrivning av CV/skickade ansökningar.
 - Klar när: Företag skickar fråga före matchning, rätt ungdom får notis, kan svara/avstå, och rätt företag kan läsa svaret utan att match/chatt har skapats. Inga upprepade kända frågor eller tysta profiluppdateringar; följ upp inaktuell/motstridig uppgift. Verifiera anonym, fel företag, fel jobb/ungdom, återkallelse/blockering, dubbelklick/återförsök, versionskonflikter och notisens lässtatus på dator/mobil.
-- Återstår före implementation: Bestäm och dokumentera begränsningar för antal/längd/takt, hantering av obesvarade/ersatta frågor, annonsens stängning och rapportering av olämpliga frågor. Återanvänd befintliga fråge-/notis-/delningsflöden och håll AI utanför manuell frågesändning. Dataskyddsavstämning samordnas med N19/F12/L05.
-- Implementerat: —
-- Verifierat: Endast plantext genomläst; ingen produktfunktion eller databasändring genom detta beslut.
+- Avgränsning beslutad för denna implementation: 500 tecken/fråga, högst två obesvarade och fem frågor totalt per ansökan, högst 20 frågor per företag/rullande 24 timmar och minst 60 sekunder mellan nya frågor på samma ansökan. Frågor ändras/ersätts inte efter sändning; tidigare svar bevaras. Paus stoppar nya frågor, stängning stoppar nya frågor/svar; historik följer befintlig behörighet/gallring. Olämpliga frågor ska kunna rapporteras med serverlagrad avgränsad snapshot.
+- Ursprunglig planering före implementation: Bestäm och dokumentera begränsningar för antal/längd/takt, hantering av obesvarade/ersatta frågor, annonsens stängning och rapportering av olämpliga frågor. Återanvänd befintliga fråge-/notis-/delningsflöden och håll AI utanför manuell frågesändning. Dataskyddsavstämning samordnas med N19/F12/L05.
+- Kodreferens: `d62e34fbfb72ea4021deb8f3c4f4a63575c4db38`, målbranch `dev`; källträdet matchar det verifierade lokala bygget.
+- Implementerat 2026-10-27: Manuella frågor på vald skickad ansökan, befintligt frivilligt svar/avstående och riktade notiser utan match/chatt. Servern kontrollerar ägare, verifiering, status, blockering och livscykel samt längd/antal/takt. Stabil begäransnyckel gör återförsök idempotenta; skickad frågetext är oföränderlig. Ungdomen kan rapportera frågan och admin ser en avgränsad serversnapshot. Frågor/svar ligger i befintlig application_followups och omfattas av L12; inga nya AI-anrop vid frågesändning. Migration `20261027134933_n24_company_application_questions.sql` införd i DevStaging. Se [N24.md](N24.md).
+- Verifierat: Sex grupper riktiga DevStaging-rollbackprov passerar före/efter migrationen: rätt/fel roller och ansökan, idempotens/dublett/taktgränser, riktad notis, frivilligt svar/avstående utan match eller profiländring, blockering/verifieringsändring/paus/stängning/återkallelse, rapportering och bevarad avgränsad evidens efter L12-gallring. Befintliga N02- (38 kontroller), L05- (12 grupper) och L12-prov (9 grupper) passerar, där L05/L12 kördes med nya migrationen. `test:company-questions` kör faktiska UI-callbacks och installerad SDK med simulerad HTTP; stabil retry-nyckel, dubbelklick, fel scope, avmontering, rapport-RPC och stängd frågas läsläge kontrolleras. Supplement-, moderations-, annonskandidat- och ansökningsöversiktsregressioner, riktad ESLint och standardproduktionsbygge/TypeScript/56 routes passerar. Inga nya säkerhetsadvisories. Noll kvarvarande N24-QA-konton/frågor; automatisk gallring är avstängd.
+- Återstår: Inloggad visuell kontroll på dator/mobil, notisöppning/lässtatus över hela flödet och verkliga flerparts-/samtidighetsprov. Exakta textdubletter stoppas; semantiskt likvärdiga/kända fakta kräver fortsatt F12/N19 och arbetsgivarens granskning av underlaget. Valet för profilsparning/återanvändning inväntar befintlig dataskyddsavstämning och är inte implementerat här; svar sparas enbart för ansökan. Ingen ny live-HTTP-/browseracceptans påstås. N24 markeras inte Klar.
 
 
 <a id="n25"></a>

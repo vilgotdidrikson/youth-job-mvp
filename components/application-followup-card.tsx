@@ -3,20 +3,21 @@
 import { useState } from "react";
 import { saveApplicationSupplement, type ApplicationCompletion, type ApplicationFollowup } from "@/lib/application-completions";
 import { supplementQuestions, supplementPayload } from "@/lib/application-supplement";
+import { ReportDialog } from "./report-dialog";
 import { UiIcon } from "./ui-icon";
 
-export function ApplicationFollowupCard({ application, items, initiallyOpen, onSaved }: { application:ApplicationCompletion; items:ApplicationFollowup[]; initiallyOpen:boolean; onSaved:(application:ApplicationCompletion, items:ApplicationFollowup[])=>void }) {
+export function ApplicationFollowupCard({ application, items, initiallyOpen, onSaved, manualReadOnly = false }: { manualReadOnly?:boolean; application:ApplicationCompletion; items:ApplicationFollowup[]; initiallyOpen:boolean; onSaved:(application:ApplicationCompletion, items:ApplicationFollowup[])=>void }) {
   const [answers,setAnswers] = useState<Record<string,string>>({});
   const [skips,setSkips] = useState<string[]>([]), [editing,setEditing] = useState<string[]>([]);
   const [open,setOpen] = useState(initiallyOpen), [busy,setBusy] = useState(false);
   const [error,setError] = useState(""), [message,setMessage] = useState("");
   const questions = supplementQuestions(application,items);
-  const pending = questions.filter(item=>item.status === "pending");
-  const editable = questions.filter(item=>item.status === "pending" || editing.includes(item.key));
+  const pending = questions.filter(item=>item.status === "pending" && !(manualReadOnly && item.source === "company"));
+  const editable = questions.filter(item=>(item.status === "pending" || editing.includes(item.key)) && !(manualReadOnly && item.source === "company"));
   const panelId = `supplement-${application.job_id}`;
   const save = async () => {
     if(busy) return;
-    const payload = supplementPayload(questions,answers,skips,editing);
+    const payload = supplementPayload(questions.filter(item=>!(manualReadOnly && item.source === "company")),answers,skips,editing);
     if(!Object.keys(payload.answers).length && !Object.keys(payload.followupAnswers).length && !payload.skipIds.length && !payload.followupSkipIds.length) {setError("Svara på en fråga eller välj att avstå.");return;}
     setBusy(true);setError("");setMessage("");
     try {
@@ -32,7 +33,9 @@ export function ApplicationFollowupCard({ application, items, initiallyOpen, onS
     <div id={panelId} hidden={!open} className="application-supplement-body">
       <p className="application-completion-note">Svaren hjälper företaget att förstå din ansökan. De är frivilliga och skickas först när du trycker på Skicka komplettering.</p>
       {questions.map((item,index)=><div className="application-question" key={item.key}>
-        {(item.status === "pending" || editing.includes(item.key)) ? <><label htmlFor={`followup-${item.key}`}><strong>{index+1}. {item.question}</strong></label><textarea id={`followup-${item.key}`} className="input-field" rows={3} maxLength={1500} disabled={busy || skips.includes(item.key)} value={answers[item.key] ?? ""} onChange={event=>setAnswers(current=>({...current,[item.key]:event.target.value}))} placeholder="Berätta med dina egna ord…"/>{item.status === "pending" && <label className="application-skip"><input type="checkbox" checked={skips.includes(item.key)} disabled={busy} onChange={event=>setSkips(current=>event.target.checked ? [...current,item.key] : current.filter(key=>key!==item.key))}/>Jag vill avstå från att svara</label>}{editing.includes(item.key) && <button type="button" className="application-answer-edit" disabled={busy} onClick={()=>setEditing(current=>current.filter(key=>key!==item.key))}>Avbryt ändringen</button>}</> : <><strong>{index+1}. {item.question}</strong><p className="application-published-answer">{item.status === "answered" ? item.answer : "Du valde att avstå från att svara"}</p><button type="button" className="application-answer-edit" disabled={busy} onClick={()=>{setAnswers(current=>({...current,[item.key]:item.answer}));setEditing(current=>[...current,item.key]);setMessage("");}}>{item.status === "answered" ? "Ändra mitt svar" : "Lägg till ett svar"}</button></>}
+        {item.source === "company" && <p>Fråga från företaget</p>}
+        {((item.status === "pending" || editing.includes(item.key)) && !(manualReadOnly && item.source === "company")) ? <><label htmlFor={`followup-${item.key}`}><strong>{index+1}. {item.question}</strong></label><textarea id={`followup-${item.key}`} className="input-field" rows={3} maxLength={1500} disabled={busy || skips.includes(item.key)} value={answers[item.key] ?? ""} onChange={event=>setAnswers(current=>({...current,[item.key]:event.target.value}))} placeholder="Berätta med dina egna ord…"/>{item.status === "pending" && <label className="application-skip"><input type="checkbox" checked={skips.includes(item.key)} disabled={busy} onChange={event=>setSkips(current=>event.target.checked ? [...current,item.key] : current.filter(key=>key!==item.key))}/>Jag vill avstå från att svara</label>}{editing.includes(item.key) && <button type="button" className="application-answer-edit" disabled={busy} onClick={()=>setEditing(current=>current.filter(key=>key!==item.key))}>Avbryt ändringen</button>}</> : <><strong>{index+1}. {item.question}</strong><p className="application-published-answer">{item.status === "answered" ? item.answer : item.status === "pending" ? "Ansökan är avslutad. Frågan kan inte längre besvaras." : "Du valde att avstå från att svara"}</p>{!(manualReadOnly && item.source === "company") && <button type="button" className="application-answer-edit" disabled={busy} onClick={()=>{setAnswers(current=>({...current,[item.key]:item.answer}));setEditing(current=>[...current,item.key]);setMessage("");}}>{item.status === "answered" ? "Ändra mitt svar" : "Lägg till ett svar"}</button>}</>}
+        {item.source === "company" && <ReportDialog targetType="application_question" targetId={item.id} label="Rapportera frågan" />}
       </div>)}
       {error && <p role="alert" className="application-completion-error">{error}</p>}
       {editable.length>0 && <div className="application-completion-actions"><small>Ansökan är skickad även om du inte svarar.</small><button type="button" className="cta-btn" disabled={busy} onClick={()=>void save()}>{busy ? "Skickar…" : "Skicka komplettering"}</button></div>}
