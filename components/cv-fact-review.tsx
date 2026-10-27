@@ -5,8 +5,8 @@ import { authenticatedHeaders } from "@/lib/api-client";
 import type { StructuredCvData } from "@/lib/structured-cv";
 import { cvFactFields, updateCvFact, cvReviewSnapshot, isCvTextAligned } from "@/lib/cv-fact-review";
 
-export function CvFactReview({ cv, sourceText, approved, onApprove, onChange, disabled = false, text, onSync }: {
-  cv: StructuredCvData; sourceText: string; approved: boolean; onApprove: (approved: boolean) => void;
+export function CvFactReview({ cv, sourceText, approved, onApprove, onChange, disabled = false, text, onSync, manual = false }: {
+  manual?: boolean; cv: StructuredCvData; sourceText: string; approved: boolean; onApprove: (approved: boolean) => void;
   onChange: (cv: StructuredCvData) => void; disabled?: boolean; text?: string; onSync?: (cv: StructuredCvData) => void;
 }) {
   const [syncing, setSyncing] = useState(false);
@@ -18,7 +18,7 @@ export function CvFactReview({ cv, sourceText, approved, onApprove, onChange, di
   const aligned = text === undefined || isCvTextAligned(text, cv);
   const locked = disabled || syncing || !aligned;
   async function syncFacts() {
-    if (!onSync || !text?.trim() || syncing) return;
+    if (manual || !onSync || !text?.trim() || syncing) return;
     const snapshot = current.current;
     const controller = new AbortController(); requestController.current = controller;
     setSyncing(true); setSyncError(""); onApprove(false);
@@ -35,10 +35,10 @@ export function CvFactReview({ cv, sourceText, approved, onApprove, onChange, di
   const fields = cvFactFields(cv).filter((field) => field.value.trim() || ["role", "startDate", "endDate", "level", "duration"].includes(field.path.at(-1) ?? ""));
   return <section className="card" style={{ padding: "1rem", margin: "1rem 0", display: "grid", gap: ".8rem" }} aria-label="Granska CV-fakta">
     <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Kontrollera dina uppgifter</h2>
-    <p style={{ margin: 0 }}>AI kan misstolka dina svar. Kolla särskilt datum, roller och språknivåer. Uppgifterna sparas i din profil och används vid matchning.</p>
+    <p style={{ margin: 0 }}>{manual ? "Kontrollera att uppgifterna stämmer. De sparas i din profil och används vid matchning." : "AI kan misstolka dina svar. Kolla särskilt datum, roller och språknivåer. Uppgifterna sparas i din profil och används vid matchning."}</p>
     {text !== undefined && <p style={{margin:0}}>{text.trim().split(/\s+/).filter(Boolean).length} ord. Sikta på ett tydligt CV på ungefär en sida, upp till två när innehållet behövs. Texten kapas inte automatiskt; du kan korta och välja själv.</p>}
     {!aligned && <div role="status"><p>Du har ändrat CV-texten. Uppdatera uppgifterna innan du godkänner.</p>
-      <button type="button" className="secondary-btn" disabled={disabled || syncing || !text?.trim()} onClick={() => void syncFacts()}>{syncing ? "Uppdaterar uppgifterna…" : "Uppdatera uppgifterna från texten"}</button>
+      <button type="button" className="secondary-btn" disabled={manual || disabled || syncing || !text?.trim()} onClick={() => void syncFacts()}>{syncing ? "Uppdaterar uppgifterna…" : "Uppdatera uppgifterna från texten"}</button>
     </div>}
     {syncError && <p role="alert">{syncError}</p>}
     <details><summary>Dina ursprungliga svar</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", font: "inherit", fontSize: ".85rem" }}>{sourceText}</pre></details>
