@@ -1,4 +1,7 @@
 "use client";
+import { useApplicationRetention } from "@/hooks/use-data-retention";
+import { ApplicationRetentionNotice, RetiredApplicationCard } from "@/components/data-retention-notice";
+import type { ApplicationRetention } from "@/lib/data-retention";
 import { JobRequirementsInsight } from "@/components/job-requirements-insight";
 
 import Link from "next/link";
@@ -32,12 +35,13 @@ function analysisNotice(results: FollowupAnalysisResult[]): string {
   return "";
 }
 
-function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, initiallyOpen, stage, onWithdrawn }: { onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage?:YouthActivity; initiallyOpen:boolean; hidden: boolean; item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (application:ApplicationCompletion, items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
+function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved, hidden, initiallyOpen, stage, onWithdrawn }: { retention?: ApplicationRetention; onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage?:YouthActivity; initiallyOpen:boolean; hidden: boolean; item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (application:ApplicationCompletion, items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  if (retention?.expired) return <RetiredApplicationCard record={retention} hidden={hidden}/>;
   const pending = item.status === "needs_completion";
-  if (item.status === "withdrawn") return <article id={`application-${item.job_id}`} hidden={hidden} className="card application-completion-card"><header><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">Återkallad</span></header><p>Ansökan eller det sparade intresset är återkallat och skickas inte igen automatiskt. En eventuell match är avslutad och chatten är skrivskyddad.</p>{item.withdrawn_at && <p>Återkallad {new Date(item.withdrawn_at).toLocaleDateString("sv-SE")}</p>}</article>;
+  if (item.status === "withdrawn") return <article id={`application-${item.job_id}`} hidden={hidden} className="card application-completion-card"><header><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">Återkallad</span></header><p>Ansökan eller det sparade intresset är återkallat och skickas inte igen automatiskt. En eventuell match är avslutad och chatten är skrivskyddad.</p>{item.withdrawn_at && <p>Återkallad {new Date(item.withdrawn_at).toLocaleDateString("sv-SE")}</p>}<ApplicationRetentionNotice record={retention}/></article>;
   const save = async (submit: boolean) => {
     if (busy) return;
     setBusy(true); setError(""); setMessage("");
@@ -50,6 +54,7 @@ function ApplicationCard({ item, onSaved, followups, onFollowupsSaved, hidden, i
   };
   return <article id={`application-${item.job_id}`} hidden={hidden} className="card application-completion-card">
     <header><div className="application-company-avatar">{item.company_name.slice(0, 2).toUpperCase()}</div><div><p>{item.company_name}</p><h2>{item.job_title}</h2></div><span className="application-status">{pending ? "Inte skickad ännu" : item.status === "submitted" ? "Skickad" : "Annonsen är inte tillgänglig"}</span></header>
+    <ApplicationRetentionNotice record={retention}/>
     {item.status === "submitted" && <p className="application-sent-note"><UiIcon name="check" width="18"/>Företaget har fått din ansökan. Eventuella frågor är frivilliga.</p>}
     {stage && recruitmentLabels[stage.status] && <div className="application-recruitment-stage"><span>{recruitmentLabels[stage.status]}</span>{!["rejected","cancelled"].includes(stage.status) && <Link href={`/chats?job=${item.job_id}`}>Öppna meddelanden <UiIcon name="arrow" width="16"/></Link>}</div>}
     {pending && <p>Den här äldre ansökan är inte skickad ännu. Du kan skicka den direkt utan att svara på frågor. Eventuell komplettering görs efteråt.</p>}
@@ -106,6 +111,9 @@ function ApplicationsPageContent() {
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const userId = user?.id;
+  const retention = useApplicationRetention(profile?.role === "youth" ? userId : undefined);
+  const retentionByJob = new Map(retention.value.map(row => [row.job_id, row]));
+  const retiredRows = retention.value.filter(row => row.expired && !items.some(item => item.job_id === row.job_id));
   const savedRevision = useRef(0);
   const searchParams = useSearchParams();
   const selectedJob = searchParams.get("job");
@@ -138,11 +146,12 @@ function ApplicationsPageContent() {
   }, [userId, profile?.role]);
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (profile?.role !== "youth") return <main className="mobile-shell"><p>Den här sidan är för ungdomskonton.</p></main>;
-  const needsAnswers = (item: ApplicationCompletion) => item.status === "submitted" && supplementQuestions(item,followups.filter(question=>question.job_id===item.job_id)).some(question=>question.status === "pending");
+  const needsAnswers = (item: ApplicationCompletion) => !retentionByJob.get(item.job_id)?.expired && item.status === "submitted" && supplementQuestions(item,followups.filter(question=>question.job_id===item.job_id)).some(question=>question.status === "pending");
   const pending = items.filter(needsAnswers);
   const ordered = [...pending, ...items.filter((item) => !needsAnswers(item))].sort((a,b)=>a.job_id===selectedJob ? -1 : b.job_id===selectedJob ? 1 : 0);
-  const extraActivity = activityWithoutApplication(activity, items);
+  const extraActivity = activityWithoutApplication(activity, items).filter(stage => !retentionByJob.get(stage.jobId)?.expired);
   const counts = applicationCounts(items, activity, needsAnswers);
+  counts.all += retiredRows.filter(row => !activity.some(stage => stage.jobId === row.job_id)).length;
   const itemHidden = (item: ApplicationCompletion) => (tab === "questions" && !needsAnswers(item)) || (tab === "unsent" && !isUnsent(item));
   const visibleCount = tab === "all" ? counts.all : tab === "unsent" ? counts.unsent : counts.questions;
   const withdrawn = (jobId: string, result: WithdrawalResult) => {
@@ -173,17 +182,19 @@ function ApplicationsPageContent() {
       <RecruitmentSummary />
       <TabList id="applications" label="Visa ansökningar" className="applications-tabs" items={[{ value: "all", label: <>Alla <span>{counts.all}</span></> }, ...(counts.unsent > 0 || tab === "unsent" ? [{ value: "unsent" as const, label: <>Inte skickade <span>{counts.unsent}</span></> }] : []), { value: "questions", label: <>Frivilliga frågor <span>{counts.questions}</span></> }]} value={tab} onChange={setTab} />
       {error && <p role="alert" className="application-completion-error">{error}</p>}
+      {retention.state.status === "error" && <div><p role="alert">{retention.state.message}</p><button type="button" className="secondary-btn" onClick={retention.retry}>Hämta lagringsstatus igen</button></div>}
       {confirmation && <p role="status" className="applications-confirmation"><UiIcon name="check" width="18" />{confirmation}</p>}
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
       <div className="applications-tab-panel" {...tabPanelProps("applications", tab)}>
       {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} onWithdrawn={withdrawn} />)}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} retention={retentionByJob.get(item.job_id)} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
         if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
       }} />)}
-      {!loading && visibleCount === 0 && <section className="applications-empty"><UiIcon name={tab === "all" ? "briefcase" : "check"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : tab === "unsent" ? "Allt är skickat" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : tab === "unsent" ? "Du har inga sparade intressen som väntar på att skickas." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
+      {!loading && tab === "all" && retiredRows.map(row => <RetiredApplicationCard key={row.job_id} record={row}/>)}
+      {!loading && visibleCount === 0 && (tab !== "all" || retiredRows.length === 0) && <section className="applications-empty"><UiIcon name={tab === "all" ? "briefcase" : "check"} width="32" height="32" /><h2>{tab === "questions" ? checking ? "Vi går igenom ditt underlag" : "Inga frågor att besvara just nu" : tab === "unsent" ? "Allt är skickat" : "Ditt nästa jobb börjar här"}</h2><p>{tab === "questions" ? "Nya kompletteringsfrågor dyker upp här och i dina notiser." : tab === "unsent" ? "Du har inga sparade intressen som väntar på att skickas." : "När du söker ett jobb samlar vi din ansökan här."}</p><Link className="cta-btn" href="/swipe">Upptäck jobb</Link></section>}
       </div>
     </section><aside className="applications-aside"><UiIcon name="info" width="24" /><h2>En ansökan, mer om dig</h2><p>Kompletteringsfrågorna utgår från just det här jobbets önskemål. Dina svar läggs till i ansökan du redan har skickat.</p><p>Du kan lämna en fråga obesvarad. Saknad information är aldrig ett automatiskt avslag.</p><Link href="/notifications">Till din aktivitet <UiIcon name="arrow" width="16" /></Link><Link href="/youth/cv">Se ditt CV <UiIcon name="arrow" width="16" /></Link></aside></div>
   </main>;

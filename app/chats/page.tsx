@@ -7,6 +7,8 @@ import {NotificationLink} from "@/components/notification-link";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
+import { useConversationRetention } from "@/hooks/use-data-retention";
+import { ConversationRetentionNotice } from "@/components/data-retention-notice";
 import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
 import { chatRequestKey, isRequestedConversation } from "@/lib/chat-navigation";
 import { getMyMatches } from "@/lib/matching";
@@ -39,6 +41,7 @@ function ChatsPageContent() {
   const [listState, setListState] = useState<"loading" | "ready" | "error">("loading"), [loadedId, setLoadedId] = useState("");
   const [error, setError] = useState(""), [messageError, setMessageError] = useState(""), [sending, setSending] = useState(false);
   const [historyRetry, setHistoryRetry] = useState(0);
+  const retention = useConversationRetention(selectedId, user?.id);
   const [blocking, setBlocking] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
@@ -104,7 +107,7 @@ function ChatsPageContent() {
   const handleSend = async (event: FormEvent) => {
     event.preventDefault();
     const id = selectedId, text = id ? drafts[id]?.trim() : "";
-    if(!id || !text || loadedId !== id || sendLock.current || chatIsReadOnly(conversations.find(item => item.conv.id === id)?.status || "")) return;
+    if(!id || !text || loadedId !== id || retention.writeBlocked || sendLock.current || chatIsReadOnly(conversations.find(item => item.conv.id === id)?.status || "")) return;
     sendLock.current=true; setSending(true); setMessageError("");
     try {
       await sendMessage(id,text);
@@ -141,11 +144,12 @@ function ChatsPageContent() {
 
       {selected.matchId && <details className={styles.nextSteps} key={selected.matchId}><summary>Jobbet och nästa steg</summary><RecruitmentPanel compact matchId={selected.matchId} company={profile?.role === "company"} onChanged={() => void loadConversations(false)} /></details>}
       {error && listState !== "error" && <p className={styles.error} role="alert">{error}</p>}
-      <div className={styles.messages} aria-label="Meddelanden">{loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}>{!message.video_kind&&<p>{message.message_text}</p>}{message.video_kind&&<VideoMessage message={message} own={message.sender_user_id===user?.id}/>}<time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
+      <div className={styles.messages} aria-label="Meddelanden">{retention.value?.expired ? <p className={styles.messageNote} role="status">{retention.value.purged_at ? "Chattens meddelanden har raderats." : "Chattens meddelanden är inte längre tillgängliga."}</p> : loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}>{!message.video_kind&&<p>{message.message_text}</p>}{message.video_kind&&<VideoMessage message={message} own={message.sender_user_id===user?.id}/>}<time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
 
       {messageError && <div className={styles.error}><p role="alert">{messageError}</p><button type="button" className={styles.secondary} disabled={sending} onClick={retryMessages}>Hämta meddelanden igen</button></div>}
 
-      {chatIsReadOnly(selected.status) ? <p className={styles.messageNote} role="status">Rekryteringen är avslutad. Chatthistoriken finns kvar att läsa, men ni kan inte skicka fler meddelanden.</p> : <>
+      <ConversationRetentionNotice value={retention.value} state={retention.state} retry={retention.retry}/>
+      {chatIsReadOnly(selected.status) && !retention.value?.expired ? <p className={styles.messageNote} role="status">Rekryteringen är avslutad. Chatthistoriken finns kvar att läsa, men ni kan inte skicka fler meddelanden.</p> : retention.writeBlocked ? null : <>
       {user&&profile?.role==='youth'&&loadedId===selectedId&&<ChatVideoComposer key={selected.conv.id} conversationId={selected.conv.id} userId={user.id} onSent={()=>{retryMessages();void loadConversations(false);}}/>}
       <form className={styles.composer} onSubmit={handleSend}><label><span className="sr-only">Meddelande till {selected.otherName}</span><textarea ref={composerRef} rows={1} value={drafts[selected.conv.id] || ""} onChange={event => {const input=event.currentTarget;input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;const value=input.value;try{sessionStorage.setItem(`mnw-chat-draft:${user?.id}:${selected.conv.id}`,value);}catch{/* Storage may be disabled. */}setDrafts(current => ({...current,[selected.conv.id]:value}));}} onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing&&window.matchMedia("(pointer:fine)").matches){event.preventDefault();event.currentTarget.form?.requestSubmit();}}} placeholder="Skriv ett meddelande…" disabled={sending || loadedId !== selectedId}/></label><button type="submit" aria-label={sending ? "Skickar meddelande" : "Skicka meddelande"} disabled={sending || loadedId !== selectedId || !drafts[selected.conv.id]?.trim()}><UiIcon name="arrow"/></button></form></>}
     </> : <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Ett samtal kan bli nästa steg</h2><p>Välj en matchning i inkorgen för att läsa eller skriva ett meddelande.</p></div>}</section></div>
