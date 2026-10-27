@@ -801,6 +801,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f24"></a>
 ### F24 Gör kartans reservvy användbar
 
+- Uttryckligen beställd kartleverans reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/f24-reference-pins-20261027`. Droppformade rosa kartnålar med vit mitt enligt användarens två referensbilder, tydligt vald nål och bevarat antal/åtkomst/kartankare. Endast markörernas utförande; basstil och popupdesign ändras inte. Popupens avstånd får anpassas till nålens höjd. Övriga F24-kriterier/status bevaras.
+
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 43
