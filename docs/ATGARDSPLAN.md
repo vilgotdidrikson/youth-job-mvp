@@ -1089,7 +1089,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Typ: Verifiering och komplettering
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l06-account-recovery-20261027`, remote-branch och ansvar publicerade 2026-10-27 före kodarbete; bas dev `0023105`.
+- Branch/PR: `codex/l06-account-recovery-20261027`, remote-branch och ansvar publicerade 2026-10-27 före kodarbete; bas dev `0023105`; kodcommit `8b8fe840e44fe8f3c8453098b082d2e4094aff76` (GitHub). Verifieringsprotokoll i `docs/L06.md`.
 - Åtgärd: Kontrollera registrering, verifieringsmejl, glömt lösenord, säkert lösenordsbyte, utloggning och utgången session. Inventera kontoradering och rätta eventuella luckor. Hantera privata dokument och video vid radering. Genomför känsliga tester med egna konton och enligt autentiseringsverktygets regler; begär aldrig lösenord i chatten. Utökade kontoval ligger i N10.
 - Klar när: Användaren kan återfå åtkomst och förstå fel utan att fastna. Sessioner och eventuell radering får det avsedda, verifierade resultatet.
 - Tillägg 2026-10-19: L13 preciserar säker självbetjäningsradering och ny autentisering före export/radering. Inventera och återanvänd befintlig raderingsfunktion; verifiera även återkallad åtkomst/sessioner och faktiska filer. Vanliga lagringstider i L12 är inte i sig skäl att neka tidigare radering.
