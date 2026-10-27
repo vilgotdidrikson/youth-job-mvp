@@ -41,7 +41,7 @@ async function moderationRequest<T>(name: string, args: Record<string, unknown>,
   const timer = setTimeout(abort, 15_000);
   try {
     const { data, error } = await Promise.race([getSupabaseClient().rpc(name, args).abortSignal(controller.signal), stopped]);
-    if (error) throw new Error(error.code === "40001" ? "Ärendet har ändrats. Läs det senaste beslutet innan du fortsätter." : getSupabaseErrorMessage(error, "Begäran kunde inte utföras."));
+    if (error) throw new Error(["PT409", "40001"].includes(error.code ?? "") ? "Ärendet har ändrats. Läs det senaste beslutet innan du fortsätter." : getSupabaseErrorMessage(error, "Begäran kunde inte utföras."));
     return data as T;
   } finally {
     clearTimeout(timer); signal?.removeEventListener("abort", abort);

@@ -104,7 +104,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Klar | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | För granskning | Vilgot / Codex |
-| 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | För granskning | Vilgot / Codex |
+| 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Klar | Vilgot / Codex |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
@@ -1066,19 +1066,19 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l05"></a>
 ### L05 Säkerhet, blockering, rapportering och administration
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 21
 - Typ: Verifiering och komplettering av befintlig funktionalitet
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l05-moderation-security-20261026`; egen remote-branch och ansvar publicerade före kodarbete. PR och dev-verifiering registreras efter publicering.
+- Branch/PR: `codex/l05-moderation-security-20261026`, [PR #127](https://github.com/vilgotdidrikson/youth-job-mvp/pull/127), införd i dev som `136ad2195982e6f49ca42b2a8a0fc6fc346b29b7`. Slutlig verifiering på egen branch `codex/l05-verification-20261026`.
 - Åtgärd: Inventera blockering, rapportering, företagsverifiering och adminhantering innan ny kod skrivs. Kontrollera att rapporter kan följas upp och att blockering påverkar kommunikation som avsett. Kör negativa åtkomsttester med egna ungdoms- och företagskonton: andra profiler, ansökningar, privata CV/video, matchningar och chattar samt pausade/stängda jobb. Lägg till verkligt saknade delar och bevara RLS.
 - Klar när: Obehörig åtkomst nekas, rapporter kan hanteras av rätt administratör och blockerade konton kan inte fortsätta den kommunikation som spärren avser.
-- Tillägg 2026-10-18 (F26/N19): Verifiera att företaget bara når jobbspecifikt ansökningsunderlag, inte hela jobbprofilen. Testa verkliga API-/RPC-svar, direkta databasfrågor/RLS och privata CV-/videolänkar med anonym, fel företag och fel jobb/ansökan. Kontrollera även äldre alternativa åtkomstvägar och AI-belägg: inga privata utkast, råa textsamtal, avvisade AI-förslag, orelaterade profilfält eller exakt bostadsadress i strukturerat underlag. Original-CV kan innehålla kontaktuppgifter och ska motsvara ungdomens granskade delning. Dold UI är inte åtkomstkontroll. Dessa nya kontroller är beställda, inte genomförda.
+- Tillägg 2026-10-18 (F26/N19): Verifiera att företaget bara når jobbspecifikt ansökningsunderlag, inte hela jobbprofilen. Testa verkliga API-/RPC-svar, direkta databasfrågor/RLS och privata CV-/videolänkar med anonym, fel företag och fel jobb/ansökan. Kontrollera även äldre alternativa åtkomstvägar och AI-belägg: inga privata utkast, råa textsamtal, avvisade AI-förslag, orelaterade profilfält eller exakt bostadsadress i strukturerat underlag. Original-CV kan innehålla kontaktuppgifter och ska motsvara ungdomens granskade delning. Dold UI är inte åtkomstkontroll. Kontrollerna är nu genomförda enligt verifieringen nedan.
 - Implementerat: Blockrelation skyddad mot utomstående, rapportmålets åtkomst kontrollerad, samtidiga rapporter/beslut idempotenta, slutligt beslut låst och interna adminanteckningar skyddade. Adminvy med aktiva/avslutade ärenden, uttrycklig spara/avbryt, sparad anteckning och bevisreferenser. Kontobyte/dubbelklick/sena svar hanteras. Videouppspelning flyttad till ocachad serverväg med aktuell användar-RLS före/efter filhämtning; separat migration stänger direkt Storage-läsning efter serverpublicering. Se [L05-verifiering](L05.md).
-- Verifierat: Lokal moderation-/videoklient-/serverlogik testad, riktiga SDK-kontrakt och tolv SQL-testgrupper i DevStaging med rollback. N19/F09/video-RLS-regressioner passerade. Riktiga HTTP-anrop verifierade 35 kontroller och avslöjade videons CDN-fel; denna första svit är därför inte komplett godkänd. Migration `20261026141513` införd i DevStaging. Detaljer och begränsningar i `docs/L05.md`.
-- Återstår / blockerare: Inför och verifiera serverbaserad video med den andra migrationen, ny komplett HTTP-svit och rensa dess engångskonton; registrera PR/dev-SHA. Full inloggad mobil-/skärmläsarkontroll återstår. L05 markeras inte Klar före införd och verifierad leverans.
+- Verifierat: Bygge inklusive TypeScript (56 routes), riktad ESLint, moderation-/SDK-/videotester och tolv SQL-testgrupper med rollback, inklusive pausat/stängt/opublicerat jobb. Riktiga HTTP-anrop: 49 godkända kontroller med privata CV-bytes, 5 MB strömmad video, direkt Storage nekad, blockering och adminbeslut. Ett efterföljande anrop reproducerade API-retry med 40001; båda funktionerna rättade till PT409 genom migration 20261027082053. Därefter passerade tolv riktade HTTP-kontroller, inklusive båda faktiska 409-svaren, dubbelsidig avblockering och nekad företags-CV-API. Båda batcherna städade; noll testkonton/rapporter verifierat 2026-10-27. Migrationerna 20261026141513, 20261026214719 och 20261027082053 införda endast i DevStaging. Se docs/L05.md.
+- Återstår / blockerare: Full fysisk mobil-/skärmläsarkontroll och kompletta inloggade resor ligger kvar i L07/L08. Redan nedladdade bytes och tidigare utfärdade CV-bearerlänkar återtas inte omedelbart vid blockering. Befintliga rådgivarvarningar hör till sina övriga uppgifter. Detta är dokumenterade avgränsningar, inte godkända tester av dessa delar.
 
 <a id="l06"></a>
 ### L06 Verifiera kontots grundläggande fel- och återställningsvägar
