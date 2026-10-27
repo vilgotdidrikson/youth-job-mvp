@@ -309,12 +309,13 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
       const chipLabel = isCluster ? `${clusterJobs.length} jobb` : (leadJob.company_name || "Företag");
       markerElement.innerHTML = `
         <button type="button" class="job-map-pin" aria-label="${escapeHtml(pinLabel)}" aria-expanded="false">
-          ${isCluster ? `<span class="job-map-pin-count" aria-hidden="true">${clusterJobs.length}</span>` : pinTileMarkup(leadJob)}
+          <svg class="job-map-pin-glyph" viewBox="0 0 36 45" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <path class="job-map-pin-body" d="M18 1C8.6 1 1 8.6 1 18c0 11.8 17 27 17 27s17-15.2 17-27C35 8.6 27.4 1 18 1Z" />
+            ${isCluster ? `<text class="job-map-pin-count" x="18" y="18" text-anchor="middle" dominant-baseline="central">${clusterJobs.length > 99 ? "99+" : clusterJobs.length}</text>` : '<circle class="job-map-pin-dot" cx="18" cy="17" r="5.5" />'}
+          </svg>
         </button>
         <span class="job-map-pin-chip" aria-hidden="true">${escapeHtml(chipLabel)}</span>
       `;
-      // A photo that fails to load uncovers the company initials underneath.
-      markerElement.querySelector("img")?.addEventListener("error", (event) => (event.currentTarget as HTMLImageElement).remove());
 
       const toggle = (event: Event) => {
         event.preventDefault();
@@ -329,8 +330,8 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
       });
 
       // Keep Mapbox's anchor independent from our expandable DOM UI. The
-      // element is a 1px coordinate anchor; CSS centres the circular pin on it
-      // and hangs the name chip below, so styling never moves the geo point.
+      // element is a 1px coordinate anchor; CSS puts the drop tip on it.
+      // Only the SVG scales, from its tip, so selection never moves the geo point.
       return new mapboxgl.Marker({ element: markerElement, anchor: "center" })
         .setLngLat([coordinates.longitude, coordinates.latitude])
         .addTo(map);
@@ -372,7 +373,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
     content.querySelector(".job-map-cluster-next")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.min(maxCardStart, cardStart + 1) })));
     content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => router.push(`/jobb/${encodeURIComponent(button.dataset.jobId || "")}`)));
 
-    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -30] })
+    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -52] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .setDOMContent(content)
       .addTo(map);
