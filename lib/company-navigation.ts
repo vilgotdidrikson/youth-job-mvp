@@ -26,3 +26,8 @@ export type ProfileTab = "overview" | "work" | "cv" | "details" | "settings";
 export function profileTabFromQuery(tab: string | null): ProfileTab {
   return tab === "work" || tab === "cv" || tab === "details" || tab === "settings" ? tab : "overview";
 }
+
+/** Keep the ad in every candidate/deep-link destination. */
+export function companyJobCandidatesHref(jobId: string, youthId?: string): string {
+  return `${COMPANY_ROUTES.candidates}&job=${encodeURIComponent(jobId)}${youthId ? `&candidate=${encodeURIComponent(youthId)}` : ""}`;
+}

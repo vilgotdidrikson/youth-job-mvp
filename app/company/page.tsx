@@ -1,12 +1,12 @@
 "use client";
 
+import { authenticatedHeaders } from "@/lib/api-client";
+import { CompanyJobCandidates } from "@/components/company-job-candidates";
 import { BrandLogo } from "@/components/brand-logo";
 
 import { JobWorkplaceFields } from "@/components/job-workplace-fields";
 import { JobWorkplaceEditor } from "@/components/job-workplace-editor";
-import { WorkplacePreference } from "@/components/workplace-preference";
 import { validateJobWorkplaces, jobCities, type JobWorkplace } from "@/lib/job-workplaces";
-import { CandidateRecruitmentProfile } from "@/components/candidate-recruitment-profile";
 
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -28,14 +28,11 @@ import { ModalDialog } from "@/components/modal-dialog";
 import { UiIcon } from "@/components/ui-icon";
 import { TabList } from "@/components/tab-list";
 import { tabPanelProps } from "@/lib/tab-keyboard";
-import { CandidateAssessmentPanel } from "@/components/candidate-assessment-panel";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { JobMatchProfileEditor } from "@/components/job-match-profile-editor";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { getSupabaseClient } from "@/lib/supabase";
-import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
-import { getCandidatesForJob, getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
-import { getMessages, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
+import { getCompanyJobs as getFeedCompanyJobs } from "@/lib/feeds";
 import { draftSalary, hasJobDraftContent, validateDraftPublication, type JobBuilderDraft as JobForm } from "@/lib/job-copy";
 import { loadOwnJobCopy } from "@/lib/job-copy-client";
 import { addMustHave, applyAiJobSuggestion, type AiJobReview, type AiJobSuggestion } from "@/lib/job-ai-review";
@@ -43,18 +40,14 @@ import { JobAiReviewPanel } from "@/components/job-ai-review-panel";
 import { firstPracticalError, localIsoDate, practicalErrors, practicalPayload } from "@/lib/job-practical";
 import { JobPracticalFields } from "@/components/job-practical-fields";
 import { firstJobFieldError, jobFieldErrors, jobFieldStep, parseSalaryText, prefillCompanyCity, type JobFieldName } from "@/lib/job-fields";
-import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref } from "@/lib/company-navigation";
+import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref, companyJobCandidatesHref } from "@/lib/company-navigation";
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
 import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
-import { RecruitmentSummary } from "@/components/recruitment-summary";
-import { CandidateVerifiedJobBadge } from "@/components/verified-job-badge";
-import { reviewCandidate } from "@/lib/matching";
 import { createInitialJobMatchProfile, saveJobMatchProfile } from "@/lib/match-profiles";
 import { uploadJobImage } from "@/lib/storage";
-import { authenticatedHeaders } from "@/lib/api-client";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
-import type { CandidateFeedItem, ChatMessage, CompanyProfile, ConversationSummary, JobPost, MatchRecord, SwipeDecision } from "@/lib/types";
+import type { CompanyProfile, JobPost } from "@/lib/types";
 
 const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
 const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
@@ -62,10 +55,6 @@ const REQUIREMENT_TIPS = ["Kan arbeta helger", "Tidigare erfarenhet", "B-körkor
 const TRAIT_TIPS = ["Ansvarstagande", "Punktlig", "Social", "Noggrann", "Serviceinriktad", "Nyfiken", "Samarbetsvillig"];
 
 
-
-type CandidateCv =
-  | { kind: "pdf"; url: string; expiresAt: string }
-  | { kind: "text"; text: string };
 
 function toggleTextList(value: string, item: string): string {
   const items = value.split(",").map((entry) => entry.trim()).filter(Boolean);
@@ -84,7 +73,6 @@ function CompanyPageContent() {
   const jobDraft = useJobDraft(hasCompanyAccess ? user?.id : undefined);
 
   const [jobs, setJobs] = useState<JobPost[]>([]);
-  const [feed, setFeed] = useState<CandidateFeedItem[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const tab = companyView(searchParams.get("view"), companyProfile?.verification_status === "verified");
   // Editing a saved listing reuses the builder with its own in-memory form, never the local create draft.
@@ -97,26 +85,7 @@ function CompanyPageContent() {
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobActionId, setJobActionId] = useState<string | null>(null);
-  const [candidateActionKey, setCandidateActionKey] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [candidateSearch, setCandidateSearch] = useState("");
-  const [candidateFilter, setCandidateFilter] = useState<"pending" | "all">("pending");
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-  const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [candidateCv, setCandidateCv] = useState<(CandidateCv & { candidateKey: string }) | null>(null);
-  const [uploadedCvError, setUploadedCvError] = useState("");
-  const [openingUploadedCv, setOpeningUploadedCv] = useState(false);
-  const [matchedConvId, setMatchedConvId] = useState<string | null>(null);
-  const [feedIndex, setFeedIndex] = useState(0);
-  const [candidateDragX, setCandidateDragX] = useState(0);
-  const [candidateIsDragging, setCandidateIsDragging] = useState(false);
-  const [candidateFlyDir, setCandidateFlyDir] = useState<"left" | "right" | null>(null);
-  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatDraft, setChatDraft] = useState("");
-  const candidateStartXRef = useRef<number | null>(null);
-  const candidateFlyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
@@ -141,7 +110,9 @@ function CompanyPageContent() {
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
 
 
+  const dataRead = useRef(0);
   const loadData = async (userId: string) => {
+    const revision = ++dataRead.current;
     try {
       setError("");
       const supabase = getSupabaseClient();
@@ -149,22 +120,19 @@ function CompanyPageContent() {
         getFeedCompanyJobs(),
         supabase.from("company_profiles").select("*").eq("user_id", userId).maybeSingle(),
       ]);
+      if (revision !== dataRead.current) return;
       if (companyError) throw new Error("Kunde inte hämta företagets verifieringsstatus. Försök igen.");
+      if (jobsData.some(job => job.company_user_id !== userId)) throw new Error("Annonslistan kunde inte verifieras.");
       setJobs(jobsData);
+      setCompanyProfile(null);
       if (cp) {
         const nextCompanyProfile = cp as CompanyProfile;
         setCompanyProfile(nextCompanyProfile);
-        if (nextCompanyProfile.verification_status === "verified") {
-          const candidateGroups = await Promise.all(jobsData.map((job) => getCandidatesForJob(job.id, { includeReviewed: true })));
-          setFeed(candidateGroups.flat());
-        } else {
-          // Unverified companies stay in their company workspace, but candidate
-          // data and review actions remain unavailable until approval.
-          setFeed([]);
-        }
+
       }
       setDataOwnerId(userId);
     } catch (err) {
+      if (revision !== dataRead.current) return;
       setError(err instanceof Error ? err.message : "Kunde inte ladda data.");
     }
   };
@@ -173,154 +141,15 @@ function CompanyPageContent() {
     if (!loading && user && profile?.role === "company") {
       void loadData(user.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Invalidate the current read generation on account/effect cleanup.
+    return () => { dataRead.current++; };
   }, [loading, user, profile?.role, router]);
 
   useEffect(() => {
-    const requestedView = searchParams.get("view");
-    const requestedJob = searchParams.get("job"), requestedCandidate = searchParams.get("candidate");
-    if (requestedJob && requestedCandidate) { setSelectedCandidateId(`${requestedJob}:${requestedCandidate}`); setCandidateCv(null); setUploadedCvError(""); setCandidateSearch(""); setCandidateFilter("all"); }
-    if (requestedView === "swipe") {
-      if (companyProfile) {
-        const view = companyView(requestedView, companyProfile.verification_status === "verified");
-        window.history.replaceState(null, "", `/company?view=${view}`);
-      }
+    if (searchParams.get("view") === "swipe" && companyProfile) {
+      window.history.replaceState(null, "", companyProfile.verification_status === "verified" ? COMPANY_ROUTES.candidates : COMPANY_ROUTES.create);
     }
-  }, [companyProfile, router, searchParams]);
-
-  useEffect(() => {
-    if (!user || profile?.role !== "company") return;
-    void getMyConversations()
-      .then(setConversations)
-      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda konversationer."));
-  }, [profile?.role, user]);
-
-  useEffect(() => {
-    if (!activeConversationId) {
-      setChatMessages([]);
-      return;
-    }
-    void getMessages(activeConversationId)
-      .then(setChatMessages)
-      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Kunde inte ladda meddelanden."));
-  }, [activeConversationId]);
-
-  useEffect(() => {
-    if (!activeConversationId) return;
-    return subscribeToConversationMessages(activeConversationId, (message) => {
-      setChatMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
-      void getMyConversations().then(setConversations).catch(() => undefined);
-    });
-  }, [activeConversationId]);
-
-  const sendCompanyMessage = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!activeConversationId || !chatDraft.trim()) return;
-    const text = chatDraft.trim();
-    setChatDraft("");
-    try {
-      await sendMessage(activeConversationId, text);
-      setChatMessages(await getMessages(activeConversationId));
-    } catch (sendError) {
-      setChatDraft(text);
-      setError(sendError instanceof Error ? sendError.message : "Kunde inte skicka meddelandet.");
-    }
-  };
-
-  const triggerCandidateDecision = (decision: SwipeDecision) => {
-    if (candidateFlyTimerRef.current) clearTimeout(candidateFlyTimerRef.current);
-    setCandidateFlyDir(decision === "interested" ? "right" : "left");
-    setCandidateIsDragging(false);
-    setCandidateDragX(0);
-    candidateStartXRef.current = null;
-    candidateFlyTimerRef.current = setTimeout(() => void handleDecision(decision), 280);
-  };
-
-  const onCandidatePointerDown = (x: number) => {
-    if (candidateFlyDir) return;
-    candidateStartXRef.current = x;
-    setCandidateIsDragging(true);
-  };
-
-  const onCandidatePointerMove = (x: number) => {
-    if (!candidateIsDragging || candidateStartXRef.current === null) return;
-    setCandidateDragX(x - candidateStartXRef.current);
-  };
-
-  const onCandidatePointerEnd = () => {
-    if (candidateDragX > 90) {
-      triggerCandidateDecision("interested");
-    } else if (candidateDragX < -90) {
-      triggerCandidateDecision("skip");
-    } else {
-      setCandidateIsDragging(false);
-      setCandidateDragX(0);
-      candidateStartXRef.current = null;
-    }
-  };
-
-  const handleDecision = async (decision: SwipeDecision) => {
-    const item = candidateFeed.filter((candidate) => !candidate.reviewDecision)[feedIndex];
-    if (!item) return;
-    try {
-      const result: MatchRecord | null = await reviewCandidate(item.job.id, item.youthUserId, decision);
-      setCandidateFlyDir(null);
-      setCandidateDragX(0);
-      setFeedIndex((i) => i + 1);
-      setError("");
-      if (decision === "interested" && result?.conversation_id) {
-        setMatchedConvId(result.conversation_id);
-      }
-    } catch (err) {
-      setCandidateFlyDir(null);
-      setCandidateDragX(0);
-      setError(err instanceof Error ? err.message : "Kunde inte spara beslut.");
-    }
-  };
-
-  const handleApplicantDecision = async (candidate: CandidateFeedItem, decision: SwipeDecision) => {
-    const actionKey = `${candidate.job.id}:${candidate.youthUserId}`;
-    setCandidateActionKey(actionKey);
-    setError("");
-    try {
-      const result = await reviewCandidate(candidate.job.id, candidate.youthUserId, decision);
-      if (decision === "interested" && result?.conversation_id) {
-        setMatchedConvId(result.conversation_id);
-      }
-      setSelectedCandidateId(null);
-      if (user) await loadData(user.id);
-      setConversations(await getMyConversations());
-    } catch (decisionError) {
-      setError(decisionError instanceof Error ? decisionError.message : "Kunde inte spara beslutet.");
-    } finally {
-      setCandidateActionKey(null);
-    }
-  };
-
-  const openUploadedCv = async (candidate: CandidateFeedItem) => {
-    setOpeningUploadedCv(true);
-    setUploadedCvError("");
-    setCandidateCv(null);
-    try {
-      const response = await fetch("/api/company/candidate-cv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
-        body: JSON.stringify({ jobId: candidate.job.id, youthUserId: candidate.youthUserId }),
-      });
-      const result = await response.json().catch(() => ({})) as { kind?: unknown; url?: unknown; expiresAt?: unknown; text?: unknown; error?: string };
-      if (!response.ok || (result.kind !== "pdf" && result.kind !== "text")) throw new Error(result.error || "Kunde inte öppna CV:t just nu.");
-      if (result.kind === "pdf" && typeof result.url === "string" && typeof result.expiresAt === "string") {
-        setCandidateCv({ kind: "pdf", url: result.url, expiresAt: result.expiresAt, candidateKey: `${candidate.job.id}:${candidate.youthUserId}` });
-      } else if (result.kind === "text" && typeof result.text === "string") {
-        setCandidateCv({ kind: "text", text: result.text, candidateKey: `${candidate.job.id}:${candidate.youthUserId}` });
-      } else {
-        throw new Error("CV:t hade ett format som inte kunde visas.");
-      }
-    } catch (cvError) {
-      setUploadedCvError(cvError instanceof Error ? cvError.message : "Kunde inte öppna CV:t just nu.");
-    } finally {
-      setOpeningUploadedCv(false);
-    }
-  };
+  }, [companyProfile, searchParams]);
 
   const handleCopyJob = async () => {
     if (!copyingJob || copyLock.current || !user) return;
@@ -594,61 +423,22 @@ function CompanyPageContent() {
 
   if (dataOwnerId !== user?.id) return <main className="mobile-shell mnw-company-workspace">
       {user && <CompanyRecruitmentStatus userId={user.id} />}
-      {tab === "kandidater" && <RecruitmentSummary company />}
       {closingJob && <CloseRecruitmentDialog jobId={closingJob.id} title={closingJob.title} onClose={() => setClosingJob(null)} onSaved={async () => {if (user) await loadData(user.id);}} />}<section className="card company-applicants-empty">
     {error ? <><h1>Företagsvyn kunde inte hämtas</h1><p role="alert">{error}</p><button type="button" className="secondary-btn" onClick={() => user && void loadData(user.id)}>Försök igen</button></> : <p role="status">Hämtar företagets annonser och ansökningar…</p>}
   </section></main>;
 
-  const candidateFeed = feed;
   const verificationStatus = companyProfile?.verification_status;
   const publication = jobPublicationAction(verificationStatus);
   const createdJob = jobs.find(job => job.id === searchParams.get("created") && job.company_user_id === user?.id);
-  const pendingCandidates = candidateFeed.filter((candidate) => !candidate.reviewDecision);
-  const displayedCandidates = candidateFilter === "pending" ? pendingCandidates : candidateFeed;
-  const filteredCandidates = filterCandidates(displayedCandidates, candidateSearch);
-  const currentCandidate = pendingCandidates[feedIndex] ?? null;
-  const candidateFlyX = candidateFlyDir === "right" ? 600 : candidateFlyDir === "left" ? -600 : candidateDragX;
-  const candidateFlyRot = candidateFlyDir === "right" ? 12 : candidateFlyDir === "left" ? -12 : candidateDragX * 0.02;
-  const candidateJaOpacity = candidateFlyDir === "right" ? 1 : candidateDragX > 20 ? Math.min(candidateDragX / 100, 1) : 0;
-  const candidateNejOpacity = candidateFlyDir === "left" ? 1 : candidateDragX < -20 ? Math.min(-candidateDragX / 100, 1) : 0;
-  const selectedCandidate = selectCandidate(filteredCandidates, selectedCandidateId);
-  const selectedConversation = selectedCandidate && conversations.find(conversation => conversation.job_id === selectedCandidate.job.id && conversation.youth_user_id === selectedCandidate.youthUserId);
 
   return (
     <main className="mobile-shell mnw-company-workspace">
       {user && <CompanyRecruitmentStatus userId={user.id} />}
-      {tab === "kandidater" && <RecruitmentSummary company />}
       {closingJob && <CloseRecruitmentDialog jobId={closingJob.id} title={closingJob.title} onClose={() => setClosingJob(null)} onSaved={async () => {if (user) await loadData(user.id);}} />}
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       {verificationStatus !== "verified" && <CompanyVerificationStatus profile={companyProfile} compact action={{ href: "/profile?tab=details", label: "Kontrollera företagsuppgifter" }} />}
-      {/* Match banner */}
-      {matchedConvId && (
-        <div className="company-match-banner">
-          <span className="company-match-banner-icon">🎉</span>
-          <div className="company-match-banner-text">
-            <p>Det blev en match!</p>
-            <p>Ni kan nu chatta med varandra.</p>
-          </div>
-          <button
-            type="button"
-            className="cta-btn company-match-banner-chat"
-            onClick={() => router.push(`/chats?conversation=${matchedConvId}`)}
-          >
-            Chatta →
-          </button>
-          <button
-            type="button"
-            onClick={() => setMatchedConvId(null)}
-            className="company-match-banner-close"
-            aria-label="Stäng"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}
       {/* Tab bar */}
       {(tab === "annonser" || tab === "skapa" || editing) && <TabList id="company-workspace" label="Annonser" className="company-workspace-tabs" value={tab} items={[{ value: "annonser", label: <>Mina annonser <span>{jobs.length}</span></> }, { value: "skapa", label: <><UiIcon name="briefcase" width="17" />Ny annons</> }]} onChange={(item) => { if (editing && jobEdit.dirty && !window.confirm("Ändringarna i annonsen är inte sparade. Vill du lämna redigeringen?")) return; window.history.pushState(null, "", item === "skapa" ? COMPANY_ROUTES.create : COMPANY_ROUTES.listings); setError(""); setEditReceipt(""); }} />}
@@ -664,189 +454,7 @@ function CompanyPageContent() {
       )}
 
       {/* ── KANDIDATER TAB ── */}
-      {false && (
-        <div>
-          {candidateFeed.length === 0 ? (
-            <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
-              <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.5rem" }}>Inga annonser ännu</p>
-              <p style={{ fontSize: "0.85rem", color: "#737373", marginBottom: "1rem" }}>
-                Skapa din första jobbannons för att börja se kandidater.
-              </p>
-              <button type="button" className="cta-btn" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }} onClick={() => window.history.pushState(null, "", COMPANY_ROUTES.create)}>
-                Skapa annons
-              </button>
-            </div>
-          ) : currentCandidate ? (
-            <div
-              className="card"
-              style={{
-                padding: "1.5rem",
-                overflow: "hidden",
-                position: "relative",
-                userSelect: "none",
-                transform: `translateX(${candidateFlyX}px) rotate(${candidateFlyRot}deg)`,
-                transition: candidateIsDragging ? "none" : "transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)",
-                cursor: candidateIsDragging ? "grabbing" : "grab",
-                touchAction: "pan-y",
-              }}
-              onPointerDown={(e) => onCandidatePointerDown(e.clientX)}
-              onPointerMove={(e) => onCandidatePointerMove(e.clientX)}
-              onPointerUp={onCandidatePointerEnd}
-              onPointerCancel={onCandidatePointerEnd}
-            >
-              <div style={{ position: "absolute", top: 14, left: 14, padding: "4px 10px", borderRadius: 8, border: "2.5px solid #21d07a", color: "#21d07a", fontWeight: 800, fontSize: "0.9rem", letterSpacing: "0.05em", opacity: candidateJaOpacity, transform: "rotate(-15deg)", transition: "opacity 0.1s ease", pointerEvents: "none" }}>JA</div>
-              <div style={{ position: "absolute", top: 14, right: 14, padding: "4px 10px", borderRadius: 8, border: "2.5px solid #fd5564", color: "#fd5564", fontWeight: 800, fontSize: "0.9rem", letterSpacing: "0.05em", opacity: candidateNejOpacity, transform: "rotate(15deg)", transition: "opacity 0.1s ease", pointerEvents: "none" }}>NEJ</div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#f5f5f5", borderRadius: 8, padding: "0.3rem 0.65rem", marginBottom: "1rem" }}>
-                <span style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#a3a3a3" }}>Ansökt till</span>
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111" }}>{currentCandidate.job.title}</span>
-              </div>
-              <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#111", margin: "0 0 0.2rem" }}>
-                {currentCandidate.profile?.full_name || "Anonym kandidat"}
-              </h2>
-              <p style={{ fontSize: "0.85rem", color: "#737373", margin: "0 0 1rem" }}>
-                {[currentCandidate.profile?.age ? `${currentCandidate.profile?.age} år` : "", currentCandidate.profile?.city].filter(Boolean).join(" · ")}
-              </p>
-              {(currentCandidate.profile?.desired_roles ?? []).length > 0 && (
-                <div style={{ marginBottom: "0.85rem" }}>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.4rem" }}>Söker jobb inom</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                    {(currentCandidate.profile?.desired_roles ?? []).map((role) => (<span key={role} className="chip">{role}</span>))}
-                  </div>
-                </div>
-              )}
-              {(currentCandidate.profile?.employment_preferences ?? []).length > 0 && (
-                <div style={{ marginBottom: "0.85rem" }}>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "0.4rem" }}>Tillgänglighet</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                    {(currentCandidate.profile?.employment_preferences ?? []).map((pref) => (<span key={pref} className="chip">{pref}</span>))}
-                  </div>
-                </div>
-              )}
-              {currentCandidate.profile?.cv_text && (
-                <div style={{ marginBottom: "0.5rem" }}>
-                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "0.85rem", fontSize: "0.82rem", color: "#444", lineHeight: 1.55 }}>
-                    {currentCandidate.profile?.cv_text?.slice(0, 250)}{(currentCandidate.profile?.cv_text?.length ?? 0) > 250 ? "\u2026" : ""}
-                  </div>
-                  {(currentCandidate.profile?.cv_text?.length ?? 0) > 250 && (
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => setCvModalOpen(true)}
-                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.8rem", color: "#737373", padding: "0.35rem 0", textDecoration: "underline" }}
-                    >
-                      Visa hela CV →
-                    </button>
-                  )}
-                </div>
-              )}
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
-                <button type="button" className="secondary-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} onPointerDown={(e) => e.stopPropagation()} onClick={() => triggerCandidateDecision("skip")}>
-                  Hoppa över
-                </button>
-                <button type="button" className="cta-btn" style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }} onPointerDown={(e) => e.stopPropagation()} onClick={() => triggerCandidateDecision("interested")}>
-                  Intresserad ✓
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
-              <p style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>🎉</p>
-              <p style={{ fontWeight: 700, color: "#111", marginBottom: "0.4rem" }}>Inga fler kandidater just nu</p>
-              <p style={{ fontSize: "0.85rem", color: "#737373" }}>Kom tillbaka senare eller skapa en ny annons.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "kandidater" && (
-        <section className="company-applicants" aria-label="Sökande kandidater">
-          <header className="company-applicants-heading">
-            <p>Ansökningar</p>
-            <h1>Kandidater som har sökt era jobb</h1>
-            <span>{candidateFeed.length} sökande</span>
-          </header>
-          <TabList id="company-applications" label="Visa ansökningar" className="company-application-tabs" items={[{ value: "pending", label: <>Att granska <span>{pendingCandidates.length}</span></> }, { value: "all", label: <>Alla ansökningar <span>{candidateFeed.length}</span></> }]} value={candidateFilter} onChange={(filter) => {setCandidateFilter(filter);setSelectedCandidateId(null);setCandidateCv(null);}} />
-          {candidateFilter === "pending" && !pendingCandidates.length && candidateFeed.length > 0 ? <section className="card company-applicants-empty" {...tabPanelProps("company-applications", candidateFilter)}><UiIcon name="check" width="30" /><h2>Alla ansökningar är granskade</h2><p>Tidigare kandidater och deras kompletteringar finns kvar under Alla ansökningar.</p><button type="button" className="secondary-btn" onClick={() => setCandidateFilter("all")}>Visa alla ansökningar</button></section> : candidateFeed.length === 0 ? (
-            <div className="card company-applicants-empty" {...tabPanelProps("company-applications", candidateFilter)}><h2>Inga ansökningar ännu</h2><p>När någon söker en av era annonser visas deras profil här.</p></div>
-          ) : (
-            <div className="company-applicants-layout" {...tabPanelProps("company-applications", candidateFilter)}>
-              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => {setCandidateSearch(event.target.value);setSelectedCandidateId(null);setCandidateCv(null);setUploadedCvError("");}} placeholder="Namn eller jobb…" /></label><div className="company-applicant-list">
-                {filteredCandidates.map((candidate) => {
-                  const profile = candidate.profile;
-                  const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;
-                  return <button key={`${candidate.youthUserId}-${candidate.job.id}`} type="button" className={`company-applicant-row${isSelected ? " is-selected" : ""}`} aria-pressed={isSelected} onClick={() => { setSelectedCandidateId(`${candidate.job.id}:${candidate.youthUserId}`); setCandidateCv(null); setUploadedCvError(""); }}>
-                    <span className="company-applicant-avatar">{(profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</span>
-                    <span><strong>{profile?.full_name || "Anonym kandidat"}</strong><small>{candidate.job.title}</small>{candidate.reviewDecision && <em className="company-application-reviewed">{candidate.reviewDecision === "interested" ? "Intresse visat" : "Avslutad"}</em>}</span>
-                    <span aria-hidden="true">›</span>
-                  </button>;
-                })}
-              </div>{candidateSearch.trim() && !filteredCandidates.length && <p className="company-search-empty" role="status">Inga ansökningar matchar din sökning.</p>}</div>
-              {!selectedCandidate && <section className="card company-applicants-empty"><h2>{selectedCandidateId ? "Ansökan är inte tillgänglig" : "Ingen kandidat att visa"}</h2><p>{selectedCandidateId ? "Välj en annan kandidat i listan för att fortsätta." : "Prova ett annat namn eller jobb för att hitta en ansökan."}</p></section>}
-              {selectedCandidate && <article className="company-candidate-profile card">
-                <header><div className="company-candidate-profile-avatar">{(selectedCandidate.profile?.full_name?.trim().charAt(0) || "?").toUpperCase()}</div><div><p>Kandidat</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div></header>
-                <section aria-label="Kandidatens CV"><button type="button" className="cta-btn company-candidate-cv-button" onClick={() => void openUploadedCv(selectedCandidate)} disabled={openingUploadedCv}>{openingUploadedCv ? "Hämtar CV..." : "Öppna CV"}</button>{uploadedCvError && <p role="alert" className="company-candidate-cv-error">{uploadedCvError}</p>}</section>
-                <WorkplacePreference key={`workplace:${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} job={selectedCandidate.job} youthId={selectedCandidate.youthUserId} readOnly/>
-                <CandidateRecruitmentProfile key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthId={selectedCandidate.youthUserId}/><CandidateAssessmentPanel key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} jobId={selectedCandidate.job.id} youthUserId={selectedCandidate.youthUserId} application={selectedCandidate.application} />
-                {selectedCandidate.reviewDecision ? <section className="company-reviewed-application"><UiIcon name={selectedCandidate.reviewDecision === "interested" ? "check" : "info"} width="22" /><div><strong>{selectedCandidate.reviewDecision === "interested" ? "Ni har visat intresse" : "Ansökan är avslutad"}</strong><p>Ansökan och kompletteringarna finns kvar här som underlag.</p></div>{selectedCandidate.reviewDecision === "interested" && <Link href={selectedConversation ? `/chats?conversation=${selectedConversation.id}` : "/chats"} className="secondary-btn">Öppna chatten <UiIcon name="arrow" width="16" /></Link>}</section> : (() => {
-                  const actionKey = `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`;
-                  const isDeciding = candidateActionKey === actionKey;
-                  return <section aria-label="Beslut om ansökan" className="company-candidate-decision">
-                    <button
-                      type="button"
-                      className="secondary-btn"
-                      disabled={isDeciding}
-                      onClick={() => {
-                        if (window.confirm(`Neka ${selectedCandidate.profile?.full_name || "den här kandidaten"} för ${selectedCandidate.job.title}?`)) {
-                          void handleApplicantDecision(selectedCandidate, "skip");
-                        }
-                      }}
-                    >
-                      {isDeciding ? "Sparar..." : "Neka"}
-                    </button>
-                    <button
-                      type="button"
-                      className="cta-btn"
-                      disabled={isDeciding}
-                      onClick={() => void handleApplicantDecision(selectedCandidate, "interested")}
-                    >
-                      {isDeciding ? "Sparar..." : "Acceptera"}
-                    </button>
-                  </section>;
-                })()}
-              </article>}
-            </div>
-          )}
-        </section>
-      )}
-
-      {false && (
-        <div className="company-candidate-workspace" style={{ display: "grid", gridTemplateColumns: "minmax(150px, 0.8fr) minmax(0, 1.6fr)", gap: "0.75rem", minHeight: 520 }}>
-          <aside className="card" style={{ padding: "0.65rem", overflowY: "auto", minHeight: 0 }}>
-            <p style={{ margin: "0.3rem 0.7rem 0.75rem", color: "#737373", fontSize: "0.72rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>Kandidater</p>
-            {candidateFeed.length === 0 ? <p style={{ padding: "0.7rem", color: "#737373", fontSize: "0.82rem" }}>Inga kandidater ännu.</p> : candidateFeed.map((candidate, index) => {
-              const candidateId = candidate.youthUserId;
-              const conversation = conversations.find((item) => item.youth_user_id === candidateId);
-              const isActive = conversation?.id === activeConversationId;
-              return <button key={`${candidateId}-${candidate.job.id}-${index}`} type="button" onClick={() => setActiveConversationId(conversation?.id ?? null)} style={{ display: "block", width: "100%", padding: "0.75rem 0.65rem", marginBottom: "0.35rem", border: 0, borderRadius: 10, textAlign: "left", background: isActive ? "#111" : "#f7f7f7", color: isActive ? "#fff" : "#111", cursor: conversation ? "pointer" : "default" }}>
-                <strong style={{ display: "block", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{candidate.profile?.full_name || "Anonym kandidat"}</strong>
-                <span style={{ display: "block", marginTop: "0.2rem", color: isActive ? "#ddd" : "#737373", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{candidate.job.title}</span>
-              </button>;
-            })}
-          </aside>
-          <section className="card" style={{ display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
-            {activeConversationId ? <>
-              <div style={{ padding: "0.9rem 1rem", borderBottom: "1px solid #e8e8e8" }}>
-                <p style={{ margin: 0, color: "#111", fontWeight: 800 }}>{feed.find((candidate) => conversations.find((item) => item.id === activeConversationId)?.youth_user_id === candidate.youthUserId)?.profile?.full_name || "Aktiv chatt"}</p>
-                <p style={{ margin: "0.2rem 0 0", color: "#737373", fontSize: "0.75rem" }}>Skriv ett meddelande</p>
-              </div>
-              <div style={{ flex: 1, minHeight: 350, overflowY: "auto", padding: "1rem" }}>
-                {chatMessages.length === 0 ? <p style={{ color: "#737373", fontSize: "0.85rem", textAlign: "center" }}>Inga meddelanden ännu.</p> : chatMessages.map((message) => <div key={message.id} style={{ display: "flex", justifyContent: message.sender_user_id === user?.id ? "flex-end" : "flex-start", marginBottom: "0.5rem" }}><span style={{ maxWidth: "78%", padding: "0.6rem 0.75rem", borderRadius: 12, background: message.sender_user_id === user?.id ? "#111" : "#f1f1f1", color: message.sender_user_id === user?.id ? "#fff" : "#111", fontSize: "0.84rem", lineHeight: 1.4 }}>{message.message_text}</span></div>)}
-              </div>
-              <form onSubmit={(event) => void sendCompanyMessage(event)} style={{ display: "flex", gap: "0.45rem", padding: "0.75rem", borderTop: "1px solid #e8e8e8" }}><input className="input-field" value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Skriv ett meddelande..." /><button type="submit" className="cta-btn" style={{ padding: "0 0.9rem" }}>Skicka</button></form>
-            </> : <div style={{ display: "grid", placeItems: "center", flex: 1, minHeight: 450, padding: "2rem", textAlign: "center" }}><p style={{ margin: 0, color: "#737373", fontSize: "0.9rem" }}>Välj en kandidat med en aktiv chatt.</p></div>}
-          </section>
-        </div>
-      )}
+      {tab === "kandidater" && user && <CompanyJobCandidates userId={user.id} jobs={jobs} verified={verificationStatus === "verified"} jobId={searchParams.get("job")} candidateId={searchParams.get("candidate")} />}
 
       {/* ── NY ANNONS TAB ── */}
       {tab === "skapa" && !draftHydrated && <p role="status">Öppnar ditt annonsutkast…</p>}
@@ -1011,6 +619,7 @@ function CompanyPageContent() {
                     <span className="job-list-card-link">Visa hela annonsen →</span>
                     </Link>
                     <div className="company-job-actions">
+                    {verificationStatus === "verified" && <Link className="secondary-btn" href={companyJobCandidatesHref(job.id)}>Visa ansökningar</Link>}
                       <button type="button" className="cta-btn" disabled={isWorking || busy} onClick={() => { setError(""); setEditReceipt(""); window.history.pushState(null, "", editCompanyJobHref(job.id)); window.scrollTo({ top: 0 }); }}>Redigera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }}>Kopiera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)}>Redigera jobbtyp</button>
@@ -1029,29 +638,6 @@ function CompanyPageContent() {
         </div>
       )}
       {/* CV full-text modal */}
-      {cvModalOpen && currentCandidate?.profile?.cv_text && (
-        <div
-          onClick={() => setCvModalOpen(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: "20px 20px 0 0", padding: "1.5rem 1.5rem 2rem", width: "100%", maxWidth: 430, maxHeight: "80svh", overflowY: "auto" }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "#111", margin: 0 }}>{currentCandidate.profile?.full_name || "Kandidat"}</p>
-                <p style={{ fontSize: "0.78rem", color: "#737373", margin: "0.1rem 0 0" }}>Fullständigt CV</p>
-              </div>
-              <button type="button" onClick={() => setCvModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.3rem", color: "#737373", padding: "0.25rem" }}>✕</button>
-            </div>
-            <p style={{ fontSize: "0.88rem", color: "#333", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
-              {currentCandidate.profile.cv_text}
-            </p>
-          </div>
-        </div>
-      )}
-      {candidateCv && selectedCandidate && candidateCv.candidateKey === `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}` && <ModalDialog label="Kandidatens CV" onClose={() => setCandidateCv(null)} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => setCandidateCv(null)} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
       {showMatchProfileEditor && user && (
         <ModalDialog label="Företagets matchprofil" onClose={() => setShowMatchProfileEditor(false)}>
           <div className="company-match-modal-content" onClick={(event) => event.stopPropagation()}>
