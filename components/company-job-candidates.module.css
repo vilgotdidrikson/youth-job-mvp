@@ -1,0 +1,24 @@
+.workspace { min-width:0; }
+.heading { margin:1rem 0 1.5rem; }
+.heading h1 { margin:0; font-size:var(--text-2xl); font-weight:var(--weight-semibold); line-height:1.2; overflow-wrap:anywhere; }
+.heading p { margin:.65rem 0 0; color:var(--color-text-muted); font-size:var(--text-md); }
+.back { display:inline-flex; align-items:center; gap:.5rem; min-height:44px; color:var(--color-text); font-size:var(--text-sm); text-decoration:none; }
+.jobs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr)); gap:1rem; margin-bottom:1rem; }
+.job { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:6rem; padding:1.25rem; border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface); color:var(--color-text); text-decoration:none; }
+.job > span { min-width:0; display:grid; gap:.5rem; }
+.job strong { font-size:var(--text-lg); font-weight:var(--weight-semibold); overflow-wrap:anywhere; }
+.job span span { font-size:var(--text-sm); color:var(--color-text-muted); }
+.job svg { flex-shrink:0; color:var(--color-brand); }
+.job:hover { border-color:var(--color-brand); }
+.workspace :is(a,button,input):focus-visible { outline:2px solid var(--color-brand); outline-offset:3px; }
+.empty { padding:1.5rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); }
+.empty h1,.empty h2 { font-size:var(--text-lg); }
+.empty p { line-height:1.6; color:var(--color-text-muted); }
+.workspace :global(.company-application-tabs button),.workspace :global(.company-application-tabs button span),.workspace :global(.company-application-reviewed) { font-size:var(--text-sm); }
+.workspace :global(.company-applicant-row strong) { font-size:var(--text-md); }
+.workspace :global(.company-candidate-search input) { font-size:var(--text-md); min-height:44px; }
+.workspace :global(.company-applicants-empty h2) { font-size:var(--text-lg); }
+@media(max-width:720px) { .heading { margin-bottom:1rem; } .job { padding:1rem; } .workspace :global(.company-application-tabs button) { white-space:normal; } }
+
+.match { padding:1rem; border-radius:var(--radius-md); background:var(--color-success-soft); color:var(--color-success-strong); }
+.match a { display:inline-flex; align-items:center; min-height:44px; color:inherit; font-weight:var(--weight-semibold); }

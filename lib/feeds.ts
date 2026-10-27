@@ -29,7 +29,7 @@ export async function getSwipeJobs(filters: DiscoveryFilters = {}): Promise<JobP
   }).map(job => prepareDiscoveryJob(job, youthProfile, seen.has(job.id))), filters);
 }
 
-export async function getCandidatesForJob(jobId: string, options?: { includeReviewed?: boolean }): Promise<CandidateFeedItem[]> {
+export async function getCandidatesForJob(jobId: string, options?: { includeReviewed?: boolean; signal?: AbortSignal; ownerId?: string }): Promise<CandidateFeedItem[]> {
   const user = await getCurrentUser();
   const profile = await getUserProfile(user?.id);
 
@@ -37,19 +37,21 @@ export async function getCandidatesForJob(jobId: string, options?: { includeRevi
     throw new Error("Candidate review is only available for task owners.");
   }
 
+  if (options?.ownerId && user.id !== options.ownerId) throw new Error("Kontot har ändrats. Läs om ansökningarna.");
+  const signal = options?.signal ?? new AbortController().signal;
   const supabase = getSupabaseClient();
   const [jobResult, interestsResult, reviewsResult] = await Promise.all([
-    supabase.from("jobs").select("*").eq("id", jobId).maybeSingle(),
+    supabase.from("jobs").select("*").eq("id", jobId).abortSignal(signal).maybeSingle(),
     supabase
       .from("swipe_actions")
       .select("*")
       .eq("job_id", jobId)
-      .eq("decision", "interested"),
+      .eq("decision", "interested").abortSignal(signal),
     supabase
       .from("company_interest_actions")
       .select("youth_user_id,decision")
       .eq("job_id", jobId)
-      .eq("company_user_id", user.id),
+      .eq("company_user_id", user.id).abortSignal(signal),
   ]);
 
   if (jobResult.error) {
@@ -90,7 +92,7 @@ export async function getCandidatesForJob(jobId: string, options?: { includeRevi
   }
 
   const { data: youthProfiles, error: youthProfileError } = await supabase
-    .rpc("get_company_candidates", { p_job_id: jobId });
+    .rpc("get_company_candidates", { p_job_id: jobId }).abortSignal(signal);
 
   if (youthProfileError) {
     logSupabaseError("youth_cv_profiles.select.by_ids", youthProfileError, {
@@ -99,7 +101,7 @@ export async function getCandidatesForJob(jobId: string, options?: { includeRevi
     throw new Error(getSupabaseErrorMessage(youthProfileError, "Unable to fetch youth profiles."));
   }
 
-  const { data: completions, error: completionError } = await supabase.from("application_completions").select("*").eq("job_id", jobId).eq("status", "submitted");
+  const { data: completions, error: completionError } = await supabase.from("application_completions").select("*").eq("job_id", jobId).eq("status", "submitted").abortSignal(signal);
   if (completionError) throw new Error("Kunde inte hämta kompletteringssvaren.");
   const completionMap = new Map((completions ?? []).map((item) => [String(item.youth_user_id), item]));
   const profileMap = new Map<string, YouthProfile>();
@@ -107,7 +109,7 @@ export async function getCandidatesForJob(jobId: string, options?: { includeRevi
     profileMap.set(row.user_id, row);
   }
 
-  return interestedIds.filter((id) => profileMap.has(id)).map((youthUserId) => ({
+  return interestedIds.filter((id) => profileMap.has(id) && completionMap.has(id)).map((youthUserId) => ({
     youthUserId,
     reviewDecision: reviewed.get(youthUserId) === "interested" ? "interested" : reviewed.get(youthUserId) === "skip" ? "skip" : undefined,
     profile: profileMap.get(youthUserId) ?? null,
