@@ -8,7 +8,7 @@ for (const mode of ["login", "signup"]) {
   const page = source.statements.find(node => ts.isFunctionDeclaration(node) && node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.DefaultKeyword));
   assert.ok(page, `${path} must export a page`);
   assert.equal(page.parameters.length, 0, "Custom auth props belong on a component, not a Next.js page");
-  const imports = source.statements.filter(ts.isImportDeclaration).map(node => node.moduleSpecifier.text);
+  const imports = source.statements.filter(node => ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly).map(node => node.moduleSpecifier.text);
   assert.deepEqual(imports, ["@/components/auth-page"]);
   const returned = page.body.statements.find(ts.isReturnStatement).expression;
   assert.ok(ts.isJsxSelfClosingElement(returned));

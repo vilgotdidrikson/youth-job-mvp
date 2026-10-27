@@ -94,9 +94,9 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           window.location.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
           return;
         }
-        // Email confirmation is disabled for this project. A missing session is
-        // therefore an unexpected fallback, but the account may still exist.
-        setMessage("Konto skapat. Logga in för att fortsätta.");
+        // Confirmation settings differ between environments. No session must
+        // not send a new account into a loop of unsuccessful login attempts.
+        setMessage("Kontrollera din e-post för att bekräfta kontot. Har du redan ett konto kan du logga in.");
         setMode("login");
         return;
       }

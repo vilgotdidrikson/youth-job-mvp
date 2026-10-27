@@ -4,7 +4,7 @@ import { BrandLogo } from "@/components/brand-logo";
 
 import Link from "next/link";
 import { UiIcon } from "@/components/ui-icon";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { requestPasswordReset } from "@/lib/auth";
 
 export default function ForgotPasswordPage() {
@@ -12,23 +12,29 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const busy = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy.current || !active.current) return;
+    const submittedEmail = String(new FormData(event.currentTarget).get("email") ?? "");
+    busy.current = true;
     setLoading(true); setError(""); setMessage("");
     try {
-      await requestPasswordReset(email);
-      setMessage("Om ett konto finns för e-postadressen har vi skickat en länk för att återställa lösenordet.");
+      await requestPasswordReset(submittedEmail);
+      if (active.current) setMessage("Om ett konto finns för e-postadressen har vi skickat en länk för att återställa lösenordet.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kunde inte skicka återställningslänken.");
-    } finally { setLoading(false); }
+      if (active.current) setError(err instanceof Error ? err.message : "Kunde inte skicka återställningslänken.");
+    } finally { busy.current = false; if (active.current) setLoading(false); }
   };
 
   return <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link><section className="auth-layout auth-layout-form-only auth-layout-login"><div className="auth-form-stack">
     <Link href="/login" className="auth-back auth-back-above"><span aria-hidden="true"><UiIcon name="chevron-left" width="18" height="18" /></span><span>Till inloggning</span></Link>
     <form className="auth-card auth-card-login" onSubmit={submit}>
       <div className="auth-card-heading"><h1>Återställ lösenord</h1><p>Ange e-postadressen till ditt konto så skickar vi en återställningslänk.</p></div>
-      <div className="auth-fields"><label>E-postadress<input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label></div>
+      <div className="auth-fields"><label>E-postadress<input name="email" className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label></div>
       {error && <p role="alert" className="auth-message auth-error">{error}</p>}
       {message && <p role="status" className="auth-message auth-success">{message}</p>}
       <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Skickar..." : "Skicka återställningslänk"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>

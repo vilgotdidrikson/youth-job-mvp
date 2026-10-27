@@ -1,6 +1,6 @@
 "use client";
 
-import type { Session, User } from "@supabase/supabase-js";
+import { createClient, type Session, type User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getSupabaseErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from "@/lib/supabase-errors";
 import type { Profile, Role } from "@/lib/types";
@@ -76,10 +76,13 @@ export async function requestPasswordReset(email: string): Promise<void> {
   const supabase = getSupabaseClient();
   const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;
   const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), { redirectTo });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit"
+    ? "För många försök. Vänta en stund och begär sedan en ny länk."
+    : getSupabaseErrorMessage(error, "Kunde inte skicka återställningslänken."));
 }
 
 export async function updatePassword(password: string): Promise<void> {
+  if (password.length < 8) throw new Error("Lösenordet måste innehålla minst 8 tecken.");
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) throw new Error(error.message);
@@ -93,13 +96,18 @@ export async function changePassword(currentPassword: string, newPassword: strin
   const user = userData.user;
   if (userError || !user?.email) throw new Error("Din session är inte giltig. Logga in igen.");
 
-  const { data: verified, error: passwordError } = await supabase.auth.signInWithPassword({
+  // Reauthentication must not sign a different account into the shared client
+  // if the user switches account while this request is in flight.
+  const reauth = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `mnw-password-check-${crypto.randomUUID()}` },
+  });
+  const { data: verified, error: passwordError } = await reauth.auth.signInWithPassword({
     email: user.email,
     password: currentPassword,
   });
   if (passwordError || verified.user?.id !== user.id) throw new Error("Ditt nuvarande lösenord stämmer inte.");
 
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  const { error } = await reauth.auth.updateUser({ password: newPassword });
   if (error) throw new Error(error.message);
 }
 
@@ -123,10 +131,10 @@ export async function getCurrentUser(): Promise<User | null> {
   if (error) {
     // Without a server answer the stored session may still be valid; keep it
     // so the user is not signed out by a dropped connection.
-    if (isNetworkError(error)) throw new Error(NETWORK_ERROR_MESSAGE);
-    // A browser may retain a stale local session after a token was revoked.
-    // Treat it as signed out so UI state agrees with protected API routes.
-    await supabase.auth.signOut({ scope: "local" });
+    if (isNetworkError(error) || (error.status ?? 0) >= 500) throw new Error(NETWORK_ERROR_MESSAGE);
+    // Clear the caller's UI through SessionProvider. Signing out the shared
+    // client here could clear a newer account after this request's auth lock
+    // has been released. The SDK owns refresh-token/storage cleanup.
     return null;
   }
 
