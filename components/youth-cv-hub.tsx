@@ -18,6 +18,8 @@ import { submitApplicationDraftsAfterCv, type ApplicationDraftSubmissionResult }
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 import { useVerifiedExperience } from "@/hooks/use-verified-experience";
 import { withVerifiedExperience } from "@/lib/recruitment-types";
+import { cvCreationMethod, type CvCreationMethod } from "@/lib/cv-method";
+import styles from "./cv-method.module.css";
 import { CvFactReview } from "./cv-fact-review";
 import { cvReviewSnapshot, cvSourceText, hasApprovedCv } from "@/lib/cv-fact-review";
 
@@ -94,7 +96,12 @@ function sectionSummary(item: FormStep, draft: Draft) {
   return [draft.merits, draft.linkedin, draft.portfolio, draft.otherLink].filter(Boolean).join(" · ") || "Inte ifyllt ännu";
 }
 
-export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean }) {
+export function YouthCvHub(props: { initialCreate?: boolean }) {
+  const { user } = useSession();
+  return <YouthCvHubContent key={user?.id ?? "signed-out"} {...props} />;
+}
+
+function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean }) {
   const router = useRouter();
   const query = useSearchParams();
   const { user, profile, loading } = useSession();
@@ -104,6 +111,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const inJourney = query.get("return") === "build" && !jobId;
   const [completed,setCompleted] = useState(false);
   const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : inJourney ? "/profile/build" : "/profile?tab=work";
+  const [method, setMethod] = useState<CvCreationMethod>("manual");
   const [step, setStep] = useState<Step>(initialCreate ? "about" : "start");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [name, setName] = useState("");
@@ -160,7 +168,8 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
             setStep("merits");
           }
         } else if (saved) {
-          const parsed = JSON.parse(saved) as { step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] };
+          const parsed = JSON.parse(saved) as { method?: unknown; step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] };
+          setMethod(cvCreationMethod(parsed.method));
           if (parsed.draft) setDraft({ ...EMPTY, ...parsed.draft });
           if (parsed.step && !["start", "pdf", "preview", "review"].includes(parsed.step)) setStep(parsed.step);
           setReturnToReview(Boolean(parsed.returnToReview));
@@ -175,16 +184,17 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   }, [key, query, user?.id]);
   useEffect(() => {
     if (ready && user && !["start", "pdf", "preview"].includes(step)) {
-      try { localStorage.setItem(key, JSON.stringify({ step, draft, returnToReview, editedSections })); setDraftStorageUnavailable(false); }
+      try { localStorage.setItem(key, JSON.stringify({ method, step, draft, returnToReview, editedSections })); setDraftStorageUnavailable(false); }
       catch { setDraftStorageUnavailable(true); }
     }
-  }, [draft, editedSections, key, ready, returnToReview, step, user]);
+  }, [draft, editedSections, key, method, ready, returnToReview, step, user]);
 
   useEffect(() => {
     if (ready) window.scrollTo({ top: 0, behavior: "instant" });
   }, [ready, step]);
 
   const generate = async () => {
+    if (method !== "ai" || generating || saving) return;
     setError(""); setGenerating(true);
     setApprovedSnapshot(null);
     setReviewSource(cvSourceText(source));
@@ -212,11 +222,12 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   };
   const prepareManualPreview = () => {
     setApprovedSnapshot(null);
+    setReviewSource(cvSourceText(source));
     setGenerated({ text: renderStructuredCv(source), structured: source });
     setReturnToReview(false);
     setStep("preview");
   };
-  const canUseAi = true;
+  const canUseAi = method === "ai";
   const finish = async () => {
     if (!user?.id || !generated) return;
     if (!factsApproved || generating || saving) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
@@ -261,8 +272,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
     {!inJourney && <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>}{jobNote}
     <h1>Skapa ditt CV</h1>
-    <div className="cv-hub-options">
-      <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><span className="cv-hub-option-recommended">Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på några frågor så skriver AI:n ett CV som du granskar. Cirka 3–5 min.</small></button>
+    <div className={`cv-hub-options ${styles.options}`}>
+      <button className="cv-hub-option" onClick={() => { setMethod("manual"); setStep("about"); }}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><strong>Skriv själv</strong><small>Fyll i dina uppgifter och granska ditt CV utan AI.</small></button>
+      <button className="cv-hub-option" onClick={() => { setMethod("ai"); setStep("about"); }}><span className="cv-hub-option-icon"><UiIcon name="chat" width="25" height="25" /></span><strong>Ta hjälp av AI</strong><small>Fyll i samma uppgifter och få ett textförslag att granska.</small></button>
       <button className="cv-hub-option" onClick={() => setStep("pdf")}><span className="cv-hub-option-icon"><UiIcon name="upload" width="25" height="25" /></span><strong>Ladda upp ett CV</strong><small>Har du redan ett CV? PDF, max 5 MB.</small></button>
       {VOICE_CV_ENABLED && <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>}
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
@@ -275,10 +287,12 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     {uploaded && <section className="cv-hub-status"><strong>CV uppladdat</strong><p>{uploaded.name}</p><button onClick={() => void getYouthDocumentSignedUrl(uploaded.url).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Kunde inte öppna PDF:en."))}>Förhandsvisa PDF</button></section>}
     {message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
+  const methodChoice = <fieldset className={styles.method} disabled={generating || saving}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;
+
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
     
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
-    <p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
+    {methodChoice}<p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
     <p className="cv-hub-lead">Välj en del i taget. Dina ändringar sparas här medan du arbetar och syns när du förhandsvisar CV:t.</p>
     <section className="cv-hub-saved-banner" aria-live="polite">
       <strong>{editedSections.length ? "Ändringar sparade" : "Ditt redigeringsutkast"}</strong>
@@ -296,13 +310,14 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <h1>Granska ditt CV</h1>
     <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
-    <textarea aria-label="Redigera CV-förhandsvisningen" className="cv-hub-preview" disabled={saving || generating} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
-    {generated && <CvFactReview text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating}
+    <textarea aria-label={canUseAi ? "Redigera CV-förhandsvisningen" : "CV-förhandsvisning"} className="cv-hub-preview" readOnly={!canUseAi} disabled={saving || generating} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
+    {!canUseAi && <p className={styles.note}>Ändra texten genom delarna ovan eller uppgifterna nedan. CV och profilfakta hålls ihop utan AI.</p>}
+    {generated && <CvFactReview manual={!canUseAi} text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating}
       onApprove={(approved) => setApprovedSnapshot(approved ? cvReviewSnapshot(generated.text, generated.structured) : null)}
       onChange={(cv) => { setApprovedSnapshot(null); setGenerated({ text: renderStructuredCv(cv), structured: cv }); }} />}
     {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
     {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
-    <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>
+    {canUseAi && <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
     <button className="cta-btn" disabled={saving || generating || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
   </main>;
@@ -324,8 +339,9 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
       {step === "merits" && <><p>Valfritt: körkort, certifikat, förening eller en länk som visar mer om dig.</p><textarea aria-label="Meriter och certifikat" rows={4} value={draft.merits} onChange={(event) => update("merits", event.target.value)} placeholder="T.ex. HLR-utbildning, ledare i en förening" /><input aria-label="LinkedIn-länk" type="url" value={draft.linkedin} onChange={(event) => update("linkedin", event.target.value)} placeholder="LinkedIn-länk (valfritt)" /><input aria-label="Portfolio eller hemsida" type="url" value={draft.portfolio} onChange={(event) => update("portfolio", event.target.value)} placeholder="Portfolio, GitHub eller egen hemsida (valfritt)" /><input aria-label="Annan länk" type="url" value={draft.otherLink} onChange={(event) => update("otherLink", event.target.value)} placeholder="Annan länk, t.ex. ett projekt (valfritt)" /></>}
     </div>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
+    {methodChoice}
     <div className="cv-hub-question-actions">
-      <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa min CV-förhandsvisning" : "Förhandsvisa ändringar" : "Fortsätt"}</button>
+      <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
       <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : "Hoppa över"}</button>
     </div>
     {/* Bekräftad erfarenhet visas i förhandsvisningen; i profilbygget finns "Pausa och fortsätt senare" redan i stegrubriken. */}

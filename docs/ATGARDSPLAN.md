@@ -114,7 +114,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
-| 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Pågår | Vilgot / Codex |
+| 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | För granskning | Vilgot / Codex |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
 | 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | Ej påbörjad | — |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
@@ -340,14 +340,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 28
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n08-manual-cv-20261027`, reservation före kodarbete från dev `d52f5d2`. Avgränsad manuell CV-väg med befintliga profilfakta, granskning och sparning. Tidigare obesvarade profil-/AI-beslut, e-post/pris/leverantörsberoenden samt slutverifiering bevaras; inga nya AI-dataflöden införs. Öppna PR:er kontrollerade.
 - Åtgärd: Visa Skriv själv som ett tydligt val från början, med samma sparade fakta och redigering som AI-guiden. AI ska vara en valfri hjälp och PDF-uppladdning ett separat alternativ.
 - Klar när: Ungdomen kan skapa och färdigställa CV utan att generera AI-text.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat 2026-10-27: Tydliga val Skriv själv, Ta hjälp av AI och Ladda upp ett CV. Manuellt och AI använder samma formulär/faktamodell/granskning/sparfunktion. Manuell förhandsvisning renderas lokalt utan CV-generation eller AI-synk. Texten ändras genom samma formulär-/faktaredigering så text och profilfakta hålls ihop. Metodval sparas i enhetens befintliga utkast; äldre utkast väljer inte AI automatiskt. Kontobyte monterar om arbetsytan. PDF och befintlig profil-/ansökningslogik bevaras; ingen AI-chatt enligt N20 byggs här. Se [N08.md](N08.md).
+- Verifierat: `test:manual-cv` kör faktiska komponentcallbacks för metodval, metodbyte, återöppnat utkast, formulär → förhandsvisning → rättelse → godkännande → sparning, befintliga strukturerade fakta, kontonycklar och spärrad AI-synk; ingen nätverksbegäran för CV-generation/synk i den manuella vägen. Explicit AI-fel kan följas av manuell förhandsvisning med bevarade svar utan nytt AI-anrop. Spartransporten är simulerad. F02/F03-, profilflödes-/profilhämtningstester, riktad ESLint och produktionsbygge med TypeScript/56 routes passerar.
+- Återstår / blockerare: Verkligt inloggat spara/återläs/PDF-/ansökningsprov samt visuell kontroll på dator/mobil och med tangentbord. Inget live-AI-anrop eller nytt backend-acceptanstest påstås. N09:s kontolagrade utkast och N20:s profilchatt förblir separata; befintliga utkast sparas bara på enheten. Manuellt metodval gäller CV-skrivandet; redan beslutade matchnings-/ansökningsflöden ändras inte. Markeras inte Klar före verklig slutverifiering.
 
 <a id="n03"></a>
 ### N03 Visa annonsutkast i översikten
