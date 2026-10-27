@@ -120,7 +120,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
-| 32.1 | [N25](#n25) | P2 | Välj annons före kandidatgranskning | Ej påbörjad | — |
+| 32.1 | [N25](#n25) | P2 | Välj annons före kandidatgranskning | Pågår | Vilgot / Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
@@ -1714,9 +1714,10 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 32.1, samordnas med N03/F04, F05/F26/N19 och DA-12.
-- Status: Ej påbörjad
-- Ansvarig: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
 - Branch/PR: Planbeslut 2026-10-26, `codex/n25-ad-candidates-plan-20261026`; ingen produktimplementation reserverad. Planändringen införd i dev genom [PR #120](https://github.com/vilgotdidrikson/youth-job-mvp/pull/120), merge `9469ab7`; funktionskortet förblir Ej påbörjad.
+- Reservation före kodarbete 2026-10-27: `codex/n25-ad-candidates-20261027`, från dev `2af9031`. Avgränsad annonsbaserad kandidatvy med befintliga datakällor och säkerhetsgränser, samordnad med auditens visuella riktning. Öppna PR:er kontrollerade; inget annat aktivt produktarbete övertas. Avsteg från tidigare ej påbörjade kort: N23 kräver aktiveringsklar videogallring; N20/N21 och profilutökningar inväntar befintlig dataskyddsavstämning; L02/L03 kräver konfigurerad e-postleverans respektive pris/fakturauppgifter; L13/L14 har kvarstående inventerings-/verksamhetsbeslut. N25 inför inga nya persondatafält, externa tjänster eller AI-anrop.
 - Åtgärd: Låt företaget först välja en egen annons i annonsöversikten och därefter granska endast de kandidater som har skickat en ansökan till den annonsen. Visa annonsens titel som tydlig kontext och en enkel väg tillbaka till annonserna. Ett generellt kandidatregister eller en blandad lista över alla annonser ska inte vara standardingången. Behåll eventuell samlad översikt enbart som ett uttryckligt separat val om det behövs.
 - Avgränsning: Samma ungdom kan söka flera annonser; varje ansökan, CV-/delningsunderlag, fråga, matchning, konversation och anställningsstatus behåller sitt jobb- och ansökningssammanhang. Annonsbyte ska rensa föregående kandidat och inaktuellt underlag direkt. Senare inkomna svar får inte visas under fel annons. Utkast och annonser utan sökande får begripliga tomvyer; pausade/stängda annonser behåller behörig historik enligt befintliga regler.
 - Regler: Återanvänd befintliga jobb-/ansökningsrelationer och ägar-/åtkomstkontroller även i API/RPC/RLS. Ett UI-filter är inte en behörighetsgräns. Ingen kandidat får falla bort på grund av låg matchgrad, saknad AI-bedömning, okänd uppgift eller utebliven frivillig video. Återkallade ansökningar och blockerad kontakt följer redan beslutade regler i F26/N19/N24.
