@@ -98,7 +98,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
-| 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
+| 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Pågår | Vilgot / Codex |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
@@ -1063,9 +1063,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P1
 - Global ordning: 15
 - Typ: Tidigare beslutad funktion
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l03-billing-details-20261027`, reserverad före kodarbete. Första sammanhängande leverans: privata fakturauppgifter, företagsinställningar, servervalidering och skydd mot fel konto/överskrivning. Pris, betalningsvillkor, fakturagenerering och utskick återstår; inga betalningsåtaganden eller produktionsändringar.
 - Åtgärd: Samla fakturauppgifter och fastställ pris, avgiftsutlösande händelse, betalningsvillkor och fakturamall innan skarp användning. Koppla bekräftad anställning till en unik faktura, PDF, e-post och administrativ betalningsstatus. Första versionen kan använda manuell betalningsavstämning. Hantera fel och rättelser utan dubbelfakturering. Premiumabonnemang och Swish Handel ingår inte i denna leverans.
 - Klar när: En avsedd bekräftad testanställning ger exakt en testfaktura; mottagare, belopp och status är korrekta och flödet kan återförsökas säkert utan verkligt betalningsåtagande.
 - Implementerat: —
