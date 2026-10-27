@@ -97,7 +97,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Pågår | Codex |
 | 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
-| 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Ej påbörjad | — |
+| 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Ej påbörjad | — |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
@@ -1046,7 +1046,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Branch/PR: `codex/l02-auth-email-20261027`, reserverad före kodarbete. Avgränsad första leverans: auth-mejl, miljöriktiga länkar, svenska mallar och konfigurationskontroll. SMTP-uppgifter och verklig leverans saknas; ingen produktionskonfiguration eller aktivering.
 - Åtgärd: Inventera befintlig e-postkod och konfigurera fungerande avsändare och leverans. Prioritera verifiering, återställning av lösenord och fakturautskick. Koppla mallar, leveransstatus och återförsök till rätt händelser och undvik dubbla utskick. Match- och meddelandemail är en senare del, med notispreferenser.
 - Klar när: Kritiska mejl når testmottagare, länkar leder till rätt miljö och misslyckade eller upprepade försök hanteras spårbart.
+- Implementerat i bekräftelsefortsättningen: Publik ny bekräftelselänk via Supabase Auth, neutral mottagarstatus, samma miljös /login och 60 s lokal spärr. Registrering skyddas mot dubbelklick och avmontering; ingen session leder till bekräftelsesteg med tömda lösenord. Se docs/L02.md.
 - Implementerat 2026-10-27: Explicit miljöriktig bekräftelseretur till /login, svenska bekräftelse-/återställnings-/e-postbytesmallar, lokala exakta returadresser och read-only hosted Auth-preflight utan känslig loggning. Inventering och anslutnings-/acceptanssteg i docs/L02.md. Inga hosted inställningar eller produktionsändringar.
+- Fortsättning verifierad lokalt: Utökat test:auth-email kör installerad SDK och faktiska komponentcallbacks med simulerad transport: resend, neutral status, fel/taktgräns, dubbla klick, avmontering, autofill och 60 s väntetid/återförsök. Dubbelklicksprovet fallerar mot föregående komponent och passerar med rättningen. Account-recovery, riktad ESLint och standardproduktionsbygge med TypeScript/57 routes passerar (fiktiva publika Supabase-byggvärden). Inloggad registreringsbekräftelse och mobilvisuell kontroll återstår.
 - Verifierat: test:auth-email kör faktiska auth-funktioner och installerad SDK mot simulerad HTTP i tre miljöer, negativa konfigurationsprov och mallkontroller. test:account-recovery, riktad ESLint och standardproduktionsbygge inklusive TypeScript/56 routes passerar (fiktiva publika Supabase-byggvärden). Verkliga utskick har inte körts.
 - Återstår / blockerare: Beslutad Zoho-avsändare: info@matchnwork.se (MatchnWork), bekräftad av användaren 2026-10-27. Kan användas efter verifierad SMTP-åtkomst, hosted konfiguration och verkliga leverans-/länkprov. SMTP-autentisering anges direkt i tjänstens inställningar. Fakturamejl och beständig leverans-/retryhantering återstår. L02 markeras inte Klar.
 

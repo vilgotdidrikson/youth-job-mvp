@@ -25,10 +25,12 @@ for (const name of ['confirmation', 'recovery', 'email_change']) assert.ok(confi
 const require = createRequire(import.meta.url);
 const { createClient } = require('@supabase/supabase-js');
 const requests = [];
+let transportError = null;
 const sdk = createClient('https://qa.supabase.co', 'qa-key', {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { fetch: async (url, options) => {
     requests.push({ url: new URL(url), body: JSON.parse(options.body) });
+    if (transportError) return new Response(JSON.stringify(transportError), {status: 400, headers: {"Content-Type": "application/json", "x-supabase-api-version": "2024-01-01"}});
     return new Response(JSON.stringify(String(url).includes('/signup') ? { user: { id: 'qa', email: 'qa@example.invalid' }, session: null } : {}), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } },
 });
@@ -50,12 +52,26 @@ try {
     await compiledModule.exports.signUp(' QA@EXAMPLE.INVALID ', 'qa-password', 'youth');
     await compiledModule.exports.requestPasswordReset(' QA@EXAMPLE.INVALID ');
     const [signup, recovery] = requests.slice(-2);
+    await compiledModule.exports.resendSignupConfirmation(" QA@EXAMPLE.INVALID ");
+    const resend = requests.at(-1);
+    assert.equal(resend.url.searchParams.get("redirect_to"), `${currentOrigin}/login`);
+    assert.equal(resend.body.type, "signup");
+    assert.equal(resend.body.email, "qa@example.invalid");
+    assert.equal("password" in resend.body, false);
     assert.equal(signup.url.searchParams.get('redirect_to'), `${currentOrigin}/login`);
     assert.equal(recovery.url.searchParams.get('redirect_to'), `${currentOrigin}/reset-password`);
     assert.equal(signup.body.email, 'qa@example.invalid');
     assert.deepEqual(signup.body.data, { role: 'youth' });
     assert.equal(recovery.body.email, 'qa@example.invalid');
   }
+  transportError = {code: "over_email_send_rate_limit", msg: "secret SMTP diagnostic"};
+  await assert.rejects(compiledModule.exports.resendSignupConfirmation("qa@example.invalid"), /För många försök/);
+  transportError = {code: "unexpected_failure", msg: "secret SMTP diagnostic"};
+  await assert.rejects(compiledModule.exports.resendSignupConfirmation("qa@example.invalid"), err => !err.message.includes("secret") && err.message.includes("Kunde inte begära"));
+  transportError = {code: "user_not_found", msg: "no such user"};
+  await compiledModule.exports.resendSignupConfirmation("qa@example.invalid");
+  transportError = {code: "email_not_confirmed", msg: "Email not confirmed"};
+  await assert.rejects(compiledModule.exports.signIn("qa@example.invalid", "test-password"), err => err.name === "EmailConfirmationRequiredError");
 } finally {
   Module._load = originalLoad;
   if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;

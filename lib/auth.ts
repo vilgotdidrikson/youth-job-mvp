@@ -60,6 +60,11 @@ export async function signIn(email: string, password: string): Promise<Session> 
   });
 
   if (error) {
+    if (error.code === "email_not_confirmed") {
+      const confirmationError = new Error("Bekräfta din e-postadress innan du loggar in.");
+      confirmationError.name = "EmailConfirmationRequiredError";
+      throw confirmationError;
+    }
     logUnexpectedAuthError("Supabase sign in failed.", error);
     throw new Error(getSupabaseErrorMessage(error, error.message));
   }
@@ -71,6 +76,19 @@ export async function signIn(email: string, password: string): Promise<Session> 
   }
 
   return data.session;
+}
+
+export async function resendSignupConfirmation(email: string): Promise<void> {
+  const { error } = await getSupabaseClient().auth.resend({
+    type: "signup",
+    email: normalizeEmail(email),
+    options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined },
+  });
+  // Do not reveal whether the address exists or has already been confirmed.
+  if (!error || error.code === "user_not_found") return;
+  throw new Error(error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit"
+    ? "För många försök. Vänta en stund och försök igen."
+    : "Kunde inte begära en ny bekräftelselänk. Försök igen om en stund.");
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
