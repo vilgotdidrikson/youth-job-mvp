@@ -13,7 +13,7 @@ end;$$;
 do $$
 declare u uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid(); d uuid:=gen_random_uuid(); admin uuid:=gen_random_uuid();
  j uuid:=gen_random_uuid(); j2 uuid:=gen_random_uuid(); cap uuid:=gen_random_uuid(); pend uuid:=gen_random_uuid(); daily uuid:=gen_random_uuid(); foreign_job uuid:=gen_random_uuid();
- job uuid; request uuid:=gen_random_uuid(); qid uuid; second uuid; reported uuid; result jsonb; packet jsonb; before_profile jsonb; n int; checks text[]:='{}';
+ job uuid; request uuid:=gen_random_uuid(); qid uuid; second uuid; reported uuid; result jsonb; packet jsonb; before_profile jsonb; bulk_ids uuid[]:='{}'; bulk_answers jsonb:='{}'; bulk_id uuid; n int; checks text[]:='{}';
 begin
  insert into auth.users(id,email,raw_user_meta_data) values
  (u,'qa-n24-'||u||'@example.invalid','{"role":"youth"}'),(c,'qa-n24-'||c||'@example.invalid','{"role":"company"}'),
@@ -145,6 +145,20 @@ begin
  perform pg_temp.n24_denied(format('select public.create_company_application_question(%L,%L,%L,%L)',daily,u,'Exceeds rolling day',gen_random_uuid()),'PT409','dygnet');
  reset role;
  checks:=array_append(checks,'closed/withdrawn writes stop; paused answers preserve existing behavior; two pending/five total/20 per rolling day enforced');
+ -- Six automatic questions plus five company questions can coexist on one application.
+ for n in 1..11 loop
+  bulk_id:=gen_random_uuid();bulk_ids:=array_append(bulk_ids,bulk_id);bulk_answers:=bulk_answers||jsonb_build_object(bulk_id::text,repeat('å',1500));
+  insert into public.application_followups(id,job_id,youth_user_id,criterion_key,criterion_label,question,job_profile_version,question_source,asked_by,request_key)
+  values(bulk_id,daily,u,'qa-bulk-'||n,'QA','QA bulk '||n,1,case when n<=6 then 'automatic' else 'company' end,case when n>6 then c end,case when n>6 then gen_random_uuid() end);
+ end loop;
+ perform set_config('request.jwt.claim.sub',u::text,true);perform set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);
+ set local role authenticated;
+ perform public.save_my_application_supplement(daily,'{}','{}','{}',bulk_ids);
+ perform pg_temp.n24_assert('all eleven can be skipped',(select count(*)=11 from public.application_followups where job_id=daily and status='skipped'));
+ perform public.save_my_application_supplement(daily,'{}','{}',bulk_answers,'{}');
+ perform pg_temp.n24_assert('all eleven full Swedish answers',(select count(*)=11 from public.application_followups where job_id=daily and status='answered' and length(answer)=1500));
+ reset role;
+ checks:=array_append(checks,'combined six automatic/five employer questions accept bulk skip and full Swedish answers');
  -- Enable only within this rolled-back, targeted fixture to verify L12 removes new rows too.
  update private.data_retention_config set applications_enabled=true,policy_reference='QA N24 rollback only',policy_reviewed_at=now(),legacy_reviewed_at=now();
  update private.application_retention set closed_at=now()-interval '7 months',delete_after=now()-interval '1 day' where job_id=j and youth_user_id=u;
