@@ -105,7 +105,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Klar | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | För granskning | Vilgot / Codex |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Klar | Vilgot / Codex |
-| 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | Ej påbörjad | — |
+| 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | För granskning | Vilgot / Codex |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
@@ -1072,7 +1072,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Typ: Verifiering och komplettering av befintlig funktionalitet
 - Status: Klar
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l05-moderation-security-20261026`, [PR #127](https://github.com/vilgotdidrikson/youth-job-mvp/pull/127), införd i dev som `136ad2195982e6f49ca42b2a8a0fc6fc346b29b7`. Slutlig verifiering på egen branch `codex/l05-verification-20261026`.
+- Branch/PR: `codex/l05-moderation-security-20261026`, [PR #127](https://github.com/vilgotdidrikson/youth-job-mvp/pull/127), införd i dev som `136ad2195982e6f49ca42b2a8a0fc6fc346b29b7`. Slutlig verifiering och konfliktfix via [PR #128](https://github.com/vilgotdidrikson/youth-job-mvp/pull/128), dev `0023105f62748cea2c32e9175c2244ed44bde57e`, verifierad READY på dev-aliasen.
 - Åtgärd: Inventera blockering, rapportering, företagsverifiering och adminhantering innan ny kod skrivs. Kontrollera att rapporter kan följas upp och att blockering påverkar kommunikation som avsett. Kör negativa åtkomsttester med egna ungdoms- och företagskonton: andra profiler, ansökningar, privata CV/video, matchningar och chattar samt pausade/stängda jobb. Lägg till verkligt saknade delar och bevara RLS.
 - Klar när: Obehörig åtkomst nekas, rapporter kan hanteras av rätt administratör och blockerade konton kan inte fortsätta den kommunikation som spärren avser.
 - Tillägg 2026-10-18 (F26/N19): Verifiera att företaget bara når jobbspecifikt ansökningsunderlag, inte hela jobbprofilen. Testa verkliga API-/RPC-svar, direkta databasfrågor/RLS och privata CV-/videolänkar med anonym, fel företag och fel jobb/ansökan. Kontrollera även äldre alternativa åtkomstvägar och AI-belägg: inga privata utkast, råa textsamtal, avvisade AI-förslag, orelaterade profilfält eller exakt bostadsadress i strukturerat underlag. Original-CV kan innehålla kontaktuppgifter och ska motsvara ungdomens granskade delning. Dold UI är inte åtkomstkontroll. Kontrollerna är nu genomförda enligt verifieringen nedan.
@@ -1087,15 +1087,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P1
 - Global ordning: 22
 - Typ: Verifiering och komplettering
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l06-account-recovery-20261027`, remote-branch och ansvar publicerade 2026-10-27 före kodarbete; bas dev `0023105`.
 - Åtgärd: Kontrollera registrering, verifieringsmejl, glömt lösenord, säkert lösenordsbyte, utloggning och utgången session. Inventera kontoradering och rätta eventuella luckor. Hantera privata dokument och video vid radering. Genomför känsliga tester med egna konton och enligt autentiseringsverktygets regler; begär aldrig lösenord i chatten. Utökade kontoval ligger i N10.
 - Klar när: Användaren kan återfå åtkomst och förstå fel utan att fastna. Sessioner och eventuell radering får det avsedda, verifierade resultatet.
 - Tillägg 2026-10-19: L13 preciserar säker självbetjäningsradering och ny autentisering före export/radering. Inventera och återanvänd befintlig raderingsfunktion; verifiera även återkallad åtkomst/sessioner och faktiska filer. Vanliga lagringstider i L12 är inte i sig skäl att neka tidigare radering.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Samlad förstärkning av konto-/återställningsflöden. Sessionsgeneration skyddar mot sena svar efter logout/kontobyte/avmontering; läsning har tidsgräns och verkligt nytt försök. Tillfälliga serverfel raderar inte delad session, och gamla Auth-svar loggar inte ut ett nyare konto. Logout-fel hanteras av anroparna. Isolerad lösenordsbekräftelse, robust återställningsläsning, ett lösenordsbyte vid dubbelklick, separat logout-retry efter sparat lösenord, kontobunden recovery och autofyllningssäker begäran om länk. Bekräftelsemejlets fallback hanterar olika miljöinställningar. Befintliga formulär/designtokens återanvänds. Se [L06](L06.md).
+- Verifierat: Fel med gammalt profilsvar efter SIGNED_OUT reproducerat före fix. Faktiska klient-/hook-callbacks testade för logout, kontobyte, timeout/retry, avmontering och recovery; tjänstekontrakt och isolerad lösenordsbekräftelse testade. Moderation-regression passerar. 18 riktiga DevStaging/dev-HTTP-kontroller: lösenordsbyte, nekat gammalt lösenord, spärrad refresh-token efter logout samt säker kontoradering med privat PDF och nekad åtkomst efteråt. Engångskonto/filer städade och noll kvar bekräftat. Det är backend-HTTP och styrda klienttester, inte verklig mejlleverans.
+- Återstår / blockerare: Verklig testinkorg/SMTP-leverans och hela återställningslänken inklusive redirect, använd/utgången länk och eventuell e-postbekräftelse (L02/L14), samt full inloggad webb-/mobil-/flerflikskontroll (L07/L08). Access-token kan leva till utgång efter logout; inga nya RLS/sessiongrants införda. DevStaging kräver för närvarande inte e-postbekräftelse; konfigurationen är inte ändrad. L06 markeras inte Klar.
 
 <a id="l09"></a>
 ### L09 Verifiera CV-uppladdning och PDF-layout

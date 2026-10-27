@@ -62,8 +62,13 @@ export function ShortYouthOnboarding() {
   // /login sends a signed-in user back here, so leave this session before switching account.
   const switchToLogin = async () => {
     setSwitching(true);
-    await logout();
-    router.replace("/login");
+    try {
+      await logout();
+      router.replace("/login");
+    } catch {
+      setError("Kunde inte logga ut. Kontrollera anslutningen och försök igen.");
+      setSwitching(false);
+    }
   };
 
   if (!ready) return <main className="mnw-onboarding"><p role="status">Hämtar dina uppgifter…</p></main>;

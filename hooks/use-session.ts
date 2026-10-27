@@ -28,6 +28,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const userRef = useRef<User | null>(null);
   const profileRef = useRef<Profile | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
+  const generationRef = useRef(0);
+
+  const invalidateRefresh = useCallback(() => {
+    generationRef.current += 1;
+    refreshPromiseRef.current = null;
+  }, []);
 
   const updateUser = useCallback((nextUser: User | null, event?: AuthChangeEvent) => {
     const identity = sessionUserForEvent(userRef.current, nextUser, event);
@@ -53,6 +59,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return refreshPromiseRef.current;
     }
 
+    const generation = generationRef.current;
+    let timedOut = false;
+    const current = () => isMountedRef.current && generation === generationRef.current && !timedOut;
+    let timer: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        timedOut = true;
+        reject(new Error("Kontouppgifterna kunde inte hämtas i tid. Kontrollera anslutningen och försök igen."));
+      }, 15_000);
+    });
+
     const refreshTask = (async () => {
       if (isMountedRef.current && showLoading) {
         setLoading(true);
@@ -60,47 +77,50 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (isMountedRef.current) setError(null);
 
       try {
-        const nextUser = knownUser === undefined ? await getCurrentUser() : knownUser;
+        await Promise.race([deadline, (async () => {
+          const nextUser = knownUser === undefined ? await getCurrentUser() : knownUser;
 
-        if (!isMountedRef.current) {
-          return;
-        }
+          if (!current()) {
+            return;
+          }
 
-        const sameUser = Boolean(nextUser && userRef.current?.id === nextUser.id);
-        updateUser(nextUser);
+          const sameUser = Boolean(nextUser && userRef.current?.id === nextUser.id);
+          if (!sameUser) updateProfile(null);
+          updateUser(nextUser);
 
-        if (!nextUser) {
-          updateProfile(null);
-          return;
-        }
+          if (!nextUser) {
+            updateProfile(null);
+            return;
+          }
 
-        // Token refreshes and mobile tab resumes frequently emit auth events.
-        // The account role cannot change during those events, so keep the
-        // existing profile instead of blanking the whole app and refetching it.
-        if (!showLoading && sameUser && profileRef.current) {
-          return;
-        }
+          // Token refreshes and mobile tab resumes frequently emit auth events.
+          // The account role cannot change during those events, so keep the
+          // existing profile instead of blanking the whole app and refetching it.
+          if (!showLoading && sameUser && profileRef.current) {
+            return;
+          }
 
-        let nextProfile = await getUserProfile(nextUser.id);
-        // The profile row is created immediately after signup. A short retry
-        // prevents a newly created company/private account from rendering as youth.
-        for (let attempt = 0; !nextProfile && attempt < 2; attempt += 1) {
-          await new Promise((resolve) => window.setTimeout(resolve, 180));
-          nextProfile = await getUserProfile(nextUser.id);
-        }
+          let nextProfile = await getUserProfile(nextUser.id);
+          // The profile row is created immediately after signup. A short retry
+          // prevents a newly created company/private account from rendering as youth.
+          for (let attempt = 0; !nextProfile && attempt < 2 && current(); attempt += 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, 180));
+            if (!current()) return;
+            nextProfile = await getUserProfile(nextUser.id);
+          }
 
-        if (!isMountedRef.current) {
-          return;
-        }
+          if (!current()) {
+            return;
+          }
 
-        if (!nextProfile) throw new Error("Kontouppgifterna kunde inte hämtas. Försök igen.");
-        updateProfile(nextProfile);
+          if (!nextProfile) throw new Error("Kontouppgifterna kunde inte hämtas. Försök igen.");
+          updateProfile(nextProfile);
+        })()]);
       } catch (sessionError) {
-        (isNetworkError(sessionError) ? console.warn : console.error)("Failed to synchronize the Supabase session in the client.", sessionError);
-
-        if (!isMountedRef.current) {
+        if (!isMountedRef.current || generation !== generationRef.current) {
           return;
         }
+        (isNetworkError(sessionError) || timedOut ? console.warn : console.error)("Failed to synchronize the Supabase session in the client.", sessionError);
 
         if (!preserveStateOnError || !profileRef.current || profileRef.current.id !== userRef.current?.id) {
           updateUser(null);
@@ -108,7 +128,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           setError(getSupabaseErrorMessage(sessionError, "Unable to load the Supabase session."));
         }
       } finally {
-        if (isMountedRef.current && showLoading) {
+        clearTimeout(timer!);
+        if (isMountedRef.current && generation === generationRef.current) {
           setLoading(false);
         }
       }
@@ -136,6 +157,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
         if (event === "SIGNED_OUT") {
+          invalidateRefresh();
           updateUser(null);
           updateProfile(null);
           setError(null);
@@ -146,7 +168,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const sessionUser = session?.user ?? null;
         const sameKnownUser = Boolean(sessionUser && userRef.current?.id === sessionUser.id);
         if (sessionUser) {
-          if (!sameKnownUser) updateProfile(null);
+          if (!sameKnownUser) { invalidateRefresh(); updateProfile(null); }
           updateUser(sessionUser, event);
         }
 
@@ -158,10 +180,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         // Calling another Supabase API while this callback still holds the
         // auth lock can deadlock the client. Run the refresh on the next tick.
+        const eventGeneration = generationRef.current;
         window.setTimeout(() => {
+          if (!isMountedRef.current || eventGeneration !== generationRef.current) return;
           void refresh({ knownUser: sessionUser, showLoading: false, preserveStateOnError: event !== "INITIAL_SESSION" })
             .finally(() => {
-              if (event === "INITIAL_SESSION" && isMountedRef.current) setLoading(false);
+              if (event === "INITIAL_SESSION" && isMountedRef.current && eventGeneration === generationRef.current) setLoading(false);
             });
         }, 0);
       });
@@ -174,6 +198,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       return () => {
         isMountedRef.current = false;
+        invalidateRefresh();
         clearTimeout(timeoutId);
         subscription.unsubscribe();
       };
@@ -185,15 +210,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       return () => {
         isMountedRef.current = false;
+        invalidateRefresh();
       };
     }
-  }, [refresh, updateProfile, updateUser]);
+  }, [refresh, updateProfile, updateUser, invalidateRefresh]);
 
   const logout = async () => {
+    // Cancel reads immediately; an old response must not undo a later logout.
+    invalidateRefresh();
+    const generation = generationRef.current;
     try {
       await signOut();
 
-      if (!isMountedRef.current) {
+      if (!isMountedRef.current || generation !== generationRef.current) {
         return;
       }
 
@@ -203,11 +232,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     } catch (logoutError) {
       console.error("Failed to sign out from Supabase.", logoutError);
 
-      if (!isMountedRef.current) {
+      if (!isMountedRef.current || generation !== generationRef.current) {
         return;
       }
 
       setError(logoutError instanceof Error ? logoutError.message : "Unable to sign out.");
+      throw logoutError;
     }
   };
 
