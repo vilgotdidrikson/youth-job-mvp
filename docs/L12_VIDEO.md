@@ -3,6 +3,8 @@
 Avgränsad leverans 2026-10-18, branch `codex/l12-video-retention-20261018`, [PR #73](https://github.com/vilgotdidrikson/youth-job-mvp/pull/73), kodcommit `25c7d40c79248582948caaad0b9ad94d4305f570`.
 Status: För granskning. Databasens åtkomstgräns är införd i DevStaging. Gallringsarbetaren är driftsatt och ett verkligt Storage-test har passerat efter användarens uttryckliga godkännande. **Automatisk gallring är fortfarande avstängd**. N23 förblir Ej påbörjad.
 
+Uppföljning 2026-10-27: L05 ersätter direkt klienthämtning av videobytes med serverkontrollerad `POST /api/videos/playback` för färsk åtkomstkontroll. Ansöknings-/textchattens separata, avstängda gallringsgrund dokumenteras i [L12_APPLICATION_CHAT.md](L12_APPLICATION_CHAT.md). Nedanstående beskriver videoleveransens ursprungliga verifiering.
+
 ## Implementerat
 
 - Nya videor registreras med serverns tid och 24 timmars frist som oskickad uppladdning. Det ger ett dygn för återförsök efter avbrott utan att övergivna filer ska sparas obegränsat. Detta är en teknisk städregel inom L12, inte en lagstadgad frist.

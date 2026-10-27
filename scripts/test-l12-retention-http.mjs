@@ -1,0 +1,32 @@
+// Exact DevStaging + disposable QA only. Pause at the marker so the operator can
+// prepare the post-purge fixture for only this hidden fictional job/chat.
+import assert from 'node:assert/strict';
+import{createInterface}from'node:readline';import{once}from'node:events';
+console.log('Ready for private disposable QA configuration on stdin.');
+const input=createInterface({input:process.stdin});const[line]=await once(input,'line');const cfg=JSON.parse(line);
+assert.equal(cfg.actors.length,5);for(const a of cfg.actors)assert.equal(a.email,`qa-l12-http-${a.id}@example.invalid`);
+const base='https://vwcfjvwfeatvuisojwrh.supabase.co',app='https://youth-job-mvp-dev.vercel.app',actors=Object.fromEntries(cfg.actors.map(a=>[a.name,a])),tokens={};let passed=0,uploaded=false;
+const check=(ok,label)=>{assert.ok(ok,label);passed++;console.log('PASS: '+label);};
+async function request(url,actor,method='GET',body,headers={}){const response=await fetch(url,{method,headers:{apikey:cfg.anonKey,...(actor?{Authorization:`Bearer ${tokens[actor]}`}:{}) ,...(body===undefined?{}:{'Content-Type':'application/json'}),...headers},body:body instanceof Uint8Array?body:body===undefined?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(60000)});const raw=await response.text();let data;try{data=raw?JSON.parse(raw):null;}catch{data=raw;}return{status:response.status,ok:response.ok,data};}
+const rpc=(actor,name,body={})=>request(`${base}/rest/v1/rpc/${name}`,actor,'POST',body);
+async function originalCv(){const signed=await request(`${base}/storage/v1/object/sign/youth-documents/${cfg.cvPath}`,'company','POST',{expiresIn:30});assert.ok(signed.ok&&signed.data?.signedURL,'CV signing failed');const p=signed.data.signedURL;const url=p.startsWith('http')?p:p.startsWith('/storage/v1/')?base+p:base+'/storage/v1'+p;const file=await fetch(url,{signal:AbortSignal.timeout(15000)});return file.ok&&(await file.text()).includes('QA L12');}
+try{
+ await Promise.all(cfg.actors.map(async a=>{const r=await request(`${base}/auth/v1/token?grant_type=password`,null,'POST',{email:a.email,password:a.password});assert.ok(r.ok&&r.data?.access_token,`Authentication failed for ${a.name}`);tokens[a.name]=r.data.access_token;}));check(Object.keys(tokens).length===5,'five disposable roles authenticate');
+ const state=await rpc('youth','get_conversation_retention',{p_conversation_id:cfg.conversation});check(state.ok&&state.data[0]?.enforced===false&&!state.data[0]?.expired,'ordinary own chat remains available with enforcement off');
+ await Promise.all(['outsider','wrongCompany',null].map(async actor=>{const r=await rpc(actor,'get_conversation_retention',{p_conversation_id:cfg.conversation});check([400,401,403].includes(r.status),`${actor??'anonymous'} denied foreign chat lifecycle`);}));
+ check((await rpc('company','get_application_disclosure',{p_job_id:cfg.job,p_youth_user_id:actors.youth.id})).ok,'own explicitly shared application accessible before purge');
+ const upload=await request(`${base}/storage/v1/object/youth-documents/${cfg.cvPath}`,'youth','POST',Buffer.from('%PDF-1.4\n% QA L12 shared original fixture\n%%EOF\n'),{'Content-Type':'application/pdf'});check(upload.ok,'owner uploads shared original CV');uploaded=true;check(await originalCv(),'company downloads real explicitly shared original');
+ console.log('READY_FOR_SCOPED_PURGE');const[marker]=await once(input,'line');assert.equal(marker,'PURGED');
+ const own=await rpc('youth','get_my_application_retention');const retired=own.data?.find(r=>r.job_id===cfg.job);check(own.ok&&retired?.expired&&retired?.purged_at,'own minimal application history reflects physical body purge');check(!('packet'in retired)&&!('answers'in retired),'history does not expose purged underlay');
+ const wrong=await rpc('wrongCompany','get_my_application_retention');check(wrong.ok&&wrong.data.length===0,'wrong company cannot read another job lifecycle');
+ const expired=await rpc('company','get_application_disclosure',{p_job_id:cfg.job,p_youth_user_id:actors.youth.id});check(expired.status===403,'company denied purged application underlay');
+ const cvApi=await request(`${app}/api/company/candidate-cv`,'company','POST',{jobId:cfg.job,youthUserId:actors.youth.id});check(cvApi.status===403,'job-scoped CV API denies purged application');
+ const active=await rpc('company','get_application_disclosure',{p_job_id:cfg.otherJob,p_youth_user_id:actors.youth.id});check(active.ok&&active.data?.cv,'other ongoing application remains explicitly shared');check(await originalCv(),'original CV survives and remains downloadable through the other valid sharing');
+ const chat=await rpc('youth','get_conversation_retention',{p_conversation_id:cfg.conversation});check(chat.ok&&chat.data[0]?.expired&&chat.data[0]?.read_only&&chat.data[0]?.purged_at,'purged chat stays read-only even while general enforcement is off');
+ const history=await request(`${base}/rest/v1/messages?select=id,message_text&conversation_id=eq.${cfg.conversation}`,'youth');check(history.ok&&history.data.length===0,'purged chat has no readable text bodies');
+ const denied=await request(`${base}/rest/v1/messages`,'youth','POST',{conversation_id:cfg.conversation,sender_user_id:actors.youth.id,message_text:'QA stale send'});check(denied.status===409&&denied.data?.code==='PT409','all message paths reject stale writes with ordinary HTTP 409');
+ const sent=await request(`${base}/rest/v1/messages`,'youth','POST',{conversation_id:cfg.activeConversation,sender_user_id:actors.youth.id,message_text:'QA active chat',created_at:'2036-01-01T00:00:00Z'});check(sent.ok,'independent ongoing chat still accepts messages');
+ const activeClock=await rpc('youth','get_conversation_retention',{p_conversation_id:cfg.activeConversation});const row=activeClock.data?.[0];check(activeClock.ok&&Date.parse(row.last_activity_at)<=Date.parse(row.server_now)&&new Date(row.read_only_at).getUTCFullYear()<2030,'real API ignores forged client time for retention activity');
+ console.log(JSON.stringify({passed,requiresSqlCleanup:true,fixtureScope:'qa-l12-http',originalCvPreserved:true}));
+}catch(error){console.error('FAIL:',error.message);process.exitCode=1;}
+finally{if(uploaded){const removed=await request(`${app}/api/account`,'youth','DELETE',{password:actors.youth.password});check(removed.status===204,'disposable owner and private original CV bytes cleaned through account API');}input.close();process.stdin.destroy();}

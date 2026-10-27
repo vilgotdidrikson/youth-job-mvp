@@ -57,7 +57,8 @@
     "test:platform-visuals": "node scripts/test-platform-visuals.mjs",
     "test:moderation": "node scripts/test-moderation-client.mjs",
     "test:video-playback": "node scripts/test-video-playback.mjs",
-    "test:account-recovery": "node scripts/test-session-lifecycle.mjs && node scripts/test-account-recovery.mjs && node scripts/test-session-events.mjs && node scripts/test-auth-route-contract.mjs"
+    "test:account-recovery": "node scripts/test-session-lifecycle.mjs && node scripts/test-account-recovery.mjs && node scripts/test-session-events.mjs && node scripts/test-auth-route-contract.mjs",
+    "test:data-retention": "node scripts/test-data-retention-client.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
