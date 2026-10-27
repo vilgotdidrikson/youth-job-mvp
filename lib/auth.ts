@@ -34,6 +34,7 @@ export async function signUp(
       // The auth.users trigger validates this allowlisted value and creates the
       // immutable application profile in the same database transaction.
       data: { role },
+      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
     },
   });
 
