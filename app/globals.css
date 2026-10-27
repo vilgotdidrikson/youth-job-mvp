@@ -558,15 +558,22 @@ button,
    outside it, so expanding a card or changing pin styles can never move the
    geographic anchor. */
 .job-map-marker { position: relative; width: 1px; height: 1px; cursor: pointer; }
-.job-map-pin { position: absolute; z-index: 2; top: 50%; left: 50%; display: grid; width: 2.6rem; height: 2.6rem; place-items: center; overflow: hidden; padding: 0; border: 0; border-radius: 50%; background: var(--map-paper, var(--color-surface)); box-shadow: 0 0 0 2px rgba(255,255,255,.95), 0 0 0 3px rgba(31,26,23,.08), 0 .15rem .5rem rgba(31,26,23,.16); cursor: pointer; transform: translate(-50%, -50%); transition: transform .2s cubic-bezier(.2,.7,.3,1), box-shadow .2s ease; }
+.job-map-pin { position: absolute; z-index: 2; top: 50%; left: 50%; display: flex; align-items: flex-end; justify-content: center; width: 44px; height: 48px; padding: 0; border: 0; border-radius: 12px; color: var(--color-brand-accent); background: transparent; box-shadow: none; cursor: pointer; transform: translate(-50%, -100%); -webkit-tap-highlight-color: transparent; }
+.job-map-pin-glyph { display: block; flex: none; width: 32px; height: 42px; overflow: visible; filter: drop-shadow(0 2px 3px rgb(36 20 25 / .16)); transform-origin: 50% 100%; transition: transform .18s ease, filter .18s ease, color .18s ease; pointer-events: none; }
+.job-map-pin-body { fill: currentColor; stroke: var(--color-on-brand); stroke-width: 1.25; stroke-linejoin: round; }
+.job-map-pin-dot { fill: var(--color-on-brand); }
+.job-map-pin:focus-visible { outline: 2px solid var(--color-brand-on-rose); outline-offset: 3px; }
+.job-map-marker.is-cluster .job-map-pin { color: var(--color-brand); }
+.job-map-marker.is-expanded .job-map-pin { color: var(--color-brand-on-rose); }
+.job-map-marker.is-expanded .job-map-pin-glyph, .job-map-pin:focus-visible .job-map-pin-glyph { transform: scale(1.13); filter: drop-shadow(0 3px 5px rgb(36 20 25 / .24)); }
+@media (hover: hover) { .job-map-pin:hover .job-map-pin-glyph { transform: scale(1.13); } }
+@media (prefers-reduced-motion: reduce) { .job-map-pin-glyph { transition: none; } }
 .job-map-pin-tile { position: relative; display: grid; width: 100%; height: 100%; place-items: center; overflow: hidden; border-radius: 50%; background: var(--map-cream, #f7f4ed); }
 .job-map-pin-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .job-map-pin-initials { color: var(--map-muted, #6b6259); font-size: .8rem; font-weight: 700; letter-spacing: -.02em; }
-.job-map-pin-count { color: var(--map-ink, #1f1a17); font-family: var(--map-serif); font-size: .95rem; font-weight: 600; line-height: 1; }
-.job-map-marker.is-cluster .job-map-pin { width: 2.35rem; height: 2.35rem; border: 1px solid var(--map-line, #ece7dc); background: var(--map-cream, #f7f4ed); box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 .15rem .5rem rgba(31,26,23,.14); }
-.job-map-pin-chip { position: absolute; z-index: 1; top: calc(50% + 1.55rem); left: 50%; max-width: 8.5rem; overflow: hidden; padding: .17rem .5rem; border: 1px solid var(--map-line, #ece7dc); border-radius: 999px; color: var(--map-ink, #1f1a17); background: rgba(255,255,255,.96); box-shadow: 0 1px 2px rgba(31,26,23,.06), 0 4px 10px rgba(31,26,23,.05); font-size: .69rem; font-weight: 600; letter-spacing: -.005em; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; transform: translateX(-50%); transition: box-shadow .2s ease, border-color .2s ease; }
-.job-map-marker:hover .job-map-pin, .job-map-marker.is-expanded .job-map-pin { transform: translate(-50%, calc(-50% - 1px)); box-shadow: 0 0 0 2px rgba(255,255,255,.95), 0 0 0 3px rgba(31,26,23,.14), 0 .35rem .9rem rgba(31,26,23,.2); }
-.job-map-marker:hover .job-map-pin-chip, .job-map-marker.is-expanded .job-map-pin-chip { border-color: var(--map-line-strong, #e5dfd3); box-shadow: 0 1px 2px rgba(31,26,23,.06), 0 8px 18px rgba(31,26,23,.12); }
+.job-map-pin-count { fill: var(--color-on-brand); font-family: inherit; font-size: 11px; font-weight: 700; }
+.job-map-pin-chip { position: absolute; z-index: 1; top: .4rem; left: 50%; max-width: 8.5rem; overflow: hidden; padding: .25rem .55rem; border: 1px solid var(--color-divider); border-radius: 999px; color: var(--color-plum-900); background: var(--color-surface); box-shadow: 0 2px 6px rgb(36 20 25 / .08); font-size: .75rem; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transform: translateX(-50%); }
+.job-map-marker:hover .job-map-pin-chip, .job-map-marker:focus-within .job-map-pin-chip, .job-map-marker.is-expanded .job-map-pin-chip { opacity: 1; visibility: visible; }
 
 .job-map-cluster-cards { position: absolute; z-index: 3; bottom: 3.25rem; left: 50%; display: flex; align-items: stretch; opacity: 0; pointer-events: none; transform: translate(-50%, .7rem) scale(.94); transform-origin: center bottom; transition: opacity .23s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
 .job-map-cluster-cards::after { content: ""; position: absolute; bottom: -.38rem; left: 50%; width: .75rem; height: .75rem; background: var(--color-surface); transform: translateX(-50%) rotate(45deg); }
@@ -1104,7 +1111,6 @@ button,
   background: var(--color-success-soft);
 }
 
-.job-map-pin,
 .job-map-cta,
 .map-count,
 .job-map-token-message > span {
@@ -1112,8 +1118,6 @@ button,
   color: var(--color-on-brand);
 }
 
-.job-map-pin:hover,
-.job-map-marker.is-expanded .job-map-pin,
 .job-map-cta:hover {
   background: var(--color-brand-hover);
 }

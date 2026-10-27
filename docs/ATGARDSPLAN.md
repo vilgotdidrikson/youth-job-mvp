@@ -801,6 +801,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f24"></a>
 ### F24 Gör kartans reservvy användbar
 
+- Kartleverans: [PR #138](https://github.com/vilgotdidrikson/youth-job-mvp/pull/138). Implementerat droppformade SVG-nålar i befintliga rosa tokens, vit mitt, mörkare/större vald nål och klusterantal. Företagschip visas vid hover/fokus/val. Geografiskt ankare, 44×48 px träffyta, aria och befintliga popupkort bevaras; popup-offset anpassat till höjden. Map-fallback, job-workplaces, riktad ESLint och produktionsbygge/TypeScript/57 routes passerar med fiktiva publika Supabase-byggvärden. SVG-geometri renderad och visuellt inspekterad; full browser-/mobil-/WebGL-kontroll återstår då Chromium-nedladdning gav ogiltigt arkiv. Ingen basstilsändring, F24 behåller status.
 - Uttryckligen beställd kartleverans reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/f24-reference-pins-20261027`. Droppformade rosa kartnålar med vit mitt enligt användarens två referensbilder, tydligt vald nål och bevarat antal/åtkomst/kartankare. Endast markörernas utförande; basstil och popupdesign ändras inte. Popupens avstånd får anpassas till nålens höjd. Övriga F24-kriterier/status bevaras.
 
 - [ ] Klar
