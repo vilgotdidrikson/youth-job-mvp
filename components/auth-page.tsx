@@ -22,6 +22,9 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const searchParams = useSearchParams();
   const { user, profile, loading: sessionLoading } = useSession();
   const isRedirectingAfterSignup = useRef(false);
+  const submitting = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const requestedRedirect = searchParams.get("redirect");
   const safeRedirectTarget = requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//") ? requestedRedirect : null;
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -62,7 +65,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (loading) return;
+    if (submitting.current || !active.current) return;
     // Read the submitted controls so password-manager/autofill changes are
     // included even when they have not triggered React's change handlers.
     const submitted = new FormData(event.currentTarget);
@@ -81,11 +84,13 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       return;
     }
 
+    submitting.current = true;
     setLoading(true);
 
     try {
       if (mode === "signup") {
         const result = await signUp(submittedEmail, submittedPassword, role);
+        if (!active.current) return;
         if (result.session) {
           isRedirectingAfterSignup.current = true;
           // A full navigation lets the destination initialize from the newly
@@ -97,25 +102,31 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         // Confirmation settings differ between environments. No session must
         // not send a new account into a loop of unsuccessful login attempts.
         setMessage("Kontrollera din e-post för att bekräfta kontot. Har du redan ett konto kan du logga in.");
+        setEmail(submittedEmail);
+        setPassword(""); setConfirmPassword("");
         setMode("login");
         return;
       }
       const session = await signIn(submittedEmail, submittedPassword);
+      if (!active.current) return;
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!active.current) return;
       if (!adminError && isAdmin === true) {
         router.replace(loginDestination(profile?.role ?? "youth", safeRedirectTarget, true));
         return;
       }
       const signedInProfile = await getUserProfile(session.user.id);
+      if (!active.current) return;
       if (!signedInProfile) {
         setError("Kontot saknar en användarprofil. Försök igen om en stund eller kontakta support.");
         return;
       }
       if (signedInProfile.role === "youth") {
         const state = await getYouthFlowState(session.user.id);
-        router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(signedInProfile.role, safeRedirectTarget));
+        if (active.current) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(signedInProfile.role, safeRedirectTarget));
       } else router.replace(loginDestination(signedInProfile.role, safeRedirectTarget));
     } catch (submitError) {
+      if (!active.current) return;
       const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
       if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
         setError("Det finns redan ett konto med den e-postadressen. Logga in istället.");
@@ -124,7 +135,8 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
         setError(msg.toLowerCase().includes("invalid login credentials") ? "E-postadressen eller lösenordet stämmer inte. Kontrollera och försök igen." : msg);
       }
     } finally {
-      setLoading(false);
+      submitting.current = false;
+      if (active.current) setLoading(false);
     }
   };
 
@@ -164,9 +176,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           </div>
           {error && <p className="auth-message auth-error" role="alert">{error}</p>}
           {message && <p className="auth-message auth-success" role="status">{message}</p>}
+          {!isSignup && <p className="auth-message"><Link href="/resend-confirmation" className="auth-switch">Skicka ny bekräftelselänk</Link></p>}
           <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>
           {isSignup && <p className="auth-privacy-note">Läs hur vi hanterar dina uppgifter i <Link href="/privacy">Integritet och AI</Link>.</p>}
-          <button type="button" className="auth-switch" onClick={() => { setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
+          <button type="button" className="auth-switch" disabled={loading} onClick={() => { if (submitting.current) return; setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
           </form>
         </div>
       </section>
