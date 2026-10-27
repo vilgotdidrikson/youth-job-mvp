@@ -1,7 +1,7 @@
 import { getSupabaseClient } from "@/lib/supabase";
 import { getSupabaseErrorMessage } from "@/lib/supabase-errors";
 
-export type ReportTargetType = "job" | "conversation" | "message" | "user";
+export type ReportTargetType = "job" | "conversation" | "message" | "user" | "application_question";
 export type ReportReason = "scam" | "harassment" | "discrimination" | "inappropriate" | "privacy" | "other";
 
 export async function submitReport(input: {
@@ -10,7 +10,9 @@ export async function submitReport(input: {
   reason: ReportReason;
   details?: string;
 }): Promise<string> {
-  const data = await moderationRequest<string>("submit_moderation_report", {
+  const data = input.targetType === "application_question" ? await moderationRequest<string>("report_application_question", {
+    p_question_id: input.targetId, p_reason: input.reason, p_details: input.details?.trim() || null,
+  }) : await moderationRequest<string>("submit_moderation_report", {
     p_target_type: input.targetType, p_target_id: input.targetId, p_reason: input.reason,
     p_details: input.details?.trim() || null,
   });
