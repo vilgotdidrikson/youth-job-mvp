@@ -5,7 +5,7 @@ import ts from 'typescript';
 const require=createRequire(import.meta.url);
 Module._extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,file);
 const {matchingCriteria,assessCandidate,candidateSourceDetails,candidateSource}=require('../lib/candidate-assessment.ts');
-const {minimizeMatchingText}=require('../lib/matching-input-policy.ts');
+const {minimizeMatchingText,isExcludedMatchingText}=require('../lib/matching-input-policy.ts');
 const {emptyRecruitmentProfile}=require('../lib/recruitment-profile.ts');
 const trait=matchingCriteria([{label:'Punktlig',category:'trait'}]);
 for(const claim of ['Jag är punktlig.','Jag är bra på att passa tider.','Jag passar tider.','Jag kommer i tid.']) {
@@ -30,6 +30,36 @@ for(const secret of ['Alex Testsson','ADHD','SSU','alex@example.invalid','Testga
 assert.ok(candidateSource({cv_text:'x'.repeat(35000)+'\nJag skötte inventering.'}).includes('Jag skötte inventering.'),'No silent 14k/32k truncation');
 assert.throws(()=>candidateSource({cv_text:'x'.repeat(120001)}));
 assert.equal(minimizeMatchingText('Jag var ledare i moskéns ungdomsgrupp. Jag tog emot bokningar.').status,'review_required','Indirect religious disclosure triggers review');
+// Swedish boundaries, PDF normalization and invisible formatting must not bypass
+// the same shared provider policy. Retained passages remain byte-for-byte quotes.
+const variants = value => [value, value.normalize('NFD'), value.replace(/[A-Za-z]/g, c => String.fromCodePoint(c.charCodeAt(0) + 0xfee0))].flatMap(form => [form, [...form].join('\u200b'), [...form].join('\u00ad')]);
+const useful = 'Jag inventerade caféets lager och hanterade returer.';
+for (const sensitive of ['ångest', 'ångestdämpande', 'ADHD', 'dömd', 'fängelse', 'församling', 'fackförbund', 'hälsotillstånd', 'kristna']) {
+ for (const variant of variants(sensitive)) {
+  const source = `Jag har ${variant}.\n${useful}`;
+  const result = minimizeMatchingText(source);
+  assert.equal(result.status, 'review_required', JSON.stringify(variant));
+  assert.equal(result.text, useful, JSON.stringify(variant));
+  assert.equal(isExcludedMatchingText(`Krav: ${variant}`), true, JSON.stringify(variant));
+ }
+}
+for (const safe of ['Jag arbetade på café och sorterade böcker.', 'Jag gjorde addition i JavaScript.', 'Jag hanterade lager på Åhléns.', 'Jag tog emot beställningar på kinesiska.']) {
+ for (const variant of [safe, safe.normalize('NFD')]) assert.equal(minimizeMatchingText(variant).text, variant, 'Preserve exact approved multilingual source');
+}
+for (const identity of ['Åsa Öst', 'Åsa Öst'.normalize('NFD'), 'Åsa\u200b Öst']) {
+ const result = minimizeMatchingText(`Jag arbetade med ${identity}.\n${useful}`, ['Åsa Öst']);
+ assert.equal(result.status, 'review_required');assert.ok(!result.text.includes(identity));assert.ok(result.text.includes(useful));
+}
+for (const heading of ['cv_text: • Åsa Öst', 'PDF-CV: • Åsa Öst'.normalize('NFD'), 'skills: Namn: Åsa Öst']) assert.equal(minimizeMatchingText(heading).text, '');
+for (const contact of ['åsa@exempel.se', 'a\u200bsa@example.invalid', 'ａｓａ＠ｅｘａｍｐｌｅ．ｓｅ', '０７０１２３４５６７']) {
+ const result = minimizeMatchingText(`Referens ${contact}.\n${useful}`);
+ assert.equal(result.status, 'review_required');assert.ok(!result.text.includes(contact));assert.ok(result.text.includes(useful));
+ assert.equal(isExcludedMatchingText(`Kontakta ${contact}`),true);
+}
+const unchangedPassage = '  Jag arbetade på café och sorterade böcker.  \n  \nJag inventerade.';
+assert.equal(minimizeMatchingText('Jag har ADHD.\n' + unchangedPassage).text, unchangedPassage, 'Keep adjacent safe clauses, conjunctions and whitespace intact after removing another clause');
+for (const separator of ['\r', '\r\n', '\u2028', '\u2029']) assert.equal(minimizeMatchingText(`Jag har ångest.${separator}${useful}`).text, useful);
+assert.equal(minimizeMatchingText(minimizeMatchingText('Referens åsa@exempel.se.').text).text, minimizeMatchingText('Referens åsa@exempel.se.').text, 'Repeated minimization is stable');
 // Capture the exact outgoing SDK request: no real provider or network call.
 const original=Module._load;const payloads=[];let offline=false;
 Module._load=function(name,parent,...rest){if(name==='openai')return {default:class {constructor(){this.chat={completions:{create:async payload=>{payloads.push(payload);if(offline)throw Error('offline');return {choices:[{message:{content:'{"criteria":[],"answers":[]}'}}]};}}};}}};return original.call(this,name,parent,...rest);};
@@ -40,6 +70,18 @@ try {
  assert.ok(actual.source.includes('inventerade lagret under juli 2025'));assert.ok(actual.source.includes('Jag kontrollerade leveranser.'));
  assert.deepEqual(actual.criteria.map(c=>c.label),['Kassavana']);assert.deepEqual(actual.questions.map(q=>q.id),['q1']);
  for(const secret of ['Alex Testsson','ADHD','SSU','alex@example.invalid','Testgatan','diabetes','muslim','PRIVATE'])assert.ok(!JSON.stringify(actual).includes(secret),'Outgoing '+secret);
+ for (const variant of variants('ångest')) {
+  await requestMatchingEvidence('synthetic-key', `Jag har ${variant}.\n${useful}`, [
+   {...matchingCriteria([{label:'Kassavana',required:true}])[0], sourceNotes:'PRIVATE CRITERION METADATA'},
+   {id:'c1',label:`Har ${variant}`,weight:3,required:true,category:'must_have'},
+   {id:'c2',label:'Kontakta åsa@exempel.se',weight:2,required:false,category:'merit'},
+  ], [{id:'q1',question:'Vilket kassasystem har du använt?',raw_chat:'PRIVATE QUESTION METADATA'}, {id:'q2',question:`Har du ${variant}?`}], `description: Jag har ${variant}.\nInventering i café.`);
+  const payload = JSON.parse(payloads.at(-1).messages[1].content);
+  assert.deepEqual(payload.criteria,[{id:'c0',label:'Kassavana'}]);
+  assert.deepEqual(payload.questions,[{id:'q1',question:'Vilket kassasystem har du använt?'}]);
+  assert.equal(payload.source,useful);assert.ok(payload.job.includes('Inventering i café.'));
+  assert.ok(!JSON.stringify(payload).includes(variant));assert.ok(!JSON.stringify(payload).includes('PRIVATE'));
+ }
  offline=true;await assert.rejects(requestMatchingEvidence('synthetic-key','Jag kan JavaScript.',matchingCriteria([{label:'JavaScript',required:true}])));
  const before=payloads.length;await assert.rejects(requestMatchingEvidence('synthetic-key','x'.repeat(120001),base));assert.equal(payloads.length,before,'Oversized text fails before provider call');
 } finally {Module._load=original;}

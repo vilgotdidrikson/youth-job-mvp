@@ -14,7 +14,7 @@ export async function requestMatchingEvidence(apiKey: string, source: string, cr
   const ai = new OpenAI({ baseURL: OPENAI_API_BASE_URL, apiKey, timeout: 35000, maxRetries: 0 });
   const response = await ai.chat.completions.create({ ...openaiTextOptions(3600), response_format: { type: "json_object" }, messages: [
     { role: "system", content: MATCHING_INSTRUCTIONS },
-    { role: "user", content: JSON.stringify({ criteria: safeCriteria, questions: safeQuestions, source: minimized.text, job: minimizeMatchingText(jobContext).text }) },
+    { role: "user", content: JSON.stringify({ criteria: safeCriteria.map(({ id, label }) => ({ id, label })), questions: safeQuestions.map(({ id, question }) => ({ id, question })), source: minimized.text, job: minimizeMatchingText(jobContext).text }) },
   ] });
   const result = JSON.parse(response.choices[0]?.message?.content ?? "{}");
   if (!Array.isArray(result.criteria)) throw new Error("Invalid provider response");
