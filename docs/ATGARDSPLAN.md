@@ -1035,6 +1035,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l02"></a>
 ### L02 SMTP och tillförlitliga e-postutskick
 
+- Fortsättning reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/l02-confirmation-flow-20261027`. Återanvänd Supabase Auth för ny bekräftelselänk, tydlig utgången-länkhantering och dubbelförsöksskydd. Användaren bekräftade att mejl från info@matchnwork.se når mottagaren och återställningslänken fungerar i dev efter rättad redirect-lista. Ingen ny automatiserad leveransverifiering påstås; obligatorisk verifiering aktiveras inte. Föregående leverans införd genom PR #135, merge 24e87fd.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 14
