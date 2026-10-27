@@ -6,6 +6,7 @@ import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { ModalDialog } from "@/components/modal-dialog";
 import { RecruitmentProfileEditor } from "@/components/recruitment-profile-editor";
 
+import { CompanyBillingSettings } from "@/components/company-billing-settings";
 import { BlockedContacts } from "@/components/blocked-contacts";
 import { PasswordInput } from "@/components/password-input";
 
@@ -453,7 +454,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
       </section>}
       {profileTab === "cv" && <div {...tabPanelProps("company-profile", "cv")}><CompanyMatchProfileForm userId={user.id} /></div>}
-      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><Link href="/privacy">Integritet och hur AI används <UiIcon name="arrow" width="16" /></Link></section>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button type="button" className="company-profile-delete" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></section></div>}
+      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><Link href="/privacy">Integritet och hur AI används <UiIcon name="arrow" width="16" /></Link></section><CompanyBillingSettings userId={user.id}/>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><button type="button" className="company-profile-delete" disabled={deletingAccount} onClick={() => void handleDeleteAccount()}>{deletingAccount ? "Raderar konto…" : "Radera konto permanent"}</button></section></div>}
     </main>;
   }
 

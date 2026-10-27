@@ -1,0 +1,14 @@
+.card { padding: 24px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); color: var(--color-text); background: var(--color-surface); }
+.card h2 { margin: 0 0 8px; font-size: var(--text-lg); }
+.intro { margin: 0 0 20px; color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.6; }
+.fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.fields legend { margin-bottom: 16px; font-weight: 600; }
+.field { display: flex; min-width: 0; flex-direction: column; gap: 6px; font-size: var(--text-sm); }
+.field input { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-surface); font: inherit; }
+.field input:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.field input[aria-invalid=true] { border-color: var(--color-danger); }
+.fields:disabled { opacity: .7; }
+.error { color: var(--color-danger); font-size: var(--text-sm); line-height: 1.5; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.actions button { min-height: 44px; }
+@media(max-width:640px) { .card { padding: 18px; } .fields { grid-template-columns: minmax(0,1fr); } .actions button { width: 100%; } }
