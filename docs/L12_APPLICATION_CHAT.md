@@ -2,6 +2,8 @@
 
 Leverans på `codex/l12-application-chat-retention-20261027`, reserverad av Vilgot / Codex före kodarbete från dev `56694c6`. Avser en sammanhängande del av L12, inte hela lagrings-/integritetsarbetet. Endast dev/DevStaging. Produktens beslutade tider används; detta dokument fastställer ingen rättslig grund.
 
+Kodreferens: `78ac09a696ca33035d20d4e8940f992f7f39fb12`, målbranch `dev`.
+
 ## Omfattning och definitioner
 
 - En ansökningsperiod avslutas vid återkallande, avslag/avslutad match, serverregistrerat avslut av rekryteringen eller slutförd anställning. Den första avslutstiden sätts på servern och förlängs inte av nya AI-jobb, profilredigering eller upprepad stängning. Paus är inget avslut. Ny rekrytering före tidsgränsen kan återöppna en ännu inte gallrad period; återöppning efter tidsgränsen får inte återställa utgånget underlag.
