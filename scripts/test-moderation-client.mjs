@@ -61,6 +61,6 @@ Module._load=function(name,parent,...rest){if(name==='@/lib/supabase')return{get
 try{
  const {submitReport,reviewModerationCase,getModerationCasework}=require('../lib/reports.ts');await submitReport({targetType:'job',targetId:'qa-job',reason:'privacy',details:'  QA  '});assert.match(calls.at(-1).url,/rpc\/submit_moderation_report$/);assert.equal(calls.at(-1).body.p_details,'QA');assert.ok(calls.at(-1).signal);
  httpBody=null;await reviewModerationCase({id:'qa-report',status:'reviewing'},'resolved','  QA note  ');assert.match(calls.at(-1).url,/review_moderation_report_checked$/);assert.equal(calls.at(-1).body.p_expected_status,'reviewing');assert.equal(calls.at(-1).body.p_resolution_note,'QA note');
- httpBody=[];assert.deepEqual(await getModerationCasework(new AbortController().signal),[]);httpStatus=400;httpBody={code:'40001',message:'stale'};await assert.rejects(()=>reviewModerationCase({id:'qa-report',status:'open'},'resolved',''),/Ärendet har ändrats/);
+ httpBody=[];assert.deepEqual(await getModerationCasework(new AbortController().signal),[]);httpStatus=409;httpBody={code:'PT409',message:'stale'};await assert.rejects(()=>reviewModerationCase({id:'qa-report',status:'open'},'resolved',''),/Ärendet har ändrats/);
  console.log('PASS: real SDK moderation endpoints, trimmed input, expected status, abort signal, empty list and conflict errors.');
 }finally{Module._load=original;}

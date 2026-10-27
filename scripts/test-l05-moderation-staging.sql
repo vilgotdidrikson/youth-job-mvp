@@ -4,7 +4,7 @@ create temporary table l05_results(result jsonb);
 do $$
 declare
  u uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); other_c uuid:=gen_random_uuid(); a uuid:=gen_random_uuid();
- job uuid:=gen_random_uuid(); other_job uuid:=gen_random_uuid(); paused uuid:=gen_random_uuid(); draft_job uuid:=gen_random_uuid();
+ job uuid:=gen_random_uuid(); other_job uuid:=gen_random_uuid(); paused uuid:=gen_random_uuid(); closed_job uuid:=gen_random_uuid(); draft_job uuid:=gen_random_uuid();
  v_match_id uuid:=gen_random_uuid(); conv uuid; message uuid:=gen_random_uuid(); vid uuid:=gen_random_uuid();
  report uuid; again uuid; message_report uuid; video_report uuid; p jsonb; packet jsonb; item record;
  before_time timestamptz; n int; checks text[]:='{}'; changed int; path text;
@@ -26,8 +26,11 @@ begin
   (job,c,'QA L05','QA L05 active','QA fictional work','QA Gatan 1'),
   (other_job,c,'QA L05','QA L05 other application','QA fictional work','QA Gatan 2'),
   (paused,c,'QA L05','QA L05 paused','PRIVATE_L05_PAUSED','QA Gatan 3'),
-  (draft_job,c,'QA L05','QA L05 draft','PRIVATE_L05_DRAFT','QA Gatan 4');
+  (draft_job,c,'QA L05','QA L05 draft','PRIVATE_L05_DRAFT','QA Gatan 4'),
+  (closed_job,c,'QA L05','QA L05 closed','PRIVATE_L05_CLOSED','QA Gatan 5');
  update public.jobs set status='paused',is_active=false where id=paused;
+ insert into public.recruitment_outcomes(job_id,company_user_id,outcome) values(closed_job,c,'no_hire');
+ update public.jobs set status='closed',is_active=false where id=closed_job;
  update public.jobs set publication_status='pending_verification' where id=draft_job;
  insert into public.job_match_profiles(job_id,status,role_summary,weighted_criteria,candidate_questions)
   values(job,'approved','QA L05 role','[]','[]');
@@ -56,10 +59,11 @@ begin
  begin update public.moderation_reports set status='resolved' where id=report; raise exception 'Direct reporter update accepted'; exception when insufficient_privilege then null; end;
  checks:=array_append(checks,'reporter cannot administer cases');
  begin perform public.submit_moderation_report('job',paused,'privacy'); raise exception 'Unrelated paused job exposed'; exception when insufficient_privilege then null; end;
+ begin perform public.submit_moderation_report('job',closed_job,'privacy'); raise exception 'Unrelated closed job exposed'; exception when insufficient_privilege then null; end;
  begin perform public.submit_moderation_report('job',draft_job,'privacy'); raise exception 'Draft job exposed'; exception when insufficient_privilege then null; end;
  begin perform public.submit_moderation_report('job',job,null); raise exception 'Null reason accepted'; exception when invalid_parameter_value then null; end;
  begin perform public.submit_moderation_report(null,job,'privacy'); raise exception 'Null target accepted'; exception when invalid_parameter_value then null; end;
- checks:=array_append(checks,'paused/draft target and invalid input protection');
+ checks:=array_append(checks,'paused/closed/draft target and invalid input protection');
  -- A block stops new messages in both directions but retains historical reporting.
  perform public.block_conversation_user(conv);
  begin insert into public.messages(conversation_id,sender_user_id,message_text) values(conv,u,'QA blocked send'); raise exception 'Blocker sent message'; exception when insufficient_privilege then null; end;
@@ -120,7 +124,7 @@ begin
  perform set_config('request.jwt.claim.sub',a::text,true);
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
  perform public.review_moderation_report_checked(report,'reviewing','open',null);
- begin perform public.review_moderation_report_checked(report,'dismissed','open','stale'); raise exception 'Stale admin decision accepted'; exception when serialization_failure then null; end;
+ begin perform public.review_moderation_report_checked(report,'dismissed','open','stale'); raise exception 'Stale admin decision accepted'; exception when sqlstate 'PT409' then null; end;
  perform public.review_moderation_report_checked(report,'resolved','reviewing','QA ADMIN PRIVATE DECISION');
  select reviewed_at into before_time from public.moderation_reports where id=report;
  perform public.review_moderation_report_checked(report,'resolved','reviewing','QA ADMIN PRIVATE DECISION');
@@ -130,7 +134,7 @@ begin
  select count(*) into n from public.notifications where user_id=u and type='moderation_report';
  set local role authenticated;
  if n<>1 then raise exception 'Expected one terminal notification, found %',n; end if;
- begin perform public.review_moderation_report(report,'reviewing',null); raise exception 'Legacy client reopened final decision'; exception when serialization_failure then null; end;
+ begin perform public.review_moderation_report(report,'reviewing',null); raise exception 'Legacy client reopened final decision'; exception when sqlstate 'PT409' then null; end;
  if not exists(select 1 from public.get_moderation_casework() r where r.id=report and r.resolution_note='QA ADMIN PRIVATE DECISION' and r.reviewed_by_user_id=a) then raise exception 'Admin decision missing from casework'; end if;
  if not private.can_read_youth_video(vid) then raise exception 'Admin cannot access reported live video'; end if;
  checks:=array_append(checks,'admin status conflict, finality, original reviewer/time, one notification and visible saved decision');
