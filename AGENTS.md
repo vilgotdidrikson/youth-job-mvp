@@ -20,6 +20,8 @@ MatchnWork ska senare kunna få en mobilapp med React Native och Expo. Håll typ
 
 Bevara autentisering, ägarkontroller och RLS. Exponera aldrig service-role-nycklar i klienten. Ändra inte säkerhetsregler för att dölja ett hämtningsfel. Databasändringar ska vara spårbara och samordnade; gör inga orelaterade produktionsändringar.
 
+Vid ändrade tabeller, kolumner, ägarrelationer eller Storage-buckets: följ `docs/L13_EXPORT_INVENTORY.md` och kontrollera en ny metadatafil från DevStaging med `check:personal-data-inventory`. Granska avvikelser innan källregistret/schemabilden uppdateras; en lokal gammal schemabild är ingen live-verifiering.
+
 Använd tydligt fiktiva QA-konton i dev för användartester. Hantera inte riktiga rekryteringar eller betalningar som testdata. Dela aldrig lösenord, token eller API-nycklar i rapporter eller commits.
 
 ## Omfattning för den aktuella insatsen

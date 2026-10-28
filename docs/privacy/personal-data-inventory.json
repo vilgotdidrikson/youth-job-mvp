@@ -1,0 +1,321 @@
+{
+  "version": 1,
+  "mode": "inventory-only",
+  "automaticExportEnabled": false,
+  "groups": [
+    {
+      "id": "account",
+      "relations": [
+        "public.profiles",
+        "public.youth_profiles",
+        "public.company_profiles",
+        "public.private_profiles",
+        "public.admin_users"
+      ],
+      "classification": "subject",
+      "subjectScope": "profiles.id eller respektive user_id = den nyautentiserade användaren; ingen roll från user_metadata.",
+      "data": "Roll, profilfakta, CV-text/struktur, jobbprofil, kontakt/adresser, bild-/dokumentreferenser, profilversion och adminmedlemskap.",
+      "review": "JSON/fritext kan nämna tredje person. Företagets administrator och verifieringsbeslut kan innehålla andra personer; exportera inte verifierarens profil. Exakt adress får ingå i egen tillgång, men får inte läggas till matchning/företagsdelning."
+    },
+    {
+      "id": "billing",
+      "relations": [
+        "public.company_billing_details"
+      ],
+      "classification": "subject",
+      "subjectScope": "user_id = egen företagsprofil.",
+      "data": "Fakturaadress, fakturamejl, referens och versionsinformation.",
+      "review": "Redovisningskontakt kan vara annan person. Tabellen är skild från publik profil; inga skarpa fakturor finns implementerade genom denna källa."
+    },
+    {
+      "id": "private-cv-work",
+      "relations": [
+        "public.ai_onboarding_sessions",
+        "public.ai_onboarding_messages"
+      ],
+      "classification": "subject",
+      "subjectScope": "session.youth_user_id = egen identitet; meddelanden kopplas genom session_id.",
+      "data": "Både pågående/avslutade CV-samtal, rå användartext och assistenttext.",
+      "review": "Privata utkast och avvisade förslag får inte utelämnas bara för att de inte godkänts för matchning. Fritext granskas för tredje personer; inget nytt AI-anrop för formatering/maskering."
+    },
+    {
+      "id": "own-discovery",
+      "relations": [
+        "public.youth_application_drafts",
+        "public.youth_saved_jobs",
+        "public.youth_job_impressions",
+        "public.youth_job_dismissals",
+        "public.swipe_actions",
+        "public.application_workplace_preferences"
+      ],
+      "classification": "subject",
+      "subjectScope": "youth_user_id = egen identitet; job_id är sammanhang, inte rätt till hela jobbets kandidatlista.",
+      "data": "Sparade jobb, intresse/bortval, visningshistorik, utkast och valda arbetsplatssnapshots.",
+      "review": "Arbetsplatssnapshot kan innehålla kontaktuppgifter. Återge relevant jobbkontext utan andra sökandes uppgifter."
+    },
+    {
+      "id": "applications",
+      "relations": [
+        "public.application_completions",
+        "public.application_followups",
+        "private.application_disclosures"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Ungdom: youth_user_id = egen identitet. Företagets ägarskap till jobbet ger inte automatiskt rätt till rå ungdomsdata i en kontoexport.",
+      "data": "Ansökningsstatus/tider, ursprungliga frågor/svar, följdfrågor, valda delningar, delat paket och privat matching_input.",
+      "review": "Delat packet och intern matching_input är olika data. Egen ungdomstillgång omfattar behandlat privat underlag; arbetsgivarens export får inte kringgå N19:s delningsgräns. asked_by/kriterier/anteckningar och tredjepartstext kräver projektion/bedömning; source_token är intern versionsmetadata."
+    },
+    {
+      "id": "assessments",
+      "relations": [
+        "public.candidate_assessments"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Ungdom: youth_user_id = egen identitet, inklusive relevanta historiska rader. Företag: individuell prövning, inte alla rader med company_user_id.",
+      "data": "AI-resultat, belägg, kriteriesnapshot, kravversion, input_hash och tid.",
+      "review": "Vanliga UI:t visar inte ungdomens personliga bedömning; det utesluter inte tillgång enligt L13. Äldre resultats begränsade företags-RLS får inte bli ungdomens enda exportkälla. Belägg kan nämna tredje person; intern hash behöver normalt förklaras, inte rådumpas."
+    },
+    {
+      "id": "company-job-context",
+      "relations": [
+        "public.jobs",
+        "public.company_match_profiles",
+        "public.job_match_profiles",
+        "public.job_match_profile_versions"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Företag: eget company_user_id eller join jobs.company_user_id. Ungdom: enbart relevant annons-/kriteriekontext kopplad till egna uppgifter.",
+      "data": "Annonser/utkast, arbetsplatser, AI-källanteckningar, företagsmatchprofil och historiska kravprofiler.",
+      "review": "Generisk företagsinformation är inte automatiskt personuppgift men kan innehålla personers kontaktuppgifter/fritext. Alla kandidatprofiler och privata ansökningsunderlag får inte följa med som jobbkontext."
+    },
+    {
+      "id": "interest-and-matches",
+      "relations": [
+        "public.company_interest_actions",
+        "public.matches",
+        "public.conversations"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Egen youth_user_id eller company_user_id; motpartskoppling är en relation, inte tillgång till motpartens profil.",
+      "data": "Intressebeslut, match-/chattrelation, status, tid och anställningsmarkering.",
+      "review": "Använd lokala exportreferenser för motparten där lämpligt; ingen bred profiljoin. Neka inte allt bara för att relationen delas; pröva vad som avser den begärande personen."
+    },
+    {
+      "id": "chat",
+      "relations": [
+        "public.messages"
+      ],
+      "classification": "mixed",
+      "subjectScope": "conversation_id kopplas till en konversation där begärande användare är deltagare; sender_user_id ensamt räcker inte.",
+      "data": "Relevanta meddelanden från båda parter, avsändarroll/tid och videoreferenser.",
+      "review": "Motpartsmeddelanden är inte generellt undantagna, men tredje personers uppgifter, kontaktvägar och känsliga uppgifter i text kräver avgränsad bedömning/maskering. Exportera inte avsändarens hela profil eller signerad fillänk."
+    },
+    {
+      "id": "employment",
+      "relations": [
+        "public.employment_records",
+        "public.recruitment_outcomes",
+        "public.recruitment_rewards",
+        "public.recruitment_followups",
+        "public.recruitment_audit"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Egen youth_user_id/company_user_id eller via egen match/jobbrelation. Audit kan avse personen även när actor_user_id är någon annan.",
+      "data": "Anställningshistorik, svar/status, datum, uppföljning, belöningsstatus, beslut och relevanta revisionsspår.",
+      "review": "admin_notes/report_details/details kan innehålla andra personer eller säkerhetsinformation. Saknat direkt user_id är inget bevis att posten saknar personuppgifter. Ingen allmän auditdump eller automatisk utlämning av interna anteckningar."
+    },
+    {
+      "id": "notifications",
+      "relations": [
+        "public.notifications"
+      ],
+      "classification": "mixed",
+      "subjectScope": "user_id = egen mottagaridentitet.",
+      "data": "Titel, meddelande, typ, läs-/skapandetid och kontextreferens.",
+      "review": "Notiser kan innehålla personuppgifter i body/href; behandla inte generiska raderingsnotiser som ett bevis att alla notiser är anonyma. Maskera ovidkommande identifierare."
+    },
+    {
+      "id": "safety",
+      "relations": [
+        "public.user_blocks",
+        "public.moderation_reports",
+        "public.company_recruitment_controls"
+      ],
+      "classification": "review",
+      "subjectScope": "Rapporter: reporter_user_id eller mål via target_type/target_id, relaterad match/annons/meddelande/video och bevarad snapshot. Blockering och restriktion kan avse begärande person även när någon annan är aktör.",
+      "data": "Rapportinnehåll, mål-snapshots, säkerhetsbeslut, blockeringar och eventuella personuppgifter i granskningsanteckningar.",
+      "review": "Kräver individuell rättighets-/säkerhetsbedömning. Avslöja inte anmälare/blockerare eller alla bevis automatiskt. Nullat reporter_user_id garanterar inte att snapshot är anonym. Enbart filtrering på reporter_user_id missar uppgifter om anmäld person."
+    },
+    {
+      "id": "videos",
+      "relations": [
+        "public.youth_videos",
+        "public.youth_profile_videos"
+      ],
+      "classification": "mixed",
+      "subjectScope": "owner_id = egen identitet; legacy profile-video via user_id. Mottagarrelaterat material bedöms via egen konversation.",
+      "data": "Mediareferenser, uppladdnings-/skickandetid, utgång/radering och kvarvarande filer.",
+      "review": "Legacy-tabellen måste inventeras trots avvecklad permanent profilvideo. Respektera L12/rapportsäkring; återställ inte gallrad video. Egen tillgång till kvarvarande ägarmaterial måste bedömas separat från vanlig mottagaruppspelning."
+    },
+    {
+      "id": "processing-state",
+      "relations": [
+        "public.api_rate_limits",
+        "public.application_analysis_jobs",
+        "private.application_retention",
+        "private.conversation_retention",
+        "private.video_cleanup_jobs"
+      ],
+      "classification": "subject",
+      "subjectScope": "Eget user_id/youth_user_id; konversation/video kopplas via deltagarskap/ägare.",
+      "data": "Behandlingsstatus, försök, felkoder, tillämpliga lagringstider och gallringsstatus.",
+      "review": "Ingen rå ködump: lock_token är arbetsbehörighet och ska inte lämnas ut. Inputhashar och intern driftmetadata behöver projektion/förklaring. Driftdata kan också vara personuppgifter och får inte slentrianmässigt utelämnas."
+    },
+    {
+      "id": "premium",
+      "relations": [
+        "public.premium_orders",
+        "public.premium_entitlements",
+        "public.premium_activation_events"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Eget company_user_id; events via egna order_id/entitlement_id även utan direkt användarkolumn.",
+      "data": "Order-/rättighetsstatus, relevanta händelser/tider och källreferenser.",
+      "review": "Källreferenser/metadata granskas. Nollade FK-fält bevisar inte anonymitet om fria referenser eller återkopplingsbara event finns kvar. Detta är inte implementerad fakturering/betalning."
+    },
+    {
+      "id": "configuration",
+      "relations": [
+        "private.data_retention_config",
+        "private.data_retention_runs",
+        "private.matching_worker_config",
+        "private.video_cleanup_config",
+        "public.premium_products"
+      ],
+      "classification": "context",
+      "subjectScope": "Ingen automatisk kontokoppling. Relevant policy-/produktinformation kan förklaras som sammanhang.",
+      "data": "Policyreferens, tillämpade lagringsregler, produktbeskrivningar och aggregerad körstatus.",
+      "review": "Exportera inte worker-endpoint/driftkonfiguration som rådata. Granska fria metadata om de faktiskt innehåller personuppgifter; klassningen är ingen innehållsverifiering."
+    },
+    {
+      "id": "auth-identity",
+      "relations": [
+        "auth.users",
+        "auth.identities",
+        "auth.scim_users"
+      ],
+      "classification": "subject",
+      "subjectScope": "Egen auth.users.id respektive user_id; identiteter kopplas till den serververifierade användaren.",
+      "data": "Kontoidentitet, mejl/telefon, verifierings-/kontotider, relevanta metadata och inloggningsidentiteter.",
+      "review": "Använd strikt fältprojektion. Aldrig lösenordshashar, återställnings-/bekräftelse-/reauth-token eller privilegiehemligheter. raw_user_meta_data är persondata, inte betrodd behörighet. identity_data/resource kan innehålla fler identifierare/andra personer."
+    },
+    {
+      "id": "auth-security",
+      "relations": [
+        "auth.sessions",
+        "auth.refresh_tokens",
+        "auth.audit_log_entries",
+        "auth.flow_state",
+        "auth.one_time_tokens",
+        "auth.mfa_amr_claims",
+        "auth.mfa_challenges",
+        "auth.mfa_factors",
+        "auth.mfa_recovery_code_sets",
+        "auth.mfa_recovery_codes",
+        "auth.oauth_authorizations",
+        "auth.oauth_client_states",
+        "auth.oauth_consents",
+        "auth.saml_relay_states",
+        "auth.webauthn_challenges",
+        "auth.webauthn_credentials"
+      ],
+      "classification": "review",
+      "subjectScope": "Direkt user_id eller kontrollerad relation via session/faktor/kodset/auktorisering; audit payload och SAML for_email kräver särskild avgränsning.",
+      "data": "Relevant kontoaktivitet, tid, IP/user-agent, samtycken och säkerhets-/inloggningsmetadata där personen omfattas.",
+      "review": "Aldrig aktiva/utgångna access-/refresh-/OTP-/OAuth-koder, tokenhashar, MFA-hemligheter/recoverykoder, PKCE-verifierare, challenge-/sessionsdata eller refresh_token_hmac_key. Dessa tabeller får inte serialiseras generiskt. Funktionen kanske inte används; detta har inte fastställts genom läsning av tabellinnehåll."
+    },
+    {
+      "id": "auth-configuration",
+      "relations": [
+        "auth.custom_oauth_providers",
+        "auth.instances",
+        "auth.oauth_clients",
+        "auth.saml_providers",
+        "auth.schema_migrations",
+        "auth.scim_tokens",
+        "auth.sso_domains",
+        "auth.sso_providers"
+      ],
+      "classification": "context",
+      "subjectScope": "Leverantörskonfiguration, inte en godkänd användarexportkälla. Eventuella personkopplingar måste utredas separat.",
+      "data": "Schema-/IdP-/klientkonfiguration.",
+      "review": "Aldrig client_secret/client_secret_hash/token_hash/SCIM-hemligheter eller raw_base_config. metadata_xml och fria klientnamn kan innehålla personuppgifter; utan innehållsgranskning kan ingen generell anonymitet fastställas."
+    },
+    {
+      "id": "storage-content",
+      "relations": [
+        "storage.objects",
+        "storage.s3_multipart_uploads",
+        "storage.s3_multipart_uploads_parts"
+      ],
+      "classification": "mixed",
+      "subjectScope": "Verifiera faktiskt ägarskap (owner_id/owner), bucket, tillåten objektreferens och eventuell delad relation; prefix/filnamn är inte ensamt bevis.",
+      "data": "Kvarvarande objekt/versionsmetadata, relevanta originalfiler och pågående uppladdningar.",
+      "review": "Ingen godtycklig HTTP-hämtning av profil-URL:er; tillåt bara betrodd bucket/objektreferens. Metadata och användarmetadata kan innehålla tredje person. Inga upload_signature, signerade länkar eller andras filer; återställ inte raderade versioner/backup."
+    },
+    {
+      "id": "storage-configuration",
+      "relations": [
+        "storage.buckets",
+        "storage.buckets_analytics",
+        "storage.buckets_vectors",
+        "storage.migrations",
+        "storage.vector_indexes"
+      ],
+      "classification": "context",
+      "subjectScope": "Projekt-/bucketkonfiguration, ingen automatisk kontokoppling.",
+      "data": "Filgränser/typ och lagringssammanhang där relevant.",
+      "review": "Inga objektlistor från andra användare. Metadata_configuration och oinventerade analytics-/vektorobjekt behöver separat granskning om sådana funktioner aktiveras."
+    }
+  ],
+  "buckets": [
+    {
+      "id": "youth-documents",
+      "scope": "Verifierad ägare och betrodd objektreferens under eget konto.",
+      "data": "CV/PDF, dokument och profilbilder som faktiskt finns kvar.",
+      "review": "Originaldokument kan innehålla kontaktuppgifter/tredje person. Inga signerade URL:er; överför filbytes med rätt filnamn/typ och säker storleksgräns."
+    },
+    {
+      "id": "job-images",
+      "scope": "Företagets egna jobb-/profilobjekt, verifierad ägare även om bucket är publik.",
+      "data": "Annonsbilder/logotyper; bilder kan innehålla människor.",
+      "review": "Publik läsbarhet är ingen rätt att exportera hela bucket. Utkastbilder kan enbart finnas lokalt."
+    },
+    {
+      "id": "youth-profile-videos",
+      "scope": "Egen videoägare och uttrycklig bedömning av mottagar-/rapportreferenser.",
+      "data": "Chattvideo och eventuella kvarvarande legacy-filer.",
+      "review": "L12:s åtkomst-/gallringsregler och fysisk filstatus måste skiljas åt. Ingen återskapning av gallrad video."
+    }
+  ],
+  "outsideCatalog": [
+    {
+      "id": "browser-drafts",
+      "location": "localStorage/sessionStorage och IndexedDB matchnwork-company-drafts",
+      "data": "CV-hubb, röst-CV-svar/struktur/samtal, chattutkast, navigation och annonsutkast inklusive bild-Blob.",
+      "review": "Serverexport kan inte se andra enheter eller webbläsare. Hantera enhetslokala data separat, kontoskopat, utan att ladda upp dem tyst. Auth-sessioner i browserlagring ska aldrig följa med."
+    },
+    {
+      "id": "provider-processing",
+      "location": "Supabase Auth/Storage/loggar/backuper, Vercel, OpenAI, Mapbox, Zoho SMTP samt GitHub vid driftärenden",
+      "data": "Beroende på aktiverad funktion: konto/mejl, loggmetadata, dokument-/AI-/röstunderlag, nätverksmetadata och utskicksinformation.",
+      "review": "Ingen leverantörslogg/backup har inventerats genom SQL-katalogen. Kontrollera avtal, aktuella kontoinställningar, rättslig grund, logg-/retentionstider och möjlig tillgång i L14. store:false bevisar inte frånvaro av leverantörens missbruksloggar."
+    },
+    {
+      "id": "vault-and-operations",
+      "location": "Vault, Edge-/Vercel-miljö, cron/net/realtime och övriga system-/extensionscheman",
+      "data": "Driftkonfiguration, åtkomsthemligheter och eventuell felsöknings-/transportmetadata.",
+      "review": "Läs eller exportera aldrig hemligheter för inventeringen. Särskild metadata-/personuppgiftsgranskning återstår utanför de fyra katalogschemana; råa systemtabeller/loggar får inte automatiskt bli exporter."
+    }
+  ]
+}

@@ -1432,6 +1432,11 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Fortsättning reserverad före arbete 2026-10-28: Vilgot / Codex, `codex/l13-export-inventory-20261028`. Datainventering inför automatisk export: aktuellt schema, ägarrelationer, privata/historiska underlag, filer, tredjepartsgränser och maskerings-/bedömningsbehov. Återanvändbart källregister och kontroll mot schemadrift. Ingen export av verkligt innehåll, ny datadelning eller ändrad databas/behörighet; exportfunktionens UI/paketfrist och verksamhetsbedömningar kvarstår. Öppna PR:er kontrollerade.
+- Leverans: [PR #143](https://github.com/vilgotdidrikson/youth-job-mvp/pull/143). Schemainventering av DevStaging: 85 relationer (50 public/private, 35 Auth/Storage) och tre buckets, klassificerade i 21 grupper med ägar-/tredjepartsgränser, historiska/privata underlag, lokala utkast och externa/driftkällor. Inga användarrader/hemligheter lästa. Inget export-UI/API eller nytt dataflöde. Se docs/L13_EXPORT_INVENTORY.md.
+- Verifierat för #143: aktuell metadata matchar hela registret; 21 negativa/positiva kontroller av driftverktyget, riktad ESLint och diff-check passerar. Ingen databasändring. Verktyget kräver uttrycklig metadatafil och är ingen live-anslutning eller export-/rättighetsverifiering. Externa/logg-/innehållsbedömningar, paketfrist, ansvar/kontakt och implementation återstår; L13 förblir Pågår.
+
+
 - Samordnad F26-fortsättning 2026-10-28: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142) skyddar mot blandade/inaktuella delningsversioner och ändrade krav i bedömnings-API:t. Modellfelvägen kontrollerar också aktuell åtkomst. Kontrollerade samtidighetsprov är simulerade; fullständigt rättelseflöde och automatisk export kvarstår. Se docs/F26.md.
 
 - Faktisk HTTP-verifiering 2026-10-28: [PR #141](https://github.com/vilgotdidrikson/youth-job-mvp/pull/141). 13 kontroller passerar med två fiktiva konton/samma lösenord och privat PDF: fel konto/lösenord, egen radering, nekad Auth/färsk filåtkomst och upprepad radering. Tidigare cachad fil-URL nekas efter cirka 59 s; omedelbar spärr av cacheträffar påstås inte. Efterkontroll visar noll QA-konton/filer. Inloggad native-dialog/mobil och övrig L13/export återstår. Se docs/L13_DELETION.md.
@@ -1466,7 +1471,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Leverans: [PR #140](https://github.com/vilgotdidrikson/youth-job-mvp/pull/140).
 - Implementerat: Samlad lösenordsskyddad raderingsdialog för samtliga roller, uttrycklig kontokoppling i klient/API, verifiering före privilegierad åtkomst och separat lösenordsverifieringsklient. Synkron dubbelklicksspärr, kontonycklad instans, tömda lösenord/val, 30 s väntetid och sanningsenligt okänt resultat utan automatisk omradering/global logout. Befintlig fil-/Auth-radering/adminspärr bevaras. Se docs/L13_DELETION.md.
 - Verifierat: Faktisk gammal handler reproducerar kontomismatch (204 i stället för 409) med simulerad Auth. Ny handler, klient och UI-callbackprov, profile-journey, account-recovery, riktad ESLint och standardbygge/TypeScript/57 routes passerar med fiktiva publika byggvärden. Faktiskt dev-HTTP-protokoll för två fiktiva konton/privat PDF finns i PR #141 och docs/L13_DELETION.md; browser-/mobilkontroll räknas inte som utförd.
-- Återstår / blockerare: Datainventering, kontaktadress/ansvarig, exakt exportpaketsfrist, rättighetsbedömning, automatisk export, rättelse och resterande verifiering. Inloggad native-dialog/mobil/flerflikskontroll återstår; hela L13 är fortsatt Pågår.
+- Återstår / blockerare: Datainventeringen på schemanivå finns i PR #143; innehålls-/leverantörs-/rättighetsbedömning, kontaktadress/ansvarig, exakt exportpaketsfrist, automatisk export, rättelse och resterande verifiering återstår. Inloggad native-dialog/mobil/flerflikskontroll återstår; hela L13 är fortsatt Pågår.
 
 <a id="l14"></a>
 ### L14 Verifiera leverantörsavtal och produktionskonton
