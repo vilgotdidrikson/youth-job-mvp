@@ -1427,6 +1427,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Nödvändig verifieringsuppföljning reserverad 2026-10-28: Vilgot / Codex, `codex/l13-cache-verification-20261028`. Faktiskt HTTP-prov efter PR #140 visar att filobjekt/Auth-konton raderas, medan en tidigare hämtad privat URL kan ge cacheträff direkt efter radering. Färsk URL med nonce ger 400/not_found och metadata visar noll testfiler/konton. Verifiera även gammal URLs eventualitet, korrigera testets omedelbarhetsantagande och dokumentera cachebegränsningen; inga produktionsinställningar eller utökade behörigheter.
+
 - [ ] Klar
 - Prioritet: P1, före skarp lansering
 - Global ordning: 22.2
