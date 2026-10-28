@@ -1432,6 +1432,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Fortsättning reserverad före arbete 2026-10-28: Vilgot / Codex, `codex/l13-export-inventory-20261028`. Datainventering inför automatisk export: aktuellt schema, ägarrelationer, privata/historiska underlag, filer, tredjepartsgränser och maskerings-/bedömningsbehov. Återanvändbart källregister och kontroll mot schemadrift. Ingen export av verkligt innehåll, ny datadelning eller ändrad databas/behörighet; exportfunktionens UI/paketfrist och verksamhetsbedömningar kvarstår. Öppna PR:er kontrollerade.
+
 - Samordnad F26-fortsättning 2026-10-28: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142) skyddar mot blandade/inaktuella delningsversioner och ändrade krav i bedömnings-API:t. Modellfelvägen kontrollerar också aktuell åtkomst. Kontrollerade samtidighetsprov är simulerade; fullständigt rättelseflöde och automatisk export kvarstår. Se docs/F26.md.
 
 - Faktisk HTTP-verifiering 2026-10-28: [PR #141](https://github.com/vilgotdidrikson/youth-job-mvp/pull/141). 13 kontroller passerar med två fiktiva konton/samma lösenord och privat PDF: fel konto/lösenord, egen radering, nekad Auth/färsk filåtkomst och upprepad radering. Tidigare cachad fil-URL nekas efter cirka 59 s; omedelbar spärr av cacheträffar påstås inte. Efterkontroll visar noll QA-konton/filer. Inloggad native-dialog/mobil och övrig L13/export återstår. Se docs/L13_DELETION.md.
