@@ -1219,6 +1219,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/f26-assessment-snapshot-20261028`. Avgränsat skydd mot blandade/inaktuella ansöknings- och kravversioner i kandidatbedömningens API och bakgrundsarbetare, samordnat med L13:s rättelsekrav. Befintliga RLS-/delningsgränser bevaras; inga nya datafält, modellpass eller databasändringar. Öppna PR:er kontrollerade.
+
 - Fortsättning reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/f26-unicode-minimization-20261027`. Unicode-säkra känslighets-/identitetskontroller i den gemensamma lokala AI-minimeringen, bevarade källcitat och utgående payloadprov. Inga nya AI-anrop, datafält eller behörigheter. L03 inväntar fastställt pris/fakturauppgifter; profilutökningar inväntar befintlig dataskyddsavstämning. Övrigt F26/N19-ägarskap och status bevaras.
 
 - [ ] Klar
