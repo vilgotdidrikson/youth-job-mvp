@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:browser:staging": "node scripts/test-l08-browser.mjs",
     "test:server-failures": "node scripts/test-server-failures.mjs",
     "test:personal-data-inventory": "node scripts/test-personal-data-inventory.mjs",
     "check:personal-data-inventory": "node scripts/check-personal-data-inventory.mjs",
