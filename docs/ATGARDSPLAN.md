@@ -107,7 +107,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Klar | Vilgot / Codex |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | För granskning | Vilgot / Codex |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
-| 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Ej påbörjad | — |
+| 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
@@ -1430,9 +1430,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - [ ] Klar
 - Prioritet: P1, före skarp lansering
 - Global ordning: 22.2
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: Implementationsägare/branch reserveras separat före kodarbete.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/l13-safe-account-deletion-20261028`, reserverad före kodarbete. Första leverans: återanvänd befintlig lösenordsverifiering/radering, ersätt prompt/confirm med lösenordsskyddad dialog, bind UI/API till uttryckligen bekräftat konto och skydda mot dubbla/sena anrop. Automatisk export, paketfrist och övriga rättighetsdelar byggs inte i denna leverans.
 - Beslut: Automatisk export är huvudlösningen, inte enbart ett manuellt ärende. Manuell hjälp finns som komplement för frågor, fel, avgränsningar och begäranden som kräver särskild bedömning.
 - Samordning: L05/L06 (behörighet, session och befintlig radering), L12 (gallring och undantag), F20 (information/kontakt), N19/F26 (profil och härledda bedömningar), N10 (övriga kontoval). Håll gemensam export-/raderingslogik återanvändbar för framtida mobilapp.
 
