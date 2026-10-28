@@ -88,7 +88,7 @@ try{
 }catch(reason){failure=reason;console.error('FAIL:',reason.message);}
 finally{
  if(cvUploaded&&!videoUploaded){const res=await request(`${base}/storage/v1/object/youth-documents`,'youth','DELETE',{prefixes:[cfg.cvPath]});check(res.ok,'test CV bytes cleaned up by owner');}
- if(videoUploaded){const res=await request(`${app}/api/account`,'youth','DELETE',{password:actors.youth.password});check(res.status===204,'disposable youth account and private file bytes cleaned up');}
+ if(videoUploaded){const res=await request(`${app}/api/account`,'youth','DELETE',{password:actors.youth.password,expectedUserId:actors.youth.id});check(res.status===204,'disposable youth account and private file bytes cleaned up');}
  console.log(JSON.stringify({passed,skipped,videoBytesTested:videoUploaded,youthDeleted:videoUploaded,requiresSqlCleanup:true,fixtureScope:'qa-l05-http'}));
 }
 process.stdin.destroy();if(failure)process.exitCode=1;

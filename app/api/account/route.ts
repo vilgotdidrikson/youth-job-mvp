@@ -65,13 +65,22 @@ export async function DELETE(request: NextRequest) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!token || !url || !anonKey) return NextResponse.json({ error: "Du måste vara inloggad." }, { status: 401 });
   if (!serviceKey) return NextResponse.json({ error: "Kontoborttagning är inte konfigurerad. Kontakta supporten." }, { status: 503 });
-  const userClient = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-  const { data: userData } = await userClient.auth.getUser(token);
-  if (!userData.user) return NextResponse.json({ error: "Din session är inte giltig." }, { status: 401 });
-  const body = await request.json().catch(() => ({})) as { password?: string };
-  if (!body.password) return NextResponse.json({ error: "Bekräfta ditt lösenord för att radera kontot." }, { status: 400 });
-  const { data: verified, error: passwordError } = await userClient.auth.signInWithPassword({ email: userData.user.email ?? "", password: body.password });
-  if (passwordError || verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
+  const userClient = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
+  const { data: userData, error: userError } = await userClient.auth.getUser(token);
+  if (userError || !userData.user) return NextResponse.json({ error: "Din session är inte giltig." }, { status: 401 });
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
+  const { password, expectedUserId } = body as Record<string, unknown>;
+  if (typeof password !== "string" || !password || password.length > 1024 || typeof expectedUserId !== "string") return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
+  // Reject an account switch before password verification or destructive access.
+  if (expectedUserId !== userData.user.id) return NextResponse.json({ error: "Kontot har ändrats. Öppna inställningarna för rätt konto igen." }, { status: 409 });
+  const reauth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const { data: verified, error: passwordError } = await reauth.auth.signInWithPassword({ email: userData.user.email ?? "", password });
+  if (passwordError) {
+    const status = passwordError.status === 429 ? 429 : !passwordError.status || passwordError.status >= 500 ? 502 : 403;
+    return NextResponse.json({ error: status === 429 ? "För många försök. Vänta en stund." : status === 502 ? "Lösenordet kunde inte verifieras just nu. Försök senare." : "Lösenordet stämmer inte." }, { status });
+  }
+  if (verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
   // Privileged accounts are offboarded by another administrator first, so the
   // platform can never lose its last admin through self-service deletion.

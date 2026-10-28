@@ -73,7 +73,7 @@ async function deleteViaApi(account) {
   const response = await fetch(`${appUrl}/api/account`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ password, expectedUserId: account.id }),
   });
   return response.status;
 }

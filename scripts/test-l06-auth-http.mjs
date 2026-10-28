@@ -26,9 +26,9 @@ try{
  const refresh=await request(`${base}/auth/v1/token?grant_type=refresh_token`,'POST',{refresh_token:fresh.data.refresh_token},null);check(!refresh.ok&&[400,401,403].includes(refresh.status),'signed-out refresh token cannot restore session');
  const afterLogout=await login(password);check(afterLogout.ok,'account can sign in again after logout');token=afterLogout.data.access_token;
  const uploaded=await request(`${base}/storage/v1/object/youth-documents/${path}`,'POST',Buffer.from('%PDF-1.4\n% QA L06 fictional private document\n%%EOF\n'),token,{'Content-Type':'application/pdf'});check(uploaded.ok,'disposable account uploads a private PDF');
- check((await request(`${app}/api/account`,'DELETE',{password:'intentionally-wrong-qa-password'})).status===403,'account deletion requires correct password');
+ check((await request(`${app}/api/account`,'DELETE',{password:'intentionally-wrong-qa-password',expectedUserId:cfg.id})).status===403,'account deletion requires correct password');
  check((await request(`${base}/auth/v1/user`)).data?.id===cfg.id,'failed deletion preserves account');
- const removed=await request(`${app}/api/account`,'DELETE',{password});check(removed.status===204,'verified account deletion removes identity and files');deleted=true;
+ const removed=await request(`${app}/api/account`,'DELETE',{password,expectedUserId:cfg.id});check(removed.status===204,'verified account deletion removes identity and files');deleted=true;
  check([401,403,404].includes((await request(`${base}/auth/v1/user`)).status),'deleted user cannot authenticate using old access token');
  const protectedApi=await request(`${app}/api/company/candidate-cv`,'POST',{});check(protectedApi.status===401,'protected app API rejects deleted identity');
  const profile=await request(`${base}/rest/v1/youth_profiles?select=user_id&user_id=eq.${cfg.id}`);check((profile.ok&&profile.data.length===0)||[401,403].includes(profile.status),'deleted private profile is inaccessible');
@@ -36,6 +36,6 @@ try{
  console.log(JSON.stringify({passed,deleted,fixtureScope:'qa-l06-http',emailDeliveryTested:false}));
 }catch(error){console.error('FAIL:',error.message);process.exitCode=1;}
 finally{
- if(!deleted&&token){let result=await request(`${app}/api/account`,'DELETE',{password});if(result.status===403)result=await request(`${app}/api/account`,'DELETE',{password:nextPassword});deleted=result.status===204;console.log(JSON.stringify({cleanupDeleted:deleted,fixtureScope:'qa-l06-http'}));}
+ if(!deleted&&token){let result=await request(`${app}/api/account`,'DELETE',{password,expectedUserId:cfg.id});if(result.status===403)result=await request(`${app}/api/account`,'DELETE',{password:nextPassword,expectedUserId:cfg.id});deleted=result.status===204;console.log(JSON.stringify({cleanupDeleted:deleted,fixtureScope:'qa-l06-http'}));}
  process.stdin.destroy();
 }

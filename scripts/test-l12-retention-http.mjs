@@ -29,4 +29,4 @@ try{
  const activeClock=await rpc('youth','get_conversation_retention',{p_conversation_id:cfg.activeConversation});const row=activeClock.data?.[0];check(activeClock.ok&&Date.parse(row.last_activity_at)<=Date.parse(row.server_now)&&new Date(row.read_only_at).getUTCFullYear()<2030,'real API ignores forged client time for retention activity');
  console.log(JSON.stringify({passed,requiresSqlCleanup:true,fixtureScope:'qa-l12-http',originalCvPreserved:true}));
 }catch(error){console.error('FAIL:',error.message);process.exitCode=1;}
-finally{if(uploaded){const removed=await request(`${app}/api/account`,'youth','DELETE',{password:actors.youth.password});check(removed.status===204,'disposable owner and private original CV bytes cleaned through account API');}input.close();process.stdin.destroy();}
+finally{if(uploaded){const removed=await request(`${app}/api/account`,'youth','DELETE',{password:actors.youth.password,expectedUserId:actors.youth.id});check(removed.status===204,'disposable owner and private original CV bytes cleaned through account API');}input.close();process.stdin.destroy();}
