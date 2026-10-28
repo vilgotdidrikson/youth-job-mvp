@@ -1,0 +1,14 @@
+.dialog { width: min(520px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-sizing: border-box; overflow: auto; padding: 24px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.dialog h2 { margin: 0 0 16px; font-size: var(--text-xl); }
+.dialog p { line-height: 1.6; }
+.fields { display: grid; gap: 16px; min-width: 0; margin: 20px 0; padding: 0; border: 0; }
+.fields label { display: grid; gap: 8px; font-size: var(--text-sm); }
+.fields input:not([type=checkbox]) { min-height: 44px; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; }
+.fields .confirm { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; cursor: pointer; line-height: 1.5; }
+.confirm input { flex: none; margin-top: 3px; width: 20px; height: 20px; accent-color: var(--color-brand); }
+.error { color: var(--color-danger); }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.actions button { min-height: 44px; }
+.danger { padding: 10px 16px; border: 1px solid var(--color-danger); border-radius: var(--radius-sm); background: var(--color-danger); color: var(--color-white); font: inherit; cursor: pointer; }
+.danger:disabled { opacity: .6; cursor: default; }
+@media(max-width:480px) { .dialog { padding: 20px; } .actions button { width: 100%; } }

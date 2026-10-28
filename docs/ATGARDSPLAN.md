@@ -1453,9 +1453,10 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Jämför exporten mot en dokumenterad datainventering med fiktiva ungdoms-/företagskonton; profil/CV ensamt är inte godkänt. Kontrollera begriplig sammanställning, JSON, svenska tecken, filer och rättighetsinformation.
 - Negativa tester: anonym, annan ungdom, annat företag, utgången länk, gammal session, dubbla jobb, fel under skapande/hämtning och samtidig kontoradering. Inga tredjepartsuppgifter eller hemligheter läcker; tillfälliga paket städas faktiskt även efter fel.
 - Verifiera rättelse och hantering av inaktuella bedömningar samt självbetjäningsradering inklusive filer/åtkomst och dokumenterade undantag. Kontaktväg och intern rutin fungerar även när automatiken eller inloggningen inte gör det.
-- Implementerat: —
-- Verifierat: Dokumentationskrav genomgångna; ingen export/radering eller kontokonfiguration ändrad i denna leverans.
-- Återstår / blockerare: Datainventering, kontaktadress/ansvarig, exakt exportpaketsfrist, rättighetsbedömning, implementation och verifiering.
+- Leverans: [PR #140](https://github.com/vilgotdidrikson/youth-job-mvp/pull/140).
+- Implementerat: Samlad lösenordsskyddad raderingsdialog för samtliga roller, uttrycklig kontokoppling i klient/API, verifiering före privilegierad åtkomst och separat lösenordsverifieringsklient. Synkron dubbelklicksspärr, kontonycklad instans, tömda lösenord/val, 30 s väntetid och sanningsenligt okänt resultat utan automatisk omradering/global logout. Befintlig fil-/Auth-radering/adminspärr bevaras. Se docs/L13_DELETION.md.
+- Verifierat: Faktisk gammal handler reproducerar kontomismatch (204 i stället för 409) med simulerad Auth. Ny handler, klient och UI-callbackprov, profile-journey, account-recovery, riktad ESLint och standardbygge/TypeScript/57 routes passerar med fiktiva publika byggvärden. Faktiskt dev-HTTP-protokoll för två fiktiva konton/privat PDF följs i PR #140:s verifieringsavsnitt; browser-/mobilkontroll räknas inte som utförd.
+- Återstår / blockerare: Datainventering, kontaktadress/ansvarig, exakt exportpaketsfrist, rättighetsbedömning, automatisk export, rättelse och resterande verifiering. Inloggad native-dialog/mobil/flerflikskontroll återstår; hela L13 är fortsatt Pågår.
 
 <a id="l14"></a>
 ### L14 Verifiera leverantörsavtal och produktionskonton

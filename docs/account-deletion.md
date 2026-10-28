@@ -99,3 +99,7 @@ Fall som täcks:
 - När ett företag raderas försvinner annonser och bilder, och andra ungdomars
   swipes, sparade jobb och utkast. Premium avslutas och anonymiseras.
 - Korsfall: en utomstående ungdom behåller sitt konto och sin profil.
+
+## Kontobunden bekräftelse 2026-10-28
+
+API:t kräver nu password och expectedUserId; identiteten jämförs mot Auth-verifierad token före lösenordsverifiering eller privilegierad åtkomst. Alla kontoroller har en samlad dialog. Datakategorier och undantag ovan är oförändrade. Aktuella company_billing_details raderas med företagsprofilens FK-kedja (L03). Se [L13_DELETION.md](L13_DELETION.md) och [PR #140](https://github.com/vilgotdidrikson/youth-job-mvp/pull/140) för verifieringsnivå och körprotokoll.
