@@ -14,6 +14,7 @@ import { getSwipeJobs } from "@/lib/feeds";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { PageLoading } from "@/components/page-loading";
 import type { JobPost } from "@/lib/types";
 
 function MapPageContent() {
@@ -79,4 +80,4 @@ function MapPageContent() {
   </main>;
 }
 
-export default function MapPage() { return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar karta…</p></main>}><MapPageContent/></Suspense>; }
+export default function MapPage() { return <Suspense fallback={<PageLoading label="Laddar karta…" />}><MapPageContent/></Suspense>; }

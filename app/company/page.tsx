@@ -44,6 +44,7 @@ import { COMPANY_ROUTES, companyView, createdCompanyJobHref, editCompanyJobHref,
 import { createJob, deleteJob, updateJob } from "@/lib/jobs";
 import { CloseRecruitmentDialog } from "@/components/close-recruitment-dialog";
 import { CompanyRecruitmentStatus } from "@/components/company-recruitment-status";
+import { PageLoading } from "@/components/page-loading";
 import { createInitialJobMatchProfile, saveJobMatchProfile } from "@/lib/match-profiles";
 import { uploadJobImage } from "@/lib/storage";
 import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
@@ -656,5 +657,5 @@ function CompanyPageContent() {
 }
 
 export default function CompanyPage() {
-  return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar...</p></main>}><CompanyPageContent /></Suspense>;
+  return <Suspense fallback={<PageLoading label="Laddar..." />}><CompanyPageContent /></Suspense>;
 }

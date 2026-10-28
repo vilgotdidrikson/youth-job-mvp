@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { YouthCvHub } from "@/components/youth-cv-hub";
 import { JourneyStepFrame } from "@/components/profile-steps/step-nav";
+import { PageLoading } from "@/components/page-loading";
 
 /** In the profile journey the CV step gets the same step menu as the other steps. */
 function CvPage() {
@@ -14,7 +15,7 @@ function CvPage() {
 
 export default function YouthCvPage() {
   return (
-    <Suspense fallback={<main className="mobile-shell"><p>Laddar...</p></main>}>
+    <Suspense fallback={<PageLoading label="Laddar..." />}>
       <CvPage />
     </Suspense>
   );
