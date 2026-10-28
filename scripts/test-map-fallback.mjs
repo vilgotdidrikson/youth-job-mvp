@@ -66,6 +66,7 @@ const mod={exports:{}};new Function('module','exports','require','document','req
  if(name==='@/components/ui-icon')return{UiIcon:'icon'};
  if(name==='@/hooks/use-require-auth')return{useRequireAuth:()=>auth};
  if(name==='@/components/auth-gate-message')return{};
+ if(name==='@/components/page-loading')return{PageLoading:'page-loading'};
  if(name==='@/lib/feeds')return{getSwipeJobs:async()=>{if(failFeed)throw Error('QA network failure');return feed;}};
  if(name==='@/lib/supabase')return{getSupabaseClient:()=>({from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{city:'Stockholm'}})})})})})};
  if(name.startsWith('@/lib/'))return require('../lib/'+name.split('/').at(-1)+'.ts');

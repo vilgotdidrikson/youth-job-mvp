@@ -12,6 +12,7 @@ import type { CvInterviewArea } from "@/lib/cv-interview";
 import { INTERVIEW_QUESTIONS, type InterviewTurn } from "@/lib/voice-interview";
 import { authenticatedAudioUrl, authenticatedHeaders } from "@/lib/api-client";
 import { UiIcon } from "@/components/ui-icon";
+import { PageLoading } from "@/components/page-loading";
 
 const VOICE_CV_STORAGE_KEY = "employo-voice-cv-answers";
 const VOICE_CV_STRUCTURED_KEY = "employo-voice-cv-structured";
@@ -328,7 +329,7 @@ export default function VoiceCvInterview() {
   };
 
   if (authStatus !== "ready") return <AuthGateMessage status={authStatus} error={sessionError} />;
-  if (!profile) return <main className="mobile-shell" style={{ display: "grid", placeItems: "center" }}><p>Hämtar innehåll...</p></main>;
+  if (!profile) return <PageLoading label="Hämtar innehåll..." />;
   return <main className="mobile-shell voice-cv-page" style={{ minHeight: "100svh" }}>
     <button type="button" onClick={goBack} aria-label="Tillbaka till CV-val" title="Tillbaka till CV-val" className="voice-cv-back">←</button>
     <section className="card" style={{ display: "grid", gap: "1.1rem", padding: "1.35rem", textAlign: "center" }}>

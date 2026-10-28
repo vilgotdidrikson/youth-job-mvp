@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { PageLoading } from "@/components/page-loading";
 import { getCandidatesForJob } from "@/lib/feeds";
 import { createJob, getCompanyJobs, updateJob } from "@/lib/jobs";
 import { reviewCandidate } from "@/lib/matching";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { CandidateFeedItem, JobPost, SwipeDecision } from "@/lib/types";
+import "./private-design.css";
 
 const initialForm = { title: "", description: "", city: "", address: "", pay: "" };
 
@@ -80,26 +82,26 @@ export default function PrivateTasksPage() {
   };
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
-  if (profile?.role !== "private") return <main className="mobile-shell"><p>Hämtar innehåll...</p></main>;
+  if (profile?.role !== "private") return <PageLoading label="Hämtar innehåll..." />;
 
-  return <main className="mobile-shell mnw-private-workspace" style={{ paddingBottom: "6rem" }}>
-    <header style={{ padding: "0.75rem 0 1.25rem" }}><p style={{ margin: 0, color: "#737373", fontSize: ".82rem" }}>Privatperson</p><h1 style={{ margin: ".2rem 0", color: "#111", fontSize: "1.65rem" }}>Mina uppdrag</h1><p style={{ margin: 0, color: "#737373", fontSize: ".88rem" }}>Hitta hjälp för enstaka uppgifter och matcha tryggt.</p></header>
-    {error && <p role="alert" style={{ color: "#b42318", background: "#fff1f0", padding: ".75rem", borderRadius: 8 }}>{error}</p>}
-    <form className="card" onSubmit={submit} style={{ padding: "1rem", marginBottom: "1rem" }}>
-      <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Nytt engångsjobb</h2>
+  return <main className="mobile-shell mnw-private-workspace">
+    <header><p>Privatperson</p><h1>Mina uppdrag</h1><p>Hitta hjälp för enstaka uppgifter och matcha tryggt.</p></header>
+    {error && <p role="alert" className="private-error">{error}</p>}
+    <form className="card" onSubmit={submit}>
+      <h2>Nytt engångsjobb</h2>
       <label>Vad behöver du hjälp med?<input className="input-field" required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="T.ex. Hjälp att bära flyttkartonger" /></label>
       <label>Beskriv uppgiften<textarea className="input-field" required rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
       <label>Ort<input className="input-field" required value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label>
       <label>Adress<input className="input-field" required value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} /></label>
       <label>Ersättning (valfritt)<input className="input-field" value={form.pay} onChange={(event) => setForm({ ...form, pay: event.target.value })} placeholder="T.ex. 150 kr/tim" /></label>
-      <button className="cta-btn" type="submit" disabled={busy} style={{ marginTop: ".8rem", width: "100%" }}>{busy ? "Sparar..." : "Publicera uppdrag"}</button>
+      <button className="cta-btn" type="submit" disabled={busy}>{busy ? "Sparar..." : "Publicera uppdrag"}</button>
     </form>
-    {tasks.map((task) => <section className="card" key={task.id} style={{ padding: "1rem", marginBottom: ".75rem" }}>
-      <p style={{ margin: 0, color: "#737373", fontSize: ".75rem" }}>{task.status === "closed" ? "Avslutat" : "Aktivt uppdrag"}</p><h2 style={{ margin: ".2rem 0", fontSize: "1.05rem" }}>{task.title}</h2><p style={{ color: "#555", fontSize: ".86rem" }}>{task.city} · {task.description}</p>
-      {(candidates[task.id] ?? []).map((candidate) => <div key={candidate.youthUserId} style={{ borderTop: "1px solid #eee", paddingTop: ".7rem", marginTop: ".7rem" }}><strong>{candidate.profile?.full_name || "Kandidat"}</strong><p style={{ margin: ".25rem 0", fontSize: ".82rem", color: "#737373" }}>{candidate.profile?.city || ""}</p><button type="button" className="secondary-btn" disabled={busy} onClick={() => void decide(task, candidate, "skip")}>Avvisa</button><button type="button" className="cta-btn" disabled={busy} onClick={() => void decide(task, candidate, "interested")} style={{ marginLeft: ".5rem" }}>Matcha</button></div>)}
-      {task.status !== "closed" && <button type="button" className="secondary-btn" disabled={busy} onClick={() => void closeTask(task)} style={{ marginTop: ".8rem" }}>Avsluta uppdrag</button>}
+    {tasks.map((task) => <section className="card private-task" key={task.id}>
+      <p className="private-task-status" data-status={task.status === "closed" ? "closed" : "active"}>{task.status === "closed" ? "Avslutat" : "Aktivt uppdrag"}</p><h2>{task.title}</h2><p className="private-task-meta">{task.city} · {task.description}</p>
+      {(candidates[task.id] ?? []).map((candidate) => <div key={candidate.youthUserId} className="private-candidate"><div><strong>{candidate.profile?.full_name || "Kandidat"}</strong><p>{candidate.profile?.city || ""}</p></div><div className="private-candidate-actions"><button type="button" className="secondary-btn" disabled={busy} onClick={() => void decide(task, candidate, "skip")}>Avvisa</button><button type="button" className="cta-btn" disabled={busy} onClick={() => void decide(task, candidate, "interested")}>Matcha</button></div></div>)}
+      {task.status !== "closed" && <button type="button" className="secondary-btn private-task-close" disabled={busy} onClick={() => void closeTask(task)}>Avsluta uppdrag</button>}
     </section>)}
-    {tasks.length === 0 && <p style={{ textAlign: "center", color: "#737373" }}>Du har inga uppdrag ännu.</p>}
-    <Link href="/chats" className="secondary-btn" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Öppna matchningar och chattar</Link>
+    {tasks.length === 0 && <p className="private-empty">Du har inga uppdrag ännu.</p>}
+    <Link href="/chats" className="secondary-btn private-chats-link">Öppna matchningar och chattar</Link>
   </main>;
 }

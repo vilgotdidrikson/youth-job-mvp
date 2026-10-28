@@ -37,7 +37,7 @@ const deps={
  '@/lib/job-categories':{jobCategoryFilterValues:()=>[]},'@/lib/job-workplaces':{getJobWorkplaces:()=>[]},
  'react':pageReact,'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'fragment'},
  'next/navigation':{useRouter:()=>({replace(){}}),useSearchParams:()=>({get(){return null;}})},
- '@/components/job-discovery':{JobDiscovery:'discovery'},'@/components/auth-gate-message':{},
+ '@/components/job-discovery':{JobDiscovery:'discovery'},'@/components/auth-gate-message':{},'@/components/page-loading':{PageLoading:'page-loading'},
  '@/lib/job-discovery':{orderDiscoveryJobs:jobs=>jobs},
  '@/lib/job-search':{readSearchFilters:()=>({query:'',city:'',category:'',employmentType:'',workTime:'',nearbyCity:'',radiusKm:'',onlyKnown:''})},
  '@/lib/discovery-history':{

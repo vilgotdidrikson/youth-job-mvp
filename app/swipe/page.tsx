@@ -13,6 +13,7 @@ import { useDiscoveryUndo } from "@/hooks/use-discovery-undo";
 import { getSwipeJobs } from "@/lib/feeds";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { PageLoading } from "@/components/page-loading";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { swipeJob } from "@/lib/matching";
 import { getSavedJobs, getYouthFlowState, saveApplicationDraft, setJobSaved } from "@/lib/youth-job-flow";
@@ -162,7 +163,7 @@ function SwipePageContent() {
   };
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
-  if (cvLoading) return <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p></main>;
+  if (cvLoading) return <PageLoading label="Hämtar innehåll..." />;
 
   const handleSave = async (job: JobPost, saved: boolean) => {
     await setJobSaved(job.id, saved);
@@ -182,4 +183,4 @@ function SwipePageContent() {
   </>;
 }
 
-export default function SwipePage() { return <Suspense fallback={<main className="mobile-shell map-page-loading"><p>Laddar...</p></main>}><SwipePageContent /></Suspense>; }
+export default function SwipePage() { return <Suspense fallback={<PageLoading label="Laddar..." />}><SwipePageContent /></Suspense>; }
