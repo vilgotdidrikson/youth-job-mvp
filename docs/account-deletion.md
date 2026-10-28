@@ -103,3 +103,7 @@ Fall som täcks:
 ## Kontobunden bekräftelse 2026-10-28
 
 API:t kräver nu password och expectedUserId; identiteten jämförs mot Auth-verifierad token före lösenordsverifiering eller privilegierad åtkomst. Alla kontoroller har en samlad dialog. Datakategorier och undantag ovan är oförändrade. Aktuella company_billing_details raderas med företagsprofilens FK-kedja (L03). Se [L13_DELETION.md](L13_DELETION.md) och [PR #140](https://github.com/vilgotdidrikson/youth-job-mvp/pull/140) för verifieringsnivå och körprotokoll.
+
+### Cache verifierad 2026-10-28
+
+Faktiskt QA-prov bekräftar raderat privat filobjekt och nekad färsk åtkomst. Den tidigare hämtade privata URL:en gav dock cacheträff direkt efter radering och nekades först efter cirka 59 s. [L13_DELETION.md](L13_DELETION.md) och [PR #141](https://github.com/vilgotdidrikson/youth-job-mvp/pull/141) redovisar de 13 kontrollerna och metodens begränsningar. Omedelbar rensning av alla cachelager eller redan hämtade kopior utlovas inte.
