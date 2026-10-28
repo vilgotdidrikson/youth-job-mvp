@@ -1219,6 +1219,11 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/f26-assessment-snapshot-20261028`. Avgränsat skydd mot blandade/inaktuella ansöknings- och kravversioner i kandidatbedömningens API och bakgrundsarbetare, samordnat med L13:s rättelsekrav. Befintliga RLS-/delningsgränser bevaras; inga nya datafält, modellpass eller databasändringar. Öppna PR:er kontrollerade.
+- Leverans: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142). Samma giltiga delningsrevision krävs före PDF/modellanrop; API:t kontrollerar även kravversion/kriterier/status/jobbkontext före svar, inklusive modellfel och efter lagring. Arbetaren avvisar blandade/ändrade revisioner före finish och båda validerar cachemetadata. Ingen databas-/delningsändring.
+- Verifierat: 20 faktiska handlerfall med simulerad Auth/DB/AI och utökat arbetartest; gammal handler reproducerar 200 där 409 krävs. Matching, matching-fairness, application-disclosure, assessment-progress, followup-batch, riktad ESLint, diff-check och standardbygge/TypeScript/57 routes passerar. Verklig samtidighet/modelltransport återstår; redan påbörjade operationer är ingen rollback. Se docs/F26.md. F26 förblir Pågår.
+
+
 - Fortsättning reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/f26-unicode-minimization-20261027`. Unicode-säkra känslighets-/identitetskontroller i den gemensamma lokala AI-minimeringen, bevarade källcitat och utgående payloadprov. Inga nya AI-anrop, datafält eller behörigheter. L03 inväntar fastställt pris/fakturauppgifter; profilutökningar inväntar befintlig dataskyddsavstämning. Övrigt F26/N19-ägarskap och status bevaras.
 
 - [ ] Klar
@@ -1426,6 +1431,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Samordnad F26-fortsättning 2026-10-28: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142) skyddar mot blandade/inaktuella delningsversioner och ändrade krav i bedömnings-API:t. Modellfelvägen kontrollerar också aktuell åtkomst. Kontrollerade samtidighetsprov är simulerade; fullständigt rättelseflöde och automatisk export kvarstår. Se docs/F26.md.
 
 - Faktisk HTTP-verifiering 2026-10-28: [PR #141](https://github.com/vilgotdidrikson/youth-job-mvp/pull/141). 13 kontroller passerar med två fiktiva konton/samma lösenord och privat PDF: fel konto/lösenord, egen radering, nekad Auth/färsk filåtkomst och upprepad radering. Tidigare cachad fil-URL nekas efter cirka 59 s; omedelbar spärr av cacheträffar påstås inte. Efterkontroll visar noll QA-konton/filer. Inloggad native-dialog/mobil och övrig L13/export återstår. Se docs/L13_DELETION.md.
 - Nödvändig verifieringsuppföljning reserverad 2026-10-28: Vilgot / Codex, `codex/l13-cache-verification-20261028`. Faktiskt HTTP-prov efter PR #140 visar att filobjekt/Auth-konton raderas, medan en tidigare hämtad privat URL kan ge cacheträff direkt efter radering. Färsk URL med nonce ger 400/not_found och metadata visar noll testfiler/konton. Verifiera även gammal URLs eventualitet, korrigera testets omedelbarhetsantagande och dokumentera cachebegränsningen; inga produktionsinställningar eller utökade behörigheter.

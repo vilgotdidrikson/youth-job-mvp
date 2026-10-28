@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:assessment-snapshot": "node scripts/test-assessment-snapshot.mjs",
     "test:matching": "node scripts/test-matching.mjs",
     "test:matching-fairness": "node scripts/test-matching-fairness.mjs",
     "test:cv-document": "node scripts/test-cv-document.mjs",
