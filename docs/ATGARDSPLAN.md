@@ -1507,7 +1507,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 - Avtals- och dataflödesförteckningen är genomgången mot faktiska konton, kod och inställningar. Konkreta luckor är lösta eller innebär dokumenterad lanseringsblockerare; rekommendationer får inte markeras som redan utförda.
 - Bekräfta rätt organisation/projekt, nycklarnas miljöseparering, åtkomst, Vercel Pro/DPA och OpenAI-inställningar utan att lägga hemligheter i dokument eller rapporter. Underbygg integritetstextens uppgifter om mottagare, träning, lagring och tredjeland.
-- Implementerat: —
+- Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
 

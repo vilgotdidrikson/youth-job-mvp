@@ -19,6 +19,7 @@ const originalLoad = Module._load;
 let calls=[], deferred, fail=false, authError=false, afterCalls=0;
 const result={status:'withdrawn',was_submitted:true,withdrawn_at:'2026-10-25T12:00:00Z',match_id:null};
 Module._load=function(request,parent,...rest) {
+ if(request==='@/lib/server-failures')return require('../lib/server-failures.ts');
  if(request==='react/jsx-runtime') return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'fragment'};
  if(request==='react') return {useRef:value=>({current:value}),useState:value=>[value,()=>{}],useEffect:()=>{}};
  if(request==='@/lib/application-completions') return {submitApplicationAction:(...args)=>{calls.push(args);return new Promise((resolve,reject)=>{deferred=()=>fail?reject(new Error('Tillfälligt fel')):resolve(result);});}};

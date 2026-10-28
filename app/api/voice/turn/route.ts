@@ -1,3 +1,4 @@
+import { reportServerFailure } from "@/lib/server-failures";
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     return reply(state, selectNextQuestion(state, decision.next_question_id), transcript);
   } catch (error) {
     if (request.signal.aborted) return new NextResponse(null, { status: 499 });
-    console.error("Voice interview failed", error instanceof Error ? error.name : "Unknown error");
+    reportServerFailure("voice_turn_failed", error);
     return NextResponse.json({ error: "Kunde inte behandla ditt svar. Försök igen." }, { status: 502 });
   }
 }

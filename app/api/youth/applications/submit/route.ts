@@ -1,3 +1,4 @@
+import { applicationSubmissionFailure, reportServerFailure } from "@/lib/server-failures";
 import { after, NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireApiUser } from "@/lib/api-auth";
@@ -16,10 +17,21 @@ export async function POST(request: NextRequest) {
   const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     accessToken: async () => auth.token, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  const { data, error } = body.action === "withdraw" ? await client.rpc("withdraw_my_application", { p_job_id: body.jobId, p_expected_submitted: body.expectedSubmitted }) : body.action === "drafts" ? await client.rpc("submit_my_application_drafts") : body.action === "answers"
-    ? await client.rpc("save_my_application_answers", { p_job_id: body.jobId, p_answers: body.answers, p_submit: body.submit })
-    : await client.rpc("prepare_my_application", { p_job_id: body.jobId });
-  if (error) return NextResponse.json({ error: error.message }, { status: error.code === "42501" ? 403 : 409 });
+  let rpcResult;
+  try {
+    rpcResult = body.action === "withdraw" ? await client.rpc("withdraw_my_application", { p_job_id: body.jobId, p_expected_submitted: body.expectedSubmitted }) : body.action === "drafts" ? await client.rpc("submit_my_application_drafts") : body.action === "answers"
+      ? await client.rpc("save_my_application_answers", { p_job_id: body.jobId, p_answers: body.answers, p_submit: body.submit })
+      : await client.rpc("prepare_my_application", { p_job_id: body.jobId });
+  } catch (error) {
+    const incidentId = reportServerFailure("application_submission_failed", error);
+    return NextResponse.json({ error: "Ansökan kunde inte uppdateras just nu. Hämta aktuell status innan du försöker igen.", incidentId }, { status: 503 });
+  }
+  const { data, error } = rpcResult;
+  if (error) {
+    const failure = applicationSubmissionFailure(error);
+    const incidentId = reportServerFailure("application_submission_failed", error);
+    return NextResponse.json({ error: failure.error, incidentId }, { status: failure.status });
+  }
   const result = Array.isArray(data) ? data[0] : data;
   if (body.action === "drafts" || result?.status === "submitted") after(async () => {
     try {

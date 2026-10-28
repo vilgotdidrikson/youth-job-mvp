@@ -1,3 +1,4 @@
+import { reportServerFailure } from "@/lib/server-failures";
 import { NextRequest, NextResponse } from "next/server";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import { writeCv } from "@/lib/cv-generation";
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ cv: renderStructuredCv(structured), structured });
   } catch (error) {
     if (request.signal.aborted) return new NextResponse(null, { status: 499 });
-    console.error("CV writing failed", error instanceof Error ? error.name : "Unknown error");
+    reportServerFailure("cv_generation_failed", error);
     return NextResponse.json({ error: "Kunde inte bearbeta CV:t just nu. Dina svar finns kvar. Försök igen." }, { status: 502 });
   }
 }
