@@ -72,8 +72,8 @@ assert.deepEqual(Object.keys(untouched), ['aiGenerated'], 'Only changed fields a
 assert.deepEqual(summarizeAiChanges(form(), form(), { transferred: [], review: [], suggestedMustHaves: [] }), { listing: [], matching: [], transferred: [], review: [], suggestedMustHaves: [] });
 
 // The route grounds AI requirements and no longer guesses an employment type.
-const compile = (file, imports) => { const module = { exports: {} }; const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText; new Function('module', 'exports', 'require', code + '\nexports.fixture={fallback,normalizeResult};')(module, module.exports, name => imports[name] ?? require(name)); return module.exports.fixture; };
-const route = compile('app/api/company/job/generate/route.ts', { '@/lib/job-categories': require('../lib/job-categories.ts'), '@/lib/job-ai-review': review, '@/lib/api-auth': {}, '@/lib/openai-config': {}, 'next/server': {} });
+const compile = (file, imports) => { const compiledModule = { exports: {} }; const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText; new Function('module', 'exports', 'require', code + '\nexports.fixture={fallback,normalizeResult};')(compiledModule, compiledModule.exports, name => imports[name] ?? require(name)); return compiledModule.exports.fixture; };
+const route = compile('app/api/company/job/generate/route.ts', { '@/lib/job-categories': require('../lib/job-categories.ts'), '@/lib/job-ai-review': review, '@/lib/server-failures': require('../lib/server-failures.ts'), '@/lib/api-auth': {}, '@/lib/openai-config': {}, 'next/server': {} });
 assert.equal(route.fallback('Kassabiträde', '', {}).employmentType, '', 'No silent Deltid without AI');
 assert.equal(route.fallback('Kassabiträde', '', { employmentType: 'Timanställning' }).employmentType, 'Timanställning');
 const normalized = route.normalizeResult({ matchProfile: { mustHaves: ['B-körkort', 'Kan arbeta helger'] } }, route.fallback('Kassabiträde', '', {}), ['B-körkort']);

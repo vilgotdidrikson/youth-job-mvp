@@ -1,3 +1,4 @@
+import { reportServerFailure } from "@/lib/server-failures";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -92,21 +93,21 @@ export async function DELETE(request: NextRequest) {
     deletionNotifications = await getDeletionNotification(admin, userData.user.id);
   } catch (notificationLookupError) {
     // Notification delivery is helpful, but must never block a user's right to delete their account.
-    console.error("Failed to resolve account-deletion notification recipients.", notificationLookupError);
+    reportServerFailure("account_delete_recipients_failed", notificationLookupError);
   }
   try {
     await removeUserStorage(admin, "youth-documents", userData.user.id);
     await removeUserStorage(admin, "youth-profile-videos", userData.user.id);
     await removeUserStorage(admin, "job-images", userData.user.id);
   } catch (storageError) {
-    console.error("Failed to remove account-owned storage objects.", storageError);
+    reportServerFailure("account_delete_files_failed", storageError);
     return NextResponse.json({ error: "Kunde inte radera uppladdade filer. Kontot har inte raderats." }, { status: 502 });
   }
   const { error } = await admin.auth.admin.deleteUser(userData.user.id);
   if (error) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
   if (deletionNotifications.length) {
     const { error: notificationError } = await admin.from("notifications").insert(deletionNotifications);
-    if (notificationError) console.error("Failed to create account-deletion notifications.", notificationError);
+    if (notificationError) reportServerFailure("account_delete_notification_failed", notificationError);
   }
   return new NextResponse(null, { status: 204 });
 }

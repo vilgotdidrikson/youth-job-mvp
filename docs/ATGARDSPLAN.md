@@ -108,7 +108,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | För granskning | Vilgot / Codex |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
-| 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Ej påbörjad | — |
+| 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Pågår | Vilgot / Codex |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -1479,9 +1479,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - [ ] Klar
 - Prioritet: P1, före behandling av riktiga användaruppgifter i skarp tjänst
 - Global ordning: 22.3
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: Implementations-/kontrollägare reserveras separat.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex – kodens logggräns
+- Branch/PR: `codex/l14-private-error-boundary-20261028`, reserverad före kodarbete 2026-10-28. Avgränsad servergranskning av egna felloggar och svar: fasta metadata i stället för råa felobjekt/leverantörssvar, bevarade produktflöden och syntetiska sekretess-/regressionstester. Inga avtals-/konto-/produktionsinställningar ändras. Öppna PR:er kontrollerade.
 - Samordning: L10 (Vercel/lansering), L12 (lagring/backup), F20 (integritetstext), L13 (export/radering hos leverantörer). Slutlig avtalspart/personuppgiftsansvar för UF-verksamheten fastställs separat; kontots visningsnamn eller en framtida ägarandel avgör inte i sig GDPR-rollen.
 
 #### Känt från användaren – ännu inte kontoverifierat
@@ -1507,7 +1507,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 - Avtals- och dataflödesförteckningen är genomgången mot faktiska konton, kod och inställningar. Konkreta luckor är lösta eller innebär dokumenterad lanseringsblockerare; rekommendationer får inte markeras som redan utförda.
 - Bekräfta rätt organisation/projekt, nycklarnas miljöseparering, åtkomst, Vercel Pro/DPA och OpenAI-inställningar utan att lägga hemligheter i dokument eller rapporter. Underbygg integritetstextens uppgifter om mottagare, träning, lagring och tredjeland.
-- Implementerat: —
+- Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
 

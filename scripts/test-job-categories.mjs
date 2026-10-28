@@ -35,11 +35,11 @@ assert.deepEqual(draftJobCategories(copy.restoreJobBuilderDraft({title:'Caféper
 assert.deepEqual(draftJobCategories({...restored,categoryIds:[]}),[]);
 
 function compile(file,imports={},extra='') {
- const module={exports:{}};
+ const compiledModule={exports:{}};
  const code=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
- new Function('module','exports','require',code+extra)(module,module.exports,name=>imports[name]??require(name));return module.exports;
+ new Function('module','exports','require',code+extra)(compiledModule,compiledModule.exports,name=>imports[name]??require(name));return compiledModule.exports;
 }
-const route=compile('app/api/company/job/generate/route.ts',{'@/lib/job-categories':categories,'@/lib/job-ai-review':require('../lib/job-ai-review.ts'),'@/lib/api-auth':{},'@/lib/openai-config':{},'next/server':{}},'\nexports.fixture={fallback,normalizeResult};').fixture;
+const route=compile('app/api/company/job/generate/route.ts',{'@/lib/job-categories':categories,'@/lib/job-ai-review':require('../lib/job-ai-review.ts'),'@/lib/server-failures': require('../lib/server-failures.ts'), '@/lib/api-auth':{},'@/lib/openai-config':{},'next/server':{}},'\nexports.fixture={fallback,normalizeResult};').fixture;
 assert.equal(route.fallback('Ekonom på café','Café',{}).category,'Ekonomiarbete');
 assert.equal(route.fallback('Astronaut','Café',{}).category,'');
 const fallback=route.fallback('Barista','Café',{category:'Butiksarbete'});
@@ -73,7 +73,7 @@ assert.throws(()=>profileModule.validateRecruitmentProfile({...withIds,preferenc
 const empty=profileModule.emptyRecruitmentProfile();empty.preferences.roles=['söker caféjobb'];
 const jobs=[{...cafe,id:'one'},{...cafe,id:'two',title:'cafépersonal'},{...cafe,id:'three',title:'Barista'}, {...cafe,id:'finance',title:'Ekonom på café'}, {...cafe,id:'unknown',title:'Astronaut',category:''}, {...corrected,id:'corrected'}].map(j=>({...j,employment_type:'Deltid',city:'QA'}));
 jobs.unshift(...jobs.splice(3,3));
-const db={from(table){const chain={select(){return chain;},eq(){return chain;},order(){return chain;},limit(){return chain;},gt(){return chain;},maybeSingle(){return Promise.resolve({data:{recruitment_profile:empty},error:null});},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);}};return chain;}};
+const db={from(){const chain={select(){return chain;},eq(){return chain;},order(){return chain;},limit(){return chain;},gt(){return chain;},maybeSingle(){return Promise.resolve({data:{recruitment_profile:empty},error:null});},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);}};return chain;}};
 const load=Module._load;
 Module._load=function(request,parent,...rest){if(request==='@/lib/auth')return{getCurrentUser:async()=>({id:'qa'}),getUserProfile:async()=>({role:'youth'})};if(request==='@/lib/jobs')return{getDiscoveryJobs:async()=>jobs};if(request==='@/lib/chat')return{};if(request==='@/lib/supabase')return{getSupabaseClient:()=>db};if(request.startsWith('@/'))return load.call(this,path.resolve(request.slice(2)),parent,...rest);return load.call(this,request,parent,...rest);};
 try {

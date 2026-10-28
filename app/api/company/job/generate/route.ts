@@ -1,3 +1,4 @@
+import { reportServerFailure } from "@/lib/server-failures";
 import { JOB_CATEGORIES, suggestJobCategories, categoryLabel } from "@/lib/job-categories";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -167,7 +168,7 @@ Regler:
     const content = completion.choices[0]?.message?.content?.trim() ?? "";
     return NextResponse.json({ ...normalizeResult(JSON.parse(content), safeFallback, cleanList(body.requirements, 6)), source: "ai" });
   } catch (error) {
-    console.error("Job match profile generation failed.", error);
+    reportServerFailure("job_generation_failed", error);
     return NextResponse.json({ ...safeFallback, source: "fallback" });
   }
 }
