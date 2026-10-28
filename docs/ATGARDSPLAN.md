@@ -1432,6 +1432,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/l13-export-package-20261028`. Återanvändbar paketering av uttryckligen avgränsade egna exportuppgifter: läsbar sammanställning, JSON, befintliga filbytes, komplett kategoriredovisning samt validering av konto, hemliga fält, storlek och arkivvägar. Ingen rå tabellinsamling, rättighets-/maskeringsautomatik, aktivering eller ny datadelning; autentisering, tillfällig lagring/gallring och UI följer separat. Ingen överlappning med #146:s laddnings-/privatvy/login-CSS.
+
 - Native-dialogens avgränsade browserprov 2026-10-28: [PR #145](https://github.com/vilgotdidrikson/youth-job-mvp/pull/145). Båda rollerna vid 375/768/1280 px: modalitet, Tab/Escape/fokusretur, konto/lösenord, verkligt nekat lösenord och ett anrop vid dubbelklick. Kontot bevaras; formuläret töms. Lyckad UI-radering, fysisk mobil/flerflik och full L13 återstår. Se docs/L08_BROWSER.md.
 
 - Fortsättning reserverad före arbete 2026-10-28: Vilgot / Codex, `codex/l13-export-inventory-20261028`. Datainventering inför automatisk export: aktuellt schema, ägarrelationer, privata/historiska underlag, filer, tredjepartsgränser och maskerings-/bedömningsbehov. Återanvändbart källregister och kontroll mot schemadrift. Ingen export av verkligt innehåll, ny datadelning eller ändrad databas/behörighet; exportfunktionens UI/paketfrist och verksamhetsbedömningar kvarstår. Öppna PR:er kontrollerade.
