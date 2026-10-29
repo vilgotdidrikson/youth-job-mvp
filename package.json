@@ -71,6 +71,7 @@
     "test:auth-email": "node scripts/test-auth-email.mjs && node scripts/test-confirmation-flow.mjs",
     "check:auth-email": "node scripts/check-auth-email.mjs",
     "test:company-billing": "node scripts/test-company-billing.mjs",
+    "test:account-reauthentication": "node scripts/test-account-reauthentication.mjs",
     "test:account-deletion-flow": "node scripts/test-account-deletion-flow.mjs",
     "test:personal-data-collection": "node scripts/test-personal-data-collection.mjs",
     "test:personal-data-collection:staging": "node scripts/test-staging-personal-data-collection.mjs"

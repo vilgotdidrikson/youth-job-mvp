@@ -18,7 +18,7 @@ Object.assign(process.env,{OPENAI_API_KEY:'qa-provider',NEXT_PUBLIC_SUPABASE_URL
 let state;
 const reset=()=>{logs=[];state={enabled:true,authorized:true,providerFails:true,after:[],rpcError:null,rpcThrows:false,storageError:false,recipientError:false,notificationError:false,deletes:0,rpcCalls:[]};};
 const db={
- auth:{getUser:async()=>({data:{user:{id:'qa-user',email:'qa@example.invalid'}},error:null}),signInWithPassword:async()=>({data:{user:{id:'qa-user'}},error:null}),admin:{deleteUser:async()=>{state.deletes++;return{error:null};}}},
+ auth:{signOut:async()=>({error:null}),getUser:async()=>({data:{user:{id:'qa-user',email:'qa@example.invalid'}},error:null}),signInWithPassword:async()=>({data:{user:{id:'qa-user'}},error:null}),admin:{deleteUser:async()=>{state.deletes++;return{error:null};}}},
  rpc:async(name,args)=>{state.rpcCalls.push([name,args]);if(state.rpcThrows)throw upstream;return{data:{status:'submitted'},error:state.rpcError};},
  from:table=>({select(){return this;},eq(){return this;},maybeSingle:async()=>({data:table==='admin_users'?null:table==='profiles'?{role:'youth'}:null,error:table==='profiles'&&state.recipientError?upstream:null}),or:async()=>({data:[{youth_user_id:'qa-user',company_user_id:'qa-other'}],error:null}),insert:async()=>({error:state.notificationError?upstream:null})}),
  storage:{from:()=>({list:async()=>({data:[],error:state.storageError?upstream:null})})},
@@ -27,8 +27,9 @@ class FakeOpenAI {
  constructor(){this.chat={completions:{create:async()=>{if(state.providerFails)throw upstream;return{choices:[{message:{content:'{}'}}]};}}};this.audio={transcriptions:{create:async()=>{throw upstream;}}};}
 }
 Module._load=function(name,parent,...args){
+ if(name==='server-only')return {};
  if(name==='openai')return{__esModule:true,default:FakeOpenAI};
- if(name==='@supabase/supabase-js')return{createClient:()=>db};
+ if(name==='@supabase/supabase-js')return{createClient:()=>({...db,auth:{...db.auth}})};
  if(name==='@/lib/api-auth')return{requireApiUser:async()=>state.authorized?{user:{id:'qa-user'},token:'qa-token'}:{response:Response.json({error:'Inloggning krävs.'},{status:401})}};
  if(name==='@/lib/feature-flags')return{get VOICE_CV_ENABLED(){return state.enabled;}};
  if(name==='@/lib/cv-generation')return{writeCv:async()=>{throw upstream;}};

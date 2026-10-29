@@ -1,3 +1,4 @@
+import { reauthenticateAccount, AccountReauthenticationError } from "@/lib/server/account-reauthentication";
 import { reportServerFailure } from "@/lib/server-failures";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
@@ -67,43 +68,40 @@ export async function DELETE(request: NextRequest) {
   if (!token || !url || !anonKey) return NextResponse.json({ error: "Du måste vara inloggad." }, { status: 401 });
   if (!serviceKey) return NextResponse.json({ error: "Kontoborttagning är inte konfigurerad. Kontakta supporten." }, { status: 503 });
   const userClient = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
-  const { data: userData, error: userError } = await userClient.auth.getUser(token);
-  if (userError || !userData.user) return NextResponse.json({ error: "Din session är inte giltig." }, { status: 401 });
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
   const { password, expectedUserId } = body as Record<string, unknown>;
   if (typeof password !== "string" || !password || password.length > 1024 || typeof expectedUserId !== "string") return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
-  // Reject an account switch before password verification or destructive access.
-  if (expectedUserId !== userData.user.id) return NextResponse.json({ error: "Kontot har ändrats. Öppna inställningarna för rätt konto igen." }, { status: 409 });
   const reauth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const { data: verified, error: passwordError } = await reauth.auth.signInWithPassword({ email: userData.user.email ?? "", password });
-  if (passwordError) {
-    const status = passwordError.status === 429 ? 429 : !passwordError.status || passwordError.status >= 500 ? 502 : 403;
-    return NextResponse.json({ error: status === 429 ? "För många försök. Vänta en stund." : status === 502 ? "Lösenordet kunde inte verifieras just nu. Försök senare." : "Lösenordet stämmer inte." }, { status });
+  let user;
+  try {
+    user = await reauthenticateAccount(userClient, reauth, expectedUserId, password);
+  } catch (error) {
+    if (error instanceof AccountReauthenticationError) return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({ error: "Kontot kunde inte verifieras just nu." }, { status: 502 });
   }
-  if (verified.user?.id !== userData.user.id) return NextResponse.json({ error: "Lösenordet stämmer inte." }, { status: 403 });
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
   // Privileged accounts are offboarded by another administrator first, so the
   // platform can never lose its last admin through self-service deletion.
-  const { data: adminMembership, error: adminLookupError } = await admin.from("admin_users").select("user_id").eq("user_id", userData.user.id).maybeSingle();
+  const { data: adminMembership, error: adminLookupError } = await admin.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
   if (adminLookupError) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
   if (adminMembership) return NextResponse.json({ error: "Administratörskonton kan inte raderas här. Be en annan administratör att först ta bort din adminbehörighet." }, { status: 409 });
   let deletionNotifications: Awaited<ReturnType<typeof getDeletionNotification>> = [];
   try {
-    deletionNotifications = await getDeletionNotification(admin, userData.user.id);
+    deletionNotifications = await getDeletionNotification(admin, user.id);
   } catch (notificationLookupError) {
     // Notification delivery is helpful, but must never block a user's right to delete their account.
     reportServerFailure("account_delete_recipients_failed", notificationLookupError);
   }
   try {
-    await removeUserStorage(admin, "youth-documents", userData.user.id);
-    await removeUserStorage(admin, "youth-profile-videos", userData.user.id);
-    await removeUserStorage(admin, "job-images", userData.user.id);
+    await removeUserStorage(admin, "youth-documents", user.id);
+    await removeUserStorage(admin, "youth-profile-videos", user.id);
+    await removeUserStorage(admin, "job-images", user.id);
   } catch (storageError) {
     reportServerFailure("account_delete_files_failed", storageError);
     return NextResponse.json({ error: "Kunde inte radera uppladdade filer. Kontot har inte raderats." }, { status: 502 });
   }
-  const { error } = await admin.auth.admin.deleteUser(userData.user.id);
+  const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return NextResponse.json({ error: "Kunde inte radera kontot just nu." }, { status: 502 });
   if (deletionNotifications.length) {
     const { error: notificationError } = await admin.from("notifications").insert(deletionNotifications);
