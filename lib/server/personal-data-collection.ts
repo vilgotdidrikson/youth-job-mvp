@@ -30,6 +30,16 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "conversations", "owner": "youth_user_id", "cursor": "id", "columns": "id,match_id,youth_user_id,company_user_id,job_id,last_message_at,created_at", "scope": "participants"},
   {"table": "messages", "owner": "conversation_id", "cursor": "id", "columns": "id,conversation_id,sender_user_id,message_text,created_at,video_kind,video_id", "parent": "conversations"},
   {"table": "employment_records", "owner": "youth_user_id", "cursor": "match_id", "columns": "match_id,youth_user_id,company_user_id,company_name,role_name,start_date,response,approved_at,show_on_profile,include_in_cv,registered_at,updated_at,paid_at", "scope": "participants"},
+  {"table": "company_match_profiles", "owner": "company_user_id", "cursor": "company_user_id", "columns": "company_user_id,culture_summary,company_values,valued_traits,work_environment,onboarding_support,employee_offer,source_notes,profile_version,created_at,updated_at"},
+  {"table": "company_recruitment_controls", "owner": "company_user_id", "cursor": "company_user_id", "columns": "company_user_id,restriction,reason,changed_at"},
+  {"table": "jobs", "owner": "company_user_id", "cursor": "id", "columns": "id,company_user_id,company_name,title,description,city,salary_per_hour,employment_type,category,requirements,benefits,image_url,is_active,created_at,min_age,max_age,address,postal_code,longitude,latitude,status,open_positions,job_kind,schedule,publication_status,workplaces,job_category_ids,job_category_manual,first_published_at,practical_details"},
+  {"table": "recruitment_outcomes", "owner": "company_user_id", "cursor": "job_id", "columns": "job_id,company_user_id,outcome,recorded_at"},
+  {"table": "recruitment_rewards", "owner": "company_user_id", "cursor": "match_id", "columns": "match_id,company_user_id,status,discount_percent,expires_at,redeemed_at"},
+  {"table": "premium_orders", "owner": "company_user_id", "cursor": "id", "columns": "id,company_user_id,product_id,job_id,status,source,created_at,activated_at,cancelled_at,cancellation_reason"},
+  {"table": "premium_entitlements", "owner": "company_user_id", "cursor": "id", "columns": "id,order_id,company_user_id,product_id,job_id,state,starts_at,ends_at,activated_at,ended_at,end_reason,created_by_source,created_at,updated_at"},
+  {"table": "youth_videos", "owner": "owner_id", "cursor": "id", "columns": "id,owner_id,conversation_id,storage_path,mime_type,size_bytes,duration_seconds,revoked_at,created_at,first_sent_at,expires_at,cleanup_started_at,deleted_at"},
+  {"table": "moderation_reports", "owner": "reporter_user_id", "cursor": "id", "columns": "id,reporter_user_id,target_type,target_id,reason,details,status,created_at,reviewed_at"},
+  {"table": "user_blocks", "owner": "blocker_user_id", "cursor": "blocked_user_id", "columns": "blocker_user_id,blocked_user_id,created_at"},
 ];
 export const COLLECTION_LIMITS = Object.freeze({ pageSize: 100, requests: 500, sourceRows: 10000, bytes: 8 * 1024 * 1024, nodes: 50000, depth: 24, milliseconds: 120000, concurrency: 4 });
 type Reason = "query_failed" | "invalid_response" | "limit_exceeded" | "dependency_unavailable";
