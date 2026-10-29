@@ -40,3 +40,5 @@ Upprepa: `npm run test:personal-data-export`. För browserdelen tillkommer `MNW_
 ## Kvar inom L13
 
 Faktisk datainsamling med rättighets-/tredjepartsbedömning, bevarad historik och tydlig källtäckning; ny autentisering och behörighetskontroll vid beställning/hämtning; privat temporärt paket, exakt beslutad frist, fysisk gallring och felåterhämtning; samtidiga ändringar/kontoradering, UI och negativa liveflöden. Kontakt-/ansvars-/leverantörsfrågorna i L13/L14 kvarstår. Automatisk export aktiveras inte av denna leverans och produktion ändras inte.
+
+Fortsättning: [intern källinsamling i PR #149](L13_EXPORT_COLLECTION.md) läser 15 egna källor till separat granskningsunderlag. Den matar inte paketbyggaren automatiskt och fullständig insamling/rättighetsbedömning och aktivering återstår.
