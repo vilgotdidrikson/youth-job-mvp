@@ -1,3 +1,14 @@
 # L13 – CV-filer inför export
 
 Reserverad före kodarbete 2026-10-29: Vilgot / Codex, `codex/l13-reviewed-cv-files-20261029`, från dev 33324cc. Aktuell dev/öppna PR:er kontrollerade. Bygg serverintern hämtning av uttryckligen granskade egna CV-referenser med vanlig användarklient, konto före/efter, säkra sökvägar, begränsningar och sanningsenlig saknad fil. Ingen generell bucketlistning, serviceklient, signerad URL, publik export eller databasändring. Koppling till granskad inventering och exportflöde återstår. L13 fortsatt Pågår.
+
+
+Serverdelen collectReviewedCvFiles i lib/server/personal-data-files.ts hämtar endast uttryckligen granskade referenser från youth-documents med användarens vanliga klient. Referenser måste i föregående granskningssteg kopplas till faktiska egna CV-poster: ett eget sökvägsprefix är inte i sig ägarskapsbevis. Den kopplingen är ännu inte byggd. Ingen API/sida importerar hjälpen.
+
+Manifestet valideras och kopieras före nätverk: eget konto, högst tio unika referenser, inga getters/extra fält, inga tomma/traverserande/URL-/kodade sökvägar. GetUser verifierar identiteten före och efter. Ingen listning, serviceklient eller signerad URL används. Neutral dokument-N.pdf ersätter ursprungliga filnamn. PDF-signatur kontrolleras; det är inte antivirus eller innehållssanering. Endast PDF ingår i denna del.
+
+Högst 8 MiB per fil och 32 MiB inkluderade filbytes totalt. Saknad/nekad fil, fel format och storleksfel ger explicit unavailable och fast felorsak, inga delbytes. Vid kontobyte eller avbrott lämnas inget delresultat ut. 30 sekunders total väntbudget; SDK-transport kan fortsätta efter avbrott men sena svar används inte. Storage.download tar emot hela Blob före storlekskontroll: gränserna begränsar inkluderade/copyade bytes, inte en strikt övre nätverks-/minnesbudget för SDK:n. Inga privata filvägar eller leverantörsfel läggs i resultatet. Exportpaketets egna slutgränser gäller också.
+
+20 lokala filprov passerar inklusive faktisk installerad Supabase-SDK mot simulerad HTTP: originaltoken används till rätt privat objekt och båda Auth-kontrollerna, ingen signerad URL. Egna bytes, Unicode i filinnehåll, misslyckade/saknade filer, HTML i stället för PDF, gränser, främmande konto, kontobyte, avbrott och hängande transport ingår. Paketets 76 regressioner, riktad ESLint, TypeScript, diff-check och produktionsbygge/57 routes passerar. Befintlig metadataBase-varning kvarstår. Inga verkliga Auth/Storage-konton eller filer användes; livefil-/RLS-prov återstår.
+
+Resultatet gäller bara det granskade manifestet, inte komplett filinventering. Andra dokumentformat/media, faktisk referens-/ägarskapsgranskning, live-Storage, konsekvent insamling, nyautentiserat UI/API, säker hämtning och gallring återstår. Ingen export aktiveras och inga behörigheter eller databasinställningar ändras. L13 fortsatt Pågår; produktion är orörd.
