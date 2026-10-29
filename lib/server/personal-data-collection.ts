@@ -5,7 +5,7 @@ import inventory from "../../docs/privacy/personal-data-inventory.json";
 // Internal review material only: never send this result directly to a client or
 // the package builder. Ownership does not settle third-party rights in free text.
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations" | "jobs"; cursorType?: "integer"; }
+interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations" | "jobs"; cursorType?: "integer"; schema?: "private"; transport?: "review_rpc"; }
 interface ReadScope { owner: string; participants?: readonly string[]; }
 const SOURCES: readonly SourceSpec[] = [
   {"table": "profiles", "owner": "id", "cursor": "id", "columns": "id,role"},
@@ -42,6 +42,8 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "user_blocks", "owner": "blocker_user_id", "cursor": "blocked_user_id", "columns": "blocker_user_id,blocked_user_id,created_at"},
   {"table": "job_match_profiles", "owner": "job_id", "cursor": "job_id", "columns": "job_id,status,role_summary,must_haves,trainable_requirements,top_traits,weighted_criteria,candidate_questions,inherited_company_version,profile_version,ai_generated,created_at,updated_at", "parent": "jobs"},
   {"table": "job_match_profile_versions", "owner": "job_id", "cursor": "profile_version", "columns": "job_id,profile_version,snapshot,created_at", "parent": "jobs", "cursorType": "integer"},
+  {"table": "application_disclosures", "owner": "youth_user_id", "cursor": "job_id", "columns": "job_id,youth_user_id,revision,selected_keys,packet,matching_input,created_at,updated_at", "schema": "private", "transport": "review_rpc"},
+  {"table": "candidate_assessments", "owner": "youth_user_id", "cursor": "id", "columns": "id,job_id,youth_user_id,company_user_id,job_profile_version,result,criteria_snapshot,created_at", "transport": "review_rpc"},
 ];
 export const COLLECTION_LIMITS = Object.freeze({ pageSize: 100, requests: 500, sourceRows: 10000, bytes: 8 * 1024 * 1024, nodes: 50000, depth: 24, milliseconds: 120000, concurrency: 4 });
 type Reason = "query_failed" | "invalid_response" | "limit_exceeded" | "dependency_unavailable";
@@ -50,7 +52,7 @@ export type CollectedSource = { relation: string; status: "collected"; rows: { [
   | { relation: string; status: "not_collected" };
 export interface PersonalDataCollection {
   version: 1; subjectId: string; startedAt: string; finishedAt: string;
-  visibility: "caller_rls"; consistency: "non_transactional"; reviewState: "pending";
+  visibility: "caller_rls" | "subject_review"; consistency: "non_transactional"; reviewState: "pending";
   categories: { id: string; reviewState: "pending"; sources: CollectedSource[] }[];
 }
 export class PersonalDataCollectionError extends Error {
@@ -65,9 +67,12 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /** The supplied client must carry the requesting user's token, never service_role.
  * getUser verifies account existence at both ends, not fresh reauthentication or
  * revocation of every old session. A future endpoint must enforce those separately.
+ * Optional reviewClient is a separately server-created service client, used ONLY
+ * for the fixed review RPC after user verification. Its output is still pending
+ * rights review; do not expose this function from a public export endpoint.
  * An empty RLS result means only "no visible rows", not proof of global absence.
  */
-export async function collectPersonalDataForReview(client: SupabaseClient, expectedSubjectId: string, signal?: AbortSignal): Promise<PersonalDataCollection> {
+export async function collectPersonalDataForReview(client: SupabaseClient, expectedSubjectId: string, signal?: AbortSignal, reviewClient?: SupabaseClient): Promise<PersonalDataCollection> {
   if (typeof expectedSubjectId !== "string" || !uuid.test(expectedSubjectId)) throw new PersonalDataCollectionError("invalid_subject");
   const stop = new AbortController();
   const activeSignal = signal ? AbortSignal.any([signal, stop.signal]) : stop.signal;
@@ -133,7 +138,7 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
     return result;
   }
   async function read(spec: SourceSpec, scopes: readonly ReadScope[]): Promise<CollectedSource> {
-    const relation = `public.${spec.table}`;
+    const relation = `${spec.schema ?? "public"}.${spec.table}`;
     const rows: { [key: string]: Json }[] = [];
     const columns = spec.columns.split(","), seen = new Set<string>();
     try {
@@ -145,14 +150,24 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
         while (true) {
           checkCancellation();
           if (++requests > COLLECTION_LIMITS.requests) throw new ReadFailure("limit_exceeded");
-          let query = client.from(spec.table).select(spec.columns);
-          // UUIDs were validated at Auth or in the fully collected parent.
-          // OR is only between the two fixed participant columns, never client SQL.
-          query = spec.scope === "participants"
-            ? query.or(`youth_user_id.eq.${owner},company_user_id.eq.${owner}`)
-            : query.eq(spec.owner, owner);
-          query = query.order(spec.cursor, { ascending: true }).limit(COLLECTION_LIMITS.pageSize);
-          if (cursor !== undefined) query = query.gt(spec.cursor, cursor);
+          let query;
+          if (spec.transport === "review_rpc") {
+            // This optional client is server-created with service credentials,
+            // never a replacement for verifying the requesting user above.
+            if (!reviewClient) throw new ReadFailure("dependency_unavailable");
+            query = reviewClient.rpc("read_personal_data_review_page", {
+              p_source: relation, p_subject_id: expectedSubjectId,
+              p_after_id: cursor ?? null, p_limit: COLLECTION_LIMITS.pageSize,
+            });
+          } else {
+            query = client.from(spec.table).select(spec.columns);
+            // UUIDs were validated at Auth or in the fully collected parent.
+            query = spec.scope === "participants"
+              ? query.or(`youth_user_id.eq.${owner},company_user_id.eq.${owner}`)
+              : query.eq(spec.owner, owner);
+            query = query.order(spec.cursor, { ascending: true }).limit(COLLECTION_LIMITS.pageSize);
+            if (cursor !== undefined) query = query.gt(spec.cursor, cursor);
+          }
           const timeout = AbortSignal.timeout(Math.max(1, COLLECTION_LIMITS.milliseconds - (Date.now() - start)));
           query = query.abortSignal(AbortSignal.any([activeSignal, timeout]));
           const response = await query;
@@ -198,14 +213,14 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
   const collected = new Map<string, CollectedSource>();
   try {
     await identity();
-    const roots = SOURCES.filter(spec => !spec.parent);
+    const roots = SOURCES.filter(spec => !spec.parent && (spec.transport !== "review_rpc" || reviewClient));
     let nextSource = 0;
     await Promise.all(Array.from({ length: COLLECTION_LIMITS.concurrency }, async () => {
       while (nextSource < roots.length) {
         checkCancellation();
         const spec = roots[nextSource++];
         const result = await read(spec, [{ owner: expectedSubjectId }]);
-        collected.set(`public.${spec.table}`, result);
+        collected.set(`${spec.schema ?? "public"}.${spec.table}`, result);
         for (const child of SOURCES.filter(source => source.parent === spec.table)) {
           collected.set(`public.${child.table}`, result.status === "collected"
             ? await read(child, result.rows.map(row => ({
@@ -219,7 +234,7 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
     await identity();
     return {
       version: 1, subjectId: expectedSubjectId, startedAt, finishedAt: new Date().toISOString(),
-      visibility: "caller_rls", consistency: "non_transactional", reviewState: "pending",
+      visibility: reviewClient ? "subject_review" : "caller_rls", consistency: "non_transactional", reviewState: "pending",
       categories: [
         ...inventory.groups.map(group => ({ id: group.id, reviewState: "pending" as const, sources: group.relations.map(relation => collected.get(relation) ?? { relation, status: "not_collected" as const }) })),
         ...inventory.outsideCatalog.map(group => ({ id: group.id, reviewState: "pending" as const, sources: [] })),
