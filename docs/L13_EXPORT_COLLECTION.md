@@ -51,3 +51,18 @@ Slutkörning `qa-l13-collection-1793263031183-75541692`: **36 kontroller passera
 Alla tre slutkonton raderades via egen konto-API, exit 0. Separat SQL-efterkontroll visar **0 QA-konton, 0 QA-meddelanden och 0 QA-fakturaunderlag**. Inga kvarvarande fixture-ID:n. Tre tidigare försök är inte godkända liveprov: första fixture-RPC:n använde fel initialversionsvärde (rättat till null), därefter stoppade 60-sekundersgränsen två sekventiella insamlingar vid långsamma nätverkssvar. Även de nio tidigare kontona städades via konto-API. Felet ledde till fyra samtidiga källor, färre redundanta kontoqueries, separat avbrytning av Auth-väntan och 120 sekunders totalbudget; ägar-/granskningsgränserna bevarades. Slutprovet ovan kör hela den ändrade insamlingen.
 
 Paketets 76 och inventeringens 21 regressioner, riktad ESLint utan fel/varningar, TypeScript, diff-check och standardproduktionsbygge/57 routes passerar med fiktiva publika byggvärden. Befintlig metadataBase-varning kvarstår. Verifieringen gäller denna interna insamling, inte fullständigt registerutdrag, transaktionssnapshot, ny lösenordsverifiering, gammal sessions revokering, nedladdning, paketfrist/gallring eller en aktiverad användarfunktion. De delarna och L13:s rättighets-/verksamhetsbeslut kvarstår.
+
+
+## Fortsättning – ansökningar och gemensamma konversationer (#150)
+
+Insamlingen omfattar nu 22 uttryckligt valda relationer. Tillkomna källor:
+
+| Källor | Avgränsning |
+| --- | --- |
+| application_completions, application_followups | ungdomens egna svar och ansökningshistorik, även återkallade ansökningar |
+| company_interest_actions, matches, conversations, employment_records | eget konto som ungdom eller företag i respektive rad |
+| messages | enbart fullständigt insamlade egna konversationer, med avsändare bland konversationens två deltagare |
+
+Alla sidors deltagarfilter bevaras. Föräldrafel blockerar meddelandeläsning; fel i en senare konversation kastar hela meddelandekällans delresultat. Dubbla meddelande-ID:n över olika konversationer avvisas. Inga främmande profiler hämtas. Interna analyshashar, request_key, asked_by och hired_by_user_id väljs inte. Gemensam fritext förblir internt underlag med pending-granskning, inte ett godkänt användarutdrag. Filer och video hämtas inte.
+
+70 lokala insamlingskontroller passerar, inklusive båda deltagarrollerna, 1 005 matchningar med korta serversidor, 106 meddelanden över två egna konversationer, felaktig avsändare/konversation, föräldrafel och senare sidfel. Installerad Supabase-SDK verifierar OR-filtrets faktiska HTTP-serialisering mot simulerad transport. Tidigare liveprov för #149 gäller dess 15 källor; denna utökning har ännu inget liveprov med rekryterings-/chattfixtures. Ingen ny databas, RLS, publik endpoint, paketlagring eller AI-användning införs. Återstående insamling, innehållsgranskning, snapshotkonsistens, autentisering, nedladdning och gallring kvarstår.

@@ -5,7 +5,8 @@ import inventory from "../../docs/privacy/personal-data-inventory.json";
 // Internal review material only: never send this result directly to a client or
 // the package builder. Ownership does not settle third-party rights in free text.
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-interface SourceSpec { table: string; owner: string; cursor: string; columns: string; }
+interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations"; }
+interface ReadScope { owner: string; participants?: readonly string[]; }
 const SOURCES: readonly SourceSpec[] = [
   {"table": "profiles", "owner": "id", "cursor": "id", "columns": "id,role"},
   {"table": "youth_profiles", "owner": "user_id", "cursor": "user_id", "columns": "user_id,full_name,age,city,desired_roles,strengths,merits,work_experience,education,languages,desired_locations,employment_preferences,cv_text,cover_letter_template,onboarding_completed,cv_generated,updated_at,documents,date_of_birth,address,additional_addresses,certificates,extracurriculars,profile_image_url,postal_code,cv_uploaded,cv_structured,short_onboarding_completed,recruitment_profile,recruitment_profile_version"},
@@ -14,7 +15,7 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "admin_users", "owner": "user_id", "cursor": "user_id", "columns": "user_id,created_at"},
   {"table": "company_billing_details", "owner": "user_id", "cursor": "user_id", "columns": "user_id,invoice_email,address_line1,address_line2,postal_code,city,reference,country_code,version,updated_at"},
   {"table": "ai_onboarding_sessions", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,status,completed_at,created_at"},
-  {"table": "ai_onboarding_messages", "owner": "session_id", "cursor": "id", "columns": "id,session_id,sender,message_text,created_at"},
+  {"table": "ai_onboarding_messages", "parent": "ai_onboarding_sessions", "owner": "session_id", "cursor": "id", "columns": "id,session_id,sender,message_text,created_at"},
   {"table": "youth_application_drafts", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,job_id,created_at,updated_at"},
   {"table": "youth_saved_jobs", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,job_id,created_at"},
   {"table": "youth_job_impressions", "owner": "youth_user_id", "cursor": "job_id", "columns": "youth_user_id,job_id,first_seen_at"},
@@ -22,6 +23,13 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "swipe_actions", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,job_id,decision,created_at"},
   {"table": "application_workplace_preferences", "owner": "youth_user_id", "cursor": "job_id", "columns": "job_id,youth_user_id,workplace_id,workplace_snapshot,updated_at"},
   {"table": "notifications", "owner": "user_id", "cursor": "id", "columns": "id,user_id,type,title,body,href,read_at,created_at,match_id"},
+  {"table": "application_completions", "owner": "youth_user_id", "cursor": "job_id", "columns": "youth_user_id,job_id,job_title,company_name,profile_version,questions,answers,status,created_at,submitted_at,omitted_question_ids,supplemented_at,question_batch_version,withdrawn_at"},
+  {"table": "application_followups", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,job_id,criterion_key,criterion_label,question,job_profile_version,status,answer,created_at,answered_at,question_source"},
+  {"table": "company_interest_actions", "owner": "youth_user_id", "cursor": "id", "columns": "id,company_user_id,youth_user_id,job_id,decision,created_at", "scope": "participants"},
+  {"table": "matches", "owner": "youth_user_id", "cursor": "id", "columns": "id,youth_user_id,company_user_id,job_id,status,created_at,hire_completed_at", "scope": "participants"},
+  {"table": "conversations", "owner": "youth_user_id", "cursor": "id", "columns": "id,match_id,youth_user_id,company_user_id,job_id,last_message_at,created_at", "scope": "participants"},
+  {"table": "messages", "owner": "conversation_id", "cursor": "id", "columns": "id,conversation_id,sender_user_id,message_text,created_at,video_kind,video_id", "parent": "conversations"},
+  {"table": "employment_records", "owner": "youth_user_id", "cursor": "match_id", "columns": "match_id,youth_user_id,company_user_id,company_name,role_name,start_date,response,approved_at,show_on_profile,include_in_cv,registered_at,updated_at,paid_at", "scope": "participants"},
 ];
 export const COLLECTION_LIMITS = Object.freeze({ pageSize: 100, requests: 500, sourceRows: 10000, bytes: 8 * 1024 * 1024, nodes: 50000, depth: 24, milliseconds: 120000, concurrency: 4 });
 type Reason = "query_failed" | "invalid_response" | "limit_exceeded" | "dependency_unavailable";
@@ -112,18 +120,26 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
     ancestors.delete(value);
     return result;
   }
-  async function read(spec: SourceSpec, owners: readonly string[]): Promise<CollectedSource> {
+  async function read(spec: SourceSpec, scopes: readonly ReadScope[]): Promise<CollectedSource> {
     const relation = `public.${spec.table}`;
     const rows: { [key: string]: Json }[] = [];
+    const columns = spec.columns.split(","), seen = new Set<string>();
     try {
-      for (const owner of owners) {
+      for (const scope of scopes) {
+        const owner = scope.owner;
         let cursor: string | undefined;
         // Always request a terminal empty page, including when the server caps
         // responses BELOW pageSize. Never infer completion from a short page.
         while (true) {
           checkCancellation();
           if (++requests > COLLECTION_LIMITS.requests) throw new ReadFailure("limit_exceeded");
-          let query = client.from(spec.table).select(spec.columns).eq(spec.owner, owner).order(spec.cursor, { ascending: true }).limit(COLLECTION_LIMITS.pageSize);
+          let query = client.from(spec.table).select(spec.columns);
+          // UUIDs were validated at Auth or in the fully collected parent.
+          // OR is only between the two fixed participant columns, never client SQL.
+          query = spec.scope === "participants"
+            ? query.or(`youth_user_id.eq.${owner},company_user_id.eq.${owner}`)
+            : query.eq(spec.owner, owner);
+          query = query.order(spec.cursor, { ascending: true }).limit(COLLECTION_LIMITS.pageSize);
           if (cursor) query = query.gt(spec.cursor, cursor);
           const timeout = AbortSignal.timeout(Math.max(1, COLLECTION_LIMITS.milliseconds - (Date.now() - start)));
           query = query.abortSignal(AbortSignal.any([activeSignal, timeout]));
@@ -134,12 +150,19 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
           if (!response.data.length) break;
           for (const input of response.data) {
             const row = snapshot(input);
-            if (!row || Array.isArray(row) || typeof row !== "object" || Object.keys(row).some(key => !spec.columns.split(",").includes(key)) || spec.columns.split(",").some(key => !Object.hasOwn(row, key))) throw new ReadFailure("invalid_response");
-            if (row[spec.owner] !== owner) throw new PersonalDataCollectionError("account_changed");
+            if (!row || Array.isArray(row) || typeof row !== "object" || Object.keys(row).length !== columns.length || columns.some(key => !Object.hasOwn(row, key))) throw new ReadFailure("invalid_response");
+            if (spec.scope === "participants") {
+              if (row.youth_user_id !== owner && row.company_user_id !== owner) throw new PersonalDataCollectionError("account_changed");
+              if (typeof row.youth_user_id !== "string" || !uuid.test(row.youth_user_id) || typeof row.company_user_id !== "string" || !uuid.test(row.company_user_id)) throw new ReadFailure("invalid_response");
+            } else if (row[spec.owner] !== owner) throw new PersonalDataCollectionError("account_changed");
+            // A message belongs to a collected conversation AND one of its two
+            // participants. Merely knowing a conversation ID proves neither.
+            if (spec.parent === "conversations" && (!scope.participants || typeof row.sender_user_id !== "string" || !scope.participants.includes(row.sender_user_id))) throw new PersonalDataCollectionError("account_changed");
             const next = row[spec.cursor];
-            if (typeof next !== "string" || !uuid.test(next) || (cursor && next <= cursor)) throw new ReadFailure("invalid_response");
+            if (typeof next !== "string" || !uuid.test(next) || (cursor && next <= cursor) || seen.has(next)) throw new ReadFailure("invalid_response");
             cursor = next;
             if (rows.length >= COLLECTION_LIMITS.sourceRows) throw new ReadFailure("limit_exceeded");
+            seen.add(next);
             rows.push(row);
           }
           // An equality filter on the unique cursor already fixes the only
@@ -156,18 +179,20 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
   const collected = new Map<string, CollectedSource>();
   try {
     await identity();
-    const roots = SOURCES.filter(spec => spec.table !== "ai_onboarding_messages");
-    const child = SOURCES.find(spec => spec.table === "ai_onboarding_messages")!;
+    const roots = SOURCES.filter(spec => !spec.parent);
     let nextSource = 0;
     await Promise.all(Array.from({ length: COLLECTION_LIMITS.concurrency }, async () => {
       while (nextSource < roots.length) {
         checkCancellation();
         const spec = roots[nextSource++];
-        const result = await read(spec, [expectedSubjectId]);
+        const result = await read(spec, [{ owner: expectedSubjectId }]);
         collected.set(`public.${spec.table}`, result);
-        if (spec.table === "ai_onboarding_sessions") {
+        for (const child of SOURCES.filter(source => source.parent === spec.table)) {
           collected.set(`public.${child.table}`, result.status === "collected"
-            ? await read(child, result.rows.map(row => row.id as string))
+            ? await read(child, result.rows.map(row => ({
+              owner: row.id as string,
+              ...(child.parent === "conversations" ? { participants: [row.youth_user_id as string, row.company_user_id as string] } : {}),
+            })))
             : { relation: `public.${child.table}`, status: "unavailable", reason: "dependency_unavailable" });
         }
       }
