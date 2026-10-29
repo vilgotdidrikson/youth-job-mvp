@@ -87,7 +87,7 @@
 @media(max-width:360px) {.application-supplement-summary button {width:100%;margin-left:0;}.application-completion-actions small {min-width:0;flex-basis:100%;}}
 
 .application-supplement-summary .secondary-btn {padding:10px 16px;}
-.application-withdraw-dialog{width:min(32rem,calc(100% - 2rem));max-height:calc(100dvh - 3rem);overflow:auto;margin:auto;border:1px solid #eadde2;border-radius:1.25rem;padding:1.5rem;background:#fff;color:#30262b;box-shadow:0 20px 80px #30262b33}
-.application-withdraw-dialog::backdrop{background:#24141d80}
+.application-withdraw-dialog{width:min(32rem,calc(100% - 2rem));max-height:calc(100dvh - 3rem);overflow:auto;margin:auto;border:1px solid var(--color-border);border-radius:1.25rem;padding:1.5rem;background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-dialog)}
+.application-withdraw-dialog::backdrop{background:var(--color-backdrop)}
 .application-withdraw-dialog p{line-height:1.6;margin:1rem 0}
-.application-withdraw-dialog button:focus-visible{outline:3px solid #9d315d;outline-offset:3px}
+.application-withdraw-dialog button:focus-visible{outline:3px solid var(--color-brand);outline-offset:3px}

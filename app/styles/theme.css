@@ -36,6 +36,10 @@
   --color-dashed: #e3b9c7;
   --color-ring: #e7c9d3;
   --color-plum-900: #241419;
+  --color-backdrop: rgb(36 20 25 / .5);
+  /* The supplied logo's black tile and its corner, relative to the logo size (D07). */
+  --color-logo-mark: #000000;
+  --radius-logo-mark: .25em;
 
   --color-success: #21855d;
   --color-success-soft: #eef9f3;
@@ -66,8 +70,10 @@
   --radius-lg: 22px;   /* cards */
   --radius-xl: 28px;   /* hero cards, dialogs */
   --radius-pill: 999px;
-  --shadow-sm: 0 5px 20px rgb(var(--color-text-rgb) / .03);
-  --shadow-md: 0 18px 32px rgb(var(--color-text-rgb) / .09);
+  /* rgba() with commas: --color-text-rgb is comma-separated, so the slash syntax made both shadows invalid. */
+  --shadow-sm: 0 5px 20px rgba(var(--color-text-rgb), .03);
+  --shadow-md: 0 18px 32px rgba(var(--color-text-rgb), .09);
+  --shadow-dialog: 0 20px 80px rgba(var(--color-text-rgb), .2);
 
   /* Existing component aliases, kept while the app is gradually refactored. */
   --bg: var(--color-canvas);
