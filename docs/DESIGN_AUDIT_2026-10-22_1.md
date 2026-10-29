@@ -162,6 +162,8 @@ Original audit sequencing advice (subject to current action-plan status and glob
 <a id="da-04"></a>
 ### DA-04 Colour tokens are bypassed, duplicated and drifting
 
+- **Implementation update — 2026-10-29 (Max / Claude, branch `Max`, not yet in dev):** Discovery (`job-discovery.module.css`), the password toggle hover and the profile-step error box use palette tokens (nearest value). The job card's image fallback, gradient and photo shade stay as illustration colours. With the DA-05 fixes below: 555 → 538 colour literals, baseline lowered. Remaining: `globals.css` (287), `video.module.css` (57) and the chat (47 one-off pinks, needs a signed-in visual check).
+
 - **Seen (code):** `app/styles/theme.css` says it is the single source of truth, but:
   - About 1,300 hard-coded hex values sit in 23 other CSS files (`globals.css` 373, `product-design.css` 215, `profile.css` 95, `company-design.css` 74 and more). The brand colour `#b84164` alone is written out 130 times instead of `var(--color-brand)`.
   - `.mnw-product` in `app/product-design.css` (line 2) redefines the tokens, and one value conflicts: `--color-surface-soft` is `#fff0f4` in `theme.css` and `#fce9ef` under `.mnw-product`. The same token name renders two different pinks depending on where a component sits.
@@ -177,6 +179,8 @@ Original audit sequencing advice (subject to current action-plan status and glob
 
 <a id="da-05"></a>
 ### DA-05 No type, radius or weight scale
+
+- **Implementation update — 2026-10-29 (Max / Claude, branch `Max`, not yet in dev):** `check:design-tokens` now counts only literal values: a value that is just a theme token (`var(--…)`) is the scale, and `@font-face` descriptors are ignored. Before, every new use of the scale made the check fail. `--shadow-sm`/`--shadow-md` were invalid (slash alpha with the comma-separated `--color-text-rgb`) and computed to `none`; they now use `rgba(var(--color-text-rgb), …)`. New values since the baseline got tokens: the map pin count (11px → `--text-xs`), the logo tile (`--color-logo-mark`, `--radius-logo-mark`) and the withdraw dialog (`--shadow-dialog`, `--color-backdrop`, palette text, border and focus). The check passes on the branch; verified in Chromium against a production build that every changed rule resolves.
 
 - **Seen (code):** The CSS uses 93 different font sizes, 47 different border radii and 10 different font weights (400, 500, 550, 600, 650, 700, 750, 800, 850 and 900). There are 17 different negative letter-spacing values, from −.005em to −.085em. This is why pages feel close to each other but not quite the same.
 - **Fix:** Add a small scale to `theme.css` and migrate to it as part of DA-04:
@@ -278,6 +282,8 @@ Original audit sequencing advice (subject to current action-plan status and glob
 
 <a id="da-11"></a>
 ### DA-11 Client-rendered marketing pages and a global Mapbox stylesheet
+
+- **Status — 2026-10-29: klar.** The canonical fix is in dev (`5e1276f`). Deployed dev: no canonical link on `/`, Lighthouse mobile SEO 100 on `/`, `/features` and `/pricing`; text without JavaScript, own titles and no Mapbox stylesheet on the public pages re-checked.
 
 - **Implementation update — 2026-10-26 (för granskning, branch `Max`):** `/`, `/features` and `/pricing` are server components with their own `metadata`; the title-only segment layouts are removed. The interactive parts are `app/landing-hero.tsx` (typed headline and session-aware buttons) and `app/pricing/pricing-plans.tsx` (audience switch and plans). The headline starts fully written, `NumberTicker` server-renders its final value, and a `<noscript>` style shows the scroll-revealed text without JavaScript. `platform-visuals.tsx` is a client module so each copy keeps its own SVG ids (otherwise DA-01 returns). The Mapbox CSS is imported in `components/job-map.tsx`, and the map control rule's specificity is raised because Mapbox now loads after the app CSS. Copy and animations are otherwise unchanged.
 - **Verified:** TypeScript, ESLint, production build (webpack), `test:accessibility`, `test:map-fallback`, `test:local-fonts`. Local production builds before/after in Chromium: screenshots of `/`, `/features`, `/pricing`, `/login` at 375px and 1280px are pixel-identical; without JavaScript the landing page now shows its headline, stats and manifesto; no Mapbox stylesheet on `/`, `/features`, `/pricing`, `/login`, `/signup` or `/privacy`. Not yet done: Lighthouse mobile before/after on deployed dev, and a signed-in visual check of `/kartan`.

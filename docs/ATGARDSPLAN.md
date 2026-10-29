@@ -1589,14 +1589,14 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Global ordning: 63
 - Status: Pågår
 - Ansvarig: Max / Claude
-- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring. Fortsatt 2026-10-29 på branch `Max`.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-04), som har fynd, filer och mått.
 - Åtgärd: Bestäm värdena i `app/styles/theme.css` (ett värde för `--color-surface-soft` och de saknade tokens som används), ta bort tokenblocket på `.mnw-product` och lokala `--ink`/`--muted`/`--rose`/`--accent`, ersätt hex-värden fil för fil med början i chatten (avvikande palett) och `product-design.css`, och lägg till ett kontrollskript som larmar om antalet hex-värden utanför `theme.css` ökar.
 - Klar när: Bara `theme.css` definierar färgvärden (undantag: SVG-illustrationer och kartan), chattens palett stämmer med resten och tokenkontrollen körs.
 - Samordning / beroenden: Görs före DA-05 och DA-06. Profilbyggets tokens i `components/profile-steps/profile-steps.module.css` flyttas hit när DA-04 införs.
-- Implementerat: Nya tokens i `app/styles/theme.css` (`--color-rose`, `--color-rose-track`, `--color-brand-accent`, `--color-brand-on-rose`, `--color-divider`, `--color-dashed`, `--color-ring`, `--color-plum-900`, `--color-success-strong`, `--color-text-muted-strong`, `--color-warning`, `--color-warning-soft`, `--color-white`). Tokenblocket på `.mnw-product` borttaget; produktytor som använde den överskrivna `--color-surface-soft` använder nu `--color-rose` (samma rosa som förut), marknadssidorna behåller `--color-surface-soft`. Lokala `--ink`/`--muted`/`--rose`/`--accent` borttagna ur modulerna och profilbyggets `--pb-*` pekar på theme-tokens. 727 hexvärden som exakt motsvarade en token ersatta med `var(--…)` i 27 filer (vitt efter sammanhang: bakgrund `--color-surface`, annars `--color-white`). Chattens avvikande palett (`#4e3341`, `#927887`, `#ac4066`) följer nu brand-paletten. Kontrollskript `scripts/check-design-tokens.mjs` (`npm run check:design-tokens`) med baslinje `scripts/design-token-baseline.json` som underkänner fler färgvärden per fil eller fler olika textstorlekar, radier och vikter.
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade.
-- Återstår / blockerare: 555 färgvärden utanför `theme.css` återstår (från cirka 1 280), främst äldre neutrala gråtoner och enstaka värden i `globals.css`, `video.module.css`, chatten och äldre vyer, samt inline-färger i TSX. Att mappa dem mot paletten ändrar utseendet och görs vy för vy tillsammans med DA-12; sänk baslinjen med `--update` efter varje migrering. Kontroll i driftsatt dev.
+- Implementerat: Nya tokens i `app/styles/theme.css` (`--color-rose`, `--color-rose-track`, `--color-brand-accent`, `--color-brand-on-rose`, `--color-divider`, `--color-dashed`, `--color-ring`, `--color-plum-900`, `--color-success-strong`, `--color-text-muted-strong`, `--color-warning`, `--color-warning-soft`, `--color-white`). Tokenblocket på `.mnw-product` borttaget; produktytor som använde den överskrivna `--color-surface-soft` använder nu `--color-rose` (samma rosa som förut), marknadssidorna behåller `--color-surface-soft`. Lokala `--ink`/`--muted`/`--rose`/`--accent` borttagna ur modulerna och profilbyggets `--pb-*` pekar på theme-tokens. 727 hexvärden som exakt motsvarade en token ersatta med `var(--…)` i 27 filer (vitt efter sammanhang: bakgrund `--color-surface`, annars `--color-white`). Chattens avvikande palett (`#4e3341`, `#927887`, `#ac4066`) följer nu brand-paletten. Kontrollskript `scripts/check-design-tokens.mjs` (`npm run check:design-tokens`) med baslinje `scripts/design-token-baseline.json` som underkänner fler färgvärden per fil eller fler olika textstorlekar, radier och vikter. 2026-10-29: upptäck (`job-discovery.module.css`: CV-ikonens kant och bakgrund, åtgärdsknappar, felruta, filterval och dialogknappar), lösenordsfältets hover och profilstegens felruta använder tokens (närmaste palettvärde: `--color-brand-soft`, `--color-canvas`, `--color-success-border`, `--color-border`, `--color-ring`, `--color-surface-soft`, `--color-brand-on-rose`). Jobbkortets bildfallback, gradient och skugga över bilden ligger kvar som illustrationsfärger. Tillsammans med DA-05:s ändringar: 555 → 538 färgvärden, baslinjen sänkt.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`. Visuell jämförelse mellan produktionsbyggen före och efter (webpack, lokalt, kopplade till DevStaging, fiktiva konton raderade efteråt) på 15 sidor (publika sidor, ungdomens upptäck/ansökningar/chattar/profil/profilsteg/notiser och företagets annonser/annonsbyggare/inställningar) vid 375 och 1280 px: 0,00–1,31 % pixlar skiljer, och differensbilderna visar att det bara är dämpad text och ikoner som blivit något mörkare (DA-06) samt chattens text; bakgrunder, kanter och layout är oförändrade. 2026-10-29 (lokalt, ej infört i dev): samma kontroller som DA-05 samma dag; i Chromium mot produktionsbygget ger varje ändrad regel ett giltigt palettvärde. Ingen inloggad visuell jämförelse av upptäck den här gången.
+- Återstår / blockerare: 538 färgvärden utanför `theme.css` återstår, främst `globals.css` (287), `video.module.css` (57) och chatten (47 enstaka rosa toner). Chatten kräver inloggad visuell kontroll vid mappning. Görs vy för vy med DA-12; sänk baslinjen med `--update` efter varje migrering. Kontroll i driftsatt dev.
 
 <a id="da-05"></a>
 ### DA-05 Inför skala för typografi, vikter, radier och skuggor
@@ -1606,14 +1606,14 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Global ordning: 64
 - Status: För granskning
 - Ansvarig: Max / Claude
-- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring.
+- Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring. Fortsatt 2026-10-29 på branch `Max` (reserverad före arbetet samma dag, användarens beställning att ta fem auditkort).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-05), som har fynd, filer och mått.
 - Åtgärd: Lägg till skalan för textstorlekar, vikter, radier och skuggor i `theme.css` enligt förslaget i audit-dokumentet och migrera till den tillsammans med DA-04.
 - Klar när: Ny och ändrad CSS använder bara skalans värden, och antalet olika textstorlekar och radier minskar för varje migrerad fil (mäts med DA-04:s kontrollskript).
 - Samordning / beroenden: Beroende: DA-04.
-- Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar.
-- Verifierat: TypeScript, produktionsbygge, riktad ESLint, `check:design-tokens`, `test:profile-steps`, `test:job-practical`, `test:company-public-profile`, `test:accessibility` och `test:job-discovery`.. Kontroll i driftsatt dev 2026-10-26: inloggade och publika sidor renderar utan avvikelser i proven ovan. `check:design-tokens` fallerar på dev av senare ändringar i andra punkters filer (`app/applications/applications-design.css` +6 färger, `components/brand-logo.module.css`, fler textstorlekar och vikter), så kriteriet om att ny CSS bara använder skalan är inte uppfyllt i dev.
-- Återstår / blockerare: Samordna med ägarna av `applications-design.css` (N19) och `brand-logo.module.css` (D07) så att de nya värdena använder skalan, och sänk baslinjen. Migrering av äldre värden sker i DA-12.
+- Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar. 2026-10-29: `check:design-tokens` räknar bara litterala värden; ett värde som bara är en theme-token (`var(--…)`) är skalan och räknas inte, och `@font-face`-deskriptorer (`font-weight: 100 900`) räknas inte. Tidigare gjorde varje ny användning av skalan att kontrollen fallerade. `--shadow-sm` och `--shadow-md` var ogiltiga (`rgb(var(--color-text-rgb) / …)` med kommaseparerat värde) och beräknades till `none`; nu `rgba(var(--color-text-rgb), …)`, så de skuggor som använder dem (`application-disclosure-view`, ansökans förhandsvisning) syns. Nya värden sedan baslinjen fick tokens: kartnålens antal `11px` → `--text-xs`, logotypens svarta ruta och hörn → `--color-logo-mark`/`--radius-logo-mark`, återkallningsdialogen i `applications-design.css` → `--color-border`, `--color-surface`, `--color-text`, `--shadow-dialog`, `--color-backdrop` och `--color-brand`.
+- Verifierat: 2026-10-29 (lokalt, ej infört i dev): `check:design-tokens` PASS (538 färgvärden, 140 textstorlekar, 56 radier, 10 vikter; baslinjen sänkt med `--update`), produktionsbygge (webpack), ESLint på skriptet, `test:profile-steps`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:local-fonts`, `test:profile-journey`. Beräknade stilar i Chromium mot produktionsbygget: skuggorna, dialogen, logotypen och kartnålen (12px) får giltiga värden. `test:accessibility` fallerar likadant med och utan ändringen (företagets ansökningsflikar, N25). Tidigare: kontroll i driftsatt dev 2026-10-26 utan avvikelser.
+- Återstår / blockerare: Införas i dev och kontrolleras där; därefter Klar. Återkallningsdialogens färger (N02) ändrades något mot paletten (text #30262b → `--color-text`, fokusring #9d315d → `--color-brand`); stäm av med N02:s ägare vid granskning. Migrering av äldre värden sker i DA-12.
 
 <a id="da-06"></a>
 ### DA-06 Rätta textfärger som inte klarar WCAG AA
@@ -1635,10 +1635,10 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-11"></a>
 ### DA-11 Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 66
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-26 enligt användarens beställning att genomföra kort från designauditen. Startsidans innehåll, animationer och D05:s tillägg (DA-03, DA-10, DA-17) ingår inte; bara uppdelning i server- och klientkomponenter. Ingen databasändring.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-11), som har fynd, filer och mått.
@@ -1646,8 +1646,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Klar när: Sidorna visar sin text utan JavaScript, har egen metadata och Mapbox-CSS laddas bara på sidor med karta. Lighthouse mobil jämförs före och efter i driftsatt dev.
 - Samordning / beroenden: Samordna startsidan med D05.
 - Implementerat: `app/page.tsx`, `app/features/page.tsx` och `app/pricing/page.tsx` är serverkomponenter med egen `metadata` (startsidan: titel och canonical; funktioner/priser: titel och beskrivning från befintlig sidtext). Segmentlayouterna som bara satte titlar är borttagna. Klientdelar: `app/landing-hero.tsx` (animerad rubrik och sessionsberoende knappar) och `app/pricing/pricing-plans.tsx` (kundtypsväxeln med planer); bakgrund, plattformsvisning, tidslinje och räknare var redan klientkomponenter. Startsidans rubrik börjar fullt utskriven så att serverns HTML visar den, `NumberTicker` serverrenderar slutvärdet, och en `<noscript>`-stil visar scrollanimerad text utan JavaScript. `components/ui/platform-visuals.tsx` är en klientmodul så att mobil- och desktopkopian får egna SVG-id:n (annars återkom DA-01-felet). Mapbox-CSS importeras i `components/job-map.tsx` i stället för `app/globals.css`; kartkontrollernas regel fick högre specificitet eftersom Mapbox-CSS nu laddas efter appens CSS. `test:map-fallback` stubbar CSS-importen. Texter, länkar och animationer i övrigt är oförändrade. Rättat 2026-10-26 efter Lighthouse: startsidans `alternates.canonical: "/"` gav en relativ canonical-länk (ingen `NEXT_PUBLIC_SITE_URL` i dev) och SEO 92; raden är borttagen på branch `Max`.
-- Verifierat: TypeScript, ESLint (inga nya varningar), produktionsbygge (webpack), `test:accessibility`, `test:map-fallback` och `test:local-fonts`. Lokala produktionsbyggen före och efter i Chromium: skärmbilder av `/`, `/features`, `/pricing`, `/login` och `/kartan` (omdirigering) vid 375 och 1280 px är pixelidentiska (0,00 %); utan JavaScript visar startsidan nu rubriken, statistikrubriken, siffrorna (24,9 % och 206 500) och manifestet, som tidigare saknades; funktions- och prissidan oförändrade. Mapbox-CSS finns inte i någon stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy`, bara i `/kartan`s chunk. Prisväxeln byter rubrik och visar företagsavsnitten, rubrikanimationen skriver nästa rubrik, räknarna når slutvärdet och inga sidfel. Kartkontrollerna behåller appens radie och knappstorlek när Mapbox-CSS laddas efter appens CSS (kontrollerat med byggets stilmallar, inte med inloggad karta). `check:design-tokens` fallerar redan på dev av andra punkters filer (`applications-design.css`, `brand-logo.module.css`); den här ändringen tillför inga nya värden. Efter merge till dev (`1e4f49d`), driftsatt dev 2026-10-26: utan JavaScript visar `/` rubrik, statistik (24,9 %, 206 500) och manifest; egna titlar och beskrivningar på `/features` och `/pricing`; ingen Mapbox-stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy`; skärmbilder vid 375 och 1280 px identiska med lokalt bygge (0,00–0,01 %). Lighthouse mobil (Chromium, tre körningar per sida, lokala webpack-byggen av dev före `a1b06d8` och efter `1e4f49d` mot DevStaging, eftersom föregående driftsättning inte längre finns): `/` prestanda 70–91 → 91–92, LCP 3,47–3,70 → 3,39–3,43 s, CLS 0,018 → 0,011; `/features` LCP 3,38–3,39 → 3,16–3,32 s; `/pricing` oförändrat (91–93 → 92), 1–5 KB mindre per sida; tillgänglighet 100 före och efter. Startsidans SEO sjönk 100 → 92 av canonical-länken; efter rättningen 100 (lokalt). Driftsatt dev före rättningen: `/` 93/SEO 92, `/features` 96/100, `/pricing` 95/100.
-- Återstår / blockerare: Canonical-rättningen (branch `Max`) ska in i dev och SEO kontrolleras där; därefter Klar. Inloggad visuell kontroll av `/kartan` med karta är inte gjord (kartans reglage kontrollerade mot byggets stilmallar).
+- Verifierat: TypeScript, ESLint (inga nya varningar), produktionsbygge (webpack), `test:accessibility`, `test:map-fallback` och `test:local-fonts`. Lokala produktionsbyggen före och efter i Chromium: skärmbilder av `/`, `/features`, `/pricing`, `/login` och `/kartan` (omdirigering) vid 375 och 1280 px är pixelidentiska (0,00 %); utan JavaScript visar startsidan nu rubriken, statistikrubriken, siffrorna (24,9 % och 206 500) och manifestet, som tidigare saknades; funktions- och prissidan oförändrade. Mapbox-CSS finns inte i någon stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy`, bara i `/kartan`s chunk. Prisväxeln byter rubrik och visar företagsavsnitten, rubrikanimationen skriver nästa rubrik, räknarna når slutvärdet och inga sidfel. Kartkontrollerna behåller appens radie och knappstorlek när Mapbox-CSS laddas efter appens CSS (kontrollerat med byggets stilmallar, inte med inloggad karta). `check:design-tokens` fallerar redan på dev av andra punkters filer (`applications-design.css`, `brand-logo.module.css`); den här ändringen tillför inga nya värden. Efter merge till dev (`1e4f49d`), driftsatt dev 2026-10-26: utan JavaScript visar `/` rubrik, statistik (24,9 %, 206 500) och manifest; egna titlar och beskrivningar på `/features` och `/pricing`; ingen Mapbox-stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy`; skärmbilder vid 375 och 1280 px identiska med lokalt bygge (0,00–0,01 %). Lighthouse mobil (Chromium, tre körningar per sida, lokala webpack-byggen av dev före `a1b06d8` och efter `1e4f49d` mot DevStaging, eftersom föregående driftsättning inte längre finns): `/` prestanda 70–91 → 91–92, LCP 3,47–3,70 → 3,39–3,43 s, CLS 0,018 → 0,011; `/features` LCP 3,38–3,39 → 3,16–3,32 s; `/pricing` oförändrat (91–93 → 92), 1–5 KB mindre per sida; tillgänglighet 100 före och efter. Startsidans SEO sjönk 100 → 92 av canonical-länken; efter rättningen 100 (lokalt). Driftsatt dev före rättningen: `/` 93/SEO 92, `/features` 96/100, `/pricing` 95/100. Canonical-rättningen finns i dev (`5e1276f`). Driftsatt dev 2026-10-29 (Max / Claude): ingen `<link rel="canonical">` på `/`; utan JavaScript visar `/` rubrik och statistik (24,9 %, 206 500); egna titlar och beskrivningar på `/`, `/features` och `/pricing`; Mapbox-biblioteket finns inte i någon stilmall på `/`, `/features`, `/pricing`, `/login`, `/signup` eller `/privacy` (bara appens sju egna `.job-map-canvas`/`.job-map-popup`-regler i `globals.css`). Lighthouse 12.2.1 mobil, en körning per sida: SEO 100 på alla tre (92 före rättningen), prestanda `/` 68, `/features` 94, `/pricing` 96; LCP 2,9 / 3,0 / 2,7 s. Startsidans prestanda varierar mellan körningar (70–92 tidigare).
+- Återstår / blockerare: Inget. Inloggad visuell kontroll av `/kartan` med karta är fortfarande inte gjord (kartans reglage kontrollerade mot byggets stilmallar); det hör till L08.
 
 <a id="da-12"></a>
 ### DA-12 Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar
@@ -1703,36 +1703,36 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-15"></a>
 ### DA-15 Korta och variera funktionssidan
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 70
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Klar
+- Ansvarig: William / Claude (genomförande); statussynk Max / Claude 2026-10-29
+- Branch/PR: `claude/da15-da16-mobile-features-20261026`, [PR #124](https://github.com/vilgotdidrikson/youth-job-mvp/pull/124), mergad till dev.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-15), som har fynd, filer och mått.
 - Åtgärd: Ge varje funktion en egen ikon, gruppera korten i två kolumner från 640px och inled varje målgruppsavsnitt med en riktig produktbild i stället för ett tolfte kort. Alternativt slå ihop sidan med startsidan och prissidan.
 - Klar när: Funktionssidan har varierade ikoner, kortare scroll på mobil och visar produkten.
 - Samordning / beroenden: Samordna produktbild med D05.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Se audit-dokumentets genomförandeuppdatering under [DA-15](DESIGN_AUDIT_2026-10-22_1.md#da-15). Kortet stod kvar som Ej påbörjad fast arbetet var infört och verifierat; statusen synkades 2026-10-29.
+- Verifierat: Enligt audit-dokumentet i driftsatt dev 2026-10-28. Kontrollerat igen i driftsatt dev 2026-10-29 (Max / Claude, Chromium): vid 375, 639, 640 och 1280 px inga textsymboler, ingen horisontell scroll och två produktvyer med tillgängliga namn; 19 olika ikoner på sidan (14 funktionsikoner plus övriga); sidhöjd vid 375 px 5 623 px (5 784 px före).
+- Återstår / blockerare: Safari/Firefox och fysisk telefon inte kontrollerade.
 
 <a id="da-16"></a>
 ### DA-16 Större text och tryckytor på mobil
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 71
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Klar
+- Ansvarig: William / Claude (genomförande); statussynk Max / Claude 2026-10-29
+- Branch/PR: `claude/da15-da16-mobile-features-20261026`, [PR #124](https://github.com/vilgotdidrikson/youth-job-mvp/pull/124) och `/login`-rättningen i [PR #146](https://github.com/vilgotdidrikson/youth-job-mvp/pull/146) (merge `7f342c2`).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-16), som har fynd, filer och mått.
 - Åtgärd: Gör varje tryckbart element minst 44×44px (padding räcker) och använd aldrig mindre än 12px för synlig text, bland annat i sidfötter, upptäck-filter, CV-banner och kortchips.
 - Klar när: Inga tryckytor under 44px och ingen synlig text under 12px vid 375px på publika sidor och upptäck.
 - Samordning / beroenden: Samordna med L08 och DA-06.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Se audit-dokumentets genomförandeuppdatering under [DA-16](DESIGN_AUDIT_2026-10-22_1.md#da-16). Kortet stod kvar som Ej påbörjad fast arbetet var infört och verifierat; statusen synkades 2026-10-29.
+- Verifierat: Enligt audit-dokumentet i driftsatt dev 2026-10-28 (39/39). Kontrollerat igen i driftsatt dev 2026-10-29 (Max / Claude, Chromium, 375 px): ingen tryckyta under 44 px, ingen synlig text under 12 px och ingen horisontell scroll på `/`, `/features`, `/pricing`, `/login`, `/signup`, `/forgot-password` och `/privacy`.
+- Återstår / blockerare: Safari/Firefox och fysisk telefon inte kontrollerade. Inloggad upptäck verifierad bara lokalt.
 
 <a id="da-18"></a>
 ### DA-18 Ska utloggade besökare kunna se publicerade jobb?
