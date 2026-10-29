@@ -41,5 +41,5 @@ assert.match(cv,/ProfileStepComplete step="cv"/);assert.match(cv,/else if \(yout
 const studio=readFileSync('app/video/record/page.tsx','utf8');assert.doesNotMatch(studio,/ProfileStepComplete|Spara profilvideo/);assert.match(studio,/if\(!conversationId\)return/);
 const editor=readFileSync('components/recruitment-profile-editor.tsx','utf8');assert.match(editor,/p_expected_version: version/);assert.match(editor,/setCompleted\(selected\)/);
 const page=readFileSync('app/profile/page.tsx','utf8');assert.ok(page.includes('Min allmänna profil'));assert.ok(page.includes('ModalDialog'));assert.ok(!page.includes('saveYouthProfileDraft'));
-const css=readFileSync('app/chats/chat.module.css','utf8');assert.ok(css.includes('height:calc(100dvh - 146px)'));assert.ok(!css.includes('height:min(770px'));
+const css=readFileSync('app/chats/chat.module.css','utf8');assert.ok(css.includes('height:calc(100dvh - 170px)'),'Chat workspace fits below the full-height header');assert.ok(!css.includes('height:min(770px'));
 console.log('PASS profile journey: fixed order/links/resume, stable explicit next steps, contact-only owned writes, age/date checks, unchanged CV/docs/recruitment, failed write and chat viewport contract.');

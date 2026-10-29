@@ -131,7 +131,7 @@ function ChatsPageContent() {
   };
   if(status !== "ready") return <AuthGateMessage status={status} error={sessionError}/>;
   if(cvLoading) return <main className={styles.page}><section className={styles.empty} role="status">Hämtar dina chattar…</section></main>;
-  if(profile?.role === "youth" && !cvCompleted) return <main className={styles.page}><section className={styles.empty}><UiIcon name="chat"/><h1>Gör klart ditt CV</h1><p>Ett färdigt CV behövs för att skicka din ansökan. När ni båda är intresserade öppnas chatten här.</p><Link className={styles.primary} href="/youth/cv">Fortsätt med CV:t <UiIcon name="arrow"/></Link></section></main>;
+  if(profile?.role === "youth" && !cvCompleted) return <main className={`${styles.page} ${styles.cvGate}`}><section className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h1>Gör klart ditt CV</h1><p>Ett färdigt CV behövs för att skicka din ansökan. När ni båda är intresserade öppnas chatten här.</p><Link className={styles.primary} href="/youth/cv">Fortsätt med CV:t <UiIcon name="arrow"/></Link></section></main>;
   const visible = conversations.filter(item => `${item.otherName} ${item.jobTitle}`.toLocaleLowerCase("sv").includes(search.toLocaleLowerCase("sv")));
   const currentMessages = messages.id === selectedId ? messages.items : [];
 

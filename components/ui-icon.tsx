@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type IconName = "camera" | "play" | "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off" | "chevron-left" | "plus" | "lock" | "bulb" | "cards" | "match" | "messages" | "store";
+export type IconName = "camera" | "play" | "discover" | "map" | "activity" | "profile" | "filter" | "heart" | "close" | "info" | "bookmark" | "arrow" | "briefcase" | "check" | "chat" | "file" | "microphone" | "upload" | "edit" | "bell" | "eye" | "eye-off" | "chevron-left" | "plus" | "lock" | "bulb" | "cards" | "match" | "messages" | "store" | "instagram";
 const paths: Record<IconName, React.ReactNode> = {
   camera: <><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3Z"/></>,
   play: <path d="m9 5 10 7-10 7Z"/>,
@@ -32,6 +32,7 @@ const paths: Record<IconName, React.ReactNode> = {
   match: <><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></>,
   messages: <><path d="M15 9a2 2 0 0 1-2 2H7l-4 3V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2Z"/><path d="M18 8h1a2 2 0 0 1 2 2v10l-3-3h-7a2 2 0 0 1-2-2v-1"/></>,
   store: <><path d="M3.5 4h17l-1 5.5h-15Z"/><path d="M5 9.5V20h14V9.5M10 20v-5h4v5"/></>,
+  instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></>,
 };
 
 export function UiIcon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {

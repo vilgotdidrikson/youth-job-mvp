@@ -14,9 +14,9 @@ const items: { href: string; label: string; icon: IconName; routes: string[] }[]
   { href: "/profile", label: "Profil", icon: "profile", routes: ["/profile", "/profile/", "/cv-builder"] },
 ];
 
-export function YouthNavigation({ pathname, hideOnMobile = false }: { pathname: string; hideOnMobile?: boolean }) {
+export function YouthNavigation({ pathname }: { pathname: string }) {
   const indicators=useNavigationIndicators();
-  return <nav className={`${styles.nav} ${pathname==="/chats"?styles.compact:""} ${hideOnMobile?styles.hideOnMobile:""}`} aria-label="Huvudnavigation">
+  return <nav className={styles.nav} aria-label="Huvudnavigation">
     <Link href="/swipe" className={styles.brand} aria-label="MatchnWork – upptäck jobb"><BrandLogo/></Link>
     <div className={styles.links}>{items.map(item => {
       const active = item.routes.some(route => route.endsWith("/") ? pathname.startsWith(route) : pathname === route);

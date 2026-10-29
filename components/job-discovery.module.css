@@ -25,6 +25,9 @@
 .deck { min-width: 0; }
 .jobCard { position: relative; isolation: isolate; width: 100%; height: 440px; overflow: hidden; border-radius: 26px; background: #ebadbf; color: var(--color-white); box-shadow: 0 18px 32px rgb(76 48 59 / .09); touch-action: pan-y; user-select: none; cursor: grab; transition: transform 240ms ease; }
 .jobCard:active { cursor: grabbing; }
+/* Each new card rises into place; uses scale/translate so the inline swipe transform is untouched. */
+.jobCard { animation: cardEnter 420ms cubic-bezier(.2, .9, .3, 1.15) both; }
+@keyframes cardEnter { from { opacity: 0; scale: .94; translate: 0 14px; } to { opacity: 1; scale: 1; translate: 0 0; } }
 .jobImage { object-fit: cover; }
 .imageFallback { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(130deg, #e8a0b7, #f5d5df); }
 .imageFallback::before { content: ""; position: absolute; width: 65%; aspect-ratio: 1; left: -12%; bottom: -28%; border-radius: 50%; background: rgb(255 255 255 / .15); }
@@ -49,6 +52,8 @@
 .swipeHint { margin: 12px 0 0; color: var(--color-text-muted); text-align: center; font-size: var(--text-xs); }
 .swipeFeedback { position: absolute; left: 24px; top: 90px; padding: 10px 18px; border: 2px solid var(--color-white); border-radius: 12px; color: var(--color-white); background: var(--color-text); transform: rotate(-8deg); font-weight: 650; }
 .feedbackYes { background: var(--color-success-strong); }
+.swipeFeedback { animation: feedbackPop 220ms ease-out both; }
+@keyframes feedbackPop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
 .sidebar { display: grid; gap: 16px; padding-top: 0; }
 .sideCard { padding: 22px; border: 1px solid var(--color-border); border-radius: 22px; background: var(--color-surface); }
 .sideCard h2 { margin: 0 0 18px; font-size: 1rem; font-weight: 550; }
@@ -118,7 +123,7 @@
   .swipeHint { font-size: var(--text-xs); margin-top: 10px; }
   .empty, .skeleton { min-height: 330px; }
 }
-@media (prefers-reduced-motion: reduce) { .jobCard, .action { transition: none !important; } .jobCard { transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .jobCard, .action { transition: none !important; } .jobCard { transform: none !important; } .jobCard, .swipeFeedback { animation: none !important; } }
 
 /* Pointer gestures own the card; photos never start a native image drag. */
 .jobImage, .imageShade, .imageFallback { pointer-events: none; user-select: none; -webkit-user-drag: none; }

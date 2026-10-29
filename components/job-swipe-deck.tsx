@@ -25,8 +25,14 @@ interface JobSwipeDeckProps {
   swipeHint: string;
 }
 
+const HINT_KEY = "mnw-swipe-hint-seen";
+// One gentle right/left tilt on the first visit shows that the card can be swiped.
+const HINT_STEPS: [x: number, at: number][] = [[56, 900], [0, 1650], [-56, 2050], [0, 2800]];
+
 export function JobSwipeDeck({ searchFilters, disabled = false, onSeen, jobs, onDecision, onSave, savedIds, emptyTitle, emptySubtitle, onClearFilters, interestedLabel, skipLabel, swipeHint }: JobSwipeDeckProps) {
   const [dragX, setDragX] = useState(0);
+  const [hintX, setHintX] = useState(0);
+  const hintTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [flyDir, setFlyDir] = useState<"left" | "right" | null>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,10 +47,25 @@ export function JobSwipeDeck({ searchFilters, disabled = false, onSeen, jobs, on
   const cardRef = useJobImpression(currentJob?.id, onSeen);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  const hasJob = Boolean(currentJob);
+  const stopHint = () => {
+    hintTimers.current.forEach(clearTimeout); hintTimers.current = [];
+    setHintX(0);
+    try { localStorage.setItem(HINT_KEY, "1"); } catch {}
+  };
+  useEffect(() => {
+    if (!hasJob || disabled || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    try { if (localStorage.getItem(HINT_KEY)) return; } catch { return; }
+    hintTimers.current = HINT_STEPS.map(([x, at]) => setTimeout(() => setHintX(x), at));
+    hintTimers.current.push(setTimeout(() => { try { localStorage.setItem(HINT_KEY, "1"); } catch {} }, HINT_STEPS[HINT_STEPS.length - 1][1]));
+    return () => { hintTimers.current.forEach(clearTimeout); hintTimers.current = []; };
+  }, [hasJob, disabled]);
+
   const resetDrag = () => { startX.current = null; activePointer.current = null; setDragX(0); };
   const decide = (decision: SwipeDecision) => {
     if (!currentJob || disabled || actionLock.current) return;
     actionLock.current = true;
+    stopHint();
     setBusy(true); setActionError(""); resetDrag();
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!reduced) setFlyDir(decision === "interested" ? "right" : "left");
@@ -65,10 +86,11 @@ export function JobSwipeDeck({ searchFilters, disabled = false, onSeen, jobs, on
   if (!currentJob) return <section className={styles.empty} aria-live="polite"><span className={styles.emptyIcon}><UiIcon name="discover" width="32" height="32"/></span><h2>{emptyTitle}</h2><p>{emptySubtitle}</p><>{onClearFilters ? <button type="button" className={styles.textLink} onClick={onClearFilters}>Rensa filter <UiIcon name="arrow"/></button> : <Link href="/swipe" className={styles.textLink}>Utforska jobb <UiIcon name="arrow"/></Link>}</></section>;
   const image = currentJob.image_url?.split(",")[0]?.trim();
   const saved = savedIds.has(currentJob.id);
+  const offsetX = dragX || hintX;
   return <div className={styles.deck}>
-    <article ref={cardRef} className={styles.jobCard}
-      style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${dragX}px) rotate(${dragX * .025}deg)`, transition: startX.current !== null ? "none" : undefined }}
-      onPointerDown={event => { if (disabled || busy || saving || actionLock.current || startX.current !== null || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("button,input,textarea,select")) return; activePointer.current = event.pointerId; startX.current = event.clientX; startY.current = event.clientY; suppressClick.current = false; }}
+    <article key={currentJob.id} ref={cardRef} className={styles.jobCard}
+      style={{ transform: flyDir ? `translateX(${flyDir === "right" ? 600 : -600}px) rotate(${flyDir === "right" ? 12 : -12}deg)` : `translateX(${offsetX}px) rotate(${offsetX * .025}deg)`, transition: startX.current !== null ? "none" : hintX ? "transform 650ms cubic-bezier(.34, 1.4, .64, 1)" : undefined }}
+      onPointerDown={event => { if (hintTimers.current.length) stopHint(); if (disabled || busy || saving || actionLock.current || startX.current !== null || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("button,input,textarea,select")) return; activePointer.current = event.pointerId; startX.current = event.clientX; startY.current = event.clientY; suppressClick.current = false; }}
       onPointerMove={event => { if (startX.current !== null && event.pointerId === activePointer.current) { const dx=event.clientX-startX.current, dy=event.clientY-startY.current; if (Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.2) { suppressClick.current=true; event.currentTarget.setPointerCapture(event.pointerId); setDragX(dx); } } }}
       onClickCapture={event => {if(suppressClick.current) {event.preventDefault();event.stopPropagation();suppressClick.current=false;}}}
       onDragStart={event => event.preventDefault()}
@@ -77,7 +99,7 @@ export function JobSwipeDeck({ searchFilters, disabled = false, onSeen, jobs, on
       {image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 680px" priority draggable={false} className={styles.jobImage}/> : <div className={styles.imageFallback}><span><UiIcon name="briefcase" width="56" height="56"/></span></div>}
       <div className={styles.imageShade}/>
       <div className={styles.cardTop}><span className={styles.cardBadge}>{`${jobs.length} ${jobs.length === 1 ? "jobb" : "jobb att upptäcka"}`}</span><button className={styles.bookmark} type="button" aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet till senare"} aria-pressed={saved} disabled={disabled || saving || busy} onClick={() => void save()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button></div>
-      {Math.abs(dragX) > 20 && <span className={`${styles.swipeFeedback} ${dragX > 0 ? styles.feedbackYes : ""}`}>{dragX > 0 ? "Intresserad" : "Inte nu"}</span>}
+      {Math.abs(offsetX) > 20 && <span className={`${styles.swipeFeedback} ${offsetX > 0 ? styles.feedbackYes : ""}`} aria-hidden={hintX ? true : undefined}>{offsetX > 0 ? "Intresserad" : "Inte nu"}</span>}
       <div className={styles.cardContent}><p className={styles.company}>{currentJob.company_name || "Arbetsgivare"}</p><h2><Link href={`/jobb/${encodeURIComponent(currentJob.id)}`}>{currentJob.title}</Link></h2><div className={styles.cardChips}>{[jobCities(currentJob), currentJob.employment_type, currentJob.salary_per_hour].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div></div>
     </article>
     {searchFilters && searchDetailLabels(currentJob, searchFilters).map(label => <p className={styles.swipeHint} key={label}>{label}</p>)}
