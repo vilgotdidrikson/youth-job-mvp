@@ -5,7 +5,7 @@ import inventory from "../../docs/privacy/personal-data-inventory.json";
 // Internal review material only: never send this result directly to a client or
 // the package builder. Ownership does not settle third-party rights in free text.
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations"; }
+interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations" | "jobs"; cursorType?: "integer"; }
 interface ReadScope { owner: string; participants?: readonly string[]; }
 const SOURCES: readonly SourceSpec[] = [
   {"table": "profiles", "owner": "id", "cursor": "id", "columns": "id,role"},
@@ -40,6 +40,8 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "youth_videos", "owner": "owner_id", "cursor": "id", "columns": "id,owner_id,conversation_id,storage_path,mime_type,size_bytes,duration_seconds,revoked_at,created_at,first_sent_at,expires_at,cleanup_started_at,deleted_at"},
   {"table": "moderation_reports", "owner": "reporter_user_id", "cursor": "id", "columns": "id,reporter_user_id,target_type,target_id,reason,details,status,created_at,reviewed_at"},
   {"table": "user_blocks", "owner": "blocker_user_id", "cursor": "blocked_user_id", "columns": "blocker_user_id,blocked_user_id,created_at"},
+  {"table": "job_match_profiles", "owner": "job_id", "cursor": "job_id", "columns": "job_id,status,role_summary,must_haves,trainable_requirements,top_traits,weighted_criteria,candidate_questions,inherited_company_version,profile_version,ai_generated,created_at,updated_at", "parent": "jobs"},
+  {"table": "job_match_profile_versions", "owner": "job_id", "cursor": "profile_version", "columns": "job_id,profile_version,snapshot,created_at", "parent": "jobs", "cursorType": "integer"},
 ];
 export const COLLECTION_LIMITS = Object.freeze({ pageSize: 100, requests: 500, sourceRows: 10000, bytes: 8 * 1024 * 1024, nodes: 50000, depth: 24, milliseconds: 120000, concurrency: 4 });
 type Reason = "query_failed" | "invalid_response" | "limit_exceeded" | "dependency_unavailable";
@@ -137,7 +139,7 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
     try {
       for (const scope of scopes) {
         const owner = scope.owner;
-        let cursor: string | undefined;
+        let cursor: string | number | undefined;
         // Always request a terminal empty page, including when the server caps
         // responses BELOW pageSize. Never infer completion from a short page.
         while (true) {
@@ -150,7 +152,7 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
             ? query.or(`youth_user_id.eq.${owner},company_user_id.eq.${owner}`)
             : query.eq(spec.owner, owner);
           query = query.order(spec.cursor, { ascending: true }).limit(COLLECTION_LIMITS.pageSize);
-          if (cursor) query = query.gt(spec.cursor, cursor);
+          if (cursor !== undefined) query = query.gt(spec.cursor, cursor);
           const timeout = AbortSignal.timeout(Math.max(1, COLLECTION_LIMITS.milliseconds - (Date.now() - start)));
           query = query.abortSignal(AbortSignal.any([activeSignal, timeout]));
           const response = await query;
@@ -169,10 +171,17 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
             // participants. Merely knowing a conversation ID proves neither.
             if (spec.parent === "conversations" && (!scope.participants || typeof row.sender_user_id !== "string" || !scope.participants.includes(row.sender_user_id))) throw new PersonalDataCollectionError("account_changed");
             const next = row[spec.cursor];
-            if (typeof next !== "string" || !uuid.test(next) || (cursor && next <= cursor) || seen.has(next)) throw new ReadFailure("invalid_response");
+            if (typeof next !== "string" && typeof next !== "number") throw new ReadFailure("invalid_response");
+            const validCursor = spec.cursorType === "integer"
+              ? typeof next === "number" && Number.isInteger(next) && next >= -2147483648 && next <= 2147483647
+              : typeof next === "string" && uuid.test(next);
+            // Version numbers are only unique within a job; message UUIDs are
+            // globally unique and still detect duplicates across conversations.
+            const rowKey = spec.cursorType === "integer" ? `${owner}:${next}` : String(next);
+            if (!validCursor || (cursor !== undefined && next <= cursor) || seen.has(rowKey)) throw new ReadFailure("invalid_response");
             cursor = next;
             if (rows.length >= COLLECTION_LIMITS.sourceRows) throw new ReadFailure("limit_exceeded");
-            seen.add(next);
+            seen.add(rowKey);
             rows.push(row);
           }
           // An equality filter on the unique cursor already fixes the only
