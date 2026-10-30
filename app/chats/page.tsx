@@ -13,6 +13,7 @@ import { getMessages, getMyConversationContacts, getMyConversations, sendMessage
 import { chatRequestKey, isRequestedConversation } from "@/lib/chat-navigation";
 import { getMyMatches } from "@/lib/matching";
 import { RecruitmentPanel } from "@/components/recruitment-panel";
+import { employmentStatusLabel } from "@/lib/recruitment-types";
 import type { ChatMessage, ConversationSummary } from "@/lib/types";
 import { ReportDialog } from "@/components/report-dialog";
 import { ChatVideoComposer, VideoMessage } from "@/components/chat-video";
@@ -24,7 +25,7 @@ import { chatIsReadOnly } from "@/lib/application-withdrawal";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 
 interface ConvDisplay { conv: ConversationSummary; otherName: string; jobTitle?: string; status: string; matchId?: string }
-const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: "Anställning registrerad", rejected: "Avslutad", cancelled: "Avslutad" };
+const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: employmentStatusLabel(), rejected: "Avslutad", cancelled: "Avslutad" };
 const initials = (name: string) => name.split(" ").filter(Boolean).slice(0,2).map(word => word[0]).join("").toUpperCase();
 function messageTime(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", { hour:"2-digit", minute:"2-digit" }).format(date); }
 function messageDate(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", {day:"numeric", month:"long"}).format(date); }

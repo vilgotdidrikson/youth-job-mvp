@@ -275,5 +275,5 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus): P
 /** Legacy lifecycle calls must use the employment form with role/start date. */
 export async function markMatchHired(matchId: string): Promise<MatchRecord> {
   void matchId;
-  throw new Error("Registrera befattning och startdatum i chatten för att markera kandidaten som anställd.");
+  throw new Error("Använd ”Registrera anställning” i chatten med kandidaten och ange befattning och startdatum.");
 }

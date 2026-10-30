@@ -1,8 +1,8 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ModalDialog } from "@/components/modal-dialog";
 import { getRecruitmentRecords, recruitmentAction, RecruitmentConflictError } from "@/lib/recruitment";
-import { employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
+import { EMPLOYMENT_STEPS, REGISTER_EMPLOYMENT, employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { CURRENT_COMPANY_OFFER } from "@/lib/current-offer";
 import styles from "./recruitment.module.css";
@@ -16,6 +16,7 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [reload, setReload] = useState(false);
   const lock = useRef(false);
+  const hintId = useId();
   const approved = expected?.response === "approved";
   const reloadLatest = async () => {
     if (lock.current) return;
@@ -40,9 +41,12 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
       else { setReload(reason instanceof RecruitmentConflictError); setError(reason instanceof Error ? reason.message : "Kunde inte spara."); }
     } finally { lock.current = false; setBusy(false); }
   };
-  return <ModalDialog label={company ? "Registrera anställning" : approved ? "Synlighet och CV" : "Granska anställning"} onClose={onClose} busy={busy} className={styles.dialog}><form onSubmit={submit}>
-    <h2>{company ? `${expected ? "Rätta anställningsuppgifter" : "Registrera anställning"} för ${item.youth_name}` : approved ? "Synlighet och CV" : "Granska din anställning"}</h2>
-    {company ? <><p>Registrera bara en anställning ni har kommit överens om. Kandidaten får granska befattning och startdatum. Ändrade uppgifter behöver godkännas igen. Chatten finns kvar.</p><p>{CURRENT_COMPANY_OFFER.registration}</p><label>Befattning<input required maxLength={120} disabled={reload} value={role} onChange={event => setRole(event.target.value)}/></label><label>Startdatum<input required type="date" min="2000-01-01" disabled={reload} value={start} onChange={event => setStart(event.target.value)}/></label></> : <>
+  return <ModalDialog label={company ? expected ? "Rätta anställningsuppgifter" : REGISTER_EMPLOYMENT : approved ? "Synlighet och CV" : "Granska anställning"} onClose={onClose} busy={busy} className={styles.dialog}><form onSubmit={submit}>
+    <h2>{company ? `${expected ? "Rätta anställningsuppgifter" : REGISTER_EMPLOYMENT} för ${item.youth_name}` : approved ? "Synlighet och CV" : "Granska din anställning"}</h2>
+    {company ? <>{expected ? <p>Kandidaten granskar de ändrade uppgifterna igen innan anställningen blir bekräftad.</p> : <ol className={styles.steps}>{EMPLOYMENT_STEPS.map(step => <li key={step}>{step}</li>)}</ol>}
+      <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>
+      <label>Befattning<input required maxLength={120} aria-describedby={`${hintId}-role`} disabled={reload} value={role} onChange={event => setRole(event.target.value)}/></label><p id={`${hintId}-role`} className={styles.hint}>Det kandidaten anställs som. Kandidaten väljer själv om den visas på profilen och i CV:t.</p>
+      <label>Startdatum<input required type="date" min="2000-01-01" aria-describedby={`${hintId}-start`} disabled={reload} value={start} onChange={event => setStart(event.target.value)}/></label><p id={`${hintId}-start`} className={styles.hint}>Första arbetsdagen. Ett kommande datum går bra.</p></> : <>
       <p><strong>{expected?.role_name} · {item.employment?.company_name}</strong><br/>Startdatum: {expected?.start_date}</p><p>{approved ? "Anställningen är redan bekräftad. Här väljer du var erfarenheten visas." : "Arbetsgivaren har registrerat uppgifterna. Godkänn bara om de stämmer. Du kan be om en rättelse utan att godkänna dem."}</p>
       <label className={styles.checkbox}><input type="checkbox" disabled={reload} checked={show} onChange={event => setShow(event.target.checked)}/>Visa erfarenheten och bocken ”Jobb via MatchnWork” på min profil</label>
       <label className={styles.checkbox}><input type="checkbox" disabled={reload} checked={cv} onChange={event => setCv(event.target.checked)}/>Ta med erfarenheten i mitt MatchnWork-CV och nästa PDF</label><p>Valen är frivilliga. Du kan godkänna anställningen utan att visa erfarenheten. En redan nedladdad eller uppladdad PDF ändras inte.</p>
@@ -95,7 +99,7 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
   const attention = employment?.response === "disputed" || (!company && employment?.response === "pending");
   const panelId = `recruitment-${item.match_id}`;
   return <section className={`${styles.panel} ${compact ? styles.compact : ""}`} aria-label="Rekryteringsavslut">
-    {compact && <div className={styles.compactHeader}><div><strong>{employment ? presentation.title : "Rekrytering"}</strong>{employment && <span>{employment.role_name}</span>}</div>{attention && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{company ? "Rätta uppgifter" : "Granska"}</button>}{company && eligible && !employment && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>Registrera anställning</button>}<button type="button" className={styles.textButton} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded(current => !current)}>{expanded ? "Dölj detaljer" : "Visa alternativ"}</button></div>}
+    {compact && <div className={styles.compactHeader}><div><strong>{employment ? presentation.title : "Rekrytering"}</strong>{employment && <span>{employment.role_name}</span>}</div>{attention && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{presentation.action}</button>}{company && eligible && !employment && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{REGISTER_EMPLOYMENT}</button>}<button type="button" className={styles.textButton} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded(current => !current)}>{expanded ? "Dölj detaljer" : "Visa alternativ"}</button></div>}
     <div id={panelId} hidden={compact && !expanded} className={compact ? styles.compactBody : undefined}><h3>{presentation.title}</h3>
     {employment && <p>{employment.role_name} · {employment.company_name}<br/>{experiencePeriod(employment.start_date)}</p>}
     <p>{presentation.description}</p>
