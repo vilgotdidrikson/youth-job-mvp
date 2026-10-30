@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:structured-personal-data-export": "node scripts/test-structured-personal-data-export.mjs",
     "test:reviewed-personal-data-export": "node scripts/test-reviewed-personal-data-export.mjs",
     "test:personal-data-review": "node scripts/test-personal-data-review.mjs",
     "test:personal-data-files": "node scripts/test-personal-data-files.mjs",
