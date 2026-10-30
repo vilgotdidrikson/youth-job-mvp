@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { reauthenticateAccount, AccountReauthenticationError } from "./account-reauthentication";
 import { collectPersonalDataForReview } from "./personal-data-collection";
 import { collectAccountCvFiles } from "./personal-data-cv-binding";
+import { verifyPersonalDataSession, PersonalDataSessionError } from "./personal-data-session";
 
 export class PersonalDataReviewError extends Error {
   constructor(public readonly code: "cancelled" | "identity_changed" | "collection_failed") {
@@ -17,7 +18,7 @@ export class PersonalDataReviewError extends Error {
 export async function preparePersonalDataReview(
   userClient: SupabaseClient, verificationClient: SupabaseClient,
   subjectId: string, password: string,
-  options: { signal?: AbortSignal; reviewClient?: SupabaseClient } = {},
+  options: { accessToken: string; sessionClient: SupabaseClient; signal?: AbortSignal; reviewClient?: SupabaseClient },
 ) {
   const stop = new AbortController();
   const active = options.signal ? AbortSignal.any([options.signal, stop.signal]) : stop.signal;
@@ -36,6 +37,7 @@ export async function preparePersonalDataReview(
     } finally { if (cancel) active.removeEventListener("abort", cancel); }
   }
   try {
+    const sessionId = await wait(() => verifyPersonalDataSession(userClient, options.sessionClient, subjectId, options.accessToken, active));
     await wait(() => reauthenticateAccount(userClient, verificationClient, subjectId, password));
     const collection = await wait(() => collectPersonalDataForReview(userClient, subjectId, active, options.reviewClient));
     if (collection.subjectId !== subjectId || collection.reviewState !== "pending") throw new PersonalDataReviewError("identity_changed");
@@ -45,13 +47,15 @@ export async function preparePersonalDataReview(
     const cv = role === "youth" ? await wait(() => collectAccountCvFiles(userClient, subjectId, active)) : null;
     const { data, error } = await wait(() => userClient.auth.getUser());
     if (error || !data.user || data.user.is_anonymous || data.user.id !== subjectId) throw new PersonalDataReviewError("identity_changed");
+    const currentSession = await wait(() => verifyPersonalDataSession(userClient, options.sessionClient, subjectId, options.accessToken, active));
+    if (currentSession !== sessionId) throw new PersonalDataReviewError("identity_changed");
     return {
-      subjectId, reviewState: "pending" as const, consistency: "non_transactional" as const,
+      subjectId, sessionId, reviewState: "pending" as const, consistency: "non_transactional" as const,
       collection, cv, cvScope: cv ? "account_cv_references" as const : "not_requested_for_role" as const,
     };
   } catch (error) {
     if (active.aborted) throw new PersonalDataReviewError("cancelled");
-    if (error instanceof AccountReauthenticationError || error instanceof PersonalDataReviewError) throw error;
+    if (error instanceof AccountReauthenticationError || error instanceof PersonalDataReviewError || error instanceof PersonalDataSessionError) throw error;
     throw new PersonalDataReviewError("collection_failed");
   } finally { clearTimeout(timer); stop.abort(); }
 }
