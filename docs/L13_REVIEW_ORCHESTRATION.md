@@ -3,7 +3,11 @@
 Reserverad före kodarbete 2026-10-30: Vilgot / Codex, `codex/l13-review-orchestration-20261030`, från dev efter #158. Aktuell dev och öppna PR:er kontrollerade. Koppla ny kontoverifiering, vanlig/privat insamling och egna CV-filer i en intern granskningsoperation med gemensam avbrytning och slutlig identitetskontroll. Inga råa uppgifter till paketbyggare/UI, ingen exportaktivering eller ny databasbehörighet. L13 fortsatt Pågår.
 
 
-## Leverans
+## Aktuell komplettering
+
+Sessionskontrollen i [L13_ACTIVE_EXPORT_SESSION.md](L13_ACTIVE_EXPORT_SESSION.md) är nu obligatorisk före lösenordsverifiering och efter insamlingen. Anroparen måste skicka ursprunglig `accessToken` och separat serverägd `sessionClient`; den valfria `reviewClient` avser fortfarande bara privat innehåll. Resultatet binds till `sessionId` utan att token sparas. Nedanstående ursprungliga verifieringsprotokoll avser leveransen före denna komplettering. Slutlig getUser har kompletterats med aktiv kontoägd sessionsrad, men framtida nedladdning kräver en ny kontroll.
+
+## Ursprunglig leverans
 
 preparePersonalDataReview i lib/server/personal-data-review.ts kopplar befintliga serverdelar i ordning: ny lösenordsverifiering med isolerad sessionsstädning → vanlig/valfri privat datainsamling → CV-filer från ungdomens egna dokumentposter → slutlig Auth-kontroll. Ingen service-/CV-läsning startar före lyckad verifiering. Rollen hämtas från skyddad profiles-rad i insamlingen, aldrig user_metadata. Saknad/felaktig profil avbryter; övriga explicita källfel/täckningsstatusar bevaras.
 
