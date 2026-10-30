@@ -3,7 +3,19 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=new URL('../',import.meta.url);
-export const readReviewedCatalog=()=>JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8'));
+/** Append reviewed metadata only; an addition cannot rewrite an existing table
+ * or bucket. Keeps historical Auth metadata byte-identical when publishing a
+ * narrowly scoped schema change. This is a local audit tool, never runtime auth. */
+export function mergeReviewedCatalogAdditions(base,additions) {
+ if(!base||!additions||additions.mode!=='additions-only'||additions.projectRef!==base.projectRef||!/^\d{4}-\d{2}-\d{2}$/.test(additions.capturedOn)||!Array.isArray(base.relations)||!Array.isArray(base.buckets)||!Array.isArray(additions.relations)||!Array.isArray(additions.buckets))throw Error('Malformed reviewed catalog additions.');
+ const relations=[...base.relations,...additions.relations],buckets=[...base.buckets,...additions.buckets];
+ if(new Set(relations.map(r=>r.schema_name+'.'+r.table_name)).size!==relations.length||new Set(buckets.map(b=>b.id)).size!==buckets.length)throw Error('Catalog additions cannot replace existing metadata.');
+ return{...base,capturedOn:additions.capturedOn,relations,buckets};
+}
+export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.export-storage-2026-10-30.json',root),'utf8')),
+);
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;

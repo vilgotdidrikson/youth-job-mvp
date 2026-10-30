@@ -2,7 +2,11 @@
 
 [PR #143](https://github.com/vilgotdidrikson/youth-job-mvp/pull/143), `codex/l13-export-inventory-20261028`, Vilgot / Codex. Reserverad före arbete 2026-10-28 från aktuell dev. **Inventering och granskningsverktyg, ingen fungerande export ännu.** L13 förblir Pågår.
 
-## Underlag och täckning
+## Aktualisering 2026-10-30
+
+[L13_TEMPORARY_EXPORT_STORAGE.md](L13_TEMPORARY_EXPORT_STORAGE.md) inför en serverägd exporttabell och privat bucket. Ny faktisk DevStaging-katalog visar 86 relationer och fyra buckets, med exakt dessa två tillägg och inga andra schemaavvikelser. Källregistret är uppdaterat. Granskad katalog läses som den byteidentiska ursprungsfilen plus catalog.export-storage-2026-10-30.json med enbart den nya exporttabellen/bucketen. Tillägget får inte ersätta gamla relationer eller buckets. Nedanstående 85/tre-protokoll är historiskt från den första inventeringen. Ingen export eller städschemaläggning aktiveras genom aktualiseringen.
+
+## Ursprungligt underlag och täckning
 
 DevStagings faktiska systemkatalog lästes 2026-10-28: **85 relationer**, varav 50 i `public`/`private` och 35 i `auth`/`storage`, samt tre Storage-buckets. Endast tabell-/kolumnnamn, typer, FK-definitioner, relationstyp, RLS-flagga och bucketnamn/publikflagga hämtades. Inga användarrader, objektnamn, dokument, lösenord, tokenvärden eller Vault-hemligheter lästes. Ingen databasändring gjordes.
 

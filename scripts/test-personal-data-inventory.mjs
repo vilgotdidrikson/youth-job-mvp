@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {auditInventory,readInventory,readReviewedCatalog} from './check-personal-data-inventory.mjs';
+import {auditInventory,readInventory,readReviewedCatalog,mergeReviewedCatalogAdditions} from './check-personal-data-inventory.mjs';
 const catalog=readReviewedCatalog(),inventory=readInventory(),copy=structuredClone;
 assert.deepEqual(auditInventory(catalog,inventory,catalog),[]);
 let passed=1;
+const base={projectRef:'qa',relations:[{schema_name:'public',table_name:'existing'}],buckets:[{id:'existing'}]},addition={mode:'additions-only',projectRef:'qa',capturedOn:'2026-10-30',relations:[{schema_name:'private',table_name:'added'}],buckets:[{id:'added'}]};
+assert.equal(mergeReviewedCatalogAdditions(base,addition).relations.length,2);assert.equal(base.relations.length,1);passed++;
+for(const mode of ['relation','bucket','project','mode']){const next=copy(addition);if(mode==='relation')next.relations=[base.relations[0]];if(mode==='bucket')next.buckets=[base.buckets[0]];if(mode==='project')next.projectRef='other';if(mode==='mode')next.mode='replace';assert.throws(()=>mergeReviewedCatalogAdditions(base,next));passed++;}
 const rejects=(change,pattern)=>{const c=copy(catalog),i=copy(inventory);change(c,i);assert.match(auditInventory(c,i,catalog).join('\n'),pattern);passed++;};
 rejects(c=>c.relations.push({...copy(c.relations[0]),table_name:'new_private_ai_history'}),/Unclassified relation/);
 rejects(c=>c.relations[0].columns.push({name:'new_private_notes',type:'jsonb'}),/New\/changed column/);

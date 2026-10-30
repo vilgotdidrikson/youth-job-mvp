@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:structured-personal-data-export": "node scripts/test-structured-personal-data-export.mjs",
     "test:reviewed-personal-data-export": "node scripts/test-reviewed-personal-data-export.mjs",
+    "test:temporary-personal-data-export": "node scripts/test-temporary-personal-data-export.mjs",
     "test:export-preview-download": "node scripts/test-export-preview-download.mjs",
     "test:personal-data-session": "node scripts/test-personal-data-session.mjs",
     "test:personal-data-review": "node scripts/test-personal-data-review.mjs",
