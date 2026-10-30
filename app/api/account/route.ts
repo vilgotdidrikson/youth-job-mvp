@@ -97,6 +97,7 @@ export async function DELETE(request: NextRequest) {
     await removeUserStorage(admin, "youth-documents", user.id);
     await removeUserStorage(admin, "youth-profile-videos", user.id);
     await removeUserStorage(admin, "job-images", user.id);
+    await removeUserStorage(admin, "personal-data-exports", user.id);
   } catch (storageError) {
     reportServerFailure("account_delete_files_failed", storageError);
     return NextResponse.json({ error: "Kunde inte radera uppladdade filer. Kontot har inte raderats." }, { status: 502 });

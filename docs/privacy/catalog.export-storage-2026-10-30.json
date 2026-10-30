@@ -1,0 +1,70 @@
+{
+  "mode": "additions-only",
+  "capturedOn": "2026-10-30",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_id",
+          "type": "uuid"
+        },
+        {
+          "name": "object_path",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "size_bytes",
+          "type": "bigint"
+        },
+        {
+          "name": "content_sha256",
+          "type": "text"
+        },
+        {
+          "name": "lock_token",
+          "type": "uuid"
+        },
+        {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "retry_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "attempts",
+          "type": "integer"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "personal_data_exports",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": []
+    }
+  ],
+  "buckets": [
+    {
+      "id": "personal-data-exports",
+      "public": false
+    }
+  ]
+}

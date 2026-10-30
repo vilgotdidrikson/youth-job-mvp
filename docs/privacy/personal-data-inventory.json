@@ -164,11 +164,12 @@
         "public.application_analysis_jobs",
         "private.application_retention",
         "private.conversation_retention",
-        "private.video_cleanup_jobs"
+        "private.video_cleanup_jobs",
+        "private.personal_data_exports"
       ],
       "classification": "subject",
-      "subjectScope": "Eget user_id/youth_user_id; konversation/video kopplas via deltagarskap/ägare.",
-      "data": "Behandlingsstatus, försök, felkoder, tillämpliga lagringstider och gallringsstatus.",
+      "subjectScope": "Eget user_id/youth_user_id; konversation/video kopplas via deltagarskap/ägare. Exportpaket: explicit subject_id och servergenererad object_path; metadata överlever kontoradering tills fysisk städning bekräftats.",
+      "data": "Behandlingsstatus, försök, felkoder, tillämpliga lagringstider och gallringsstatus. Tillfälliga exportpakets status, giltighet, storlek och städningsförsök.",
       "review": "Ingen rå ködump: lock_token är arbetsbehörighet och ska inte lämnas ut. Inputhashar och intern driftmetadata behöver projektion/förklaring. Driftdata kan också vara personuppgifter och får inte slentrianmässigt utelämnas."
     },
     {
@@ -296,6 +297,12 @@
       "scope": "Egen videoägare och uttrycklig bedömning av mottagar-/rapportreferenser.",
       "data": "Chattvideo och eventuella kvarvarande legacy-filer.",
       "review": "L12:s åtkomst-/gallringsregler och fysisk filstatus måste skiljas åt. Ingen återskapning av gallrad video."
+    },
+    {
+      "id": "personal-data-exports",
+      "scope": "Serverägd jobbrad med subject_id och genererad subject_id/export_id.zip; ingen direkt klientåtkomst, inte enbart prefixbevis.",
+      "data": "Privata ZIP-kopior med en timmes giltighet. Inga nya originalkällor; källuppgifter inventeras separat.",
+      "review": "Inga signerade/publika länkar. Konto/session och giltig jobbrad kontrolleras vid hämtning. Beakta kvarvarande paketmetadata utan att rekursivt duplicera tidigare ZIP-arkiv. Lock_token och interna kontrollsummor lämnas inte ut generiskt. Fysisk städning sker via Storage API, med återförsök och avstämning av sena uppladdningar."
     }
   ],
   "outsideCatalog": [
