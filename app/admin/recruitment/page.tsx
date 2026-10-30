@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useAdminAccess } from "@/hooks/use-admin-access";
 import { getRecruitmentRecords, recruitmentAction } from "@/lib/recruitment";
-import { needsRecruitmentReview, type RecruitmentRecord } from "@/lib/recruitment-types";
+import { employmentStatusLabel, needsRecruitmentReview, type RecruitmentRecord } from "@/lib/recruitment-types";
 import styles from "@/components/recruitment.module.css";
 import { TabList } from "@/components/tab-list";
 import { tabPanelProps } from "@/lib/tab-keyboard";
@@ -24,7 +24,7 @@ function ReviewCard({ item, refresh }: { item: RecruitmentRecord; refresh: () =>
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte spara."); }
     finally { setBusy(false); }
   };
-  return <article className={styles.adminCard}><h2>{item.company_name} · {item.youth_name}</h2><p>{item.job_title} · {item.match_status === "hired" ? "Markerad som anställd" : "Rekrytering pågår"}</p>
+  return <article className={styles.adminCard}><h2>{item.company_name} · {item.youth_name}</h2><p>{item.job_title} · {item.match_status === "hired" ? employmentStatusLabel(item.employment?.response) : "Rekrytering pågår"}</p>
     <p>{item.employment ? `${item.employment.role_name} · Startdatum ${item.employment.start_date}\n${responseLabels[item.employment.response]}` : "Ingen anställning registrerad med befattning och startdatum."}</p>
     {item.requested_at && <p>Påminnelse begärd: {new Date(item.requested_at).toLocaleDateString("sv-SE")}</p>}
     {item.escalated_at && <p>Behöver uppföljning sedan {new Date(item.escalated_at).toLocaleDateString("sv-SE")}</p>}

@@ -127,7 +127,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Klar | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Klar | Max / Claude |
-| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
+| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | För granskning | Max / Claude |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
@@ -136,7 +136,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
-| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Ej påbörjad | — |
+| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | För granskning | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
@@ -774,14 +774,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 39
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N23 (väntar på L12-gallring), N20/N21/F12 (pausat profil-/AI-arbete inför GDPR-beslut) och F20 (integritet) hoppas över. Endast text, benämningar och förklaring i befintligt anställningsflöde; L04:s statuslogik, RPC, databas och F06:s pristext (`lib/current-offer.ts`) ändras inte. Samordning: L04/F06 ägs av Vilgot / Codex och är införda i dev.
 - Åtgärd: Använd samma benämning och ingång i stället för både Registrera anställning och Markera som anställd. Förklara befattning, startdatum, ungdomens granskning och nästa status, tillsammans med prisinformationen i F06.
 - Klar när: Användaren förstår vad registreringen innebär och vad som händer därefter.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat (kod och webbläsare): Samma steg hette ”Registrera anställning” i chatten men ”Markerad som anställd” hos admin, ”Anställd” i ungdomens ansökningar (redan när företaget registrerat, före ungdomens granskning) och ”Rätta uppgifter”/”Granska” i chattens kompakta rad men ”Rätta anställningsuppgifter”/”Granska uppgifterna” i panelen. Stäng rekrytering sa ”Registrera den anställda kandidaten i chatten” utan att nämna steget. Alla rekryteringsdialoger saknade bakgrund, padding och kant i webbläsaren eftersom den globala `.mnw-modal-dialog` skrev över modulens `.dialog`.
+- Implementerat: Gemensamma `REGISTER_EMPLOYMENT`, `EMPLOYMENT_STEPS` och `employmentStatusLabel()` i `lib/recruitment-types.ts` (återanvändbara för mobilapp). Företagets enda ingång heter ”Registrera anställning” i chattens kompakta rad, panel, dialog och Stäng rekrytering (som nu hänvisar till samma steg i chatten med kandidaten). Kompakta raden använder panelens åtgärdsnamn. Status för anställd match: ”Anställning registrerad” tills ungdomen godkänt, ”Anställning bekräftad” efter godkännande och ”Anställning behöver rättas” vid invändning (admin); ungdomens ansökningar och chattlistan visar ”Anställning registrerad”. Registreringsdialogen visar tre numrerade steg (befattning/startdatum, kandidatens granskning, bekräftad status), F06:s oförändrade pristext i rosa yta och kopplade hjälptexter för befattning och startdatum (framtida datum tillåts redan av RPC:n, upp till två år). Rättelse visar i stället att kandidaten granskar igen. Dialogernas bakgrund, padding, kant och bredd återställda med tokens. Gammal felsträng i oanvända `markMatchHired` uppdaterad. Ingen RPC, databas, statuslogik eller pristext ändrad.
+- Verifierat: TypeScript, produktionsbygge, riktad ESLint utan problem i ändrade källfiler (två befintliga fel om `module` i testskriptet finns även i dev), `check:design-tokens` (oförändrad baslinje), `test:recruitment` och utökat `test:recruitment-review` (gemensamt namn, tre steg, kopplade hjälptexter, rättelse utan steg, statusetiketter, inga gamla benämningar); de nya kontrollerna fallerar på gamla koden. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efter varje körning), 21/21: företagets chatt vid 375 och 1280 px (en ingång, dialognamn, tre steg, pristext, hjälptexter kopplade via aria-describedby, ingen horisontell scroll), registrering till ”Inväntar kandidatens granskning”, Stäng rekrytering med ”Anställd genom MatchnWork” hänvisar till ”Registrera anställning”, ungdomens ansökan visar ”Anställning registrerad” (inte ”Anställd”), ungdomens kompakta rad ”Granska uppgifterna” och godkännande till ”Anställning bekräftad”, adminkortet visar ”Anställning bekräftad”. Skärmbilder granskade.
+- Återstår / begränsning: `test:accessibility` fallerar redan i dev på en orelaterad företagsflik (`TabList id="company-applications"`); inte ändrat här. Ungdomens chatt vid 375 px och fysisk mobil inte provade; inte kontrollerat i driftsatt dev. Commit på `Max`, införande i dev återstår. Framtida betald modell (F06) oförändrad.
 
 <a id="f18"></a>
 ### F18 Förbättra sparande i profilredigeringen
@@ -884,14 +885,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 48
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N09 (ny serverlagring av CV-utkast inväntar GDPR/L13) och L07 (slutverifiering som väntar på ofärdiga delar) hoppas över; mellanliggande punkter har ägare. Endast knapparnas layout i profilöversikten (`components/profile-builder.tsx`, `components/recruitment-profile.module.css`); profilflödet ägs av F15/F16/F18 (Vilgot / Codex).
 - Åtgärd: På /profile/build?welcome=1 ska Bygg din profil ha text och pil på samma rad. Centrera texten i Skapa den senare vertikalt och ge knapparna konsekvent höjd, mellanrum och padding.
 - Klar när: Ingen pilrad eller stor tom yta under sekundärtexten.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-10-30 (Chromium, lokalt produktionsbygge mot DevStaging, fiktivt QA-konto): Knapparna heter nu ”Bygg senare” och ”Bygg profil” efter tidigare omarbetning av profilöversikten. Pil och text låg redan på samma rad och texten var vertikalt centrerad med lika höjd (50 px) och padding i 320–1280 px. Kvar var att knapparna vid 320 och 375 px låg högerställda på var sin rad med olika bredd (138/149 px): modulens mobilregel gjorde bara `button` fullbredd, medan översikten använder länkar.
+- Implementerat: Mobilregeln i `components/recruitment-profile.module.css` gäller nu både knappar och länkar i `.form footer` (≤720 px), så båda åtgärderna blir fullbredd och staplas som i profilredigeraren. Bara översikten har länkar i en sådan footer; inga andra vyer påverkas. Text, länkar och logik oförändrade.
+- Verifierat: `check:design-tokens` (oförändrad baslinje), produktionsbygge, `test:profile-journey` och `test:profile-steps`. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälligt fiktivt QA-konto (raderat efteråt) på `/profile/build?welcome=1`, 28/28 vid 320, 375, 768 och 1280 px: pil på textraden, etiketter på en rad, texten centrerad, lika höjd och padding, fullbredd på mobil, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder före/efter granskade.
+- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Ej provat på fysisk mobil eller i driftsatt dev. Commit på `Max`, införande i dev återstår.
 
 <a id="d05"></a>
 ### D05 Förklara produkten direkt på startsidan

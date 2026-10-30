@@ -50,7 +50,7 @@ const nodes = root => !root || typeof root !== 'object' ? [] : [root,...(Array.i
 const text = node => node==null||typeof node==='boolean' ? '' : typeof node!=='object'?String(node):Array.isArray(node)?node.map(text).join(''):text(node.props?.children);
 function harness({company=false,record=employment,write=async()=>{},reload=async()=>{}}={}) {
   const slots=[];let cursor=0,props;const calls=[],closed=[];
-  const react={useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],value=>slots[i]=value];},useRef(initial){const i=cursor++;return slots[i]??={current:initial};}};
+  const react={useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],value=>slots[i]=value];},useRef(initial){const i=cursor++;return slots[i]??={current:initial};},useId:()=>'hint'};
   const module=compile('components/recruitment-panel.tsx',{
     react,
     '@/components/modal-dialog':{ModalDialog:()=>null},
@@ -77,7 +77,16 @@ await ui.submit();assert.equal(ui.calls.length,1,'Refresh failure after a succes
 let resolveWrite;ui=harness({write:()=>new Promise(resolve=>{resolveWrite=resolve;})});
 const first=ui.submit();await ui.submit();assert.equal(ui.calls.length,1,'Double submit must be locked before rerender');resolveWrite();await first;
 ui=harness({company:true,record:null});assert.ok(text(ui.render()).includes(offer.CURRENT_COMPANY_OFFER.registration));
+const registerForm=nodes(ui.render());assert.ok(ui.button(types.REGISTER_EMPLOYMENT),'New registration uses the shared action name');
+assert.deepEqual(registerForm.filter(n=>n.type==='li').map(text),[...types.EMPLOYMENT_STEPS],'Registration explains review and next status');
+for(const input of registerForm.filter(n=>n.type==='input'))assert.ok(registerForm.some(n=>n.props?.id===input.props['aria-describedby']&&text(n)),'Role and start date have a described hint');
+ui=harness({company:true});assert.ok(ui.button('Skicka rättelse'));assert.equal(nodes(ui.render()).filter(n=>n.type==='li').length,0);
+assert.equal(types.employmentPresentation(null,true).action,types.REGISTER_EMPLOYMENT);
+assert.equal(types.employmentStatusLabel(),'Anställning registrerad');assert.equal(types.employmentStatusLabel('pending'),'Anställning registrerad');
+assert.equal(types.employmentStatusLabel('approved'),'Anställning bekräftad');assert.match(types.employmentStatusLabel('disputed'),/rättas/);
+for(const file of ['components/recruitment-panel.tsx','components/close-recruitment-dialog.tsx','app/admin/recruitment/page.tsx','app/applications/page.tsx','app/chats/page.tsx','lib/matching.ts'])assert.doesNotMatch(readFileSync(file,'utf8'),/Markera(d)? som anställd|hired:\s*"Anställd"/,`${file} uses the shared hire terms`);
+assert.match(readFileSync('components/close-recruitment-dialog.tsx','utf8'),/REGISTER_EMPLOYMENT/);
 ui=harness({record:{...employment,response:'approved'}});assert.ok(ui.button('Spara synlighet och CV'));assert.ok(ui.button('Begär rättelse av anställningen'));
 await ui.submit();assert.equal(ui.calls[0][2].show_on_profile,false);assert.equal(ui.calls[0][2].include_in_cv,false);
 assert.notEqual(ui.wrapper({matchId:'a'}).key,ui.wrapper({matchId:'b'}).key,'Changing conversations resets open dialogs and records');
-console.log('PASS: reviewed facts, stale form props, conflict recovery, no duplicate writes, successful-write/read-failure, independent consent, correction after approval, current pricing and exact-match chat links.');
+console.log('PASS: reviewed facts, stale form props, conflict recovery, no duplicate writes, successful-write/read-failure, independent consent, correction after approval, current pricing, exact-match chat links and one hire entry name with explained next steps.');

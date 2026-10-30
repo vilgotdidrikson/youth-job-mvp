@@ -30,13 +30,26 @@ export function employmentSnapshot(employment: EmploymentRecord | null) {
   } : null;
 }
 
+/** The company's one name for the hire step, in chat, panel and when closing a job. */
+export const REGISTER_EMPLOYMENT = "Registrera anställning";
+/** What registering means and what happens next, shown before the company registers. */
+export const EMPLOYMENT_STEPS = [
+  "Ni anger befattning och startdatum som ni har kommit överens om.",
+  "Kandidaten granskar uppgifterna och godkänner dem eller ber om en rättelse.",
+  "När kandidaten har godkänt står anställningen som bekräftad hos er båda.",
+] as const;
+/** Short status for a hired match: registered until the candidate approves the facts. */
+export function employmentStatusLabel(response?: EmploymentRecord["response"] | null): string {
+  return response === "approved" ? "Anställning bekräftad" : response === "disputed" ? "Anställning behöver rättas" : "Anställning registrerad";
+}
+
 export function employmentPresentation(employment: EmploymentRecord | null, company: boolean) {
   if (!employment) return {
     title: "Har rekryteringen lett till ett jobb?",
     description: company
       ? "Registrera befattning och startdatum när ni har kommit överens. Kandidaten granskar sedan uppgifterna innan anställningen blir bekräftad här."
       : "Be arbetsgivaren registrera befattning och startdatum. Du får sedan granska uppgifterna innan anställningen blir bekräftad här.",
-    action: company ? "Registrera anställning" : "Be arbetsgivaren registrera anställningen",
+    action: company ? REGISTER_EMPLOYMENT : "Be arbetsgivaren registrera anställningen",
   };
   if (employment.response === "approved") return {
     title: "Anställning bekräftad",

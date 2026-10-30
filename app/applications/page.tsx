@@ -18,6 +18,7 @@ import { tabPanelProps } from "@/lib/tab-keyboard";
 import { supplementQuestions } from "@/lib/application-supplement";
 import { NotificationLink } from "@/components/notification-link";
 import { RecruitmentSummary } from "@/components/recruitment-summary";
+import { employmentStatusLabel } from "@/lib/recruitment-types";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {getYouthActivity,type YouthActivity} from "@/lib/youth-activity";
@@ -26,7 +27,7 @@ import { useCvCompletion } from "@/hooks/use-cv-completion";
 import { WithdrawApplicationButton } from "@/components/withdraw-application-button";
 import { canWithdrawApplication, withdrawalCopy, type WithdrawalResult } from "@/lib/application-withdrawal";
 
-const recruitmentLabels: Record<string,string> = {matched:"Ni har matchat",in_contact:"Kontakt pågår",interview:"Intervju",hired:"Anställd",rejected:"Avslutad",cancelled:"Avslutad"};
+const recruitmentLabels: Record<string,string> = {matched:"Ni har matchat",in_contact:"Kontakt pågår",interview:"Intervju",hired:employmentStatusLabel(),rejected:"Avslutad",cancelled:"Avslutad"};
 import "./applications-design.css";
 
 function analysisNotice(results: FollowupAnalysisResult[]): string {
