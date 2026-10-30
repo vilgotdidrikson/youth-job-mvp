@@ -136,7 +136,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
-| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Pågår | Max / Claude |
+| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | För granskning | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
@@ -885,14 +885,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 48
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N09 (ny serverlagring av CV-utkast inväntar GDPR/L13) och L07 (slutverifiering som väntar på ofärdiga delar) hoppas över; mellanliggande punkter har ägare. Endast knapparnas layout i profilöversikten (`components/profile-builder.tsx`, `components/recruitment-profile.module.css`); profilflödet ägs av F15/F16/F18 (Vilgot / Codex).
 - Åtgärd: På /profile/build?welcome=1 ska Bygg din profil ha text och pil på samma rad. Centrera texten i Skapa den senare vertikalt och ge knapparna konsekvent höjd, mellanrum och padding.
 - Klar när: Ingen pilrad eller stor tom yta under sekundärtexten.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-10-30 (Chromium, lokalt produktionsbygge mot DevStaging, fiktivt QA-konto): Knapparna heter nu ”Bygg senare” och ”Bygg profil” efter tidigare omarbetning av profilöversikten. Pil och text låg redan på samma rad och texten var vertikalt centrerad med lika höjd (50 px) och padding i 320–1280 px. Kvar var att knapparna vid 320 och 375 px låg högerställda på var sin rad med olika bredd (138/149 px): modulens mobilregel gjorde bara `button` fullbredd, medan översikten använder länkar.
+- Implementerat: Mobilregeln i `components/recruitment-profile.module.css` gäller nu både knappar och länkar i `.form footer` (≤720 px), så båda åtgärderna blir fullbredd och staplas som i profilredigeraren. Bara översikten har länkar i en sådan footer; inga andra vyer påverkas. Text, länkar och logik oförändrade.
+- Verifierat: `check:design-tokens` (oförändrad baslinje), produktionsbygge, `test:profile-journey` och `test:profile-steps`. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälligt fiktivt QA-konto (raderat efteråt) på `/profile/build?welcome=1`, 28/28 vid 320, 375, 768 och 1280 px: pil på textraden, etiketter på en rad, texten centrerad, lika höjd och padding, fullbredd på mobil, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder före/efter granskade.
+- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Ej provat på fysisk mobil eller i driftsatt dev. Commit på `Max`, införande i dev återstår.
 
 <a id="d05"></a>
 ### D05 Förklara produkten direkt på startsidan
