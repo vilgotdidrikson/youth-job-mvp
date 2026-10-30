@@ -18,10 +18,11 @@ Module._load=function(name,parent,...args){if(name==='server-only')return{};if(p
 const modulePath=require.resolve('../lib/server/personal-data-review.ts');
 const {preparePersonalDataReview:prepare,PersonalDataReviewError}=require(modulePath);
 const reset=()=>{calls=[];role='youth';reauth=collect=cv=session=undefined;finalUser={id};};
-const run=signal=>prepare(client,verification,id,'qa-password',{reviewClient:privileged,sessionClient:privileged,accessToken:'qa-token',signal});
+const run=(signal,options={})=>prepare(client,verification,id,'qa-password',{reviewClient:privileged,sessionClient:privileged,accessToken:'qa-token',signal,...options});
 async function test(name,fn){reset();await fn();passed++;console.log('PASS '+name);}
 try{
  await test('authentication gates collection, CV and final check; material remains pending',async()=>{const r=await run();assert.deepEqual(calls,['session','reauth','collect','cv','final','session']);assert.equal(r.reviewState,'pending');assert.equal(r.consistency,'non_transactional');assert.equal(r.cvScope,'account_cv_references');});
+ await test('structured policy skips CV download without claiming role exclusion',async()=>{const r=await run(undefined,{includeCvFiles:false});assert.equal(r.cv,null);assert.equal(r.cvScope,'not_requested_for_policy');assert.ok(!calls.includes('cv'));});
  for(const r of ['company','private'])await test('no youth CV query for role '+r,async()=>{role=r;const result=await run();assert.equal(result.cv,null);assert.equal(result.cvScope,'not_requested_for_role');assert.deepEqual(calls,['session','reauth','collect','final','session']);});
  for(const stage of ['session','reauth','collect','cv'])await test('failed '+stage+' blocks later stages and sanitizes raw errors',async()=>{const fail=()=>{throw Error('QA_PRIVATE');};if(stage==='session')session=fail;if(stage==='reauth')reauth=fail;if(stage==='collect')collect=fail;if(stage==='cv')cv=fail;await assert.rejects(run(),e=>e instanceof PersonalDataReviewError&&!e.message.includes('QA_PRIVATE'));assert.equal(calls.at(-1),stage);});
  for(const mode of ['other subject','no profile','bad role'])await test('invalid collected identity/role stops CV: '+mode,async()=>{collect=()=>{const p=pending();if(mode==='other subject')p.subjectId=other;if(mode==='no profile')p.categories=[];if(mode==='bad role')p.categories[0].sources[0].rows[0].role='admin';return p;};await assert.rejects(run());assert.deepEqual(calls,['session','reauth','collect']);});

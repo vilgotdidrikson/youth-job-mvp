@@ -18,7 +18,7 @@ export class PersonalDataReviewError extends Error {
 export async function preparePersonalDataReview(
   userClient: SupabaseClient, verificationClient: SupabaseClient,
   subjectId: string, password: string,
-  options: { accessToken: string; sessionClient: SupabaseClient; signal?: AbortSignal; reviewClient?: SupabaseClient },
+  options: { accessToken: string; sessionClient: SupabaseClient; signal?: AbortSignal; reviewClient?: SupabaseClient; includeCvFiles?: boolean },
 ) {
   const stop = new AbortController();
   const active = options.signal ? AbortSignal.any([options.signal, stop.signal]) : stop.signal;
@@ -44,14 +44,14 @@ export async function preparePersonalDataReview(
     const profile = collection.categories.flatMap(category => category.sources).find(source => source.relation === "public.profiles");
     const role = profile?.status === "collected" && profile.rows.length === 1 && profile.rows[0].id === subjectId ? profile.rows[0].role : null;
     if (typeof role !== "string" || !["youth", "company", "private"].includes(role)) throw new PersonalDataReviewError("collection_failed");
-    const cv = role === "youth" ? await wait(() => collectAccountCvFiles(userClient, subjectId, active)) : null;
+    const cv = role === "youth" && options.includeCvFiles !== false ? await wait(() => collectAccountCvFiles(userClient, subjectId, active)) : null;
     const { data, error } = await wait(() => userClient.auth.getUser());
     if (error || !data.user || data.user.is_anonymous || data.user.id !== subjectId) throw new PersonalDataReviewError("identity_changed");
     const currentSession = await wait(() => verifyPersonalDataSession(userClient, options.sessionClient, subjectId, options.accessToken, active));
     if (currentSession !== sessionId) throw new PersonalDataReviewError("identity_changed");
     return {
       subjectId, sessionId, reviewState: "pending" as const, consistency: "non_transactional" as const,
-      collection, cv, cvScope: cv ? "account_cv_references" as const : "not_requested_for_role" as const,
+      collection, cv, cvScope: cv ? "account_cv_references" as const : role === "youth" ? "not_requested_for_policy" as const : "not_requested_for_role" as const,
     };
   } catch (error) {
     if (active.aborted) throw new PersonalDataReviewError("cancelled");
