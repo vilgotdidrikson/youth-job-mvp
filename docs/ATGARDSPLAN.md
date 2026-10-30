@@ -127,7 +127,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Klar | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Klar | Max / Claude |
-| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Ej påbörjad | — |
+| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Pågår | Max / Claude |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
@@ -774,9 +774,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 39
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N23 (väntar på L12-gallring), N20/N21/F12 (pausat profil-/AI-arbete inför GDPR-beslut) och F20 (integritet) hoppas över. Endast text, benämningar och förklaring i befintligt anställningsflöde; L04:s statuslogik, RPC, databas och F06:s pristext (`lib/current-offer.ts`) ändras inte. Samordning: L04/F06 ägs av Vilgot / Codex och är införda i dev.
 - Åtgärd: Använd samma benämning och ingång i stället för både Registrera anställning och Markera som anställd. Förklara befattning, startdatum, ungdomens granskning och nästa status, tillsammans med prisinformationen i F06.
 - Klar när: Användaren förstår vad registreringen innebär och vad som händer därefter.
 - Implementerat: —
