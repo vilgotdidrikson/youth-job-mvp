@@ -32,6 +32,10 @@ En timme är åtkomstfrist, inte en garanterad fysisk raderingstid. En återkomm
 - HTTP-provets 44, granskningspaketets 39, paketbyggarens 76 och serverfelens 42 kontroller passerar. Kontoraderingens verkliga handler/klient/dialog-prov passerar med simulerad Auth/Storage och fyra städade buckets.
 - TypeScript, riktad ESLint och diff-check passerar. Säkerhetsadvisories är oförändrade jämfört med före migrationen (observationstid undantagen).
 
-## Återstår före aktivering
+## Uppföljning 2026-11-01
+
+[L13_LIVE_EXPORT_CLEANUP.md](L13_LIVE_EXPORT_CLEANUP.md) verifierar verklig privat ZIP-uppladdning/läsning, nekat publikt/anonymt utlämnande och borttagning genom den riktiga Storage-arbetaren i DevStaging. En skyddad Edge-worker och cronkoppling är införda, men cron är fortsatt avstängd. Nedanstående ursprungliga återstående-punkter avser #165; kontobundet komplett flöde, samtidighetsprov och övervakad schemakörning återstår.
+
+## Ursprungligen återstående före aktivering
 
 Verifiera fysisk uppladdning/läsning/radering i verklig privat Storage, anslut och övervaka återkommande worker, koppla lagringen till autentiserat beställnings-/nedladdningsflöde och användarstatuser samt testa samtidighet över separata anslutningar. SQL-provens sekventiella reservations-/låskontroller är inte ett sådant samtidighetstest. Fullständigt exportinnehåll, verksamhetsinformation och övriga L13-kriterier återstår. Ingen AI, produktion eller verklig användarfil berörs. Global åtgärdsplan lämnas byteidentisk; leveranschecklista finns här och i PR.
