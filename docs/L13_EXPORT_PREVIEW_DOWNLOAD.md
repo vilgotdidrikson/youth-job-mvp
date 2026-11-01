@@ -5,7 +5,11 @@
 - Branch: `codex/l13-export-preview-download-20261030`
 - Offentlig reservation före kodarbete: `98d5f8b`, från aktuell dev efter PR #163. Öppna PR:er kontrollerade.
 
-## Leverans och avgränsning
+## Uppföljning 2026-11-01
+
+[L13_STORED_DOWNLOAD_FLOW.md](L13_STORED_DOWNLOAD_FLOW.md) kopplar senare detta prov till privat lagring/återhämtning, felstädning och en extra avstängd lagringsspärr. Nedanstående protokoll beskriver den ursprungliga transportleveransen; dess påstående om enbart arbetsminne gäller inte den nya lagrade varianten. Exporten är fortsatt avstängd.
+
+## Ursprunglig leverans och avgränsning
 
 `POST /api/account/export-preview` kopplar de befintliga riktiga serverdelarna till en binär HTTP-nedladdning: aktiv kontoägd session → begränsning av försök → ny lösenordsverifiering med isolerad sessionsstädning → insamling → automatisk skalärpolicy → nytt sessionsprov efter paketering → ZIP-svar. Ingen klientskickad datakälla, projektion, granskningsapproval eller exportmetadata accepteras.
 
