@@ -20,18 +20,23 @@ function Control({ userId }: { userId: string }) {
   return <><button type="button" className="secondary-btn" onClick={() => { setMessage(""); setOpen(true); }}>Hämta exportprov</button>
     {open && <ModalDialog labelledBy={title} onClose={close} className={styles.dialog}>
       <form onSubmit={async event => {
-        event.preventDefault(); if (pending.current) return;
+        event.preventDefault(); if (!mounted.current || pending.current) return;
         const controller = new AbortController(); pending.current = controller; setBusy(true); setMessage("");
         const entered = password; setPassword("");
-        const deadline = setTimeout(() => controller.abort(), 125000);
+        const deadline = setTimeout(() => controller.abort(new DOMException("Export timed out", "TimeoutError")), 125000);
         try {
           const file = await requestAccountExport(userId, entered, controller.signal);
           controller.signal.throwIfAborted(); release();
           link.current = URL.createObjectURL(file.blob);
-          const anchor = document.createElement("a"); anchor.href = link.current; anchor.download = file.filename; document.body.append(anchor); anchor.click(); anchor.remove();
+          const anchor = document.createElement("a"); anchor.href = link.current; anchor.download = file.filename; document.body.append(anchor);
+          try { anchor.click(); } finally { anchor.remove(); }
           timer.current = setTimeout(release, 30000);
           setMessage("Nedladdningen har startats. Paketet är ofullständigt.");
-        } catch (error) { if (!controller.signal.aborted) setMessage(error instanceof AccountExportError ? error.message : "Exportprovet kunde inte hämtas. Försök igen senare."); }
+        } catch (error) {
+          release();
+          if (mounted.current && controller.signal.reason?.name === "TimeoutError") setMessage("Tidsgränsen nåddes. Paketet kan ha skapats, men nedladdningen kunde inte bekräftas. Ingen ny beställning skickas automatiskt.");
+          else if (mounted.current && !controller.signal.aborted) setMessage(error instanceof AccountExportError ? error.message : "Exportprovet kunde inte hämtas. Försök igen senare.");
+        }
         finally { clearTimeout(deadline); if (pending.current === controller) { pending.current = null; if (mounted.current) setBusy(false); } }
       }}>
         <h2 id={title}>Hämta ett ofullständigt exportprov</h2>
