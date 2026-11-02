@@ -42,3 +42,7 @@ Upprepa: `npm run test:personal-data-export`. För browserdelen tillkommer `MNW_
 Faktisk datainsamling med rättighets-/tredjepartsbedömning, bevarad historik och tydlig källtäckning; ny autentisering och behörighetskontroll vid beställning/hämtning; privat temporärt paket, exakt beslutad frist, fysisk gallring och felåterhämtning; samtidiga ändringar/kontoradering, UI och negativa liveflöden. Kontakt-/ansvars-/leverantörsfrågorna i L13/L14 kvarstår. Automatisk export aktiveras inte av denna leverans och produktion ändras inte.
 
 Fortsättning: [intern källinsamling i PR #149](L13_EXPORT_COLLECTION.md) läser 15 egna källor till separat granskningsunderlag. Den matar inte paketbyggaren automatiskt och fullständig insamling/rättighetsbedömning och aktivering återstår.
+
+## Läsbara poster 2026-11-02
+
+[L13_READABLE_EXPORT_RECORDS.md](L13_READABLE_EXPORT_RECORDS.md) lägger till responsiv visning av varje redan inkluderad post direkt i offline-HTML, svenska etiketter för de 19 strukturerade källorna och explicita Stockholmstider. JSON-kontrakt, validering och innehålls-/granskningsgränser bevaras. Protokollet redovisar 113 nya format-/browserkontroller och 350 regressioner; tidigare begränsningar ovan är historiska för #147.
