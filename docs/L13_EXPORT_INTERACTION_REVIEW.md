@@ -26,3 +26,7 @@ Den tidigare komponenten kördes mot den nya sviten och misslyckades vid återan
 Den tillgängliga lokala Playwright-installationen saknade körbar Chromium. Ingen verklig DOM-, visuell-, fysisk mobil- eller Safari-nedladdning påstås. De kontrollerna samt hela autentiserade flödet, komplett innehåll, asynkron status/återhämtning och övervakad städkörning återstår före aktivering.
 
 Ingen flagga, serverroute, databas, Storage, cron eller produktion ändras. Exportprovet är fortsatt avstängt. Global åtgärdsplan lämnas byteidentisk; leveranschecklista finns här och i PR.
+
+## Senare lokal browseracceptans
+
+Chromium kunde därefter köras separat från produktberoendena. [Lokal browseracceptans](L13_LOCAL_BROWSER_ACCEPTANCE.md) redovisar 49 verkliga DOM-/nedladdningskontroller med fiktiv Auth/HTTP, inklusive mobilbredder. Begränsningen ovan beskriver läget vid #169; fysisk mobil/Safari och autentiserad backendacceptans återstår.
