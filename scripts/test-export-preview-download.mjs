@@ -6,6 +6,7 @@ import {createServer} from 'node:http';
 import {generateKeyPairSync,sign} from 'node:crypto';
 import ts from 'typescript';
 import {unzipSync,strFromU8} from 'fflate';
+import {historyRows} from './fixtures/structured-export-history.mjs';
 const require=createRequire(import.meta.url),oldLoad=Module._load,oldTs=Module._extensions['.ts'];
 Module._extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,f);
 Module._load=function(n,parent,...args){if(n==='server-only')return{};if(n.startsWith('@/'))return oldLoad.call(this,path.resolve(n.slice(2)),parent,...args);return oldLoad.call(this,n,parent,...args);};
@@ -22,7 +23,7 @@ Module._load=function(n,parent,...args){
   if(n==='@supabase/supabase-js')return{createClient:(url,key,options)=>{const client={auth:{},rpc(name,params){if(key==='qa-service'){state.calls.push('fail');assert.equal(name,'finish_personal_data_export');assert.equal(params.p_success,false);return{abortSignal:()=>Promise.resolve({data:true,error:null})};}state.calls.push('quota');assert.equal(key,'qa-public');assert.equal(options.global.headers.Authorization,'Bearer qa-token');assert.equal(name,'consume_api_quota');assert.deepEqual(params,{p_endpoint:'personal-data-export-preview',p_limit:3});return{abortSignal:()=>Promise.resolve({data:state.quota,error:state.quotaError})};}};state.clients.push({client,key,options});return client;}};
   if(n==='@/lib/server/temporary-personal-data-export')return{...realStorage,beginTemporaryPersonalDataExport:async(c,owner,id)=>{state.calls.push('reserve');if(state.storageMode==='busy')throw new realStorage.TemporaryExportError('busy');state.job={id,subjectId:owner,path:owner+'/'+id+'.zip',expiresAt:new Date(Date.now()+3600000).toISOString()};return state.job;},storeTemporaryPersonalDataExport:async(c,job,bytes)=>{state.calls.push('store');if(state.storageMode==='upload')throw new realStorage.TemporaryExportError('unavailable');state.stored=bytes.slice();},readTemporaryPersonalDataExport:async()=>{state.calls.push('read');if(state.storageMode==='expired')throw new realStorage.TemporaryExportError('unavailable');if(state.storageMode==='late_expiry')state.job.expiresAt='2000-01-01T00:00:00Z';return state.stored;}};
   if(n==='@/lib/server/personal-data-session')return{...realSession,verifyPersonalDataSession:async(user,service,id,token,signal)=>{state.calls.push('session');assert.equal(token,'qa-token');assert.equal(id,subject);assert.ok(signal instanceof AbortSignal);assert.notEqual(user,service);if(state.sessionError)throw state.sessionError;const final=state.calls.filter(x=>x==='session').length===2;if(final&&state.finalRevoked)throw new realSession.PersonalDataSessionError('invalid_session');return final&&state.changedFinal?other:sid;}};
-  if(n==='@/lib/server/personal-data-review')return{...realReview,preparePersonalDataReview:async(user,verification,id,password,options)=>{state.calls.push('prepare');assert.equal(id,subject);assert.equal(password,'qa-password');assert.notEqual(user,verification);assert.equal(options.includeCvFiles,false);assert.equal(options.reviewClient,undefined);assert.equal(options.accessToken,'qa-token');if(state.prepareError)throw state.prepareError;if(state.hanging)return new Promise(()=>{});return bundle();}};
+  if(n==='@/lib/server/personal-data-review')return{...realReview,preparePersonalDataReview:async(user,verification,id,password,options)=>{state.calls.push('prepare');assert.equal(id,subject);assert.equal(password,'qa-password');assert.notEqual(user,verification);assert.equal(options.includeCvFiles,false);assert.equal(options.reviewClient,options.sessionClient);assert.equal(options.accessToken,'qa-token');if(state.prepareError)throw state.prepareError;if(state.hanging)return new Promise(()=>{});return bundle();}};
  }
  if(n==='server-only')return{};if(n.startsWith('@/'))return oldLoad.call(this,path.resolve(n.slice(2)),parent,...args);return oldLoad.call(this,n,parent,...args);
 };
@@ -57,8 +58,9 @@ try{
  const sdk=require('@supabase/supabase-js'),keys=generateKeyPairSync('ec',{namedCurve:'P-256'}),jwk={...keys.publicKey.export({format:'jwk'}),kid:'qa-preview-key',alg:'ES256',use:'sig'};
  function token(sessionId){const encode=x=>Buffer.from(JSON.stringify(x)).toString('base64url'),data=encode({alg:'ES256',kid:jwk.kid,typ:'JWT'})+'.'+encode({sub:subject,session_id:sessionId,role:'authenticated',aud:'authenticated',iss:'https://vwcfjvwfeatvuisojwrh.supabase.co/auth/v1',iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600});return data+'.'+sign('sha256',Buffer.from(data),{key:keys.privateKey,dsaEncoding:'ieee-p1363'}).toString('base64url');}
  const originalToken=token(sid),temporaryToken=token(other);
- for(const mode of ['success','revoked after packaging','wrong password','foreign source','busy','upload error','corrupted stored file','expired stored file'])await test('full real-helper SDK integration: '+mode,async()=>{
+ for(const mode of ['success','success company','success private','private unavailable','foreign private history','revoked after packaging','wrong password','foreign source','busy','upload error','corrupted stored file','expired stored file'])await test('full real-helper SDK integration: '+mode,async()=>{
   const steps=[];let sessionChecks=0,job,archive,reads=0;
+  const accountRole=mode==='success company'?'company':mode==='success private'?'private':'youth',history=historyRows(accountRole);
   const user={id:subject,email:'qa@example.invalid',aud:'authenticated',created_at:new Date().toISOString()};
   const transport=async(input,init)=>{
    const url=new URL(String(input)),headers=new Headers(init?.headers),authorization=headers.get('authorization');
@@ -72,6 +74,14 @@ try{
    if(url.pathname==='/auth/v1/logout'){assert.equal(authorization,'Bearer '+temporaryToken);assert.equal(url.searchParams.get('scope'),'local');steps.push('cleanup');return new Response(null,{status:204});}
    if(url.pathname==='/rest/v1/rpc/is_personal_data_session_active'){assert.equal(authorization,'Bearer qa-service');assert.deepEqual(JSON.parse(init.body),{p_subject_id:subject,p_session_id:sid});steps.push('session');sessionChecks++;return Response.json(!(mode==='revoked after packaging'&&sessionChecks===4));}
    if(url.pathname==='/rest/v1/rpc/consume_api_quota'){assert.equal(authorization,'Bearer '+originalToken);steps.push('quota');return Response.json(true);}
+   if(url.pathname.endsWith('/read_personal_data_review_page')){
+    assert.equal(authorization,'Bearer qa-service');const p=JSON.parse(init.body);assert.equal(p.p_subject_id,subject);assert.equal(p.p_limit,100);assert.ok(steps.includes('cleanup'));assert.ok(['private.application_disclosures','public.candidate_assessments'].includes(p.p_source));steps.push('private:'+p.p_source);
+    if(mode==='private unavailable'||accountRole!=='youth')return Response.json({message:'QA_PRIVATE'},{status:403});
+    if(p.p_after_id!==null)return Response.json([]);
+    const rows=history[p.p_source].map(row=>Object.fromEntries(Object.entries(row).filter(([key])=>!['source_token','input_hash'].includes(key))));
+    if(mode==='foreign private history')rows[0].youth_user_id=other;
+    return Response.json(rows);
+   }
    if(url.pathname.endsWith('/begin_personal_data_export')){assert.equal(authorization,'Bearer qa-service');const p=JSON.parse(init.body);job={id:p.p_export_id,subjectId:p.p_subject_id,path:p.p_subject_id+'/'+p.p_export_id+'.zip',status:'building',expiresAt:new Date(Date.now()+3600000).toISOString()};steps.push('reserve');return Response.json(mode==='busy'?{status:'busy'}:job);}
    if(url.pathname.endsWith('/finish_personal_data_export')){assert.equal(authorization,'Bearer qa-service');const p=JSON.parse(init.body);steps.push(p.p_success?'ready':'failed');if(p.p_success)Object.assign(job,{status:'ready',sizeBytes:p.p_size_bytes,sha256:p.p_content_sha256});return Response.json(true);}
    if(url.pathname.endsWith('/read_personal_data_export')){assert.equal(authorization,'Bearer qa-service');reads++;return Response.json(mode==='expired stored file'&&reads===2?{status:'unavailable'}:job);}
@@ -79,9 +89,10 @@ try{
    if(url.pathname.startsWith('/rest/v1/')){
     assert.equal(authorization,'Bearer '+originalToken);assert.equal(headers.get('apikey'),'qa-public');assert.ok(steps.includes('cleanup'));const table=url.pathname.split('/').at(-1);steps.push('data:'+table);
     const columns=url.searchParams.get('select').split(',');let rows=[];
-    if(table==='profiles')rows=[{id:subject,role:'youth'}];
-    if(table==='youth_profiles')rows=[Object.fromEntries(columns.map(key=>[key,key==='user_id'?subject:key==='documents'?[]:key==='cv_text'?'QA_PRIVATE':null]))];
-    if(table==='youth_saved_jobs'&&!url.searchParams.get('id')?.startsWith('gt.'))rows=[{id:other,youth_user_id:mode==='foreign source'?other:subject,job_id:other,created_at:new Date().toISOString()}];
+    if(table==='profiles')rows=[{id:subject,role:accountRole}];
+    if(table==='youth_profiles'&&accountRole==='youth')rows=[Object.fromEntries(columns.map(key=>[key,key==='user_id'?subject:key==='documents'?[]:key==='cv_text'?'QA_PRIVATE':null]))];
+    if(table==='youth_saved_jobs'&&accountRole==='youth'&&!url.searchParams.get('id')?.startsWith('gt.'))rows=[{id:other,youth_user_id:mode==='foreign source'?other:subject,job_id:other,created_at:new Date().toISOString()}];
+    const sample=history['public.'+table];if(sample&&!['id','job_id'].some(key=>url.searchParams.get(key)?.startsWith('gt.')))rows=sample.map(row=>Object.fromEntries(columns.map(key=>[key,row[key]??null])));
     return Response.json(rows);
    }
    throw Error('Unexpected integration URL '+url.pathname);
@@ -89,8 +100,8 @@ try{
   Module._load=function(n,parent,...args){if(parent?.filename.endsWith('/export-preview/route.ts')&&n==='@supabase/supabase-js')return{...sdk,createClient:(url,key,options)=>sdk.createClient(url,key,{...options,global:{...options.global,fetch:transport}})};if(n==='server-only')return{};if(n.startsWith('@/'))return oldLoad.call(this,path.resolve(n.slice(2)),parent,...args);return oldLoad.call(this,n,parent,...args);};
   delete require.cache[routePath];const realPost=require(routePath).POST;
   const response=await realPost(request(undefined,{Authorization:'Bearer '+originalToken}));secure(response);
-  if(mode==='success'){
-   assert.equal(response.status,200);const entries=unzipSync(new Uint8Array(await response.arrayBuffer()));assert.equal(JSON.parse(strFromU8(entries['uppgifter/own-discovery.json'])).records[0].job_id,other);assert.equal(JSON.parse(strFromU8(entries['oversikt.json'])).coverage,'needs_completion');for(const bytes of Object.values(entries))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));assert.equal(sessionChecks,4);assert.ok(steps.indexOf('cleanup')<steps.findIndex(x=>x.startsWith('data:')));assert.equal(steps.at(-1),'session');assert.ok(steps.indexOf('ready')<steps.indexOf('download'));assert.ok(response.headers.has('x-matchnwork-export-expires'));
+  if(mode.startsWith('success')||mode==='private unavailable'){
+   assert.equal(response.status,200);const entries=unzipSync(new Uint8Array(await response.arrayBuffer()));if(accountRole==='youth')assert.equal(JSON.parse(strFromU8(entries['uppgifter/own-discovery.json'])).records[0].job_id,other);if(mode==='success'){assert.equal(JSON.parse(strFromU8(entries['uppgifter/applications.json'])).records.find(r=>r.source==='private.application_disclosures').revision,5);assert.equal(JSON.parse(strFromU8(entries['uppgifter/assessments.json'])).records[0].job_profile_version,3);}if(mode==='private unavailable')assert.equal(entries['uppgifter/assessments.json'],undefined);if(accountRole==='company')assert.equal(JSON.parse(strFromU8(entries['uppgifter/billing.json'])).records[0].version,2);if(accountRole!=='youth')assert.equal(JSON.parse(strFromU8(entries['uppgifter/company-job-context.json'])).records.find(r=>r.source==='public.jobs').status,'closed');assert.equal(JSON.parse(strFromU8(entries['oversikt.json'])).coverage,'needs_completion');for(const bytes of Object.values(entries))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));assert.equal(sessionChecks,4);assert.ok(steps.indexOf('cleanup')<steps.findIndex(x=>x.startsWith('data:')));assert.equal(steps.at(-1),'session');assert.ok(steps.indexOf('ready')<steps.indexOf('download'));assert.ok(response.headers.has('x-matchnwork-export-expires'));
   }else{
    assert.equal(response.status,mode==='revoked after packaging'?401:mode==='wrong password'?403:['busy'].includes(mode)?409:['upload error','corrupted stored file','expired stored file'].includes(mode)?503:502);assert.equal(response.headers.get('content-disposition'),null);assert.ok(!(await response.text()).includes('QA_PRIVATE'));if(mode==='wrong password')assert.ok(!steps.some(x=>x.startsWith('data:')));
   }

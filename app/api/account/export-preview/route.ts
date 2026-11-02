@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     const { data: allowed, error } = await wait(() => userClient.rpc("consume_api_quota", { p_endpoint: "personal-data-export-preview", p_limit: 3 }).abortSignal(active), active);
     if (error || typeof allowed !== "boolean") throw new PreviewError(503);
     if (!allowed) return errorResponse(429, "För många exportförsök. Försök igen senare.");
-    const bundle = await wait(() => preparePersonalDataReview(userClient, verificationClient, expectedUserId, password, { accessToken, sessionClient, signal: active, includeCvFiles: false }), active);
+    const bundle = await wait(() => preparePersonalDataReview(userClient, verificationClient, expectedUserId, password, { accessToken, sessionClient, signal: active, reviewClient: sessionClient, includeCvFiles: false }), active);
     if (bundle.sessionId !== sessionId) throw new PreviewError(409);
     const exportId = randomUUID();
     const job = await wait(() => beginTemporaryPersonalDataExport(sessionClient, expectedUserId, exportId, active), active);

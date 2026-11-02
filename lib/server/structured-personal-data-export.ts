@@ -10,8 +10,12 @@ const uuid = (value: unknown): value is string => typeof value === "string" && /
 const timestamp: Validator = (v): v is string | null => v === null || typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 const boolean: Validator = (v): v is boolean | null => v === null || typeof v === "boolean";
 const version: Validator = (v): v is number | null => v === null || typeof v === "number" && Number.isSafeInteger(v) && v >= 0 && v <= 2147483647;
+const positiveVersion: Validator = (v): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0 && v <= 2147483647;
+const requiredTimestamp: Validator = (v): v is string => typeof v === "string" && timestamp(v);
+const requiredBoolean: Validator = (v): v is boolean => typeof v === "boolean";
+const oneOf = (...values: readonly string[]): Validator => (v): v is string => typeof v === "string" && values.includes(v);
 const role: Validator = (v): v is string => v === "youth" || v === "company" || v === "private";
-interface Policy { category: string; owner: string; key: string; youthOnly?: boolean; fields: Record<string, Validator> }
+interface Policy { category: string; owner: string; key: string; youthOnly?: boolean; roles?: readonly string[]; fields: Record<string, Validator> }
 // A closed list of scalar fields. Never spread a source row or stringify nested
 // data: extra columns, text, URLs, snapshots and third-party profiles stay out.
 const POLICIES: Record<string, Policy> = {
@@ -23,6 +27,23 @@ const POLICIES: Record<string, Policy> = {
   "public.youth_job_dismissals": { category: "own-discovery", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, dismissed_at: timestamp } },
   "public.swipe_actions": { category: "own-discovery", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, decision: (v): v is string => v === "interested" || v === "skip", created_at: timestamp } },
   "public.application_workplace_preferences": { category: "own-discovery", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, workplace_id: uuid, updated_at: timestamp } },
+  // Account lifecycle: preserve status/version metadata, not contact people,
+  // verification reasons, names, addresses or payment/reference free text.
+  "public.company_profiles": { category: "account", owner: "user_id", key: "user_id", roles: ["company"], fields: { user_id: uuid, verification_status: oneOf("pending", "verified", "rejected"), verification_submitted_at: timestamp, verified_at: timestamp, updated_at: requiredTimestamp } },
+  "public.private_profiles": { category: "account", owner: "user_id", key: "user_id", roles: ["private"], fields: { user_id: uuid, updated_at: requiredTimestamp } },
+  "public.company_billing_details": { category: "billing", owner: "user_id", key: "user_id", roles: ["company"], fields: { user_id: uuid, country_code: oneOf("SE"), version: positiveVersion, updated_at: requiredTimestamp } },
+  // Youth-owned lifecycle and history only. Answers, matching_input, result,
+  // criteria snapshots and the employer's identity still require review.
+  "public.application_completions": { category: "applications", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, profile_version: positiveVersion, status: oneOf("needs_completion", "submitted", "unavailable", "withdrawn"), created_at: requiredTimestamp, submitted_at: timestamp, supplemented_at: timestamp, question_batch_version: version, withdrawn_at: timestamp } },
+  "public.application_followups": { category: "applications", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, job_profile_version: positiveVersion, status: oneOf("pending", "answered", "skipped"), question_source: oneOf("automatic", "company"), created_at: requiredTimestamp, answered_at: timestamp } },
+  "private.application_disclosures": { category: "applications", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, revision: positiveVersion, created_at: requiredTimestamp, updated_at: requiredTimestamp } },
+  "public.candidate_assessments": { category: "assessments", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, job_profile_version: positiveVersion, created_at: requiredTimestamp } },
+  // Existing recruitment helpers treat company AND private as job owners.
+  // Ownership never authorizes exporting candidates or other users' profiles.
+  "public.jobs": { category: "company-job-context", owner: "company_user_id", key: "id", roles: ["company", "private"], fields: { id: uuid, company_user_id: uuid, status: oneOf("active", "paused", "closed"), publication_status: oneOf("pending_verification", "published"), job_kind: oneOf("employment", "private_task"), is_active: requiredBoolean, job_category_manual: requiredBoolean, created_at: requiredTimestamp, first_published_at: timestamp } },
+  "public.company_match_profiles": { category: "company-job-context", owner: "company_user_id", key: "company_user_id", roles: ["company", "private"], fields: { company_user_id: uuid, profile_version: positiveVersion, created_at: requiredTimestamp, updated_at: requiredTimestamp } },
+  "public.company_recruitment_controls": { category: "safety", owner: "company_user_id", key: "company_user_id", roles: ["company", "private"], fields: { company_user_id: uuid, restriction: oneOf("none", "limited", "suspended"), changed_at: requiredTimestamp } },
+  "public.recruitment_outcomes": { category: "employment", owner: "company_user_id", key: "job_id", roles: ["company", "private"], fields: { company_user_id: uuid, job_id: uuid, outcome: oneOf("hired", "no_hire", "continuing"), recorded_at: requiredTimestamp } },
 };
 
 export class StructuredExportError extends Error {
@@ -32,7 +53,7 @@ function fail(): never { throw new StructuredExportError(); }
 
 /** Internal automatic policy, not a complete access-request response. Supply
  * only server-owned output from preparePersonalDataReview, never request JSON.
- * The future delivery endpoint must recheck the active identity before release.
+ * Delivery must recheck the active identity before releasing any bytes.
  * No legal approval is fabricated, and no original file is automatically shared.
  */
 export function buildStructuredPersonalDataExport(bundle: Bundle, metadata: Omit<ExportPackageInput, "subjectId" | "categories">) {
@@ -62,7 +83,7 @@ export function buildStructuredPersonalDataExport(bundle: Bundle, metadata: Omit
         if (!policy) continue;
         if (policy.category !== category.id) fail();
         if (source.status !== "collected") continue;
-        if (policy.youthOnly && accountRole !== "youth") {
+        if ((policy.youthOnly && accountRole !== "youth") || (policy.roles && !policy.roles.includes(accountRole as string))) {
           if (source.rows.length) fail();
           continue;
         }
