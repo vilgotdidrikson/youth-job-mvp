@@ -17,7 +17,7 @@
 - Ny submit under pågående begäran dubblerar inte beställningen. Stängning, kontobyte och avmontering avbryter väntande hämtning utan fil-URL. Kontobyte efter lyckad hämtning frigör Blob-URL.
 - Inga browserundantag. Skärmbilden vid 375 px granskades visuellt: läsbara texter, fält, fokusmarkering och båda knapparna ryms.
 
-Därtill passerade 13 komponentprov, 18 klientprov, riktad ESLint och diff-check. Totalt 80 kontroller i denna leverans; de tidigare 53 serverproven ändras inte och räknas inte som omkörda här. Ingen produktkod behövde ändras.
+Därtill passerade 13 komponentprov, 18 klientprov, riktad ESLint och diff-check. Totalt 80 kontroller i denna leverans; de tidigare 53 serverproven ändras inte och räknas inte som omkörda här. Ingen produktkod behövde ändras. Testverktygets städning rättades också: fixturen tas bort före asynkron browserstängning och frånvaron kontrolleras uttryckligen.
 
 ## Köra igen
 

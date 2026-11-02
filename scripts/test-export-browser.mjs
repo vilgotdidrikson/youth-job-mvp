@@ -1,6 +1,6 @@
 // Isolated real-browser acceptance. No backend, credentials or product flags.
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {resolve,join} from 'node:path';
@@ -63,5 +63,8 @@ try{
  mode='hold';await fresh();await opener.click();await page.getByLabel('Lösenord').fill('qa-password');await Promise.all([page.waitForRequest(r=>r.url()===base+'/api/account/export-preview'),page.getByRole('button',{name:'Skapa och hämta'}).click()]);await page.evaluate(()=>window.qaUnmount());if(held)await held.abort().catch(()=>{});check(await page.evaluate(()=>window.qaUrls.created===0),'unmount cannot start late download');
  check(errors.length===0,'no browser exceptions');await context.close();console.log(`PASS ${passed} real Chromium DOM/download checks; local fixture, mocked Auth/HTTP, no backend or physical mobile.`);
 }finally{
- await browser?.close();if(server)await new Promise(r=>server.close(r));if(compiler)await new Promise(r=>compiler.close(r));rmSync(tmp,{recursive:true,force:true});
+ // Remove files synchronously first: Node can exit with an unresolved close callback.
+ rmSync(tmp,{recursive:true,force:true});
+ assert.equal(existsSync(tmp),false);console.log('CLEANUP fixture removed');
+ await browser?.close();if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}if(compiler)await new Promise(r=>compiler.close(r));
 }
