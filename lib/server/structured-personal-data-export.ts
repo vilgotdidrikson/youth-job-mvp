@@ -44,6 +44,9 @@ const POLICIES: Record<string, Policy> = {
   "public.company_match_profiles": { category: "company-job-context", owner: "company_user_id", key: "company_user_id", roles: ["company", "private"], fields: { company_user_id: uuid, profile_version: positiveVersion, created_at: requiredTimestamp, updated_at: requiredTimestamp } },
   "public.company_recruitment_controls": { category: "safety", owner: "company_user_id", key: "company_user_id", roles: ["company", "private"], fields: { company_user_id: uuid, restriction: oneOf("none", "limited", "suspended"), changed_at: requiredTimestamp } },
   "public.recruitment_outcomes": { category: "employment", owner: "company_user_id", key: "job_id", roles: ["company", "private"], fields: { company_user_id: uuid, job_id: uuid, outcome: oneOf("hired", "no_hire", "continuing"), recorded_at: requiredTimestamp } },
+  "public.ai_onboarding_sessions": { category: "private-cv-work", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, status: oneOf("in_progress", "completed"), created_at: requiredTimestamp, completed_at: timestamp } },
+  "public.youth_videos": { category: "videos", owner: "owner_id", key: "id", fields: { id: uuid, owner_id: uuid, created_at: requiredTimestamp, first_sent_at: timestamp, expires_at: requiredTimestamp, revoked_at: timestamp, cleanup_started_at: timestamp, deleted_at: timestamp } },
+  "public.notifications": { category: "notifications", owner: "user_id", key: "id", fields: { id: uuid, user_id: uuid, created_at: requiredTimestamp, read_at: timestamp } },
 };
 
 export class StructuredExportError extends Error {
