@@ -9,12 +9,12 @@
 
 ## Implemented
 
-- Root landing page uses the existing MatchnWork logo and pink palette, self-hosted fonts, mobile layout, and local interactive demos for both audiences.
+- Root landing page uses a signup-first card, the existing MatchnWork logo and pink palette, self-hosted fonts and product information below. `/demo` contains local interactive demos for both audiences.
 - `/api/prelaunch` validates names, email, company and explicit consent, then writes using the server-only `register_prelaunch_signup` RPC.
 - Two new isolated tables: `prelaunch_signups`, `prelaunch_rate_limits`. Both have RLS enabled and no grants for anon/authenticated; the RPC is service-role only and uses invoker security.
 - Both roles may subscribe with the same email. Repeat submissions do not overwrite names or reactivate unsubscribed records, and give the same public success response.
 - No signup creates an application account. Demo actions never send applications, messages or AI requests.
-- `/launch-admin`: log in using an existing production account listed in `admin_users`, then open this URL. View the first 100 active contacts; export all active contacts as CSV, optionally by audience. Authorization is checked server-side using verified Supabase identity and the existing admin allowlist.
+- `/launch-admin`: open this URL and use its embedded login with an existing production account listed in `admin_users`. View the first 100 active contacts; export all active contacts as CSV, optionally by audience. Authorization is checked server-side using verified Supabase identity and the existing admin allowlist.
 - `/launch-privacy`: purpose, consent, contact and retention information for this waitlist.
 - `/avregistrera?token=...`: confirmation page; only an explicit POST unsubscribes. Each CSV row includes its own unsubscribe link. Never put this link/token in a public list.
 
@@ -44,10 +44,20 @@ Hash-based rate-limit rows expire after 30 minutes and are pruned on the next va
 - Transactional database assertions for both roles, duplicate non-overwrite, quota and unsubscribe. All fixtures rolled back.
 - Verified RLS and absence of anon/authenticated read/write grants for both new tables.
 
-## Verification limits and delivery state
+## Signup-first layout and prelaunch boundary
 
-Managed browser preview is currently unavailable for this existing Next.js repo: the preview daemon appends Vite flags (`--host`, `--strictPort`) that `next dev` does not accept. Browser layout and click-through QA remain unverified; no application runtime workaround was introduced.
+The first viewport is a centered signup card. Product information is below it and the demo is a separate `/demo` route. Demo code is not imported by the signup page.
 
-The first branch push was rejected by automatic approval review because explicit authorization to upload source to GitHub was required. Source commits are local until the user approves pushing to `vilgotdidrikson/youth-job-mvp`. No new deployment exists. The production database migration and public Vercel environment configuration have been applied as authorized. No launch emails were sent.
+`proxy.ts` allows only `/`, `/demo`, `/launch-privacy`, `/avregistrera`, `/launch-admin`, the three exact waitlist API paths and required static assets. Other page paths (including `/profile`, `/signup`, `/login`, `/company` and `/auth`) temporarily redirect to `/`. Other application APIs return JSON 404 without invoking their handlers. This also applies to logged-in visitors; the normal app is closed during prelaunch. The proxy does not grant admin access: the export API continues to validate user identity and `admin_users` server-side.
 
-Supabase advisor notes `RLS Enabled No Policy` for the two new server-only tables; this is intentional because public/client roles have no grants and there is no client-access policy. Advisor also reports existing warnings in unrelated production functions. These were not changed by the prelaunch migration.
+Admin login is now embedded at `/launch-admin`; no ordinary app login/registration page needs to be exposed. The admin can sign in/out there, then load or export contacts. Do not re-open `/login` as a workaround.
+
+The boundary is intended for the production prelaunch branch. Do not copy it to the dev site. Remove or update it deliberately when launching the full application. Existing Supabase authorization remains independent of this website routing boundary.
+
+Tests: `node --experimental-strip-types scripts/test-prelaunch.mjs` and `node --experimental-strip-types scripts/test-prelaunch-boundary.mjs`. These cover the actual Next.js matcher/proxy, direct legacy routes, RSC/prefetch headers, old APIs and the allowlist.
+
+## Delivery history
+
+The initial landing page was published on production `master` as commit `22b22b6` on 2026-11-02. Browser tests verified youth and company signups reaching Primary, demo application/chat, and unsubscribe. Disposable test contacts were deleted. No launch emails were sent. Later layout/boundary changes follow the user's request to separate demo and close ordinary app routes.
+
+Supabase advisor notes `RLS Enabled No Policy` for the two server-only tables; this is intentional because public/client roles have no grants and there is no client-access policy. Existing warnings in unrelated production functions were not changed by the prelaunch migration.

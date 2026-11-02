@@ -115,6 +115,7 @@ export function MobileNav() {
     pathname === "/signup" ||
     pathname === "/" ||
     pathname === "/launch-admin" ||
+    pathname === "/demo" ||
     pathname === "/launch-privacy" ||
     pathname === "/avregistrera" ||
     pathname === "/pricing" ||

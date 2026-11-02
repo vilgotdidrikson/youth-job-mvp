@@ -15,3 +15,8 @@ assert.equal(csvCell('=HYPERLINK("https://evil.example")'), '"\'=HYPERLINK(""htt
 assert.equal(csvCell(' +12'), '"\' +12"');
 assert.equal(csvCell('Café; "M"'), '"Café; ""M"""');
 console.log('Prelaunch validation and CSV injection checks passed.');
+const { prelaunchRoute } = await import('../lib/prelaunch-routes.ts');
+for (const path of ['/', '/demo', '/demo/', '/launch-privacy', '/avregistrera', '/launch-admin', '/api/prelaunch', '/api/prelaunch/admin', '/api/prelaunch/unsubscribe', '/fonts/inter-latin.woff2', '/_next/static/chunk.js']) assert.equal(prelaunchRoute(path), 'allow', path);
+for (const path of ['/profile', '/profile/', '/company', '/signup', '/login', '/auth', '/swipe', '/kartan', '/jobb/123', '/private', '/demo/profile', '/profile.json', '/_next/data/build/profile.json']) assert.equal(prelaunchRoute(path), 'redirect', path);
+for (const path of ['/api', '/api/account', '/api/voice/turn', '/api/company/candidate-cv', '/api/prelaunch/anything']) assert.equal(prelaunchRoute(path), 'deny-api', path);
+console.log('Prelaunch boundary blocks app pages and old APIs while preserving signup/demo/admin.');
