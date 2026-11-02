@@ -30,3 +30,7 @@ Denna körning använde runtime-Playwright och tillfällig `@sparticuz/chromium@
 Detta är lokal DOM-/nedladdningsacceptans med kontrollerad Auth/HTTP, inte autentiserad DevStaging-verifiering. CSS bygger på befintliga globala/dialogstilar, utan hela profilsidan eller produktionsbyggd Tailwind. Ingen fysisk mobil, Safari eller faktisk backendleverans testades. Komplett exportinnehåll, återhämtning/asynkron status och övervakad städning återstår också.
 
 Exportprovet är fortsatt avstängt. Ingen flagga, databas, Storage, cron eller produktion ändras. Global åtgärdsplan lämnas byteidentisk; leveranschecklista finns här och i PR.
+
+## Fortsättning – återhämtning och status
+
+[L13_EXPORT_RECOVERY_STATUS.md](L13_EXPORT_RECOVERY_STATUS.md) utökar samma browserprotokoll till 63 kontroller, inklusive befintligt paket och fyra statusbesked utan ny beställning. Den tidigare körningens resultat och avgränsning ovan bevaras.

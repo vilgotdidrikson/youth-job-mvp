@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { AccountExportError, requestAccountExport } from "@/lib/account-export";
+import { AccountExportError, requestAccountExport, recoverAccountExport } from "@/lib/account-export";
 import { ModalDialog } from "./modal-dialog";
 import styles from "./delete-account-control.module.css";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -25,13 +25,20 @@ function Control({ userId }: { userId: string }) {
         const entered = password; setPassword("");
         const deadline = setTimeout(() => controller.abort(new DOMException("Export timed out", "TimeoutError")), 125000);
         try {
-          const file = await requestAccountExport(userId, entered, controller.signal);
+          const recovering = (event.nativeEvent as SubmitEvent | undefined)?.submitter?.getAttribute("value") === "recover";
+          const file = await (recovering ? recoverAccountExport : requestAccountExport)(userId, entered, controller.signal);
+          controller.signal.throwIfAborted();
+          if ("status" in file) {
+            const messages = { none: "Inget sparat exportpaket hittades. Du kan skapa ett nytt prov.", expired: "Exportpaketet har gått ut och kan inte hämtas. Du kan skapa ett nytt prov.", failed: "Det tidigare exportpaketet kunde inte färdigställas. Du kan skapa ett nytt prov.", building: "Paketet skapas fortfarande. Kontrollera igen senare; ingen ny beställning har skickats." };
+            setMessage(messages[file.status] + (file.status === "building" ? ` Giltigt till ${new Date(file.expiresAt).toLocaleString("sv-SE")}.` : ""));
+            return;
+          }
           controller.signal.throwIfAborted(); release();
           link.current = URL.createObjectURL(file.blob);
           const anchor = document.createElement("a"); anchor.href = link.current; anchor.download = file.filename; document.body.append(anchor);
           try { anchor.click(); } finally { anchor.remove(); }
           timer.current = setTimeout(release, 30000);
-          setMessage("Nedladdningen har startats. Paketet är ofullständigt.");
+          setMessage(`Nedladdningen har startats. Paketet är klart men ofullständigt. Giltigt till ${new Date(file.expiresAt).toLocaleString("sv-SE")}.`);
         } catch (error) {
           release();
           if (mounted.current && controller.signal.reason?.name === "TimeoutError") setMessage("Tidsgränsen nåddes. Paketet kan ha skapats, men nedladdningen kunde inte bekräftas. Ingen ny beställning skickas automatiskt.");
@@ -42,8 +49,9 @@ function Control({ userId }: { userId: string }) {
         <h2 id={title}>Hämta ett ofullständigt exportprov</h2>
         <p>Detta dev-prov innehåller bara utvalda strukturerade uppgifter. Det är inte ett fullständigt registerutdrag.</p>
         <fieldset className={styles.fields} disabled={busy}><label>Lösenord<input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required maxLength={1024} disabled={busy}/></label></fieldset>
-        <p role="status" aria-live="polite">{busy ? "Skapar och kontrollerar paketet…" : message}</p>
+        <p role="status" aria-live="polite">{busy ? "Kontrollerar paketet…" : message}</p>
         <div className={styles.actions}><button className="cta-btn" disabled={busy} type="submit">{busy ? "Arbetar…" : "Skapa och hämta"}</button>
+        <button className="secondary-btn" type="submit" value="recover" disabled={busy}>Hämta befintligt paket</button>
         <button className="secondary-btn" type="button" onClick={close}>Stäng</button></div>
       </form>
     </ModalDialog>}</>;

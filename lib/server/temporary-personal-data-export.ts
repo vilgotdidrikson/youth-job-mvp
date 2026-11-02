@@ -87,3 +87,23 @@ export async function readTemporaryPersonalDataExport(client: SupabaseClient, su
     return bytes;
   } catch { return fail("unavailable"); }
 }
+
+
+export type TemporaryExportStatus = { status: "none" | "expired" | "failed" } | { status: "building" | "ready"; id: string; subjectId: string; expiresAt: string };
+/** Service-only metadata lookup. Caller must freshly verify identity/password and
+ * the original active session before calling, and again before releasing bytes.
+ * This never creates, retries, extends or marks an existing package failed.
+ */
+export async function latestTemporaryPersonalDataExport(client: SupabaseClient, subjectId: string, signal?: AbortSignal): Promise<TemporaryExportStatus> {
+  if (!uuid(subjectId)) fail("unavailable");
+  check(signal);
+  try {
+    const query = client.rpc("latest_personal_data_export", { p_subject_id: subjectId });
+    const { data, error } = await (signal ? query.abortSignal(signal) : query);
+    check(signal);
+    if (error || !data || typeof data !== "object" || Array.isArray(data)) fail("unavailable");
+    if (["none", "expired", "failed"].includes(data.status) && Object.keys(data).length === 1) return { status: data.status };
+    if (!["building", "ready"].includes(data.status) || Object.keys(data).sort().join() !== "expiresAt,id,status,subjectId" || data.subjectId !== subjectId || !uuid(data.id) || typeof data.expiresAt !== "string" || data.expiresAt.length > 64 || !Number.isFinite(Date.parse(data.expiresAt)) || Date.parse(data.expiresAt) <= Date.now()) fail("unavailable");
+    return { status: data.status, id: data.id, subjectId, expiresAt: data.expiresAt };
+  } catch (error) { if (error instanceof TemporaryExportError) throw error; return fail("unavailable"); }
+}
