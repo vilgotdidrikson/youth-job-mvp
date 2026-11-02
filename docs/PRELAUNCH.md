@@ -61,3 +61,9 @@ Tests: `node --experimental-strip-types scripts/test-prelaunch.mjs` and `node --
 The initial landing page was published on production `master` as commit `22b22b6` on 2026-11-02. Browser tests verified youth and company signups reaching Primary, demo application/chat, and unsubscribe. Disposable test contacts were deleted. No launch emails were sent. Later layout/boundary changes follow the user's request to separate demo and close ordinary app routes.
 
 Supabase advisor notes `RLS Enabled No Policy` for the two server-only tables; this is intentional because public/client roles have no grants and there is no client-access policy. Existing warnings in unrelated production functions were not changed by the prelaunch migration.
+
+## Expanded standalone demo
+
+The `/demo` page now has its own responsive workspace. Youth can search/filter four fictional jobs, save them, submit a local demo application with an optional message, review applications and try per-company chats. Companies can create/pause/reactivate local demo ads, select applications per ad, read example application evidence and CVs, and try per-candidate chats. An explicit “show example reply” action inserts canned recipient replies. It does not call an AI model or contact a person. Reset clears the demo state; reload also discards it. The signup page and production waitlist backend are unaffected.
+
+There is no automated launch mail delivery. Administrators can view/filter active signups and export CSV at `/launch-admin`. The export includes personal unsubscribe links. A future sender should require an administrator to approve/start a campaign, then deliver automatically with opt-out checks, delivery tracking, retry/idempotency protection, and audience selection. No email sending feature is added by the demo work.
