@@ -38,3 +38,7 @@ Fel ägare, blandad roll, upprepade källor/postidentiteter, fel kategori eller 
 Intern paketering, ingen publik endpoint eller leverans till användare. Serverfunktionen är ingen autentiseringsgräns och får aldrig ta emot klientskickat insamlingsunderlag; framtida leverans måste kontrollera aktuell identitet. Lösenordsverifieringen finns i den befintliga insamlingskedjan. Databas, verklig Storage, inloggat UI och liveflöde har inte testats i denna leverans.
 
 Denna första automatiska policy ersätter inte återstående innehålls-/rättighetsbedömning eller fullständigt svar på en tillgångsbegäran. Säker nedladdning, privat tillfällig lagring, bestämd paketfrist och fysisk gallring återstår. Ingen databasändring, extern AI eller produktion. Den globala åtgärdsplanen lämnas byteidentisk; leveransstatus och faktisk verifiering dokumenteras här och i PR.
+
+## Fortsättning 2026-11-02
+
+[L13_STRUCTURED_HISTORY_GROUPS.md](L13_STRUCTURED_HISTORY_GROUPS.md) utökar den fasta projektionen från åtta till 19 källor i tre avgränsade grupper: kontostatusar, egna ansöknings-/versionsstatusar och egna annons-/rekryteringsstatusar. Den privata serverläsaren ansluts i det avstängda dev-provet. Den ursprungliga tabellen och verifieringsnivån ovan beskriver #162; alla kategorier och hela L13 är fortfarande ofullständiga.
