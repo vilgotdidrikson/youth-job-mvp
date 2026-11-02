@@ -1,32 +1,19 @@
-﻿import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
 import "./globals.css";
 
-// Self-hosted by Next.js at build time (no runtime request to Google Fonts),
-// so it renders identically for every visitor — unlike the previous base
-// font, "Neue Haas Grotesk", which was never actually shipped to the browser
-// and only rendered correctly on machines that happened to have it installed
-// as a system font.
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-// Display serif used for the map's counts and headings, mirroring the
-// editorial feel of the startup-map layout the map view is modelled on.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-  weight: ["500", "600", "700"],
-});
+const inter = localFont({ src: "../public/fonts/inter-latin.woff2", variable: "--font-inter", display: "swap", weight: "100 900" });
+const fraunces = localFont({ src: "../public/fonts/fraunces-latin.woff2", variable: "--font-fraunces", display: "swap", weight: "100 900" });
 
 export const metadata: Metadata = {
-  title: "Employo Youth Jobs",
+  metadataBase: new URL("https://matchnwork.se"),
+  title: "MatchnWork – Mer potential. Mindre krångel.",
+  applicationName: "MatchnWork",
+  openGraph: { title: "MatchnWork – Var med från start", description: "För unga som vill jobba och företag som ser möjligheter. Anmäl intresse inför lanseringen.", siteName: "MatchnWork", locale: "sv_SE", type: "website", images: ["/brand/matchnwork-logo.png"] },
+  icons: { icon: "/favicon.ico", apple: "/icons/icon-192.png" },
   description:
     "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
 };

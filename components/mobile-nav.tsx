@@ -114,6 +114,9 @@ export function MobileNav() {
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/" ||
+    pathname === "/launch-admin" ||
+    pathname === "/launch-privacy" ||
+    pathname === "/avregistrera" ||
     pathname === "/pricing" ||
     pathname === "/features" ||
     pathname === "/velaris-preview" ||

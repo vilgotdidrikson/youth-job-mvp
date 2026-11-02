@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { requireApiUser } from "@/lib/api-auth";
 
-const groq = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY ?? "",
-});
-
 interface JobInput {
   title: string;
   industry: string;
@@ -30,6 +25,11 @@ export async function POST(req: NextRequest) {
 
   if (!title) return NextResponse.json({ error: "Ange en jobbtitel först." }, { status: 400 });
   if (!process.env.GROQ_API_KEY) return NextResponse.json(fallback(title, industry));
+
+  const groq = new OpenAI({
+    baseURL: "https://api.groq.com/openai/v1",
+    apiKey: process.env.GROQ_API_KEY ?? "",
+  });
 
   const prompt = `Du hjälper ett företag att skriva en svensk jobbannons.
 Jobbtitel: ${title}

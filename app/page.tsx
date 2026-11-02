@@ -1,273 +1,66 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { MarketingNav } from "@/components/marketing-nav";
-import { useAppDestination } from "@/hooks/use-app-destination";
-import Velaris from "@/components/ui/velaris";
-import { NumberTicker } from "@/components/ui/number-ticker";
-import { Reveal } from "@/components/ui/reveal";
-import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
-import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
-import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
-import { AiVisual, MatchVisual, ChatVisual, MapVisual, EverywhereVisual } from "@/components/ui/platform-visuals";
-import "./landing.css";
+import { useState, type FormEvent } from "react";
+import type { Audience } from "@/lib/prelaunch";
+import "./prelaunch.css";
 
-const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
-
-interface StatItem {
-  value: number;
-  decimals: number;
-  suffix: string;
-  label: string;
-  note: string;
-}
-
-const stats: StatItem[] = [
-  {
-    value: 24.9,
-    decimals: 1,
-    suffix: "%",
-    label: "ungdomsarbetslöshet i Sverige",
-    note: "juni 2026 · EU-snitt: 15,4 %",
-  },
-  {
-    value: 206500,
-    decimals: 0,
-    suffix: "",
-    label: "unga (15–24 år) utan jobb",
-    note: "maj 2026",
-  },
+const jobs = [
+  { title: "Ditt nästa steg? En kaffe med oss.", company: "Kvarterskaffet", place: "Södermalm, Stockholm", category: "Café & service", symbol: "K.", color: "cafe", hours: "Helger & efter skolan", description: "Gillar du människor, doften av nybakat och att få saker att hända? Hjälp till i kassan, servera kaffe och bli en del av ett litet team.", tags: ["Från 16 år", "Ingen erfarenhet krävs"] },
+  { title: "Gör vardagen lite grönare.", company: "Gröna Hörnet", place: "Vasastan, Stockholm", category: "Butik", symbol: "g.", color: "green", hours: "Eftermiddagar & helger", description: "Vi söker en nyfiken kollega som vill möta kunder och hålla fint i vår växtbutik. Du får lära dig på plats.", tags: ["Från 16 år", "Deltid"] },
+  { title: "Bli en del av matchdagen.", company: "Stadens Sportklubb", place: "Nacka, Stockholm", category: "Event & förening", symbol: "S.", color: "blue", hours: "Kvällar & helger", description: "Hjälp oss skapa bra upplevelser på våra matcher. Du möter besökare, hjälper till i kiosken och jobbar tillsammans med andra unga.", tags: ["Från 15 år", "Extrajobb"] },
+];
+const candidates = [
+  { name: "Alex", age: 18, initial: "A", place: "Södermalm", headline: "Bra service börjar med ett hej.", bio: "Jag går sista året på gymnasiet och söker ett extrajobb där jag får träffa människor. Jag är van att ta ansvar som ledare i min förening.", tags: ["Svenska & engelska", "Helger & kvällar"], evidence: "Har erfarenhet av att möta människor genom föreningsarbete. Kan arbeta de helger ni söker personal." },
+  { name: "Sam", age: 17, initial: "S", place: "Årsta", headline: "Nyfiken, noggrann och redo att lära.", bio: "Jag söker mitt första jobb och gillar att samarbeta. På fritiden tränar jag och hjälper till på skolans evenemang.", tags: ["Svenska & engelska", "Efter skolan"], evidence: "Beskriver samarbete vid skolevenemang. Tidigare kassavana är inte angiven och behöver följas upp." },
 ];
 
-const steps: TimelineStep[] = [
-  {
-    number: "01",
-    title: "Skapa konto & CV",
-    body: "Registrera dig och få hjälp av AI att bygga ett vasst CV på minuter.",
-  },
-  {
-    number: "02",
-    title: "Swipea och hitta jobb",
-    body: "Bläddra bland jobb nära dig, swipea och visa intresse för roller som passar.",
-  },
-  {
-    number: "03",
-    title: "Ni har matchat",
-    body: "Matcha, börja chatta med företaget och ta nästa steg mot en intervju.",
-  },
-];
-
-const platformItems: PlatformItem[] = [
-  {
-    id: "ai",
-    icon: "✦",
-    title: "AI som känner dig",
-    body: "Vår AI hjälper dig skriva CV, formulera ett personligt brev och förbereda dig inför intervjuer.",
-    visual: <AiVisual />,
-  },
-  {
-    id: "match",
-    icon: "◎",
-    title: "Matchning åt båda håll",
-    body: "Både du och företaget väljer vem ni vill prata med – ingen ansökan försvinner i tystnad.",
-    visual: <MatchVisual />,
-  },
-  {
-    id: "chat",
-    icon: "◈",
-    title: "Trygg chatt",
-    body: "Prata direkt i appen. Du delar aldrig mer än du själv vill, när du själv vill.",
-    visual: <ChatVisual />,
-  },
-  {
-    id: "map",
-    icon: "⌖",
-    title: "Jobb nära dig",
-    body: "Se lediga roller på kartan och upptäck möjligheter i ditt eget område.",
-    visual: <MapVisual />,
-  },
-  {
-    id: "everywhere",
-    icon: "▤",
-    title: "Fungerar överallt",
-    body: "Sköt hela din jobbsökning från mobilen, webben eller var du än är.",
-    visual: <EverywhereVisual />,
-  },
-];
-
-const copy = {
-  primary: "Kom igång",
-  secondary: "För företag",
-  statsHeading: "Ett verkligt problem",
-  statsSource: "Källa: SCB / Ekonomifakta",
-  platformTitleStart: "En plattform, ",
-  platformTitleAccent: "hela vägen",
-  platformSub: "Employo är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
-  howTitle: "Tre steg. Inget krångel.",
-  manifesto: "Potential syns inte alltid i ett tomt CV.",
-  manifestoSub: "Därför hjälper Employo unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
-  footer: "En enklare väg från nyfiken till anställd.",
-};
-
-const heroHeadlines = [
-  { title: "Ditt första jobb", accent: "börjar här." },
-  { title: "En enklare väg till rätt", accent: "rekrytering." },
-];
-
-function AnimatedHeroHeadline() {
-  const [headlineIndex, setHeadlineIndex] = useState(0);
-  const [visibleText, setVisibleText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const headline = heroHeadlines[headlineIndex];
-  const fullHeadline = `${headline.title}\n${headline.accent}`;
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const delay = reducedMotion ? 0 : isDeleting ? 38 : 55;
-    const timer = setTimeout(() => {
-      if (reducedMotion) {
-        setVisibleText(fullHeadline);
-        return;
-      }
-
-      if (!isDeleting && visibleText.length < fullHeadline.length) {
-        setVisibleText(fullHeadline.slice(0, visibleText.length + 1));
-        return;
-      }
-
-      if (!isDeleting) {
-        setIsDeleting(true);
-        return;
-      }
-
-      if (visibleText.length > 0) {
-        setVisibleText(fullHeadline.slice(0, visibleText.length - 1));
-        return;
-      }
-
-      setHeadlineIndex((current) => (current + 1) % heroHeadlines.length);
-      setIsDeleting(false);
-    }, visibleText.length === fullHeadline.length && !isDeleting ? 1700 : delay);
-
-    return () => clearTimeout(timer);
-  }, [fullHeadline, isDeleting, visibleText]);
-
-  const visibleTitle = visibleText.slice(0, headline.title.length);
-  const visibleAccent = visibleText.slice(headline.title.length + 1);
-  const isWritingAccent = visibleText.length > headline.title.length;
-
-  return (
-    <h1 aria-label={`${headline.title} ${headline.accent}`}>
-      <span>{visibleTitle}{!isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</span>
-      <br />
-      <em>{visibleAccent}{isWritingAccent && <span className="landing-hero-caret" aria-hidden="true" />}</em>
-    </h1>
-  );
+function Demo({ role, setRole }: { role: Audience; setRole: (role: Audience) => void }) {
+  const [index, setIndex] = useState(0);
+  const [applied, setApplied] = useState<number[]>([]);
+  const [view, setView] = useState<"card" | "profile" | "chat">("card");
+  const [messages, setMessages] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const job = jobs[index % jobs.length];
+  const candidate = candidates[index % candidates.length];
+  function switchRole(next: Audience) { setRole(next); setView("card"); setIndex(0); setMessages([]); }
+  return <div className="pl-demo" id="demo">
+    <div className="pl-demo-top"><span className="pl-demo-live"><i /> Testa själv</span><span>Interaktiv demo</span></div>
+    <div className="pl-switch" aria-label="Välj demovy"><button type="button" aria-pressed={role === "youth"} onClick={() => switchRole("youth")}>Jag söker jobb</button><button type="button" aria-pressed={role === "company"} onClick={() => switchRole("company")}>Vi söker personal</button></div>
+    <div className="pl-demo-screen">
+      <div className="pl-appbar"><span>matchnwork<span className="pl-brand-dot">.</span></span><span className="pl-avatar">{role === "youth" ? "A" : "K"}</span></div>
+      {view === "chat" ? <div className="pl-chat"><button className="pl-text-button" onClick={() => setView("card")}>← Tillbaka</button><h3>{role === "youth" ? job.company : candidate.name}</h3><span className="pl-small">Demochatt · inget skickas till någon</span><div className="pl-messages"><p className="pl-bubble">Hej! Vad roligt att du är intresserad. När skulle du kunna börja?</p>{messages.map((text, i) => <p className="pl-bubble pl-bubble-own" key={i}>{text}</p>)}</div><form onSubmit={e => { e.preventDefault(); if (draft.trim()) { setMessages([...messages, draft.trim()]); setDraft(""); } }} className="pl-chat-form"><input value={draft} onChange={e => setDraft(e.target.value)} maxLength={300} placeholder="Skriv ett demosvar…" aria-label="Demomeddelande" required /><button aria-label="Skicka demosvar">↑</button></form></div>
+      : role === "youth" ? <><div className={`pl-job-art ${job.color}`}><span className="pl-job-category">{job.category}</span><span className="pl-job-symbol" aria-hidden="true">{job.symbol}</span><span className="pl-art-caption">Människor. Möjligheter. Ditt nästa steg.</span><div className="pl-art-ring" /></div><div className="pl-card-copy"><div className="pl-card-kicker">{job.company} <span>↗</span></div><h3>{job.title}</h3><p className="pl-small">⌖ {job.place}</p><div className="pl-tags">{job.tags.map(x => <span key={x}>{x}</span>)}</div><p className="pl-description">{job.description}</p><p className="pl-hours">◷ {job.hours}</p>{applied.includes(index % jobs.length) ? <div className="pl-applied" role="status"><strong>✓ Demoansökan skickad</strong><p>Här skulle du kunna följa din ansökan.</p><button onClick={() => { setMessages([]); setView("chat"); }}>Prova chatten →</button></div> : <div className="pl-demo-actions"><button className="pl-skip" onClick={() => setIndex(index + 1)}>Nästa jobb →</button><button className="pl-apply" onClick={() => setApplied([...applied, index % jobs.length])}>Ansök <span>♡</span></button></div>}</div></>
+      : <div className="pl-candidate"><div className="pl-candidate-heading"><span className="pl-person">{candidate.initial}</span><div><span className="pl-small">Ansökan till cafémedarbetare</span><h3>{candidate.name}, {candidate.age} år</h3><p className="pl-small">⌖ {candidate.place}</p></div></div><h4>{candidate.headline}</h4><div className="pl-tags">{candidate.tags.map(x => <span key={x}>{x}</span>)}</div><p className="pl-description">{candidate.bio}</p>{view === "profile" && <div className="pl-evidence"><strong>Underlag till er bedömning</strong><p>{candidate.evidence}</p><span>Exempel på beslutsstöd. Ni gör själva bedömningen.</span></div>}<div className="pl-candidate-tools"><button onClick={() => setView(view === "profile" ? "card" : "profile")}>{view === "profile" ? "Dölj underlag ↑" : "Se ansökningsunderlag ↓"}</button></div><div className="pl-demo-actions"><button className="pl-skip" onClick={() => { setIndex(index + 1); setView("card"); }}>Nästa kandidat →</button><button className="pl-apply" onClick={() => { setMessages([]); setView("chat"); }}>Prova chatten ↗</button></div></div>}
+    </div>
+    <div className="pl-demo-disclaimer"><span>✳</span> Fiktiva jobb och personer. Ingen riktig ansökan skickas.</div>
+  </div>;
 }
 
 export default function Home() {
-  const { isAuthenticated, destination } = useAppDestination();
-
-  return (
-    <main className="landing-page landing-bold">
-      <Velaris
-        className="fixed inset-0 -z-10"
-        height="100vh"
-        bg="#ffffff"
-        colors={LANDING_BG_COLORS}
-      />
-
-      <MarketingNav />
-
-      <section className="landing-bold-hero">
-        <AnimatedHeroHeadline />
-        <div className="landing-bold-actions">
-          {isAuthenticated ? (
-            <Link href={destination ?? "/login"} className="landing-bold-primary">
-              Gå till appen<span aria-hidden="true">→</span>
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/signup?role=company"
-                className="landing-bold-secondary"
-                style={{ border: "1.5px solid #d65f85", background: "#ffffff" }}
-              >
-                {copy.secondary}
-              </Link>
-              <Link href="/signup" className="landing-bold-primary">
-                {copy.primary}<span aria-hidden="true">→</span>
-              </Link>
-            </>
-          )}
-        </div>
-      </section>
-
-      <div className="landing-bold-body">
-        <section className="landing-bold-stats">
-          <div className="landing-bold-stats-heading">
-            <h2>
-              <TextGenerateEffect words={copy.statsHeading} />
-            </h2>
-          </div>
-          <div className="landing-bold-stats-grid">
-            {stats.map((stat) => (
-              <article key={stat.label}>
-                <NumberTicker
-                  value={stat.value}
-                  decimals={stat.decimals}
-                  suffix={stat.suffix}
-                  className="landing-bold-stat-value"
-                />
-                <p>{stat.label}</p>
-                <span className="landing-bold-stat-note">{stat.note}</span>
-              </article>
-            ))}
-          </div>
-          <p className="landing-bold-stats-source">{copy.statsSource}</p>
-        </section>
-
-        <section className="landing-bold-platform">
-          <PlatformShowcase
-            items={platformItems}
-            heading={
-              <>
-                {copy.platformTitleStart}
-                <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
-              </>
-            }
-            subheading={copy.platformSub}
-          />
-        </section>
-
-        <section className="landing-bold-how">
-          <h2>{copy.howTitle}</h2>
-          <VerticalTimeline steps={steps} />
-        </section>
-
-        <section className="landing-bold-manifesto">
-          <Reveal>
-            <p>{copy.manifesto}</p>
-            <span>{copy.manifestoSub}</span>
-          </Reveal>
-        </section>
-
-        <footer className="landing-bold-footer">
-          <div className="landing-bold-footer-brand">
-            <span className="landing-logo">
-              <span className="landing-logo-mark">E</span>employo
-            </span>
-            <p>{copy.footer}</p>
-          </div>
-          <nav className="landing-bold-footer-links" aria-label="Sidfotsnavigation">
-            <Link href="/features">Funktioner</Link>
-            <Link href="/pricing">Priser</Link>
-            <Link href="/login">Logga in</Link>
-          </nav>
-          <span className="landing-bold-footer-copy">© 2026 Employo</span>
-        </footer>
-      </div>
-    </main>
-  );
+  const [role, setRole] = useState<Audience>("youth");
+  const [formRole, setFormRole] = useState<Audience>("youth");
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [error, setError] = useState("");
+  function chooseForm(next: Audience) { setFormRole(next); setStatus("idle"); setError(""); }
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (status === "sending") return;
+    const form = new FormData(event.currentTarget);
+    setStatus("sending"); setError("");
+    try {
+      const response = await fetch("/api/prelaunch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: formRole, name: form.get("name"), email: form.get("email"), companyName: form.get("companyName"), consent: form.get("consent") === "on", website: form.get("website") }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Kunde inte spara din anmälan.");
+      setStatus("success");
+    } catch (err) { setError(err instanceof Error ? err.message : "Kunde inte ansluta. Försök igen."); setStatus("error"); }
+  }
+  return <main className="pl-page">
+    <a className="pl-skip-link" href="#main-content">Till innehållet</a>
+    <header className="pl-header"><a href="/" aria-label="MatchnWork startsida" className="pl-logo"><span className="pl-logo-box"><Image src="/brand/matchnwork-logo.png" alt="" width={44} height={44} priority /></span><span>matchnwork<span className="pl-brand-dot">.</span></span></a><nav aria-label="Huvudnavigation"><a href="#sa-funkar-det">Så funkar det</a><a href="#demo">Testa demon ↗</a></nav><a href="#intresse" className="pl-header-cta">Var med från start <span>↗</span></a></header>
+    <section className="pl-hero" id="main-content"><div className="pl-hero-copy"><div className="pl-eyebrow"><span /> NÅGOT NYTT ÄR PÅ VÄG</div><h1>Mer potential.<br />Mindre <span>krångel.</span></h1><p className="pl-hero-description">Ditt första jobb. Er nästa medarbetare.<br />Vi för samman unga som vill jobba med företag som ser möjligheter.</p><div className="pl-hero-actions"><a href="#intresse" className="pl-button">Meddela mig när ni öppnar <span>↗</span></a><a href="#demo" className="pl-demo-link" onClick={() => { document.querySelector("#demo button")?.scrollIntoView({ block: "center", behavior: "smooth" }); }}>Ta en titt först <span>↓</span></a></div><div className="pl-hero-note"><span className="pl-spark">✳</span><p>För unga från 15 år.<br /><strong>Och företag redo att ge dem en chans.</strong></p></div><div className="pl-hero-bottom"><span>ETT NYTT SÄTT ATT MÖTAS</span><span>STOCKHOLM, SVERIGE ↗</span></div></div><div className="pl-demo-wrap"><div className="pl-demo-orbit" aria-hidden="true" /><Demo role={role} setRole={setRole} /><span className="pl-demo-side-note">EN LITEN FÖRHANDSTITT PÅ NÄSTA STEG</span></div></section>
+    <section className="pl-how" id="sa-funkar-det"><div className="pl-section-title"><span className="pl-eyebrow">FRÅN NYFIKEN TILL NÄSTA STEG</span><h2>En bra början.<br /><span>För båda sidor.</span></h2></div><div className="pl-steps"><article><span>01 / UPPTÄCK</span><h3>Hitta något som passar.</h3><p>Unga upptäcker jobb nära sig. Företag visar vilka de är och vem de söker.</p></article><article><span>02 / VISA INTRESSE</span><h3>Mer än ett tomt CV.</h3><p>Personlighet, tillgänglighet och erfarenheter får ta plats i ansökan.</p></article><article><span>03 / TA KONTAKT</span><h3>Börja med ett hej.</h3><p>En direkt kontakt mellan kandidat och företag gör nästa steg enklare.</p></article></div></section>
+    <section className="pl-signup-section" id="intresse"><div className="pl-signup-copy"><span className="pl-eyebrow">VAR MED FRÅN BÖRJAN</span><h2>Det börjar<br />med <em>ett hej.</em></h2><p>Vi förbereder lanseringen av MatchnWork. Skriv upp dig så hör vi av oss när det är dags.</p><div className="pl-launch-detail"><span>↗</span><p>{formRole === "youth" ? "Letar du efter ditt första jobb, ett extrajobb eller ett sommarjobb? Här börjar nästa steg." : "Söker ni nya kollegor? Visa intresse så kan vi kontakta er om lanseringen och en eventuell pilot."}</p></div><a href="mailto:info@matchnwork.se">En fråga innan dess? Säg hej →</a></div><div className="pl-form-card">{status === "success" ? <div className="pl-success" role="status"><span>✓</span><h3>Du är med på listan.</h3><p>Tack för ditt intresse! Vi hör av oss via e-post när MatchnWork öppnar, eller om vi vill bjuda in dig till en pilot.</p><p className="pl-small">Din anmälan är sparad. Du behöver inte skapa något konto.</p><button className="pl-text-button" onClick={() => setStatus("idle")}>Anmäl en till person →</button></div> : <><h3>Håll mig uppdaterad.</h3><p className="pl-form-intro">Välj det som passar dig.</p><div className="pl-switch" aria-label="Vem vill anmäla intresse?"><button type="button" aria-pressed={formRole === "youth"} onClick={() => chooseForm("youth")}>Jag söker jobb</button><button type="button" aria-pressed={formRole === "company"} onClick={() => chooseForm("company")}>Vi söker personal</button></div><form onSubmit={submit}>{formRole === "company" && <label>Företagsnamn<input name="companyName" placeholder="Vad heter ert företag?" autoComplete="organization" minLength={2} maxLength={150} required /></label>}<label>{formRole === "company" ? "Kontaktperson" : "Ditt namn"}<input name="name" placeholder={formRole === "company" ? "För- och efternamn" : "Vad heter du?"} autoComplete="name" minLength={2} maxLength={100} required /></label><label>E-post<input name="email" type="email" placeholder="namn@exempel.se" autoComplete="email" maxLength={254} required /></label><div className="pl-honeypot" aria-hidden="true"><label>Webbplats<input name="website" tabIndex={-1} autoComplete="off" /></label></div><label className="pl-consent"><input name="consent" type="checkbox" required /><span>Jag vill få mejl om lanseringen och eventuell pilot. Jag har läst <Link href="/launch-privacy">hur mina uppgifter används</Link> och kan när som helst avregistrera mig.</span></label>{error && <p className="pl-error" role="alert">{error}</p>}<button disabled={status === "sending"} className="pl-button pl-submit">{status === "sending" ? "Sparar din anmälan…" : "Meddela mig när ni öppnar"}<span>↗</span></button><p className="pl-form-footnote">Inget konto. Inga köpkrav. Bara ett första steg.</p></form></>}</div></section>
+    <footer className="pl-footer"><a href="/" className="pl-footer-brand">matchnwork<span>.</span></a><p>Potential förtjänar en chans.</p><div><Link href="/launch-privacy">Integritet</Link><a href="mailto:info@matchnwork.se">Kontakt ↗</a><span>© 2026 MatchnWork UF</span></div></footer>
+  </main>;
 }

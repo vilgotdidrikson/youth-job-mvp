@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { validateSignup, csvCell } from '../lib/prelaunch.ts';
+const youth = { role: 'youth', name: ' Test Person ', email: ' TEST@EXAMPLE.COM ', consent: true };
+assert.deepEqual(validateSignup(youth), { role: 'youth', name: 'Test Person', email: 'test@example.com', consent: true, companyName: '' });
+assert.equal(validateSignup({ ...youth, role: 'company' }), null);
+assert.equal(validateSignup({ ...youth, consent: false }), null);
+assert.equal(validateSignup({ ...youth, role: 'admin' }), null);
+assert.equal(validateSignup({ ...youth, name: 'A' }), null);
+assert.equal(validateSignup({ ...youth, name: 'A\nB' }), null);
+assert.equal(validateSignup({ ...youth, email: 'hello@invalid' }), null);
+assert.equal(validateSignup({ ...youth, companyName: 'x'.repeat(151) }), null);
+assert.equal(validateSignup(null), null);
+assert.equal(validateSignup({ ...youth, role: 'company', companyName: ' Café AB ' }).companyName, 'Café AB');
+assert.equal(csvCell('=HYPERLINK("https://evil.example")'), '"\'=HYPERLINK(""https://evil.example"")"');
+assert.equal(csvCell(' +12'), '"\' +12"');
+assert.equal(csvCell('Café; "M"'), '"Café; ""M"""');
+console.log('Prelaunch validation and CSV injection checks passed.');
