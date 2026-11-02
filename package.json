@@ -10,6 +10,7 @@
     "test:structured-personal-data-export": "node scripts/test-structured-personal-data-export.mjs",
     "test:reviewed-personal-data-export": "node scripts/test-reviewed-personal-data-export.mjs",
     "test:export-browser": "node scripts/test-export-browser.mjs",
+    "test:export-recovery": "node scripts/test-export-recovery.mjs",
     "test:export-control": "node scripts/test-export-control.mjs",
     "test:account-export": "node scripts/test-account-export.mjs",
     "test:export-cleanup-handler": "node scripts/test-export-cleanup-handler.mjs",
