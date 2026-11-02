@@ -1,3 +1,4 @@
+import { CONTACT_EMAIL } from "./product-copy";
 export type PricingAudience = "youth" | "company";
 
 export interface PricingPlan {
@@ -62,5 +63,5 @@ export const enterprisePlan = {
   title: "Behöver ni rekrytera i större skala?",
   body: "Kontakta oss för att diskutera en lösning för ert företag.",
   cta: "Kontakta oss",
-  ctaHref: "mailto:hej@employo.se",
+  ctaHref: `mailto:${CONTACT_EMAIL}`,
 };

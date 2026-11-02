@@ -1,4 +1,5 @@
 "use client";
+import { jobReturnLink } from "@/lib/product-copy";
 import { getJobWorkplaces, jobCities, workplaceLabel } from "@/lib/job-workplaces";
 import { WorkplacePreference } from "@/components/workplace-preference";
 import Image from "next/image";
@@ -30,6 +31,7 @@ export default function JobDetailPage() {
   const cvDialog = useRef<HTMLDialogElement>(null);
   const params = useParams<{ jobId: string }>();
   const { user, profile } = useSession();
+  const back = jobReturnLink(profile?.role);
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [job, setJob] = useState<JobPost | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState("");
@@ -68,7 +70,7 @@ export default function JobDetailPage() {
     else if (!showCvPrompt && dialog.open) dialog.close();
   }, [showCvPrompt]);
   if (loading || (!error && job && job.id !== params.jobId)) return <main className={styles.page}><div className={styles.loading} role="status">Hämtar annonsen…</div></main>;
-  if (error || !job) return <main className={styles.page}><section className={styles.panel}><h1>Jobbet kunde inte visas</h1><p>{error || "Annonsen hittades inte."}</p><Link href="/swipe" className={styles.back}>Tillbaka till Upptäck</Link></section></main>;
+  if (error || !job) return <main className={styles.page}><section className={styles.panel}><h1>Jobbet kunde inte visas</h1><p>{error || "Annonsen hittades inte."}</p><Link href={back.href} className={styles.back}>{back.label}</Link></section></main>;
   const acceptsApplications = job.status === "active" && job.is_active !== false;
   const requirements = [ageRequirement(job), ...listItems(job.requirements)].filter((item): item is string => Boolean(item));
   const benefits = listItems(job.benefits), address = getJobWorkplaces(job).map(workplaceLabel).join("; ");
@@ -97,7 +99,7 @@ export default function JobDetailPage() {
   const actionNote = withdrawn ? "Din ansökan är återkallad och skickas inte igen automatiskt." : savedInterest ? savedInterest.note : !cvCompleted && !alreadyApplied ? "Ditt intresse sparas tills CV:t är klart." : "Ansökan skickas direkt. Följ den under Ansökningar.";
   const action = withdrawn ? <Link href="/applications" className={styles.primary}>Ansökan återkallad</Link> : alreadyApplied ? <p className={styles.status}><UiIcon name="check"/>Ditt intresse är skickat</p> : needsCompletion ? <Link href="/applications" className={styles.primary}>Komplettera din ansökan <UiIcon name="arrow"/></Link> : savedInterest?.kind === "complete_cv" ? <Link href={`/youth/cv?job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title)}`} className={styles.primary}>{savedInterest.label} <UiIcon name="arrow"/></Link> : savedInterest ? <button type="button" className={styles.primary} disabled={busy || loadedJobId !== params.jobId} onClick={() => void startApplication()}>{busy ? "Skickar…" : savedInterest.label}</button> : acceptsApplications ? <button type="button" className={styles.primary} disabled={busy || cvLoading || loadedJobId !== params.jobId} onClick={() => void startApplication()}><UiIcon name="heart"/>{busy ? "Sparar…" : "Jag är intresserad"}</button> : <p className={styles.status}>Nya ansökningar är stängda</p>;
   return <main className={styles.page}>
-    <Link href="/swipe" className={styles.back}><UiIcon name="arrow"/>Tillbaka till Upptäck</Link>
+    <Link href={back.href} className={styles.back}><UiIcon name="arrow"/>{back.label}</Link>
     <div className={styles.layout}><article className={styles.article}>
       <div className={styles.hero}>{image ? <Image src={image} alt="" fill sizes="(max-width: 720px) 100vw, 700px" priority className={styles.heroImage}/> : <div className={styles.fallback}><UiIcon name="briefcase" width="52" height="52"/></div>}<div className={styles.shade}/><p>{job.company_name || "Arbetsgivare"}</p>{profile?.role === "youth" && <button type="button" className={styles.heroSave} disabled={busy || loadedJobId !== params.jobId} aria-label={saved ? "Ta bort sparat jobb" : "Spara jobbet"} aria-pressed={saved} onClick={() => void toggleSaved()}><UiIcon name="bookmark" fill={saved ? "currentColor" : "none"}/></button>}</div>
       <header className={styles.heading}><h1>{job.title}</h1><p>{[jobCities(job), job.employment_type].filter(Boolean).join(" · ")}</p>{!acceptsApplications && <p className={styles.notice} role="status">{job.status === "closed" ? "Den här annonsen är stängd." : "Den här annonsen är tillfälligt pausad."}</p>}</header>

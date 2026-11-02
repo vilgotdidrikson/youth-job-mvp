@@ -45,8 +45,8 @@ const stats: StatItem[] = [
 const steps: TimelineStep[] = [
   {
     number: "01",
-    title: "Skapa konto & CV",
-    body: "Registrera dig och få hjälp av AI att bygga ett vasst CV på minuter.",
+    title: "Skapa konto och utforska",
+    body: "Börja med några grunduppgifter och upptäck jobb. Skapa eller ladda upp ditt CV när du vill söka.",
   },
   {
     number: "02",
@@ -64,7 +64,7 @@ const platformItems: PlatformItem[] = [
   {
     id: "ai",
     icon: "✦",
-    title: "AI som känner dig",
+    title: "Stöd när du söker jobb",
     body: "Vår AI hjälper dig skriva CV och ställer kompletteringsfrågor när en ansökan saknar uppgifter.",
     visual: <AiVisual />,
   },
@@ -92,8 +92,8 @@ const platformItems: PlatformItem[] = [
   {
     id: "everywhere",
     icon: "▤",
-    title: "Fungerar överallt",
-    body: "Sköt hela din jobbsökning från mobilen, webben eller var du än är.",
+    title: "Mobil och dator",
+    body: "Använd MatchnWork i webbläsaren på mobilen eller datorn.",
     visual: <EverywhereVisual />,
   },
 ];
@@ -105,7 +105,7 @@ const copy = {
   statsSource: "Källa: SCB / Ekonomifakta",
   platformTitleStart: "En plattform, ",
   platformTitleAccent: "hela vägen",
-  platformSub: "MatchnWork är byggt för att bära dig från första ansökan till första arbetsdagen – och hela vägen till din första lönecheck. En enklare och tydligare väg till jobbet.",
+  platformSub: "MatchnWork samlar jobbsökande, ansökningar och kontakt med arbetsgivaren. Lön och anställningsvillkor hanterar du med arbetsgivaren.",
   howTitle: "Tre steg. Inget krångel.",
   manifesto: "Potential syns inte alltid i ett tomt CV.",
   manifestoSub: "Därför hjälper MatchnWork unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
