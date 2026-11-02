@@ -1,4 +1,5 @@
 "use client";
+import { applicationCountLabel } from "@/lib/product-copy";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -96,7 +97,7 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
   };
   return <section className={`company-applicants ${styles.workspace}`} aria-label="Ansökningar till vald annons">
     <Link className={styles.back} href={COMPANY_ROUTES.candidates}><UiIcon name="chevron-left" width="18" />Byt annons</Link>
-    <header className={styles.heading}><h1>{job.title}</h1><p>{state.status === "ready" ? `${candidateFeed.length} ansökningar` : "Ansökningar"}</p></header>
+    <header className={styles.heading}><h1>{job.title}</h1><p>{state.status === "ready" ? applicationCountLabel(candidateFeed.length) : "Ansökningar"}</p></header>
     {matchedConversationId && <p role="status" className={styles.match}>Ni kan nu chatta. <Link href={`/chats?conversation=${encodeURIComponent(matchedConversationId)}`}>Öppna chatten</Link></p>}
     <RecruitmentSummary company jobId={job.id} />
     {actionError && <p role="alert">{actionError}</p>}

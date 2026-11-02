@@ -7,7 +7,7 @@ export interface FeatureItem {
 }
 
 export const youthFeatures: FeatureItem[] = [
-  { icon: "file", title: "AI-CV", body: "Skapa ett professionellt CV genom att bara berätta om dig själv." },
+  { icon: "file", title: "CV på ditt sätt", body: "Skriv ditt CV själv, få hjälp av AI eller ladda upp ett befintligt CV. Du granskar innehållet före användning." },
   { icon: "cards", title: "Swipea jobb", body: "Upptäck jobb på ett enkelt och modernt sätt." },
   { icon: "discover", title: "Smart jobbmatchning", body: "Få jobb rekommenderade utifrån dina erfarenheter, intressen och önskemål." },
   { icon: "map", title: "Karta", body: "Se jobb nära dig och hitta möjligheter i ditt område." },
@@ -18,12 +18,12 @@ export const youthFeatures: FeatureItem[] = [
 export const companyFeatures: FeatureItem[] = [
   { icon: "briefcase", title: "Lägg upp jobb", body: "Publicera en jobbannons på några minuter." },
   { icon: "match", title: "AI-matchning", body: "AI hjälper er hitta kandidater som passar jobbet." },
-  { icon: "eye", title: "AI-screening", body: "Få en snabb överblick över de mest relevanta kandidaterna." },
+  { icon: "eye", title: "Bedömningsunderlag", body: "Se hur delade ansökningsuppgifter förhåller sig till jobbets kriterier. Ni fattar anställningsbeslutet." },
   { icon: "filter", title: "Kandidatfilter", body: "Sök bland ansökningar efter kandidatens namn eller jobbet de har sökt." },
   { icon: "messages", title: "Kandidatchatt", body: "Kommunicera direkt med kandidater från plattformen." },
   { icon: "activity", title: "Rekryteringsstatus", body: "Följ kontakten med kandidaten och uppdatera status genom rekryteringen." },
   { icon: "store", title: "Företagsprofil", body: "Visa upp ert företag och varför ungdomar ska vilja jobba hos er." },
-  { icon: "heart", title: "Employer branding", body: "Bygg en starkare relation till nästa generation av medarbetare." },
+  { icon: "heart", title: "Visa er som arbetsgivare", body: "Bygg en starkare relation till nästa generation av medarbetare." },
 ];
 
 export const individualFeatures: FeatureItem[] = [
@@ -38,7 +38,7 @@ export const aiCapabilities: string[] = [
   "Förbättra CV",
   "Matcha jobb",
   "Identifiera saknade ansökningsuppgifter",
-  "Screena kandidater",
+  "Sammanställa bedömningsunderlag",
   "Skriva jobbannonser",
 ];
 

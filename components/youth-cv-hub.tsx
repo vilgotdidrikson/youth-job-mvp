@@ -1,4 +1,5 @@
 "use client";
+import { applicationCountLabel } from "@/lib/product-copy";
 
 import { ProfileStepComplete } from "./profile-journey";
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
@@ -40,7 +41,7 @@ function completedCvMessage(result: ApplicationDraftSubmissionResult, fallback: 
   if (result.sent > 1) parts.push(`${result.sent} sparade ansökningar har skickats.`);
   if (result.unavailable === 1) parts.push("En annons tar inte längre emot ansökningar.");
   if (result.unavailable > 1) parts.push(`${result.unavailable} annonser tar inte längre emot ansökningar.`);
-  if (result.pending > 0) parts.push(`${result.pending} ansökningar behöver kompletteras. Öppna Dina ansökningar för att svara eller skicka med uppgift saknas.`);
+  if (result.pending > 0) parts.push(`${applicationCountLabel(result.pending)} kan kompletteras. Öppna Dina ansökningar för att svara eller skicka med uppgift saknas.`);
   return parts.join(" ");
 }
 
