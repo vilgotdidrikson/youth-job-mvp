@@ -47,3 +47,16 @@ Efterkontroll visar noll qa-cv-chain-konton, noll QA-annonser, noll filer för d
 `MNW_CV_ANON_KEY=<publik DevStaging-nyckel> npm run test:live-cv-chain` är låst till dev och skapar/städar fiktiva konton. Lösenord/token stannar i minnet; endast QA-ID:n skrivs till temporär checkpoint. Browser: sätt MNW_CV_CHROMIUM och vid behov MNW_PLAYWRIGHT_MODULE; vanlig proxykonfiguration återanvänds. MNW_CV_BROWSER_ONLY=1 kör ägar-/browserdelen med ett enda testkonto. MNW_CV_SHARE_SEED=1 är ett separat, operatörsberoende delningsprov med tidsbegränsad QA-fixturhandshake; utebliven seed redovisas som blockerad, aldrig passerad.
 
 L09/N19 är fortsatt Pågår tills kvarvarande autentiserade företagsdelning, samtidighet och avsedda webbläsare är verifierade. Fysisk mobil/Safari ersätts inte av Chromium-viewports. Ingen ny AI-funktion, exportflagga, gallring, databas/RLS eller produktion aktiveras. Global åtgärdsplan lämnas byteidentisk; detta protokoll och PR redovisar faktiskt arbete och kvarstående kriterier.
+
+
+## Efter driftsättning av #176
+
+Fortsatt verifiering inom samma L09/N19-reservation, branch `codex/l09-n19-postmerge-ui-proof-20261103`, från dev-merge `f001d7c6a4d84710e53afeae084065db6b4daee7`. Båda Vercel-kontrollerna passerade före och efter merge.
+
+- `qa-cv-chain-1793734173608-dc9ab0fd`: 15 verkliga ägar-/browserkontroller mot uppdaterad dev. Privat PDF öppnas med identiska bytes vid 375/768/1280 px. Det tillfälliga kontot städades, remainingFixtureIds=[].
+- `qa-cv-chain-ui-1793734354299-094882aa`: 10 verkliga kontroller via filväljaren på driftsatt dev. UI-inloggning, uppladdning på /youth/cv, sparbekräftelse, cv_uploaded=true/cv_generated=false, ägarbunden referens, identiska Storage-bytes och återöppning via profilens nya popupflöde. Mobilbredd utan dokumentöverspill. Inga AI-anrop observerades i browserprovet. Kontot städades, remainingFixtureIds=[].
+- Slutlig skrivskyddad databasfråga: 0 QA-konton, 0 QA-annonser, 0 filer för filväljarprovets ägare och 0 medlemskap för den tidigare tilltänkta QA-granskaren.
+
+Filväljarprovet finns i `scripts/test-live-cv-upload-ui.mjs`, körs med `npm run test:live-cv-upload-ui`. Kräver publik MNW_CV_ANON_KEY för fast dev-projekt, Playwright/Chromium och en fiktiv PDF via MNW_CV_PDF (standard /tmp/mnw-live-cv.pdf från kedjeprovet). Det skapar ett eget tillfälligt ungdomskonto och försöker alltid radera det i finally; kvarvarande ID ger felkod. Lösenord/token skrivs inte till fil eller logg. Detta verifierar Chromium och ersätter inte kvarstående företagsdelning eller fysisk Safari/mobilacceptans.
+
+Uppföljningen tillför QA-skript och evidens; produktfixarna ligger redan i #176. Syntax, riktad ESLint och diff-check körs för dessa uppföljningsfiler; produktbygget ovan återanvänds eftersom ingen produktkod ändras.
