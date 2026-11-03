@@ -1,5 +1,6 @@
 "use client";
 
+import { uploadedCvPath } from "./cv-document-path";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import type {
@@ -376,18 +377,26 @@ export async function saveVoiceCvToProfile(input: StructuredCvData): Promise<You
 }
 
 export async function saveUploadedCvToProfile(document: import("./types").YouthDocument): Promise<YouthProfile> {
-  const existing = await getYouthProfile();
-  const documents = [
-    ...((existing?.documents ?? []).filter((item) => item.type !== "cv")),
-    document,
-  ];
-
-  return persistYouthProfile({
-    documents,
-    cv_uploaded: true,
-    onboarding_completed: true,
-    cv_generated: false,
-  });
+  const user = await requireYouthUser();
+  const path = document && uploadedCvPath([document], user.id);
+  if (!document || document.type !== "cv" || !path || path !== document.url || /[?#%\x00-\x1f]/.test(document.url)) {
+    throw new Error("Välj en PDF som du har laddat upp till ditt eget konto.");
+  }
+  const client = getSupabaseClient();
+  const { data: file, error: fileError } = await client.storage.from("youth-documents").info(document.url);
+  if (fileError || !file || file.contentType !== "application/pdf" || !Number.isSafeInteger(file.size) || !file.size || file.size > 5 * 1024 * 1024) {
+    throw new Error("PDF-filen kunde inte verifieras. Ladda upp filen igen.");
+  }
+  const existing = await getYouthProfile(user.id);
+  const current = await getCurrentUser();
+  if (!existing || current?.id !== user.id) throw new Error("Kontot har ändrats. Öppna CV-sidan igen.");
+  const documents = [...((existing.documents ?? []).filter(item => item.type !== "cv")), document];
+  // Never let a session switch retarget this write to the new account.
+  const { data, error } = await client.from("youth_profiles").update({
+    documents, cv_uploaded: true, onboarding_completed: true, cv_generated: false,
+  }).eq("user_id", user.id).select("*").single();
+  if (error || !data || data.user_id !== user.id) throw new Error("CV:t kunde inte sparas. Filen finns kvar. Försök igen.");
+  return data as YouthProfile;
 }
 
 export async function completeYouthOnboarding(input: {

@@ -15,14 +15,15 @@ import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import Link from "next/link";
 import { profileTabFromQuery, type ProfileTab } from "@/lib/company-navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { createCvPdfFile, downloadPdfFile } from "@/lib/cv-pdf";
 import { getYouthProfile, saveYouthContactDetails, saveReviewedCvToProfile } from "@/lib/onboarding";
-import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
+import { openYouthDocument as openOwnedDocument } from "@/lib/open-youth-document";
+import { uploadYouthDocument } from "@/lib/storage";
 import { ExportAccountControl } from "@/components/export-account-control";
 import { DeleteAccountControl } from "@/components/delete-account-control";
 import { changePassword } from "@/lib/auth";
@@ -69,7 +70,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const requestedProfileTab = profileTabFromQuery(query.get("tab"));
   const [profileTab, setProfileTab] = useState<ProfileTab>(requestedProfileTab);
   useEffect(() => { setProfileTab(requestedProfileTab); }, [requestedProfileTab]);
+  const documentOpen = useRef<AbortController | null>(null);
   const [frame,setFrame]=useState<"cv"|"general"|null>(null);
+  useEffect(() => () => { documentOpen.current?.abort(); documentOpen.current = null; }, [user?.id, frame, profileTab]);
   const [frameBusy,setFrameBusy]=useState(false),[frameDirty,setFrameDirty]=useState(false);
   const [error, setError] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -221,11 +224,15 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   };
 
   const openYouthDocument = async (path: string) => {
+    if (!user?.id || documentOpen.current) return;
+    const controller = new AbortController(); documentOpen.current = controller;
     try {
-      window.open(await getYouthDocumentSignedUrl(path), "_blank", "noopener,noreferrer");
+      await openOwnedDocument({ subjectId: user.id, path, signal: controller.signal,
+        openWindow: () => window.open("", "_blank"),
+      });
     } catch (openError) {
-      setError(openError instanceof Error ? openError.message : "Kunde inte öppna dokumentet.");
-    }
+      if (!controller.signal.aborted) setError(openError instanceof Error ? openError.message : "Kunde inte öppna dokumentet.");
+    } finally { if (documentOpen.current === controller) documentOpen.current = null; }
   };
 
   const storedOrganizationNumber = savedCompany?.organization_number ?? "";
