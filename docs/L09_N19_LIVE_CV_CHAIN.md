@@ -60,3 +60,8 @@ Fortsatt verifiering inom samma L09/N19-reservation, branch `codex/l09-n19-postm
 Filväljarprovet finns i `scripts/test-live-cv-upload-ui.mjs`, körs med `npm run test:live-cv-upload-ui`. Kräver publik MNW_CV_ANON_KEY för fast dev-projekt, Playwright/Chromium och en fiktiv PDF via MNW_CV_PDF (standard /tmp/mnw-live-cv.pdf från kedjeprovet). Det skapar ett eget tillfälligt ungdomskonto och försöker alltid radera det i finally; kvarvarande ID ger felkod. Lösenord/token skrivs inte till fil eller logg. Detta verifierar Chromium och ersätter inte kvarstående företagsdelning eller fysisk Safari/mobilacceptans.
 
 Uppföljningen tillför QA-skript och evidens; produktfixarna ligger redan i #176. Syntax, riktad ESLint och diff-check körs för dessa uppföljningsfiler; produktbygget ovan återanvänds eftersom ingen produktkod ändras.
+
+
+## Fortsättning 2026-11-05
+
+[Det fullständiga företagsprovet](L09_N19_SHARING_ACCEPTANCE.md) ersätter den tidigare begränsningen om ej verifierad positiv företagsdelning: 42 faktiska kontroller av före-match-åtkomst, exakt sparad/uppdaterad filversion, negativa HTTP-/Storage-gränser, återkallelse och företagsvy vid 375/1280 px passerar med efterstädning. Ett verkligt HTTP-fel i versionskonflikterna upptäcktes och rättades till PT409 i de två berörda N19-funktionerna. Övriga kvarstående L09/N19-kriterier är fortsatt öppna.
