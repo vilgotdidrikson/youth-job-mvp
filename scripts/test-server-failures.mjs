@@ -48,7 +48,7 @@ try {
  reportServerFailure(canary,poison);safe();assert.equal(logs.at(-1)[1].event,'server_failure');assert.equal(accessed,0);passed++;
  reportServerFailure('job_generation_failed',new Proxy({},{getOwnPropertyDescriptor(){throw Error(canary);}}));safe();passed++;
  for(const status of [-1,0,99,600,NaN,Infinity,'502',{},502.5]){reportServerFailure('job_generation_failed',{status});assert.equal(logs.at(-1)[1].status,undefined);safe();passed++;}
- for(const [error,status,expected] of [[{code:'42501'},undefined,'permission'],[{},403,'permission'],[{code:'23505'},undefined,'conflict'],[{code:'22023'},undefined,'invalid_data'],[{name:'TimeoutError'},undefined,'timeout'],[{},429,'rate_limit'],[{},503,'upstream'],[{name:canary},undefined,'unknown']]){assert.equal(failureCategory(error,status),expected);passed++;}
+ for(const [error,status,expected] of [[{code:'42501'},undefined,'permission'],[{},403,'permission'],[{code:'23505'},undefined,'conflict'],[{code:'PT409'},undefined,'conflict'],[{code:'40001'},undefined,'conflict'],[{},409,'conflict'],[{code:'22023'},undefined,'invalid_data'],[{name:'TimeoutError'},undefined,'timeout'],[{},429,'rate_limit'],[{},503,'upstream'],[{name:canary},undefined,'unknown']]){assert.equal(failureCategory(error,status),expected);passed++;}
  console.error=()=>{throw Error('sink unavailable');};assert.ok(uuid.test(reportServerFailure('job_generation_failed',upstream)));passed++;console.error=(...args)=>logs.push(args);
  const session=require('../app/api/voice/session/route.ts').POST;
  reset();let cancelled=false,read=false;globalThis.fetch=async()=>({ok:false,status:429,body:{cancel:async()=>{cancelled=true;}},text:async()=>{read=true;return canary;}});

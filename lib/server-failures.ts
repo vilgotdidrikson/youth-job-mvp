@@ -18,7 +18,7 @@ export function failureCategory(error: unknown, status?: number): FailureCategor
   if (status === 401 || status === 403 || code === "42501") return "permission";
   if (status === 429 || code === "rate_limit_exceeded" || code === "insufficient_quota") return "rate_limit";
   if (status === 408 || status === 504 || code === "57014" || name === "AbortError" || name === "TimeoutError" || name === "APIConnectionTimeoutError") return "timeout";
-  if (code === "23505" || code === "40001") return "conflict";
+  if (status === 409 || code === "23505" || code === "40001" || code === "PT409") return "conflict";
   if (code === "22023" || code === "23503") return "invalid_data";
   if (typeof status === "number" && status >= 500 && status <= 599) return "upstream";
   return "unknown";
