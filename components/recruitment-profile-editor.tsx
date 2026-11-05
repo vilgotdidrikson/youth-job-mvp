@@ -51,7 +51,7 @@ function SectionForm({ section, profile, version, onSaved, onClose, cvLanguages,
       const languages=extraLanguages.filter(item=>item.language.trim()||item.level.trim());
       const clean = validateRecruitmentProfile({ ...draft, examples: examples.examples, preferences: { ...draft.preferences, roles: roleList, categoryIds: preferredJobCategories(roleList), locations: locationList }, qualifications: { ...draft.qualifications, licences: addListItems(commaList(licences),pendingLicence,MAX_LICENCES), tools: addListItems(commaList(tools),pendingTool,MAX_TOOLS),languages:section==="qualifications"?[...cvLanguages.filter(item=>item.level),...languages]:draft.qualifications.languages } });
       const { error: failure } = await getSupabaseClient().rpc("save_my_recruitment_profile", { p_section: section, p_value: clean[section], p_expected_version: version });
-      if (failure) throw new Error(failure.code === "40001" ? "Profilen har ändrats i en annan vy. Kopiera dina ändringar och gå tillbaka för att läsa in den senaste profilen." : "Uppgifterna kunde inte sparas. Dina ändringar finns kvar här; försök igen.");
+      if (failure) throw new Error(["PT409", "40001"].includes(failure.code ?? "") ? "Profilen har ändrats i en annan vy. Kopiera dina ändringar och gå tillbaka för att läsa in den senaste profilen." : "Uppgifterna kunde inte sparas. Dina ändringar finns kvar här; försök igen.");
       onDirtyChange?.(false);await onSaved();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kontrollera uppgifterna."); }
     finally { setBusy(false);onBusyChange?.(false); }
