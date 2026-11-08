@@ -150,9 +150,11 @@
 .mnw-product .job-match-editor { padding:28px; }
 .mnw-product .job-match-editor > h2 { font-size:1.6rem;margin-right:35px; }
 .mnw-product .job-match-editor > p { color:var(--color-text-muted);font-size:.83rem;line-height:1.8; }
-.mnw-product .job-match-editor label { font-size:.83rem;font-weight:500;gap:10px;margin:20px 0;color:var(--color-text); }
+.mnw-product .job-match-editor label { font-size:.83rem;font-weight:500;gap:10px;margin:4px 0;color:var(--color-text); }
 .mnw-product .job-match-editor small { color:var(--color-text-muted);font-weight:400;line-height:1.7; }
 .mnw-product .job-match-editor textarea { font-size:16px;line-height:1.7;padding:13px; }
+/* D03: the criteria fields grow with their text (at least three lines) so several rows can be read without scrolling inside each field. */
+.mnw-product .job-match-editor textarea { height:auto;min-height:calc(3lh + 28px);max-height:60vh;resize:vertical;field-sizing:content; }
 .mnw-product .job-match-editor details { padding:14px;border:1px solid var(--color-border);border-radius:14px;margin-top:20px;font-size:.8rem;line-height:1.75; }
 @media(max-width:720px) {
  .mnw-product .auth-layout.auth-layout-form-only { padding:20px 0;max-width:480px; }
