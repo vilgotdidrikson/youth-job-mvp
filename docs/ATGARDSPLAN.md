@@ -127,7 +127,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Klar | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Klar | Max / Claude |
-| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | För granskning | Max / Claude |
+| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Klar | Max / Claude |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
@@ -136,7 +136,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
-| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | För granskning | Max / Claude |
+| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
@@ -152,14 +152,14 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
-| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
+| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | Klar | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | Klar | Max / Claude |
-| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | För granskning | Max / Claude |
+| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Klar | Max / Claude |
 | 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
 | 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Klar | William / Claude |
 | 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
-| 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Ej påbörjad | — |
-| 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Ej påbörjad | — |
+| 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
+| 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
@@ -773,10 +773,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f17"></a>
 ### F17 Samla anställningsflödet i en tydlig ingång
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 39
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N23 (väntar på L12-gallring), N20/N21/F12 (pausat profil-/AI-arbete inför GDPR-beslut) och F20 (integritet) hoppas över. Endast text, benämningar och förklaring i befintligt anställningsflöde; L04:s statuslogik, RPC, databas och F06:s pristext (`lib/current-offer.ts`) ändras inte. Samordning: L04/F06 ägs av Vilgot / Codex och är införda i dev.
 - Åtgärd: Använd samma benämning och ingång i stället för både Registrera anställning och Markera som anställd. Förklara befattning, startdatum, ungdomens granskning och nästa status, tillsammans med prisinformationen i F06.
@@ -784,7 +784,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Reproducerat (kod och webbläsare): Samma steg hette ”Registrera anställning” i chatten men ”Markerad som anställd” hos admin, ”Anställd” i ungdomens ansökningar (redan när företaget registrerat, före ungdomens granskning) och ”Rätta uppgifter”/”Granska” i chattens kompakta rad men ”Rätta anställningsuppgifter”/”Granska uppgifterna” i panelen. Stäng rekrytering sa ”Registrera den anställda kandidaten i chatten” utan att nämna steget. Alla rekryteringsdialoger saknade bakgrund, padding och kant i webbläsaren eftersom den globala `.mnw-modal-dialog` skrev över modulens `.dialog`.
 - Implementerat: Gemensamma `REGISTER_EMPLOYMENT`, `EMPLOYMENT_STEPS` och `employmentStatusLabel()` i `lib/recruitment-types.ts` (återanvändbara för mobilapp). Företagets enda ingång heter ”Registrera anställning” i chattens kompakta rad, panel, dialog och Stäng rekrytering (som nu hänvisar till samma steg i chatten med kandidaten). Kompakta raden använder panelens åtgärdsnamn. Status för anställd match: ”Anställning registrerad” tills ungdomen godkänt, ”Anställning bekräftad” efter godkännande och ”Anställning behöver rättas” vid invändning (admin); ungdomens ansökningar och chattlistan visar ”Anställning registrerad”. Registreringsdialogen visar tre numrerade steg (befattning/startdatum, kandidatens granskning, bekräftad status), F06:s oförändrade pristext i rosa yta och kopplade hjälptexter för befattning och startdatum (framtida datum tillåts redan av RPC:n, upp till två år). Rättelse visar i stället att kandidaten granskar igen. Dialogernas bakgrund, padding, kant och bredd återställda med tokens. Gammal felsträng i oanvända `markMatchHired` uppdaterad. Ingen RPC, databas, statuslogik eller pristext ändrad.
 - Verifierat: TypeScript, produktionsbygge, riktad ESLint utan problem i ändrade källfiler (två befintliga fel om `module` i testskriptet finns även i dev), `check:design-tokens` (oförändrad baslinje), `test:recruitment` och utökat `test:recruitment-review` (gemensamt namn, tre steg, kopplade hjälptexter, rättelse utan steg, statusetiketter, inga gamla benämningar); de nya kontrollerna fallerar på gamla koden. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efter varje körning), 21/21: företagets chatt vid 375 och 1280 px (en ingång, dialognamn, tre steg, pristext, hjälptexter kopplade via aria-describedby, ingen horisontell scroll), registrering till ”Inväntar kandidatens granskning”, Stäng rekrytering med ”Anställd genom MatchnWork” hänvisar till ”Registrera anställning”, ungdomens ansökan visar ”Anställning registrerad” (inte ”Anställd”), ungdomens kompakta rad ”Granska uppgifterna” och godkännande till ”Anställning bekräftad”, adminkortet visar ”Anställning bekräftad”. Skärmbilder granskade.
-- Återstår / begränsning: `test:accessibility` fallerar redan i dev på en orelaterad företagsflik (`TabList id="company-applications"`); inte ändrat här. Ungdomens chatt vid 375 px och fysisk mobil inte provade; inte kontrollerat i driftsatt dev. Commit på `Max`, införande i dev återstår. Framtida betald modell (F06) oförändrad.
+- Verifierat i driftsatt dev: Kontrollerat i driftsatt dev 2026-11-08 (Max / Claude): Chromium/Playwright mot https://youth-job-mvp-dev.vercel.app (DevStaging, dev `a8febe6`) med tillfälliga fiktiva QA-konton som raderades efteråt (företag, ungdom med fiktivt CV-text, admin), 26/26: företagets chatt vid 375 och 1280 px har en synlig ingång ”Registrera anställning” (i mobilens hopfällda ”Jobbet och nästa steg”) och ingen ”Markera som anställd”; dialogens rubrik, tre steg, F06:s pristext, kopplade hjälptexter, bakgrund/padding inom vyn och ingen horisontell scroll; registrering ger ”Inväntar kandidatens granskning”; ungdomens ansökningar vid 375 px visar ”Anställning registrerad” och inte ”Anställd”; ungdomens chatt vid 375 och 1280 px har ”Granska uppgifterna” utan horisontell scroll; godkännande ger ”Anställning bekräftad”; adminkortet syns inte under Behöver följas upp och visar ”Anställning bekräftad” under Alla rekryteringar. Skärmbilder granskade.
+- Återstår / begränsning: `test:accessibility` fallerar redan i dev på en orelaterad företagsflik (`TabList id="company-applications"`); inte ändrat här. Införd i dev (commit `d9b37fa`). Fysisk mobil inte provad. Framtida betald modell (F06) oförändrad.
 
 <a id="f18"></a>
 ### F18 Förbättra sparande i profilredigeringen
@@ -884,10 +885,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="d01"></a>
 ### D01 Rätta knapparna i profilintroduktionen
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 48
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N09 (ny serverlagring av CV-utkast inväntar GDPR/L13) och L07 (slutverifiering som väntar på ofärdiga delar) hoppas över; mellanliggande punkter har ägare. Endast knapparnas layout i profilöversikten (`components/profile-builder.tsx`, `components/recruitment-profile.module.css`); profilflödet ägs av F15/F16/F18 (Vilgot / Codex).
 - Åtgärd: På /profile/build?welcome=1 ska Bygg din profil ha text och pil på samma rad. Centrera texten i Skapa den senare vertikalt och ge knapparna konsekvent höjd, mellanrum och padding.
@@ -895,7 +896,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Reproducerat 2026-10-30 (Chromium, lokalt produktionsbygge mot DevStaging, fiktivt QA-konto): Knapparna heter nu ”Bygg senare” och ”Bygg profil” efter tidigare omarbetning av profilöversikten. Pil och text låg redan på samma rad och texten var vertikalt centrerad med lika höjd (50 px) och padding i 320–1280 px. Kvar var att knapparna vid 320 och 375 px låg högerställda på var sin rad med olika bredd (138/149 px): modulens mobilregel gjorde bara `button` fullbredd, medan översikten använder länkar.
 - Implementerat: Mobilregeln i `components/recruitment-profile.module.css` gäller nu både knappar och länkar i `.form footer` (≤720 px), så båda åtgärderna blir fullbredd och staplas som i profilredigeraren. Bara översikten har länkar i en sådan footer; inga andra vyer påverkas. Text, länkar och logik oförändrade.
 - Verifierat: `check:design-tokens` (oförändrad baslinje), produktionsbygge, `test:profile-journey` och `test:profile-steps`. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälligt fiktivt QA-konto (raderat efteråt) på `/profile/build?welcome=1`, 28/28 vid 320, 375, 768 och 1280 px: pil på textraden, etiketter på en rad, texten centrerad, lika höjd och padding, fullbredd på mobil, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder före/efter granskade.
-- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Ej provat på fysisk mobil eller i driftsatt dev. Commit på `Max`, införande i dev återstår.
+- Verifierat i driftsatt dev: Kontrollerat i driftsatt dev 2026-11-08 (Max / Claude): Chromium/Playwright mot https://youth-job-mvp-dev.vercel.app (DevStaging, dev `a8febe6`) med tillfälliga fiktiva QA-konton som raderades efteråt, 24/24 på `/profile/build?welcome=1` vid 320, 375, 768 och 1280 px: båda åtgärderna finns, lika höjd (50 px), pilen på textraden, symmetrisk padding, fullbredd och staplade vid 320/375 px, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder granskade.
+- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Införd i dev (commit `21e59f9`). Ej provat på fysisk mobil.
 
 <a id="d05"></a>
 ### D05 Förklara produkten direkt på startsidan
@@ -1605,10 +1607,10 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-05"></a>
 ### DA-05 Inför skala för typografi, vikter, radier och skuggor
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 64
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring. Fortsatt 2026-10-29 på branch `Max` (reserverad före arbetet samma dag, användarens beställning att ta fem auditkort).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-05), som har fynd, filer och mått.
@@ -1617,7 +1619,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Samordning / beroenden: Beroende: DA-04.
 - Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar. 2026-10-29: `check:design-tokens` räknar bara litterala värden; ett värde som bara är en theme-token (`var(--…)`) är skalan och räknas inte, och `@font-face`-deskriptorer (`font-weight: 100 900`) räknas inte. Tidigare gjorde varje ny användning av skalan att kontrollen fallerade. `--shadow-sm` och `--shadow-md` var ogiltiga (`rgb(var(--color-text-rgb) / …)` med kommaseparerat värde) och beräknades till `none`; nu `rgba(var(--color-text-rgb), …)`, så de skuggor som använder dem (`application-disclosure-view`, ansökans förhandsvisning) syns. Nya värden sedan baslinjen fick tokens: kartnålens antal `11px` → `--text-xs`, logotypens svarta ruta och hörn → `--color-logo-mark`/`--radius-logo-mark`, återkallningsdialogen i `applications-design.css` → `--color-border`, `--color-surface`, `--color-text`, `--shadow-dialog`, `--color-backdrop` och `--color-brand`.
 - Verifierat: 2026-10-29 (lokalt, ej infört i dev): `check:design-tokens` PASS (538 färgvärden, 140 textstorlekar, 56 radier, 10 vikter; baslinjen sänkt med `--update`), produktionsbygge (webpack), ESLint på skriptet, `test:profile-steps`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:local-fonts`, `test:profile-journey`. Beräknade stilar i Chromium mot produktionsbygget: skuggorna, dialogen, logotypen och kartnålen (12px) får giltiga värden. `test:accessibility` fallerar likadant med och utan ändringen (företagets ansökningsflikar, N25). Tidigare: kontroll i driftsatt dev 2026-10-26 utan avvikelser.
-- Återstår / blockerare: Införas i dev och kontrolleras där; därefter Klar. Återkallningsdialogens färger (N02) ändrades något mot paletten (text #30262b → `--color-text`, fokusring #9d315d → `--color-brand`); stäm av med N02:s ägare vid granskning. Migrering av äldre värden sker i DA-12.
+- Verifierat i dev 2026-11-08 (Max / Claude): `check:design-tokens` PASS på dev `a8febe6` (538 färgvärden, 140 textstorlekar, 56 radier, 10 vikter, oförändrad baslinje). I driftsatt dev beräknas `--shadow-sm`, `--shadow-md` och `--shadow-dialog` till giltiga skuggor och `--text-xs` till 12 px (Chromium, inloggat fiktivt QA-konto, raderat efteråt).
+- Återstår / blockerare: Inget för DA-05. Återkallningsdialogens färger (N02) ändrades något mot paletten (text #30262b → `--color-text`, fokusring #9d315d → `--color-brand`); N02:s ägare (Vilgot / Codex) behöver informeras; ingen avstämning gjord i denna insats. Migrering av äldre värden sker i DA-12.
 
 <a id="da-06"></a>
 ### DA-06 Rätta textfärger som inte klarar WCAG AA
