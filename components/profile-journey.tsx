@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useSession } from "@/hooks/use-session";
-import { PROFILE_JOURNEY, nextProfileStep, profileStepUrl, type ProfileJourneyStep } from "@/lib/profile-journey";
+import { PROFILE_JOURNEY, nextProfileStep, profileStepStatus, profileStepUrl, type ProfileJourneyStep } from "@/lib/profile-journey";
 import { UiIcon } from "./ui-icon";
 import styles from "./profile-journey.module.css";
 
@@ -10,10 +10,10 @@ export function useRememberProfileStep(step:ProfileJourneyStep) {
   const {user}=useSession();
   return ()=>{if(user)try{localStorage.setItem(`mnw-profile-resume:${user.id}`,step);}catch{/* Optional navigation hint only. */}};
 }
-export function ProfileJourneyHeader({step}:{step:ProfileJourneyStep}) {
+export function ProfileJourneyHeader({step,done}:{step:ProfileJourneyStep;done?:readonly string[]}) {
   const remember=useRememberProfileStep(step);
   const index=PROFILE_JOURNEY.findIndex(item=>item.key===step);
-  return <section className={styles.progress} aria-label="Profilbyggets steg"><div className={styles.progressTop}><span>Din jobbprofil · Steg {index+1} av {PROFILE_JOURNEY.length}</span><Link onClick={remember} href="/profile?tab=work">Pausa och fortsätt senare</Link></div><ol>{PROFILE_JOURNEY.map((item,i)=><li key={item.key} aria-current={item.key===step?'step':undefined} className={i===index?styles.current:''}><span>{i+1}</span>{item.title}</li>)}</ol></section>;
+  return <section className={styles.progress} aria-label="Profilbyggets steg"><div className={styles.progressTop}><span>Din jobbprofil · {profileStepStatus(step,done)}</span><Link onClick={remember} href="/profile?tab=work">Pausa och fortsätt senare</Link></div><ol>{PROFILE_JOURNEY.map((item,i)=><li key={item.key} aria-current={item.key===step?'step':undefined} className={i===index?styles.current:''}><span>{i+1}</span>{item.title}</li>)}</ol></section>;
 }
 export function ProfileStepComplete({step,skipped=false}:{step:ProfileJourneyStep;skipped?:boolean}) {
   const {user}=useSession();

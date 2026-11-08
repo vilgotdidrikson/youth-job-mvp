@@ -10,6 +10,17 @@ export type ProfileJourneyStep = typeof PROFILE_JOURNEY[number]["key"];
 export function isProfileJourneyStep(value: unknown): value is ProfileJourneyStep {
   return PROFILE_JOURNEY.some(step=>step.key===value);
 }
+/**
+ * Where the person is in the profile, in words instead of "Steg 2 av 5" (D06): the CV is
+ * the only required part, the other steps are optional. Without `done` the CV state is left out.
+ */
+export function profileStepStatus(step: ProfileJourneyStep, done?: readonly string[]): string {
+  if (step === "cv") return "CV · krävs för att söka jobb";
+  const optional = PROFILE_JOURNEY.filter(item => item.optional);
+  const part = `valfri del ${optional.findIndex(item => item.key === step) + 1} av ${optional.length}`;
+  if (!done) return part.charAt(0).toLocaleUpperCase("sv-SE") + part.slice(1);
+  return `${done.includes("cv") ? "CV klart" : "CV saknas"} · ${part}`;
+}
 export function nextProfileStep(current: ProfileJourneyStep): ProfileJourneyStep | null {
   return PROFILE_JOURNEY[PROFILE_JOURNEY.findIndex(step=>step.key===current)+1]?.key??null;
 }

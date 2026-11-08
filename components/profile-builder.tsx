@@ -31,7 +31,7 @@ export function ProfileBuilder() {
   if(profile?.role!=='youth')return <main className={styles.page}><Link href="/profile">Till din profil</Link></main>;
   const after=query.get('after');
   if(after==='video')return <main className={styles.page}><h1>Fortsätt bygga din profil</h1><p>Profilvideo används inte längre. Nästa del handlar om vilka jobb du söker.</p><Link className="cta-btn" href={profileStepUrl('preferences')}>Fortsätt till vad jag söker</Link></main>;
-  if(isProfileJourneyStep(after))return <main className={styles.page}><ProfileJourneyHeader step={after}/><ProfileStepComplete step={after} skipped={query.get('skipped')==='1'}/></main>;
+  if(isProfileJourneyStep(after))return <main className={styles.page}><ProfileJourneyHeader step={after} done={data.loading||cvLoading?undefined:[...completedProfileSections(data.profile),...(cvCompleted?['cv']:[])]}/><ProfileStepComplete step={after} skipped={query.get('skipped')==='1'}/></main>;
   const loading=data.loading||cvLoading;
   const failure=data.error;
   const saved=[...completedProfileSections(data.profile),...(cvCompleted?['cv']:[])];
