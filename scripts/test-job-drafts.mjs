@@ -137,7 +137,7 @@ try {
   await assert.rejects(view.checkCurrent(), JobDraftConflictError, 'A stale tab cannot begin publication');
   RenderHarness(); await view.reload(); RenderHarness();
   assert.equal(view.conflict, false); assert.equal(view.form.title, 'Other tab winner'); assert.equal(view.files.length, 0); assert.equal(view.step, 2);
-  assert.equal(await view.checkCurrent(), newer);
+  assert.notEqual(await view.checkCurrent(), newer, 'Publication claims a fresh atomic revision even without form edits');
   // Multiple manual saves in this hook are ordered with their own revision, not rejected as foreign edits.
   view.setForm({ ...EMPTY_JOB_FORM, title: 'Ordered local save' }); RenderHarness();
   await Promise.all([view.saveNow(), view.saveNow()]); RenderHarness();

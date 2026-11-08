@@ -154,6 +154,7 @@ Original audit sequencing advice (subject to current action-plan status and glob
   - Let the typewriter animate only the last word or phrase, and render the full headline as static text for screen readers and `prefers-reduced-motion`. The latter is already partly handled.
   - Move the statistics below "En plattform, hela vägen", or reframe them for the actual age group.
 - **Done when:** A first-time visitor on a 375px screen can say what the service does and who it is for from the first frame, without waiting for the animation.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** The typewriter types only the last phrase and screen readers get the full first headline. A static explanation, moving the statistics and a fictional swipe card were tried in the hero and removed again at the user's request, so the first frame still has no product explanation.
 
 ---
 
@@ -279,6 +280,7 @@ Original audit sequencing advice (subject to current action-plan status and glob
 - **Seen (code + browser):** `components/ui/velaris.tsx` runs a full-screen WebGL shader in a `fixed inset-0` canvas behind the whole landing page. It renders every frame with `requestAnimationFrame` for as long as the page is open, also when scrolled far below the hero and when the tab is hidden. It does not check `prefers-reduced-motion`. On mid-range Android phones, which much of the audience uses, this costs battery and makes scrolling heavier.
 - **Fix:** Stop the loop when the hero is out of view (`IntersectionObserver`) and on `visibilitychange`. Render a single static frame, or a plain CSS gradient, when reduced motion is on. Cap the device pixel ratio at 1.5 on touch devices, and consider throttling to 30 fps.
 - **Done when:** The Performance panel shows no animation frames while scrolled past the hero or with the tab hidden, and reduced motion gives a still background.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** `components/ui/velaris.tsx` pauses when the hero is off screen (`IntersectionObserver`) or the tab is hidden, draws one still frame with reduced motion, caps the pixel ratio at 1.5 and runs at 30 fps on touch devices. The landing keeps its original colours and dark edges (user decision 2026-11-08); text over the darker parts of the animation does not meet WCAG AA at every moment, before or after D05. Frame counts measured in Chromium: 0 frames scrolled past the hero and with a hidden tab, 0 after the still frame with reduced motion.
 
 <a id="da-11"></a>
 ### DA-11 Client-rendered marketing pages and a global Mapbox stylesheet
@@ -363,6 +365,7 @@ Original audit sequencing advice (subject to current action-plan status and glob
 
 - **Seen:** After "Potential syns inte alltid i ett tomt CV." the page goes straight to the footer. `/features` ends with a "Kom igång" button, but the landing page does not.
 - **Fix:** Add a closing block with the primary "Kom igång" button and a secondary "För företag" link, reusing the existing `.landing-bold-primary` styles.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** The manifesto ends with the same sign-up actions as the hero (shared `LandingActions`, "Gå till appen" when signed in).
 
 ---
 

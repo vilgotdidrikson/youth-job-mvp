@@ -104,7 +104,10 @@ try {
 
   step = 'copy active paused closed';
   for (const status of ['active', 'paused', 'closed']) {
-    const updated = await c.from('jobs').update({ status }).eq('id', original.id); assert.ok(!updated.error);
+    const updated = status === 'closed'
+      ? await c.rpc('recruitment_action', { p_action: 'close_job', p_match_id: null, p_payload: { job_id: original.id, outcome: 'no_hire' } })
+      : await c.from('jobs').update({ status }).eq('id', original.id);
+    assert.ok(!updated.error);
     await page.goto(`${app}/company?view=annonser`);
     await page.getByRole('button', { name: 'Kopiera annons', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Kopiera annons', exact: true });

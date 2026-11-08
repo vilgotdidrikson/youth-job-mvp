@@ -146,9 +146,10 @@ export function useJobDraft(ownerId: string | undefined) {
       setReadBlocked(true); setConflict(true); setSaveStatus("error"); setError(reason.message);
       throw reason;
     }
-    // Flush this tab's pending edits before remembering the publication revision.
-    // Otherwise its own delayed autosave would look like a newer, unrelated draft at cleanup.
-    if (savedInputs?.form !== form || savedInputs.files !== files || savedInputs.step !== step) await persist(form, files, step);
+    // Claim a new revision even when nothing changed: two equally current tabs
+    // must not both pass a read-only check and start the same publication.
+    // This also flushes this tab's pending autosave before cleanup remembers its revision.
+    await persist(form, files, step);
     return lease.revision;
   };
   const reload = async () => {

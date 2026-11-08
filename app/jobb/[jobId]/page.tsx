@@ -1,5 +1,6 @@
 "use client";
 import { jobReturnLink } from "@/lib/product-copy";
+import { benefitItems, mergeBenefits } from "@/lib/job-benefits";
 import { getJobWorkplaces, jobCities, workplaceLabel } from "@/lib/job-workplaces";
 import { WorkplacePreference } from "@/components/workplace-preference";
 import Image from "next/image";
@@ -73,7 +74,7 @@ export default function JobDetailPage() {
   if (error || !job) return <main className={styles.page}><section className={styles.panel}><h1>Jobbet kunde inte visas</h1><p>{error || "Annonsen hittades inte."}</p><Link href={back.href} className={styles.back}>{back.label}</Link></section></main>;
   const acceptsApplications = job.status === "active" && job.is_active !== false;
   const requirements = [ageRequirement(job), ...listItems(job.requirements)].filter((item): item is string => Boolean(item));
-  const benefits = listItems(job.benefits), address = getJobWorkplaces(job).map(workplaceLabel).join("; ");
+  const benefits = mergeBenefits(benefitItems(job.benefits)), address = getJobWorkplaces(job).map(workplaceLabel).join("; ");
   const image = job.image_url?.split(",")[0]?.trim();
   const toggleSaved = async () => {
     if (busy) return;
@@ -113,6 +114,6 @@ export default function JobDetailPage() {
     </article><aside className={styles.aside}><section className={styles.panel}><h2 className={styles.eyebrow}>Snabb överblick</h2><dl className={styles.facts}><div><dt>Lön</dt><dd>{job.salary_per_hour || "Enligt överenskommelse"}</dd></div><div><dt>Arbetstid</dt><dd>{job.employment_type || "Enligt överenskommelse"}</dd></div>{practicalFacts(job.practical_details ?? {}, localIsoDate()).map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}<div><dt>Plats</dt><dd>{address || "Meddelas av arbetsgivaren"}</dd></div>{job.category && <div><dt>Kategori</dt><dd>{job.category}</dd></div>}</dl>{profile?.role === "youth" && <div className={styles.desktopAction}>{action}<p className={styles.actionNote}>{actionNote}</p><button type="button" className={styles.secondary} disabled={busy || loadedJobId !== params.jobId} onClick={() => void toggleSaved()}><UiIcon name="bookmark"/>{saved ? "Jobbet är sparat" : "Spara jobbet"}</button></div>}</section></aside></div>
     {actionError && <p role="alert" className={styles.error}>{actionError}</p>}
     {profile?.role === "youth" && <footer className={styles.mobileAction}>{action}<p>{actionNote}</p></footer>}
-    <dialog ref={cvDialog} className={styles.modal} onCancel={() => setShowCvPrompt(false)} aria-labelledby="detail-cv-title"><section className={styles.panel}><span className={styles.modalIcon}><UiIcon name="briefcase"/></span><h2 id="detail-cv-title">Ditt intresse är sparat</h2><p>Gör klart ditt CV så kan du gå vidare med ansökan.</p><Link className={styles.primary} href={`/youth/cv?job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title)}`}>Fortsätt med CV:t <UiIcon name="arrow"/></Link><button type="button" className={styles.secondary} onClick={() => setShowCvPrompt(false)}>Fortsätt utforska</button></section></dialog>
+    <dialog ref={cvDialog} className={styles.modal} onCancel={() => setShowCvPrompt(false)} aria-labelledby="detail-cv-title"><section className={styles.panel}><span className={styles.modalIcon}><UiIcon name="briefcase"/></span><h2 id="detail-cv-title">Ditt intresse är sparat</h2><p>Gör klart ditt CV så kan du gå vidare med ansökan.</p><Link className={styles.primary} href={`/youth/cv?job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title)}`}>Fortsätt med CV:t <UiIcon name="arrow"/></Link><button type="button" className={styles.secondary} onClick={() => setShowCvPrompt(false)}>Tillbaka till annonsen</button></section></dialog>
   </main>;
 }

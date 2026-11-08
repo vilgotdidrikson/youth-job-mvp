@@ -88,5 +88,8 @@ resolveRead({data:{company_name:'Fictional company',industry:'Test',administrato
 await Promise.resolve();
 assert.deepEqual(calls.pop(), ['replace', '/company?view=swipe'], 'Returning completed accounts keep their existing entry redirect');
 const nav = readFileSync('components/mobile-nav.tsx', 'utf8');
-assert.match(nav, /profile\.role === "company" \? COMPANY_ROUTES\.account : "\/profile"/);
-console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, preserved youth account destination.');
+// F21: one Profil item, no second account icon leading to the same profile page.
+assert.match(nav, /\{href:"\/profile",label:"Profil",icon:"profile"\}/);
+assert.doesNotMatch(nav, /aria-label="Mitt konto"/, 'The nav has no duplicate account link next to Profil');
+assert.match(onboarding, /href=\{COMPANY_ROUTES\.account\}/, 'Onboarding still links straight to the account settings tab');
+console.log('PASS company navigation: actual entry callbacks, URL-driven views, legacy aliases, query-driven account tab, single Profil entry without a duplicate account link.');

@@ -907,7 +907,7 @@
   line-height: .98;
 }
 
-.landing-bold-manifesto span {
+.landing-bold-manifesto-sub {
   display: block;
   max-width: 40rem;
   margin: 1.8rem auto 0;
@@ -1071,7 +1071,7 @@
   /* Manifesto */
   .landing-bold-manifesto { padding: clamp(4rem, 13vw, 6rem) 1.25rem; }
   .landing-bold-manifesto p { font-size: clamp(2rem, 8.5vw, 3.2rem); line-height: 1.04; }
-  .landing-bold-manifesto span { margin-top: 1.4rem; font-size: .95rem; }
+  .landing-bold-manifesto-sub { margin-top: 1.4rem; font-size: .95rem; }
 
   /* Footer */
   .landing-bold-footer {
@@ -1122,3 +1122,22 @@
 /* On the landing page the nav sits on the hero's dark edges: white text there.
    /features and /pricing keep the dark text from the rules above. */
 .landing-page.landing-bold .landing-bold-nav :is(.landing-logo, .landing-bold-language) { color: var(--color-white); }
+
+/* D05: the first line changes with the headline; only the last phrase is typed. */
+.landing-hero-stem { animation: landing-hero-stem-in .35s ease both; }
+
+@keyframes landing-hero-stem-in {
+  from { opacity: 0; }
+}
+
+.landing-bold-actions .landing-bold-secondary {
+  border: 1.5px solid var(--color-brand-accent);
+  background: var(--color-surface);
+}
+
+/* DA-17: the page ends with the same actions as the first view. */
+.landing-bold-manifesto .landing-bold-actions { margin-top: 2.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-stem { animation: none; }
+}

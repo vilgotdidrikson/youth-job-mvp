@@ -343,7 +343,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     {methodChoice}
     <div className="cv-hub-question-actions">
       <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
-      <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : "Hoppa över"}</button>
+      <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "merits" ? canUseAi ? "Hoppa över och skapa CV-förslag" : "Hoppa över och förhandsvisa" : "Hoppa över"}</button>
     </div>
     {/* Bekräftad erfarenhet visas i förhandsvisningen; i profilbygget finns "Pausa och fortsätt senare" redan i stegrubriken. */}
     <p className="cv-hub-draft-note"><UiIcon name="info" width="17" />{draftStorageUnavailable ? "Utkastet kunde inte sparas på den här enheten. Stanna på sidan tills du har granskat och gjort CV:t klart." : "Sparas på den här enheten medan du skriver."}</p>
