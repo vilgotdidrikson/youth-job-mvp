@@ -137,7 +137,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
-| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
+| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | För granskning | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
@@ -905,16 +905,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 49
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/d05-landing-polish-20261019`; reserverad före kodarbete 2026-10-19 enligt användarens uttryckliga beställning om visuell finputs av startsidan. Fortsättning reserverad före kodarbete 2026-11-08 på branch `Max` (Max / Claude), utifrån dev `a8febe6`; ingen kod fanns på den tidigare branchen. Omfattning: startsidans första vy (statisk förklaring, fiktivt swipekort i telefonram, skrivmaskin bara på sista ordet), statistikens placering, WebGL-bakgrundens paus/reducerad rörelse och avslutande Kom igång/För företag. Endast `app/page.tsx`, `app/landing-hero.tsx`, landningens komponenter/CSS och `components/ui/velaris.tsx`; ingen databas, auth eller annan vy.
 - Åtgärd: Lägg en statisk kort förklaring av ungdomsjobb och matchning i första vyn. Minska tomrum där det döljer nyttan. Låt eventuell skrivmaskinsanimation vara ett komplement och respektera reducerad rörelse.
 - Klar när: Besökaren förstår tjänsten utan att vänta på en animerad rubrik.
 - Tillägg 2026-10-19: Leveransen omfattar även visuell finputs av hela startsidan: justering, avstånd, färgpalett, typografi och responsiv layout. Befintlig struktur, innehåll och funktion bevaras. Delad marknadsnavigation kontrolleras även på /features och /pricing.
 - Tillägg från designaudit 2026-10-25 (DA-03, DA-10, DA-17 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): visa produkten i första vyn (ett tydligt fiktivt swipekort i telefonram), låt skrivmaskinen animera bara sista ordet med statisk rubrik för skärmläsare och reducerad rörelse, flytta eller anpassa arbetslöshetsstatistiken till målgruppen; stoppa WebGL-bakgrunden när hjälten inte syns, när fliken är dold och vid reducerad rörelse; avsluta startsidan med Kom igång och För företag.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (Chromium, driftsatt dev, 375 och 1280 px): Första vyn visade en halvskriven rubrik (”En e…”, ”En enklare v…”) och två knappar; ingen förklaring och ingen produkt. Skrivmaskinen raderade och skrev om hela rubriken. WebGL-bakgrunden ritade varje bildruta oavsett scroll, flik och reducerad rörelse. Statistiken kom före produktförklaringen och sidan slutade utan knappar.
+- Implementerat: Statisk förklaring under rubriken (”Sommarjobb, extrajobb och deltidsjobb för unga. Swipea, matcha och chatta direkt med företaget.”) och DA-15:s fiktiva swipekort (`SwipeCardPreview`, märkt Exempel) i telefonram – bredvid rubriken från 1024 px, under knapparna på mindre skärmar. Skrivmaskinen skriver bara sista frasen; första raden står alltid kvar och tonas in vid byte. h1 har den fullständiga första rubriken som skärmläsartext; utan JavaScript och vid reducerad rörelse visas den stilla. Statistiken flyttad efter ”En plattform, hela vägen”. Manifestet avslutas med samma knappar som hjälten (ny gemensam `LandingActions`, ”Gå till appen” för inloggade); knapparnas inline-färger ersatta med tokens. `components/ui/velaris.tsx`: pausar när hjälten inte syns (IntersectionObserver) och vid dold flik, en stillbild vid reducerad rörelse, pixeltäthet max 1,5 och 30 fps på pekskärm, ny prop för kantmörkning. Startsidan använder temats mjuka rosa (`--color-surface-rose`, `--color-brand-soft`, `--color-surface-rose-strong`) med nästan ingen kantmörkning, så startsidans vita specialfärg på navigationen är borttagen och navigationen har samma mörka text som /features och /pricing. Rubrikens bas-storlek justerad för textkolumnen (antalet textstorlekar oförändrat). Ingen databas, auth eller annan vy ändrad; övriga demosidor för Velaris behåller standardvärdena.
+- Verifierat: TypeScript, riktad ESLint, `check:design-tokens` (oförändrad baslinje: 538/140/56/10), produktionsbygge, `test:platform-visuals` och `test:local-fonts`. `test:accessibility` fallerar likadant med och utan ändringen (företagets ansökningsflikar, se F17). Chromium/Playwright mot lokalt produktionsbygge, 71/71: vid 320, 375, 768, 1024, 1280 och 1440 px syns förklaring och knappar i första vyn och kortet börjar i första vyn (bredvid rubriken från 1024 px), ingen horisontell scroll, ingen hjältetext under 12 px, länkar minst 44 px, inga konsolfel; sämsta uppmätta kontrast mot den rörliga bakgrunden (sex tidpunkter) förklaring 8,5–10,3, rubrik 7,7–9,2, rosa slutfras 3,6–4,8 (stor text), navigationen 7,9–8,4; WebGL ~45 bildrutor/s i hjälten, 0 när hjälten är bortscrollad och vid dold flik, återupptas efteråt, reducerad rörelse ger en stillbild och stilla fullständig rubrik; första raden alltid hel medan sista frasen skrivs, rubrikens höjd oförändrad; utan JavaScript syns rubrik, förklaring, knappar och kort; statistiken efter plattformsavsnittet; avslutande knappar till /signup och /signup?role=company. Skärmbilder före/efter granskade.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Ej provat i Safari/Firefox, på fysisk mobil eller med Lighthouse. På smala skärmar reserverar rubriken höjden för den längsta rubriken (tre rader), så avståndet till förklaringen är större när den kortare visas; medvetet för att inget ska flytta sig.
 
 <a id="d09"></a>
 ### D09 Placera feedback vid rätt åtgärd

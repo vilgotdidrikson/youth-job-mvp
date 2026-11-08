@@ -21,6 +21,7 @@ uniform float u_time;
 uniform float u_grain;
 uniform vec3  u_colors[4];
 uniform vec3  u_bg;
+uniform float u_edge;
 
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
@@ -75,7 +76,7 @@ void main() {
   float glow = smoothstep(0.8, 0.0, dist) * 0.3;
   col += u_colors[1] * glow;
 
-  col = mix(col * 0.2, col, vignette);
+  col = mix(col * u_edge, col, vignette);
 
   float grain = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453 + u_time);
   col += (grain - 0.5) * u_grain * 0.1;
@@ -90,6 +91,10 @@ export interface VelarisProps {
   speed?: number;
   grain?: number;
   height?: string;
+  /** Brightness kept at the edges: 0.2 (default) gives dark edges, 1 none. */
+  edge?: number;
+  /** Id of the element the background belongs to; drawing pauses while it is off screen. */
+  pauseOutsideId?: string;
   className?: string;
   children?: React.ReactNode;
 }
@@ -102,6 +107,8 @@ const Velaris = ({
   speed = 2.0,
   grain = 0.3,
   height = "100vh",
+  edge = 0.2,
+  pauseOutsideId,
   className,
   children,
 }: VelarisProps) => {
@@ -165,38 +172,85 @@ const Velaris = ({
       grain: gl.getUniformLocation(program, "u_grain"),
       colors: gl.getUniformLocation(program, "u_colors"),
       bg: gl.getUniformLocation(program, "u_bg"),
+      edge: gl.getUniformLocation(program, "u_edge"),
+    };
+
+    // Touch devices get a lower resolution and 30 fps to save battery.
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const maxDpr = coarse ? 1.5 : 2;
+    const frameInterval = coarse ? 1000 / 30 : 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Animation time; starts mid-flow so the still frame and the first moving frame match.
+    let elapsed = 4000;
+    let raf = 0;
+    let lastFrame = 0;
+    let targetVisible = true;
+
+    const draw = () => {
+      gl.uniform2f(locs.res, canvas.width, canvas.height);
+      gl.uniform1f(locs.time, elapsed * 0.001 * speed);
+      gl.uniform1f(locs.grain, grain);
+      gl.uniform1f(locs.edge, edge);
+      gl.uniform3f(locs.bg, ...hexToRgb(bg));
+      gl.uniform3fv(locs.colors, new Float32Array(colors.slice(0, 4).flatMap(hexToRgb)));
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+
+    const loop = (t: number) => {
+      raf = requestAnimationFrame(loop);
+      if (lastFrame && t - lastFrame < frameInterval) return;
+      // Cap the step so a resumed loop continues smoothly instead of jumping.
+      if (lastFrame) elapsed += Math.min(t - lastFrame, 100);
+      lastFrame = t;
+      draw();
+    };
+
+    // Runs only while the background can be seen and motion is allowed;
+    // otherwise the last frame stays as a still image.
+    const update = () => {
+      const run = targetVisible && !document.hidden && !reducedMotion.matches;
+      if (run && !raf) {
+        lastFrame = 0;
+        raf = requestAnimationFrame(loop);
+      } else if (!run && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
     };
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio, 2);
+      const dpr = Math.min(window.devicePixelRatio, maxDpr);
       canvas.width = container.clientWidth * dpr;
       canvas.height = container.clientHeight * dpr;
       gl.viewport(0, 0, canvas.width, canvas.height);
+      // Resizing clears the canvas; redraw the still frame when paused.
+      if (!raf) draw();
     };
 
     const ro = new ResizeObserver(resize);
     ro.observe(container);
 
-    let raf: number;
-    const render = (t: number) => {
-      gl.uniform2f(locs.res, canvas.width, canvas.height);
-      gl.uniform1f(locs.time, t * 0.001 * speed);
-      gl.uniform1f(locs.grain, grain);
-      gl.uniform3f(locs.bg, ...hexToRgb(bg));
+    const target = pauseOutsideId ? document.getElementById(pauseOutsideId) : null;
+    const io = target
+      ? new IntersectionObserver(([entry]) => {
+          targetVisible = entry.isIntersecting;
+          update();
+        })
+      : null;
+    if (target) io?.observe(target);
+    document.addEventListener("visibilitychange", update);
+    reducedMotion.addEventListener("change", update);
 
-      const flat = new Float32Array(colors.slice(0, 4).flatMap(hexToRgb));
-      gl.uniform3fv(locs.colors, flat);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      raf = requestAnimationFrame(render);
-    };
-
-    raf = requestAnimationFrame(render);
+    draw();
+    update();
     return () => {
       ro.disconnect();
+      io?.disconnect();
+      document.removeEventListener("visibilitychange", update);
+      reducedMotion.removeEventListener("change", update);
       cancelAnimationFrame(raf);
     };
-  }, [bg, colors, speed, grain]);
+  }, [bg, colors, speed, grain, edge, pauseOutsideId]);
 
   return (
     <div

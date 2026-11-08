@@ -8,14 +8,17 @@ import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
 import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
 import { AiVisual, MatchVisual, ChatVisual, MapVisual, EverywhereVisual } from "@/components/ui/platform-visuals";
-import { LandingHero } from "./landing-hero";
+import { SwipeCardPreview } from "@/components/marketing-product-preview";
+import { LandingActions, LandingHero } from "./landing-hero";
 import "./landing.css";
 
 export const metadata: Metadata = {
   title: { absolute: "MatchnWork" },
 };
 
-const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
+// Soft theme pinks (--color-surface-rose, --color-brand-soft, --color-surface-rose-strong)
+// keep the headline, explanation and navigation readable over the moving background (D05).
+const LANDING_BG_COLORS = ["#f9dce5", "#f7c2ce", "#fbd8e2", "#ffffff"];
 
 interface StatItem {
   value: number;
@@ -98,7 +101,10 @@ const platformItems: PlatformItem[] = [
   },
 ];
 
+const HERO_ID = "landing-hero";
+
 const copy = {
+  lede: "Sommarjobb, extrajobb och deltidsjobb för unga. Swipea, matcha och chatta direkt med företaget.",
   primary: "Kom igång",
   secondary: "För företag",
   statsHeading: "Ett verkligt problem",
@@ -123,13 +129,28 @@ export default function Home() {
         height="100vh"
         bg="#ffffff"
         colors={LANDING_BG_COLORS}
+        edge={0.96}
+        pauseOutsideId={HERO_ID}
       />
 
       <MarketingNav />
 
-      <LandingHero primary={copy.primary} secondary={copy.secondary} />
+      <LandingHero id={HERO_ID} lede={copy.lede} primary={copy.primary} secondary={copy.secondary} product={<SwipeCardPreview />} />
 
       <div className="landing-bold-body">
+        <section className="landing-bold-platform">
+          <PlatformShowcase
+            items={platformItems}
+            heading={
+              <>
+                {copy.platformTitleStart}
+                <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
+              </>
+            }
+            subheading={copy.platformSub}
+          />
+        </section>
+
         <section className="landing-bold-stats">
           <div className="landing-bold-stats-heading">
             <h2>
@@ -153,19 +174,6 @@ export default function Home() {
           <p className="landing-bold-stats-source">{copy.statsSource}</p>
         </section>
 
-        <section className="landing-bold-platform">
-          <PlatformShowcase
-            items={platformItems}
-            heading={
-              <>
-                {copy.platformTitleStart}
-                <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
-              </>
-            }
-            subheading={copy.platformSub}
-          />
-        </section>
-
         <section className="landing-bold-how">
           <h2>{copy.howTitle}</h2>
           <VerticalTimeline steps={steps} />
@@ -174,8 +182,9 @@ export default function Home() {
         <section className="landing-bold-manifesto">
           <Reveal>
             <p>{copy.manifesto}</p>
-            <span>{copy.manifestoSub}</span>
+            <span className="landing-bold-manifesto-sub">{copy.manifestoSub}</span>
           </Reveal>
+          <LandingActions primary={copy.primary} secondary={copy.secondary} />
         </section>
 
         <MarketingFooter />
