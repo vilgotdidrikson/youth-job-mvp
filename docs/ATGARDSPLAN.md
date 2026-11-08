@@ -139,12 +139,12 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | För granskning | Max / Claude |
-| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Pågår | Max / Claude |
-| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Pågår | Max / Claude |
-| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Pågår | Max / Claude |
-| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Pågår | Max / Claude |
+| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | För granskning | Max / Claude |
+| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | För granskning | Max / Claude |
+| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | För granskning | Max / Claude |
+| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | För granskning | Max / Claude |
 | 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
-| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Pågår | Max / Claude |
+| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | För granskning | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
@@ -826,14 +826,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 51
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). `lib/job-benefits.ts` (ny, återanvändbar sammanslagning), `lib/job-ai-review.ts` (AI-förslag slås ihop med företagets val), annonsbyggarens förmånsfält i `app/company/page.tsx` och visningen av förmåner. Ingen databas eller AI-prompt ändras.
 - Åtgärd: Samordna företagsprofilens AI-förslag med annonsens val så att Lunch under arbetspasset och Måltid ingår inte blir dubbla poster. Låt företaget granska och redigera den slutliga listan.
 - Klar när: Annonsen visar en kort och konsekvent förmånslista utan upprepningar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, fiktiv annons med förmånerna ”Lunch under arbetspasset, Måltid ingår, Personalrabatt, Arbetskläder”): annonsen visade alla fyra, alltså samma måltidsförmån två gånger. I annonsbyggaren syntes bara de fem färdiga valen, så ”Lunch under arbetspasset” och ”Arbetskläder” gick varken att se eller ta bort. Ett AI-förslag ersatte dessutom företagets valda förmåner i stället för att komplettera dem.
+- Implementerat: Ny ramverksfri `lib/job-benefits.ts` känner igen likvärdiga förmåner (måltid/lunch/mat, flexibla tider, introduktion/upplärning, personalrabatt, friskvård) och behåller första formuleringen. AI-förslag behåller företagets egna förmåner först och lägger bara till nya, högst sex totalt (`lib/job-ai-review.ts`). I byggaren visar ett färdigt val den formulering annonsen faktiskt har (t.ex. ”Lunch under arbetspasset” på måltidsvalet), egna förmåner visas som valda chips med ×, ett klick tar bort alla likvärdiga och en egen förmån som redan finns läggs inte till igen. Annonsvyn och förhandsvisningen visar varje förmån en gång. Ingen databas, AI-prompt eller sparad data ändras; befintliga annonser visas sammanslagna.
+- Verifierat: Nytt `test:job-benefits` (likvärdiga formuleringar, ”matlagning” räknas inte som måltid, ordning, tak, växling/tillägg/borttagning, AI-sammanslagning; fallerar på gamla koden där AI ersatte förmånerna), `test:job-ai-review`, `test:job-edit`, `test:job-copy`, TypeScript, ESLint och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): annonsen visar ”Lunch under arbetspasset, Personalrabatt, Arbetskläder”; i byggaren är måltidsvalet markerat med annonsens formulering, Arbetskläder syns som eget chip och kan tas bort, avmarkering tar bort alla likvärdiga och ”Fri lunch” läggs inte till när Måltid ingår finns. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Igenkänningen bygger på ordlistor för de vanligaste förmånerna; andra omskrivningar jämförs som text.
 
 <a id="f21"></a>
 ### F21 Förtydliga konto och företagsuppgifter
@@ -841,14 +842,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 56
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Företagsnavigeringens kontoikon (`components/mobile-nav.tsx`) och fältet Bransch i företagsuppgifterna (`app/profile/page.tsx`). Ingen RLS, verifieringslogik eller migration ändras.
 - Åtgärd: Skilj Profil från Mitt konto genom rätt flik eller ta bort dubbleringen. Ge en tydlig väg att se och uppdatera bransch och administratör som lämnats i onboarding.
 - Klar när: Navigationens etiketter har tydliga destinationer och grunduppgifter kan hållas aktuella.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 1280 px, fiktivt företagskonto): Navigationen hade både Profil (/profile) och en mörk ikon ”Mitt konto” med samma profilikon (/profile?tab=settings). Under Företagsuppgifter fanns namn, stad, organisationsnummer, kontaktperson (administratör) och beskrivning, men inte branschen från onboarding, som visas på den publika företagsprofilen (N04).
+- Implementerat: Kontoikonen bredvid Profil är borttagen (`components/mobile-nav.tsx`); kontot nås under Profil → Inställningar och onboardingens ”Gå till mitt konto” leder dit som tidigare. Företagsuppgifterna har fältet Bransch, som krävs som i onboarding och sparas med övriga uppgifter (`app/profile/page.tsx`). Administratören var redan redigerbar. Bara ändrat organisationsnummer startar ny granskning, så branschändring påverkar inte verifieringen. Ingen RLS eller migration ändrad.
+- Verifierat: Uppdaterat `test:company-navigation` (en Profil-post, ingen dubbel kontolänk, onboardingens kontolänk kvar), TypeScript, ESLint och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): ingen Mitt konto-länk bredvid Profil; Bransch visar sparat värde, tomt fält ger ”Ange företagets bransch.” utan att spara, ny bransch sparas, verifieringsstatus fortsatt godkänd, värdet kvar efter omladdning och Ditt konto syns under Inställningar. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Privatkontots navigation (samma dubblering) ändras också eftersom den delar komponent; ej webbtestad för privatkonto.
 
 <a id="f19"></a>
 ### F19 Gör filterdialogens beteende tydligt
@@ -940,14 +942,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 52
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast textfälten i `components/job-match-profile-editor.tsx` och deras CSS. Inga regler för kriterier ändras.
 - Åtgärd: Öka höjden eller använd innehållsanpassning för rollbeskrivning, grundkrav, lärande, egenskaper och frågor. Minska det stora tomrummet mellan fälten och behåll tydliga etiketter.
 - Klar när: Flera rader går att läsa utan att skrolla i varje mycket lågt fält.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 1280 och 375 px): Alla fem textfält i Matchkriterier var 48 px höga (en rad) eftersom den globala `.input-field` satte `height: 3rem`; tre rader rollbeskrivning och fem grundkrav fick 62 respektive 116 px intern scroll. Avståndet mellan fälten var 56 px.
+- Implementerat: Fälten växer med innehållet (`field-sizing: content`), minst tre rader och högst 60 % av skärmhöjden, kan dras större, och den fasta höjden nollställs (`app/product-design.css`). Fallback för webbläsare utan `field-sizing`: rollbeskrivning 4 och grundkrav 5 rader. Avståndet mellan fälten minskat till 24 px; etiketter och hjälptexter oförändrade.
+- Verifierat: `check:design-tokens`, produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): vid 1280 px är fälten 110–164 px höga utan intern scroll med tre rader rollbeskrivning och fem grundkrav, avstånd 24 px, etiketterna kvar; vid 375 px fyra grundkrav utan intern scroll och ingen horisontell scroll. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Automatisk höjd kräver `field-sizing` (Chromium); Safari/Firefox får de fasta radantalen och kan dra fältet större. Ej provat på fysisk mobil.
 
 <a id="d06"></a>
 ### D06 Gör status och profilprogress begripliga
@@ -955,14 +958,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 53
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Etiketten för profilstegen (`lib/profile-journey.ts`, `components/profile-steps/step-nav.tsx`, `components/profile-journey.tsx`) och kontroll av ansökningstexterna. Profilflödets logik ägs av F15/F16/F18 (Vilgot / Codex, införda i dev) och ändras inte.
 - Åtgärd: Byt abstrakt 1 av 5 och tekniska förklaringar mot exempelvis CV klart och valfria profildelar. Anpassa ansökningstext till väntande eller skickad status och skriv tydligt vad som återstår.
 - Klar när: Texten beskriver användarens situation och nästa steg.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 375 px): Profilstegen visade ”Steg 1 av 5”, ”Steg 2 av 5” och ”Steg 3 av 5” utan att säga att bara CV:t krävs eller om det var klart. Ansökningstexterna anpassas redan efter status (F13/N08): jobbsidan säger ”Ditt intresse sparas tills CV:t är klart.” utan CV och ”Ansökan skickas direkt. Följ den under Ansökningar.” med CV, och ett sparat intresse visas som ”Inte skickad ännu – Ditt CV är klart, men ansökan har inte skickats. Skicka den nu så får företaget den direkt.” Den delen behövde ingen ändring.
+- Implementerat: Ny `profileStepStatus()` i `lib/profile-journey.ts` (återanvändbar för mobilapp): CV-steget heter ”CV · krävs för att söka jobb”, övriga ”CV klart · valfri del 2 av 4” eller ”CV saknas · valfri del 1 av 4”. Används i mobilens stegrubrik och i ”Din jobbprofil · …” på mellanskärmen och i redigeraren. Stegordning, länkar och profilflödets logik (F15/F16/F18) oförändrade.
+- Verifierat: `test:profile-journey`, TypeScript och produktionsbygge. `test:profile-steps` fallerar likadant utan ändringen (förväntad 40001-text i redigeraren). Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt) vid 375 px: CV-steget ”CV · krävs för att söka jobb”, valfritt steg utan CV ”CV saknas · valfri del 1 av 4”, med CV ”CV klart · valfri del 2 av 4”, ingen horisontell scroll; jobbsidans och ansökningssidans texter för väntande och skickbar ansökan avlästa enligt ovan. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Desktopens stegmeny visar fortfarande stegnamnen 1–5 med bock för klara steg (oförändrad).
 
 <a id="d04"></a>
 ### D04 Öka padding på kartans kortknapp
@@ -970,14 +974,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 54
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast knappmått i kartsidans vyväxling/reservvy (`app/kartan/map-design.css`). F24:s logik (Vilgot / Codex) ändras inte.
 - Åtgärd: Ge Visa som kort tillräcklig horisontell padding och samma mått som andra sekundärknappar. Anpassa till reservvyn i F24.
 - Klar när: Text och ikon ligger med tydlig marginal till knappens kanter.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 375 och 1280 px): Kortknappen heter nu ”Sök och filtrera” (F24). Den är en fylld knapp, men kartans gemensamma regel för 44 px-länkar satte `padding: 10px 0`, så texten låg mot kanterna (0 px sidomarginal, radie 12,8 px).
+- Implementerat: Knappen har en egen regel med sekundärknapparnas mått: minst 44 px, 16 px sidopadding och radie 13 px (`app/kartan/map-design.css`). Den gemensamma regeln gäller bara textlänkarna. F24:s logik och reservvy oförändrade.
+- Verifierat: `test:map-fallback`, `check:design-tokens` och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): vid 375 och 1280 px 16 px från text till knappkant på båda sidor, 44 px höjd, radie 13 px. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar.
 
 <a id="d07"></a>
 ### D07 Rätta mikrocopy och varumärkestext
