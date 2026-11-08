@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { UiIcon } from "@/components/ui-icon";
 import { useAppDestination } from "@/hooks/use-app-destination";
 
@@ -81,15 +81,11 @@ export function LandingActions({ primary, secondary }: { primary: string; second
   );
 }
 
-export function LandingHero({ id, lede, primary, secondary, product }: { id: string; lede: string; primary: string; secondary: string; product: ReactNode }) {
+export function LandingHero({ id, primary, secondary }: { id: string; primary: string; secondary: string }) {
   return (
     <section className="landing-bold-hero" id={id}>
-      <div className="landing-hero-copy">
-        <AnimatedHeroHeadline />
-        <p className="landing-hero-lede">{lede}</p>
-        <LandingActions primary={primary} secondary={secondary} />
-      </div>
-      <div className="landing-hero-product">{product}</div>
+      <AnimatedHeroHeadline />
+      <LandingActions primary={primary} secondary={secondary} />
     </section>
   );
 }
