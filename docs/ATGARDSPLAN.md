@@ -127,7 +127,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
 | 37 | [N04](#n04) | P2 | Öppna en läsbar företagsprofil från annonsen | Klar | Max / Claude |
 | 38 | [N05](#n05) | P2 | Lägg till strukturerade praktiska jobbuppgifter | Klar | Max / Claude |
-| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | För granskning | Max / Claude |
+| 39 | [F17](#f17) | P2 | Samla anställningsflödet i en tydlig ingång | Klar | Max / Claude |
 | 40 | [N07](#n07) | P2 | Ångra det senaste bortvalet i swipe | För granskning | Vilgot / Codex |
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
@@ -136,15 +136,15 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
-| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | För granskning | Max / Claude |
+| 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
-| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
-| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
-| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
-| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
-| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Ej påbörjad | — |
+| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | För granskning | Max / Claude |
+| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | För granskning | Max / Claude |
+| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | För granskning | Max / Claude |
+| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | För granskning | Max / Claude |
+| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | För granskning | Max / Claude |
 | 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
-| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Ej påbörjad | — |
+| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | För granskning | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
@@ -152,14 +152,14 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | Pågår | Max / Claude |
-| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | För granskning | Max / Claude |
+| 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | Klar | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | Klar | Max / Claude |
-| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | För granskning | Max / Claude |
+| 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Klar | Max / Claude |
 | 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
 | 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Klar | William / Claude |
 | 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
-| 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Ej påbörjad | — |
-| 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Ej påbörjad | — |
+| 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
+| 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
@@ -178,6 +178,8 @@ Reserverat 2026-10-25 (uttrycklig beställning): Profilbygget leverans 3 och 4 e
   - Implementerat: Steg 4 (`components/profile-steps/qualifications-step.tsx`): rubrik ”Vad kan du?”, körkort/behörigheter och verktyg som TagInput med förslag och räknare (max 8 respektive 12, bredvid varandra på desktop), CV-språk skrivskyddat i rosa yta med ”Ändra i CV:t”, extra språk med nivå som enval-chips (tidigare fritextnivå behålls som eget chip), ”+ Ett språk till” inom max 8. Steg 5 (`examples-step.tsx`): tips med glödlampa (i stegmenyn på desktop i resan), sparade exempel som kompakt rad med ”Ändra”, nytt exempel i kort med brand-kant, styrka som enval-chips med ”+ Eget” (max 30 tecken), situation och egen insats med hjälptext, ”+ Ett exempel till (X av 5)”, primärknapp ”Spara och bli klar”. Text kvar i taggfälten sparas, tomma exempelkort och tomma språkrader sparas inte, påbörjat exempel utan styrka ger ”Välj vad exemplet visar.”. Konstanter och hjälpfunktioner i `lib/profile-steps.ts`, ikonen `bulb` i `ui-icon.tsx`, valfritt `tip` i `ProfileStepPage`. Nederkantsmenyn döljs nu på mobil även i steg 4 och 5 i resan (den täckte stegets fasta knapprad). Rättat i delade komponenter: förslagschips i TagInput saknade chip-stil, och formuläret sträcktes ut vertikalt när stegmenyn var högre än innehållet.
   - Verifierat: TypeScript, produktionsbygge, `test:profile-steps` (utökat med steg 4/5 och sparkontraktet), `test:profile-journey` och `test:accessibility`. Riktad ESLint utan nya problem (ett befintligt fel om setState i effekt på rad 87 i redigeraren finns redan i dev). Playwright/Chromium mot lokal dev-server kopplad till DevStaging med tillfälligt fiktivt QA-konto med CV-språk (raderat efteråt), 31/31: 375 px (rubrik, CV-språk, ingen horisontell scroll, förslag och Enter blir taggar, räknare, nivå med piltangent, fast primärknapp 52 px, varning vid Hoppa över, sparning till mellanskärmen med kontrollerade värden i databasen inklusive text kvar i verktygsfältet; tips och tomt kort, felmeddelande för påbörjat exempel, eget val, räknare, borttaget kort, sparat exempel i databasen), 1280 px (taggkort bredvid varandra, förslag med chip-ram, sparade värden, stegmeny, ingen horisontell scroll, sparat exempel som rad, tips bara i stegmenyn, Ändra öppnar kortet) och utanför resan (rubrik som h2, Avbryt/”Spara den här delen”, tips i formuläret, sparning). Inga konsolfel.
   - Återstår: Commit, PR och införande i dev, kontroll i driftsatt dev. Inbäddat läge på `/profile` är inte klickat igenom (samma formulärväg som fristående sidan, som är testad). Versionskonflikt inte testad (känt DevStaging-fel, se leverans 1). Öppet beslut i SPEC: vilka förslag som ska finnas för behörigheter och verktyg (nu designfilernas exempel).
+
+Reserverat 2026-11-08: Statussynk och verifiering i driftsatt dev av egna kort D01, F17 och DA-05 (kod redan införd i dev), samt rättning av översiktstabellens inaktuella rader DA-11, DA-15 och DA-16 (korten är redan Klar). Max / Claude, branch `Max`. Endast dokumentation; inga andras kort ändras.
 
 Reserverat 2026-10-22: DA-01 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (landningssidans plattformsillustrationer är tomma under 1024px), Max / Claude, `claude/da01-platform-visuals-20261022`, [PR #95](https://github.com/vilgotdidrikson/youth-job-mvp/pull/95), mergad till dev `50d6a49`. Status: Klar. Övriga DA-punkter är förslag och inte reserverade om inget annat anges nedan.
   - Reproducerat: I webbläsare vid 375 och 800px var alla sex gradient-id dubblerade och samtliga fem synliga mobilillustrationer pekade på gradienter i den dolda desktopkolumnen; illustrationerna visades som tomma mörka rutor.
@@ -771,10 +773,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f17"></a>
 ### F17 Samla anställningsflödet i en tydlig ingång
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 39
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N23 (väntar på L12-gallring), N20/N21/F12 (pausat profil-/AI-arbete inför GDPR-beslut) och F20 (integritet) hoppas över. Endast text, benämningar och förklaring i befintligt anställningsflöde; L04:s statuslogik, RPC, databas och F06:s pristext (`lib/current-offer.ts`) ändras inte. Samordning: L04/F06 ägs av Vilgot / Codex och är införda i dev.
 - Åtgärd: Använd samma benämning och ingång i stället för både Registrera anställning och Markera som anställd. Förklara befattning, startdatum, ungdomens granskning och nästa status, tillsammans med prisinformationen i F06.
@@ -782,7 +784,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Reproducerat (kod och webbläsare): Samma steg hette ”Registrera anställning” i chatten men ”Markerad som anställd” hos admin, ”Anställd” i ungdomens ansökningar (redan när företaget registrerat, före ungdomens granskning) och ”Rätta uppgifter”/”Granska” i chattens kompakta rad men ”Rätta anställningsuppgifter”/”Granska uppgifterna” i panelen. Stäng rekrytering sa ”Registrera den anställda kandidaten i chatten” utan att nämna steget. Alla rekryteringsdialoger saknade bakgrund, padding och kant i webbläsaren eftersom den globala `.mnw-modal-dialog` skrev över modulens `.dialog`.
 - Implementerat: Gemensamma `REGISTER_EMPLOYMENT`, `EMPLOYMENT_STEPS` och `employmentStatusLabel()` i `lib/recruitment-types.ts` (återanvändbara för mobilapp). Företagets enda ingång heter ”Registrera anställning” i chattens kompakta rad, panel, dialog och Stäng rekrytering (som nu hänvisar till samma steg i chatten med kandidaten). Kompakta raden använder panelens åtgärdsnamn. Status för anställd match: ”Anställning registrerad” tills ungdomen godkänt, ”Anställning bekräftad” efter godkännande och ”Anställning behöver rättas” vid invändning (admin); ungdomens ansökningar och chattlistan visar ”Anställning registrerad”. Registreringsdialogen visar tre numrerade steg (befattning/startdatum, kandidatens granskning, bekräftad status), F06:s oförändrade pristext i rosa yta och kopplade hjälptexter för befattning och startdatum (framtida datum tillåts redan av RPC:n, upp till två år). Rättelse visar i stället att kandidaten granskar igen. Dialogernas bakgrund, padding, kant och bredd återställda med tokens. Gammal felsträng i oanvända `markMatchHired` uppdaterad. Ingen RPC, databas, statuslogik eller pristext ändrad.
 - Verifierat: TypeScript, produktionsbygge, riktad ESLint utan problem i ändrade källfiler (två befintliga fel om `module` i testskriptet finns även i dev), `check:design-tokens` (oförändrad baslinje), `test:recruitment` och utökat `test:recruitment-review` (gemensamt namn, tre steg, kopplade hjälptexter, rättelse utan steg, statusetiketter, inga gamla benämningar); de nya kontrollerna fallerar på gamla koden. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efter varje körning), 21/21: företagets chatt vid 375 och 1280 px (en ingång, dialognamn, tre steg, pristext, hjälptexter kopplade via aria-describedby, ingen horisontell scroll), registrering till ”Inväntar kandidatens granskning”, Stäng rekrytering med ”Anställd genom MatchnWork” hänvisar till ”Registrera anställning”, ungdomens ansökan visar ”Anställning registrerad” (inte ”Anställd”), ungdomens kompakta rad ”Granska uppgifterna” och godkännande till ”Anställning bekräftad”, adminkortet visar ”Anställning bekräftad”. Skärmbilder granskade.
-- Återstår / begränsning: `test:accessibility` fallerar redan i dev på en orelaterad företagsflik (`TabList id="company-applications"`); inte ändrat här. Ungdomens chatt vid 375 px och fysisk mobil inte provade; inte kontrollerat i driftsatt dev. Commit på `Max`, införande i dev återstår. Framtida betald modell (F06) oförändrad.
+- Verifierat i driftsatt dev: Kontrollerat i driftsatt dev 2026-11-08 (Max / Claude): Chromium/Playwright mot https://youth-job-mvp-dev.vercel.app (DevStaging, dev `a8febe6`) med tillfälliga fiktiva QA-konton som raderades efteråt (företag, ungdom med fiktivt CV-text, admin), 26/26: företagets chatt vid 375 och 1280 px har en synlig ingång ”Registrera anställning” (i mobilens hopfällda ”Jobbet och nästa steg”) och ingen ”Markera som anställd”; dialogens rubrik, tre steg, F06:s pristext, kopplade hjälptexter, bakgrund/padding inom vyn och ingen horisontell scroll; registrering ger ”Inväntar kandidatens granskning”; ungdomens ansökningar vid 375 px visar ”Anställning registrerad” och inte ”Anställd”; ungdomens chatt vid 375 och 1280 px har ”Granska uppgifterna” utan horisontell scroll; godkännande ger ”Anställning bekräftad”; adminkortet syns inte under Behöver följas upp och visar ”Anställning bekräftad” under Alla rekryteringar. Skärmbilder granskade.
+- Återstår / begränsning: `test:accessibility` fallerar redan i dev på en orelaterad företagsflik (`TabList id="company-applications"`); inte ändrat här. Införd i dev (commit `d9b37fa`). Fysisk mobil inte provad. Framtida betald modell (F06) oförändrad.
 
 <a id="f18"></a>
 ### F18 Förbättra sparande i profilredigeringen
@@ -823,14 +826,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 51
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). `lib/job-benefits.ts` (ny, återanvändbar sammanslagning), `lib/job-ai-review.ts` (AI-förslag slås ihop med företagets val), annonsbyggarens förmånsfält i `app/company/page.tsx` och visningen av förmåner. Ingen databas eller AI-prompt ändras.
 - Åtgärd: Samordna företagsprofilens AI-förslag med annonsens val så att Lunch under arbetspasset och Måltid ingår inte blir dubbla poster. Låt företaget granska och redigera den slutliga listan.
 - Klar när: Annonsen visar en kort och konsekvent förmånslista utan upprepningar.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, fiktiv annons med förmånerna ”Lunch under arbetspasset, Måltid ingår, Personalrabatt, Arbetskläder”): annonsen visade alla fyra, alltså samma måltidsförmån två gånger. I annonsbyggaren syntes bara de fem färdiga valen, så ”Lunch under arbetspasset” och ”Arbetskläder” gick varken att se eller ta bort. Ett AI-förslag ersatte dessutom företagets valda förmåner i stället för att komplettera dem.
+- Implementerat: Ny ramverksfri `lib/job-benefits.ts` känner igen likvärdiga förmåner (måltid/lunch/mat, flexibla tider, introduktion/upplärning, personalrabatt, friskvård) och behåller första formuleringen. AI-förslag behåller företagets egna förmåner först och lägger bara till nya, högst sex totalt (`lib/job-ai-review.ts`). I byggaren visar ett färdigt val den formulering annonsen faktiskt har (t.ex. ”Lunch under arbetspasset” på måltidsvalet), egna förmåner visas som valda chips med ×, ett klick tar bort alla likvärdiga och en egen förmån som redan finns läggs inte till igen. Annonsvyn och förhandsvisningen visar varje förmån en gång. Ingen databas, AI-prompt eller sparad data ändras; befintliga annonser visas sammanslagna.
+- Verifierat: Nytt `test:job-benefits` (likvärdiga formuleringar, ”matlagning” räknas inte som måltid, ordning, tak, växling/tillägg/borttagning, AI-sammanslagning; fallerar på gamla koden där AI ersatte förmånerna), `test:job-ai-review`, `test:job-edit`, `test:job-copy`, TypeScript, ESLint och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): annonsen visar ”Lunch under arbetspasset, Personalrabatt, Arbetskläder”; i byggaren är måltidsvalet markerat med annonsens formulering, Arbetskläder syns som eget chip och kan tas bort, avmarkering tar bort alla likvärdiga och ”Fri lunch” läggs inte till när Måltid ingår finns. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Igenkänningen bygger på ordlistor för de vanligaste förmånerna; andra omskrivningar jämförs som text.
 
 <a id="f21"></a>
 ### F21 Förtydliga konto och företagsuppgifter
@@ -838,14 +842,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 56
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Företagsnavigeringens kontoikon (`components/mobile-nav.tsx`) och fältet Bransch i företagsuppgifterna (`app/profile/page.tsx`). Ingen RLS, verifieringslogik eller migration ändras.
 - Åtgärd: Skilj Profil från Mitt konto genom rätt flik eller ta bort dubbleringen. Ge en tydlig väg att se och uppdatera bransch och administratör som lämnats i onboarding.
 - Klar när: Navigationens etiketter har tydliga destinationer och grunduppgifter kan hållas aktuella.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 1280 px, fiktivt företagskonto): Navigationen hade både Profil (/profile) och en mörk ikon ”Mitt konto” med samma profilikon (/profile?tab=settings). Under Företagsuppgifter fanns namn, stad, organisationsnummer, kontaktperson (administratör) och beskrivning, men inte branschen från onboarding, som visas på den publika företagsprofilen (N04).
+- Implementerat: Kontoikonen bredvid Profil är borttagen (`components/mobile-nav.tsx`); kontot nås under Profil → Inställningar och onboardingens ”Gå till mitt konto” leder dit som tidigare. Företagsuppgifterna har fältet Bransch, som krävs som i onboarding och sparas med övriga uppgifter (`app/profile/page.tsx`). Administratören var redan redigerbar. Bara ändrat organisationsnummer startar ny granskning, så branschändring påverkar inte verifieringen. Ingen RLS eller migration ändrad.
+- Verifierat: Uppdaterat `test:company-navigation` (en Profil-post, ingen dubbel kontolänk, onboardingens kontolänk kvar), TypeScript, ESLint och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): ingen Mitt konto-länk bredvid Profil; Bransch visar sparat värde, tomt fält ger ”Ange företagets bransch.” utan att spara, ny bransch sparas, verifieringsstatus fortsatt godkänd, värdet kvar efter omladdning och Ditt konto syns under Inställningar. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Privatkontots navigation (samma dubblering) ändras också eftersom den delar komponent; ej webbtestad för privatkonto.
 
 <a id="f19"></a>
 ### F19 Gör filterdialogens beteende tydligt
@@ -882,10 +887,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="d01"></a>
 ### D01 Rätta knapparna i profilintroduktionen
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 48
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad före kodarbete 2026-10-30. Avsteg från global ordning: N09 (ny serverlagring av CV-utkast inväntar GDPR/L13) och L07 (slutverifiering som väntar på ofärdiga delar) hoppas över; mellanliggande punkter har ägare. Endast knapparnas layout i profilöversikten (`components/profile-builder.tsx`, `components/recruitment-profile.module.css`); profilflödet ägs av F15/F16/F18 (Vilgot / Codex).
 - Åtgärd: På /profile/build?welcome=1 ska Bygg din profil ha text och pil på samma rad. Centrera texten i Skapa den senare vertikalt och ge knapparna konsekvent höjd, mellanrum och padding.
@@ -893,7 +898,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Reproducerat 2026-10-30 (Chromium, lokalt produktionsbygge mot DevStaging, fiktivt QA-konto): Knapparna heter nu ”Bygg senare” och ”Bygg profil” efter tidigare omarbetning av profilöversikten. Pil och text låg redan på samma rad och texten var vertikalt centrerad med lika höjd (50 px) och padding i 320–1280 px. Kvar var att knapparna vid 320 och 375 px låg högerställda på var sin rad med olika bredd (138/149 px): modulens mobilregel gjorde bara `button` fullbredd, medan översikten använder länkar.
 - Implementerat: Mobilregeln i `components/recruitment-profile.module.css` gäller nu både knappar och länkar i `.form footer` (≤720 px), så båda åtgärderna blir fullbredd och staplas som i profilredigeraren. Bara översikten har länkar i en sådan footer; inga andra vyer påverkas. Text, länkar och logik oförändrade.
 - Verifierat: `check:design-tokens` (oförändrad baslinje), produktionsbygge, `test:profile-journey` och `test:profile-steps`. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälligt fiktivt QA-konto (raderat efteråt) på `/profile/build?welcome=1`, 28/28 vid 320, 375, 768 och 1280 px: pil på textraden, etiketter på en rad, texten centrerad, lika höjd och padding, fullbredd på mobil, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder före/efter granskade.
-- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Ej provat på fysisk mobil eller i driftsatt dev. Commit på `Max`, införande i dev återstår.
+- Verifierat i driftsatt dev: Kontrollerat i driftsatt dev 2026-11-08 (Max / Claude): Chromium/Playwright mot https://youth-job-mvp-dev.vercel.app (DevStaging, dev `a8febe6`) med tillfälliga fiktiva QA-konton som raderades efteråt, 24/24 på `/profile/build?welcome=1` vid 320, 375, 768 och 1280 px: båda åtgärderna finns, lika höjd (50 px), pilen på textraden, symmetrisk padding, fullbredd och staplade vid 320/375 px, sida vid sida från 768 px, ingen horisontell scroll. Skärmbilder granskade.
+- Återstår / begränsning: Hörnradien skiljer 1 px (sekundär 13 px, primär 14 px) via de globala knappklasserna i hela produkten; hör till DA-05:s skala och ändras inte här. Införd i dev (commit `21e59f9`). Ej provat på fysisk mobil.
 
 <a id="d05"></a>
 ### D05 Förklara produkten direkt på startsidan
@@ -903,14 +909,16 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Global ordning: 49
 - Status: Pågår
 - Ansvarig: Max / Claude
-- Branch/PR: `claude/d05-landing-polish-20261019`; reserverad före kodarbete 2026-10-19 enligt användarens uttryckliga beställning om visuell finputs av startsidan.
+- Branch/PR: `claude/d05-landing-polish-20261019`; reserverad före kodarbete 2026-10-19 enligt användarens uttryckliga beställning om visuell finputs av startsidan. Fortsättning reserverad före kodarbete 2026-11-08 på branch `Max` (Max / Claude), utifrån dev `a8febe6`; ingen kod fanns på den tidigare branchen. Omfattning: startsidans första vy (statisk förklaring, fiktivt swipekort i telefonram, skrivmaskin bara på sista ordet), statistikens placering, WebGL-bakgrundens paus/reducerad rörelse och avslutande Kom igång/För företag. Endast `app/page.tsx`, `app/landing-hero.tsx`, landningens komponenter/CSS och `components/ui/velaris.tsx`; ingen databas, auth eller annan vy.
 - Åtgärd: Lägg en statisk kort förklaring av ungdomsjobb och matchning i första vyn. Minska tomrum där det döljer nyttan. Låt eventuell skrivmaskinsanimation vara ett komplement och respektera reducerad rörelse.
 - Klar när: Besökaren förstår tjänsten utan att vänta på en animerad rubrik.
 - Tillägg 2026-10-19: Leveransen omfattar även visuell finputs av hela startsidan: justering, avstånd, färgpalett, typografi och responsiv layout. Befintlig struktur, innehåll och funktion bevaras. Delad marknadsnavigation kontrolleras även på /features och /pricing.
 - Tillägg från designaudit 2026-10-25 (DA-03, DA-10, DA-17 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): visa produkten i första vyn (ett tydligt fiktivt swipekort i telefonram), låt skrivmaskinen animera bara sista ordet med statisk rubrik för skärmläsare och reducerad rörelse, flytta eller anpassa arbetslöshetsstatistiken till målgruppen; stoppa WebGL-bakgrunden när hjälten inte syns, när fliken är dold och vid reducerad rörelse; avsluta startsidan med Kom igång och För företag.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (Chromium, driftsatt dev, 375 och 1280 px): Första vyn visade en halvskriven rubrik (”En e…”, ”En enklare v…”) och två knappar; ingen förklaring och ingen produkt. Skrivmaskinen raderade och skrev om hela rubriken. WebGL-bakgrunden ritade varje bildruta oavsett scroll, flik och reducerad rörelse. Statistiken kom före produktförklaringen och sidan slutade utan knappar.
+- Ändrat på användarens begäran 2026-11-08: Den statiska förklaringen under rubriken och det fiktiva swipekortet i hjälten är borttagna igen, och bakgrundens ursprungliga färger och mörka kanter är kvar. Hjälten har därmed samma innehåll och layout som tidigare. Statistiken står åter direkt efter hjälten: utan förklaring i hjälten hamnade den mörka plattformspanelen direkt mot bakgrunden, vilket såg trasigt ut. Under hjälten är sidan därför som tidigare, med tillägget av avslutande knappar.
+- Implementerat: Skrivmaskinen skriver bara sista frasen; första raden står alltid kvar och tonas in vid byte. h1 har den fullständiga första rubriken som skärmläsartext; utan JavaScript och vid reducerad rörelse visas den stilla. Manifestet avslutas med samma knappar som hjälten (ny gemensam `LandingActions`, ”Gå till appen” för inloggade); knapparnas inline-färger ersatta med tokens. `components/ui/velaris.tsx`: pausar när hjälten inte syns (IntersectionObserver) och vid dold flik, en stillbild vid reducerad rörelse, pixeltäthet max 1,5 och 30 fps på pekskärm, ny valfri prop för kantmörkning (standard oförändrad). Bakgrundens färger, mörka kanter och navigationens vita text är oförändrade på användarens begäran 2026-11-08; en ljusare variant med text bredvid kortet prövades och valdes bort. Ingen databas, auth eller annan vy ändrad; övriga demosidor för Velaris behåller standardvärdena.
+- Verifierat (version utan förklaring och kort): TypeScript, riktad ESLint, `check:design-tokens` (oförändrad baslinje: 538/140/56/10) och produktionsbygge; skärmbilder vid 375 och 1280 px mot lokalt produktionsbygge granskade. Tidigare Chromium-kontroller av WebGL-paus (0 bildrutor utanför hjälten och vid dold flik, stillbild vid reducerad rörelse), skrivmaskinen (första raden alltid hel, fast rubrikhöjd, skärmläsartext) och avslutande knappar gjordes på samma kod före borttagningen. Skärmbilder av hela sidan vid scroll (375 och 1280 px) jämförda med driftsatt dev: samma sektioner och bakgrunder; enda skillnaden är de avslutande knapparna. Kontrasten mot den rörliga mörkkantade bakgrunden klarar inte WCAG AA i alla lägen, varken före eller efter D05 (driftsatt dev före D05: rubriken 1,00 vid 1280 px, navigationen 2,65–4,26).
+- Återstår / blockerare: Kriteriet Klar när (besökaren förstår tjänsten utan att vänta på rubriken) uppfylls inte utan en statisk förklaring eller produktbild i första vyn; kräver nytt beslut om innehåll. Kontrasten mot bakgrunden kräver ett designbeslut. Inget av detta är committat eller infört i dev.
 
 <a id="d09"></a>
 ### D09 Placera feedback vid rätt åtgärd
@@ -918,14 +926,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 50
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (lokal commit; publiceras tillsammans med leveransen enligt användarens begäran). Endast knapptexter och väntetext: `app/company/page.tsx` (annonslistans Pausa/Återaktivera/Ta bort), `components/youth-cv-hub.tsx` (sista frågans Hoppa över) och `app/jobb/[jobId]/page.tsx` (CV-dialogens sekundärknapp). Ingen logik, databas eller annan vy ändras.
 - Åtgärd: Visa Pausar eller Sparar vid den knapp som används i stället för vid Ta bort. Förtydliga sista CV-frågans Hoppa över och använd Fortsätt utforska bara om användaren faktiskt kommer tillbaka till upptäck.
 - Klar när: Knapptext och feedback beskriver det som händer och den destination användaren får.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (kod och Chromium): I företagets annonslista visade Ta bort ”Sparar...” medan en annons pausades eller återaktiverades, och Pausa/Återaktivera gav ingen egen återkoppling. På CV-guidens sista fråga (Meriter & länkar) skapade Hoppa över i själva verket CV-förslaget med AI eller öppnade förhandsvisningen. CV-dialogen på jobbsidan hade Fortsätt utforska, men knappen stänger bara dialogen och användaren blir kvar på annonsen.
+- Implementerat: Annonslistan håller reda på vilken åtgärd som pågår; Pausa visar ”Pausar…”, Återaktivera ”Återaktiverar…” och Ta bort ”Tar bort…”, och övriga knappar behåller sin text (`app/company/page.tsx`). Sista CV-frågans sekundärknapp heter ”Hoppa över och skapa CV-förslag” med AI-hjälp och ”Hoppa över och förhandsvisa” när personen skriver själv; frågorna 1–5 heter fortfarande Hoppa över (`components/youth-cv-hub.tsx`). CV-dialogens sekundärknapp heter ”Tillbaka till annonsen” (`app/jobb/[jobId]/page.tsx`). Bara knapptexter och väntetext; logik, RLS och databas oförändrade.
+- Verifierat: TypeScript, riktad ESLint (en befintlig `<img>`-varning i företagssidan), produktionsbygge, `check:design-tokens`, `test:profile-journey`, `test:company-navigation` och `test:cv-document`. `test:job-publication` fallerar likadant utan ändringen (`readPracticalDetails is not a function`). Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt) och fördröjda annonsanrop, 32/32: vid 1280 och 375 px visar Pausa ”Pausar…” och Återaktivera ”Återaktiverar…” medan Ta bort är oförändrad, ingen horisontell scroll; Ta bort visar ”Tar bort…” medan Pausa är oförändrad och annonsen försvinner; jobbsidans CV-dialog vid 375 och 1280 px har ”Tillbaka till annonsen”, ingen Fortsätt utforska, och knappen stänger dialogen på samma annons; CV-guiden vid 375 och 1280 px har Hoppa över på frågorna 1–5, rätt text på sista frågan för båda metoderna, oförändrad primärknapp, ingen horisontell scroll och sista Hoppa över öppnar förhandsvisningen. Skärmbilder granskade.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Ej provat med skärmläsare (väntetexten byts i knappen, ingen separat statusannonsering) eller på fysisk mobil. Reservationen publicerades tillsammans med leveransen, inte före kodarbetet, enligt användarens begäran.
 
 <a id="d03"></a>
 ### D03 Ge kriteriernas textfält mer plats
@@ -933,14 +942,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 52
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast textfälten i `components/job-match-profile-editor.tsx` och deras CSS. Inga regler för kriterier ändras.
 - Åtgärd: Öka höjden eller använd innehållsanpassning för rollbeskrivning, grundkrav, lärande, egenskaper och frågor. Minska det stora tomrummet mellan fälten och behåll tydliga etiketter.
 - Klar när: Flera rader går att läsa utan att skrolla i varje mycket lågt fält.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 1280 och 375 px): Alla fem textfält i Matchkriterier var 48 px höga (en rad) eftersom den globala `.input-field` satte `height: 3rem`; tre rader rollbeskrivning och fem grundkrav fick 62 respektive 116 px intern scroll. Avståndet mellan fälten var 56 px.
+- Implementerat: Fälten växer med innehållet (`field-sizing: content`), minst tre rader och högst 60 % av skärmhöjden, kan dras större, och den fasta höjden nollställs (`app/product-design.css`). Fallback för webbläsare utan `field-sizing`: rollbeskrivning 4 och grundkrav 5 rader. Avståndet mellan fälten minskat till 24 px; etiketter och hjälptexter oförändrade.
+- Verifierat: `check:design-tokens`, produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): vid 1280 px är fälten 110–164 px höga utan intern scroll med tre rader rollbeskrivning och fem grundkrav, avstånd 24 px, etiketterna kvar; vid 375 px fyra grundkrav utan intern scroll och ingen horisontell scroll. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Automatisk höjd kräver `field-sizing` (Chromium); Safari/Firefox får de fasta radantalen och kan dra fältet större. Ej provat på fysisk mobil.
 
 <a id="d06"></a>
 ### D06 Gör status och profilprogress begripliga
@@ -948,14 +958,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 53
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Etiketten för profilstegen (`lib/profile-journey.ts`, `components/profile-steps/step-nav.tsx`, `components/profile-journey.tsx`) och kontroll av ansökningstexterna. Profilflödets logik ägs av F15/F16/F18 (Vilgot / Codex, införda i dev) och ändras inte.
 - Åtgärd: Byt abstrakt 1 av 5 och tekniska förklaringar mot exempelvis CV klart och valfria profildelar. Anpassa ansökningstext till väntande eller skickad status och skriv tydligt vad som återstår.
 - Klar när: Texten beskriver användarens situation och nästa steg.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 375 px): Profilstegen visade ”Steg 1 av 5”, ”Steg 2 av 5” och ”Steg 3 av 5” utan att säga att bara CV:t krävs eller om det var klart. Ansökningstexterna anpassas redan efter status (F13/N08): jobbsidan säger ”Ditt intresse sparas tills CV:t är klart.” utan CV och ”Ansökan skickas direkt. Följ den under Ansökningar.” med CV, och ett sparat intresse visas som ”Inte skickad ännu – Ditt CV är klart, men ansökan har inte skickats. Skicka den nu så får företaget den direkt.” Den delen behövde ingen ändring.
+- Implementerat: Ny `profileStepStatus()` i `lib/profile-journey.ts` (återanvändbar för mobilapp): CV-steget heter ”CV · krävs för att söka jobb”, övriga ”CV klart · valfri del 2 av 4” eller ”CV saknas · valfri del 1 av 4”. Används i mobilens stegrubrik och i ”Din jobbprofil · …” på mellanskärmen och i redigeraren. Stegordning, länkar och profilflödets logik (F15/F16/F18) oförändrade.
+- Verifierat: `test:profile-journey`, TypeScript och produktionsbygge. `test:profile-steps` fallerar likadant utan ändringen (förväntad 40001-text i redigeraren). Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt) vid 375 px: CV-steget ”CV · krävs för att söka jobb”, valfritt steg utan CV ”CV saknas · valfri del 1 av 4”, med CV ”CV klart · valfri del 2 av 4”, ingen horisontell scroll; jobbsidans och ansökningssidans texter för väntande och skickbar ansökan avlästa enligt ovan. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Desktopens stegmeny visar fortfarande stegnamnen 1–5 med bock för klara steg (oförändrad).
 
 <a id="d04"></a>
 ### D04 Öka padding på kartans kortknapp
@@ -963,14 +974,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 54
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast knappmått i kartsidans vyväxling/reservvy (`app/kartan/map-design.css`). F24:s logik (Vilgot / Codex) ändras inte.
 - Åtgärd: Ge Visa som kort tillräcklig horisontell padding och samma mått som andra sekundärknappar. Anpassa till reservvyn i F24.
 - Klar när: Text och ikon ligger med tydlig marginal till knappens kanter.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (driftsatt dev, 375 och 1280 px): Kortknappen heter nu ”Sök och filtrera” (F24). Den är en fylld knapp, men kartans gemensamma regel för 44 px-länkar satte `padding: 10px 0`, så texten låg mot kanterna (0 px sidomarginal, radie 12,8 px).
+- Implementerat: Knappen har en egen regel med sekundärknapparnas mått: minst 44 px, 16 px sidopadding och radie 13 px (`app/kartan/map-design.css`). Den gemensamma regeln gäller bara textlänkarna. F24:s logik och reservvy oförändrade.
+- Verifierat: `test:map-fallback`, `check:design-tokens` och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt): vid 375 och 1280 px 16 px från text till knappkant på båda sidor, 44 px höjd, radie 13 px. Före-läget mättes med samma skript mot driftsatt dev.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar.
 
 <a id="d07"></a>
 ### D07 Rätta mikrocopy och varumärkestext
@@ -1603,10 +1615,10 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-05"></a>
 ### DA-05 Inför skala för typografi, vikter, radier och skuggor
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 64
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Max / Claude
 - Branch/PR: branch `Max`; reserverad före kodarbete 2026-10-25 (DA-04, DA-05 och DA-06 som ett designsystemblock enligt audit-dokumentet, på användarens uttryckliga begäran). Ingen databasändring. Fortsatt 2026-10-29 på branch `Max` (reserverad före arbetet samma dag, användarens beställning att ta fem auditkort).
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-05), som har fynd, filer och mått.
@@ -1615,7 +1627,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Samordning / beroenden: Beroende: DA-04.
 - Implementerat: Skalan för textstorlekar, spårning, vikter, radier och skuggor finns i `theme.css` enligt audit-dokumentet. `check:design-tokens` räknar olika textstorlekar (140), radier (57) och vikter (10) och underkänner om antalet ökar. 2026-10-29: `check:design-tokens` räknar bara litterala värden; ett värde som bara är en theme-token (`var(--…)`) är skalan och räknas inte, och `@font-face`-deskriptorer (`font-weight: 100 900`) räknas inte. Tidigare gjorde varje ny användning av skalan att kontrollen fallerade. `--shadow-sm` och `--shadow-md` var ogiltiga (`rgb(var(--color-text-rgb) / …)` med kommaseparerat värde) och beräknades till `none`; nu `rgba(var(--color-text-rgb), …)`, så de skuggor som använder dem (`application-disclosure-view`, ansökans förhandsvisning) syns. Nya värden sedan baslinjen fick tokens: kartnålens antal `11px` → `--text-xs`, logotypens svarta ruta och hörn → `--color-logo-mark`/`--radius-logo-mark`, återkallningsdialogen i `applications-design.css` → `--color-border`, `--color-surface`, `--color-text`, `--shadow-dialog`, `--color-backdrop` och `--color-brand`.
 - Verifierat: 2026-10-29 (lokalt, ej infört i dev): `check:design-tokens` PASS (538 färgvärden, 140 textstorlekar, 56 radier, 10 vikter; baslinjen sänkt med `--update`), produktionsbygge (webpack), ESLint på skriptet, `test:profile-steps`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:local-fonts`, `test:profile-journey`. Beräknade stilar i Chromium mot produktionsbygget: skuggorna, dialogen, logotypen och kartnålen (12px) får giltiga värden. `test:accessibility` fallerar likadant med och utan ändringen (företagets ansökningsflikar, N25). Tidigare: kontroll i driftsatt dev 2026-10-26 utan avvikelser.
-- Återstår / blockerare: Införas i dev och kontrolleras där; därefter Klar. Återkallningsdialogens färger (N02) ändrades något mot paletten (text #30262b → `--color-text`, fokusring #9d315d → `--color-brand`); stäm av med N02:s ägare vid granskning. Migrering av äldre värden sker i DA-12.
+- Verifierat i dev 2026-11-08 (Max / Claude): `check:design-tokens` PASS på dev `a8febe6` (538 färgvärden, 140 textstorlekar, 56 radier, 10 vikter, oförändrad baslinje). I driftsatt dev beräknas `--shadow-sm`, `--shadow-md` och `--shadow-dialog` till giltiga skuggor och `--text-xs` till 12 px (Chromium, inloggat fiktivt QA-konto, raderat efteråt).
+- Återstår / blockerare: Inget för DA-05. Återkallningsdialogens färger (N02) ändrades något mot paletten (text #30262b → `--color-text`, fokusring #9d315d → `--color-brand`); N02:s ägare (Vilgot / Codex) behöver informeras; ingen avstämning gjord i denna insats. Migrering av äldre värden sker i DA-12.
 
 <a id="da-06"></a>
 ### DA-06 Rätta textfärger som inte klarar WCAG AA

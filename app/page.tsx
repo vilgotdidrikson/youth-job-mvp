@@ -8,7 +8,7 @@ import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
 import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
 import { AiVisual, MatchVisual, ChatVisual, MapVisual, EverywhereVisual } from "@/components/ui/platform-visuals";
-import { LandingHero } from "./landing-hero";
+import { LandingActions, LandingHero } from "./landing-hero";
 import "./landing.css";
 
 export const metadata: Metadata = {
@@ -98,6 +98,8 @@ const platformItems: PlatformItem[] = [
   },
 ];
 
+const HERO_ID = "landing-hero";
+
 const copy = {
   primary: "Kom igång",
   secondary: "För företag",
@@ -123,11 +125,12 @@ export default function Home() {
         height="100vh"
         bg="#ffffff"
         colors={LANDING_BG_COLORS}
+        pauseOutsideId={HERO_ID}
       />
 
       <MarketingNav />
 
-      <LandingHero primary={copy.primary} secondary={copy.secondary} />
+      <LandingHero id={HERO_ID} primary={copy.primary} secondary={copy.secondary} />
 
       <div className="landing-bold-body">
         <section className="landing-bold-stats">
@@ -174,8 +177,9 @@ export default function Home() {
         <section className="landing-bold-manifesto">
           <Reveal>
             <p>{copy.manifesto}</p>
-            <span>{copy.manifestoSub}</span>
+            <span className="landing-bold-manifesto-sub">{copy.manifestoSub}</span>
           </Reveal>
+          <LandingActions primary={copy.primary} secondary={copy.secondary} />
         </section>
 
         <MarketingFooter />

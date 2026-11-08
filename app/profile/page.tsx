@@ -85,6 +85,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   // ── company profile state ──────────────────────────────────
   const [companyName, setCompanyName] = useState("");
   const [companyCity, setCompanyCity] = useState("");
+  const [companyIndustry, setCompanyIndustry] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
   const [companyOrganizationNumber, setCompanyOrganizationNumber] = useState("");
   const [companyAdministrator, setCompanyAdministrator] = useState("");
@@ -126,6 +127,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           const cp = cpResult.data;
           setCompanyName(cp?.company_name ?? "");
           setCompanyCity(cp?.city ?? "");
+          setCompanyIndustry(cp?.industry ?? "");
           setCompanyDescription(cp?.description ?? "");
           setCompanyOrganizationNumber(cp?.organization_number ?? "");
           setCompanyAdministrator(cp?.administrator ?? "");
@@ -246,6 +248,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
   const handleSaveCompanyProfile = async () => {
     if (!user?.id) return;
+    // Bransch is required in onboarding and shown on the public company profile (F21).
+    if (!companyIndustry.trim()) { setError("Ange företagets bransch."); return; }
     if (organizationNumberError) {
       setOrganizationNumberTouched(true);
       setError(organizationNumberError);
@@ -268,6 +272,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
           organization_number: organizationNumber,
           administrator: companyAdministrator.trim(),
           city: companyCity.trim(),
+          industry: companyIndustry.trim(),
           description: companyDescription.trim(),
           updated_at: new Date().toISOString(),
         })
@@ -394,6 +399,17 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             placeholder="T.ex. Stockholm"
             value={companyCity}
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
+          />
+
+          <label htmlFor="company-profile-industry" style={labelStyle}>Bransch</label>
+          <input id="company-profile-industry"
+            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
+            style={{ marginBottom: "0.85rem" }}
+            placeholder="T.ex. Café och restaurang"
+            required
+            maxLength={80}
+            value={companyIndustry}
+            onChange={(e) => { setCompanyIndustry(e.target.value); setSavedNote(""); }}
           />
 
           <label htmlFor="company-profile-organization" style={labelStyle}>Organisationsnummer</label>

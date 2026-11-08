@@ -47,8 +47,8 @@ export function JobMatchProfileEditor({ jobId, title, onClose, onSaved }: { jobI
       <p>Används som internt bedömningsstöd. Den exakta kriterielistan visas inte för den sökande. Viktiga behörighetskrav och avgörande villkor ska också framgå i annonsen. Nya kriterier används vid nästa bedömning. Befintliga ansökningsfrågor, svar och tidigare bedömningar behålls. Ändringar här uppdaterar matchningen; annonsens beskrivning ändras inte.</p>
       {error && <p role="alert">{error}</p>}
       {loading ? <p>Läser matchprofil…</p> : <>
-        <label>Rollbeskrivning<textarea autoFocus className="input-field" required maxLength={2000} rows={3} value={summary} disabled={busy} onChange={(event) => setSummary(event.target.value)} /></label>
-        <label>Grundkrav <small>En konkret uppgift per rad, högst 8. Exempel: B-körkort, kan arbeta helger.</small><textarea className="input-field" rows={4} value={mustHaves} disabled={busy} onChange={(event) => setMustHaves(event.target.value)} /></label>
+        <label>Rollbeskrivning<textarea autoFocus className="input-field" required maxLength={2000} rows={4} value={summary} disabled={busy} onChange={(event) => setSummary(event.target.value)} /></label>
+        <label>Grundkrav <small>En konkret uppgift per rad, högst 8. Exempel: B-körkort, kan arbeta helger.</small><textarea className="input-field" rows={5} value={mustHaves} disabled={busy} onChange={(event) => setMustHaves(event.target.value)} /></label>
         <label>Kan läras på plats <small>Högst 7. Påverkar inte matchgraden.</small><textarea className="input-field" rows={3} value={trainable} disabled={busy} onChange={(event) => setTrainable(event.target.value)} /></label>
         <label>Önskade egenskaper <small>Högst 5. Personlighet ska inte gissas från CV:t.</small><textarea className="input-field" rows={3} value={traits} disabled={busy} onChange={(event) => setTraits(event.target.value)} /></label>
         <label>Valfria ansökningsfrågor <small>Högst 3, en per rad. Gäller endast nya ansökningar.</small><textarea className="input-field" rows={3} value={questions} disabled={busy} onChange={(event) => setQuestions(event.target.value)} /></label>

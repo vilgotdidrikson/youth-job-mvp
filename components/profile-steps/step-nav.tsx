@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { PROFILE_JOURNEY, profileStepUrl, type ProfileJourneyStep } from "@/lib/profile-journey";
+import { PROFILE_JOURNEY, profileStepStatus, profileStepUrl, type ProfileJourneyStep } from "@/lib/profile-journey";
 import { useRememberProfileStep } from "../profile-journey";
 import { useSession } from "@/hooks/use-session";
 import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
@@ -12,15 +12,15 @@ import styles from "./profile-steps.module.css";
 
 const PAUSE_HREF = "/profile?tab=work";
 
-/** Mobile (under 720px): back to the previous step, "Steg X av 5", five progress segments and the pause link. */
-export function StepHeader({ step }: { step: ProfileJourneyStep }) {
+/** Mobile (under 720px): back to the previous step, where the person is (D06), five progress segments and the pause link. */
+export function StepHeader({ step, done }: { step: ProfileJourneyStep; done?: readonly ProfileJourneyStep[] }) {
   const remember = useRememberProfileStep(step);
   const index = PROFILE_JOURNEY.findIndex(item => item.key === step);
   const previous = PROFILE_JOURNEY[index - 1];
   return <div className={`${styles.header} ${styles.mobileOnly}`}>
     <div className={styles.headerTop}>
       {previous ? <Link className={styles.back} href={profileStepUrl(previous.key)} aria-label={`Föregående steg: ${previous.title}`}><UiIcon name="chevron-left" width="22" height="22" strokeWidth="2" /></Link> : <span className={styles.back} aria-hidden="true" />}
-      <span className={styles.stepCount}>Steg {index + 1} av {PROFILE_JOURNEY.length}</span>
+      <span className={styles.stepCount}>{profileStepStatus(step, done)}</span>
       <Link className={styles.pause} href={PAUSE_HREF} onClick={remember}>Pausa och fortsätt senare</Link>
     </div>
     <div className={styles.segments} aria-hidden="true">{PROFILE_JOURNEY.map((item, i) => <span key={item.key} className={i <= index ? styles.filled : ""} />)}</div>
@@ -55,7 +55,7 @@ export function ProfileStepPage({ step, done, cvFacts, tip, children, as: Outer 
   </div> : undefined;
   const info = facts || tip ? <>{tip}{facts}</> : undefined;
   return <Outer className={styles.page}>
-    <StepHeader step={step} />
+    <StepHeader step={step} done={done} />
     <div className={styles.layout}>
       <StepRail step={step} done={done} info={info} />
       <div className={styles.main}>{children}</div>

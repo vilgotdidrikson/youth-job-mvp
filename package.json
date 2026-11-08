@@ -73,6 +73,7 @@
     "test:application-withdrawal": "node scripts/test-application-withdrawal.mjs",
     "test:job-fields": "node scripts/test-job-fields.mjs",
     "test:job-ai-review": "node scripts/test-job-ai-review.mjs",
+    "test:job-benefits": "node scripts/test-job-benefits.mjs",
     "test:notifications": "node scripts/test-notifications.mjs",
     "test:accessibility": "node scripts/test-accessibility.mjs",
     "test:profile-steps": "node scripts/test-profile-steps.mjs",

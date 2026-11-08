@@ -1,6 +1,7 @@
 "use client";
 
 import { authenticatedHeaders } from "@/lib/api-client";
+import { BENEFIT_TIPS, addBenefit, customBenefits, listedBenefit, removeBenefit, toggleBenefit } from "@/lib/job-benefits";
 import { CompanyJobCandidates } from "@/components/company-job-candidates";
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -51,7 +52,6 @@ import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/
 import type { CompanyProfile, JobPost } from "@/lib/types";
 
 const EMPLOYMENT_TYPES = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
-const BENEFIT_TIPS = ["Flexibla tider", "Introduktion", "Personalrabatt", "Friskvårdsbidrag", "Måltid ingår"];
 const REQUIREMENT_TIPS = ["Kan arbeta helger", "Tidigare erfarenhet", "B-körkort", "Svenska", "Kan börja omgående"];
 const TRAIT_TIPS = ["Ansvarstagande", "Punktlig", "Social", "Noggrann", "Serviceinriktad", "Nyfiken", "Samarbetsvillig"];
 
@@ -85,7 +85,8 @@ function CompanyPageContent() {
   const [editReceipt, setEditReceipt] = useState("");
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [jobActionId, setJobActionId] = useState<string | null>(null);
+  // Which ad and which action is running, so the pending text appears on the button that was pressed.
+  const [jobAction, setJobAction] = useState<{ id: string; kind: "active" | "paused" | "closed" | "delete" } | null>(null);
   const [error, setError] = useState("");
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
@@ -327,7 +328,7 @@ function CompanyPageContent() {
   };
 
   const handleJobStatus = async (job: JobPost, status: "active" | "paused" | "closed") => {
-    setJobActionId(job.id);
+    setJobAction({ id: job.id, kind: status });
     setError("");
     try {
       await updateJob(job.id, { status });
@@ -335,13 +336,13 @@ function CompanyPageContent() {
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Kunde inte uppdatera annonsen.");
     } finally {
-      setJobActionId(null);
+      setJobAction(null);
     }
   };
 
   const handleDeleteJob = async (job: JobPost) => {
     if (!window.confirm(`Ta bort annonsen "${job.title}"?`)) return;
-    setJobActionId(job.id);
+    setJobAction({ id: job.id, kind: "delete" });
     setError("");
     try {
       await deleteJob(job.id);
@@ -349,7 +350,7 @@ function CompanyPageContent() {
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Kunde inte ta bort annonsen.");
     } finally {
-      setJobActionId(null);
+      setJobAction(null);
     }
   };
 
@@ -551,7 +552,7 @@ function CompanyPageContent() {
                     </section>
                     <JobPracticalFields value={form.practical} onChange={practical => setForm(current => ({ ...current, practical }))} today={editing ? undefined : localIsoDate()} showAll={practicalShowAll} disabled={busy} />
                     <section className="card job-builder-section"><h2>Lön <span className="job-builder-optional">Valfritt</span></h2>{form.salaryText && <label>Kopierad löneuppgift<input className="input-field" value={form.salaryText} onChange={event => setForm(current => ({ ...current, salaryText: event.target.value }))}/><small>Redigera texten här, eller fyll i beloppsfälten nedan för att ersätta den.</small></label>}{form.salaryText && (salaryTransfer ? <div className="job-builder-transfer"><span>Texten anger {draftSalary({ ...form, ...salaryTransfer, salaryText: "" })}.</span><button type="button" className="secondary-btn" onClick={() => setForm(current => ({ ...current, ...salaryTransfer, salaryText: "" }))}>Fyll i lönefälten</button></div> : <p className="job-builder-help">Texten saknar ett tydligt belopp med enhet och kan inte fyllas i automatiskt.</p>)}<div className="job-builder-info">✦ Annonser med angiven lön får ofta fler ansökningar.</div><label className="job-builder-label">Lönetyp</label><div className="job-builder-chips">{(["timlön", "månadslön", "fast lön"] as const).map((type) => <button key={type} type="button" onClick={() => setForm((p) => ({ ...p, salaryType: type, salaryText: "" }))} className={`chip ${form.salaryType === type ? "job-builder-chip-selected" : ""}`}>{type}</button>)}</div><div className="job-builder-salary"><label>Lön från<input className="input-field" inputMode="numeric" placeholder="T.ex. 120" value={form.salaryFrom} onChange={(e) => setForm((p) => ({ ...p, salaryFrom: e.target.value, salaryText: "" }))} {...fieldProps("salaryFrom")} /></label><span>—</span><label>Lön till<input className="input-field" inputMode="numeric" placeholder="T.ex. 145" value={form.salaryTo} onChange={(e) => setForm((p) => ({ ...p, salaryTo: e.target.value, salaryText: "" }))} {...fieldProps("salaryTo")} /></label><em>kr/{salaryPeriod}</em></div>{(["salaryFrom", "salaryTo"] as const).map(field => fieldError(field) && <p key={field} id={`job-field-${field}-error`} className="job-builder-field-error" role="alert">{fieldError(field)}</p>)}</section>
-                    <section className="card job-builder-section"><h2 id="job-benefits-label">Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips" role="group" aria-labelledby="job-benefits-label">{BENEFIT_TIPS.map((tip) => { const selected = textListItems(form.benefits).includes(tip); return <button key={tip} type="button" aria-pressed={selected} onClick={() => setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, tip) }))} className={`chip ${selected ? "job-builder-chip-selected" : ""}`}>{tip}</button>; })}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: toggleTextList(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
+                    <section className="card job-builder-section"><h2 id="job-benefits-label">Förmåner <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Visa vad kandidaten får utöver själva jobbet.</p><div className="job-builder-chips" role="group" aria-labelledby="job-benefits-label">{BENEFIT_TIPS.map((tip) => { const listed = listedBenefit(form.benefits, tip); return <button key={tip} type="button" aria-pressed={Boolean(listed)} onClick={() => setForm((p) => ({ ...p, benefits: toggleBenefit(p.benefits, tip) }))} className={`chip ${listed ? "job-builder-chip-selected" : ""}`}>{listed ?? tip}</button>; })}{customBenefits(form.benefits).map((item) => <button key={item} type="button" aria-pressed="true" aria-label={`Ta bort förmånen ${item}`} onClick={() => setForm((p) => ({ ...p, benefits: removeBenefit(p.benefits, item) }))} className="chip job-builder-chip-selected">{item} <span aria-hidden="true">×</span></button>)}<button type="button" className="chip" onClick={() => setShowCustomBenefit((visible) => !visible)}>+ Egen förmån</button></div>{showCustomBenefit && <div className="job-builder-custom"><input className="input-field" placeholder="Skriv egen förmån" value={customBenefit} onChange={(e) => setCustomBenefit(e.target.value)} /><button type="button" className="secondary-btn" onClick={() => { if (customBenefit.trim()) { setForm((p) => ({ ...p, benefits: addBenefit(p.benefits, customBenefit.trim()) })); setCustomBenefit(""); setShowCustomBenefit(false); } }}>Lägg till</button></div>}</section>
                     <section className="card job-builder-section"><h2>Omslagsbild <span className="job-builder-optional">Valfritt</span></h2><p className="job-builder-help">Välj en bild och beskär den för annonsformatet.</p><label className="job-builder-dropzone"><input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) setImageToCrop(file); }} />{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).length ? <div className="job-builder-image-grid">{(jobImageFiles.length ? jobImagePreviews : form.imageUrls).map((preview, index) => <img key={preview} src={preview} alt={`Förhandsgranskning ${index + 1}`} />)}</div> : <><b>↑</b><strong>Lägg till omslagsbild</strong><span>JPG, PNG eller WEBP · beskärs till 4:3</span></>}</label></section>
                     {form.imagePending && jobImageFiles.length === 0 && <p className="job-copy-notice" role="alert">Den nya bilden behöver väljas igen efter omladdningen. Den sparade bilden visas tills dess.</p>}
                     {(form.imageUrls.length > 0 || jobImageFiles.length > 0 || form.imagePending) && <div className="job-copy-image-actions"><button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setForm(current => ({ ...current, imageUrls: [], imagePending: false })); }}>Ta bort bild</button>{form.imagePending && form.imageUrls.length > 0 && <button type="button" className="secondary-btn" onClick={() => { setJobImageFiles([]); setForm(current => ({ ...current, imagePending: false })); }}>Behåll den sparade bilden</button>}</div>}
@@ -601,7 +602,8 @@ function CompanyPageContent() {
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 const status = job.status ?? (job.is_active ? "active" : "paused");
-                const isWorking = jobActionId === job.id;
+                const isWorking = jobAction?.id === job.id;
+                const pending = isWorking ? jobAction?.kind : null;
                 const publicState = jobPublicationState(job);
                 const awaitingVerification = publicState === "waiting";
                 return (
@@ -626,10 +628,10 @@ function CompanyPageContent() {
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)}>Redigera jobbtyp</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)}>Redigera matchkriterier</button>
-                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>Återaktivera</button>}
-                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")}>Pausa</button>}
+                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>{pending === "active" ? "Återaktiverar…" : "Återaktivera"}</button>}
+                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")}>{pending === "paused" ? "Pausar…" : "Pausa"}</button>}
                       {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setClosingJob(job)}>Stäng rekrytering</button>}
-                      <button type="button" className="company-job-delete" disabled={isWorking} onClick={() => void handleDeleteJob(job)}>{isWorking ? "Sparar..." : "Ta bort"}</button>
+                      <button type="button" className="company-job-delete" disabled={isWorking} onClick={() => void handleDeleteJob(job)}>{pending === "delete" ? "Tar bort…" : "Ta bort"}</button>
                     </div>
                   </article>
                 );
