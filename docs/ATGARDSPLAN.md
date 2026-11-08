@@ -138,7 +138,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
-| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Pågår | Max / Claude |
+| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | För granskning | Max / Claude |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
 | 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
@@ -924,14 +924,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 50
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (lokal commit; publiceras tillsammans med leveransen enligt användarens begäran). Endast knapptexter och väntetext: `app/company/page.tsx` (annonslistans Pausa/Återaktivera/Ta bort), `components/youth-cv-hub.tsx` (sista frågans Hoppa över) och `app/jobb/[jobId]/page.tsx` (CV-dialogens sekundärknapp). Ingen logik, databas eller annan vy ändras.
 - Åtgärd: Visa Pausar eller Sparar vid den knapp som används i stället för vid Ta bort. Förtydliga sista CV-frågans Hoppa över och använd Fortsätt utforska bara om användaren faktiskt kommer tillbaka till upptäck.
 - Klar när: Knapptext och feedback beskriver det som händer och den destination användaren får.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat 2026-11-08 (kod och Chromium): I företagets annonslista visade Ta bort ”Sparar...” medan en annons pausades eller återaktiverades, och Pausa/Återaktivera gav ingen egen återkoppling. På CV-guidens sista fråga (Meriter & länkar) skapade Hoppa över i själva verket CV-förslaget med AI eller öppnade förhandsvisningen. CV-dialogen på jobbsidan hade Fortsätt utforska, men knappen stänger bara dialogen och användaren blir kvar på annonsen.
+- Implementerat: Annonslistan håller reda på vilken åtgärd som pågår; Pausa visar ”Pausar…”, Återaktivera ”Återaktiverar…” och Ta bort ”Tar bort…”, och övriga knappar behåller sin text (`app/company/page.tsx`). Sista CV-frågans sekundärknapp heter ”Hoppa över och skapa CV-förslag” med AI-hjälp och ”Hoppa över och förhandsvisa” när personen skriver själv; frågorna 1–5 heter fortfarande Hoppa över (`components/youth-cv-hub.tsx`). CV-dialogens sekundärknapp heter ”Tillbaka till annonsen” (`app/jobb/[jobId]/page.tsx`). Bara knapptexter och väntetext; logik, RLS och databas oförändrade.
+- Verifierat: TypeScript, riktad ESLint (en befintlig `<img>`-varning i företagssidan), produktionsbygge, `check:design-tokens`, `test:profile-journey`, `test:company-navigation` och `test:cv-document`. `test:job-publication` fallerar likadant utan ändringen (`readPracticalDetails is not a function`). Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (företag, ungdom, admin; raderade efteråt) och fördröjda annonsanrop, 32/32: vid 1280 och 375 px visar Pausa ”Pausar…” och Återaktivera ”Återaktiverar…” medan Ta bort är oförändrad, ingen horisontell scroll; Ta bort visar ”Tar bort…” medan Pausa är oförändrad och annonsen försvinner; jobbsidans CV-dialog vid 375 och 1280 px har ”Tillbaka till annonsen”, ingen Fortsätt utforska, och knappen stänger dialogen på samma annons; CV-guiden vid 375 och 1280 px har Hoppa över på frågorna 1–5, rätt text på sista frågan för båda metoderna, oförändrad primärknapp, ingen horisontell scroll och sista Hoppa över öppnar förhandsvisningen. Skärmbilder granskade.
+- Återstår / blockerare: Införas i dev och kontrolleras i driftsatt dev; därefter Klar. Ej provat med skärmläsare (väntetexten byts i knappen, ingen separat statusannonsering) eller på fysisk mobil. Reservationen publicerades tillsammans med leveransen, inte före kodarbetet, enligt användarens begäran.
 
 <a id="d03"></a>
 ### D03 Ge kriteriernas textfält mer plats

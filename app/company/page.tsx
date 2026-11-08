@@ -85,7 +85,8 @@ function CompanyPageContent() {
   const [editReceipt, setEditReceipt] = useState("");
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [jobActionId, setJobActionId] = useState<string | null>(null);
+  // Which ad and which action is running, so the pending text appears on the button that was pressed.
+  const [jobAction, setJobAction] = useState<{ id: string; kind: "active" | "paused" | "closed" | "delete" } | null>(null);
   const [error, setError] = useState("");
   const [imageToCrop, setImageToCrop] = useState<File | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
@@ -327,7 +328,7 @@ function CompanyPageContent() {
   };
 
   const handleJobStatus = async (job: JobPost, status: "active" | "paused" | "closed") => {
-    setJobActionId(job.id);
+    setJobAction({ id: job.id, kind: status });
     setError("");
     try {
       await updateJob(job.id, { status });
@@ -335,13 +336,13 @@ function CompanyPageContent() {
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Kunde inte uppdatera annonsen.");
     } finally {
-      setJobActionId(null);
+      setJobAction(null);
     }
   };
 
   const handleDeleteJob = async (job: JobPost) => {
     if (!window.confirm(`Ta bort annonsen "${job.title}"?`)) return;
-    setJobActionId(job.id);
+    setJobAction({ id: job.id, kind: "delete" });
     setError("");
     try {
       await deleteJob(job.id);
@@ -349,7 +350,7 @@ function CompanyPageContent() {
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Kunde inte ta bort annonsen.");
     } finally {
-      setJobActionId(null);
+      setJobAction(null);
     }
   };
 
@@ -601,7 +602,8 @@ function CompanyPageContent() {
               {jobs.map((job) => {
                 const agePart = job.min_age || job.max_age ? `${job.min_age ?? "?"}–${job.max_age ?? "?"} år` : null;
                 const status = job.status ?? (job.is_active ? "active" : "paused");
-                const isWorking = jobActionId === job.id;
+                const isWorking = jobAction?.id === job.id;
+                const pending = isWorking ? jobAction?.kind : null;
                 const publicState = jobPublicationState(job);
                 const awaitingVerification = publicState === "waiting";
                 return (
@@ -626,10 +628,10 @@ function CompanyPageContent() {
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)}>Redigera jobbtyp</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)}>Redigera matchkriterier</button>
-                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>Återaktivera</button>}
-                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")}>Pausa</button>}
+                      {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>{pending === "active" ? "Återaktiverar…" : "Återaktivera"}</button>}
+                      {status === "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "paused")}>{pending === "paused" ? "Pausar…" : "Pausa"}</button>}
                       {status !== "closed" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setClosingJob(job)}>Stäng rekrytering</button>}
-                      <button type="button" className="company-job-delete" disabled={isWorking} onClick={() => void handleDeleteJob(job)}>{isWorking ? "Sparar..." : "Ta bort"}</button>
+                      <button type="button" className="company-job-delete" disabled={isWorking} onClick={() => void handleDeleteJob(job)}>{pending === "delete" ? "Tar bort…" : "Ta bort"}</button>
                     </div>
                   </article>
                 );
