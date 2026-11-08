@@ -24,6 +24,7 @@ import { JobPublicationNotice } from "@/components/job-publication-notice";
 import { CompanyVerificationStatus } from "@/components/company-verification-status";
 import { jobPublicationAction, jobPublicationState, jobPublicationLabel } from "@/lib/job-publication";
 import { JobPreviewDialog } from "@/components/job-preview-dialog";
+import { JobDraftConflictNotice } from "@/components/job-draft-conflict-notice";
 import { ModalDialog } from "@/components/modal-dialog";
 import { UiIcon } from "@/components/ui-icon";
 import { TabList } from "@/components/tab-list";
@@ -107,6 +108,7 @@ function CompanyPageContent() {
   const [copyError, setCopyError] = useState("");
   const [copyBusy, setCopyBusy] = useState(false);
   const copyLock = useRef(false);
+  const createLock = useRef(false);
   const [closingJob, setClosingJob] = useState<JobPost | null>(null);
   const closeCriteria = useCallback(() => setEditingCriteria(null), []);
 
@@ -238,10 +240,12 @@ function CompanyPageContent() {
 
   const handleCreateJob = async (e: FormEvent) => {
     e.preventDefault();
-    if (busy || copyingJob || !draftHydrated || !builderFormIsValid()) return;
+    if (createLock.current || busy || copyingJob || !draftHydrated || jobDraft.conflict || !builderFormIsValid()) return;
+    createLock.current = true;
     setBusy(true);
     setError("");
     try {
+      const draftRevision = await jobDraft.checkCurrent();
       const imageUrls = jobImageFiles.length > 0
         ? await Promise.all(jobImageFiles.map((file) => uploadJobImage(file)))
         : form.imageUrls;
@@ -282,7 +286,7 @@ function CompanyPageContent() {
         matchProfileWarning = "Annonsen skapades, men matchprofilen behöver kompletteras senare.";
       }
       setAiReview(null);
-      try { await jobDraft.clear(); }
+      try { await jobDraft.clear(draftRevision); }
       catch { matchProfileWarning = [matchProfileWarning, "Annonsen skapades, men det lokala utkastet kunde inte tas bort. Publicera inte samma utkast igen."].filter(Boolean).join(" "); }
       if (user) await loadData(user.id);
       window.history.replaceState(null, "", createdCompanyJobHref(job.id));
@@ -290,6 +294,7 @@ function CompanyPageContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
     } finally {
+      createLock.current = false;
       setBusy(false);
     }
   };
@@ -460,6 +465,7 @@ function CompanyPageContent() {
       {/* ── NY ANNONS TAB ── */}
       {tab === "skapa" && !draftHydrated && <p role="status">Öppnar ditt annonsutkast…</p>}
       {(tab === "annonser" || tab === "skapa") && jobDraft.error && <p className="job-copy-notice" role="alert">{jobDraft.error} Dina ändringar är inte bekräftat sparade; behåll sidan öppen och försök igen.</p>}
+      {(tab === "annonser" || tab === "skapa") && jobDraft.conflict && <JobDraftConflictNotice onReload={jobDraft.reload} />}
       {(tab === "skapa" || editing) && builderHydrated && (
         <form
           {...(tab === "skapa" ? tabPanelProps("company-workspace", "skapa") : {})}
