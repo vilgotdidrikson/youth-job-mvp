@@ -139,12 +139,12 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | För granskning | Max / Claude |
-| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
-| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
-| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
-| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Ej påbörjad | — |
+| 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Pågår | Max / Claude |
+| 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Pågår | Max / Claude |
+| 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Pågår | Max / Claude |
+| 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Pågår | Max / Claude |
 | 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
-| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Ej påbörjad | — |
+| 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Pågår | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
@@ -826,9 +826,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 51
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). `lib/job-benefits.ts` (ny, återanvändbar sammanslagning), `lib/job-ai-review.ts` (AI-förslag slås ihop med företagets val), annonsbyggarens förmånsfält i `app/company/page.tsx` och visningen av förmåner. Ingen databas eller AI-prompt ändras.
 - Åtgärd: Samordna företagsprofilens AI-förslag med annonsens val så att Lunch under arbetspasset och Måltid ingår inte blir dubbla poster. Låt företaget granska och redigera den slutliga listan.
 - Klar när: Annonsen visar en kort och konsekvent förmånslista utan upprepningar.
 - Implementerat: —
@@ -841,9 +841,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 56
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Företagsnavigeringens kontoikon (`components/mobile-nav.tsx`) och fältet Bransch i företagsuppgifterna (`app/profile/page.tsx`). Ingen RLS, verifieringslogik eller migration ändras.
 - Åtgärd: Skilj Profil från Mitt konto genom rätt flik eller ta bort dubbleringen. Ge en tydlig väg att se och uppdatera bransch och administratör som lämnats i onboarding.
 - Klar när: Navigationens etiketter har tydliga destinationer och grunduppgifter kan hållas aktuella.
 - Implementerat: —
@@ -940,9 +940,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 52
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast textfälten i `components/job-match-profile-editor.tsx` och deras CSS. Inga regler för kriterier ändras.
 - Åtgärd: Öka höjden eller använd innehållsanpassning för rollbeskrivning, grundkrav, lärande, egenskaper och frågor. Minska det stora tomrummet mellan fälten och behåll tydliga etiketter.
 - Klar när: Flera rader går att läsa utan att skrolla i varje mycket lågt fält.
 - Implementerat: —
@@ -955,9 +955,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 53
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Etiketten för profilstegen (`lib/profile-journey.ts`, `components/profile-steps/step-nav.tsx`, `components/profile-journey.tsx`) och kontroll av ansökningstexterna. Profilflödets logik ägs av F15/F16/F18 (Vilgot / Codex, införda i dev) och ändras inte.
 - Åtgärd: Byt abstrakt 1 av 5 och tekniska förklaringar mot exempelvis CV klart och valfria profildelar. Anpassa ansökningstext till väntande eller skickad status och skriv tydligt vad som återstår.
 - Klar när: Texten beskriver användarens situation och nästa steg.
 - Implementerat: —
@@ -970,9 +970,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 54
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (fem P3-kort i global ordning F25, D03, D06, D04, F21 på användarens begäran). Endast knappmått i kartsidans vyväxling/reservvy (`app/kartan/map-design.css`). F24:s logik (Vilgot / Codex) ändras inte.
 - Åtgärd: Ge Visa som kort tillräcklig horisontell padding och samma mått som andra sekundärknappar. Anpassa till reservvyn i F24.
 - Klar när: Text och ikon ligger med tydlig marginal till knappens kanter.
 - Implementerat: —
