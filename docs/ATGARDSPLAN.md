@@ -244,6 +244,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n14"></a>
 ### N14 Publicera samma annons på flera adresser
 
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 7
@@ -260,6 +262,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n15"></a>
 ### N15 Kopiera befintliga annonser till nya utkast
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P1
@@ -354,6 +358,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n03"></a>
 ### N03 Visa annonsutkast i översikten
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P2
@@ -584,6 +590,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f07"></a>
 ### F07 Bevara bilden i sparade annonsutkast
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P1

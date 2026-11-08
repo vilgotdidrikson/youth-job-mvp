@@ -35,11 +35,11 @@ assert.equal(jobPublicationState({ ...active, is_active: false }), 'paused');
 assert.equal(createdCompanyJobHref('qa/id?x'), '/company?view=annonser&created=qa%2Fid%3Fx');
 
 // A missing or unrecognized database value must not normalize to published.
-const module = { exports: {} };
+const fixtureModule = { exports: {} };
 const source = ts.transpileModule(readFileSync('lib/jobs.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-new Function('module', 'exports', 'require', source + '\nexports.normalizeFixture=normalizeJob;')(module, module.exports, name => name.startsWith('@/') ? {} : require(name));
-for (const publication_status of [undefined, null, 'new-unrecognized-state']) assert.equal(module.exports.normalizeFixture({ publication_status }).publication_status, undefined);
-assert.equal(module.exports.normalizeFixture({ publication_status: 'pending_verification' }).publication_status, 'pending_verification');
+new Function('module', 'exports', 'require', source + '\nexports.normalizeFixture=normalizeJob;')(fixtureModule, fixtureModule.exports, name => name === '@/lib/job-practical' ? require('../lib/job-practical.ts') : name.startsWith('@/') ? {} : require(name));
+for (const publication_status of [undefined, null, 'new-unrecognized-state']) assert.equal(fixtureModule.exports.normalizeFixture({ publication_status }).publication_status, undefined);
+assert.equal(fixtureModule.exports.normalizeFixture({ publication_status: 'pending_verification' }).publication_status, 'pending_verification');
 
 const originalLoad = Module._load;
 Module._load = function (name, parent, ...rest) { return originalLoad.call(this, name.startsWith('@/') ? path.resolve(name.slice(2)) : name, parent, ...rest); };

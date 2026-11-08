@@ -105,7 +105,7 @@ try {
 const page = readFileSync('app/company/page.tsx', 'utf8');
 const saveHandler = page.slice(page.indexOf('const handleSaveJobEdit'), page.indexOf('const handleCreateJob'));
 assert.match(page, /const builder = editing \? jobEdit : jobDraft;/);
-assert.match(saveHandler, /updateJob\(job\.id, updates\)/);
+assert.match(saveHandler, /updateJob\(job\.id, updates, "workplaces" in updates \? \{ expectedWorkplaces: job.workplaces \?\? \[\] \} : undefined\)/);
 assert.match(saveHandler, /saveJobMatchProfile\(jobEditCriteria\(form, job\.id\), jobEdit\.criteria\?\.profile_version \?\? null\)/);
 assert.doesNotMatch(saveHandler, /createJob|jobDraft\.|createInitialJobMatchProfile/);
 assert.match(page, /Redigera annons<\/button>/);

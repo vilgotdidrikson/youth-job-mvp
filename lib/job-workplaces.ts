@@ -10,6 +10,9 @@ export interface JobWorkplace {
   latitude: number | null;
 }
 export const MAX_JOB_WORKPLACES = 10;
+export class JobWorkplaceConflictError extends Error {
+  constructor() { super("Arbetsplatserna har ändrats i en annan vy. Dina ändringar finns kvar här. Stäng och öppna redigeringen igen innan du sparar."); this.name = "JobWorkplaceConflictError"; }
+}
 export function newJobWorkplace(): JobWorkplace {
   return { id: crypto.randomUUID(), name: "", address: "", postal_code: "", city: "", longitude: null, latitude: null };
 }
