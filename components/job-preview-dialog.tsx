@@ -1,5 +1,6 @@
 "use client";
 import { workplaceLabel, type JobWorkplace } from "@/lib/job-workplaces";
+import { benefitItems, mergeBenefits } from "@/lib/job-benefits";
 import { jobPublicationAction } from "@/lib/job-publication";
 import { practicalFacts, practicalPayload, type JobPracticalForm } from "@/lib/job-practical";
 
@@ -22,7 +23,7 @@ export function JobPreviewDialog({ form, image, companyName, salary, verificatio
     <div className="job-preview-stage"><article className={`job-preview-detail is-${device}`}>
       <div className="job-preview-image">{image ? <img src={image} alt="Annonsens omslagsbild" draggable={false} /> : <UiIcon name="briefcase" width="46" height="46" />}</div>
       <div className="job-preview-detail-layout"><div><p className="job-preview-company">{companyName || "Ditt företag"}</p><h2>{form.title || "Din jobbtitel"}</h2><p className="job-preview-location"><UiIcon name="map" width="16" />{[form.workplaces?.length ? [...new Set(form.workplaces.map(place => place.city))].filter(Boolean).join(" / ") : form.city, form.employmentType].filter(Boolean).join(" · ") || "Ort och anställningsform"}</p><section><h3>Om jobbet</h3><p>{form.description || "Här visas arbetsbeskrivningen när du börjar skriva."}</p></section><section><h3>Anställningsform</h3><p>{form.employmentType || "Anställningsform är inte angiven"}</p></section></div>
-      <aside className="job-preview-facts" aria-label="Annonsens villkor">{form.practical && practicalFacts(practicalPayload(form.practical)).map(fact => <section key={fact.label}><h3>{fact.label}</h3><p>{fact.value}</p></section>)}<section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...list(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{list(form.benefits).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Plats</h3><p>{form.workplaces?.length ? form.workplaces.map(workplaceLabel).join("; ") : [form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Plats är inte angiven"}</p></section></aside></div>
+      <aside className="job-preview-facts" aria-label="Annonsens villkor">{form.practical && practicalFacts(practicalPayload(form.practical)).map(fact => <section key={fact.label}><h3>{fact.label}</h3><p>{fact.value}</p></section>)}<section><h3>Krav</h3><p>{[form.minAge || form.maxAge ? `${form.minAge || "?"}–${form.maxAge || "?"} år` : "", ...list(form.requirements)].filter(Boolean).join(" · ") || "Inga särskilda krav"}</p></section><section><h3>Förmåner</h3><p>{mergeBenefits(benefitItems(form.benefits)).join(" · ") || "Inga förmåner angivna"}</p></section><section><h3>Lön</h3><p>{salary}</p></section><section><h3>Plats</h3><p>{form.workplaces?.length ? form.workplaces.map(workplaceLabel).join("; ") : [form.address, form.postalCode, form.city].filter(Boolean).join(", ") || "Plats är inte angiven"}</p></section></aside></div>
     </article></div><p className="job-preview-footer-note">{editNote ?? publication.previewNote}</p>
   </ModalDialog>;
 }

@@ -4,6 +4,7 @@
  * later a mobile app. Facts are read from the employer's own text, never from
  * AI output, so nothing invented can reach the age or salary fields.
  */
+import { mergeSuggestedBenefits } from "./job-benefits";
 import { draftSalary, EMPTY_JOB_FORM, type JobBuilderDraft } from "./job-copy";
 import { JOB_AGE_MAX, JOB_AGE_MIN, jobFieldErrors, parseSalaryText } from "./job-fields";
 
@@ -126,7 +127,8 @@ export function applyAiJobSuggestion(form: JobBuilderDraft, data: AiJobSuggestio
     employmentType: form.employmentType.trim() ? form.employmentType : data.employmentType || form.employmentType,
     description: data.description || form.description,
     matchRoleSummary: data.description || form.matchRoleSummary,
-    benefits: data.benefits?.join(", ") || form.benefits,
+    // The employer's benefits stay; the suggestion only adds benefits that are not already listed (F25).
+    benefits: mergeSuggestedBenefits(form.benefits, data.benefits),
     requirements: data.matchProfile?.mustHaves?.join(", ") || form.requirements,
     trainableRequirements: data.matchProfile?.trainableRequirements?.join(", ") || form.trainableRequirements,
     topTraits: data.matchProfile?.topTraits?.join(", ") || form.topTraits,

@@ -1,5 +1,6 @@
 "use client";
 import { jobReturnLink } from "@/lib/product-copy";
+import { benefitItems, mergeBenefits } from "@/lib/job-benefits";
 import { getJobWorkplaces, jobCities, workplaceLabel } from "@/lib/job-workplaces";
 import { WorkplacePreference } from "@/components/workplace-preference";
 import Image from "next/image";
@@ -73,7 +74,7 @@ export default function JobDetailPage() {
   if (error || !job) return <main className={styles.page}><section className={styles.panel}><h1>Jobbet kunde inte visas</h1><p>{error || "Annonsen hittades inte."}</p><Link href={back.href} className={styles.back}>{back.label}</Link></section></main>;
   const acceptsApplications = job.status === "active" && job.is_active !== false;
   const requirements = [ageRequirement(job), ...listItems(job.requirements)].filter((item): item is string => Boolean(item));
-  const benefits = listItems(job.benefits), address = getJobWorkplaces(job).map(workplaceLabel).join("; ");
+  const benefits = mergeBenefits(benefitItems(job.benefits)), address = getJobWorkplaces(job).map(workplaceLabel).join("; ");
   const image = job.image_url?.split(",")[0]?.trim();
   const toggleSaved = async () => {
     if (busy) return;
