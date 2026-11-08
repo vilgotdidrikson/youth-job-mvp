@@ -138,7 +138,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
-| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Ej påbörjad | — |
+| 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Pågår | Max / Claude |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Ej påbörjad | — |
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Ej påbörjad | — |
 | 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Ej påbörjad | — |
@@ -924,9 +924,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 50
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Max / Claude
+- Branch/PR: `Max`, reserverad 2026-11-08 före kodarbete utifrån dev `a8febe6` (lokal commit; publiceras tillsammans med leveransen enligt användarens begäran). Endast knapptexter och väntetext: `app/company/page.tsx` (annonslistans Pausa/Återaktivera/Ta bort), `components/youth-cv-hub.tsx` (sista frågans Hoppa över) och `app/jobb/[jobId]/page.tsx` (CV-dialogens sekundärknapp). Ingen logik, databas eller annan vy ändras.
 - Åtgärd: Visa Pausar eller Sparar vid den knapp som används i stället för vid Ta bort. Förtydliga sista CV-frågans Hoppa över och använd Fortsätt utforska bara om användaren faktiskt kommer tillbaka till upptäck.
 - Klar när: Knapptext och feedback beskriver det som händer och den destination användaren får.
 - Implementerat: —
