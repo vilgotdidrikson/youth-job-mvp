@@ -8,7 +8,6 @@ import { RecruitmentProfileEditor } from "@/components/recruitment-profile-edito
 
 import { CompanyBillingSettings } from "@/components/company-billing-settings";
 import { BlockedContacts } from "@/components/blocked-contacts";
-import { PasswordInput } from "@/components/password-input";
 
 import { CvFactReview } from "@/components/cv-fact-review";
 import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
@@ -26,7 +25,7 @@ import { openYouthDocument as openOwnedDocument } from "@/lib/open-youth-documen
 import { uploadYouthDocument } from "@/lib/storage";
 import { ExportAccountControl } from "@/components/export-account-control";
 import { DeleteAccountControl } from "@/components/delete-account-control";
-import { changePassword } from "@/lib/auth";
+import { AccountSecuritySettings } from "@/components/account-security-settings";
 import { UiIcon } from "@/components/ui-icon";
 import { TabList } from "@/components/tab-list";
 import { tabPanelProps } from "@/lib/tab-keyboard";
@@ -75,12 +74,6 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   useEffect(() => () => { documentOpen.current?.abort(); documentOpen.current = null; }, [user?.id, frame, profileTab]);
   const [frameBusy,setFrameBusy]=useState(false),[frameDirty,setFrameDirty]=useState(false);
   const [error, setError] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState("");
-  const [passwordError, setPasswordError] = useState("");
 
   // ── company profile state ──────────────────────────────────
   const [companyName, setCompanyName] = useState("");
@@ -308,57 +301,11 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     }
   };
 
-  const handleChangePassword = async () => {
-    setPasswordError("");
-    setPasswordMessage("");
-    if (!currentPassword) { setPasswordError("Ange ditt nuvarande lösenord."); return; }
-    if (newPassword.length < 8) { setPasswordError("Det nya lösenordet måste innehålla minst 8 tecken."); return; }
-    if (newPassword !== confirmPassword) { setPasswordError("De nya lösenorden matchar inte."); return; }
-
-    setChangingPassword(true);
-    try {
-      await changePassword(currentPassword, newPassword);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setPasswordMessage("Lösenordet har ändrats.");
-    } catch (changeError) {
-      setPasswordError(changeError instanceof Error ? changeError.message : "Kunde inte ändra lösenordet.");
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-
-
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
   if (!user) return null;
   if ((profile?.role === "youth" || profile?.role === "company") && loadedProfileKey !== profileKey) return <main className="mobile-shell profile-page mnw-profile"><section className="mnw-profile-card">{profileLoadError ? <><h1>Profilen kunde inte hämtas</h1><p role="alert">{profileLoadError}</p><button type="button" className="secondary-btn" onClick={() => setProfileLoadRetry((value) => value + 1)}>Försök igen</button></> : <p role="status">Hämtar din profil…</p>}</section></main>;
 
-  const accountSecurityCard = (
-    <section className="card" style={{ padding: "1.25rem", marginTop: "0.75rem", marginBottom: "0.75rem" }} aria-labelledby="password-settings-title">
-      <h2 id="password-settings-title" style={{ margin: 0, fontSize: "1rem", color: "#111" }}>Byt lösenord</h2>
-      <p style={{ margin: ".35rem 0 1rem", color: "#737373", fontSize: ".85rem" }}>Bekräfta ditt nuvarande lösenord innan du väljer ett nytt.</p>
-      <div style={{ display: "grid", gap: ".75rem" }}>
-        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
-          Nuvarande lösenord
-          <PasswordInput autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
-        </label>
-        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
-          Nytt lösenord
-          <PasswordInput autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
-        </label>
-        <label style={{ display: "grid", gap: ".3rem", fontSize: ".82rem", fontWeight: 600 }}>
-          Bekräfta nytt lösenord
-          <PasswordInput autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm" />
-        </label>
-      </div>
-      {passwordError && <p role="alert" style={{ margin: ".75rem 0 0", color: "#b42318", fontSize: ".84rem" }}>{passwordError}</p>}
-      {passwordMessage && <p role="status" style={{ margin: ".75rem 0 0", color: "#226a54", fontSize: ".84rem" }}>{passwordMessage}</p>}
-      <button type="button" className="secondary-btn" style={{ width: "100%", padding: ".8rem", marginTop: "1rem" }} disabled={changingPassword} onClick={() => void handleChangePassword()}>
-        {changingPassword ? "Ändrar lösenord..." : "Ändra lösenord"}
-      </button>
-    </section>
-  );
+  const accountSecurityCard = <AccountSecuritySettings userId={user.id} email={user.email} pendingEmail={user.new_email}/>;
 
   if (profile?.role === "company") {
     const labelStyle: React.CSSProperties = {
@@ -497,7 +444,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
     {error&&!frame&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&!frame&&<p role="status" className="mnw-profile-success">{savedNote}</p>}
     {profileTab==="overview"&&<div className="mnw-profile-grid" {...tabPanelProps("profile","overview")}><section className="mnw-profile-card"><span className="mnw-profile-icon"><UiIcon name="profile"/></span><h2>Din jobbprofil, på ett ställe</h2><p>{hasCv||cvCompleted?"Ditt CV finns sparat. Övriga profildelar är frivilliga.":"Du kan upptäcka jobb nu och bygga din profil i din takt."}</p><div className="mnw-profile-buttons"><Link className="cta-btn" href="/profile/build">Bygg / fortsätt min profil</Link><button className="secondary-btn" type="button" onClick={()=>setProfileTab("work")}>Visa min jobbprofil</button></div></section><section className="mnw-profile-card"><h2>Dina genvägar</h2><Link className="mnw-profile-shortcut" href="/swipe?saved=1"><UiIcon name="bookmark"/><span><strong>Sparade jobb</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/applications"><UiIcon name="briefcase"/><span><strong>Dina ansökningar</strong></span><UiIcon name="arrow" width="18"/></Link><Link className="mnw-profile-shortcut" href="/chats"><UiIcon name="chat"/><span><strong>Dina samtal</strong></span><UiIcon name="arrow" width="18"/></Link></section></div>}
     {profileTab==="work"&&<section className="mnw-job-profile" {...tabPanelProps("profile","work")}><header><div><h2>Din jobbprofil</h2><p>Öppna en del för att se eller ändra den.</p></div><Link className="secondary-btn" href="/profile/build">Bygg steg för steg</Link></header><div className="mnw-job-profile-parts">{([{key:"cv",title:"Mitt CV",description:hasCv?"Visa CV, redigera och öppna PDF":"Skapa ett CV eller ladda upp PDF",icon:"file"},{key:"general",title:"Min allmänna profil",description:`Vad jag söker, tillgänglighet och kunskaper · ${completedSectionCount} av 4 delar har uppgifter`,icon:"profile"}] as const).map(item=><button type="button" key={item.key} onClick={()=>openFrame(item.key)}><span className="mnw-profile-icon"><UiIcon name={item.icon}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><UiIcon name="arrow" width="19"/></button>)}</div><details className="mnw-profile-card mnw-profile-confirmed"><summary>Bekräftad erfarenhet</summary><EmploymentExperiences userId={user.id}/>{verified.error&&<p role="alert">{verified.error}</p>}</details></section>}
-    {profileTab === "settings" && <section className="mnw-profile-panel" {...tabPanelProps("profile", "settings")}><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section><details className="mnw-profile-card"><summary>Kontaktuppgifter</summary><p className="mnw-profile-muted">Kontaktuppgifter sparas separat från CV och jobbönskemål. Ändrar du namn eller ort, kontrollera även ditt sparade CV.</p><div className="mnw-profile-fields">{([["name","Fullständigt namn","text"],["dateOfBirth","Födelsedatum","date"],["address","Adress","text"],["postalCode","Postnummer","text"],["city","Ort","text"]] as const).map(([field,label,type])=><label className="mnw-profile-field" key={field}>{label}<input type={type} disabled={saving} value={form[field]} onChange={event=>{setForm(current=>({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div><div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving} onClick={()=>void handleSave()}>{saving?"Sparar…":"Spara kontaktuppgifter"}</button></div></details><details className="mnw-profile-card"><summary>Lösenord</summary>{accountSecurityCard}</details><details className="mnw-profile-card"><summary>Blockerade kontakter</summary><BlockedContacts key={user.id} userId={user.id}/></details><section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="mnw-profile-danger secondary-btn"/></div></section></section>}
+    {profileTab === "settings" && <section className="mnw-profile-panel" {...tabPanelProps("profile", "settings")}><section className="mnw-profile-card"><h2>Ditt konto</h2><p className="mnw-profile-muted">{user.email}</p></section><details className="mnw-profile-card"><summary>Kontaktuppgifter</summary><p className="mnw-profile-muted">Kontaktuppgifter sparas separat från CV och jobbönskemål. Ändrar du namn eller ort, kontrollera även ditt sparade CV.</p><div className="mnw-profile-fields">{([["name","Fullständigt namn","text"],["dateOfBirth","Födelsedatum","date"],["address","Adress","text"],["postalCode","Postnummer","text"],["city","Ort","text"]] as const).map(([field,label,type])=><label className="mnw-profile-field" key={field}>{label}<input type={type} disabled={saving} value={form[field]} onChange={event=>{setForm(current=>({...current,[field]:event.target.value}));setSavedNote("");}}/></label>)}</div><div className="mnw-profile-buttons"><button className="cta-btn" disabled={saving} onClick={()=>void handleSave()}>{saving?"Sparar…":"Spara kontaktuppgifter"}</button></div></details><details className="mnw-profile-card"><summary>E-post och lösenord</summary>{accountSecurityCard}</details><details className="mnw-profile-card"><summary>Blockerade kontakter</summary><BlockedContacts key={user.id} userId={user.id}/></details><section className="mnw-profile-card"><h2>Kontohantering</h2><div className="mnw-profile-buttons"><button className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="mnw-profile-danger secondary-btn"/></div></section></section>}
     {frame&&<ModalDialog label={frame==="cv"?"Mitt CV":"Min allmänna profil"} busy={saving||frameBusy} onClose={closeFrame} className="mnw-profile-frame"><header className="mnw-profile-frame-heading"><h2>{frame==="cv"?"Mitt CV":"Min allmänna profil"}</h2><button type="button" className="secondary-btn" disabled={saving||frameBusy} aria-label="Stäng profildelen" onClick={closeFrame}><UiIcon name="close"/></button></header>{error&&<p role="alert" className="mnw-profile-alert">{error}</p>}{savedNote&&<p role="status" className="mnw-profile-success">{savedNote}</p>}{frame==="cv"?<section className="mnw-profile-card mnw-profile-panel"><div className="mnw-profile-card-heading"><h3>Ditt CV</h3><Link href={hasCv ? "/youth/cv/create?edit=1" : "/youth/cv"} className="secondary-btn">{hasCv ? "Redigera i CV-byggaren" : "Skapa CV"}</Link></div>{hasGeneratedCv ? <><p className="mnw-profile-muted">Här är det CV du har sparat. Du kan redigera texten eller öppna en PDF.</p>{editingCv ? <><label className="mnw-profile-field">CV-text<textarea rows={14} disabled={saving} value={cvEditText} onChange={event => { setCvApproval(null); setCvEditText(event.target.value); }}/></label>{cvStructured && <CvFactReview text={cvEditText} cv={cvStructured} sourceText={generatedCv} approved={cvApproved} disabled={saving}
       onApprove={(approved) => setCvApproval(approved ? cvReviewSnapshot(cvEditText, cvStructured) : null)}
       onSync={(cv) => { setCvApproval(null); setCvStructured(cv); }}
