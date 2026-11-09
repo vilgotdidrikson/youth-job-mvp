@@ -431,6 +431,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n06-discovery-filters-20261025`; [PR #104](https://github.com/vilgotdidrikson/youth-job-mvp/pull/104), implementation `12cd8052`. Reserverad före kodarbete 2026-10-25. Fritext, N05-arbetstid och lokalt uppskattat avstånd från vald orts centrum; inga bostads-/GPS-/AI-data eller databasändringar. Kvarstående profil/GDPR/SMTP/prisberoenden och andra ägares uppgifter hoppas över enligt tidigare avgränsning.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Börja med textsökning och ett användbart val för närhet eller pendling samt arbetstid. Lägg därefter till lön och ålder om underlaget stödjer pålitlig filtrering. Koppla arbetstidsfilter till N05 och behåll lätt återställning.
 - Klar när: Ungdomen hittar relevanta jobb utan att behöva öppna varje annons; okända uppgifter hanteras tydligt.
 - Implementerat: Sökfält med synonym-/flerordssökning, N05-arbetstider och lokalt uppskattad fågelväg från vald orts centrum (12 referensorter, 5/10/25/50 km). Jobb med okänd vald uppgift kan behållas och märks, flera arbetsplatser hanteras utan dubblett. Filter före paginering, totalräknare, tydlig rensning och bibehållna sökval mellan kort/karta. Ångra behåller filtren. Inga nya profil-/GPS-/AI-data, databas- eller behörighetsändringar. Se docs/N06.md.
@@ -868,9 +869,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 57
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n06-f19-n18-discovery-20261109`, PR #184; reservation publicerad före kodarbete 2026-11-09.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Välj ett konsekvent beteende: direkt filtrering med tydlig stängning eller tillämpning med möjlighet att avbryta. Visa aktiva filter och gör rensning lätt att hitta.
 - Klar när: Det är tydligt om stängning behåller eller avbryter valen.
 - Implementerat: —
@@ -1235,6 +1237,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Codex
 - Branch/PR: `codex/n18-feed-relevance-20261019`, [PR #79](https://github.com/vilgotdidrikson/youth-job-mvp/pull/79). Reservation publicerad före kodarbete.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Bygg vidare på N17: uttryckliga filter är hårda val; profilönskemål, plats och känd tillgänglighet ger mjuk prioritering. Ovisade annonser, publiceringstid och variation mellan företag styr därefter. Behåll spärrar för tidigare val/ansökningar; ingen automatisk återvisning/lyft vid anställning eller textredigering. Visa begriplig anledning till relevans.
 - Klar när: Tom profil kan upptäcka jobb och nybörjare utesluts inte för saknad erfarenhet. Filter respekteras, resultat/paginering är stabila, flera arbetsplatser räknas en gång och ett företag tar inte över flödet. Sparade jobb fungerar separat. Inga betalda lyft aktiveras.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.

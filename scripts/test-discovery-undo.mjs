@@ -33,12 +33,13 @@ const pageReact={
 const hookMod={exports:{}};new Function('module','exports','require',compile('hooks/use-discovery-undo.ts'))(hookMod,hookMod.exports,()=>pageReact);
 const jobA={...a,employment_type:'Deltid'},jobB={...b,employment_type:'Deltid'};let feed=[jobA,jobB],reloadFails=false;
 const writes=[];let releaseSkip,releaseUndo,undoFail=false;
+const pageDomain={exports:{}};new Function('module','exports','require',compile('lib/job-discovery.ts'))(pageDomain,pageDomain.exports,()=>({}));
 const deps={
  '@/lib/job-categories':{jobCategoryFilterValues:()=>[]},'@/lib/job-workplaces':{getJobWorkplaces:()=>[]},
  'react':pageReact,'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'fragment'},
  'next/navigation':{useRouter:()=>({replace(){}}),useSearchParams:()=>({get(){return null;}})},
  '@/components/job-discovery':{JobDiscovery:'discovery'},'@/components/auth-gate-message':{},'@/components/page-loading':{PageLoading:'page-loading'},
- '@/lib/job-discovery':{orderDiscoveryJobs:jobs=>jobs},
+ '@/lib/job-discovery':{orderDiscoveryJobs:jobs=>jobs,discoveryPage:pageDomain.exports.discoveryPage},
  '@/lib/job-search':{readSearchFilters:()=>({query:'',city:'',category:'',employmentType:'',workTime:'',nearbyCity:'',radiusKm:'',onlyKnown:''})},
  '@/lib/discovery-history':{
   dismissDiscoveryJob:async id=>{writes.push(id);if(id==='a')await new Promise(r=>releaseSkip=r);return id+'-token';},
