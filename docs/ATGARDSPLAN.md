@@ -31,12 +31,45 @@ Beställt av användaren: samordna nuvarande och framtida GDPR-beslut i denna ar
 - Rekrytering utan aktivitet stängs efter sex månader, därefter sex månaders ansökningsfrist. Textchatt raderas vid den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; skrivskydd efter sex månader kvarstår.
 - Vanliga egna tekniska loggar: 30 dagar. Nödvändiga incidentutdrag får separat prövad frist. Dokumentera avvikelsen från äldre 90-dagars körningsloggar före aktivering i stället för att tyst ändra historik.
 
-### Förslag och juridiska frågor som ännu inte är beslutade
+### Beslutad komplettering efter gemensam genomgång 2026-11-09
 
-- Föreslagna frister: avtalsbevis/minimal verifieringsnotering under relationen plus tre år, incidentunderlag tolv månader efter avslut och egna operativa säkerhetskopior högst 30 dagar. Dessa är beslutsförslag, inte lagstadgade frister eller aktiveringsbeslut.
-- Entimmesfrist finns i det befintliga exportprovet men får inte tyst räknas som slutligt godkänd frist för alla framtida exporter. Faktura-/redovisningsfrist fastställs separat enligt tillämpliga krav; håll ekonomiskt underlag avskilt från kandidatdata.
-- Väntelista: föreslaget högst tolv månader med tidigare radering när syftet upphört och direkt stopp av utskick vid avregistrering. Identifierande kontaktdata och eventuell minimal spärrpost behöver egna fastställda frister/grunder. Ingen automatisk överföring till kandidatkonto eller annan marknadsföring.
+Följande är användarens önskade produktregler och interna rutiner, inte lagstadgade frister, slutligt juridiskt godkännande eller verifierad implementation. De ersätter äldre förslagsstatus i berörda kort. Ingen ny kortreservation eller ändring av befintliga ägare/statusar görs genom dokumentationen.
+
+| Område | Beslut och avgränsning | Kort |
+|---|---|---|
+| Avtalsbevis | Avtalstext, bilaga, version, godkännare och tidpunkt under avtalsrelationen samt tre år efter avslut. Juridisk kontroll av ändamål, nödvändighet och eventuella avgränsade undantag kvarstår. Minimal verifieringsnoterings egen frist är fortfarande inte separat avgjord. | L12/L15 |
+| Incidentdokumentation | Tolv månader efter avslut som önskad normalfrist. Dokumenterat, avgränsat undantag när underlaget fortfarande behövs; juridisk kontroll kvarstår. Ingen radering av pågående ärende/tillsyn enbart på grund av normalfristen. | L12/L16 |
+| Säkerhetskopior | Mål: raderade uppgifter ska försvinna ur säkerhetskopior inom högst 30 dagar. Faktisk leverantörskapacitet och DB-/filkopior måste verifieras innan löftet används externt. Återställning ska åter genomföra tidigare raderingar innan uppgifterna blir tillgängliga. | L12/L14 |
+| Exportfiler | Tillfälliga nedladdningsbara registerutdragsfiler raderas från servern efter en timme; en ny kan skapas. Alla leveransvägar/länkar ska respektera fristen. Redan hämtade externa kopior omfattas inte av serverraderingen. | L12/L13 |
+| Intresselista | Högst tolv månader utan övergång till konto eller aktivt förnyat intresse; tidigare radering när ändamålet upphör. Avregistrering stoppar utskick direkt och kontaktuppgifter raderas ur listan inom 30 dagar. Ingen automatisk kandidatregistrering/annan marknadsföring. Eventuell minimal spärrpost behöver separat grund och frist. | L10/L12/L14 |
+| Mejl och arbetskopior | Relevant ärendeinnehåll förs till skyddad adminhantering. Överflödiga mejl/bilagor raderas ur den gemensamma inkorgen inom 30 dagar efter överföring; nödvändig dokumentation följer ärendefristen. Arbetskopior omfattas också av tidigare beslut om radering inom 30 dagar efter avslut eller tidigare när obehövliga. | L12/L16 |
+| Teamåtkomst | Alla fem får gemensam mejlåtkomst och varsitt personligt adminkonto samt uttrycklig behörighet för integritetsärenden och incidenter. Tvåfaktorsautentisering är obligatorisk för samtliga adminkonton. Det innebär inte generell läsrätt till kandidatunderlag. | L05/L14/L16 |
+| Handläggning | Den som är tillgänglig tar ärendet och markerar ”Jag hanterar detta”; övertagande tillåts. Första återkoppling inom fem arbetsdagar är intern målsättning. Öppna integritetsärenden/incidenter följs upp minst var 30:e dag. Visa tillämpligt sista svarsdatum och skicka påminnelser innan dess; den månatliga uppföljningen förlänger inga externa frister. | L13/L16 |
+| Identitet och meddelanden | Begäran normalt inloggad; mejlärenden kräver separat proportionerlig identitetskontroll, inte rutinmässig ID-kopia. Mejlnotiser om integritetsärenden innehåller endast ärendenummer och länk, inte ärendeinnehåll/personuppgifter/bilagor. Ärenden fungerar även för personer utan konto. | L13/L16 |
+| Rättelser | Ungdomar kan anmäla fel i skickad ansökan eller AI-bedömning; rätta underlaget och underrätta berörda företag. Spårbar rättelse får inte skriva om ett tidigare avtalsbevis eller sprida andra ansökningars uppgifter. | F26/N19/L13/L16 |
+| Incidentansvar | Misstänkta dataläckor/obehörig åtkomst rapporteras internt omedelbart till Vilgot och Max som samordnar. Någon av övriga tre kan ta över direkt om båda är frånvarande. Alla fem behåller beslutad ärendeåtkomst. | L16 |
+| Företagsspärr och ändringar | Återkallad verifiering eller avslutat avtal spärrar kandidatåtkomst. Väsentliga avtalsändringar kräver ny accept före fortsatt användning av rekryteringsfunktionerna; tidigare godkända versioner bevaras som avtalsbevis. Detta är vald produktregel. | L15 |
+
+### Juridiska frågor och kontroller som återstår
+
+- Faktura-/redovisningsfrist fastställs separat enligt tillämpliga krav; håll ekonomiskt underlag avskilt från kandidatdata. Fastställ även minimal verifieringsnoterings och eventuell spärrposts egen grund/frist före aktivering.
 - Rådgivarens inskickade rollutlåtande pekar på artikel 26. Exakta gemensamma/separata moment, namngivna ansvariga inklusive extern medgrundares faktiska roll, rättsliga grunder, minderårigas flöde och AI-klassificering återstår. Fyra frågor har skickats till rådgivaren. Utkast är inte slutligt godkända texter.
+
+### Genomförande efter besluten – 2026-11-09
+
+Detta är en avgränsad ordning inom GDPR-arbetet, inte en ny global prioriteringslista eller ett övertagande av andras reservationer.
+
+| Steg | Kan förberedas nu | Krävs före skarp användning |
+|---|---|---|
+| 1. Ärenden och åtkomst (L16/L13/L05) | Personliga adminbehörigheter/tvåfaktorsgräns, ärendestatus och övertagande, privata bilagor, identitetskontroll, fristfält/påminnelser, innehållsfria mejlnotiser och incidentrutin. Återanvänd export/radering. | Behörighet för alla fem individuellt, verifierad mejlåtkomst, server-/RLS-/Storage-prov och utbildad handläggning. Alla fems åtkomst ersätter inte ansvarsfördelningen som ska fastställas juridiskt. |
+| 2. Gallring och återställning (L12/L13/L14) | Kategorier/startpunkter och beslutade frister, schemalagda återförsök, exportfrist, gallringsdagar för ärenden och separata dokumenterade undantag. Ta fram återställningsrutin för tidigare raderingar. | Rättsligt stöd/nödvändighet, verkliga leverantörsfrister och lyckade gräns-/fil-/återställningsprov. Aktivera inte destruktiv gallring genom dokumentändring. |
+| 3. Företagsaccept och spärrar (L15) | Versionsmodell, låst avtalskopia, godkännandeflöde, granskningsstatus, återkallande och omaccept med fiktiv avtalstext/testföretag. | Fastställda parter/roller, slutligt avtal/artikel 26-bilaga och verifieringsmetod; positiva/negativa flöden innan kandidatåtkomst. |
+| 4. Information och AI (F20/F26/N19/L14/L15) | Dataflödesinventering per funktion, minimeringskontroller för CV/matchning och rättelseväg. Strukturera integritetstext och behandlingsregister med öppna fält, utan att publicera juridiska antaganden som fakta. | Rådgivarens svar om grunder, 15–17-åringar, exakta roller, DPIA/AI-klassificering samt faktiska mottagare, leverantörsavtal och lagringsuppgifter. |
+| 5. Slutverifiering (L07/L08) | Fiktiva testfall för personligt admin-/företags-/ungdomskonto, åtkomst, export, rättelse, radering, incident och avtal. | Verkliga dev-flöden inklusive negativt API-/Storage-prov, återförsök och tidsgränser; kvarstående juridiska/leverantörsblockerare lösta före skarp lansering. |
+
+Minimikrav vid verifiering: samtliga fem behöriga konton och en obehörig admin, otillräcklig tvåfaktor, två samtidiga handläggare, korrekt övertagande, påminnelser före svarstid, neutral mejlnotis, identitetskontroll utan rutinmässig ID-kopia, fel ansöknings-/bilage-ID, utgången entimmesexport, avregistrering utan fler utskick, återkallad företagsverifiering och väsentligt ändrat avtal. Återställningsprov ska visa att redan raderade uppgifter inte åter exponeras.
+
+Dokumentationsleverans: Vilgot / Codex, branch `codex/gdpr-decisions-consolidation-20261109`. Kontrollerat: aktuell dev och öppna PR:er, befintliga relevanta kort, överensstämmelse med samtalets beslut samt att övriga korts innehåll/ägare/status är bevarade. Ingen ny produktkod, konto-/leverantörskontroll, funktionsverifiering eller produktionsändring ingår.
 
 ### Avgränsad kontrollstatus
 
@@ -1455,7 +1488,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 <a id="l12"></a>
 ### L12 Inför beslutade lagringstider och automatisk gallring
 
-- Samordnat tillägg 2026-11-09: Beslut och frister preciseras i den samlade GDPR-avstämningen nedan. Den kompletterar äldre tabell och öppna frågor där ett nyare beslut finns, men bevarar befintlig status, ägare och verifieringshistorik. L16:s adminärenden är en separat kategori från L05:s modereringsrapporter.
+- Samordnat tillägg 2026-11-09: Beslut och frister preciseras i den samlade GDPR-avstämningen i början av filen. Den kompletterar äldre tabell och öppna frågor där ett nyare beslut finns, men bevarar befintlig status, ägare och verifieringshistorik. L16:s adminärenden är en separat kategori från L05:s modereringsrapporter.
 
 - [ ] Klar
 - Prioritet: P1, före skarp lansering; 14-dagarsgallring krävs före aktivering av ansökningsvideo.
@@ -1636,8 +1669,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 - Visa företagsidentitet, organisationsnummer, företrädarens namn/roll, exakt avtal/bilaga och sparbar identisk kopia. Samla företagets dataskyddskontakt och rekryteringsinformation för visning före ansökan.
 - Inloggad företrädare med verifierad mejl accepterar med två initialt tomma rutor: avtal inklusive bilaga respektive behörighetsintyg. Knapp: Godkänn och skicka för granskning. Mejlverifiering/egen försäkran bevisar inte ensamma firmateckningsrätt; admin följer dokumenterad kontrollmetod. Ingen extern signeringstjänst är beställd; rådgivaren bekräftar tillräcklig kontrollnivå.
-- Servern sparar oföränderlig avtalstext/bilaga, versioner, företag, företrädare, konto och tidpunkt. Ge kopia/bekräftelse; bevara gamla versioner och kräv ny accept vid tillämpliga väsentliga ändringar.
-- Publicering och kandidatåtkomst kräver både giltigt avtal och godkänd företags-/behörighetskontroll. Spärren ska gälla även RPC/API/RLS/Storage, direktlänkar och gamla klienter. Avtal får inte lova absolut nedladdningsskydd för levererade PDF-filer.
+- Servern sparar oföränderlig avtalstext/bilaga, versioner, företag, företrädare, konto och tidpunkt. Ge kopia/bekräftelse. Beslutad produktregel: bevara tidigare godkända versioner och kräv ny accept vid väsentliga ändringar före fortsatt användning av rekryteringsfunktionerna. L12 anger önskad bevarandetid under avtalsrelationen plus tre år efter avslut, med juridisk kontroll kvar.
+- Publicering och kandidatåtkomst kräver både giltigt avtal och godkänd företags-/behörighetskontroll. Återkallad verifiering eller avslutat avtal ska spärra kandidatåtkomst. Spärren ska gälla även RPC/API/RLS/Storage, direktlänkar och gamla klienter. Testa också redan öppnad vy och återanvändning av utfärdade länkar; dokumentera deras faktiska giltighet utan att lova återkallelse av redan levererade externa kopior. Avtal får inte lova absolut nedladdningsskydd för levererade PDF-filer.
 - Grundavtalet är inte en avgiftsbelagd beställning. Pris och separat rekryteringsbekräftelse återanvänder L03/L04/F06; ingen parallell fakturamotor eller framtida premiumbeställning införs.
 
 #### Ungdom och rättsligt underlag
@@ -1665,28 +1698,30 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Status: Ej påbörjad
 - Ansvarig: —
 - Branch/PR: —; reservera före kodarbete och samordna med L05/L13.
-- Beslut 2026-11-09: Separat skyddad del av adminsidan för support- och personuppgiftsärenden; uppgifter lagras i Supabase. Eventuella bilagor lagras privat med samma åtkomstgräns. Åtkomst bara för faktiska handläggare, föreslaget Vilgot och Max. Juridiskt ansvar är en separat bedömning. L12 anger beslutade ärendefrister.
+- Beslut 2026-11-09: Separat skyddad del av adminsidan för support- och personuppgiftsärenden; uppgifter lagras i Supabase. Eventuella bilagor lagras privat med samma åtkomstgräns. Alla fem (Vilgot, William, Melker, Tom och Max) ska uttryckligen ges ärende-/incidentbehörighet via varsitt personligt adminkonto med obligatorisk tvåfaktorsautentisering; alla fem får även åtkomst till den gemensamma mejlen. Det tidigare förslaget om bara Vilgot och Max ersätts av detta beslut. Juridiskt ansvar är en separat bedömning. L12 anger beslutade ärendefrister.
 - Avgränsning: Återanvänd L13:s export/radering och L05:s rapport-/adminskydd. Ingen ny generell rätt att läsa kandidater och ingen separat exportmotor.
 
 #### Ärendeflöde och åtkomst
 
 - info@matchnwork.se är möjlig ingång. Spara mottagningsdag, berörd användare/kontakt, begäran, handläggare, status, åtgärder, beslut, avslut och gallringsdag. För över bara relevant mejlinnehåll; även inkorg/vidarebefordran behöver gallras.
 - Privata bilagor i avskild lagring med ärendebehörighet i API/databas/Storage. Inga publika URL:er; spara inte hela CV:n/chattar eller ID-handlingar rutinmässigt. Logga nödvändiga åtkomst-/åtgärdshändelser utan innehållskopior.
-- Vanlig admin, marknadsföringsroll, andra ungdomar/företag eller obehöriga utvecklare får inte ärendeåtkomst. Medgrundarskap eller företagsverifieringsroll ger inte automatiskt handläggarbehörighet. Kandidatunderlag får öppnas bara vid dokumenterat konkret support-/incidentbehov.
+- Alla fem har uttryckligen beslutad handläggarbehörighet, oavsett övrig teamroll; en framtida vanlig admin eller utvecklare får inte automatiskt samma behörighet. Andra ungdomar/företag och obehöriga konton nekas. Kandidatunderlag får öppnas bara vid dokumenterat konkret support-/incidentbehov. Kontrollera handläggarbehörighet och uppfylld tvåfaktorsautentisering på servern för läsning, ändringar och privata bilagor; en UI-spärr ensam räcker inte.
 - Hantera tillgång, rättelse, radering, begränsning, invändning och dataportabilitet enligt respektive förutsättningar. Proportionerlig identitetskontroll och normalt en månads frist; tillåten förlängning/skäl meddelas inom första månaden. Vidarebefordran till arbetsgivare startar inte ny frist. Kontakt fungerar även utan inloggning.
 - Automatisk export kvarstår i L13. Manuell rutin måste kunna komplettera ofullständiga paket och ge fullständiga svar i tid medan automatiken byggs. Säker leverans efter identitetskontroll; inga exportpaket till AI för granskning eller rutinmässigt som öppen mejlbilaga. Underrätta mottagare om rättelser/radering när det krävs.
-- Återkoppling inom fem arbetsdagar och uppföljning av öppna ärenden var 30:e dag är rutinförslag, inte slutligt beslutade produktfrister. Undvik obegränsad lagring av öppna ärenden utan uppföljning.
+- Beslutad intern målsättning: första återkoppling inom fem arbetsdagar. Följ upp öppna integritetsärenden och incidenter minst var 30:e dag. Visa sista tillämpliga svarsdatum och påminn före tidsfristen; fem arbetsdagar/30-dagarsuppföljning ersätter eller förlänger inte externa frister. Den som är tillgänglig markerar ”Jag hanterar detta”; tillåt spårbart övertagande och undvik dubbel handläggning vid samtidiga anrop.
+- Begäran görs normalt inloggad; via mejl krävs separat proportionerlig identitetskontroll utan rutinmässig ID-kopia. Behåll kontaktväg utan konto. Notismejl innehåller bara ärendenummer och länk till skyddad adminvy, inte ärendeinnehåll/personuppgifter/bilagor. Överflödiga inkorgskopior/bilagor raderas inom 30 dagar efter överföring till ärendet. Tillfälliga exportfiler följer entimmesfristen i L12/L13.
+- Anmälan om fel i skickad ansökan/AI-bedömning ska kunna kopplas till rätt ansökan, handläggas, rättas och följas av meddelande till berörda företag; återanvänd F26/N19/L13.
 
 #### Incidenter
 
-- Vilgot samordnar med Max som ersättare enligt tidigare underlag. Möjliggör omedelbara skyddsåtgärder inom behörighet utan gruppmöte: spärra åtkomst, pausa berört flöde och återkalla nycklar/sessioner vid behov.
+- Misstänkt dataläcka eller obehörig åtkomst rapporteras internt omedelbart till Vilgot och Max som samordnar. Om båda är frånvarande kan någon av övriga tre ta över direkt. Möjliggör omedelbara skyddsåtgärder inom behörighet utan gruppmöte: spärra åtkomst, pausa berört flöde och återkalla nycklar/sessioner vid behov.
 - Dokumentera vetskapstid, händelse, berörda uppgifter/personer, risk, åtgärder och kontakter. Samordna med arbetsgivare/leverantörer men bevaka varje parts skyldigheter. Bedöm IMY-anmälan utan onödigt dröjsmål och när tillämpligt inom 72 timmar från vetskap; information till berörda vid hög risk utan onödigt dröjsmål. Dokumentera även skäl att avstå.
-- Incidentbevis begränsas och skyddas separat. Incidenternas egen frist/undantag behöver fastställas i L12; tolv månader är hittills ett förslag för incidenter, inte en regel att gallra pågående tillsyn.
+- Incidentbevis begränsas och skyddas separat. Beslutad önskad normalfrist är tolv månader efter avslut enligt L12, med juridisk kontroll kvar. Dokumentera avgränsat undantag, skäl och nästa omprövning när längre lagring behövs. Normalfristen får inte medföra radering under pågående tillsyn eller dokumenterat rättsligt ärende.
 
 #### Klar när
 
 - Fiktiva ärenden kan tas emot, tilldelas, följas upp, avslutas och gallras. Frister och skyddade bilagor fungerar; vanliga ärenden skiljs från incidenter och modereringsrapporter.
-- Positiva/negativa tester för handläggare, annan admin, anonym, ungdom, företag, fel ärende/bilage-ID, gammal session och samtidighet. Inga direktanrop kringgår handläggarbehörighet.
+- Positiva tester för samtliga fem personliga handläggarkonton med tvåfaktor och negativa tester för admin utan särskild ärendebehörighet, otillräcklig tvåfaktor, anonym, ungdom, företag, fel ärende/bilage-ID och gammal session. Prova samtidig övertagning, uteblivna påminnelser/återförsök och att notismejl saknar innehåll. Inga direktanrop kringgår handläggarbehörighet.
 - Verifiera avslut/återöppning utan tyst evig förlängning, radering/återförsök, backup-/mejlkopior och rättelse till mottagare. Incidentövning sker med syntetiska data; skicka inte verklig IMY-anmälan som test.
 - Implementerat: —
 - Verifierat: Dokumentkrav och användarens beslut; ingen ny produktkod eller driftåtgärd.
