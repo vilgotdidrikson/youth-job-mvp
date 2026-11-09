@@ -35,6 +35,7 @@ Module._load=function(name,parent,...rest){
   requestAccountEmailChange:(...args)=>{const d=deferred();writes.push({kind:'email',args,...d});return d.promise;},
   readAccountEmail:(...args)=>{const d=deferred();reads.push({args,...d});return d.promise;},
  };
+ if(name==='./account-totp-settings')return{AccountTotpSettings:()=>null};
  if(name==='./password-input')return{PasswordInput:()=>null};
  return originalLoad.call(this,name.startsWith('@/')?path.resolve(name.slice(2)):name,parent,...rest);
 };

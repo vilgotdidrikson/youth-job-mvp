@@ -90,6 +90,7 @@
     "test:platform-visuals": "node scripts/test-platform-visuals.mjs",
     "test:moderation": "node scripts/test-moderation-client.mjs",
     "test:video-playback": "node scripts/test-video-playback.mjs",
+    "test:account-totp": "node scripts/test-account-totp.mjs && node scripts/test-account-totp-ui.mjs && node scripts/test-two-factor-session.mjs",
     "test:account-settings": "node scripts/test-account-settings.mjs && node scripts/test-account-settings-ui.mjs",
     "test:account-recovery": "node scripts/test-session-lifecycle.mjs && node scripts/test-account-recovery.mjs && node scripts/test-session-events.mjs && node scripts/test-auth-route-contract.mjs",
     "test:company-questions": "node scripts/test-company-questions.mjs",
