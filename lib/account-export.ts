@@ -7,16 +7,16 @@ export class AccountExportError extends Error {
 const MAX = 64 * 1024 * 1024;
 export type AccountExportFile = { blob: Blob; filename: string; expiresAt: string };
 export type AccountExportStatus = { status: "none" | "expired" | "failed" } | { status: "building"; expiresAt: string };
-export async function requestAccountExport(expectedUserId: string, password: string, signal: AbortSignal): Promise<AccountExportFile> {
-  const result = await requestExport(expectedUserId, password, signal, false);
+export async function requestAccountExport(expectedUserId: string, password: string, signal: AbortSignal, totpCode?: string): Promise<AccountExportFile> {
+  const result = await requestExport(expectedUserId, password, signal, false, totpCode);
   if ("status" in result) throw new AccountExportError();
   return result;
 }
-export function recoverAccountExport(expectedUserId: string, password: string, signal: AbortSignal) {
-  return requestExport(expectedUserId, password, signal, true);
+export function recoverAccountExport(expectedUserId: string, password: string, signal: AbortSignal, totpCode?: string) {
+  return requestExport(expectedUserId, password, signal, true, totpCode);
 }
 /** Local session is only a token snapshot; server verifies identity/password. */
-async function requestExport(expectedUserId: string, password: string, signal: AbortSignal, recover: boolean): Promise<AccountExportFile | AccountExportStatus> {
+async function requestExport(expectedUserId: string, password: string, signal: AbortSignal, recover: boolean, totpCode?: string): Promise<AccountExportFile | AccountExportStatus> {
   if (!expectedUserId || !password || password.length > 1024) throw new AccountExportError("Ange lösenordet för ditt konto.");
   const client = getSupabaseClient();
   async function wait<T>(operation: Promise<T>): Promise<T> {
@@ -31,9 +31,9 @@ async function requestExport(expectedUserId: string, password: string, signal: A
     return data.session.access_token;
   };
   const token = await snapshot();
-  const response = await fetch(recover ? "/api/account/export-preview/recover" : "/api/account/export-preview", { method: "POST", cache: "no-store", credentials: "omit", redirect: "error", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ expectedUserId, password }), signal });
+  const response = await fetch(recover ? "/api/account/export-preview/recover" : "/api/account/export-preview", { method: "POST", cache: "no-store", credentials: "omit", redirect: "error", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ expectedUserId, password, ...(totpCode ? { totpCode } : {}) }), signal });
   if (!response.ok) {
-    const messages: Record<number, string> = { 401: "Logga in igen och försök på nytt.", 403: "Kontrollera lösenordet.", 409: "Ett exportpaket finns redan eller kontot har ändrats.", 429: "För många försök. Försök igen senare.", 503: "Exportprovet är inte tillgängligt just nu." };
+    const messages: Record<number, string> = { 401: "Logga in igen och försök på nytt.", 403: "Kontrollera lösenordet och eventuell tvåfaktorskod.", 409: "Ett exportpaket finns redan eller kontot har ändrats.", 429: "För många försök. Försök igen senare.", 503: "Exportprovet är inte tillgängligt just nu." };
     throw new AccountExportError(messages[response.status]);
   }
   if (recover && response.headers.get("content-type") === "application/json") {

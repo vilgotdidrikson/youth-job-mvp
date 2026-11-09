@@ -14,6 +14,7 @@ async function test(name,fn){reset();await fn();passed++;console.log('PASS '+nam
 const start=signal=>run('A','qa-password',signal??new AbortController().signal);
 try{
  await test('valid binary response remains scoped to original session',async()=>{const out=await start();assert.equal(out.filename,filename);assert.deepEqual(new Uint8Array(await out.blob.arrayBuffer()),bytes);assert.equal(reads,2);});
+ await test('code is forwarded only in the protected request body',async()=>{const before=globalThis.fetch;globalThis.fetch=(url,init)=>{const value=JSON.parse(init.body);assert.equal(value.totpCode,'123456');const {totpCode,...rest}=value;assert.equal(totpCode,'123456');return before(url,{...init,body:JSON.stringify(rest)});};await run('A','qa-password',new AbortController().signal,'123456');});
  await test('wrong account cannot send password',async()=>{user='B';await assert.rejects(start());assert.equal(calls,0);});
  await test('account switch after response withholds file',async()=>{after=true;await assert.rejects(start());});
  for(const statusCode of [401,403,409,429,503])await test('fixed error text for '+statusCode,async()=>{status=statusCode;body='QA_PRIVATE';await assert.rejects(start(),e=>!e.message.includes('QA_PRIVATE'));});

@@ -18,7 +18,7 @@ export class PersonalDataReviewError extends Error {
 export async function preparePersonalDataReview(
   userClient: SupabaseClient, verificationClient: SupabaseClient,
   subjectId: string, password: string,
-  options: { accessToken: string; sessionClient: SupabaseClient; signal?: AbortSignal; reviewClient?: SupabaseClient; includeCvFiles?: boolean },
+  options: { accessToken: string; sessionClient: SupabaseClient; signal?: AbortSignal; reviewClient?: SupabaseClient; includeCvFiles?: boolean; totpCode?: string },
 ) {
   const stop = new AbortController();
   const active = options.signal ? AbortSignal.any([options.signal, stop.signal]) : stop.signal;
@@ -38,7 +38,7 @@ export async function preparePersonalDataReview(
   }
   try {
     const sessionId = await wait(() => verifyPersonalDataSession(userClient, options.sessionClient, subjectId, options.accessToken, active));
-    await wait(() => reauthenticateAccount(userClient, verificationClient, subjectId, password));
+    await wait(() => reauthenticateAccount(userClient, verificationClient, subjectId, password, options.totpCode, active));
     const collection = await wait(() => collectPersonalDataForReview(userClient, subjectId, active, options.reviewClient));
     if (collection.subjectId !== subjectId || collection.reviewState !== "pending") throw new PersonalDataReviewError("identity_changed");
     const profile = collection.categories.flatMap(category => category.sources).find(source => source.relation === "public.profiles");
