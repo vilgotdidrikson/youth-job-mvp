@@ -1,4 +1,4 @@
-.page { max-width: 1060px; min-height: 100svh; margin: auto; padding: 122px 32px 60px; color: var(--color-text); }
+.page { max-width: var(--page-width); min-height: 100svh; margin: auto; padding: var(--page-top) var(--page-gutter) 60px; color: var(--color-text); }
 .page a:focus-visible, .page button:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .heading { margin-bottom: 32px; }
 .eyebrow { margin: 0 0 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; font-size: .7rem; }
@@ -64,9 +64,9 @@
 .textButton:hover:not(:disabled) { text-decoration: underline; }
 .read .notificationIcon { color: var(--color-text-muted); background: #f4f0f2; }
 .error { padding: 16px; border-radius: 14px; color: var(--color-brand-on-rose); background: var(--color-surface-soft); font-size: .85rem; }
-@media (max-width: 900px) and (min-width: 721px) { .page { padding-inline: 24px; } .layout { grid-template-columns: minmax(0,1fr) 230px; gap: 20px; } .cardTop { flex-wrap: wrap; } .badge { margin-left: 59px; } .cardFooter { flex-wrap: wrap; } }
+@media (max-width: 900px) and (min-width: 721px) { .page { padding-inline: var(--page-gutter-tablet); } .layout { grid-template-columns: minmax(0,1fr) 230px; gap: 20px; } .cardTop { flex-wrap: wrap; } .badge { margin-left: 59px; } .cardFooter { flex-wrap: wrap; } }
 @media (max-width: 720px) {
-  .page { max-width: 480px; padding: 30px 18px calc(110px + env(safe-area-inset-bottom)); }
+  .page { max-width: var(--page-width-mobile); padding: var(--page-top-mobile) var(--page-gutter-mobile) calc(110px + env(safe-area-inset-bottom)); }
   .heading { margin-bottom: 24px; }
   .heading h1 { font-size: 1.9rem; }
   .heading > p:last-child { font-size: .82rem; max-width: 300px; }

@@ -1,4 +1,4 @@
-.page {max-width:1680px;margin:auto;padding:102px 24px 12px;color:var(--color-text); }
+.page {max-width:var(--page-width-wide);margin:auto;padding:102px var(--page-gutter) 12px;color:var(--color-text); }
 .page button,.page input,.page textarea { font:inherit; }
 .page button { cursor:pointer; }
 .page button:disabled { opacity:.45;cursor:default; }
@@ -68,6 +68,10 @@
 .cvGate .empty p { max-width:440px;font-size:var(--text-md);line-height:1.65;margin:16px 0 28px; }
 .cvGate .primary { min-height:48px;padding:12px 22px;border-radius:13px;font-size:var(--text-md); }
 .listNote { padding:32px 22px;text-align:center;font-size:.8rem;line-height:1.8;color:var(--color-text-muted); }
+/* Empty inbox: the conversation pane carries the empty state on desktop; the inbox carries it on mobile, where that pane is hidden. */
+.emptyActions,.listActions { display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px; }
+.inboxEmpty { display:none; }
+.listNote > svg { display:block;margin:0 auto; }
 .listNote h3 { font-size:.95rem;font-weight:500;color:var(--color-text); }
 .messageNote,.welcome { margin:auto;text-align:center;color:var(--color-text-muted);font-size:.82rem; }
 .welcome h3 { font-weight:500;color:var(--color-text); }
@@ -79,9 +83,10 @@
 .mobileBack { display:none; }
 .quickReplies { display:flex;flex-wrap:wrap;gap:8px;padding:10px 20px;background:var(--color-surface);flex-shrink:0; }
 .quickReplies button { min-height:36px;padding:8px 12px;border:1px solid #ecdee5;border-radius:20px;background:var(--color-surface);color:var(--accent);font-size:.74rem; }
-@media(max-width:950px) and (min-width:721px) { .workspace { grid-template-columns:250px minmax(0,1fr); }.matchStatus { display:none; }.page { padding-inline:20px; } }
+@media(max-width:950px) and (min-width:721px) { .workspace { grid-template-columns:250px minmax(0,1fr); }.matchStatus { display:none; }.page { padding-inline:var(--page-gutter-tablet); } }
 @media(max-width:720px) {
- .page { max-width:540px;padding:26px 18px calc(100px + env(safe-area-inset-bottom)); }.heading { margin-bottom:20px; }.heading h1 { font-size:1.8rem; }
+ .inboxEmpty { display:block; }
+ .page { max-width:var(--page-width-mobile);padding:var(--page-top-mobile) var(--page-gutter-mobile) calc(100px + env(safe-area-inset-bottom)); }.heading { margin-bottom:20px; }.heading h1 { font-size:1.8rem; }
  .workspace { display:block;height:auto;min-height:0;border-radius:20px; }.inbox { border:0; }.conversation { display:none; }
  .hasConversation { max-width:100%;padding:0;height:calc(100dvh - 66px - env(safe-area-inset-bottom)); }.hasConversation > .heading,.hasConversation .inbox { display:none; }.hasConversation .workspace { height:100%;border:0;border-radius:0; }.hasConversation .conversation { display:flex;height:100%; }
  .conversationHeader { padding:calc(12px + env(safe-area-inset-top)) 14px 12px;gap:10px; }.conversationHeader .avatar { width:38px;height:38px;border-radius:13px; }.conversationHeader h2 { font-size:.88rem; }.conversationHeader p { font-size:.7rem; }.matchStatus { display:none; }

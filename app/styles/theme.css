@@ -75,6 +75,16 @@
   --shadow-md: 0 18px 32px rgba(var(--color-text-rgb), .09);
   --shadow-dialog: 0 20px 80px rgba(var(--color-text-rgb), .2);
 
+  /* Shared page frame for signed-in product views (D08). */
+  --page-width: 1060px;        /* single-column views: discover, applications, profile, notifications */
+  --page-width-wide: 1180px;   /* deliberate two-column workspaces: chat and the company workspace */
+  --page-gutter: 32px;
+  --page-gutter-tablet: 24px;  /* 721–900px */
+  --page-top: 122px;           /* clears the 88px desktop navigation */
+  --page-width-mobile: 480px;
+  --page-gutter-mobile: 18px;
+  --page-top-mobile: 24px;
+
   /* Existing component aliases, kept while the app is gradually refactored. */
   --bg: var(--color-canvas);
   --surface: var(--color-surface);

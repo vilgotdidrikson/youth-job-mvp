@@ -1,4 +1,4 @@
-.page { width: min(100%, 1060px); min-height: 100svh; margin: 0 auto; padding: 124px 32px 48px; color: var(--color-text); font-size: .9rem; }
+.page { width: min(100%, var(--page-width)); min-height: 100svh; margin: 0 auto; padding: var(--page-top) var(--page-gutter) 48px; color: var(--color-text); font-size: .9rem; }
 .page * { box-sizing: border-box; }
 .page button, .page a, .page select { -webkit-tap-highlight-color: transparent; }
 .page a:focus-visible, .page button:focus-visible, .page select:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
@@ -87,9 +87,9 @@
 .dialogActions { display: flex; gap: 12px; }
 .dialogActions button { flex: 1; min-height: 48px; border: 1px solid var(--color-ring); border-radius: 999px; color: var(--color-text); background: var(--color-surface); }
 .dialogActions button:last-child { color: white; border-color: var(--accent); background: var(--accent); }
-@media (max-width: 900px) and (min-width: 721px) { .layout { grid-template-columns: minmax(0, 1fr) 230px; gap: 20px; } .page { padding-inline: 24px; } .action { padding: .7rem; } .sideCard { padding: 18px; } }
+@media (max-width: 900px) and (min-width: 721px) { .layout { grid-template-columns: minmax(0, 1fr) 230px; gap: 20px; } .page { padding-inline: var(--page-gutter-tablet); } .action { padding: .7rem; } .sideCard { padding: 18px; } }
 @media (max-width: 720px) {
-  .page { max-width: 480px; padding: 20px 16px calc(100px + env(safe-area-inset-bottom)); }
+  .page { max-width: var(--page-width-mobile); padding: var(--page-top-mobile) var(--page-gutter-mobile) calc(100px + env(safe-area-inset-bottom)); }
   .header { margin-bottom: 18px; }
   .header h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .header p { display: none; }

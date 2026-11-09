@@ -241,7 +241,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
 | 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Klar | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
-| 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Pågår | Max / Claude |
+| 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | För granskning | Max / Claude |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Pågår | Vilgot / Codex |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
@@ -1125,14 +1125,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 58
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `Max`; reservation 2026-11-09 före kodarbete.
 - Åtgärd: Visa ett relevant nästa steg i tom chattsida i stället för Välj en matchning när ingen finns. Samordna marginaler och innehållsbredder mellan upptäck, profil, ansökningar och chatt, med avsiktliga undantag för tvåspaltsvyer.
 - Klar när: Tomvyer ger användbar väg vidare och layouten känns sammanhängande.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Reproducerat före ändringen (driftsatt dev, DevStaging, 2026-11-09): en ungdom utan samtal såg ”Välj en matchning i inkorgen” i samtalsytan trots att inkorgen var tom; ett företag utan samtal fick ingen väg vidare alls. Chatten var 1680px bred och följde varken navigeringens eller företagsvyns ram; mobilvyerna hade 16/18px sidmarginal, 20–30px toppavstånd och chatten 540px bredd.
+- Implementerat: Samtalsytan skiljer på tre lägen (`app/chats/page.tsx`): inga samtal ger ”Inga samtal ännu” med nästa steg – ungdom: Upptäck jobb och Se dina ansökningar; företag: Granska kandidater (`/company?view=kandidater`); samtal finns men inget valt ger ”Välj ett samtal”; under hämtning/fel visas inget i samtalsytan (inkorgen visar status). På mobil, där samtalsytan är dold, bär inkorgen samma nästa steg; på dator visas bara samtalsytans tomvy så att två tomvyer inte konkurrerar. Gemensamma sidramstokens i `app/styles/theme.css` (`--page-width` 1060px, `--page-width-wide` 1180px, `--page-gutter` 32/24/18px, `--page-top` 122/24px, `--page-width-mobile` 480px) används av upptäck, ansökningar och övriga enspaltiga `mobile-shell`-vyer, profil, notiser och chatt. Avsiktligt undantag: chatt och företagsvyn är tvåspaltiga och delar 1180px; chattens toppavstånd 102px behålls för helhöjdsytan. Ingen produktlogik, RLS eller migration ändrad.
+- Verifierat (lokalt, ej i dev): TypeScript, ESLint för chatten och produktionsbygge. Chromium mot lokalt produktionsbygge kopplat till DevStaging med tillfälliga fiktiva QA-konton (två ungdomar, två företag, admin; alla raderade efteråt), 1280, 900 och 375px: ungdom och företag utan samtal får rätt nästa steg, företagets knapp öppnar kandidatvyn, ungdom med match ser ”Välj ett samtal”, inkorgens tomvy döljs på dator och visas med samma åtgärder på mobil, åtgärderna är 46px höga och ingen vågrät scroll. Uppmätt ram på `/swipe`, `/applications`, `/profile`, `/notifications`: 1060px/32px vid 1280, 24px vid 900, 18px/24px topp vid 375; `/chats` 1180px. Samma skript mot driftsatt dev reproducerade före-läget.
+- Återstår / blockerare: Införas i dev och verifieras i driftsatt dev. Fysisk mobil ej testad. Företagsvyns egna tomvyer och inline-stilar ligger kvar i DA-12.
 
 ## Lansering, tidigare beslut och kompletterande verifiering
 
