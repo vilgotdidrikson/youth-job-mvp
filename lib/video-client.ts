@@ -1,5 +1,6 @@
 "use client";
 
+import { getCurrentUser } from "@/lib/auth";
 import { videoHasExpired } from "@/lib/video-retention";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -39,9 +40,14 @@ export async function videoPlaybackUrl(video: YouthVideo): Promise<string> {
   return URL.createObjectURL(data);
 }
 
-export async function revokeVideo(video: YouthVideo): Promise<boolean> {
+export async function revokeVideo(video: YouthVideo, signal?: AbortSignal): Promise<boolean> {
+  signal?.throwIfAborted();
+  if ((await getCurrentUser())?.id !== video.owner_id) throw new Error("Kontot har ändrats. Öppna videoflödet igen.");
+  signal?.throwIfAborted();
   const db = getSupabaseClient();
-  const { data, error } = await db.from("youth_videos").update({ revoked_at: new Date().toISOString() }).eq("id", video.id).select("id");
+  let query = db.from("youth_videos").update({ revoked_at: new Date().toISOString() }).eq("id", video.id).eq("owner_id", video.owner_id).select("id");
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query;
   if (error || !data?.length) throw new Error("Videon kunde inte tas bort. Försök igen.");
   // Physical deletion is centralized so report exclusions and retries apply.
   return true;
@@ -54,15 +60,18 @@ export async function uploadVideo(file: File, duration: number, userId: string, 
   const validation = validateProfileVideo({name:file.name,type:file.type.split(";")[0],size:file.size,durationSeconds:duration});
   if (!validation.ok) throw new Error(validation.message);
   signal.throwIfAborted();
+  if ((await getCurrentUser())?.id !== userId) throw new Error("Kontot har ändrats. Öppna videoflödet igen.");
+  signal.throwIfAborted();
   const db = getSupabaseClient();
   const id = crypto.randomUUID();
   const video: YouthVideo = {id,owner_id:userId,storage_path:`${userId}/${id}.${validation.extension}`,conversation_id:conversationId,duration_seconds:duration,revoked_at:null};
-  const { error } = await db.from("youth_videos").insert({...video,mime_type:validation.mimeType,size_bytes:file.size});
+  const { error } = await db.from("youth_videos").insert({...video,mime_type:validation.mimeType,size_bytes:file.size}).abortSignal(signal);
   if (error) throw new Error("Kunde inte förbereda videon. Kontrollera din session och försök igen.");
   try {
     signal.throwIfAborted();
     const { data: { session } } = await db.auth.getSession();
-    if (!session) throw new Error("Logga in igen för att ladda upp video.");
+    if (!session || session.user.id !== userId) throw new Error("Logga in med rätt konto igen för att ladda upp video.");
+    signal.throwIfAborted();
     const uploadClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
       accessToken: async () => session.access_token,
       auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
@@ -80,14 +89,36 @@ export async function uploadVideo(file: File, duration: number, userId: string, 
 }
 
 /** A deterministic message UUID makes retries idempotent, including lost replies. */
-export async function sendVideoMessage(conversationId: string, userId: string, messageId: string, video: YouthVideo): Promise<void> {
+export async function sendVideoMessage(conversationId: string, userId: string, messageId: string, video: YouthVideo, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted();
   if (!video || video.conversation_id !== conversationId || video.owner_id !== userId) throw new Error("Videon tillhör inte den här chatten.");
+  if ((await getCurrentUser())?.id !== userId) throw new Error("Kontot har ändrats. Öppna videoflödet igen.");
+  signal?.throwIfAborted();
   const db = getSupabaseClient();
   const expected = {id:messageId,conversation_id:conversationId,sender_user_id:userId,
     message_text:"Videomeddelande",video_kind:"file",video_id:video.id};
-  const {error} = await db.from("messages").insert(expected);
+  let insert = db.from("messages").insert(expected);
+  if (signal) insert = insert.abortSignal(signal);
+  const {error} = await insert;
   if (!error) return;
-  const {data} = await db.from("messages").select("id,conversation_id,sender_user_id,video_kind,video_id").eq("id",messageId).maybeSingle();
-  if (data && data.conversation_id===conversationId && data.sender_user_id===userId && data.video_kind===expected.video_kind && data.video_id===expected.video_id) return;
+  if (error.code === "23505") {
+    let receipt = db.from("messages").select("id,conversation_id,sender_user_id,video_kind,video_id").eq("id",messageId).eq("conversation_id",conversationId).eq("sender_user_id",userId);
+    if (signal) receipt = receipt.abortSignal(signal);
+    const {data, error: receiptError} = await receipt.maybeSingle();
+    if (!receiptError && data?.id===messageId && data.conversation_id===conversationId && data.sender_user_id===userId && data.video_kind===expected.video_kind && data.video_id===expected.video_id) return;
+  }
   throw new Error("Videon kunde inte skickas. Förhandsvisningen finns kvar så att du kan försöka igen.");
+}
+
+/** Caller-scoped preparation only; writes still rely on the existing RLS. */
+export async function readChatVideoAccess(ownerId: string, conversationId: string, signal: AbortSignal): Promise<boolean> {
+  signal.throwIfAborted();
+  if ((await getCurrentUser())?.id !== ownerId) throw new Error("Kontot har ändrats.");
+  signal.throwIfAborted();
+  const { data, error } = await getSupabaseClient().from("conversations").select("id,match_id")
+    .eq("id", conversationId).eq("youth_user_id", ownerId).abortSignal(signal).maybeSingle();
+  signal.throwIfAborted();
+  if (error || data?.id !== conversationId || !data.match_id || (await getCurrentUser())?.id !== ownerId) throw new Error("Kunde inte öppna videoflödet för den här chatten.");
+  signal.throwIfAborted();
+  return true;
 }
