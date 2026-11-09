@@ -50,6 +50,30 @@ Följande är användarens önskade produktregler och interna rutiner, inte lags
 | Incidentansvar | Misstänkta dataläckor/obehörig åtkomst rapporteras internt omedelbart till Vilgot och Max som samordnar. Någon av övriga tre kan ta över direkt om båda är frånvarande. Alla fem behåller beslutad ärendeåtkomst. | L16 |
 | Företagsspärr och ändringar | Återkallad verifiering eller avslutat avtal spärrar kandidatåtkomst. Väsentliga avtalsändringar kräver ny accept före fortsatt användning av rekryteringsfunktionerna; tidigare godkända versioner bevaras som avtalsbevis. Detta är vald produktregel. | L15 |
 
+### Senaste verksamhetsbeslut och återstående dokumentarbete 2026-11-09
+
+Användaren har nu beställt att även besluten efter föregående sammanställning och det återstående GDPR-arbetet ska införas här. Uppdatera befintliga kort; inga nya parallella GDPR-kort eller ändrade ägare/statusar införs. Denna leverans omfattar endast planen, inte produktkod eller publicerade juridiska texter.
+
+- Intresselistan används bara för lanseringsinformation och besked om att tjänsten är live, inte framtida erbjudanden/nyhetsbrev. Tidigare beslutade avregistrerings- och gallringsfrister gäller.
+- Användningsstatistik är en möjlig framtida funktion som behöver egen prövning före införande; ingen statistikfunktion beställs nu.
+- Verkliga CV:n, profilsvar och AI-bedömningar får inte återanvändas för att testa eller förbättra MatchnWorks AI. Använd fiktiva uppgifter; kontroll av leverantörens egna villkor/inställningar kvarstår.
+- Företag får använda kandidatuppgifter endast för den aktuella rekryteringen, utan egen kandidatbank, marknadsföring eller överföring till externa AI-tjänster. Efter anställning medges bara nödvändiga uppgifter för anställningsavtal och personaladministration under företagets separata ansvar; undantaget ger inte generell export av CV, AI-bedömning eller hela kandidatunderlaget.
+- Företagets vanliga kontaktmejl används om annan dataskyddsadress inte anges. Rekryteringsinformationen lämnas genom egen relevant länk eller ifylld mall hos MatchnWork och visas före ansökan. Inget separat krav på namngiven dataskyddsperson eller extern policysida införs; eventuellt dataskyddsombud anges där tillämpligt.
+- Ungdomar uppmanas att undvika känsliga uppgifter och personnummer i CV/fritext. Företag får inte efterfråga hälsa, religion, politiska åsikter eller andra känsliga uppgifter och inte onödiga personnummer i plattformens frågor. Om uppgifter ändå lämnas begränsas åtkomst och innehållet tas bort/ersätts med ungdomens hjälp, utan onödiga kopior; redan delat underlag/mottagare ska följas upp.
+- Återkallad ansökan spärrar företagets åtkomst till ansökans CV, svar och AI-bedömning direkt samt notifierar företaget neutralt utan underlagskopior. Textchatten skrivskyddas direkt för båda parter, tidigare meddelanden följer gallringsregeln i L12. Spärrat underlag får inte öppnas genom gamla chattbilagor/länkar. Ingen automatisk återöppning genom ett bakgrundsjobb.
+- Kandidatåtkomst får tillfälligt pausas vid misstänkt personuppgiftsmissbruk under utredning enligt L15/L16. Återkallad verifiering/avslutat avtal och väsentligt ändrade villkor följer tidigare spärr-/omacceptbeslut.
+
+| Befintligt kort | Det som ska göras härnäst | Läget och beroenden |
+|---|---|---|
+| F20/L15 | Förbered begriplig integritetsinformation för ungdomar och företagskontakter, kort information vid AI/ansökan samt väsentligt innehåll i artikel 26-fördelningen. | Kan skrivas med markerade öppna fält. Slutlig ansvarig, grund, minderårigflöde och faktisk leverantörsbehandling fastställs före publicering. |
+| F20/L15 | Skriv företagets ifyllbara mall för information till sökande, med identitet/kontakt, behandling/ändamål, rättslig grund, mottagare/överföringar, lagring och rättigheter. | Företaget ansvarar för korrekta uppgifter om sin hantering; ingen malltext får påstå att alla företag har samma grunder, lagring eller leverantörer. Slutligt innehåll granskas före användning. |
+| L15 | Färdigställ behandlingsförteckningen och samordna företagsavtal/dataskyddsbilaga med de nya besluten. | Förberedda arbetsdokument: Behandlingsförteckning v0.1, Företagsavtal v0.5, Bilaga A v0.2 och Leverantörer lagring och rutiner v0.2, daterade 2026-11-09. De är inte signeringsklara eller intyg om faktisk drift. Chattskrivskyddsbeslutet ska föras in vid nästa dokumentrevidering. |
+| L15/F26/N19 | Förbered DPIA med konkreta dataflöden, behov/alternativ, risker för ungdomar, planerade skydd och kvarstående risk. | Underlag kan tas fram nu. Juridisk klassificering, riskprövning, faktiskt verifierade skydd och ansvarigt slutbeslut återstår; en mall eller AI-varning är inte genomförd konsekvensbedömning. |
+| L14 | Kontrollera faktiska leverantörsavtal och datainställningar och koppla resultaten till register/integritetstext. | Inventeringen finns redan. Behåll bevis på kundpart, avtal/version/anslutning, länder/överföringar, datadelning, åtkomst och logg-/backup-/raderingsfrister. Offentliga standardvillkor räcker inte som kontokontroll. |
+| L12/L13/L16/N19/L07 | Omsätt verksamhetsreglerna i befintliga åtkomst-, rättelse-, ärende- och gallringsflöden och verifiera hela kedjan senare. | Framtida implementation/verifiering; denna dokumentleverans bygger eller aktiverar inget. Bevara övriga pågående reservationer. |
+
+Dokumentkontroll för denna leverans: avstämt mot aktuell dev och öppna PR:er samt de uttryckliga besluten i samtalet. Bara berörda plankort kompletteras; befintlig verifieringshistorik bevaras. Juridiska frågor och konto-/leverantörskontroller förblir öppna. Dokumentationsbranch: `codex/gdpr-remaining-plan-20261109`.
+
 ### Juridiska frågor och kontroller som återstår
 
 - Faktura-/redovisningsfrist fastställs separat enligt tillämpliga krav; håll ekonomiskt underlag avskilt från kandidatdata. Fastställ även minimal verifieringsnoterings och eventuell spärrposts egen grund/frist före aktivering.
@@ -793,6 +817,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
 
+- Komplettering 2026-11-09 efter dokumentgenomgång: Två dokumentleveranser återstår inom F20/L15: (1) integritetsinformation för ungdomar och företagskontakter med korta lager vid AI/ansökan, (2) företagets ifyllbara rekryteringsinformation. Återanvänd behandlingsförteckningen; håll ansvarig, grund, minderårigflöde och obekräftade leverantörsuppgifter öppna i arbetsutkast. Publicera först när sakuppgifter och faktisk funktion stämmer. Ta med återkallad ansökan/chattskrivskydd, hantering av oavsiktligt känsligt innehåll och lanseringslistans begränsade ändamål. Se den samlade GDPR-avstämningen för omfattning och granskningskrav.
+
 - Samordnat tillägg 2026-11-09: Slutlig saktext och avtalsaccept samordnas med L15. Visa ansvariga, ändamål/grunder, mottagare, leverantörer/länder, frister, rättigheter och kontakt på rätt plats. Före ansökan visas mottagande arbetsgivare, dess rekryteringsinformation och det väsentliga innehållet i artikel 26-arrangemanget. Särskilj information, avtalsaccept och specifika frivilliga samtycken; en generell GDPR-ruta ska inte godkänna all delning/AI. Beskriv faktisk drift utan obestyrkta löften om anonymisering, EU-exklusiv behandling eller absolut kopieringsskydd.
 
 - [ ] Klar
@@ -1359,6 +1385,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
 
+- Komplettering 2026-11-09: Samordna återkallad ansökans omedelbara spärr av CV/svar/AI-underlag med L12:s omedelbara chattskrivskydd och neutrala notifiering. Bevara tidigare textmeddelanden enligt gallringsregeln, men öppna inte spärrat underlag via chattbilagor, gamla länkar, cache eller AI-historik. Följ L15:s begränsning till aktuell rekrytering och L16:s rutin för känsligt innehåll; inga nya profilåtkomster beställs.
+
 - Samordnat tillägg 2026-11-09: Generella kompletteringssvar får återanvändas i profilen först efter ett separat aktivt val; ge översikt, ändring och radering. Ett nej stoppar inte aktuell ansökan. Bevara daterad skickad version och erbjud aktiv uppdatering, men rätta felaktig aktuell AI-bedömning och underrätta mottagare där det krävs enligt L13/L15. Vid CV-AI-fel sparas inmatat underlag privat för återförsök; vid matchningsfel skickas ansökan ändå och företaget ser saknad analys/kan försöka igen. Verifiera verklig sparning över omladdning, inte bara feltext.
 
 - Fortsättning 2026-10-26, Vilgot / Codex, `codex/n19-followup-race-20261026`: Reserverad i arbetschatten och med publicerad branch före kodarbete. Reproducerat att långsam första läsning av kompletteringsfrågor kan skriva över nyare svar efter manuell bedömningsuppdatering. Den första läsningen kontrollerar nu samma revisionsräknare som senare läsningar. Inga nya anrop, datafält, modellinställningar eller åtkomster. Regressionstest kör verkliga effekter och levererar svar i omvänd ordning; det fallerade före rättningen och passerar efter. N19 förblir Pågår; inloggad server-/webbverifiering återstår. Verifierat lokalt: `test:assessment-progress`, riktad ESLint och standardproduktionsbygge inklusive TypeScript och 55 routes passerar. Lokalt kodunderlag: `fa8ad3b`; publicerad leverans följs på branch `codex/n19-followup-race-20261026` och dess PR till dev.
@@ -1491,6 +1519,8 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 <a id="l12"></a>
 ### L12 Inför beslutade lagringstider och automatisk gallring
 
+- Nytt uttryckligt beslut 2026-11-09: Vid återkallad ansökan skrivskyddas textchatten omedelbart för båda parter. Befintliga textmeddelanden ligger kvar enligt den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; ordinarie sexmånadersskrivskydd gäller annars. Företaget notifieras neutralt om återkallandet, samtidigt spärras CV, svar och AI-bedömning direkt. Åtkomstspärr och fysisk radering är skilda åtgärder. Samordna N19/L15 och testa redan öppnad vy, gamla länkar och samtidiga meddelanden.
+
 - Samordnat tillägg 2026-11-09: Beslut och frister preciseras i den samlade GDPR-avstämningen i början av filen. Den kompletterar äldre tabell och öppna frågor där ett nyare beslut finns, men bevarar befintlig status, ägare och verifieringshistorik. L16:s adminärenden är en separat kategori från L05:s modereringsrapporter.
 
 - [ ] Klar
@@ -1511,7 +1541,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 |---|---|---|
 | Skickad video i chatt eller ansökan | Radera efter 14 dagar | Från serverregistrerat skickande, oberoende av uppspelning. Visa exakt utgångsdatum för båda parter; därefter endast en neutral markering, exempelvis Videon har raderats. |
 | Avslutad ansökan, dess CV-underlag och AI-bedömningar | Radera efter 6 månader | Från dokumenterat avslut av den enskilda ansökan. Tidigare ansökningar visar avslutsstatus och planerad radering. |
-| Textchatt | Skrivskydda efter 6 månaders inaktivitet; radera efter 12 månader | Från definierad användaraktivitet i den aktuella konversationen. Arkivering och skrivskydd är inte radering. Exakt aktivitetsdefinition och hantering av återöppning fastställs före implementation. |
+| Textchatt | Skrivskydda direkt vid återkallad ansökan, annars efter 6 månaders inaktivitet. Radera vid tidigaste av ansökans gallringsdag och 12 månaders chattinaktivitet. | Tidigare textmeddelanden följer gallringsregeln även vid återkallande. CV, ansökningssvar och AI-bedömning spärras direkt, även via chattens filreferenser/länkar. Arkivering eller skrivskydd är inte radering. Aktivitet får inte tyst återöppna en återkallad ansökan. |
 | Inaktivt ungdomskonto med jobbprofil och aktuellt CV | Radera efter 24 månaders inaktivitet | Från användarens egen definierade aktivitet. Påminn 30 och 7 dagar före; förklara vad som försvinner och hur kontot behålls. Automatiska mejl, AI-jobb och bakgrundsuppdateringar återställer inte tiden. |
 
 #### Omfattning och skydd
@@ -1619,6 +1649,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l14"></a>
 ### L14 Verifiera leverantörsavtal och produktionskonton
 
+- Komplettering 2026-11-09: Verifiera faktisk kontokund, avtalsanslutning och datainställningar per redan listad leverantör; koppla daterat kontrollresultat och kvarstående luckor till behandlingsförteckningen och F20:s saktext. Verkliga användaruppgifter får inte återanvändas för test/förbättring av MatchnWorks AI; leverantörens delningsval kontrolleras separat. Intresselistan är enbart för lanseringsbesked. Användningsstatistik är framtida möjlighet, inte beställd behandling eller infört analysverktyg.
+
 - Samordnat tillägg 2026-11-09: Inventeringen omfattar Supabase, Vercel, OpenAI, Mapbox, Zoho, Loopia, GitHub och eventuella utvecklingsassistenter, analysverktyg och mejlvidarebefordringar. För varje behandling verifieras kundpart, roll, DPA-version/anslutning, underleverantörer/länder, överföringsstöd, åtkomst, loggar, backup och radering. Publik DPA är inte bevis på kontots avtal. CV-genereringens bredare strukturerade underlag/konversation ska få en kontrollerad gräns före externa anrop enligt N19/F26. OpenAI store: false bevisar inte noll säkerhetslagring eller EU-exklusiv behandling. Mapbox kräver granskning av SDK/plats/telemetri/cookies. Zoho-inkorg och SMTP tillför mottagare och innehåll; undvik CV/känsliga uppgifter i vanliga notismejl. Databasbackup och Storage-filbackup inventeras separat.
 
 - [ ] Klar
@@ -1660,6 +1692,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l15"></a>
 ### L15 Avtal och rättsligt underlag för behandling på sidan
 
+- Komplettering 2026-11-09: Färdigställ behandlingsförteckningen mot faktiska flöden och förbered DPIA med behov/alternativ, barns risker, åtgärder, kvarstående risk och ansvarigt beslut. Arbetsutkast finns enligt dokumentförteckningen i den samlade GDPR-avstämningen; de är inte slutligt juridiskt godkända. F20 äger informationstexter/företagsmall och L14 faktisk leverantörskontroll; skapa inga parallella uppgifter. Vid nästa avtals-/bilagerevidering förs det senaste beslutet om omedelbart chattskrivskydd vid återkallande in.
+
 - [ ] Klar
 - Prioritet: P1, före berörd behandling och skarp kandidatåtkomst.
 - Global ordning: 22.4. Rättsligt underlag är beroende även för berörda delar av L12–L14/F20/F26/N19 oavsett tabellordning; tekniska förberedelser får ske med syntetiska data.
@@ -1670,11 +1704,12 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 #### Företagets godkännande
 
-- Visa företagsidentitet, organisationsnummer, företrädarens namn/roll, exakt avtal/bilaga och sparbar identisk kopia. Samla företagets dataskyddskontakt och rekryteringsinformation för visning före ansökan.
+- Visa företagsidentitet, organisationsnummer, företrädarens namn/roll, exakt avtal/bilaga och sparbar identisk kopia. Företagets registrerade kontaktmejl används för dataskyddsfrågor om en annan adress inte anges; inget extra krav på namngiven dataskyddsperson. Företaget länkar relevant egen rekryteringsinformation eller fyller i mallen enligt F20, med eventuellt dataskyddsombud där tillämpligt. Visa informationen före ansökan; företag utan extern policysida ska kunna använda mallen.
 - Inloggad företrädare med verifierad mejl accepterar med två initialt tomma rutor: avtal inklusive bilaga respektive behörighetsintyg. Knapp: Godkänn och skicka för granskning. Mejlverifiering/egen försäkran bevisar inte ensamma firmateckningsrätt; admin följer dokumenterad kontrollmetod. Ingen extern signeringstjänst är beställd; rådgivaren bekräftar tillräcklig kontrollnivå.
 - Servern sparar oföränderlig avtalstext/bilaga, versioner, företag, företrädare, konto och tidpunkt. Ge kopia/bekräftelse. Beslutad produktregel: bevara tidigare godkända versioner och kräv ny accept vid väsentliga ändringar före fortsatt användning av rekryteringsfunktionerna. L12 anger önskad bevarandetid under avtalsrelationen plus tre år efter avslut, med juridisk kontroll kvar.
 - Publicering och kandidatåtkomst kräver både giltigt avtal och godkänd företags-/behörighetskontroll. Återkallad verifiering eller avslutat avtal ska spärra kandidatåtkomst. Spärren ska gälla även RPC/API/RLS/Storage, direktlänkar och gamla klienter. Testa också redan öppnad vy och återanvändning av utfärdade länkar; dokumentera deras faktiska giltighet utan att lova återkallelse av redan levererade externa kopior. Avtal får inte lova absolut nedladdningsskydd för levererade PDF-filer.
 - Grundavtalet är inte en avgiftsbelagd beställning. Pris och separat rekryteringsbekräftelse återanvänder L03/L04/F06; ingen parallell fakturamotor eller framtida premiumbeställning införs.
+- Företagsvillkor enligt senaste beslut: endast aktuell rekrytering, ingen egen kandidatbank/marknadsföring och ingen överföring till externa AI-tjänster. Efter anställning får bara nödvändiga uppgifter för anställningsavtal/personaladministration överföras under företagets separata ansvar, inte hela kandidatunderlaget eller AI-bedömningen. Företag får inte efterfråga känsliga uppgifter eller onödiga personnummer i plattformens frågor. Återkallad ansökan spärrar CV/svar/AI direkt och notifierar neutralt; textchatten skrivskyddas enligt L12. Misstänkt personuppgiftsmissbruk får medföra tillfällig kandidatspärr under utredning.
 
 #### Ungdom och rättsligt underlag
 
@@ -1694,6 +1729,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l16"></a>
 ### L16 Skyddade personuppgiftsärenden och incidenthantering
+
+- Komplettering 2026-11-09: Dokumentera rutin när känsliga uppgifter/personnummer ändå lämnas i CV/fritext: begränsa åtkomst, hjälp ungdomen ta bort/ersätta innehållet, följ upp delade ansökningskopior och mottagare och undvik nya onödiga kopior. Frågeförbud och företagets begränsade användning anges i L15. Vid misstänkt missbruk kan kandidatåtkomst tillfälligt spärras under dokumenterad utredning; detta ger inte bredare generell adminläsning.
 
 - [ ] Klar
 - Prioritet: P1, fungerande rutin före berörd skarp behandling; automatisering kan ske stegvis.
