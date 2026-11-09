@@ -886,6 +886,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
+- 2026-11-09: Fortsatt egen chattdel i PR #182 (`codex/l08-chat-recovery-20261109`): konto-/samtalsisolering, avbrutna läsningar med timeout/återförsök och bevarade textutkast med samma meddelande-id vid osäkert sändningssvar. `test:chat-recovery`, sex berörda regressioner, TypeScript, riktad lint och bygge passerade; SDK/komponentprov har simulerad transport. Se `docs/L08_CHAT_RECOVERY.md` för före/efter-prov och avgränsningar. Inloggad browser/fysisk mobil/live-RLS återstår; huvudpunkten inte Klar.
 - Åtgärd: Beräkna chattens höjd med hänsyn till navigation och sidrubrik. Låt meddelandeytan skrolla separat och håll skrivfält samt Skicka åtkomliga, även på liten skärm och när tangentbordet visas.
 - Klar när: Skrivfältet hamnar inte nedanför den tillgängliga vyn.
 - Implementerat: Desktopchattens tidigare höjdtak borttaget, bredare arbetsyta och kompakt navigation/rubrik. Befintliga mobilanpassningar behållna.
@@ -1156,6 +1157,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: Pågår
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l08-browser-verification-20261028`, reserverad före arbete 2026-10-28. Avgränsad inloggad Chromium-verifiering på 375/768/1280 px, tangentbord/native-dialog, kartans WebGL/reservvy och nödvändiga korrigeringar. Fiktiva QA-konton i DevStaging; ingen aktivering av gallring, riktiga rekryteringar eller produktion. Fysisk mobil/virtuellt tangentbord kan inte räknas som verifierat genom viewportemulering. Öppna PR:er kontrollerade.
+- 2026-11-09: Fortsatt egen chattdel i PR #182 (`codex/l08-chat-recovery-20261109`): konto-/samtalsisolering, avbrutna läsningar med timeout/återförsök och bevarade textutkast med samma meddelande-id vid osäkert sändningssvar. `test:chat-recovery`, sex berörda regressioner, TypeScript, riktad lint och bygge passerade; SDK/komponentprov har simulerad transport. Se `docs/L08_CHAT_RECOVERY.md` för före/efter-prov och avgränsningar. Inloggad browser/fysisk mobil/live-RLS återstår; huvudpunkten inte Klar.
 - Åtgärd: Kontrollera alla centrala vyer i verklig mobil viewport och relevanta riktiga mobilwebbläsare: navigation, formulär, bildbeskärning/zoom/dragning, chatt med öppet tangentbord och video. Kontrollera fokus och tangentbordsanvändning. Testa kartpins, zoom och geografisk interaktion i miljö med WebGL, samt reservvy. F23/F24 och designpunkterna beskriver kända förbättringar; ytterligare fel dokumenteras separat.
 - Klar när: Kärnflödena går att använda på mobil och med tangentbord utan dolda kontroller, horisontellt spill eller blockerande kartfel.
 - Implementerat: [PR #145](https://github.com/vilgotdidrikson/youth-job-mvp/pull/145), reproducerbar dev-låst browserlöpare, kontoskopade fiktiva fixtures, seed-fråga utan adminsteg och automatisk kontostädning. Ingen produktkod-/schema-/behörighetsändring. Se docs/L08_BROWSER.md.

@@ -62,6 +62,7 @@
     "test:company-navigation": "node scripts/test-company-navigation.mjs",
     "test:assessment-history": "node scripts/test-assessment-history.mjs",
     "test:assessment-progress": "node scripts/test-assessment-progress.mjs",
+    "test:chat-recovery": "node scripts/test-chat-recovery.mjs && node scripts/test-chat-page-recovery.mjs",
     "test:recruitment-review": "node scripts/test-recruitment-review.mjs",
     "test:video-retention": "node scripts/test-video-retention.mjs",
     "test:job-categories": "node scripts/test-job-categories.mjs",

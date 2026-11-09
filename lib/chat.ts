@@ -43,13 +43,14 @@ function normalizeMessage(row: Record<string, unknown>): ChatMessage {
 }
 
 
-async function ensureMatchedConversation(conversationId: string) {
+async function ensureMatchedConversation(conversationId: string, signal?: AbortSignal) {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("conversations")
     .select("id, match_id")
-    .eq("id", conversationId)
-    .maybeSingle();
+    .eq("id", conversationId);
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     logSupabaseError("conversations.select.by_id", error, { conversationId });
@@ -98,20 +99,24 @@ export async function getOrCreateConversation(seed: ConversationSeed): Promise<C
   return normalizeConversation(data as Record<string, unknown>);
 }
 
-export async function getMessages(conversationId: string): Promise<ChatMessage[]> {
+export async function getMessages(conversationId: string, signal?: AbortSignal): Promise<ChatMessage[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query;
 
   if (error) {
     logSupabaseError("messages.select.by_conversation", error, { conversationId });
     throw new Error(getSupabaseErrorMessage(error, "Unable to fetch messages."));
   }
 
-  return (data ?? []).map((row) => normalizeMessage(row as Record<string, unknown>));
+  const messages = (data ?? []).map((row) => normalizeMessage(row as Record<string, unknown>));
+  if (messages.some(message => message.conversation_id !== conversationId)) throw new Error("Meddelandenas samtal kunde inte verifieras.");
+  return messages;
 }
 
 export function subscribeToConversationMessages(conversationId: string, onMessage: (message: ChatMessage) => void) {
@@ -126,22 +131,43 @@ export function subscribeToConversationMessages(conversationId: string, onMessag
   return () => { void supabase.removeChannel(channel); };
 }
 
-export async function sendMessage(conversationId: string, messageText: string): Promise<void> {
+export async function sendMessage(conversationId: string, messageText: string, options?: { requestId: string; expectedUserId: string; signal?: AbortSignal }): Promise<void> {
+  const signal = options?.signal;
+  signal?.throwIfAborted();
+  if (options && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(options.requestId)) throw new Error("Meddelandets identifierare är ogiltig.");
   const user = await getCurrentUser();
 
   if (!user?.id) {
     throw new Error("You must be signed in to send messages.");
   }
+  if (options && user.id !== options.expectedUserId) throw new Error("Kontot har ändrats. Öppna chatten igen.");
 
-  await ensureMatchedConversation(conversationId);
+  await ensureMatchedConversation(conversationId, signal);
+  if ((await getCurrentUser())?.id !== user.id) throw new Error("Kontot har ändrats. Öppna chatten igen.");
+  signal?.throwIfAborted();
 
   const supabase = getSupabaseClient();
-  const { error } = await supabase.from("messages").insert({
+  let query = supabase.from("messages").insert({
+    ...(options ? { id: options.requestId } : {}),
     conversation_id: conversationId,
     sender_user_id: user.id,
     message_text: messageText,
     created_at: new Date().toISOString(),
   });
+  if (signal) query = query.abortSignal(signal);
+  const { error } = await query;
+
+  if (error?.code === "23505" && options) {
+    // A lost response can follow a committed insert. Confirm that exact own
+    // message rather than upserting or accepting an unrelated key collision.
+    let receipt = supabase.from("messages").select("id,conversation_id,sender_user_id,message_text,video_kind")
+      .eq("id", options.requestId).eq("conversation_id", conversationId).eq("sender_user_id", user.id);
+    if (signal) receipt = receipt.abortSignal(signal);
+    const result = await receipt.maybeSingle();
+    if (!result.error && result.data?.id === options.requestId && result.data.conversation_id === conversationId
+      && result.data.sender_user_id === user.id && result.data.message_text === messageText && !result.data.video_kind) return;
+    throw new Error("Det tidigare sändningsförsöket kunde inte bekräftas. Texten finns kvar.");
+  }
 
   if (error) {
     logSupabaseError("messages.insert", error, {
@@ -153,7 +179,7 @@ export async function sendMessage(conversationId: string, messageText: string): 
 
 }
 
-export async function getMyConversations(userId?: string): Promise<ConversationSummary[]> {
+export async function getMyConversations(userId?: string, signal?: AbortSignal): Promise<ConversationSummary[]> {
   const user = userId ? { id: userId } : await getCurrentUser();
 
   if (!user) {
@@ -161,11 +187,13 @@ export async function getMyConversations(userId?: string): Promise<ConversationS
   }
 
   const supabase = getSupabaseClient();
-  const { data: conversations, error: conversationError } = await supabase
+  let query = supabase
     .from("conversations")
     .select("*")
     .or(`youth_user_id.eq.${user.id},company_user_id.eq.${user.id}`)
     .order("last_message_at", { ascending: false });
+  if (signal) query = query.abortSignal(signal);
+  const { data: conversations, error: conversationError } = await query;
 
   if (conversationError) {
     logSupabaseError("conversations.select.mine", conversationError, { userId: user.id });
@@ -182,9 +210,10 @@ export async function getMyConversations(userId?: string): Promise<ConversationS
   });
 }
 
-export async function getMyConversationContacts(): Promise<ConversationContact[]> {
+export async function getMyConversationContacts(signal?: AbortSignal): Promise<ConversationContact[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.rpc("get_my_conversation_contacts");
+  const query = supabase.rpc("get_my_conversation_contacts");
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
   if (error) {
     logSupabaseError("conversations.contacts", error);
     throw new Error(getSupabaseErrorMessage(error, "Unable to load conversation contacts."));
