@@ -817,7 +817,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
 
-- Komplettering 2026-11-09 efter dokumentgenomgång: Två dokumentleveranser återstår inom F20/L15: (1) integritetsinformation för ungdomar och företagskontakter med korta lager vid AI/ansökan, (2) företagets ifyllbara rekryteringsinformation. Återanvänd behandlingsförteckningen; håll ansvarig, grund, minderårigflöde och obekräftade leverantörsuppgifter öppna i arbetsutkast. Publicera först när sakuppgifter och faktisk funktion stämmer. Ta med återkallad ansökan/chattskrivskydd, hantering av oavsiktligt känsligt innehåll och lanseringslistans begränsade ändamål. Se den samlade GDPR-avstämningen för omfattning och granskningskrav.
+- Komplettering 2026-11-09 efter dokumentgenomgång: Arbetsutkast v0.1 har nu skapats separat för (1) integritetsinformation för ungdomar och företagskontakter, `MatchnWork_integritetsinformation_v01.docx`, och (2) företagets ifyllbara rekryteringsinformation, `MatchnWork_rekryteringsinformation_mall_v01.docx`. Dokumenten bygger på behandlingsförteckningen och senaste besluten om återkallad ansökan/omedelbart chattskrivskydd, oavsiktligt känsligt innehåll och lanseringslistans begränsade ändamål. Ansvariga, exakt artikel 26-gräns, rättsliga grunder per behandling, minderårigflöde, leverantörer/överföringar, cookies och vissa bevarandefrister är markerade för färdigställande. Företaget måste fylla i sin faktiska hantering; mallen är information, inte ett separat signeringsavtal. Korta kontexttexter vid AI/ansökan samt slutlig publicering och införande återstår. Kontroll: saktext jämförd med beslut och primärkällor, båda Word-dokumenten renderade och samtliga tio sidor visuellt granskade. Ingen produktkod eller funktionstest har ingått; dokumentutkast betyder inte juridiskt godkänt eller driftsatt.
 
 - Samordnat tillägg 2026-11-09: Slutlig saktext och avtalsaccept samordnas med L15. Visa ansvariga, ändamål/grunder, mottagare, leverantörer/länder, frister, rättigheter och kontakt på rätt plats. Före ansökan visas mottagande arbetsgivare, dess rekryteringsinformation och det väsentliga innehållet i artikel 26-arrangemanget. Särskilj information, avtalsaccept och specifika frivilliga samtycken; en generell GDPR-ruta ska inte godkänna all delning/AI. Beskriv faktisk drift utan obestyrkta löften om anonymisering, EU-exklusiv behandling eller absolut kopieringsskydd.
 
@@ -1691,6 +1691,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l15"></a>
 ### L15 Avtal och rättsligt underlag för behandling på sidan
+
+- Dokumentläge 2026-11-09: Separata informationsutkast v0.1 finns nu enligt F20. Granskningsfält och faktiskt införande återstår; L15 är inte färdigställt genom dessa utkast.
 
 - Komplettering 2026-11-09: Färdigställ behandlingsförteckningen mot faktiska flöden och förbered DPIA med behov/alternativ, barns risker, åtgärder, kvarstående risk och ansvarigt beslut. Arbetsutkast finns enligt dokumentförteckningen i den samlade GDPR-avstämningen; de är inte slutligt juridiskt godkända. F20 äger informationstexter/företagsmall och L14 faktisk leverantörskontroll; skapa inga parallella uppgifter. Vid nästa avtals-/bilagerevidering förs det senaste beslutet om omedelbart chattskrivskydd vid återkallande in.
 
