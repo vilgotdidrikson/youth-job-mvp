@@ -6,7 +6,7 @@ export class AccountDeletionError extends Error {
 }
 /** A checked session snapshot supplies the token; the server independently checks
  * its user against expectedUserId before any reauthentication or destructive work. */
-export async function deleteOwnAccount(expectedUserId:string,password:string,signal:AbortSignal):Promise<void> {
+export async function deleteOwnAccount(expectedUserId:string,password:string,signal:AbortSignal,totpCode?:string):Promise<void> {
  signal.throwIfAborted();
  const {data,error}=await getSupabaseClient().auth.getSession();
  signal.throwIfAborted();
@@ -14,7 +14,7 @@ export async function deleteOwnAccount(expectedUserId:string,password:string,sig
  if(error||!session?.access_token||session.user?.id!==expectedUserId) throw new AccountDeletionError('Kontot eller sessionen har ändrats. Logga in på rätt konto igen.');
  let response:Response;
  try {
-  response=await fetch('/api/account',{method:'DELETE',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({password,expectedUserId}),signal});
+  response=await fetch('/api/account',{method:'DELETE',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({password,expectedUserId,...(totpCode?{totpCode}:{})}),signal});
  } catch {throw new AccountDeletionError('Raderingens resultat kunde inte bekräftas. Kontrollera kontot genom att logga in igen innan du gör ett nytt försök.',true);}
  signal.throwIfAborted();
  if(response.status===204) return;

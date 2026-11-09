@@ -10,7 +10,8 @@ const oldUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,oldKey=process.env.NEXT_PUBLIC
 process.env.NEXT_PUBLIC_SUPABASE_URL='https://qa.invalid';process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY='test-only-public-key';
 for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(mod,file)=>mod._compile(ts.transpileModule(process.env.TOTP_BASELINE&&file.endsWith('/lib/account-settings.ts')?execFileSync('git',['show',`${process.env.TOTP_BASELINE}:lib/account-settings.ts`],{encoding:'utf8'}):readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
 const owner='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',factorId='33333333-3333-4333-8333-333333333333',sessionId='44444444-4444-4444-8444-444444444444';
-const token=aal=>['eyJhbGciOiJIUzI1NiJ9',Buffer.from(JSON.stringify({sub:owner,session_id:sessionId,aal,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'test-only-signature'].join('.');
+const tokenExpiry=Math.floor(Date.now()/1000)+3600;
+const token=aal=>['eyJhbGciOiJIUzI1NiJ9',Buffer.from(JSON.stringify({sub:owner,session_id:sessionId,aal,exp:tokenExpiry})).toString('base64url'),'test-only-signature'].join('.');
 let actor=owner,factors=[],calls=[],hook,secretOutput,verifyFails=false,loseVerifyReply=false,deleteFails=false,closeFails=false,serverOK=true,sharedWrites=0;
 const user=()=>({id:owner,email:'qa@example.invalid',factors:[...factors]});
 const shared={auth:{getUser:async()=>({data:{user:{...user(),id:actor}},error:null}),setSession:async()=>{sharedWrites++;},signOut:async()=>{sharedWrites++;}}};
