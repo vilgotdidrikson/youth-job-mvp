@@ -39,6 +39,7 @@
     "test:local-fonts": "node scripts/test-local-fonts.mjs",
     "test:disclosure-loading": "node scripts/test-disclosure-loading.mjs",
     "test:application-disclosure": "node scripts/test-application-disclosure.mjs",
+    "test:supplement-recovery": "node scripts/test-supplement-recovery.mjs && node scripts/test-supplement-recovery-ui.mjs",
     "test:application-supplement": "node scripts/test-application-supplement.mjs",
     "test:followup-batch": "node scripts/test-followup-batch.mjs",
     "test:cv": "node scripts/test-cv-scenarios.mjs",
