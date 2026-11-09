@@ -6,8 +6,8 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
-import { readSearchFilters } from "@/lib/job-search";
-import { orderDiscoveryJobs } from "@/lib/job-discovery";
+import { readSearchFilters, updateSearchFilter } from "@/lib/job-search";
+import { discoveryPage, orderDiscoveryJobs } from "@/lib/job-discovery";
 import { dismissDiscoveryJob, recordJobImpression, undoDiscoveryDismissal } from "@/lib/discovery-history";
 import { useDiscoveryUndo } from "@/hooks/use-discovery-undo";
 import { getSwipeJobs } from "@/lib/feeds";
@@ -97,8 +97,8 @@ function SwipePageContent() {
     employmentTypes: uniqueSorted(jobs.flatMap((job) => job.employment_type.split(",").map((value) => value.trim()))),
   }), [jobs]);
   const orderedJobs = useMemo(() => showingSaved ? jobs : orderDiscoveryJobs(jobs, filters, restoredId ?? searchParams.get("job")), [filters, jobs, restoredId, showingSaved, searchParams]);
-  const filteredJobs = orderedJobs.slice(0, showingSaved ? undefined : pageEnd).filter(job => !decidedIds.has(job.id));
-  const hasMore = !showingSaved && pageEnd < orderedJobs.length;
+  const page = discoveryPage(orderedJobs, decidedIds, pageEnd, showingSaved);
+  const filteredJobs = page.jobs, hasMore = page.hasMore;
 
   const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
     if (pending.current.has(job.id) || undoLock.current) return;
@@ -172,13 +172,10 @@ function SwipePageContent() {
   };
   const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
     setPageEnd(20);
-    setFilters(current => ({ ...current, [key]: value,
-      ...(key === "nearbyCity" ? { radiusKm: value ? current.radiusKm || "25" : "" } : {}),
-      ...(key === "radiusKm" && !value ? { nearbyCity: "" } : {}),
-    }));
+    setFilters(current => updateSearchFilter(current, key, value));
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={filters} resultCount={orderedJobs.filter(job => !decidedIds.has(job.id)).length} options={filterOptions} onFilter={handleFilter} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={filters} resultCount={page.count} options={filterOptions} onFilter={handleFilter} onFiltersChange={next => { setPageEnd(20); setFilters(next); }} onDecision={handleDecision} onSave={handleSave}/>}
     <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }
