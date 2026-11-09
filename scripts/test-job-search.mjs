@@ -59,7 +59,7 @@ const runtime={jsx,jsxs:jsx,Fragment:'fragment'};
 const mod={exports:{}};
 const source=ts.transpileModule(readFileSync('components/job-discovery.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 new Function('module','exports','require',source)(mod,mod.exports,name=>{
- if(name==='react')return{useRef:()=>({current:{close(){},showModal(){}}})};
+ if(name==='react')return{useState:initial=>[initial,()=>{}]};
  if(name==='react/jsx-runtime')return runtime;
  if(name.endsWith('.css'))return{default:new Proxy({},{get:(_,key)=>key})};
  if(name==='next/link')return{default:'link'};
@@ -69,12 +69,11 @@ new Function('module','exports','require',source)(mod,mod.exports,name=>{
  return {UiIcon:'icon'};
 });
 const filters={...readSearchFilters(new URLSearchParams()),...combined};
-const tree=mod.exports.JobDiscovery({jobs:[base],savedJobs:[],savedIds:new Set(),showingSaved:false,loading:false,error:'',filters,options:{cities:['Stockholm'],categories:['cafe'],employmentTypes:['Deltid']},onFilter:(key,value)=>{cleared.push([key,value]);},resultCount:45});
+const tree=mod.exports.JobDiscovery({jobs:[base],savedJobs:[],savedIds:new Set(),showingSaved:false,loading:false,error:'',filters,options:{cities:['Stockholm'],categories:['cafe'],employmentTypes:['Deltid']},onFilter:(key,value)=>{cleared.push([key,value]);},onFiltersChange:values=>{cleared.push(...Object.entries(values));},resultCount:45});
 const nodes=[];function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}nodes.push(node);visit(node.props?.children);}visit(tree);
 const search=nodes.find(n=>n.type==='input'&&n.props.type==='search');assert.equal(search.props.maxLength,200);search.props.onChange({target:{value:'barista'}});assert.deepEqual(cleared.pop(),['query','barista']);
 const text=node=>(typeof node==='string'||typeof node==='number')?String(node):Array.isArray(node)?node.map(text).join(''):node?.props?text(node.props.children):'';
-const reset=nodes.find(n=>n.type==='button'&&text(n)==='Rensa filter');reset.props.onClick();assert.deepEqual(Object.fromEntries(cleared),Object.fromEntries(Object.keys(filters).map(key=>[key,''])));
+const reset=nodes.find(n=>n.type==='button'&&text(n)==='Rensa');reset.props.onClick();assert.deepEqual(Object.fromEntries(cleared),Object.fromEntries(Object.keys(filters).map(key=>[key,''])));
 assert(nodes.some(n=>n.props?.href===url),'Map link preserves search values');
-assert(nodes.some(n=>n.type==='button'&&text(n)==='Visa 45 jobb'),'Total count is not limited to first page');
-assert(nodes.some(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props.checked===false));
-console.log('PASS actual filter UI: labelled search, total result count, map link, unknown checkbox and clear-all handler.');
+assert(nodes.some(n=>n.props?.role==='status'&&text(n).includes('45 jobb')),'Total count is not limited to first page');
+console.log('PASS actual filter UI: labelled search, total result count, map link and atomic clear-all handler. Transactional dialog cases are in test:discovery-filters.');

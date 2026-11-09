@@ -83,7 +83,7 @@
 .filterDialog > p { color: var(--color-text-muted); }
 .filterFields { display: grid; gap: 18px; margin: 24px 0; }
 .filterFields label { display: grid; gap: 8px; font-size: .85rem; font-weight: 550; }
-.filterFields select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--color-ring); border-radius: 12px; color: var(--color-text); background: var(--color-surface); font: inherit; }
+.filterFields select, .filterFields input[type="text"] { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--color-ring); border-radius: 12px; color: var(--color-text); background: var(--color-surface); font: inherit; }
 .dialogActions { display: flex; gap: 12px; }
 .dialogActions button { flex: 1; min-height: 48px; border: 1px solid var(--color-ring); border-radius: 999px; color: var(--color-text); background: var(--color-surface); }
 .dialogActions button:last-child { color: white; border-color: var(--accent); background: var(--accent); }
@@ -159,3 +159,5 @@ button.textLink {border:0;background:transparent;font:inherit;cursor:pointer;}
 .filterFields .unknownChoice { display:flex; align-items:flex-start; gap:10px; font-weight:400; line-height:1.5; min-height:44px; cursor:pointer; }
 .unknownChoice input { flex-shrink:0; margin-top:4px; width:20px; height:20px; accent-color:var(--color-brand-accent); }
 .page input:focus-visible { outline:3px solid var(--color-brand-accent); outline-offset:3px; }
+
+.filterFields select, .filterFields input[type="text"] { font-size: var(--text-md); }

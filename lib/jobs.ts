@@ -4,7 +4,7 @@ import { validJobCategoryIds } from "@/lib/job-categories";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
-import { validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
+import { JobWorkplaceConflictError, validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
 import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
 import { readPracticalDetails } from "@/lib/job-practical";
@@ -327,11 +327,17 @@ async function insertJobRow(payload: JobInsertPayload) {
   return normalizeJob(data as Record<string, unknown>);
 }
 
-async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
+async function updateJobRow(jobId: string, updates: Record<string, unknown>, expectedWorkplaces?: JobWorkplace[]) {
   assertOnlyKnownJobFields(updates);
 
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from("jobs").update(updates).eq("id", jobId).select("*").single();
+  let query = supabase.from("jobs").update(updates).eq("id", jobId);
+  // Postgres evaluates JSONB equality and the write atomically, even when another
+  // editor saves after the ownership read. Unrelated listing changes do not conflict.
+  if (expectedWorkplaces !== undefined) query = query.eq("workplaces", JSON.stringify(expectedWorkplaces));
+  const result = query.select("*");
+  const { data, error } = expectedWorkplaces === undefined ? await result.single() : await result.maybeSingle();
+  if (!error && !data && expectedWorkplaces !== undefined) throw new JobWorkplaceConflictError();
 
   if (error || !data) {
     logSupabaseError("jobs.update", error ?? new Error("Supabase returned no job row after update."), {
@@ -422,8 +428,10 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
   return inactiveData ? normalizeJob(inactiveData as Record<string, unknown>) : null;
 }
 
-export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
+export async function createJob(jobData: CreateJobInput, expectedOwnerId?: string): Promise<JobPost> {
   assertAllowedJobCreateInput(toRecord(jobData));
+  const companyUser = await assertCompanyUser();
+  if (expectedOwnerId !== undefined && companyUser.id !== expectedOwnerId) throw new Error("Kontot har ändrats. Öppna annonsutkastet igen innan du publicerar.");
 
   const workplaces = jobData.workplaces ? await resolveWorkplaces(jobData.workplaces) : undefined;
   const hasAddress = Boolean(jobData.address?.trim()) || Boolean(workplaces?.length);
@@ -435,7 +443,6 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     throw new Error("Koordinater måste innehålla både giltig longitud och latitud.");
   }
 
-  const companyUser = await assertCompanyUser();
   const coordinates = workplaces?.[0] ?? (hasCoordinates
     ? { longitude: jobData.longitude, latitude: jobData.latitude }
     : await geocodeJobLocation({
@@ -477,11 +484,13 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   const practical = readPracticalDetails(jobData.practical_details);
   if (Object.keys(practical).length) payload.practical_details = practical;
 
+  if ((await getCurrentUser())?.id !== companyUser.id) throw new Error("Kontot har ändrats. Öppna annonsutkastet igen innan du publicerar.");
   return insertJobRow(payload);
 }
 
-export async function updateJob(jobId: string, updates: UpdateJobInput): Promise<JobPost> {
+export async function updateJob(jobId: string, updates: UpdateJobInput, options?: { expectedWorkplaces: JobWorkplace[] }): Promise<JobPost> {
   assertAllowedJobUpdateInput(toRecord(updates));
+  if (options && (!updates.workplaces || !Array.isArray(options.expectedWorkplaces))) throw new Error("Arbetsplatsernas ursprungliga version saknas. Öppna redigeringen igen.");
 
   const companyUser = await assertCompanyUser();
   const existing = await getJobById(jobId);
@@ -518,7 +527,7 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
     return existing;
   }
 
-  return updateJobRow(jobId, payload);
+  return updateJobRow(jobId, payload, options?.expectedWorkplaces);
 }
 
 export async function deleteJob(jobId: string): Promise<void> {

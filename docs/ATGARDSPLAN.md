@@ -6,6 +6,99 @@ Videobeslut 2026-10-18: permanent profilvideo ska tas bort (N22). Video behålls
 
 För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Fortsatt kodarbete är godkänt enligt prioriteringslistan, i avgränsade leveranser med publicering och verifiering.
 
+
+## GDPR och personuppgifter – samlad avstämning 2026-11-09
+
+Beställt av användaren: samordna nuvarande och framtida GDPR-beslut i denna arbetsplan, först efter kontroll av befintlig omfattning. Detta tillägg är planering, inte ny produktkod, juridiskt godkännande eller aktiverad gallring. Interna ägar-, vinst-, kodöverlåtelse- och utträdesavtal ingår inte. Befintliga uppgifter, ägare, statusar och reservationer bevaras.
+
+| Kort | Ansvar i planen |
+|---|---|
+| [F20](#f20) och [L15](#l15) | Slutliga villkor/integritetsinformation vid registrering, AI och ansökan; artikel 26-sammanfattning och arbetsgivarens information. |
+| [L15](#l15) – nytt | Företagets avtal/bilaga, aktiv accept, behörighetskontroll och åtkomstspärr; åldersgräns, minderåriga, grunder, behandlingsregister, DPIA och AI-klassificering. |
+| [F26](#f26), [N19](#n19) och [L14](#l14) | AI-indata för CV och matchning, minimering före anrop, relevant bredd, rättelse och separat val för återanvändbara svar. |
+| [L12](#l12) | Gallring och nya ärendefrister enligt nedan; konton/påminnelser, rapporter, övergivna rekryteringar, backup och cache. |
+| [L13](#l13) och [L16](#l16) – nytt ärendeflöde | Återanvänd automatisk export/radering; komplettera med skyddad manuell hantering och fristbevakning. |
+| [L05](#l05), [L06](#l06), [L14](#l14) och [L16](#l16) | Adminåtkomst efter behov, incidentrutin, gamla sessioner, loggminimering och borttagning av token i URL. L05:s redan verifierade omfattning återöppnas inte. |
+| [L14](#l14), [L10](#l10) och [L12](#l12) | Faktiska leverantörskonton/avtal, överföringar, loggar och väntelista. Produktion kräver separat samordning. |
+| [L07](#l07) och [L08](#l08) | Sammanhängande dev-flöden, negativa API-/RLS-/Storage-prov och verifierade rättelser/gallring. |
+
+### Beslutade kompletteringar till L12
+
+- Verifieringshandlingar raderas 30 dagar efter avslutad företagsgranskning/slutligt avslutad komplettering. Behåll minimal notering om vad som kontrollerades, resultat, datum och granskare; noteringens egen bevarandefrist återstår.
+- Support- och personuppgiftsärenden: minimal ärendelogg, beslut och nödvändig korrespondens tolv månader efter avslut. Onödiga arbetskopior och exporter raderas inom 30 dagar efter avslut eller tidigare när de saknar behov. Privata bilagor och samma handläggarbehörighet enligt L16; spara inte hela CV/chattar rutinmässigt.
+- Hanterade modereringsrapporter: behörigt adminarkiv, radering ett år efter avslutad hantering. Öppna ärenden och filundantag får inte medföra obestämd lagring utan behovsprövning.
+- Företagskonton: samma 24 månaders inaktivitet och påminnelser 30/7 dagar före som ungdomskonton. Användarens egen inloggade aktivitet återställer klockan; bakgrundsjobb/mejl gör det inte.
+- Rekrytering utan aktivitet stängs efter sex månader, därefter sex månaders ansökningsfrist. Textchatt raderas vid den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; skrivskydd efter sex månader kvarstår.
+- Vanliga egna tekniska loggar: 30 dagar. Nödvändiga incidentutdrag får separat prövad frist. Dokumentera avvikelsen från äldre 90-dagars körningsloggar före aktivering i stället för att tyst ändra historik.
+
+### Beslutad komplettering efter gemensam genomgång 2026-11-09
+
+Följande är användarens önskade produktregler och interna rutiner, inte lagstadgade frister, slutligt juridiskt godkännande eller verifierad implementation. De ersätter äldre förslagsstatus i berörda kort. Ingen ny kortreservation eller ändring av befintliga ägare/statusar görs genom dokumentationen.
+
+| Område | Beslut och avgränsning | Kort |
+|---|---|---|
+| Avtalsbevis | Avtalstext, bilaga, version, godkännare och tidpunkt under avtalsrelationen samt tre år efter avslut. Juridisk kontroll av ändamål, nödvändighet och eventuella avgränsade undantag kvarstår. Minimal verifieringsnoterings egen frist är fortfarande inte separat avgjord. | L12/L15 |
+| Incidentdokumentation | Tolv månader efter avslut som önskad normalfrist. Dokumenterat, avgränsat undantag när underlaget fortfarande behövs; juridisk kontroll kvarstår. Ingen radering av pågående ärende/tillsyn enbart på grund av normalfristen. | L12/L16 |
+| Säkerhetskopior | Mål: raderade uppgifter ska försvinna ur säkerhetskopior inom högst 30 dagar. Faktisk leverantörskapacitet och DB-/filkopior måste verifieras innan löftet används externt. Återställning ska åter genomföra tidigare raderingar innan uppgifterna blir tillgängliga. | L12/L14 |
+| Exportfiler | Tillfälliga nedladdningsbara registerutdragsfiler raderas från servern efter en timme; en ny kan skapas. Alla leveransvägar/länkar ska respektera fristen. Redan hämtade externa kopior omfattas inte av serverraderingen. | L12/L13 |
+| Intresselista | Högst tolv månader utan övergång till konto eller aktivt förnyat intresse; tidigare radering när ändamålet upphör. Avregistrering stoppar utskick direkt och kontaktuppgifter raderas ur listan inom 30 dagar. Ingen automatisk kandidatregistrering/annan marknadsföring. Eventuell minimal spärrpost behöver separat grund och frist. | L10/L12/L14 |
+| Mejl och arbetskopior | Relevant ärendeinnehåll förs till skyddad adminhantering. Överflödiga mejl/bilagor raderas ur den gemensamma inkorgen inom 30 dagar efter överföring; nödvändig dokumentation följer ärendefristen. Arbetskopior omfattas också av tidigare beslut om radering inom 30 dagar efter avslut eller tidigare när obehövliga. | L12/L16 |
+| Teamåtkomst | Alla fem får gemensam mejlåtkomst och varsitt personligt adminkonto samt uttrycklig behörighet för integritetsärenden och incidenter. Tvåfaktorsautentisering är obligatorisk för samtliga adminkonton. Det innebär inte generell läsrätt till kandidatunderlag. | L05/L14/L16 |
+| Handläggning | Den som är tillgänglig tar ärendet och markerar ”Jag hanterar detta”; övertagande tillåts. Första återkoppling inom fem arbetsdagar är intern målsättning. Öppna integritetsärenden/incidenter följs upp minst var 30:e dag. Visa tillämpligt sista svarsdatum och skicka påminnelser innan dess; den månatliga uppföljningen förlänger inga externa frister. | L13/L16 |
+| Identitet och meddelanden | Begäran normalt inloggad; mejlärenden kräver separat proportionerlig identitetskontroll, inte rutinmässig ID-kopia. Mejlnotiser om integritetsärenden innehåller endast ärendenummer och länk, inte ärendeinnehåll/personuppgifter/bilagor. Ärenden fungerar även för personer utan konto. | L13/L16 |
+| Rättelser | Ungdomar kan anmäla fel i skickad ansökan eller AI-bedömning; rätta underlaget och underrätta berörda företag. Spårbar rättelse får inte skriva om ett tidigare avtalsbevis eller sprida andra ansökningars uppgifter. | F26/N19/L13/L16 |
+| Incidentansvar | Misstänkta dataläckor/obehörig åtkomst rapporteras internt omedelbart till Vilgot och Max som samordnar. Någon av övriga tre kan ta över direkt om båda är frånvarande. Alla fem behåller beslutad ärendeåtkomst. | L16 |
+| Företagsspärr och ändringar | Återkallad verifiering eller avslutat avtal spärrar kandidatåtkomst. Väsentliga avtalsändringar kräver ny accept före fortsatt användning av rekryteringsfunktionerna; tidigare godkända versioner bevaras som avtalsbevis. Detta är vald produktregel. | L15 |
+
+### Senaste verksamhetsbeslut och återstående dokumentarbete 2026-11-09
+
+Användaren har nu beställt att även besluten efter föregående sammanställning och det återstående GDPR-arbetet ska införas här. Uppdatera befintliga kort; inga nya parallella GDPR-kort eller ändrade ägare/statusar införs. Denna leverans omfattar endast planen, inte produktkod eller publicerade juridiska texter.
+
+- Intresselistan används bara för lanseringsinformation och besked om att tjänsten är live, inte framtida erbjudanden/nyhetsbrev. Tidigare beslutade avregistrerings- och gallringsfrister gäller.
+- Användningsstatistik är en möjlig framtida funktion som behöver egen prövning före införande; ingen statistikfunktion beställs nu.
+- Verkliga CV:n, profilsvar och AI-bedömningar får inte återanvändas för att testa eller förbättra MatchnWorks AI. Använd fiktiva uppgifter; kontroll av leverantörens egna villkor/inställningar kvarstår.
+- Företag får använda kandidatuppgifter endast för den aktuella rekryteringen, utan egen kandidatbank, marknadsföring eller överföring till externa AI-tjänster. Efter anställning medges bara nödvändiga uppgifter för anställningsavtal och personaladministration under företagets separata ansvar; undantaget ger inte generell export av CV, AI-bedömning eller hela kandidatunderlaget.
+- Företagets vanliga kontaktmejl används om annan dataskyddsadress inte anges. Rekryteringsinformationen lämnas genom egen relevant länk eller ifylld mall hos MatchnWork och visas före ansökan. Inget separat krav på namngiven dataskyddsperson eller extern policysida införs; eventuellt dataskyddsombud anges där tillämpligt.
+- Ungdomar uppmanas att undvika känsliga uppgifter och personnummer i CV/fritext. Företag får inte efterfråga hälsa, religion, politiska åsikter eller andra känsliga uppgifter och inte onödiga personnummer i plattformens frågor. Om uppgifter ändå lämnas begränsas åtkomst och innehållet tas bort/ersätts med ungdomens hjälp, utan onödiga kopior; redan delat underlag/mottagare ska följas upp.
+- Återkallad ansökan spärrar företagets åtkomst till ansökans CV, svar och AI-bedömning direkt samt notifierar företaget neutralt utan underlagskopior. Textchatten skrivskyddas direkt för båda parter, tidigare meddelanden följer gallringsregeln i L12. Spärrat underlag får inte öppnas genom gamla chattbilagor/länkar. Ingen automatisk återöppning genom ett bakgrundsjobb.
+- Kandidatåtkomst får tillfälligt pausas vid misstänkt personuppgiftsmissbruk under utredning enligt L15/L16. Återkallad verifiering/avslutat avtal och väsentligt ändrade villkor följer tidigare spärr-/omacceptbeslut.
+
+| Befintligt kort | Det som ska göras härnäst | Läget och beroenden |
+|---|---|---|
+| F20/L15 | Förbered begriplig integritetsinformation för ungdomar och företagskontakter, kort information vid AI/ansökan samt väsentligt innehåll i artikel 26-fördelningen. | Kan skrivas med markerade öppna fält. Slutlig ansvarig, grund, minderårigflöde och faktisk leverantörsbehandling fastställs före publicering. |
+| F20/L15 | Skriv företagets ifyllbara mall för information till sökande, med identitet/kontakt, behandling/ändamål, rättslig grund, mottagare/överföringar, lagring och rättigheter. | Företaget ansvarar för korrekta uppgifter om sin hantering; ingen malltext får påstå att alla företag har samma grunder, lagring eller leverantörer. Slutligt innehåll granskas före användning. |
+| L15 | Färdigställ behandlingsförteckningen och samordna företagsavtal/dataskyddsbilaga med de nya besluten. | Förberedda arbetsdokument: Behandlingsförteckning v0.1, Företagsavtal v0.5, Bilaga A v0.2 och Leverantörer lagring och rutiner v0.2, daterade 2026-11-09. De är inte signeringsklara eller intyg om faktisk drift. Chattskrivskyddsbeslutet ska föras in vid nästa dokumentrevidering. |
+| L15/F26/N19 | Förbered DPIA med konkreta dataflöden, behov/alternativ, risker för ungdomar, planerade skydd och kvarstående risk. | Underlag kan tas fram nu. Juridisk klassificering, riskprövning, faktiskt verifierade skydd och ansvarigt slutbeslut återstår; en mall eller AI-varning är inte genomförd konsekvensbedömning. |
+| L14 | Kontrollera faktiska leverantörsavtal och datainställningar och koppla resultaten till register/integritetstext. | Inventeringen finns redan. Behåll bevis på kundpart, avtal/version/anslutning, länder/överföringar, datadelning, åtkomst och logg-/backup-/raderingsfrister. Offentliga standardvillkor räcker inte som kontokontroll. |
+| L12/L13/L16/N19/L07 | Omsätt verksamhetsreglerna i befintliga åtkomst-, rättelse-, ärende- och gallringsflöden och verifiera hela kedjan senare. | Framtida implementation/verifiering; denna dokumentleverans bygger eller aktiverar inget. Bevara övriga pågående reservationer. |
+
+Dokumentkontroll för denna leverans: avstämt mot aktuell dev och öppna PR:er samt de uttryckliga besluten i samtalet. Bara berörda plankort kompletteras; befintlig verifieringshistorik bevaras. Juridiska frågor och konto-/leverantörskontroller förblir öppna. Dokumentationsbranch: `codex/gdpr-remaining-plan-20261109`.
+
+### Juridiska frågor och kontroller som återstår
+
+- Faktura-/redovisningsfrist fastställs separat enligt tillämpliga krav; håll ekonomiskt underlag avskilt från kandidatdata. Fastställ även minimal verifieringsnoterings och eventuell spärrposts egen grund/frist före aktivering.
+- Rådgivarens inskickade rollutlåtande pekar på artikel 26. Exakta gemensamma/separata moment, namngivna ansvariga inklusive extern medgrundares faktiska roll, rättsliga grunder, minderårigas flöde och AI-klassificering återstår. Fyra frågor har skickats till rådgivaren. Utkast är inte slutligt godkända texter.
+
+### Genomförande efter besluten – 2026-11-09
+
+Detta är en avgränsad ordning inom GDPR-arbetet, inte en ny global prioriteringslista eller ett övertagande av andras reservationer.
+
+| Steg | Kan förberedas nu | Krävs före skarp användning |
+|---|---|---|
+| 1. Ärenden och åtkomst (L16/L13/L05) | Personliga adminbehörigheter/tvåfaktorsgräns, ärendestatus och övertagande, privata bilagor, identitetskontroll, fristfält/påminnelser, innehållsfria mejlnotiser och incidentrutin. Återanvänd export/radering. | Behörighet för alla fem individuellt, verifierad mejlåtkomst, server-/RLS-/Storage-prov och utbildad handläggning. Alla fems åtkomst ersätter inte ansvarsfördelningen som ska fastställas juridiskt. |
+| 2. Gallring och återställning (L12/L13/L14) | Kategorier/startpunkter och beslutade frister, schemalagda återförsök, exportfrist, gallringsdagar för ärenden och separata dokumenterade undantag. Ta fram återställningsrutin för tidigare raderingar. | Rättsligt stöd/nödvändighet, verkliga leverantörsfrister och lyckade gräns-/fil-/återställningsprov. Aktivera inte destruktiv gallring genom dokumentändring. |
+| 3. Företagsaccept och spärrar (L15) | Versionsmodell, låst avtalskopia, godkännandeflöde, granskningsstatus, återkallande och omaccept med fiktiv avtalstext/testföretag. | Fastställda parter/roller, slutligt avtal/artikel 26-bilaga och verifieringsmetod; positiva/negativa flöden innan kandidatåtkomst. |
+| 4. Information och AI (F20/F26/N19/L14/L15) | Dataflödesinventering per funktion, minimeringskontroller för CV/matchning och rättelseväg. Strukturera integritetstext och behandlingsregister med öppna fält, utan att publicera juridiska antaganden som fakta. | Rådgivarens svar om grunder, 15–17-åringar, exakta roller, DPIA/AI-klassificering samt faktiska mottagare, leverantörsavtal och lagringsuppgifter. |
+| 5. Slutverifiering (L07/L08) | Fiktiva testfall för personligt admin-/företags-/ungdomskonto, åtkomst, export, rättelse, radering, incident och avtal. | Verkliga dev-flöden inklusive negativt API-/Storage-prov, återförsök och tidsgränser; kvarstående juridiska/leverantörsblockerare lösta före skarp lansering. |
+
+Minimikrav vid verifiering: samtliga fem behöriga konton och en obehörig admin, otillräcklig tvåfaktor, två samtidiga handläggare, korrekt övertagande, påminnelser före svarstid, neutral mejlnotis, identitetskontroll utan rutinmässig ID-kopia, fel ansöknings-/bilage-ID, utgången entimmesexport, avregistrering utan fler utskick, återkallad företagsverifiering och väsentligt ändrat avtal. Återställningsprov ska visa att redan raderade uppgifter inte åter exponeras.
+
+Dokumentationsleverans: Vilgot / Codex, branch `codex/gdpr-decisions-consolidation-20261109`. Kontrollerat: aktuell dev och öppna PR:er, befintliga relevanta kort, överensstämmelse med samtalets beslut samt att övriga korts innehåll/ägare/status är bevarade. Ingen ny produktkod, konto-/leverantörskontroll, funktionsverifiering eller produktionsändring ingår.
+
+### Avgränsad kontrollstatus
+
+Dokumentationsleverans: Vilgot / Codex, branch codex/gdpr-plan-completion-20261109. Befintliga kort och öppna PR:er kontrollerades före tillägget. Den tidigare skrivskyddade kontrollen 2026-11-09 visade DevStaging i eu-central-1, Primary i eu-west-1 och separata Vercel-projekt. Kundpart/plan/DPA-anslutning och full backup-/regionkedja var inte verifierade. Vid kontrollen var ansöknings-/chattgallring och videoradering avstängda i konfigurationen; exportstädcron var inaktiv. Detta är en ögonblicksbild, inte påstående om framtida drift. Senare verifierad livekontroll har företräde. Ingen inställning, kodfunktion eller faktisk personuppgiftsbehandling ändras genom detta tillägg.
+
 ## Arbetssätt
 
 - Läs AGENTS.md och denna fil före arbetet. Hämta aktuell dev och kontrollera pågående uppgifter och PR:er.
@@ -109,6 +202,8 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Pågår | Vilgot / Codex |
+| 22.4 | [L15](#l15) | P1 | Avtal och rättsligt underlag för behandling på sidan | Ej påbörjad | — |
+| 22.5 | [L16](#l16) | P1 | Skyddade personuppgiftsärenden och incidenthantering | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -147,7 +242,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Klar | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
-| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
+| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Pågår | Vilgot / Codex |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
@@ -235,6 +330,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, PR #54; gemensam videoleverans uttryckligen beställd 2026-10-14.
+- Fortsättning 2026-11-09, Vilgot / Codex, `codex/n12-n13-video-recovery-20261109`, PR #183: konto-/samtalsisolerade videovyer, gemensam begränsad överföring, bevarad uppladdning/UUID vid osäkert sändningssvar, stoppade frikopplade callbacks och återkallelse även i studion. Nya SDK-/komponentprov, fem berörda regressioner, TypeScript, riktad lint och bygge passerade; ingen live-/kameraverifiering påstås. Generella `test:accessibility` stannar på befintlig företagsfliksförväntan (oförändrade filer). Se `docs/N12_N13_VIDEO_RECOVERY.md`. Status kvar För granskning; fysisk kamera/mobil och verklig Storage/RLS återstår.
 - Åtgärd (reviderad 2026-10-18): Låt ungdomen spela in eller ladda upp en separat frivillig video i en befintlig chatt. Visa förhandsvisning, uppladdningsstatus, hanterbara fel och uppspelning. Behåll privat mediehantering, deltagarbehörighet, blockering och rapportering. Ta bort valet att dela profilvideo enligt N22; befintliga profilvideodelningar hanteras enligt avvecklingsplanen utan att skada separata chattvideor.
 - Klar när: Båda deltagarna kan spela upp skickad video på mobil och dator. Utomstående nekas åtkomst och fel kan återhämtas utan dubbletter.
 - Implementerat: Ungdomen kan dela aktuell profilvideo eller ladda upp/spela in en separat video i en matchad chatt. Explicit skicka efter förhandsvisning, avbrott, retry med deterministiskt meddelande-ID, borttagning av egen separat video och anmälan per videomeddelande. Båda deltagarna får signerad uppspelning. Profilvideodelningar följer aktuell profilpekare; byte byter innehållet och borttagning gör delningen otillgänglig. Separata meddelanden har egna immutabla filer och påverkas inte av profilbyten. Rapporter sparar videoreferensen vid anmälan för behörig admin; borttagna videobytes arkiveras inte i en dold kopia.
@@ -243,6 +339,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n14"></a>
 ### N14 Publicera samma annons på flera adresser
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P1
@@ -260,6 +358,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n15"></a>
 ### N15 Kopiera befintliga annonser till nya utkast
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P1
@@ -330,6 +430,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n11-profile-video-20261014`, PR #54; reserverad före kodarbete efter uttrycklig beställning om hela videoflödet. Implementeras efter N11/N12:s grund.
+- Fortsättning 2026-11-09, Vilgot / Codex, `codex/n12-n13-video-recovery-20261109`, PR #183: konto-/samtalsisolerade videovyer, gemensam begränsad överföring, bevarad uppladdning/UUID vid osäkert sändningssvar, stoppade frikopplade callbacks och återkallelse även i studion. Nya SDK-/komponentprov, fem berörda regressioner, TypeScript, riktad lint och bygge passerade; ingen live-/kameraverifiering påstås. Generella `test:accessibility` stannar på befintlig företagsfliksförväntan (oförändrade filer). Se `docs/N12_N13_VIDEO_RECOVERY.md`. Status kvar För granskning; fysisk kamera/mobil och verklig Storage/RLS återstår.
 - Åtgärd: Komplettera uppladdningen med inspelning via kamera och mikrofon. Ge förhandsvisning, ta om och uttryckligt spara/skicka. Hantera nekad behörighet och använd uppladdning som alternativ när inspelning inte stöds. Återanvänd N11/N12; inspelning publicerar inte automatiskt.
 - Klar när: Inspelning fungerar i avsedda mobil- och datorwebbläsare, kan tas om och går att avbryta utan att video publiceras.
 - Implementerat: Gemensam MediaRecorder-komponent i profil och chatt med användarinitierad kamera/mikrofon, lokal kameraförhandsvisning, stoppa/ta om/avbryt, automatstopp vid 60 sekunder och bytegräns. Ingen automatisk publicering. Spår stängs vid stopp, avbrott, navigering och sent behörighetssvar. Nekad/ej stödd inspelning visar filuppladdning som alternativ. MP4 väljs när stödet finns, annars WebM.
@@ -354,6 +455,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n03"></a>
 ### N03 Visa annonsutkast i översikten
+
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
 - [ ] Klar
 - Prioritet: P2
@@ -423,6 +526,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n06-discovery-filters-20261025`; [PR #104](https://github.com/vilgotdidrikson/youth-job-mvp/pull/104), implementation `12cd8052`. Reserverad före kodarbete 2026-10-25. Fritext, N05-arbetstid och lokalt uppskattat avstånd från vald orts centrum; inga bostads-/GPS-/AI-data eller databasändringar. Kvarstående profil/GDPR/SMTP/prisberoenden och andra ägares uppgifter hoppas över enligt tidigare avgränsning.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Börja med textsökning och ett användbart val för närhet eller pendling samt arbetstid. Lägg därefter till lön och ålder om underlaget stödjer pålitlig filtrering. Koppla arbetstidsfilter till N05 och behåll lätt återställning.
 - Klar när: Ungdomen hittar relevanta jobb utan att behöva öppna varje annons; okända uppgifter hanteras tydligt.
 - Implementerat: Sökfält med synonym-/flerordssökning, N05-arbetstider och lokalt uppskattad fågelväg från vald orts centrum (12 referensorter, 5/10/25/50 km). Jobb med okänd vald uppgift kan behållas och märks, flera arbetsplatser hanteras utan dubblett. Filter före paginering, totalräknare, tydlig rensning och bibehållna sökval mellan kort/karta. Ångra behåller filtren. Inga nya profil-/GPS-/AI-data, databas- eller behörighetsändringar. Se docs/N06.md.
@@ -450,9 +554,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 59
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n10-l02-l06-account-settings-20261109`, PR #186; reservation publicerad före kodarbete 2026-11-09.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Gör det möjligt att ändra e-post genom säker verifiering och välja de notispreferenser som motsvarar fungerande kanaler. Lägg inte val för ännu otillgängliga mailutskick.
 - Klar när: Användaren kan hålla sin kontaktuppgift aktuell och styra befintliga notiser.
 - Tillägg 2026-10-19: Integritetssektionens export/rättelse/radering hanteras separat som P1 i L13 och ska inte skjutas till denna P3-punkt.
@@ -585,6 +690,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f07"></a>
 ### F07 Bevara bilden i sparade annonsutkast
 
+- Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 18
@@ -709,6 +816,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
+
+- Komplettering 2026-11-09 efter dokumentgenomgång: Arbetsutkast v0.1 har nu skapats separat för (1) integritetsinformation för ungdomar och företagskontakter, `MatchnWork_integritetsinformation_v01.docx`, och (2) företagets ifyllbara rekryteringsinformation, `MatchnWork_rekryteringsinformation_mall_v01.docx`. Dokumenten bygger på behandlingsförteckningen och senaste besluten om återkallad ansökan/omedelbart chattskrivskydd, oavsiktligt känsligt innehåll och lanseringslistans begränsade ändamål. Ansvariga, exakt artikel 26-gräns, rättsliga grunder per behandling, minderårigflöde, leverantörer/överföringar, cookies och vissa bevarandefrister är markerade för färdigställande. Företaget måste fylla i sin faktiska hantering; mallen är information, inte ett separat signeringsavtal. Korta kontexttexter vid AI/ansökan samt slutlig publicering och införande återstår. Kontroll: saktext jämförd med beslut och primärkällor, båda Word-dokumenten renderade och samtliga tio sidor visuellt granskade. Ingen produktkod eller funktionstest har ingått; dokumentutkast betyder inte juridiskt godkänt eller driftsatt.
+
+- Samordnat tillägg 2026-11-09: Slutlig saktext och avtalsaccept samordnas med L15. Visa ansvariga, ändamål/grunder, mottagare, leverantörer/länder, frister, rättigheter och kontakt på rätt plats. Före ansökan visas mottagande arbetsgivare, dess rekryteringsinformation och det väsentliga innehållet i artikel 26-arrangemanget. Särskilj information, avtalsaccept och specifika frivilliga samtycken; en generell GDPR-ruta ska inte godkänna all delning/AI. Beskriv faktisk drift utan obestyrkta löften om anonymisering, EU-exklusiv behandling eller absolut kopieringsskydd.
 
 - [ ] Klar
 - Prioritet: P2
@@ -860,9 +971,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 57
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n06-f19-n18-discovery-20261109`, PR #184; reservation publicerad före kodarbete 2026-11-09.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Välj ett konsekvent beteende: direkt filtrering med tydlig stängning eller tillämpning med möjlighet att avbryta. Visa aktiva filter och gör rensning lätt att hitta.
 - Klar när: Det är tydligt om stängning behåller eller avbryter valen.
 - Implementerat: —
@@ -880,6 +992,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/profile-journey-20261014`; reserverad före kodarbete 2026-10-14 enligt uttrycklig beställning om profilflöde och större chatt.
+- 2026-11-09: Fortsatt egen chattdel i PR #182 (`codex/l08-chat-recovery-20261109`): konto-/samtalsisolering, avbrutna läsningar med timeout/återförsök och bevarade textutkast med samma meddelande-id vid osäkert sändningssvar. `test:chat-recovery`, sex berörda regressioner, TypeScript, riktad lint och bygge passerade; SDK/komponentprov har simulerad transport. Se `docs/L08_CHAT_RECOVERY.md` för före/efter-prov och avgränsningar. Inloggad browser/fysisk mobil/live-RLS återstår; huvudpunkten inte Klar.
 - Åtgärd: Beräkna chattens höjd med hänsyn till navigation och sidrubrik. Låt meddelandeytan skrolla separat och håll skrivfält samt Skicka åtkomliga, även på liten skärm och när tangentbordet visas.
 - Klar när: Skrivfältet hamnar inte nedanför den tillgängliga vyn.
 - Implementerat: Desktopchattens tidigare höjdtak borttaget, bredare arbetsyta och kompakt navigation/rubrik. Befintliga mobilanpassningar behållna.
@@ -1067,6 +1180,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: Pågår
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l02-auth-email-20261027`, reserverad före kodarbete. Avgränsad första leverans: auth-mejl, miljöriktiga länkar, svenska mallar och konfigurationskontroll. SMTP-uppgifter och verklig leverans saknas; ingen produktionskonfiguration eller aktivering.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Inventera befintlig e-postkod och konfigurera fungerande avsändare och leverans. Prioritera verifiering, återställning av lösenord och fakturautskick. Koppla mallar, leveransstatus och återförsök till rätt händelser och undvik dubbla utskick. Match- och meddelandemail är en senare del, med notispreferenser.
 - Klar när: Kritiska mejl når testmottagare, länkar leder till rätt miljö och misslyckade eller upprepade försök hanteras spårbart.
 - Leverans för bekräftelsefortsättningen: [PR #136](https://github.com/vilgotdidrikson/youth-job-mvp/pull/136), kod `c976d37`. Lokal verifiering redovisad nedan; verklig bekräftelsekedja återstår.
@@ -1120,6 +1234,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l06-account-recovery-20261027`, remote-branch och ansvar publicerade 2026-10-27 före kodarbete; bas dev `0023105`; kodcommit `8b8fe840e44fe8f3c8453098b082d2e4094aff76` (GitHub). Verifieringsprotokoll i `docs/L06.md`.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Kontrollera registrering, verifieringsmejl, glömt lösenord, säkert lösenordsbyte, utloggning och utgången session. Inventera kontoradering och rätta eventuella luckor. Hantera privata dokument och video vid radering. Genomför känsliga tester med egna konton och enligt autentiseringsverktygets regler; begär aldrig lösenord i chatten. Utökade kontoval ligger i N10.
 - Klar när: Användaren kan återfå åtkomst och förstå fel utan att fastna. Sessioner och eventuell radering får det avsedda, verifierade resultatet.
 - Tillägg 2026-10-19: L13 preciserar säker självbetjäningsradering och ny autentisering före export/radering. Inventera och återanvänd befintlig raderingsfunktion; verifiera även återkallad åtkomst/sessioner och faktiska filer. Vanliga lagringstider i L12 är inte i sig skäl att neka tidigare radering.
@@ -1154,6 +1269,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: Pågår
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l08-browser-verification-20261028`, reserverad före arbete 2026-10-28. Avgränsad inloggad Chromium-verifiering på 375/768/1280 px, tangentbord/native-dialog, kartans WebGL/reservvy och nödvändiga korrigeringar. Fiktiva QA-konton i DevStaging; ingen aktivering av gallring, riktiga rekryteringar eller produktion. Fysisk mobil/virtuellt tangentbord kan inte räknas som verifierat genom viewportemulering. Öppna PR:er kontrollerade.
+- 2026-11-09: Fortsatt egen chattdel i PR #182 (`codex/l08-chat-recovery-20261109`): konto-/samtalsisolering, avbrutna läsningar med timeout/återförsök och bevarade textutkast med samma meddelande-id vid osäkert sändningssvar. `test:chat-recovery`, sex berörda regressioner, TypeScript, riktad lint och bygge passerade; SDK/komponentprov har simulerad transport. Se `docs/L08_CHAT_RECOVERY.md` för före/efter-prov och avgränsningar. Inloggad browser/fysisk mobil/live-RLS återstår; huvudpunkten inte Klar.
 - Åtgärd: Kontrollera alla centrala vyer i verklig mobil viewport och relevanta riktiga mobilwebbläsare: navigation, formulär, bildbeskärning/zoom/dragning, chatt med öppet tangentbord och video. Kontrollera fokus och tangentbordsanvändning. Testa kartpins, zoom och geografisk interaktion i miljö med WebGL, samt reservvy. F23/F24 och designpunkterna beskriver kända förbättringar; ytterligare fel dokumenteras separat.
 - Klar när: Kärnflödena går att använda på mobil och med tangentbord utan dolda kontroller, horisontellt spill eller blockerande kartfel.
 - Implementerat: [PR #145](https://github.com/vilgotdidrikson/youth-job-mvp/pull/145), reproducerbar dev-låst browserlöpare, kontoskopade fiktiva fixtures, seed-fråga utan adminsteg och automatisk kontostädning. Ingen produktkod-/schema-/behörighetsändring. Se docs/L08_BROWSER.md.
@@ -1229,6 +1345,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Codex
 - Branch/PR: `codex/n18-feed-relevance-20261019`, [PR #79](https://github.com/vilgotdidrikson/youth-job-mvp/pull/79). Reservation publicerad före kodarbete.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n06-f19-n18-discovery-20261109`, PR #184: tre sammanhängande funktionsdelar – jämförbart lönefilter (N06), lokala filterval med atomär tillämpning/avbryt (F19), strukturerad arbetstidsrelevans och direkt fortsatt kortflöde efter första sidans beslut (N18). Före/efter-prov reproducerar tom lista efter 20 val. Nya faktiska domän-/callbackprov, sju regressioner, TypeScript, riktad lint och bygge passerade. Ingen ny lagring/AI/RLS eller visuell ombyggnad. Se `docs/N06_F19_N18_DISCOVERY.md`; inloggad browser/mobil och faktisk kart-/fokusverifiering återstår. Inte Klar.
 - Åtgärd: Bygg vidare på N17: uttryckliga filter är hårda val; profilönskemål, plats och känd tillgänglighet ger mjuk prioritering. Ovisade annonser, publiceringstid och variation mellan företag styr därefter. Behåll spärrar för tidigare val/ansökningar; ingen automatisk återvisning/lyft vid anställning eller textredigering. Visa begriplig anledning till relevans.
 - Klar när: Tom profil kan upptäcka jobb och nybörjare utesluts inte för saknad erfarenhet. Filter respekteras, resultat/paginering är stabila, flera arbetsplatser räknas en gång och ett företag tar inte över flödet. Sparade jobb fungerar separat. Inga betalda lyft aktiveras.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
@@ -1238,6 +1355,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
+
+- Samordnat tillägg 2026-11-09: Samordna minimering för både matchning och CV-generering med N19/L14. Kontrollera fritext, PDF, frågor och omanalys före externa anrop, med definierad stopp-/kompletteringsväg vid osäkerhet. Ordlistor och prompt är inte garanti mot känsliga uppgifter. Relevant godkänt underlag ska bevaras. AI får inte rangordna, sortera bort, dölja eller neka kandidater. Rättslig grund, AI-klassificering och faktisk DPIA fastställs i L15; varningstext/mänskligt slutbeslut är inte generella undantag.
 
 - Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/f26-assessment-snapshot-20261028`. Avgränsat skydd mot blandade/inaktuella ansöknings- och kravversioner i kandidatbedömningens API och bakgrundsarbetare, samordnat med L13:s rättelsekrav. Befintliga RLS-/delningsgränser bevaras; inga nya datafält, modellpass eller databasändringar. Öppna PR:er kontrollerade.
 - Leverans: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142). Samma giltiga delningsrevision krävs före PDF/modellanrop; API:t kontrollerar även kravversion/kriterier/status/jobbkontext före svar, inklusive modellfel och efter lagring. Arbetaren avvisar blandade/ändrade revisioner före finish och båda validerar cachemetadata. Ingen databas-/delningsändring.
@@ -1271,6 +1390,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Komplettering 2026-11-09: Samordna återkallad ansökans omedelbara spärr av CV/svar/AI-underlag med L12:s omedelbara chattskrivskydd och neutrala notifiering. Bevara tidigare textmeddelanden enligt gallringsregeln, men öppna inte spärrat underlag via chattbilagor, gamla länkar, cache eller AI-historik. Följ L15:s begränsning till aktuell rekrytering och L16:s rutin för känsligt innehåll; inga nya profilåtkomster beställs.
+
+- Samordnat tillägg 2026-11-09: Generella kompletteringssvar får återanvändas i profilen först efter ett separat aktivt val; ge översikt, ändring och radering. Ett nej stoppar inte aktuell ansökan. Bevara daterad skickad version och erbjud aktiv uppdatering, men rätta felaktig aktuell AI-bedömning och underrätta mottagare där det krävs enligt L13/L15. Vid CV-AI-fel sparas inmatat underlag privat för återförsök; vid matchningsfel skickas ansökan ändå och företaget ser saknad analys/kan försöka igen. Verifiera verklig sparning över omladdning, inte bara feltext.
 
 - Fortsättning 2026-10-26, Vilgot / Codex, `codex/n19-followup-race-20261026`: Reserverad i arbetschatten och med publicerad branch före kodarbete. Reproducerat att långsam första läsning av kompletteringsfrågor kan skriva över nyare svar efter manuell bedömningsuppdatering. Den första läsningen kontrollerar nu samma revisionsräknare som senare läsningar. Inga nya anrop, datafält, modellinställningar eller åtkomster. Regressionstest kör verkliga effekter och levererar svar i omvänd ordning; det fallerade före rättningen och passerar efter. N19 förblir Pågår; inloggad server-/webbverifiering återstår. Verifierat lokalt: `test:assessment-progress`, riktad ESLint och standardproduktionsbygge inklusive TypeScript och 55 routes passerar. Lokalt kodunderlag: `fa8ad3b`; publicerad leverans följs på branch `codex/n19-followup-race-20261026` och dess PR till dev.
 
@@ -1402,6 +1525,10 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 <a id="l12"></a>
 ### L12 Inför beslutade lagringstider och automatisk gallring
 
+- Nytt uttryckligt beslut 2026-11-09: Vid återkallad ansökan skrivskyddas textchatten omedelbart för båda parter. Befintliga textmeddelanden ligger kvar enligt den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; ordinarie sexmånadersskrivskydd gäller annars. Företaget notifieras neutralt om återkallandet, samtidigt spärras CV, svar och AI-bedömning direkt. Åtkomstspärr och fysisk radering är skilda åtgärder. Samordna N19/L15 och testa redan öppnad vy, gamla länkar och samtidiga meddelanden.
+
+- Samordnat tillägg 2026-11-09: Beslut och frister preciseras i den samlade GDPR-avstämningen i början av filen. Den kompletterar äldre tabell och öppna frågor där ett nyare beslut finns, men bevarar befintlig status, ägare och verifieringshistorik. L16:s adminärenden är en separat kategori från L05:s modereringsrapporter.
+
 - [ ] Klar
 - Prioritet: P1, före skarp lansering; 14-dagarsgallring krävs före aktivering av ansökningsvideo.
 - Global ordning: 22.1
@@ -1420,7 +1547,7 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 |---|---|---|
 | Skickad video i chatt eller ansökan | Radera efter 14 dagar | Från serverregistrerat skickande, oberoende av uppspelning. Visa exakt utgångsdatum för båda parter; därefter endast en neutral markering, exempelvis Videon har raderats. |
 | Avslutad ansökan, dess CV-underlag och AI-bedömningar | Radera efter 6 månader | Från dokumenterat avslut av den enskilda ansökan. Tidigare ansökningar visar avslutsstatus och planerad radering. |
-| Textchatt | Skrivskydda efter 6 månaders inaktivitet; radera efter 12 månader | Från definierad användaraktivitet i den aktuella konversationen. Arkivering och skrivskydd är inte radering. Exakt aktivitetsdefinition och hantering av återöppning fastställs före implementation. |
+| Textchatt | Skrivskydda direkt vid återkallad ansökan, annars efter 6 månaders inaktivitet. Radera vid tidigaste av ansökans gallringsdag och 12 månaders chattinaktivitet. | Tidigare textmeddelanden följer gallringsregeln även vid återkallande. CV, ansökningssvar och AI-bedömning spärras direkt, även via chattens filreferenser/länkar. Arkivering eller skrivskydd är inte radering. Aktivitet får inte tyst återöppna en återkallad ansökan. |
 | Inaktivt ungdomskonto med jobbprofil och aktuellt CV | Radera efter 24 månaders inaktivitet | Från användarens egen definierade aktivitet. Påminn 30 och 7 dagar före; förklara vad som försvinner och hur kontot behålls. Automatiska mejl, AI-jobb och bakgrundsuppdateringar återställer inte tiden. |
 
 #### Omfattning och skydd
@@ -1451,6 +1578,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Samordnat tillägg 2026-11-09: Automatisk export fortsätter enligt befintligt mål. Nya L16 tillför skyddad manuell handläggning och fristbevakning, inte en parallell exportmotor. Manuell rutin ska kunna komplettera ofullständiga paket och ge fullständiga svar inom tillämplig frist när automatiken inte räcker. L12 styr ärendebilagor/arbetskopior. Rättelse av aktuella AI-bedömningar och underrättelse till mottagare ska verifieras; status och pågående ägare bevaras.
 
 - CV-filinsamling reserverad före kodarbete 2026-10-29: Vilgot / Codex, `codex/l13-reviewed-cv-files-20261029`, offentlig reservation 3d44b9c. Serverintern hämtning av granskade egna PDF-referenser med användarklient, identitet före/efter, validerat manifest, neutrala filnamn, explicita saknade filer och byte-/väntgränser. 20 lokala filprov inklusive installerad SDK/simulerad HTTP, 76 paketregressioner, lint, TypeScript och bygge passerar. Inga livefiler eller DB-ändringar. Faktisk koppling till granskade ägda CV-poster, andra filformat/media, live-RLS, export-UI/API och gallring återstår. Se docs/L13_EXPORT_CV_FILES.md. L13 fortsatt Pågår.
 
@@ -1526,6 +1655,10 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l14"></a>
 ### L14 Verifiera leverantörsavtal och produktionskonton
 
+- Komplettering 2026-11-09: Verifiera faktisk kontokund, avtalsanslutning och datainställningar per redan listad leverantör; koppla daterat kontrollresultat och kvarstående luckor till behandlingsförteckningen och F20:s saktext. Verkliga användaruppgifter får inte återanvändas för test/förbättring av MatchnWorks AI; leverantörens delningsval kontrolleras separat. Intresselistan är enbart för lanseringsbesked. Användningsstatistik är framtida möjlighet, inte beställd behandling eller infört analysverktyg.
+
+- Samordnat tillägg 2026-11-09: Inventeringen omfattar Supabase, Vercel, OpenAI, Mapbox, Zoho, Loopia, GitHub och eventuella utvecklingsassistenter, analysverktyg och mejlvidarebefordringar. För varje behandling verifieras kundpart, roll, DPA-version/anslutning, underleverantörer/länder, överföringsstöd, åtkomst, loggar, backup och radering. Publik DPA är inte bevis på kontots avtal. CV-genereringens bredare strukturerade underlag/konversation ska få en kontrollerad gräns före externa anrop enligt N19/F26. OpenAI store: false bevisar inte noll säkerhetslagring eller EU-exklusiv behandling. Mapbox kräver granskning av SDK/plats/telemetri/cookies. Zoho-inkorg och SMTP tillför mottagare och innehåll; undvik CV/känsliga uppgifter i vanliga notismejl. Databasbackup och Storage-filbackup inventeras separat.
+
 - [ ] Klar
 - Prioritet: P1, före behandling av riktiga användaruppgifter i skarp tjänst
 - Global ordning: 22.3
@@ -1560,6 +1693,88 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
+
+
+<a id="l15"></a>
+### L15 Avtal och rättsligt underlag för behandling på sidan
+
+- Dokumentläge 2026-11-09: Separata informationsutkast v0.1 finns nu enligt F20. Granskningsfält och faktiskt införande återstår; L15 är inte färdigställt genom dessa utkast.
+
+- Komplettering 2026-11-09: Färdigställ behandlingsförteckningen mot faktiska flöden och förbered DPIA med behov/alternativ, barns risker, åtgärder, kvarstående risk och ansvarigt beslut. Arbetsutkast finns enligt dokumentförteckningen i den samlade GDPR-avstämningen; de är inte slutligt juridiskt godkända. F20 äger informationstexter/företagsmall och L14 faktisk leverantörskontroll; skapa inga parallella uppgifter. Vid nästa avtals-/bilagerevidering förs det senaste beslutet om omedelbart chattskrivskydd vid återkallande in.
+
+- [ ] Klar
+- Prioritet: P1, före berörd behandling och skarp kandidatåtkomst.
+- Global ordning: 22.4. Rättsligt underlag är beroende även för berörda delar av L12–L14/F20/F26/N19 oavsett tabellordning; tekniska förberedelser får ske med syntetiska data.
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —; reservera före produktkod enligt AGENTS.md.
+- Åtgärd: Omsätt granskat företagsavtal/artikel 26-bilaga samt ungdomsvillkor/integritetsinformation till versionshanterat godkännande och information. Roller ska motsvara faktisk behandling.
+
+#### Företagets godkännande
+
+- Visa företagsidentitet, organisationsnummer, företrädarens namn/roll, exakt avtal/bilaga och sparbar identisk kopia. Företagets registrerade kontaktmejl används för dataskyddsfrågor om en annan adress inte anges; inget extra krav på namngiven dataskyddsperson. Företaget länkar relevant egen rekryteringsinformation eller fyller i mallen enligt F20, med eventuellt dataskyddsombud där tillämpligt. Visa informationen före ansökan; företag utan extern policysida ska kunna använda mallen.
+- Inloggad företrädare med verifierad mejl accepterar med två initialt tomma rutor: avtal inklusive bilaga respektive behörighetsintyg. Knapp: Godkänn och skicka för granskning. Mejlverifiering/egen försäkran bevisar inte ensamma firmateckningsrätt; admin följer dokumenterad kontrollmetod. Ingen extern signeringstjänst är beställd; rådgivaren bekräftar tillräcklig kontrollnivå.
+- Servern sparar oföränderlig avtalstext/bilaga, versioner, företag, företrädare, konto och tidpunkt. Ge kopia/bekräftelse. Beslutad produktregel: bevara tidigare godkända versioner och kräv ny accept vid väsentliga ändringar före fortsatt användning av rekryteringsfunktionerna. L12 anger önskad bevarandetid under avtalsrelationen plus tre år efter avslut, med juridisk kontroll kvar.
+- Publicering och kandidatåtkomst kräver både giltigt avtal och godkänd företags-/behörighetskontroll. Återkallad verifiering eller avslutat avtal ska spärra kandidatåtkomst. Spärren ska gälla även RPC/API/RLS/Storage, direktlänkar och gamla klienter. Testa också redan öppnad vy och återanvändning av utfärdade länkar; dokumentera deras faktiska giltighet utan att lova återkallelse av redan levererade externa kopior. Avtal får inte lova absolut nedladdningsskydd för levererade PDF-filer.
+- Grundavtalet är inte en avgiftsbelagd beställning. Pris och separat rekryteringsbekräftelse återanvänder L03/L04/F06; ingen parallell fakturamotor eller framtida premiumbeställning införs.
+- Företagsvillkor enligt senaste beslut: endast aktuell rekrytering, ingen egen kandidatbank/marknadsföring och ingen överföring till externa AI-tjänster. Efter anställning får bara nödvändiga uppgifter för anställningsavtal/personaladministration överföras under företagets separata ansvar, inte hela kandidatunderlaget eller AI-bedömningen. Företag får inte efterfråga känsliga uppgifter eller onödiga personnummer i plattformens frågor. Återkallad ansökan spärrar CV/svar/AI direkt och notifierar neutralt; textchatten skrivskyddas enligt L12. Misstänkt personuppgiftsmissbruk får medföra tillfällig kandidatspärr under utredning.
+
+#### Ungdom och rättsligt underlag
+
+- Minimiålder 15 år: validera födelsedatum även på server/databas och skydda direktanrop och senare ändring av profil. Slutligt flöde för 15–17-åringar fastställs juridiskt; samtyckesålder är inte samma sak som avtalsförmåga.
+- Separera integritetsinformation, avtalsaccept och specifika frivilliga val där samtycke behövs. Dokumentera och möjliggör återkallande; informera om ändamål och konsekvenser. N19 hanterar separat val för återanvändbara profilsvar.
+- Fastställ ansvariga operatörsparter, artikel 26-gräns och ansvarsfördelning, ändamål/grunder för varje behandling och behandlingsregister. Artikel 26-sammanfattning ska vara tillgänglig och rättigheter kunna utövas mot varje gemensamt ansvarig.
+- Färdigställ faktisk DPIA med nödvändighet/alternativ, risk före/efter åtgärder, testbevis och ansvarigt beslut. Bedöm eventuellt dataskyddsombud och förhandssamråd vid kvarstående hög risk. Samtycke eller en mall gör inte otillåten behandling laglig.
+- Bedöm CV-formatering och rekryteringsbedömning separat enligt AI-förordningen. Verifiera aktuell klassificering, skyldigheter och tillämpningsdatum mot gällande rätt; tidigare preliminära datum är inte fastställt besked.
+
+#### Klar när
+
+- Namngivna ansvariga, gränser/grunder, minderårigas flöde och nödvändiga texter är fastställda för verklig funktion; rådgivarbesked och kvarstående frågor är spårbara.
+- Fiktiva företag/ungdomar verifierar accept, exakt kopia/version, adminprövning, ändringar, åldersgräns och information före AI/ansökan. Fel konto/företag/version, gammal session, dubbla anrop och direkt API-/Storage-väg är negativt testade. L12:s frister följs.
+- Implementerat: —. Denna dokumentändring inför inga databasfält, avtal eller godkännanden.
+- Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
+- Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
+
+<a id="l16"></a>
+### L16 Skyddade personuppgiftsärenden och incidenthantering
+
+- Komplettering 2026-11-09: Dokumentera rutin när känsliga uppgifter/personnummer ändå lämnas i CV/fritext: begränsa åtkomst, hjälp ungdomen ta bort/ersätta innehållet, följ upp delade ansökningskopior och mottagare och undvik nya onödiga kopior. Frågeförbud och företagets begränsade användning anges i L15. Vid misstänkt missbruk kan kandidatåtkomst tillfälligt spärras under dokumenterad utredning; detta ger inte bredare generell adminläsning.
+
+- [ ] Klar
+- Prioritet: P1, fungerande rutin före berörd skarp behandling; automatisering kan ske stegvis.
+- Global ordning: 22.5
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —; reservera före kodarbete och samordna med L05/L13.
+- Beslut 2026-11-09: Separat skyddad del av adminsidan för support- och personuppgiftsärenden; uppgifter lagras i Supabase. Eventuella bilagor lagras privat med samma åtkomstgräns. Alla fem (Vilgot, William, Melker, Tom och Max) ska uttryckligen ges ärende-/incidentbehörighet via varsitt personligt adminkonto med obligatorisk tvåfaktorsautentisering; alla fem får även åtkomst till den gemensamma mejlen. Det tidigare förslaget om bara Vilgot och Max ersätts av detta beslut. Juridiskt ansvar är en separat bedömning. L12 anger beslutade ärendefrister.
+- Avgränsning: Återanvänd L13:s export/radering och L05:s rapport-/adminskydd. Ingen ny generell rätt att läsa kandidater och ingen separat exportmotor.
+
+#### Ärendeflöde och åtkomst
+
+- info@matchnwork.se är möjlig ingång. Spara mottagningsdag, berörd användare/kontakt, begäran, handläggare, status, åtgärder, beslut, avslut och gallringsdag. För över bara relevant mejlinnehåll; även inkorg/vidarebefordran behöver gallras.
+- Privata bilagor i avskild lagring med ärendebehörighet i API/databas/Storage. Inga publika URL:er; spara inte hela CV:n/chattar eller ID-handlingar rutinmässigt. Logga nödvändiga åtkomst-/åtgärdshändelser utan innehållskopior.
+- Alla fem har uttryckligen beslutad handläggarbehörighet, oavsett övrig teamroll; en framtida vanlig admin eller utvecklare får inte automatiskt samma behörighet. Andra ungdomar/företag och obehöriga konton nekas. Kandidatunderlag får öppnas bara vid dokumenterat konkret support-/incidentbehov. Kontrollera handläggarbehörighet och uppfylld tvåfaktorsautentisering på servern för läsning, ändringar och privata bilagor; en UI-spärr ensam räcker inte.
+- Hantera tillgång, rättelse, radering, begränsning, invändning och dataportabilitet enligt respektive förutsättningar. Proportionerlig identitetskontroll och normalt en månads frist; tillåten förlängning/skäl meddelas inom första månaden. Vidarebefordran till arbetsgivare startar inte ny frist. Kontakt fungerar även utan inloggning.
+- Automatisk export kvarstår i L13. Manuell rutin måste kunna komplettera ofullständiga paket och ge fullständiga svar i tid medan automatiken byggs. Säker leverans efter identitetskontroll; inga exportpaket till AI för granskning eller rutinmässigt som öppen mejlbilaga. Underrätta mottagare om rättelser/radering när det krävs.
+- Beslutad intern målsättning: första återkoppling inom fem arbetsdagar. Följ upp öppna integritetsärenden och incidenter minst var 30:e dag. Visa sista tillämpliga svarsdatum och påminn före tidsfristen; fem arbetsdagar/30-dagarsuppföljning ersätter eller förlänger inte externa frister. Den som är tillgänglig markerar ”Jag hanterar detta”; tillåt spårbart övertagande och undvik dubbel handläggning vid samtidiga anrop.
+- Begäran görs normalt inloggad; via mejl krävs separat proportionerlig identitetskontroll utan rutinmässig ID-kopia. Behåll kontaktväg utan konto. Notismejl innehåller bara ärendenummer och länk till skyddad adminvy, inte ärendeinnehåll/personuppgifter/bilagor. Överflödiga inkorgskopior/bilagor raderas inom 30 dagar efter överföring till ärendet. Tillfälliga exportfiler följer entimmesfristen i L12/L13.
+- Anmälan om fel i skickad ansökan/AI-bedömning ska kunna kopplas till rätt ansökan, handläggas, rättas och följas av meddelande till berörda företag; återanvänd F26/N19/L13.
+
+#### Incidenter
+
+- Misstänkt dataläcka eller obehörig åtkomst rapporteras internt omedelbart till Vilgot och Max som samordnar. Om båda är frånvarande kan någon av övriga tre ta över direkt. Möjliggör omedelbara skyddsåtgärder inom behörighet utan gruppmöte: spärra åtkomst, pausa berört flöde och återkalla nycklar/sessioner vid behov.
+- Dokumentera vetskapstid, händelse, berörda uppgifter/personer, risk, åtgärder och kontakter. Samordna med arbetsgivare/leverantörer men bevaka varje parts skyldigheter. Bedöm IMY-anmälan utan onödigt dröjsmål och när tillämpligt inom 72 timmar från vetskap; information till berörda vid hög risk utan onödigt dröjsmål. Dokumentera även skäl att avstå.
+- Incidentbevis begränsas och skyddas separat. Beslutad önskad normalfrist är tolv månader efter avslut enligt L12, med juridisk kontroll kvar. Dokumentera avgränsat undantag, skäl och nästa omprövning när längre lagring behövs. Normalfristen får inte medföra radering under pågående tillsyn eller dokumenterat rättsligt ärende.
+
+#### Klar när
+
+- Fiktiva ärenden kan tas emot, tilldelas, följas upp, avslutas och gallras. Frister och skyddade bilagor fungerar; vanliga ärenden skiljs från incidenter och modereringsrapporter.
+- Positiva tester för samtliga fem personliga handläggarkonton med tvåfaktor och negativa tester för admin utan särskild ärendebehörighet, otillräcklig tvåfaktor, anonym, ungdom, företag, fel ärende/bilage-ID och gammal session. Prova samtidig övertagning, uteblivna påminnelser/återförsök och att notismejl saknar innehåll. Inga direktanrop kringgår handläggarbehörighet.
+- Verifiera avslut/återöppning utan tyst evig förlängning, radering/återförsök, backup-/mejlkopior och rättelse till mottagare. Incidentövning sker med syntetiska data; skicka inte verklig IMY-anmälan som test.
+- Implementerat: —
+- Verifierat: Dokumentkrav och användarens beslut; ingen ny produktkod eller driftåtgärd.
+- Återstår / blockerare: Faktiska handläggarbehörigheter, implementation, dev-verifiering och fastställelse av kvarvarande juridiska gränser.
+
 
 ## Designaudit 2026-10-22 – kort
 

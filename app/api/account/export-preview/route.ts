@@ -89,9 +89,9 @@ export async function POST(request: Request) {
   let pending: { client: SupabaseClient; subjectId: string; id: string } | undefined;
   try {
     const input = await body(request, active);
-    if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).sort().join() !== "expectedUserId,password") throw new PreviewError(400);
-    const { expectedUserId, password } = input as Record<string, unknown>;
-    if (typeof expectedUserId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(expectedUserId) || typeof password !== "string" || !password || password.length > 1024) throw new PreviewError(400);
+    if (!input || typeof input !== "object" || Array.isArray(input) || !["expectedUserId,password", "expectedUserId,password,totpCode"].includes(Object.keys(input).sort().join())) throw new PreviewError(400);
+    const { expectedUserId, password, totpCode } = input as Record<string, unknown>;
+    if (typeof expectedUserId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(expectedUserId) || typeof password !== "string" || !password || password.length > 1024 || totpCode !== undefined && (typeof totpCode !== "string" || !/^\d{6}$/.test(totpCode))) throw new PreviewError(400);
     const auth = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false };
     const userClient = createClient(url, anonKey, { auth, global: { headers: { Authorization: `Bearer ${accessToken}` } } });
     const verificationClient = createClient(url, anonKey, { auth });
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     const { data: allowed, error } = await wait(() => userClient.rpc("consume_api_quota", { p_endpoint: "personal-data-export-preview", p_limit: 3 }).abortSignal(active), active);
     if (error || typeof allowed !== "boolean") throw new PreviewError(503);
     if (!allowed) return errorResponse(429, "För många exportförsök. Försök igen senare.");
-    const bundle = await wait(() => preparePersonalDataReview(userClient, verificationClient, expectedUserId, password, { accessToken, sessionClient, signal: active, reviewClient: sessionClient, includeCvFiles: false }), active);
+    const bundle = await wait(() => preparePersonalDataReview(userClient, verificationClient, expectedUserId, password, { accessToken, sessionClient, signal: active, reviewClient: sessionClient, includeCvFiles: false, totpCode: totpCode as string | undefined }), active);
     if (bundle.sessionId !== sessionId) throw new PreviewError(409);
     const exportId = randomUUID();
     const job = await wait(() => beginTemporaryPersonalDataExport(sessionClient, expectedUserId, exportId, active), active);

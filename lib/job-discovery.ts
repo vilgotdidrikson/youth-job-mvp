@@ -34,9 +34,15 @@ export function prepareDiscoveryJob(job: JobPost, profile: YouthProfile | null, 
   if (job.employment_type.split(",").some(value => employment.includes(normalize(value)))) { score++; reasons.push("Anställningsformen finns bland dina önskemål"); }
   const requirements = (job.requirements ?? "").split(/[\n.;]/).map(normalize);
   const a = recruitment.availability;
-  if ((requirements.includes("kan arbeta helger") && ["sat", "sun"].every(day => a.days.map(normalize).includes(day)))
-    || (requirements.includes("kan arbeta kvällar") && a.periods.map(normalize).includes("evening"))) {
-    score++; reasons.push("En angiven arbetstid stämmer med din tillgänglighet");
+  const times = readPracticalDetails(job.practical_details).times;
+  const days = a.days.map(normalize), periods = a.periods.map(normalize);
+  const knownTime = times?.some(time => time === "evening" ? periods.includes("evening")
+    : time === "weekend" ? days.some(day => day === "sat" || day === "sun")
+    : periods.includes("day") && days.some(day => ["mon", "tue", "wed", "thu", "fri"].includes(day)));
+  const legacyTime = !times?.length && ((requirements.includes("kan arbeta helger") && ["sat", "sun"].every(day => days.includes(day)))
+    || (requirements.includes("kan arbeta kvällar") && periods.includes("evening")));
+  if (knownTime || legacyTime) {
+    score++; reasons.push("En angiven arbetstid överlappar din tillgänglighet");
   }
   return { ...job, discovery: { seen, score, reasons } };
 }
@@ -67,4 +73,11 @@ export function orderDiscoveryJobs(jobs: JobPost[], filters: DiscoveryFilters = 
   const index = result.findIndex(job => job.id === requestedId);
   if (index > 0) result.unshift(...result.splice(index, 1));
   return result;
+}
+
+/** Fill a page from remaining jobs, rather than emptying the first fixed slice. */
+export function discoveryPage(jobs: JobPost[], decidedIds: ReadonlySet<string>, pageSize: number, showingSaved = false) {
+  const remaining = jobs.filter(job => !decidedIds.has(job.id));
+  return { jobs: showingSaved ? remaining : remaining.slice(0, pageSize), count: remaining.length,
+    hasMore: !showingSaved && pageSize < remaining.length };
 }

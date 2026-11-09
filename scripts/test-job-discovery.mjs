@@ -4,7 +4,7 @@ import {createRequire,Module} from 'node:module';
 import ts from 'typescript';
 const require=createRequire(import.meta.url);
 Module._extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,file);
-const {orderDiscoveryJobs:order,prepareDiscoveryJob:prepare}=require('../lib/job-discovery.ts');
+const {orderDiscoveryJobs:order,prepareDiscoveryJob:prepare,discoveryPage}=require('../lib/job-discovery.ts');
 const {emptyRecruitmentProfile}=require('../lib/recruitment-profile.ts');
 const job=(id,company,score=0,seen=false)=>({id,company_user_id:company,title:'Barista',category:'Caféjobb',city:'QA',employment_type:'Deltid',created_at:'2026-01-01',first_published_at:'2026-01-01',discovery:{seen,score,reasons:[]}});
 const jobs=[job('a1','a',5),job('a2','a',5),job('a3','a',5),job('b1','b',1),job('b2','b',1),job('c1','c',0),job('seen','d',99,true)];
@@ -24,9 +24,11 @@ assert.equal(prepare({...job('x','x'),requirements:'Kan arbeta kvällar'},youth,
 assert.equal(prepare(job('x','x'),null,false).discovery.score,0,'Empty profile discovers jobs without penalty');
 const snapshot=order(Array.from({length:45},(_,i)=>job(String(i).padStart(3,'0'),'c'+i)));
 const decided=new Set(snapshot.slice(0,20).map(j=>j.id));
-assert.equal(snapshot.slice(0,20).filter(j=>!decided.has(j.id)).length,0);
-assert.deepEqual(snapshot.slice(0,40).filter(j=>!decided.has(j.id)).map(j=>j.id),snapshot.slice(20,40).map(j=>j.id));
-decided.delete(snapshot[4].id);assert.equal(snapshot.slice(0,20).filter(j=>!decided.has(j.id))[0].id,snapshot[4].id,'Failed choice restores original position');
+assert.equal(discoveryPage(snapshot,decided,20).jobs[0].id,snapshot[20].id,'Next undecided card fills the page immediately');
+assert.equal(discoveryPage(snapshot,decided,20).jobs.length,20);
+assert.equal(discoveryPage(snapshot,decided,20).count,25);
+assert.equal(discoveryPage(snapshot,decided,40).hasMore,false);
+decided.delete(snapshot[4].id);assert.equal(discoveryPage(snapshot,decided,20).jobs[0].id,snapshot[4].id,'Failed choice restores original position');
 // Execute real paginated transport, including >1,000 exclusion IDs.
 const historySource=readFileSync('lib/discovery-history.ts','utf8');
 const code=ts.transpileModule(historySource,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;

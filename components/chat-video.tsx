@@ -4,44 +4,47 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ModalDialog } from "./modal-dialog";
 import { UiIcon } from "./ui-icon";
-import { getVideo, revokeVideo, sendVideoMessage, uploadVideo, type YouthVideo } from "@/lib/video-client";
+import { getVideo, revokeVideo } from "@/lib/video-client";
+import { createChatVideoTransfer, type VideoTransferState } from "@/lib/chat-video-transfer";
 import { VideoPicker, type SelectedVideo } from "./video-picker";
 import { VideoPlayer } from "./video-player";
 import { ReportDialog } from "./report-dialog";
 import type { ChatMessage } from "@/lib/types";
 import styles from "./video.module.css";
 
-export function ChatVideoComposer({conversationId,userId,onSent}:{conversationId:string;userId:string;onSent:()=>void}) {
-  const [selected,setSelected]=useState<SelectedVideo|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
-  const [phase,setPhase]=useState(''),[note,setNote]=useState("");
+export function ChatVideoComposer(props:{conversationId:string;userId:string;onSent:()=>void}) {
+  return <ChatVideoWorkspace key={JSON.stringify([props.userId,props.conversationId])} {...props}/>;
+}
+
+function ChatVideoWorkspace({conversationId,userId,onSent}:{conversationId:string;userId:string;onSent:()=>void}) {
+  const [selected,setSelected]=useState<SelectedVideo|null>(null);
+  const [state,setState]=useState<VideoTransferState>({phase:"ready",hasPending:false,error:"",note:""});
   const [open,setOpen]=useState(false);
-  const controller=useRef<AbortController|null>(null),lock=useRef(false),pending=useRef<YouthVideo|null>(null);
-  const messageId=useRef(crypto.randomUUID()),mounted=useRef(true);
-  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;controller.current?.abort();};},[]);
+  const transfer=useRef<ReturnType<typeof createChatVideoTransfer>|null>(null),mounted=useRef(false);
+  useEffect(()=>{
+    mounted.current=true;
+    const current=createChatVideoTransfer(userId,conversationId,setState);transfer.current=current;
+    return()=>{mounted.current=false;current.stop();if(transfer.current===current)transfer.current=null;};
+  },[userId,conversationId]);
+  const busy=state.phase!=="ready",error=state.error,note=state.note;
+  const phase=state.phase==="uploading"?"Laddar upp…":state.phase==="revoking"?"Återkallar…":"Skickar…";
   const send=async()=>{
-    if(lock.current||!selected)return;lock.current=true;setBusy(true);setError("");setNote("");
-    const abort=new AbortController();controller.current=abort;
-    try{
-      setPhase("Laddar upp…");const video=pending.current??await uploadVideo(selected!.file,selected!.duration,userId,conversationId,abort.signal);pending.current=video;
-      abort.signal.throwIfAborted();controller.current=null;setPhase("Skickar…");
-      await sendVideoMessage(conversationId,userId,messageId.current,video);
-      pending.current=null;messageId.current=crypto.randomUUID();
-      if(mounted.current){setSelected(null);setNote("Videon är skickad.");onSent();}
-    }catch(reason){if(mounted.current)setError(abort.signal.aborted?"Uppladdningen avbröts. Inget nytt videomeddelande skickades.":reason instanceof Error?reason.message:"Videon kunde inte skickas.");}
-    finally{lock.current=false;controller.current=null;if(mounted.current){setBusy(false);setPhase('');}}
+    if(!mounted.current||!selected||!transfer.current)return;
+    if(await transfer.current.send(selected.file,selected.duration)){
+      if(mounted.current){setSelected(null);onSent();}
+    }
   };
   const discardPending=async()=>{
-    if(!pending.current)return;setBusy(true);setError("");
-    try{await revokeVideo(pending.current);pending.current=null;setSelected(null);messageId.current=crypto.randomUUID();setNote("Videon är otillgänglig. Om ett tidigare skickförsök nådde chatten går den videon inte längre att spela upp.");}
-    catch{setError("Kunde inte återkalla videon. Försök igen.");}finally{setBusy(false);}
+    if(!mounted.current||!transfer.current)return;
+    if(await transfer.current.discard())if(mounted.current)setSelected(null);
   };
   return <section className={styles.chatTools} aria-label="Video i chatten"><div className={styles.videoToolbar}>
     <Link href={`/video/record?conversation=${encodeURIComponent(conversationId)}`}><UiIcon name="camera" width="17"/>Spela in video</Link>
     <button type="button" disabled={busy} onClick={()=>setOpen(true)}><UiIcon name="upload" width="17"/>Välj video</button>
     </div>
     {open&&<ModalDialog label="Skicka en video" busy={busy} onClose={()=>setOpen(false)} className={styles.videoDialog}><div className={styles.dialogHeading}><h2>Skicka en video</h2><button type="button" disabled={busy} className={styles.closeButton} aria-label="Stäng videoförhandsvisningen" onClick={()=>setOpen(false)}><UiIcon name="close"/></button></div>
-    <VideoPicker value={selected} disabled={busy||!!pending.current} onChange={value=>{setSelected(value);setError("");setNote("");messageId.current=crypto.randomUUID();}}/>
-    <div className={styles.actions}>{selected&&<button type="button" className="cta-btn" disabled={busy} onClick={()=>void send()}>{busy?phase:"Skicka vald video"}</button>}{controller.current&&phase==='Laddar upp…'&&<button className="secondary-btn" type="button" onClick={()=>controller.current?.abort()}>Avbryt uppladdning</button>}{pending.current&&!busy&&<button className="secondary-btn" type="button" onClick={()=>void discardPending()}>Återkalla video och välj annan</button>}</div>
+    <VideoPicker value={selected} disabled={busy||state.hasPending} onChange={value=>{if(!busy&&!state.hasPending){setSelected(value);setState(current=>({...current,error:"",note:""}));}}}/>
+    <div className={styles.actions}>{selected&&<button type="button" className="cta-btn" disabled={busy} onClick={()=>void send()}>{busy?phase:"Skicka vald video"}</button>}{state.phase==="uploading"&&<button className="secondary-btn" type="button" onClick={()=>transfer.current?.cancelUpload()}>Avbryt uppladdning</button>}{state.hasPending&&!busy&&<button className="secondary-btn" type="button" onClick={()=>void discardPending()}>Återkalla video och välj annan</button>}</div>
     <p className={styles.hint}>Delas bara i den här chatten och är tillgänglig i 14 dagar efter att den skickats. Mottagaren kan hinna missa den.</p>{busy&&<p role="status">{phase||"Förbereder delning…"}</p>}{error&&<p role="alert" className={styles.error}>{error}</p>}{note&&<p role="status">{note}</p>}</ModalDialog>}
     {!open&&error&&<p role="alert" className={styles.error}>{error}</p>}{!open&&note&&<p role="status">{note}</p>}
   </section>;

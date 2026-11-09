@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient, type Session, type User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getSupabaseErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from "@/lib/supabase-errors";
 import type { Profile, Role } from "@/lib/types";
@@ -107,27 +107,10 @@ export async function updatePassword(password: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+export async function changePassword(currentPassword: string, newPassword: string, options?: import("./account-settings").AccountChangeOptions) {
   if (newPassword.length < 8) throw new Error("Det nya lösenordet måste innehålla minst 8 tecken.");
-
-  const supabase = getSupabaseClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const user = userData.user;
-  if (userError || !user?.email) throw new Error("Din session är inte giltig. Logga in igen.");
-
-  // Reauthentication must not sign a different account into the shared client
-  // if the user switches account while this request is in flight.
-  const reauth = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `mnw-password-check-${crypto.randomUUID()}` },
-  });
-  const { data: verified, error: passwordError } = await reauth.auth.signInWithPassword({
-    email: user.email,
-    password: currentPassword,
-  });
-  if (passwordError || verified.user?.id !== user.id) throw new Error("Ditt nuvarande lösenord stämmer inte.");
-
-  const { error } = await reauth.auth.updateUser({ password: newPassword });
-  if (error) throw new Error(error.message);
+  const { changeAccountPassword } = await import("./account-settings");
+  return changeAccountPassword(currentPassword, newPassword, options);
 }
 
 export async function signOut(): Promise<void> {

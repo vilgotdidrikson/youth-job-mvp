@@ -227,15 +227,19 @@ export async function reviewCandidate(
   return null;
 }
 
-export async function getMyMatches(): Promise<MatchRecord[]> {
+export async function getMyMatches(options?: { expectedUserId: string; signal?: AbortSignal }): Promise<MatchRecord[]> {
   const { user, profile } = await getAuthenticatedUser();
+  options?.signal?.throwIfAborted();
+  if (options && user.id !== options.expectedUserId) throw new Error("Kontot har ändrats. Öppna chatterna igen.");
   const supabase = getSupabaseClient();
   const column = profile?.role === "company" || profile?.role === "private" ? "company_user_id" : "youth_user_id";
-  const { data, error } = await supabase
+  let query = supabase
     .from("matches")
     .select("*")
     .eq(column, user.id)
     .order("created_at", { ascending: false });
+  if (options?.signal) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
 
   if (error) {
     logSupabaseError("matches.select.mine", error, {

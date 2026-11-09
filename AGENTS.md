@@ -8,6 +8,11 @@ Reservera en punkt genom att publicera ansvarig och branch innan kodarbete börj
 
 Arbeta på egen branch utifrån aktuell dev. Använd uppgiftens ID i commit och PR. Bevara andras ändringar och undvik force-push på gemensamma branches. Uppdatera bara berörda uppgifter i checklistan, inte hela dokumentets status.
 
+
+## GDPR och beslut om personuppgifter
+
+När användaren fattar eller ändrar beslut om GDPR, personuppgifter, AI-data, gallring, rättigheter, adminåtkomst eller avtal som ska godkännas på sidan: läs först relevanta kort i docs/ATGARDSPLAN.md och samordna beslutet där. Uppdatera befintligt kort i första hand; skapa bara nytt när omfattningen saknas. Skilj uttryckliga beslut från förslag, juridiska besked som återstår och verifierad drift. Bevara andra ägare/statusar och ta inte över reservationer. F20, F26/N19, L12–L16 och säkerhets-/lanseringskorten är gemensamma hänvisningar; undvik parallella motstridiga GDPR-listor. Interna ägar- och utträdesavtal ingår bara om användaren uttryckligen beställer det.
+
 ## Status och verifiering
 
 Använd Ej påbörjad, Pågår, För granskning, Klar eller Blockerad. Skilj alltid mellan skriven kod, lokala kontroller, införd ändring och verifierat användarflöde. Markera Klar och kryssa av först när ändringen är införd i dev och kriteriet Klar när är verifierat. Saknad miljö eller åtkomst dokumenteras som begränsning, inte som godkänt test.

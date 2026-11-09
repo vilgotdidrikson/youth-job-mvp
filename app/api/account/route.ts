@@ -70,12 +70,12 @@ export async function DELETE(request: NextRequest) {
   const userClient = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
-  const { password, expectedUserId } = body as Record<string, unknown>;
-  if (typeof password !== "string" || !password || password.length > 1024 || typeof expectedUserId !== "string") return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
+  const { password, expectedUserId, totpCode } = body as Record<string, unknown>;
+  if (typeof password !== "string" || !password || password.length > 1024 || typeof expectedUserId !== "string" || totpCode !== undefined && (typeof totpCode !== "string" || !/^\d{6}$/.test(totpCode))) return NextResponse.json({ error: "Bekräfta kontot och lösenordet." }, { status: 400 });
   const reauth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
   let user;
   try {
-    user = await reauthenticateAccount(userClient, reauth, expectedUserId, password);
+    user = await reauthenticateAccount(userClient, reauth, expectedUserId, password, totpCode as string | undefined, request.signal);
   } catch (error) {
     if (error instanceof AccountReauthenticationError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "Kontot kunde inte verifieras just nu." }, { status: 502 });

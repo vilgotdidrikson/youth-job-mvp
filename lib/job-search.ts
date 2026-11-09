@@ -1,13 +1,15 @@
 import { getCityCoordinates, type Coordinates } from "./job-location";
 import { getJobWorkplaces } from "./job-workplaces";
 import { readPracticalDetails, WORK_TIMES } from "./job-practical";
+import { jobFieldErrors, parseAmount, parseSalaryText } from "./job-fields";
 import type { JobPost } from "./types";
 
 export interface JobSearchFilters {
   query?: string; city?: string; category?: string; employmentType?: string;
   workTime?: string; nearbyCity?: string; radiusKm?: string; onlyKnown?: string;
+  salaryUnit?: string; salaryMin?: string;
 }
-export const SEARCH_FILTER_KEYS = ["query", "city", "category", "employmentType", "workTime", "nearbyCity", "radiusKm", "onlyKnown"] as const;
+export const SEARCH_FILTER_KEYS = ["query", "city", "category", "employmentType", "workTime", "nearbyCity", "radiusKm", "onlyKnown", "salaryUnit", "salaryMin"] as const;
 export type SearchFilterValues = Record<typeof SEARCH_FILTER_KEYS[number], string>;
 export const DISTANCE_CHOICES = ["5", "10", "25", "50"] as const;
 export const normalizeSearchText = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("sv-SE").trim();
@@ -33,6 +35,40 @@ export function jobDistance(job: JobPost, city: string): { km: number | null; ha
   return { km: distances.length ? Math.min(...distances) : null, hasUnknown };
 }
 
+export const SALARY_SEARCH_UNITS = { hour: "Timlön", month: "Månadslön" } as const;
+const salaryType = (unit?: string) => unit === "hour" ? "timlön" : unit === "month" ? "månadslön" : null;
+
+export function salarySearchError(filters: JobSearchFilters): string | null {
+  if (!filters.salaryUnit && !filters.salaryMin) return null;
+  const type = salaryType(filters.salaryUnit);
+  if (!type) return "Välj timlön eller månadslön för lönefiltret.";
+  return jobFieldErrors({ minAge: "", maxAge: "", salaryFrom: filters.salaryMin ?? "", salaryTo: "", salaryType: type }).salaryFrom ?? null;
+}
+
+/** No conversion, prose inference or guessed lower bound. */
+export function matchesSalarySearch(job: JobPost, filters: JobSearchFilters): boolean {
+  const type = salaryType(filters.salaryUnit);
+  if (!type || salarySearchError(filters)) return true;
+  const pay = parseSalaryText(typeof job.salary_per_hour === "string" ? job.salary_per_hour : "");
+  const includeUnknown = filters.onlyKnown !== "yes";
+  if (!pay) return includeUnknown;
+  if (pay.salaryType !== type) return false;
+  const min = filters.salaryMin?.trim() ? parseAmount(filters.salaryMin)! : 0;
+  if (!min) return true;
+  if (pay.salaryFrom) return Number(pay.salaryFrom) >= min;
+  if (pay.salaryTo && Number(pay.salaryTo) < min) return false;
+  return includeUnknown;
+}
+
+/** A filter with dependent fields is always changed as one value. */
+export function updateSearchFilter(filters: SearchFilterValues, key: keyof SearchFilterValues, value: string): SearchFilterValues {
+  return { ...filters, [key]: value,
+    ...(key === "nearbyCity" ? { radiusKm: value ? filters.radiusKm || "25" : "" } : {}),
+    ...(key === "radiusKm" && !value ? { nearbyCity: "" } : {}),
+    ...(key === "salaryUnit" && !value ? { salaryMin: "" } : {}),
+  };
+}
+
 export function matchesPracticalSearch(job: JobPost, filters: JobSearchFilters): boolean {
   const times = readPracticalDetails(job.practical_details).times;
   const includeUnknown = filters.onlyKnown !== "yes";
@@ -43,7 +79,7 @@ export function matchesPracticalSearch(job: JobPost, filters: JobSearchFilters):
     const distance = jobDistance(job, filters.nearbyCity);
     if (!(distance.km !== null && distance.km <= Number(filters.radiusKm)) && !(includeUnknown && distance.hasUnknown)) return false;
   }
-  return true;
+  return matchesSalarySearch(job, filters);
 }
 
 export function searchDetailLabels(job: JobPost, filters: JobSearchFilters): string[] {
@@ -56,6 +92,10 @@ export function searchDetailLabels(job: JobPost, filters: JobSearchFilters): str
     const { km, hasUnknown } = jobDistance(job, filters.nearbyCity);
     labels.push(km === null ? "Avstånd okänt" : `Ca ${Math.round(km)} km från ${filters.nearbyCity} centrum${hasUnknown ? " · plats saknas för någon arbetsplats" : ""}`);
   }
+  if (salaryType(filters.salaryUnit) && !salarySearchError(filters)) {
+    const pay = parseSalaryText(typeof job.salary_per_hour === "string" ? job.salary_per_hour : "");
+    labels.push(!pay ? "Lön ej angiven i jämförbar form" : filters.salaryMin && !pay.salaryFrom ? "Annonserad lägstalön saknas" : `Angiven lön: ${job.salary_per_hour}`);
+  }
   return labels;
 }
 
@@ -63,6 +103,8 @@ export function readSearchFilters(params: { get: (key: string) => string | null 
   const filters = Object.fromEntries(SEARCH_FILTER_KEYS.map(key => [key, (params.get(key) ?? "").slice(0, 200)])) as SearchFilterValues;
   if (!(Object.prototype.hasOwnProperty.call(WORK_TIMES, filters.workTime))) filters.workTime = "";
   if (!getCityCoordinates(filters.nearbyCity) || !DISTANCE_CHOICES.some(value => value === filters.radiusKm)) { filters.nearbyCity = ""; filters.radiusKm = ""; }
+  if (!salaryType(filters.salaryUnit) || salarySearchError(filters)) { filters.salaryUnit = ""; filters.salaryMin = ""; }
+  else filters.salaryMin = filters.salaryMin.trim() ? String(parseAmount(filters.salaryMin)) : "";
   if (filters.onlyKnown !== "yes") filters.onlyKnown = "";
   return filters;
 }
