@@ -218,7 +218,7 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | För granskning | Max / Claude |
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Ej påbörjad | — |
-| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Ej påbörjad | — |
+| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Pågår | Vilgot / Codex |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
@@ -530,9 +530,10 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 59
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n10-l02-l06-account-settings-20261109`, PR #186; reservation publicerad före kodarbete 2026-11-09.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Gör det möjligt att ändra e-post genom säker verifiering och välja de notispreferenser som motsvarar fungerande kanaler. Lägg inte val för ännu otillgängliga mailutskick.
 - Klar när: Användaren kan hålla sin kontaktuppgift aktuell och styra befintliga notiser.
 - Tillägg 2026-10-19: Integritetssektionens export/rättelse/radering hanteras separat som P1 i L13 och ska inte skjutas till denna P3-punkt.
@@ -1147,6 +1148,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: Pågår
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l02-auth-email-20261027`, reserverad före kodarbete. Avgränsad första leverans: auth-mejl, miljöriktiga länkar, svenska mallar och konfigurationskontroll. SMTP-uppgifter och verklig leverans saknas; ingen produktionskonfiguration eller aktivering.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Inventera befintlig e-postkod och konfigurera fungerande avsändare och leverans. Prioritera verifiering, återställning av lösenord och fakturautskick. Koppla mallar, leveransstatus och återförsök till rätt händelser och undvik dubbla utskick. Match- och meddelandemail är en senare del, med notispreferenser.
 - Klar när: Kritiska mejl når testmottagare, länkar leder till rätt miljö och misslyckade eller upprepade försök hanteras spårbart.
 - Leverans för bekräftelsefortsättningen: [PR #136](https://github.com/vilgotdidrikson/youth-job-mvp/pull/136), kod `c976d37`. Lokal verifiering redovisad nedan; verklig bekräftelsekedja återstår.
@@ -1200,6 +1202,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Status: För granskning
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l06-account-recovery-20261027`, remote-branch och ansvar publicerade 2026-10-27 före kodarbete; bas dev `0023105`; kodcommit `8b8fe840e44fe8f3c8453098b082d2e4094aff76` (GitHub). Verifieringsprotokoll i `docs/L06.md`.
+- Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Kontrollera registrering, verifieringsmejl, glömt lösenord, säkert lösenordsbyte, utloggning och utgången session. Inventera kontoradering och rätta eventuella luckor. Hantera privata dokument och video vid radering. Genomför känsliga tester med egna konton och enligt autentiseringsverktygets regler; begär aldrig lösenord i chatten. Utökade kontoval ligger i N10.
 - Klar när: Användaren kan återfå åtkomst och förstå fel utan att fastna. Sessioner och eventuell radering får det avsedda, verifierade resultatet.
 - Tillägg 2026-10-19: L13 preciserar säker självbetjäningsradering och ny autentisering före export/radering. Inventera och återanvänd befintlig raderingsfunktion; verifiera även återkallad åtkomst/sessioner och faktiska filer. Vanliga lagringstider i L12 är inte i sig skäl att neka tidigare radering.
