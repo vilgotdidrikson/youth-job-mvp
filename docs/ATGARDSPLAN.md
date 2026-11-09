@@ -6,6 +6,42 @@ Videobeslut 2026-10-18: permanent profilvideo ska tas bort (N22). Video behålls
 
 För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Fortsatt kodarbete är godkänt enligt prioriteringslistan, i avgränsade leveranser med publicering och verifiering.
 
+
+## GDPR och personuppgifter – samlad avstämning 2026-11-09
+
+Beställt av användaren: samordna nuvarande och framtida GDPR-beslut i denna arbetsplan, först efter kontroll av befintlig omfattning. Detta tillägg är planering, inte ny produktkod, juridiskt godkännande eller aktiverad gallring. Interna ägar-, vinst-, kodöverlåtelse- och utträdesavtal ingår inte. Befintliga uppgifter, ägare, statusar och reservationer bevaras.
+
+| Kort | Ansvar i planen |
+|---|---|
+| [F20](#f20) och [L15](#l15) | Slutliga villkor/integritetsinformation vid registrering, AI och ansökan; artikel 26-sammanfattning och arbetsgivarens information. |
+| [L15](#l15) – nytt | Företagets avtal/bilaga, aktiv accept, behörighetskontroll och åtkomstspärr; åldersgräns, minderåriga, grunder, behandlingsregister, DPIA och AI-klassificering. |
+| [F26](#f26), [N19](#n19) och [L14](#l14) | AI-indata för CV och matchning, minimering före anrop, relevant bredd, rättelse och separat val för återanvändbara svar. |
+| [L12](#l12) | Gallring och nya ärendefrister enligt nedan; konton/påminnelser, rapporter, övergivna rekryteringar, backup och cache. |
+| [L13](#l13) och [L16](#l16) – nytt ärendeflöde | Återanvänd automatisk export/radering; komplettera med skyddad manuell hantering och fristbevakning. |
+| [L05](#l05), [L06](#l06), [L14](#l14) och [L16](#l16) | Adminåtkomst efter behov, incidentrutin, gamla sessioner, loggminimering och borttagning av token i URL. L05:s redan verifierade omfattning återöppnas inte. |
+| [L14](#l14), [L10](#l10) och [L12](#l12) | Faktiska leverantörskonton/avtal, överföringar, loggar och väntelista. Produktion kräver separat samordning. |
+| [L07](#l07) och [L08](#l08) | Sammanhängande dev-flöden, negativa API-/RLS-/Storage-prov och verifierade rättelser/gallring. |
+
+### Beslutade kompletteringar till L12
+
+- Verifieringshandlingar raderas 30 dagar efter avslutad företagsgranskning/slutligt avslutad komplettering. Behåll minimal notering om vad som kontrollerades, resultat, datum och granskare; noteringens egen bevarandefrist återstår.
+- Support- och personuppgiftsärenden: minimal ärendelogg, beslut och nödvändig korrespondens tolv månader efter avslut. Onödiga arbetskopior och exporter raderas inom 30 dagar efter avslut eller tidigare när de saknar behov. Privata bilagor och samma handläggarbehörighet enligt L16; spara inte hela CV/chattar rutinmässigt.
+- Hanterade modereringsrapporter: behörigt adminarkiv, radering ett år efter avslutad hantering. Öppna ärenden och filundantag får inte medföra obestämd lagring utan behovsprövning.
+- Företagskonton: samma 24 månaders inaktivitet och påminnelser 30/7 dagar före som ungdomskonton. Användarens egen inloggade aktivitet återställer klockan; bakgrundsjobb/mejl gör det inte.
+- Rekrytering utan aktivitet stängs efter sex månader, därefter sex månaders ansökningsfrist. Textchatt raderas vid den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; skrivskydd efter sex månader kvarstår.
+- Vanliga egna tekniska loggar: 30 dagar. Nödvändiga incidentutdrag får separat prövad frist. Dokumentera avvikelsen från äldre 90-dagars körningsloggar före aktivering i stället för att tyst ändra historik.
+
+### Förslag och juridiska frågor som ännu inte är beslutade
+
+- Föreslagna frister: avtalsbevis/minimal verifieringsnotering under relationen plus tre år, incidentunderlag tolv månader efter avslut och egna operativa säkerhetskopior högst 30 dagar. Dessa är beslutsförslag, inte lagstadgade frister eller aktiveringsbeslut.
+- Entimmesfrist finns i det befintliga exportprovet men får inte tyst räknas som slutligt godkänd frist för alla framtida exporter. Faktura-/redovisningsfrist fastställs separat enligt tillämpliga krav; håll ekonomiskt underlag avskilt från kandidatdata.
+- Väntelista: föreslaget högst tolv månader med tidigare radering när syftet upphört och direkt stopp av utskick vid avregistrering. Identifierande kontaktdata och eventuell minimal spärrpost behöver egna fastställda frister/grunder. Ingen automatisk överföring till kandidatkonto eller annan marknadsföring.
+- Rådgivarens inskickade rollutlåtande pekar på artikel 26. Exakta gemensamma/separata moment, namngivna ansvariga inklusive extern medgrundares faktiska roll, rättsliga grunder, minderårigas flöde och AI-klassificering återstår. Fyra frågor har skickats till rådgivaren. Utkast är inte slutligt godkända texter.
+
+### Avgränsad kontrollstatus
+
+Dokumentationsleverans: Vilgot / Codex, branch codex/gdpr-plan-completion-20261109. Befintliga kort och öppna PR:er kontrollerades före tillägget. Den tidigare skrivskyddade kontrollen 2026-11-09 visade DevStaging i eu-central-1, Primary i eu-west-1 och separata Vercel-projekt. Kundpart/plan/DPA-anslutning och full backup-/regionkedja var inte verifierade. Vid kontrollen var ansöknings-/chattgallring och videoradering avstängda i konfigurationen; exportstädcron var inaktiv. Detta är en ögonblicksbild, inte påstående om framtida drift. Senare verifierad livekontroll har företräde. Ingen inställning, kodfunktion eller faktisk personuppgiftsbehandling ändras genom detta tillägg.
+
 ## Arbetssätt
 
 - Läs AGENTS.md och denna fil före arbetet. Hämta aktuell dev och kontrollera pågående uppgifter och PR:er.
@@ -109,6 +145,8 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Pågår | Vilgot / Codex |
+| 22.4 | [L15](#l15) | P1 | Avtal och rättsligt underlag för behandling på sidan | Ej påbörjad | — |
+| 22.5 | [L16](#l16) | P1 | Skyddade personuppgiftsärenden och incidenthantering | Ej påbörjad | — |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
@@ -721,6 +759,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
 
+- Samordnat tillägg 2026-11-09: Slutlig saktext och avtalsaccept samordnas med L15. Visa ansvariga, ändamål/grunder, mottagare, leverantörer/länder, frister, rättigheter och kontakt på rätt plats. Före ansökan visas mottagande arbetsgivare, dess rekryteringsinformation och det väsentliga innehållet i artikel 26-arrangemanget. Särskilj information, avtalsaccept och specifika frivilliga samtycken; en generell GDPR-ruta ska inte godkänna all delning/AI. Beskriv faktisk drift utan obestyrkta löften om anonymisering, EU-exklusiv behandling eller absolut kopieringsskydd.
+
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 33
@@ -1248,6 +1288,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Samordnat tillägg 2026-11-09: Samordna minimering för både matchning och CV-generering med N19/L14. Kontrollera fritext, PDF, frågor och omanalys före externa anrop, med definierad stopp-/kompletteringsväg vid osäkerhet. Ordlistor och prompt är inte garanti mot känsliga uppgifter. Relevant godkänt underlag ska bevaras. AI får inte rangordna, sortera bort, dölja eller neka kandidater. Rättslig grund, AI-klassificering och faktisk DPIA fastställs i L15; varningstext/mänskligt slutbeslut är inte generella undantag.
+
 - Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/f26-assessment-snapshot-20261028`. Avgränsat skydd mot blandade/inaktuella ansöknings- och kravversioner i kandidatbedömningens API och bakgrundsarbetare, samordnat med L13:s rättelsekrav. Befintliga RLS-/delningsgränser bevaras; inga nya datafält, modellpass eller databasändringar. Öppna PR:er kontrollerade.
 - Leverans: [PR #142](https://github.com/vilgotdidrikson/youth-job-mvp/pull/142). Samma giltiga delningsrevision krävs före PDF/modellanrop; API:t kontrollerar även kravversion/kriterier/status/jobbkontext före svar, inklusive modellfel och efter lagring. Arbetaren avvisar blandade/ändrade revisioner före finish och båda validerar cachemetadata. Ingen databas-/delningsändring.
 - Verifierat: 20 faktiska handlerfall med simulerad Auth/DB/AI och utökat arbetartest; gammal handler reproducerar 200 där 409 krävs. Matching, matching-fairness, application-disclosure, assessment-progress, followup-batch, riktad ESLint, diff-check och standardbygge/TypeScript/57 routes passerar. Verklig samtidighet/modelltransport återstår; redan påbörjade operationer är ingen rollback. Se docs/F26.md. F26 förblir Pågår.
@@ -1280,6 +1322,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Samordnat tillägg 2026-11-09: Generella kompletteringssvar får återanvändas i profilen först efter ett separat aktivt val; ge översikt, ändring och radering. Ett nej stoppar inte aktuell ansökan. Bevara daterad skickad version och erbjud aktiv uppdatering, men rätta felaktig aktuell AI-bedömning och underrätta mottagare där det krävs enligt L13/L15. Vid CV-AI-fel sparas inmatat underlag privat för återförsök; vid matchningsfel skickas ansökan ändå och företaget ser saknad analys/kan försöka igen. Verifiera verklig sparning över omladdning, inte bara feltext.
 
 - Fortsättning 2026-10-26, Vilgot / Codex, `codex/n19-followup-race-20261026`: Reserverad i arbetschatten och med publicerad branch före kodarbete. Reproducerat att långsam första läsning av kompletteringsfrågor kan skriva över nyare svar efter manuell bedömningsuppdatering. Den första läsningen kontrollerar nu samma revisionsräknare som senare läsningar. Inga nya anrop, datafält, modellinställningar eller åtkomster. Regressionstest kör verkliga effekter och levererar svar i omvänd ordning; det fallerade före rättningen och passerar efter. N19 förblir Pågår; inloggad server-/webbverifiering återstår. Verifierat lokalt: `test:assessment-progress`, riktad ESLint och standardproduktionsbygge inklusive TypeScript och 55 routes passerar. Lokalt kodunderlag: `fa8ad3b`; publicerad leverans följs på branch `codex/n19-followup-race-20261026` och dess PR till dev.
 
@@ -1411,6 +1455,8 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 <a id="l12"></a>
 ### L12 Inför beslutade lagringstider och automatisk gallring
 
+- Samordnat tillägg 2026-11-09: Beslut och frister preciseras i den samlade GDPR-avstämningen nedan. Den kompletterar äldre tabell och öppna frågor där ett nyare beslut finns, men bevarar befintlig status, ägare och verifieringshistorik. L16:s adminärenden är en separat kategori från L05:s modereringsrapporter.
+
 - [ ] Klar
 - Prioritet: P1, före skarp lansering; 14-dagarsgallring krävs före aktivering av ansökningsvideo.
 - Global ordning: 22.1
@@ -1460,6 +1506,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Samordnat tillägg 2026-11-09: Automatisk export fortsätter enligt befintligt mål. Nya L16 tillför skyddad manuell handläggning och fristbevakning, inte en parallell exportmotor. Manuell rutin ska kunna komplettera ofullständiga paket och ge fullständiga svar inom tillämplig frist när automatiken inte räcker. L12 styr ärendebilagor/arbetskopior. Rättelse av aktuella AI-bedömningar och underrättelse till mottagare ska verifieras; status och pågående ägare bevaras.
 
 - CV-filinsamling reserverad före kodarbete 2026-10-29: Vilgot / Codex, `codex/l13-reviewed-cv-files-20261029`, offentlig reservation 3d44b9c. Serverintern hämtning av granskade egna PDF-referenser med användarklient, identitet före/efter, validerat manifest, neutrala filnamn, explicita saknade filer och byte-/väntgränser. 20 lokala filprov inklusive installerad SDK/simulerad HTTP, 76 paketregressioner, lint, TypeScript och bygge passerar. Inga livefiler eller DB-ändringar. Faktisk koppling till granskade ägda CV-poster, andra filformat/media, live-RLS, export-UI/API och gallring återstår. Se docs/L13_EXPORT_CV_FILES.md. L13 fortsatt Pågår.
 
@@ -1535,6 +1583,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l14"></a>
 ### L14 Verifiera leverantörsavtal och produktionskonton
 
+- Samordnat tillägg 2026-11-09: Inventeringen omfattar Supabase, Vercel, OpenAI, Mapbox, Zoho, Loopia, GitHub och eventuella utvecklingsassistenter, analysverktyg och mejlvidarebefordringar. För varje behandling verifieras kundpart, roll, DPA-version/anslutning, underleverantörer/länder, överföringsstöd, åtkomst, loggar, backup och radering. Publik DPA är inte bevis på kontots avtal. CV-genereringens bredare strukturerade underlag/konversation ska få en kontrollerad gräns före externa anrop enligt N19/F26. OpenAI store: false bevisar inte noll säkerhetslagring eller EU-exklusiv behandling. Mapbox kräver granskning av SDK/plats/telemetri/cookies. Zoho-inkorg och SMTP tillför mottagare och innehåll; undvik CV/känsliga uppgifter i vanliga notismejl. Databasbackup och Storage-filbackup inventeras separat.
+
 - [ ] Klar
 - Prioritet: P1, före behandling av riktiga användaruppgifter i skarp tjänst
 - Global ordning: 22.3
@@ -1569,6 +1619,79 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
+
+
+<a id="l15"></a>
+### L15 Avtal och rättsligt underlag för behandling på sidan
+
+- [ ] Klar
+- Prioritet: P1, före berörd behandling och skarp kandidatåtkomst.
+- Global ordning: 22.4. Rättsligt underlag är beroende även för berörda delar av L12–L14/F20/F26/N19 oavsett tabellordning; tekniska förberedelser får ske med syntetiska data.
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —; reservera före produktkod enligt AGENTS.md.
+- Åtgärd: Omsätt granskat företagsavtal/artikel 26-bilaga samt ungdomsvillkor/integritetsinformation till versionshanterat godkännande och information. Roller ska motsvara faktisk behandling.
+
+#### Företagets godkännande
+
+- Visa företagsidentitet, organisationsnummer, företrädarens namn/roll, exakt avtal/bilaga och sparbar identisk kopia. Samla företagets dataskyddskontakt och rekryteringsinformation för visning före ansökan.
+- Inloggad företrädare med verifierad mejl accepterar med två initialt tomma rutor: avtal inklusive bilaga respektive behörighetsintyg. Knapp: Godkänn och skicka för granskning. Mejlverifiering/egen försäkran bevisar inte ensamma firmateckningsrätt; admin följer dokumenterad kontrollmetod. Ingen extern signeringstjänst är beställd; rådgivaren bekräftar tillräcklig kontrollnivå.
+- Servern sparar oföränderlig avtalstext/bilaga, versioner, företag, företrädare, konto och tidpunkt. Ge kopia/bekräftelse; bevara gamla versioner och kräv ny accept vid tillämpliga väsentliga ändringar.
+- Publicering och kandidatåtkomst kräver både giltigt avtal och godkänd företags-/behörighetskontroll. Spärren ska gälla även RPC/API/RLS/Storage, direktlänkar och gamla klienter. Avtal får inte lova absolut nedladdningsskydd för levererade PDF-filer.
+- Grundavtalet är inte en avgiftsbelagd beställning. Pris och separat rekryteringsbekräftelse återanvänder L03/L04/F06; ingen parallell fakturamotor eller framtida premiumbeställning införs.
+
+#### Ungdom och rättsligt underlag
+
+- Minimiålder 15 år: validera födelsedatum även på server/databas och skydda direktanrop och senare ändring av profil. Slutligt flöde för 15–17-åringar fastställs juridiskt; samtyckesålder är inte samma sak som avtalsförmåga.
+- Separera integritetsinformation, avtalsaccept och specifika frivilliga val där samtycke behövs. Dokumentera och möjliggör återkallande; informera om ändamål och konsekvenser. N19 hanterar separat val för återanvändbara profilsvar.
+- Fastställ ansvariga operatörsparter, artikel 26-gräns och ansvarsfördelning, ändamål/grunder för varje behandling och behandlingsregister. Artikel 26-sammanfattning ska vara tillgänglig och rättigheter kunna utövas mot varje gemensamt ansvarig.
+- Färdigställ faktisk DPIA med nödvändighet/alternativ, risk före/efter åtgärder, testbevis och ansvarigt beslut. Bedöm eventuellt dataskyddsombud och förhandssamråd vid kvarstående hög risk. Samtycke eller en mall gör inte otillåten behandling laglig.
+- Bedöm CV-formatering och rekryteringsbedömning separat enligt AI-förordningen. Verifiera aktuell klassificering, skyldigheter och tillämpningsdatum mot gällande rätt; tidigare preliminära datum är inte fastställt besked.
+
+#### Klar när
+
+- Namngivna ansvariga, gränser/grunder, minderårigas flöde och nödvändiga texter är fastställda för verklig funktion; rådgivarbesked och kvarstående frågor är spårbara.
+- Fiktiva företag/ungdomar verifierar accept, exakt kopia/version, adminprövning, ändringar, åldersgräns och information före AI/ansökan. Fel konto/företag/version, gammal session, dubbla anrop och direkt API-/Storage-väg är negativt testade. L12:s frister följs.
+- Implementerat: —. Denna dokumentändring inför inga databasfält, avtal eller godkännanden.
+- Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
+- Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
+
+<a id="l16"></a>
+### L16 Skyddade personuppgiftsärenden och incidenthantering
+
+- [ ] Klar
+- Prioritet: P1, fungerande rutin före berörd skarp behandling; automatisering kan ske stegvis.
+- Global ordning: 22.5
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —; reservera före kodarbete och samordna med L05/L13.
+- Beslut 2026-11-09: Separat skyddad del av adminsidan för support- och personuppgiftsärenden; uppgifter lagras i Supabase. Eventuella bilagor lagras privat med samma åtkomstgräns. Åtkomst bara för faktiska handläggare, föreslaget Vilgot och Max. Juridiskt ansvar är en separat bedömning. L12 anger beslutade ärendefrister.
+- Avgränsning: Återanvänd L13:s export/radering och L05:s rapport-/adminskydd. Ingen ny generell rätt att läsa kandidater och ingen separat exportmotor.
+
+#### Ärendeflöde och åtkomst
+
+- info@matchnwork.se är möjlig ingång. Spara mottagningsdag, berörd användare/kontakt, begäran, handläggare, status, åtgärder, beslut, avslut och gallringsdag. För över bara relevant mejlinnehåll; även inkorg/vidarebefordran behöver gallras.
+- Privata bilagor i avskild lagring med ärendebehörighet i API/databas/Storage. Inga publika URL:er; spara inte hela CV:n/chattar eller ID-handlingar rutinmässigt. Logga nödvändiga åtkomst-/åtgärdshändelser utan innehållskopior.
+- Vanlig admin, marknadsföringsroll, andra ungdomar/företag eller obehöriga utvecklare får inte ärendeåtkomst. Medgrundarskap eller företagsverifieringsroll ger inte automatiskt handläggarbehörighet. Kandidatunderlag får öppnas bara vid dokumenterat konkret support-/incidentbehov.
+- Hantera tillgång, rättelse, radering, begränsning, invändning och dataportabilitet enligt respektive förutsättningar. Proportionerlig identitetskontroll och normalt en månads frist; tillåten förlängning/skäl meddelas inom första månaden. Vidarebefordran till arbetsgivare startar inte ny frist. Kontakt fungerar även utan inloggning.
+- Automatisk export kvarstår i L13. Manuell rutin måste kunna komplettera ofullständiga paket och ge fullständiga svar i tid medan automatiken byggs. Säker leverans efter identitetskontroll; inga exportpaket till AI för granskning eller rutinmässigt som öppen mejlbilaga. Underrätta mottagare om rättelser/radering när det krävs.
+- Återkoppling inom fem arbetsdagar och uppföljning av öppna ärenden var 30:e dag är rutinförslag, inte slutligt beslutade produktfrister. Undvik obegränsad lagring av öppna ärenden utan uppföljning.
+
+#### Incidenter
+
+- Vilgot samordnar med Max som ersättare enligt tidigare underlag. Möjliggör omedelbara skyddsåtgärder inom behörighet utan gruppmöte: spärra åtkomst, pausa berört flöde och återkalla nycklar/sessioner vid behov.
+- Dokumentera vetskapstid, händelse, berörda uppgifter/personer, risk, åtgärder och kontakter. Samordna med arbetsgivare/leverantörer men bevaka varje parts skyldigheter. Bedöm IMY-anmälan utan onödigt dröjsmål och när tillämpligt inom 72 timmar från vetskap; information till berörda vid hög risk utan onödigt dröjsmål. Dokumentera även skäl att avstå.
+- Incidentbevis begränsas och skyddas separat. Incidenternas egen frist/undantag behöver fastställas i L12; tolv månader är hittills ett förslag för incidenter, inte en regel att gallra pågående tillsyn.
+
+#### Klar när
+
+- Fiktiva ärenden kan tas emot, tilldelas, följas upp, avslutas och gallras. Frister och skyddade bilagor fungerar; vanliga ärenden skiljs från incidenter och modereringsrapporter.
+- Positiva/negativa tester för handläggare, annan admin, anonym, ungdom, företag, fel ärende/bilage-ID, gammal session och samtidighet. Inga direktanrop kringgår handläggarbehörighet.
+- Verifiera avslut/återöppning utan tyst evig förlängning, radering/återförsök, backup-/mejlkopior och rättelse till mottagare. Incidentövning sker med syntetiska data; skicka inte verklig IMY-anmälan som test.
+- Implementerat: —
+- Verifierat: Dokumentkrav och användarens beslut; ingen ny produktkod eller driftåtgärd.
+- Återstår / blockerare: Faktiska handläggarbehörigheter, implementation, dev-verifiering och fastställelse av kvarvarande juridiska gränser.
+
 
 ## Designaudit 2026-10-22 – kort
 
