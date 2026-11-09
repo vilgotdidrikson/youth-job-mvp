@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { AccountTotpSettings } from "./account-totp-settings";
 import { PasswordInput } from "./password-input";
 import { AccountSettingsError, changeAccountPassword, readAccountEmail, requestAccountEmailChange, validAccountEmail, type AccountSessionCleanup } from "@/lib/account-settings";
 import { createLatestRead, type ReadState } from "@/lib/latest-read";
@@ -10,7 +11,7 @@ export function AccountSecuritySettings(props: { userId: string; email?: string;
   return <AccountSecurityWorkspace key={props.userId} {...props}/>;
 }
 function clearPasswords(form: HTMLFormElement | null) {
-  for (const name of ["currentPassword", "newPassword", "confirmPassword"]) {
+  for (const name of ["currentPassword", "newPassword", "confirmPassword", "totpCode"]) {
     const input = form?.elements.namedItem(name); if (input && "value" in input) input.value = "";
   }
 }
@@ -65,7 +66,7 @@ function AccountSecurityWorkspace({ userId, email, pendingEmail }: { userId: str
     const timer = setTimeout(() => task.abort(), 30_000);
     try {
       const action = kind === "email" ? requestAccountEmailChange : changeAccountPassword;
-      const operation = action(currentPassword, next, { expectedUserId: userId, signal: task.signal });
+      const operation = action(currentPassword, next, { expectedUserId: userId, signal: task.signal, totpCode: String(data.get("totpCode") ?? "").trim() });
       // Keep cleanup for the isolated session even when the view has already left.
       void operation.then(result => { if (!active.current || task.signal.aborted) void result.cleanup?.(); }, reason => { if ((!active.current || task.signal.aborted) && reason instanceof AccountSettingsError) void reason.cleanup?.(); });
       const result = await Promise.race([operation, cancelled]);
@@ -105,6 +106,7 @@ function AccountSecurityWorkspace({ userId, email, pendingEmail }: { userId: str
       <h3>Byt e-postadress</h3>
       <label>Ny e-postadress<input name="newEmail" type="email" maxLength={254} autoComplete="email" required value={newEmail} onChange={event => setNewEmail(event.target.value)} disabled={disabled || cooldown}/></label>
       <label>Nuvarande lösenord<PasswordInput name="currentPassword" autoComplete="current-password" maxLength={1024} required disabled={disabled || cooldown}/></label>
+      <label>Tvåfaktorskod, om du har autentiseringsapp<input name="totpCode" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" disabled={disabled || cooldown}/></label>
       <button className="secondary-btn" type="submit" disabled={disabled || cooldown}>{busy === "email" ? "Begär ändring…" : cooldown ? "Vänta en minut före nästa mejlförsök" : "Begär byte av e-post"}</button>
     </form>
     <form ref={passwordForm} onSubmit={event => void submit(event, "password")} className={styles.form}>
@@ -112,8 +114,10 @@ function AccountSecurityWorkspace({ userId, email, pendingEmail }: { userId: str
       <label>Nuvarande lösenord<PasswordInput name="currentPassword" autoComplete="current-password" maxLength={1024} required disabled={disabled}/></label>
       <label>Nytt lösenord<PasswordInput name="newPassword" autoComplete="new-password" minLength={8} maxLength={1024} required disabled={disabled}/></label>
       <label>Bekräfta nytt lösenord<PasswordInput name="confirmPassword" autoComplete="new-password" minLength={8} maxLength={1024} required disabled={disabled}/></label>
+      <label>Tvåfaktorskod, om du har autentiseringsapp<input name="totpCode" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" disabled={disabled}/></label>
       <button className="secondary-btn" type="submit" disabled={disabled}>{busy === "password" ? "Ändrar lösenord…" : "Ändra lösenord"}</button>
     </form>
+    <AccountTotpSettings userId={userId}/>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     {needsCleanup && <div><p role="alert">Den tillfälliga verifieringssessionens utloggning kunde inte bekräftas. Ett nytt ändringsförsök är spärrat tills den är avslutad.</p><button type="button" className="secondary-btn" disabled={!!busy} onClick={() => void retryCleanup()}>Försök avsluta verifieringssessionen</button></div>}
   </section>;
