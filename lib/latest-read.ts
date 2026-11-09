@@ -20,7 +20,8 @@ export function createLatestRead<T, A = void>({ read, update, errorMessage, time
       onAbort = () => reject(new Error(errorMessage));
       controller.signal.addEventListener("abort", onAbort, { once: true });
     });
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    // A named reason keeps a timeout distinguishable from an intentional cancellation.
+    const timer = setTimeout(() => controller.abort(new DOMException("The read timed out.", "TimeoutError")), timeoutMs);
     try {
       const value = await Promise.race([cancelled, read(args, controller.signal)]);
       if (!stopped && current === controller) update({ status: "ready", value });

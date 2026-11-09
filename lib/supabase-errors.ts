@@ -17,6 +17,14 @@ export function isNetworkError(error: unknown): boolean {
   return message === NETWORK_ERROR_MESSAGE || /failed to fetch|load failed|networkerror|network request failed/i.test(message);
 }
 
+// A request cancelled on purpose (the view unmounted or a newer read replaced
+// it). PostgREST returns it as an error whose message starts with "AbortError:".
+export function isAbortError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  if ((error as { name?: unknown }).name === "AbortError") return true;
+  return hasStringProperty(error, "message") && error.message.startsWith("AbortError:");
+}
+
 export function getSupabaseErrorMessage(error: unknown, fallback: string): string {
   if (isNetworkError(error)) {
     return NETWORK_ERROR_MESSAGE;
@@ -38,6 +46,9 @@ export function logSupabaseError(
   error: unknown,
   metadata?: unknown,
 ): void {
+  // Intentional cancellation is not a failure; the caller ignores the result.
+  if (isAbortError(error)) return;
+
   const payload: Record<string, unknown> = {
     message: getSupabaseErrorMessage(error, "Unknown Supabase error."),
   };
