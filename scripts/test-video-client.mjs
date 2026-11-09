@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
 
 const dir=mkdtempSync(join(tmpdir(),'mnw-video-client-'));
-const replies=[],calls=[];let uploadResult={error:null},uploadCallback=null;
+const replies=[],calls=[];let uploadResult={error:null},uploadCallback=null,sessionOwner='11111111-1111-4111-8111-111111111111';
 const storage={
   download:async(...args)=>{calls.push(['download',...args]);return replies.shift();},
   remove:async(...args)=>{calls.push(['remove',...args]);return replies.shift()??{error:null};},
@@ -15,11 +15,11 @@ const storage={
 const db={
   from(table){
     const chain={};
-    for(const method of ['select','insert','update','delete','eq'])chain[method]=(...args)=>{calls.push([table,method,...args]);return chain;};
+    for(const method of ['select','insert','update','delete','eq','abortSignal'])chain[method]=(...args)=>{calls.push([table,method,...args]);return chain;};
     chain.maybeSingle=()=>chain;
     chain.then=(resolve,reject)=>Promise.resolve(replies.shift()??{data:null,error:null}).then(resolve,reject);
     return chain;
-  },storage:{from:()=>storage},auth:{getSession:async()=>({data:{session:{access_token:'test-only-not-a-real-token'}}})},
+  },storage:{from:()=>storage},auth:{getSession:async()=>({data:{session:{access_token:'test-only-not-a-real-token',user:{id:sessionOwner}}}})},
 };
 globalThis.__videoTestDb=db;
 const originalFetch=globalThis.fetch;
@@ -27,14 +27,15 @@ globalThis.fetch=async(url,options)=>{calls.push(['playback',url,options]);const
 try{
   writeFileSync(join(dir,'policy.mjs'),ts.transpileModule(readFileSync('lib/profile-video.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText);
   let code=ts.transpileModule(readFileSync('lib/video-client.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext}}).outputText;
-  code=code.replace(/import .* from "@supabase\/supabase-js";/,'const createClient=()=>globalThis.__videoTestDb;')
+  code=code.replace(/import .* from "@\/lib\/auth";/,'const getCurrentUser=async()=>({id:"11111111-1111-4111-8111-111111111111"});')
+    .replace(/import .* from "@supabase\/supabase-js";/,'const createClient=()=>globalThis.__videoTestDb;')
     .replace(/import .* from "@\/lib\/supabase";/,'const getSupabaseClient=()=>globalThis.__videoTestDb;')
     .replace('"@/lib/profile-video"','"./policy.mjs"').replace(/import .* from "@\/lib\/video-retention";/,'const videoHasExpired=value=>!!value&&Date.parse(value)<=Date.now();');
   writeFileSync(join(dir,'client.mjs'),code);
   const {getVideo,videoPlaybackUrl,revokeVideo,sendVideoMessage,uploadVideo}=await import(pathToFileURL(join(dir,'client.mjs')));
   const owner='11111111-1111-4111-8111-111111111111',id='22222222-2222-4222-8222-222222222222';
   const video={id,owner_id:owner,storage_path:`${owner}/${id}.mp4`,conversation_id:"conversation",duration_seconds:30,revoked_at:null};
-  const reset=(...items)=>{replies.splice(0,replies.length,...items);calls.length=0;uploadResult={error:null};uploadCallback=null;};
+  const reset=(...items)=>{replies.splice(0,replies.length,...items);calls.length=0;uploadResult={error:null};uploadCallback=null;sessionOwner=owner;};
   reset({data:video,error:null});assert.deepEqual(await getVideo(id),video);
   reset({data:{...video,revoked_at:'now'},error:null});assert.equal(await getVideo(id),null);
   reset({error:{code:'denied'}});await assert.rejects(getVideo(id),/hämta/);
@@ -60,5 +61,6 @@ try{
   await assert.rejects(uploadVideo(file,30,owner,"conversation",new AbortController().signal));assert.ok(calls.some(c=>c[1]==='update'),'Failed upload revoked for scheduled cleanup');
   const aborted=new AbortController();reset({error:null},{data:[{id}],error:null},{error:null});uploadCallback=async()=>aborted.abort();
   await assert.rejects(uploadVideo(file,30,owner,"conversation",aborted.signal));assert.ok(calls.some(c=>c[1]==='update'),'Late abort revokes asset before cleanup');
+  reset({error:null});sessionOwner=id;await assert.rejects(uploadVideo(file,30,owner,"conversation",new AbortController().signal),/rätt konto/);assert.ok(!calls.some(c=>c[0]==='upload'),'Account change after metadata insert must not start storage upload');
   console.log('PASS video client: authenticated downloads and expiry, invalid paths and retired profile rejection, lost responses, idempotent sends, failed/aborted uploads and cleanup. Transport simulated.');
 }finally{globalThis.fetch=originalFetch;delete globalThis.__videoTestDb;rmSync(dir,{recursive:true,force:true});}
