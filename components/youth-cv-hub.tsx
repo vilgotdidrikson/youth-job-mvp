@@ -8,14 +8,14 @@ import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
 
 import Link from "next/link";
 import { UiIcon } from "./ui-icon";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
-import { authenticatedHeaders } from "@/lib/api-client";
-import { getYouthProfile, saveUploadedCvToProfile, saveReviewedCvToProfile } from "@/lib/onboarding";
-import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
+import { getYouthProfile } from "@/lib/onboarding";
+import { openYouthDocument } from "@/lib/open-youth-document";
+import { createCvSave, ownedCvHeaders, uploadOwnedCvPdf, verifyOwnedCvUpload, CvWorkflowError, CvSaveUnconfirmed, CvUploadUnconfirmed } from "@/lib/cv-save-workflow";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
-import { submitApplicationDraftsAfterCv, type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
+import { type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
 import { useVerifiedExperience } from "@/hooks/use-verified-experience";
 import { withVerifiedExperience } from "@/lib/recruitment-types";
@@ -111,6 +111,11 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
   const title = query.get("title");
   const inJourney = query.get("return") === "build" && !jobId;
   const [completed,setCompleted] = useState(false);
+  const alive=useRef(false),lock=useRef(false),request=useRef<AbortController|null>(null);
+  const saveTask=useRef<ReturnType<typeof createCvSave>|null>(null);
+  const fileCandidate=useRef<YouthDocument|null>(null),originalUploaded=useRef<YouthDocument|null>(null);
+  const [recovery,setRecovery]=useState<"save"|"upload"|"file"|null>(null);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;request.current?.abort();};},[]);
   const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : inJourney ? "/profile/build" : "/profile?tab=work";
   const [method, setMethod] = useState<CvCreationMethod>("manual");
   const [step, setStep] = useState<Step>(initialCreate ? "about" : "start");
@@ -135,7 +140,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
   const key = `employo-cv-hub-draft:${user?.id ?? "anonymous"}`;
   const index = STEPS.indexOf(step as FormStep);
   const source = useMemo(() => buildSource(draft, name, city), [draft, name, city]);
-  const update = (field: keyof Draft, value: string | boolean) => setDraft((current) => ({ ...current, [field]: value }));
+  const update = (field: keyof Draft, value: string | boolean) => {if(!lock.current&&!recovery)setDraft((current) => ({ ...current, [field]: value }));};
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -152,7 +157,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
         setSupportsStructuredCv(Object.prototype.hasOwnProperty.call(youth ?? {}, "cv_structured"));
         setSupportsCvExtras(Object.prototype.hasOwnProperty.call(youth ?? {}, "certificates") && Object.prototype.hasOwnProperty.call(youth ?? {}, "extracurriculars"));
         const docs = Array.isArray(youth?.documents) ? youth.documents : [];
-        setUploaded(docs.find((doc) => doc.type === "cv") ?? null);
+        originalUploaded.current=docs.find((doc)=>doc.type==="cv")??null;setUploaded(originalUploaded.current);
         const saved = localStorage.getItem(key);
         if (query.get("edit") === "1" && (youth?.cv_structured || youth?.cv_text)) {
           const existingDraft = draftFromProfile(youth);
@@ -195,25 +200,31 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
   }, [ready, step]);
 
   const generate = async () => {
-    if (method !== "ai" || generating || saving) return;
+    if (method !== "ai" || generating || saving || recovery || lock.current || !alive.current || !user?.id) return;
+    lock.current=true;const controller=new AbortController();request.current=controller;const deadline=setTimeout(()=>controller.abort(new DOMException("CV generation timed out","TimeoutError")),70_000);
     setError(""); setGenerating(true);
     setApprovedSnapshot(null);
     setReviewSource(cvSourceText(source));
     try {
+      const headers=await ownedCvHeaders(user.id,controller.signal);
+      if(!alive.current||controller.signal.aborted)return;
       const response = await fetch("/api/youth/cv/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
+        headers: { "Content-Type": "application/json", ...headers },
+        signal:controller.signal,
         body: JSON.stringify({ structured: source, profile_details: draft.about, work_experience: draft.noExperience ? "" : draft.experience, skills_text: draft.skills, languages: draft.languages, certificates: draft.merits, linkedin: draft.linkedin, portfolio: draft.portfolio }),
       });
       const result = await response.json() as { cv?: string; structured?: StructuredCvData; error?: string };
+      if(!alive.current||controller.signal.aborted)return;
       if (!response.ok || !result.cv || !result.structured) throw new Error(result.error ?? "Kunde inte skriva CV:t just nu.");
       setGenerated({ text: result.cv, structured: result.structured });
       setReturnToReview(false);
       setStep("preview");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte skapa CV:t. Dina svar är kvar."); }
-    finally { setGenerating(false); }
+    } catch { if(alive.current)setError("Kunde inte skapa CV:t. Dina svar är kvar."); }
+    finally { clearTimeout(deadline);lock.current=false;if(request.current===controller)request.current=null;if(alive.current)setGenerating(false); }
   };
   const advance = (skip = false) => {
+    if(lock.current||recovery)return;
     setError("");
     setApprovedSnapshot(null);
     if (!skip && step === "about" && !draft.about.trim()) { setError("Skriv några ord om dig själv, eller hoppa över och fyll i senare."); return; }
@@ -222,6 +233,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     setStep(STEPS[index + 1]);
   };
   const prepareManualPreview = () => {
+    if(lock.current||recovery)return;
     setApprovedSnapshot(null);
     setReviewSource(cvSourceText(source));
     setGenerated({ text: renderStructuredCv(source), structured: source });
@@ -229,40 +241,54 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     setStep("preview");
   };
   const canUseAi = method === "ai";
-  const finish = async () => {
-    if (!user?.id || !generated) return;
-    if (!factsApproved || generating || saving) { setError("Granska och godkänn CV-texten och profilfakta innan du sparar."); return; }
-    setSaving(true); setError("");
-    try {
-      if (!supportsStructuredCv || !supportsCvExtras) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Kontakta support; din text finns kvar.");
-      await saveReviewedCvToProfile(generated.text, generated.structured, approvedSnapshot);
-      const applications = await submitApplicationDraftsAfterCv().catch(() => null);
-      if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
-        for (const base of ["employo-voice-cv-answers", "employo-voice-cv-structured", "employo-voice-cv-conversation", "employo-voice-cv-draft"]) sessionStorage.removeItem(voiceCvStorageKey(base, user.id));
-      }
-      try { localStorage.removeItem(key); } catch { /* Saving to the account succeeded. */ }
-      setMessage(applications ? completedCvMessage(applications, "Ditt CV är klart!") : "Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
-      setCompleted(true);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte göra klart ditt CV."); }
-    finally { setSaving(false); }
+  const complete = async (task:ReturnType<typeof createCvSave>,signal:AbortSignal) => {
+    const result=await task.read(signal);
+    if(!alive.current||signal.aborted)return;
+    if(!result.confirmed){saveTask.current=null;setMessage("");setRecovery(fileCandidate.current?"file":null);throw new CvWorkflowError("Det sparade CV:t motsvarar inte ditt utkast. Granska det innan du väljer att spara igen.");}
+    const applications=await task.submitDrafts(signal).catch(()=>null);
+    if(!alive.current||signal.aborted)return;
+    if(VOICE_CV_ENABLED&&query.get("voice")==="finalize")for(const base of ["employo-voice-cv-answers","employo-voice-cv-structured","employo-voice-cv-conversation","employo-voice-cv-draft"])try{sessionStorage.removeItem(voiceCvStorageKey(base,user?.id));}catch{}
+    try{localStorage.removeItem(key);}catch{}
+    setMessage(applications?completedCvMessage(applications,"Ditt CV är sparat och klart."):"Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
+    setCompleted(true);setRecovery(null);
   };
-  const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; if (!file || saving) return;
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { setError("Välj en PDF-fil."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("PDF:en är för stor. Max är 5 MB."); return; }
-    setSaving(true); setError("");
-    try {
-      const url = await uploadYouthDocument(file);
-      const document = { name: file.name, url, type: "cv" as const };
-      await saveUploadedCvToProfile(document);
-      const applications = await submitApplicationDraftsAfterCv().catch(() => null);
-      setUploaded(document);
-      try { localStorage.removeItem(key); } catch { /* Saving to the account succeeded. */ }
-      setMessage(applications ? completedCvMessage(applications, "Ditt CV är uppladdat och klart.") : "Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
-      setCompleted(true);
-    }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte ladda upp PDF:en."); }
-    finally { setSaving(false); event.target.value = ""; }
+  const run = async (action:(signal:AbortSignal)=>Promise<void>) => {
+    if(lock.current||!alive.current)return;
+    lock.current=true;setSaving(true);setError("");setMessage("");const controller=new AbortController();request.current=controller;
+    try{await action(controller.signal);}
+    catch(reason){if(alive.current&&!controller.signal.aborted){if(reason instanceof CvSaveUnconfirmed)setRecovery("save");if(reason instanceof CvUploadUnconfirmed){fileCandidate.current=reason.document;setRecovery("upload");}setError(reason instanceof CvWorkflowError?reason.message:"CV:t kunde inte bekräftas. Dina uppgifter finns kvar här.");}}
+    finally{lock.current=false;if(request.current===controller)request.current=null;if(alive.current)setSaving(false);}
+  };
+  const persist = async (task:ReturnType<typeof createCvSave>,signal:AbortSignal) => {
+    saveTask.current=task;await task.save(signal);
+    if(!alive.current||signal.aborted)return;
+    setRecovery("save");setMessage("CV:t är sparat. Kontrollerar de sparade uppgifterna…");await complete(task,signal);
+  };
+  const finish = () => void run(async signal=>{
+    if(!user?.id||!generated||recovery)return;
+    if(!factsApproved)throw new CvWorkflowError("Granska och godkänn CV-texten och profilfakta innan du sparar.");
+    if(!supportsStructuredCv||!supportsCvExtras)throw new CvWorkflowError("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+    await persist(createCvSave(user.id,{kind:"reviewed",text:generated.text,structured:generated.structured,approval:approvedSnapshot}),signal);
+  });
+  const upload = (event:React.ChangeEvent<HTMLInputElement>) => {
+    const field=event.currentTarget,file=field.files?.[0];field.value="";
+    if(!file||!user?.id||recovery||lock.current)return;
+    void run(async signal=>{
+      const document=await uploadOwnedCvPdf(user.id,file,signal);
+      if(!alive.current||signal.aborted)return;
+      fileCandidate.current=document;setUploaded(document);setRecovery("file");
+      await persist(createCvSave(user.id,{kind:"uploaded",document}),signal);
+    });
+  };
+  const recover = () => void run(async signal=>{
+    if(recovery==="save"&&saveTask.current)await complete(saveTask.current,signal);
+    else if(recovery==="upload"&&fileCandidate.current&&user?.id){await verifyOwnedCvUpload(user.id,fileCandidate.current,signal);if(alive.current&&!signal.aborted){setUploaded(fileCandidate.current);setRecovery("file");setMessage("PDF-filen finns uppladdad. Välj Spara uppladdad PDF för att använda den som ditt CV.");}}
+    else if(recovery==="file"&&fileCandidate.current&&user?.id)await persist(createCvSave(user.id,{kind:"uploaded",document:fileCandidate.current}),signal);
+  });
+  const recoveryNotice = recovery&&<section className="cv-hub-status" aria-label="Kontrollera CV-sparning"><p>{recovery==="save"?"Kontrollera det sparade resultatet innan du skickar igen. Dina uppgifter finns kvar här.":"Fortsätt med samma PDF utan en ny uppladdning."}</p><button className="secondary-btn" type="button" disabled={saving} onClick={recover}>{recovery==="save"?"Kontrollera sparningen":recovery==="upload"?"Kontrollera uppladdningen":"Spara uppladdad PDF"}</button>{recovery!=="save"&&<button className="secondary-btn" type="button" disabled={saving} onClick={()=>{if(lock.current)return;fileCandidate.current=null;saveTask.current=null;setUploaded(originalUploaded.current);setRecovery(null);setMessage("");setError("");}}>Välj PDF igen</button>}</section>;
+  const previewPdf = () => {
+    if(!user?.id||!uploaded||lock.current||!alive.current)return;
+    void run(signal=>openYouthDocument({subjectId:user.id,path:uploaded.url,signal,openWindow:()=>window.open("about:blank","_blank")}).catch(reason=>{throw new CvWorkflowError(reason instanceof Error&&reason.message.startsWith("Tillåt ett nytt fönster")?reason.message:"PDF:en kunde inte öppnas. Kontrollera din anslutning och försök igen.");}));
   };
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
@@ -282,13 +308,13 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
   </main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
     
-    <button className="cv-hub-back" onClick={() => setStep("start")}>← Tillbaka till valen</button>{jobNote}
-    <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
-    <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
-    {uploaded && <section className="cv-hub-status"><strong>CV uppladdat</strong><p>{uploaded.name}</p><button onClick={() => void getYouthDocumentSignedUrl(uploaded.url).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Kunde inte öppna PDF:en."))}>Förhandsvisa PDF</button></section>}
-    {message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
+    <button className="cv-hub-back" disabled={saving || !!recovery} onClick={() => {if(!lock.current&&!recovery)setStep("start");}}>← Tillbaka till valen</button>{jobNote}
+    <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB. Innehållet i filen, även eventuella kontaktuppgifter, blir synligt när du delar CV:t i en ansökan.</p>
+    <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving || !!recovery} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
+    {uploaded && <section className="cv-hub-status"><strong>PDF-fil</strong><p>{uploaded.name}</p><button disabled={saving} onClick={previewPdf}>Förhandsvisa PDF</button></section>}
+    {recoveryNotice}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
-  const methodChoice = <fieldset className={styles.method} disabled={generating || saving}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;
+  const methodChoice = <fieldset className={styles.method} disabled={generating || saving || !!recovery}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { if(lock.current||recovery)return;setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;
 
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
     
@@ -300,9 +326,9 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
       <span>{editedSections.length ? `${editedSections.length} ${editedSections.length === 1 ? "del är" : "delar är"} sparad${editedSections.length === 1 ? "" : "e"}.` : "Välj en del för att börja redigera."}</span>
     </section>
     <div className="cv-hub-review-list">
-      {STEPS.map((item) => <button className="cv-hub-review-card" key={item} type="button" onClick={() => { setReturnToReview(true); setStep(item); }}><span className="cv-hub-review-card-copy"><strong>{LABELS[item]}</strong><small>{sectionSummary(item, draft)}</small></span><span className="cv-hub-review-card-meta">{editedSections.includes(item) && <em>Sparat</em>}<b>Ändra</b></span></button>)}
+      {STEPS.map((item) => <button className="cv-hub-review-card" key={item} type="button" disabled={saving || generating || !!recovery} onClick={() => { if(lock.current||recovery)return;setReturnToReview(true); setStep(item); }}><span className="cv-hub-review-card-copy"><strong>{LABELS[item]}</strong><small>{sectionSummary(item, draft)}</small></span><span className="cv-hub-review-card-meta">{editedSections.includes(item) && <em>Sparat</em>}<b>Ändra</b></span></button>)}
     </div>
-    <button className="cta-btn" disabled={generating} onClick={() => { if (canUseAi) void generate(); else prepareManualPreview(); }}>{generating ? "AI:n skriver ditt CV..." : canUseAi ? "Skapa mitt CV" : "Förhandsvisa ändringar"}</button>
+    <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => { if (canUseAi) void generate(); else prepareManualPreview(); }}>{generating ? "AI:n skriver ditt CV..." : canUseAi ? "Skapa mitt CV" : "Förhandsvisa ändringar"}</button>
     <p className="cv-hub-cost-note">{canUseAi ? "AI:n används bara för den första versionen. Du kan göra hur många ändringar du vill innan dess." : "Det här CV:t uppdateras utan AI. Dina sparade ändringar visas i förhandsvisningen."}</p>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
   </main>;
@@ -310,17 +336,17 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
     <h1>Granska ditt CV</h1>
-    <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
-    <textarea aria-label={canUseAi ? "Redigera CV-förhandsvisningen" : "CV-förhandsvisning"} className="cv-hub-preview" readOnly={!canUseAi} disabled={saving || generating} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
+    <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} disabled={saving || generating || !!recovery} onClick={() => { if(lock.current||recovery)return;setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
+    <textarea aria-label={canUseAi ? "Redigera CV-förhandsvisningen" : "CV-förhandsvisning"} className="cv-hub-preview" readOnly={!canUseAi} disabled={saving || generating || !!recovery} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
     {!canUseAi && <p className={styles.note}>Ändra texten genom delarna ovan eller uppgifterna nedan. CV och profilfakta hålls ihop utan AI.</p>}
-    {generated && <CvFactReview manual={!canUseAi} text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating}
+    {generated && <CvFactReview manual={!canUseAi} text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating || !!recovery}
       onApprove={(approved) => setApprovedSnapshot(approved ? cvReviewSnapshot(generated.text, generated.structured) : null)}
       onChange={(cv) => { setApprovedSnapshot(null); setGenerated({ text: renderStructuredCv(cv), structured: cv }); }} />}
     {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
     {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
-    {canUseAi && <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
-    <button className="cta-btn" disabled={saving || generating || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
-    {error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
+    {canUseAi && <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
+    <button className="cta-btn" disabled={saving || generating || !!recovery || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
+    {recoveryNotice}{error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
   </main>;
 
   return <main className="mobile-shell cv-hub">
@@ -342,8 +368,8 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
     {methodChoice}
     <div className="cv-hub-question-actions">
-      <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
-      <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "merits" ? canUseAi ? "Hoppa över och skapa CV-förslag" : "Hoppa över och förhandsvisa" : "Hoppa över"}</button>
+      <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
+      <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "merits" ? canUseAi ? "Hoppa över och skapa CV-förslag" : "Hoppa över och förhandsvisa" : "Hoppa över"}</button>
     </div>
     {/* Bekräftad erfarenhet visas i förhandsvisningen; i profilbygget finns "Pausa och fortsätt senare" redan i stegrubriken. */}
     <p className="cv-hub-draft-note"><UiIcon name="info" width="17" />{draftStorageUnavailable ? "Utkastet kunde inte sparas på den här enheten. Stanna på sidan tills du har granskat och gjort CV:t klart." : "Sparas på den här enheten medan du skriver."}</p>
