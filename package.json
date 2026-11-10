@@ -105,7 +105,8 @@
     "test:account-reauthentication": "node scripts/test-account-reauthentication.mjs && node scripts/test-sensitive-account-mfa.mjs",
     "test:account-deletion-flow": "node scripts/test-account-deletion-flow.mjs",
     "test:personal-data-collection": "node scripts/test-personal-data-collection.mjs",
-    "test:personal-data-collection:staging": "node scripts/test-staging-personal-data-collection.mjs"
+    "test:personal-data-collection:staging": "node scripts/test-staging-personal-data-collection.mjs",
+    "test:account-cv-drafts": "node scripts/test-account-cv-drafts.mjs && node scripts/test-account-cv-draft-panel.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",

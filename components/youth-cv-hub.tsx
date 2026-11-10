@@ -1,4 +1,6 @@
 "use client";
+import {AccountCvDraftPanel} from "./account-cv-draft-panel";
+import {type AccountCvDraft,type CvFormDraft} from "@/lib/account-cv-draft";
 import { applicationCountLabel } from "@/lib/product-copy";
 
 import { ProfileStepComplete } from "./profile-journey";
@@ -26,7 +28,7 @@ import { cvReviewSnapshot, cvSourceText, hasApprovedCv } from "@/lib/cv-fact-rev
 
 type FormStep = "about" | "education" | "experience" | "skills" | "languages" | "merits";
 type Step = "start" | "pdf" | "review" | "preview" | FormStep;
-type Draft = { about: string; school: string; program: string; graduation: string; experience: string; noExperience: boolean; skills: string; languages: string; merits: string; linkedin: string; portfolio: string; otherLink: string };
+type Draft = CvFormDraft;
 const EMPTY: Draft = { about: "", school: "", program: "", graduation: "", experience: "", noExperience: false, skills: "", languages: "", merits: "", linkedin: "", portfolio: "", otherLink: "" };
 const STEPS: FormStep[] = ["about", "education", "experience", "skills", "languages", "merits"];
 const LABELS: Record<FormStep, string> = { about: "Kort om mig", education: "Utbildning", experience: "Erfarenhet", skills: "Kompetenser", languages: "Språk", merits: "Meriter & länkar" };
@@ -290,10 +292,15 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     if(!user?.id||!uploaded||lock.current||!alive.current)return;
     void run(signal=>openYouthDocument({subjectId:user.id,path:uploaded.url,signal,openWindow:()=>window.open("about:blank","_blank")}).catch(reason=>{throw new CvWorkflowError(reason instanceof Error&&reason.message.startsWith("Tillåt ett nytt fönster")?reason.message:"PDF:en kunde inte öppnas. Kontrollera din anslutning och försök igen.");}));
   };
+  const accountDraftSnapshot:AccountCvDraft={version:1,method,step,draft,returnToReview,editedSections,generated,reviewSource};
+  const accountDraftPanel=user?.id&&ready&&<AccountCvDraftPanel key="account-cv-draft" userId={user.id} snapshot={accountDraftSnapshot} disabled={generating||saving||!!recovery} completed={completed} onRestore={value=>{
+    if(lock.current||recovery)return;
+    setDraft(value.draft);setMethod(value.method);setStep(value.step);setReturnToReview(value.returnToReview);setEditedSections(value.editedSections as FormStep[]);setGenerated(value.generated);setReviewSource(value.reviewSource);setApprovedSnapshot(null);setError("");setMessage("");
+  }}/>;
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
-  if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p></main>;
-  if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}</main>;
+  if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p>{accountDraftPanel}</main>;
+  if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}{accountDraftPanel}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
     
     {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
@@ -305,7 +312,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
       <button className="cv-hub-option" onClick={() => setStep("pdf")}><span className="cv-hub-option-icon"><UiIcon name="upload" width="25" height="25" /></span><strong>Ladda upp ett CV</strong><small>Har du redan ett CV? PDF, max 5 MB.</small></button>
       {VOICE_CV_ENABLED && <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>}
     </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
-  </main>;
+  {accountDraftPanel}</main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
     
     <button className="cv-hub-back" disabled={saving || !!recovery} onClick={() => {if(!lock.current&&!recovery)setStep("start");}}>← Tillbaka till valen</button>{jobNote}
@@ -313,7 +320,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving || !!recovery} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
     {uploaded && <section className="cv-hub-status"><strong>PDF-fil</strong><p>{uploaded.name}</p><button disabled={saving} onClick={previewPdf}>Förhandsvisa PDF</button></section>}
     {recoveryNotice}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
-  </main>;
+  {accountDraftPanel}</main>;
   const methodChoice = <fieldset className={styles.method} disabled={generating || saving || !!recovery}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { if(lock.current||recovery)return;setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;
 
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
@@ -331,7 +338,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => { if (canUseAi) void generate(); else prepareManualPreview(); }}>{generating ? "AI:n skriver ditt CV..." : canUseAi ? "Skapa mitt CV" : "Förhandsvisa ändringar"}</button>
     <p className="cv-hub-cost-note">{canUseAi ? "AI:n används bara för den första versionen. Du kan göra hur många ändringar du vill innan dess." : "Det här CV:t uppdateras utan AI. Dina sparade ändringar visas i förhandsvisningen."}</p>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
-  </main>;
+  {accountDraftPanel}</main>;
   if (step === "preview") return <main className="mobile-shell cv-hub cv-hub-preview-page">
     
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
@@ -347,7 +354,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     {canUseAi && <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
     <button className="cta-btn" disabled={saving || generating || !!recovery || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
     {recoveryNotice}{error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
-  </main>;
+  {accountDraftPanel}</main>;
 
   return <main className="mobile-shell cv-hub">
     
@@ -374,5 +381,5 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     {/* Bekräftad erfarenhet visas i förhandsvisningen; i profilbygget finns "Pausa och fortsätt senare" redan i stegrubriken. */}
     <p className="cv-hub-draft-note"><UiIcon name="info" width="17" />{draftStorageUnavailable ? "Utkastet kunde inte sparas på den här enheten. Stanna på sidan tills du har granskat och gjort CV:t klart." : "Sparas på den här enheten medan du skriver."}</p>
     {!draftStorageUnavailable && !inJourney && <Link className="cv-hub-save-later" href={returnPath}>Fortsätt senare <UiIcon name="arrow" width="16" /></Link>}
-  </main>;
+  {accountDraftPanel}</main>;
 }
