@@ -3,8 +3,9 @@ import {readFileSync} from 'node:fs';
 import {createRequire,Module} from 'node:module';
 import path from 'node:path';
 import ts from 'typescript';
+import {execFileSync} from 'node:child_process';
 const require=createRequire(import.meta.url),original=Module._load;
-for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(m,file)=>m._compile(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
+for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(m,file)=>m._compile(ts.transpileModule(process.env.CV_HUB_BASELINE&&file.endsWith('/components/youth-cv-hub.tsx')?execFileSync('git',['show',`${process.env.CV_HUB_BASELINE}:components/youth-cv-hub.tsx`],{encoding:'utf8'}):readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
 Module._extensions['.css']=m=>{m.exports={__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};};
 const React=require('react');let active,user='qa-manual-a';const storage=new Map(),writes=[],network=[];let query=new URLSearchParams(),savedProfile;
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
@@ -27,6 +28,7 @@ Module._load=function(name,parent,...rest){
  if(name==='next/navigation')return{useRouter:()=>({replace(){}}),useSearchParams:()=>query};
  if(name==='@/hooks/use-session')return{useSession:()=>({user:{id:user},profile:{role:'youth'},loading:false})};
  if(name==='@/hooks/use-verified-experience')return{useVerifiedExperience:()=>({items:[],error:null})};
+ if(name==='@/lib/cv-save-workflow')return{CvWorkflowError:class extends Error{},CvSaveUnconfirmed:class extends Error{},CvUploadUnconfirmed:class extends Error{},ownedCvHeaders:async()=>({}),createCvSave:(_owner,input)=>({save:async()=>{writes.push(review.reviewedCvPayload(input.text,input.structured,input.approval));},read:async()=>({confirmed:true,profile:savedProfile}),submitDrafts:async()=>({sent:0,unavailable:0,pending:0})})};
  if(name==='@/lib/api-client')return{authenticatedHeaders:async()=>({})};
  if(name==='@/lib/onboarding')return{getYouthProfile:async()=>savedProfile,saveReviewedCvToProfile:async(text,facts,approval)=>{writes.push(review.reviewedCvPayload(text,facts,approval));return savedProfile},saveUploadedCvToProfile:async()=>{writes.push('pdf')}};
  if(name==='@/lib/storage')return{getYouthDocumentSignedUrl:async()=>'',uploadYouthDocument:async()=>({type:'cv',name:'QA.pdf',url:'qa/QA.pdf'})};
@@ -56,7 +58,7 @@ try{
  let facts=nodes(tree).find(n=>n.type==='CvFactReview');assert.equal(facts.props.manual,true);assert.ok(facts.props.text.includes('QA Gymnasium'));assert.equal(button(tree,'Gör mitt CV klart').props.disabled,true);
  facts.props.onApprove(true);tree=v.render();assert.equal(button(tree,'Gör mitt CV klart').props.disabled,false);
  facts=nodes(tree).find(n=>n.type==='CvFactReview');const corrected=review.updateCvFact(facts.props.cv,['personalInfo','city'],'Malmö');facts.props.onChange(corrected);tree=v.render();assert.equal(button(tree,'Gör mitt CV klart').props.disabled,true,'correction requires fresh approval');
- facts=nodes(tree).find(n=>n.type==='CvFactReview');facts.props.onApprove(true);tree=v.render();button(tree,'Gör mitt CV klart').props.onClick();await settle();tree=v.render();assert.equal(writes.length,1);assert.equal(writes[0].cv_structured.personalInfo.city,'Malmö');assert.equal(network.length,0);assert.ok(text(tree).includes('Ditt CV är sparat'));v.stop();
+ facts=nodes(tree).find(n=>n.type==='CvFactReview');facts.props.onApprove(true);tree=v.render();const finish=button(tree,'Gör mitt CV klart').props.onClick;finish();finish();await settle();tree=v.render();assert.equal(writes.length,1,'Same-frame save clicks write once');assert.equal(writes[0].cv_structured.personalInfo.city,'Malmö');assert.equal(network.length,0);assert.ok(text(tree).includes('Ditt CV är sparat'));v.stop();
  // Saved CVs keep all structured entries in edit mode; approval is never restored.
  savedProfile={...savedProfile,cv_structured:cv.structuredCvFromForm({full_name:'Alex QA',work_experiences:[{company:'A',description:'Praktik A'},{company:'B',description:'Praktik B'}]})};savedProfile.cv_text=cv.renderStructuredCv(savedProfile.cv_structured);query=new URLSearchParams('edit=1');({v,tree}=await mount({initialCreate:true}));facts=nodes(tree).find(n=>n.type==='CvFactReview');assert.equal(facts.props.cv.workExperience.length,2);assert.equal(facts.props.approved,false);v.stop();
  query=new URLSearchParams();const first=YouthCvHub({});user='qa-manual-b';assert.notEqual(YouthCvHub({}).key,first.key);({v,tree}=await mount({initialCreate:true}));assert.notEqual(field(tree,'Kort om mig').props.value,'Jag tycker om att hjälpa människor.');v.stop();
