@@ -190,5 +190,5 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 }
 
 export function AuthPage({ initialMode = "login" }: { initialMode?: Mode }) {
-  return <Suspense fallback={null}><LoginPageContent initialMode={initialMode} /></Suspense>;
+  return <Suspense fallback={<main className="auth-page"><p role="status">Laddar inloggningen…</p><SupportLinks/></main>}><LoginPageContent initialMode={initialMode} /></Suspense>;
 }
