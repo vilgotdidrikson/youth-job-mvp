@@ -107,7 +107,8 @@
     "test:personal-data-collection": "node scripts/test-personal-data-collection.mjs",
     "test:personal-data-collection:staging": "node scripts/test-staging-personal-data-collection.mjs",
     "test:account-cv-drafts": "node scripts/test-account-cv-drafts.mjs && node scripts/test-account-cv-draft-panel.mjs",
-    "test:job-insight-recovery": "node scripts/test-job-insight-recovery.mjs && node scripts/test-job-insight-panel.mjs"
+    "test:job-insight-recovery": "node scripts/test-job-insight-recovery.mjs && node scripts/test-job-insight-panel.mjs",
+    "test:live-cv-drafts": "node --env-file=.env.local scripts/test-live-cv-drafts.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",
