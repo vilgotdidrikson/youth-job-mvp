@@ -8,6 +8,7 @@ type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 interface SourceSpec { table: string; owner: string; cursor: string; columns: string; scope?: "participants"; parent?: "ai_onboarding_sessions" | "conversations" | "jobs"; cursorType?: "integer"; schema?: "private"; transport?: "review_rpc"; }
 interface ReadScope { owner: string; participants?: readonly string[]; }
 const SOURCES: readonly SourceSpec[] = [
+  {"table": "youth_cv_drafts", "owner": "user_id", "cursor": "user_id", "columns": "user_id,revision,content,updated_at"},
   {"table": "profiles", "owner": "id", "cursor": "id", "columns": "id,role"},
   {"table": "youth_profiles", "owner": "user_id", "cursor": "user_id", "columns": "user_id,full_name,age,city,desired_roles,strengths,merits,work_experience,education,languages,desired_locations,employment_preferences,cv_text,cover_letter_template,onboarding_completed,cv_generated,updated_at,documents,date_of_birth,address,additional_addresses,certificates,extracurriculars,profile_image_url,postal_code,cv_uploaded,cv_structured,short_onboarding_completed,recruitment_profile,recruitment_profile_version"},
   {"table": "company_profiles", "owner": "user_id", "cursor": "user_id", "columns": "user_id,company_name,administrator,description,city,updated_at,industry,address,employee_count,common_roles,hiring_priorities,logo_url,website_url,linkedin_url,instagram_url,facebook_url,tiktok_url,x_url,organization_number,verification_status,verification_submitted_at,verified_at,verification_rejection_reason"},

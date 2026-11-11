@@ -19,6 +19,7 @@ interface Policy { category: string; owner: string; key: string; youthOnly?: boo
 // A closed list of scalar fields. Never spread a source row or stringify nested
 // data: extra columns, text, URLs, snapshots and third-party profiles stay out.
 const POLICIES: Record<string, Policy> = {
+  "public.youth_cv_drafts": { category: "private-cv-work", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, revision: uuid, updated_at: requiredTimestamp } },
   "public.profiles": { category: "account", owner: "id", key: "id", fields: { id: uuid, role } },
   "public.youth_profiles": { category: "account", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, onboarding_completed: boolean, cv_generated: boolean, cv_uploaded: boolean, short_onboarding_completed: boolean, recruitment_profile_version: version, updated_at: timestamp } },
   "public.youth_application_drafts": { category: "own-discovery", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, created_at: timestamp, updated_at: timestamp } },

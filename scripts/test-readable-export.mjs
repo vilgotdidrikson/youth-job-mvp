@@ -30,7 +30,7 @@ try{
   const {rows,result}=packageFor(role),entries=unzipSync(result.bytes),html=strFromU8(entries['LAS-MIG.html']);samples[role]=html;
   check(html.includes('class="record"')&&!html.includes('QA_PRIVATE'),role+' actual ZIP shows projected records without excluded raw material');
   check(!html.includes('<script')&&!html.includes('<iframe')&&!html.includes('<img'),role+' HTML contains no executable injected elements');
-  check(result.manifest.coverage==='needs_completion'&&result.manifest.pendingCategories.length===24,role+' readable view retains incomplete coverage');
+  check(result.manifest.coverage==='needs_completion'&&result.manifest.pendingCategories.length===25,role+' readable view retains incomplete coverage');
   for(const [relation,records]of Object.entries(rows)){
    const category=groups.find(g=>g.relations?.includes(relation)).id;
    const json=JSON.parse(strFromU8(entries['uppgifter/'+category+'.json'])),actual=json.records.find(r=>r.source===relation);

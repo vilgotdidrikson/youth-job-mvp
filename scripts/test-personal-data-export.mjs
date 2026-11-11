@@ -20,7 +20,7 @@ const rejects=(change,code='invalid_input')=>{const i=input(),f=[];change(i,f);a
 const dir=mkdtempSync(join(tmpdir(),'mnw-export-'));
 try {
  const i=input(),f=file(),archive=build(i,[f,file()]),entries=unzipSync(archive.bytes);assert.equal(archive.mimeType,'application/zip');assert.equal(Object.keys(entries).length,6);passed++;
- const manifest=JSON.parse(strFromU8(entries['oversikt.json']));assert.equal(manifest.categories.length,24);assert.equal(manifest.coverage,'needs_completion');assert.equal('complete' in manifest,false);assert.equal(manifest.pendingCategories.length,22);passed++;
+ const manifest=JSON.parse(strFromU8(entries['oversikt.json']));assert.equal(manifest.categories.length,25);assert.equal(manifest.coverage,'needs_completion');assert.equal('complete' in manifest,false);assert.equal(manifest.pendingCategories.length,23);passed++;
  assert.deepEqual(JSON.parse(strFromU8(entries['uppgifter/account.json'])).records,[{full_name:'Åsa Öberg',cv_text:cv}]);assert.deepEqual(entries[manifest.files[0].path],f.bytes);assert.ok(manifest.files[0].path!==manifest.files[1].path);passed++;
  f.bytes.fill(0);i.information.controller='CHANGED';assert.ok(strFromU8(entries[manifest.files[0].path]).startsWith('%PDF'));assert.equal(archive.manifest.information.controller,'QA Exportverksamhet');passed++;
  const reordered=input();reordered.categories.reverse();assert.deepEqual(build(reordered,[file(),file()]).bytes,archive.bytes);passed++;

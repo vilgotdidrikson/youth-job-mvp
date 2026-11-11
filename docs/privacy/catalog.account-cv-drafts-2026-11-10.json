@@ -1,0 +1,35 @@
+{
+  "mode": "additions-only",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-10",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "revision",
+          "type": "uuid"
+        },
+        {
+          "name": "content",
+          "type": "jsonb"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "youth_cv_drafts",
+      "rls_enabled": true,
+      "schema_name": "public",
+      "foreign_keys": [
+        "FOREIGN KEY (user_id) REFERENCES youth_profiles(user_id) ON DELETE CASCADE"
+      ]
+    }
+  ],
+  "buckets": []
+}
