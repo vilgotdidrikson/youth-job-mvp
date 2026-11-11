@@ -6,6 +6,7 @@ const footerLinks = [
   { href: "/features", label: "Funktioner" },
   { href: "/pricing", label: "Priser" },
   { href: "/privacy", label: "Integritet" },
+  { href: "/help", label: "Hjälp och kontakt" },
   { href: "/login", label: "Logga in" },
 ] as const;
 

@@ -1,13 +1,29 @@
 "use client";
-import { useEffect,useRef,useState } from "react";
-import { PublicJobInformation, type PublicJobInformationData } from "./public-job-information";
-import { getSupabaseClient } from "@/lib/supabase";
-interface Insight extends PublicJobInformationData {job_id:string}
-export function JobRequirementsInsight({jobId}:{jobId:string}) { return <InsightPanel key={jobId} jobId={jobId}/>; }
-function InsightPanel({jobId}:{jobId:string}) {
-  const [data,setData]=useState<Insight|null>(null),[error,setError]=useState(""),[busy,setBusy]=useState(false);
-  const request=useRef(0);
-  useEffect(()=>{const currentRequest=request;return()=>{currentRequest.current++;};},[]);
-  const load=async()=>{if(busy||data)return;const sequence=++request.current;setBusy(true);setError("");const result=await getSupabaseClient().rpc("get_job_requirement_insight",{p_job_id:jobId});if(sequence!==request.current)return;setBusy(false);if(result.error||!result.data){setError("Kravinformationen kunde inte hämtas.");return;}setData(result.data as Insight);};
-  return <details onToggle={event=>{if(event.currentTarget.open)void load();}}><summary>Läs annonsens beskrivning och krav</summary>{busy?<p role="status">Hämtar annons…</p>:error?<p role="alert">{error} <button type="button" onClick={()=>void load()}>Försök igen</button></p>:data?<PublicJobInformation job={data}/>:null}</details>;
+import {useEffect,useRef,useState} from "react";
+import {useSession} from "@/hooks/use-session";
+import {loadJobInsight} from "@/lib/job-requirements-insight";
+import {JobInsightError} from "@/lib/job-requirements-information";
+import {PublicJobInformation,type PublicJobInformationData} from "./public-job-information";
+export function JobRequirementsInsight({jobId}:{jobId:string}) {
+ const {user,loading}=useSession();
+ return <InsightPanel key={`${loading?"loading":user?.id??"anonymous"}:${jobId}`} jobId={jobId} ownerId={loading?null:user?.id??null}/>;
+}
+function InsightPanel({jobId,ownerId}:{jobId:string;ownerId:string|null}) {
+ const [data,setData]=useState<PublicJobInformationData|null>(null),[error,setError]=useState(""),[busy,setBusy]=useState(false);
+ const request=useRef<AbortController|null>(null),active=useRef(false);
+ useEffect(()=>{active.current=true;return()=>{active.current=false;const current=request.current;request.current=null;current?.abort();};},[]);
+ const load=async()=>{
+  if(!active.current||request.current||!ownerId)return;
+  const current=new AbortController();request.current=current;setBusy(true);setError("");setData(null);
+  try{const value=await loadJobInsight(ownerId,jobId,current.signal);if(active.current&&!current.signal.aborted)setData(value);}
+  catch(reason){if(active.current&&!current.signal.aborted)setError(reason instanceof JobInsightError?reason.message:"Kravinformationen kunde inte hämtas. Försök igen.");}
+  finally{if(request.current===current){request.current=null;if(active.current)setBusy(false);}}
+ };
+ return <details onToggle={event=>{if(event.currentTarget.open)void load();}}>
+  <summary>Se vad företaget söker</summary>
+  {!ownerId?<p>Logga in för att läsa kravinformationen för din ansökan.</p>:<>
+   {busy?<p role="status">Hämtar annons…</p>:error?<p role="alert">{error} <button type="button" onClick={()=>void load()}>Försök igen</button></p>:data?<PublicJobInformation job={data}/>:null}
+   {data&&<button type="button" className="secondary-btn" onClick={()=>void load()}>Uppdatera annonsinformationen</button>}
+  </>}
+ </details>;
 }

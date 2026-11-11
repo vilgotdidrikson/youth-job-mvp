@@ -1,4 +1,5 @@
 
+import Link from "next/link";
 import type { Metadata } from "next";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
@@ -22,7 +23,7 @@ export default function PrivacyPage() {
       <section id="delete-account"><h2>Radera konto</h2><p>Du kan permanent radera konto, profil, ansökningar, matchningar, chattar och uppladdade dokument från din profil. Raderar ett företag sitt konto försvinner även dess annonser och tillhörande ansökningar och chattar. Detta går inte att ångra.</p></section>
       <section id="videos"><h2>Video i chatten</h2><p>Video är frivillig och används inte för AI-analys eller matchpoäng. En skickad video blir otillgänglig efter 14 dagar från skickandet, oavsett om mottagaren hunnit se den. Utgångstiden visas vid videon. Saknad eller utgången video döljer inte din ansökan.</p><p>I den här utvecklingsversionen är automatisk filradering ännu inte aktiverad. Åtkomsten stängs ändå efter 14 dagar för skickade videor och efter 24 timmar för oskickade uppladdningar. Filradering och återförsök ska verifieras innan funktionen lanseras. Anmäld video kan behöva behållas separat för säkerhetsgranskning; vanlig uppspelning stängs ändå vid utgångstiden.</p><p>Kopior som någon redan har laddat ned kan inte återkallas av tjänsten. Mottagaren ansvarar för sin vidare hantering.</p></section>
       <section id="reports"><h2>Anmälningar</h2><p>Anmälningar till moderering och det anmälda innehållet sparas för säkerhetsgranskning i upp till 12 månader efter att ärendet avslutats, även om något av kontona raderas. Anmälarens identitet tas då bort.</p></section>
-      <footer><p>Den slutliga integritetspolicyn och kontaktuppgifterna måste juridiskt granskas av MatchnWork före produktion.</p><PrivacyProfileLink /></footer>
+      <footer><p>Den slutliga integritetspolicyn och kontaktuppgifterna måste juridiskt granskas av MatchnWork före produktion.</p><Link href="/help">Hjälp och kontakt</Link><PrivacyProfileLink /></footer>
     </article></div>
     </div>
     <MarketingFooter />

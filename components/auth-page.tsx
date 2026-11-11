@@ -1,4 +1,5 @@
 "use client";
+import {SupportLinks} from "@/components/support-links";
 
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -183,11 +184,11 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           </form>
         </div>
       </section>
-      <footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
+      <SupportLinks/><footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
     </main>
   );
 }
 
 export function AuthPage({ initialMode = "login" }: { initialMode?: Mode }) {
-  return <Suspense fallback={null}><LoginPageContent initialMode={initialMode} /></Suspense>;
+  return <Suspense fallback={<main className="auth-page"><p role="status">Laddar inloggningen…</p><SupportLinks/></main>}><LoginPageContent initialMode={initialMode} /></Suspense>;
 }

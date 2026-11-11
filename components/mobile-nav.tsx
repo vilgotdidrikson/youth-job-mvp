@@ -39,7 +39,7 @@ export function MobileNav() {
   const welcome = pathname === "/profile/build" && (welcomeParam || welcomeFlow);
   const journeyStep = pathname === "/profile/develop" && query.get("return") === "build";
   // The whole CV flow and every step of the profile journey are headerless.
-  if(!profile || welcome || ["/","/login","/signup","/auth","/forgot-password","/reset-password","/resend-confirmation","/pricing","/features","/privacy","/velaris-preview"].includes(pathname) || pathname.startsWith("/admin") || pathname.includes("onboarding") || pathname.startsWith("/youth/cv") || journeyStep || pathname.startsWith("/youth/get-started")) return null;
+  if(!profile || welcome || ["/","/login","/signup","/auth","/forgot-password","/reset-password","/resend-confirmation","/pricing","/features","/privacy","/help","/velaris-preview"].includes(pathname) || pathname.startsWith("/admin") || pathname.includes("onboarding") || pathname.startsWith("/youth/cv") || journeyStep || pathname.startsWith("/youth/get-started")) return null;
   if(profile.role === "youth") return <YouthNavigation pathname={pathname}/>;
   const items: {href:string; label:string; icon:IconName; view?:string}[] = profile.role === "company" ? [
     {href:COMPANY_ROUTES.listings, label:"Annonser", icon:"briefcase",view:"annonser"},
