@@ -1,8 +1,5 @@
-export interface PublicJobInformationData {
-  title: string;
-  description: string;
-  requirements: string;
-}
+import type {PublicJobInformationData} from "@/lib/job-requirements-information";
+export type {PublicJobInformationData} from "@/lib/job-requirements-information";
 
 /** Only public listing fields are rendered, including during a rolling deploy. */
 export function PublicJobInformation({ job }: { job: PublicJobInformationData }) {

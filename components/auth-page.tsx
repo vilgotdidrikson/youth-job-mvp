@@ -1,4 +1,5 @@
 "use client";
+import {SupportLinks} from "@/components/support-links";
 
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -183,7 +184,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           </form>
         </div>
       </section>
-      <footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
+      <SupportLinks/><footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
     </main>
   );
 }
