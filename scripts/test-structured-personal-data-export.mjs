@@ -14,6 +14,7 @@ let passed=0;
 function test(name,fn){fn();passed++;console.log('PASS '+name);}
 function fixture(){
  const rows={
+  'public.youth_cv_drafts':[{user_id:subject,revision:other,updated_at:time,content:{draft:'QA_PRIVATE'}}],
   'public.profiles':[{id:subject,role:'youth'}],
   'public.youth_profiles':[{user_id:subject,onboarding_completed:true,cv_generated:false,cv_uploaded:null,short_onboarding_completed:true,recruitment_profile_version:3,updated_at:time,cv_text:'QA_PRIVATE',documents:[{url:'QA_PRIVATE'}],recruitment_profile:{text:'QA_PRIVATE'}}],
   'public.youth_application_drafts':[{id:other,youth_user_id:subject,job_id:other,created_at:time,updated_at:time}],
@@ -37,11 +38,13 @@ try{
   assert.equal(account.records.length,2);assert.equal(discovery.records.length,6);
   assert.equal(account.records[0].role,'youth');assert.equal(discovery.records.find(r=>r.source==='public.swipe_actions').decision,'interested');
   assert.equal(account.records[1].cv_uploaded,null);assert.equal(account.records[1].recruitment_profile_version,3);
-  assert.equal(out.manifest.coverage,'needs_completion');assert.equal(out.manifest.pendingCategories.length,24);assert.equal(out.manifest.files.length,0);
+  assert.equal(out.manifest.coverage,'needs_completion');assert.equal(out.manifest.pendingCategories.length,25);assert.equal(out.manifest.files.length,0);
   assert.equal(account.status,'partially_included');assert.equal(discovery.needsCompletion,true);
   for(const bytes of Object.values(entries))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));
   assert.match(strFromU8(entries['LAS-MIG.html']),/Delvis inkluderad/);
  });
+ test('private CV draft projects only owner/revision/time and keeps free text pending',()=>{const f=fixture(),out=build(f.b,f.m),entry=JSON.parse(strFromU8(unzipSync(out.bytes)['uppgifter/private-cv-work.json']));assert.deepEqual(entry.records,[{source:'public.youth_cv_drafts',user_id:subject,revision:other,updated_at:time}]);assert.equal(entry.status,'partially_included');assert.ok(out.manifest.pendingCategories.includes('private-cv-work'));for(const bytes of Object.values(unzipSync(out.bytes)))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));});
+ for(const [field,value]of [['user_id',other],['revision','QA_PRIVATE'],['updated_at',null]])test('invalid CV draft metadata blocks package: '+field,()=>rejects(f=>{f.source('public.youth_cv_drafts').rows[0][field]=value;}));
  for(const relation of ['public.youth_application_drafts','public.youth_saved_jobs','public.youth_job_impressions','public.youth_job_dismissals','public.swipe_actions','public.application_workplace_preferences'])test('foreign owned activity aborts entire package: '+relation,()=>rejects(f=>{f.source(relation).rows[0].youth_user_id=other;}));
  for(const status of ['unavailable','not_collected'])test('unread source remains incomplete: '+status,()=>{
   const f=fixture();f.source('public.youth_saved_jobs').status=status;delete f.source('public.youth_saved_jobs').rows;
@@ -75,7 +78,7 @@ try{
 
  function historyFixture(role){const f=fixture();f.source('public.profiles').rows[0].role=role;for(const source of f.b.collection.categories.flatMap(c=>c.sources))if(source.relation!=='public.profiles'&&source.status==='collected')source.rows=[];for(const [relation,rows]of Object.entries(historyRows(role)))Object.assign(f.source(relation),{status:'collected',rows});return f;}
  const read=(out,category)=>JSON.parse(strFromU8(unzipSync(out.bytes)['uppgifter/'+category+'.json']));
- function clean(out){for(const data of Object.values(unzipSync(out.bytes)))assert.ok(!strFromU8(data).includes('QA_PRIVATE'));assert.equal(out.manifest.coverage,'needs_completion');assert.equal(out.manifest.pendingCategories.length,24);assert.equal(out.manifest.files.length,0);}
+ function clean(out){for(const data of Object.values(unzipSync(out.bytes)))assert.ok(!strFromU8(data).includes('QA_PRIVATE'));assert.equal(out.manifest.coverage,'needs_completion');assert.equal(out.manifest.pendingCategories.length,25);assert.equal(out.manifest.files.length,0);}
  for(const role of ['youth','company','private'])test('three-group projection preserves every allowlisted fixture for '+role,()=>{const f=historyFixture(role),out=build(f.b,f.m);clean(out);for(const [relation,rows]of Object.entries(historyRows(role))){const cat=f.b.collection.categories.find(c=>c.sources.some(s=>s.relation===relation)).id;const data=read(out,cat);assert.equal(data.status,'partially_included');const record=data.records.find(r=>r.source===relation);assert.deepEqual(record,{source:relation,...Object.fromEntries(historyFields[relation].map(key=>[key,rows[0][key]]))});assert.equal(rows.length,1);}});
  for(const role of ['youth','company','private'])for(const [relation,rows]of Object.entries(historyRows(role))){
   const row=rows[0],owner=Object.hasOwn(row,'youth_user_id')?'youth_user_id':Object.hasOwn(row,'user_id')?'user_id':Object.hasOwn(row,'owner_id')?'owner_id':'company_user_id';

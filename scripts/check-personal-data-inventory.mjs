@@ -12,10 +12,12 @@ export function mergeReviewedCatalogAdditions(base,additions) {
  if(new Set(relations.map(r=>r.schema_name+'.'+r.table_name)).size!==relations.length||new Set(buckets.map(b=>b.id)).size!==buckets.length)throw Error('Catalog additions cannot replace existing metadata.');
  return{...base,capturedOn:additions.capturedOn,relations,buckets};
 }
-export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
- JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')),
- JSON.parse(readFileSync(new URL('docs/privacy/catalog.export-storage-2026-10-30.json',root),'utf8')),
-);
+export const readReviewedCatalog=()=>[
+ 'docs/privacy/catalog.export-storage-2026-10-30.json',
+ 'docs/privacy/catalog.storage-lifecycle-2026-11-10.json',
+ 'docs/privacy/catalog.account-cv-drafts-2026-11-10.json',
+].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')));
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;

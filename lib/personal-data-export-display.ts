@@ -3,6 +3,7 @@ import type { ExportCategory } from "./personal-data-export";
 type Data = NonNullable<ExportCategory["records"]>[number]["data"];
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 const sources: Record<string, string> = {
+  "public.youth_cv_drafts": "Privat CV-utkasts version",
   "public.ai_onboarding_sessions": "CV-utkastets status", "public.youth_videos": "Videons livscykel", "public.notifications": "Notisens lässtatus",
   "public.profiles": "Kontotyp", "public.youth_profiles": "Profilens status", "public.company_profiles": "Företagsprofilens status", "public.private_profiles": "Uppdragsgivarens profil", "public.company_billing_details": "Fakturaunderlagets version",
   "public.youth_application_drafts": "Ansökningsutkast", "public.youth_saved_jobs": "Sparat jobb", "public.youth_job_impressions": "Visat jobb", "public.youth_job_dismissals": "Bortvalt jobb", "public.swipe_actions": "Jobbval", "public.application_workplace_preferences": "Vald arbetsplats",

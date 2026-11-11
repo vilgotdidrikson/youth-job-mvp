@@ -31,12 +31,24 @@
       "id": "private-cv-work",
       "relations": [
         "public.ai_onboarding_sessions",
-        "public.ai_onboarding_messages"
+        "public.ai_onboarding_messages",
+        "public.youth_cv_drafts"
       ],
       "classification": "subject",
-      "subjectScope": "session.youth_user_id = egen identitet; meddelanden kopplas genom session_id.",
-      "data": "Både pågående/avslutade CV-samtal, rå användartext och assistenttext.",
-      "review": "Privata utkast och avvisade förslag får inte utelämnas bara för att de inte godkänts för matchning. Fritext granskas för tredje personer; inget nytt AI-anrop för formatering/maskering."
+      "subjectScope": "session.youth_user_id = egen identitet; meddelanden kopplas genom session_id. Kontoutkast: user_id = egen ungdomsidentitet.",
+      "data": "Både pågående/avslutade CV-samtal, rå användartext och assistenttext. Kontoutkast innehåller formsteg, metodval, användartext och eventuellt genererat CV; inget granskningsgodkännande.",
+      "review": "Privata utkast och avvisade förslag får inte utelämnas bara för att de inte godkänts för matchning. Fritext granskas för tredje personer; inget nytt AI-anrop för formatering/maskering. youth_cv_drafts raderas med ungdomskontot och kan tömmas av ägaren. Kontoutkastets fritext samlas för granskning; automatisk export tar endast ägar-, revisions- och tidsmetadata."
+    },
+    {
+      "id": "storage-lifecycle",
+      "relations": [
+        "storage.bucket_lifecycle_states",
+        "storage.lifecycle_abandoned_artifacts"
+      ],
+      "classification": "review",
+      "subjectScope": "Driftmetadata per bucket; eventuell objekt-/versionsreferens kräver individuell avgränsning, inte global utläsning.",
+      "data": "Plattformens livscykelkörning, status/fel, fortsättningsmetadata och övergivna objektreferenser. Endast schemametadata inventerad.",
+      "review": "Tillkom i faktisk katalog före N09. Inga användarrader har lästs. Kan innehålla driftnycklar/objektnamn; inga råa driftfält eller claim-token förs till automatisk kontoexport."
     },
     {
       "id": "own-discovery",
