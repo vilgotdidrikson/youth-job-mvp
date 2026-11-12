@@ -19,7 +19,19 @@ for (const mode of ["login", "signup"]) {
 const component = readFileSync("components/auth-page.tsx", "utf8");
 assert.match(component, /^"use client";/);
 assert.match(component, /useState<Mode>\(initialMode\)/);
-assert.match(component, /<Suspense fallback=\{null\}><LoginPageContent initialMode=\{initialMode\}/);
+const authSource = ts.createSourceFile("auth-page.tsx", component, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+let wrappedLogin = false;
+function inspect(node) {
+  if (ts.isJsxElement(node) && node.openingElement.tagName.getText(authSource) === "Suspense") {
+    const fallback = node.openingElement.attributes.properties.find(attribute => attribute.name?.getText(authSource) === "fallback");
+    const login = node.children.find(child => ts.isJsxSelfClosingElement(child) && child.tagName.getText(authSource) === "LoginPageContent");
+    const mode = login?.attributes.properties.find(attribute => attribute.name?.getText(authSource) === "initialMode");
+    if (fallback && mode?.initializer?.getText(authSource) === "{initialMode}") wrappedLogin = true;
+  }
+  ts.forEachChild(node, inspect);
+}
+inspect(authSource);
+assert.ok(wrappedLogin, "Login search params must remain inside Suspense with a fallback");
 const onboarding = readFileSync("app/youth/onboarding/page.tsx", "utf8");
 assert.match(onboarding, /return <ShortYouthOnboarding \/>;/);
 assert.doesNotMatch(onboarding, /export function YouthOnboardingFlow/);

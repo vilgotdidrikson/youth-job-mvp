@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import inventory from "../../docs/privacy/personal-data-inventory.json";
+import { projectIndicatorPreferences } from "../notification-indicator-preferences";
 
 // Internal review material only: never send this result directly to a client or
 // the package builder. Ownership does not settle third-party rights in free text.
@@ -98,6 +99,7 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
       checkCancellation();
       if (error || !data.user || data.user.is_anonymous) throw new PersonalDataCollectionError("unauthenticated");
       if (data.user.id !== expectedSubjectId) throw new PersonalDataCollectionError("account_changed");
+      return data.user;
     } catch (error) {
       if (error instanceof PersonalDataCollectionError) throw error;
       throw new PersonalDataCollectionError("unauthenticated");
@@ -232,7 +234,14 @@ export async function collectPersonalDataForReview(client: SupabaseClient, expec
         }
       }
     }));
-    await identity();
+    const verifiedUser = await identity();
+    // Auth API getUser supplies only this user's closed preference projection.
+    // Never collect the remaining raw metadata, factors, tokens or identities.
+    try {
+      collected.set("auth.users", { relation: "auth.users", status: "collected", rows: [{ id: expectedSubjectId, ...projectIndicatorPreferences(verifiedUser.user_metadata) }] });
+    } catch {
+      collected.set("auth.users", { relation: "auth.users", status: "unavailable", reason: "invalid_response" });
+    }
     return {
       version: 1, subjectId: expectedSubjectId, startedAt, finishedAt: new Date().toISOString(),
       visibility: reviewClient ? "subject_review" : "caller_rls", consistency: "non_transactional", reviewState: "pending",

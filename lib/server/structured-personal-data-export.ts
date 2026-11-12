@@ -19,6 +19,7 @@ interface Policy { category: string; owner: string; key: string; youthOnly?: boo
 // A closed list of scalar fields. Never spread a source row or stringify nested
 // data: extra columns, text, URLs, snapshots and third-party profiles stay out.
 const POLICIES: Record<string, Policy> = {
+  "auth.users": { category: "auth-identity", owner: "id", key: "id", fields: { id: uuid, indicator_preferences_configured: requiredBoolean, indicator_preferences_version: (v): v is number | null => v === null || v === 1, indicator_messages: boolean, indicator_questions: boolean, indicator_notifications: boolean } },
   "public.youth_cv_drafts": { category: "private-cv-work", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, revision: uuid, updated_at: requiredTimestamp } },
   "public.profiles": { category: "account", owner: "id", key: "id", fields: { id: uuid, role } },
   "public.youth_profiles": { category: "account", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, onboarding_completed: boolean, cv_generated: boolean, cv_uploaded: boolean, short_onboarding_completed: boolean, recruitment_profile_version: version, updated_at: timestamp } },
@@ -99,6 +100,10 @@ export function buildStructuredPersonalDataExport(bundle: Bundle, metadata: Omit
             const value = row[key];
             if (!validate(value)) fail();
             data[key] = value as Scalar;
+          }
+          if (source.relation === "auth.users") {
+            const keys = ["indicator_preferences_version", "indicator_messages", "indicator_questions", "indicator_notifications"];
+            if (data.indicator_preferences_configured ? (data.indicator_preferences_version !== 1 || keys.slice(1).some(key => typeof data[key] !== "boolean")) : keys.some(key => data[key] !== null)) fail();
           }
           const key = data[policy.key];
           if (typeof key !== "string" || seenRows.has(key)) fail();

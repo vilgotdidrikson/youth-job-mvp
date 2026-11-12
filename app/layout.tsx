@@ -4,6 +4,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
 import { ProductSurface } from "@/components/product-surface";
 import { NavigationIndicatorsProvider } from "@/hooks/use-navigation-indicators";
+import { IndicatorPreferencesProvider } from "@/hooks/use-indicator-preferences";
 import "./fonts.css";
 import "./globals.css";
 import "./product-design.css";
@@ -40,12 +41,14 @@ export default function RootLayout({
         className="antialiased"
       >
         <SessionProvider>
+          <IndicatorPreferencesProvider>
           <NavigationIndicatorsProvider>
           <ProductSurface>{children}</ProductSurface>
           <Suspense fallback={null}>
             <MobileNav />
           </Suspense>
           </NavigationIndicatorsProvider>
+          </IndicatorPreferencesProvider>
         </SessionProvider>
       </body>
     </html>
