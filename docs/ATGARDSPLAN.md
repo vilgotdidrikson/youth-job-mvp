@@ -7,6 +7,11 @@ Videobeslut 2026-10-18: permanent profilvideo ska tas bort (N22). Video behålls
 För L-punkter innebär Ej påbörjad att denna samlade inventering/verifiering inte är avklarad, inte att all berörd funktion saknas. Tidigare byggda delar ska återanvändas. Fortsatt kodarbete är godkänt enligt prioriteringslistan, i avgränsade leveranser med publicering och verifiering.
 
 
+## Regler för kodändringar
+
+- Ändra endast kod som berör det område du arbetar med för stunden.
+- Skriv minsta nödvändiga mängd kod. Om samma problem kan lösas med 50 rader i stället för 200, välj lösningen med 50 rader, med bibehållen funktion och säkerhet.
+
 ## GDPR och personuppgifter – samlad avstämning 2026-11-09
 
 Beställt av användaren: samordna nuvarande och framtida GDPR-beslut i denna arbetsplan, först efter kontroll av befintlig omfattning. Detta tillägg är planering, inte ny produktkod, juridiskt godkännande eller aktiverad gallring. Interna ägar-, vinst-, kodöverlåtelse- och utträdesavtal ingår inte. Befintliga uppgifter, ägare, statusar och reservationer bevaras.
