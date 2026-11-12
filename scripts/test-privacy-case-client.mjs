@@ -21,5 +21,12 @@ try{
  reset();onFetch=()=>Response.json({...record(),id:B});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain===true);ok(requests.length===1,'wrong write receipt requires read-back');
  reset();hanging=true;const controller=new AbortController();const pending=client.readOwnPrivacyCases(A,null,controller.signal);controller.abort();await assert.rejects(()=>pending);ok(requests.length===0,'aborted hanging Auth is bounded before any case request');
  reset();onFetch=()=>Response.json({error:'SECRET_SERVER_ERROR'},{status:503});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain&&!e.message.includes('SECRET_SERVER_ERROR'));ok(requests.length===1,'backend failure is sanitized and treated as uncertain');
+ const before={id:rev,created_at:'2026-11-12T09:00:00.123456Z'},old={id:B,action:'reply',public_message:'QA äldre',created_at:'2026-11-12T09:00:00.123455Z'};
+ reset();onFetch=()=>Response.json({id,revision:rev,events:[{...old,private_actor:'DROP'}],next:null});v=await client.readPrivacyCaseHistory(A,record(),before,signal());ok(v.events.length===1&&!JSON.stringify(v).includes('DROP'),'history preserves microsecond ordering and strips private extra fields');
+ for(const bad of [{id:B,revision:rev,events:[old],next:null},{id,revision:B,events:[old],next:null},{id,revision:rev,events:[old,old],next:null},{id,revision:rev,events:[{...old,created_at:before.created_at,id:rev}],next:null},{id,revision:rev,events:[old],next:{id:rev,created_at:old.created_at}}]){assert.throws(()=>model.parsePrivacyCaseHistory(bad,record(),before));count++;}
+ ok(model.privacyCaseFollowup({...record(),status:'closed'})===null,'closed cases have no active deadline prompt');
+ v=model.privacyCaseFollowup({...record(),review_after:'2026-11-11T09:00:00Z'},Date.parse('2026-11-12T09:00:00Z'));ok(v.reviewOverdue&&!v.replyOverdue&&v.due===Date.parse('2026-11-11T09:00:00Z'),'review date and reply deadline remain separate');
+ ok(model.parsePrivacyCase({...record(),review_after:old.created_at},A).review_after===null,'own parser never exposes the internal review date');
+ reset();onFetch=()=>Response.json({...record(),id:B});await assert.rejects(()=>client.replyToOwnPrivacyCase(A,record(),'QA',B,signal()),e=>e.uncertain===true);ok(requests.length===1,'foreign reply receipt is discarded without another write');
  console.log('PASS '+count+' model/client checks; simulated Auth and fetch. No live account or browser claim.');
 }finally{Module._load=load;globalThis.fetch=network;}

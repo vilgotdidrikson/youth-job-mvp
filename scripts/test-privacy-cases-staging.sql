@@ -11,8 +11,9 @@ insert into private.privacy_case_handlers(user_id)values('a7d94e14-6fd9-478d-908
 insert into auth.mfa_factors(id,user_id,factor_type,status,secret,created_at,updated_at)values
  ('a7d94e14-6fd9-478d-9089-c7d3f9672210','a7d94e14-6fd9-478d-9089-c7d3f9672203','totp','verified','QA_SYNTHETIC_NOT_AN_AUTH_FACTOR',now(),now());
 insert into auth.sessions(id,user_id,created_at,updated_at,not_after)values('a7d94e14-6fd9-478d-9089-c7d3f9672211','a7d94e14-6fd9-478d-9089-c7d3f9672203',now(),now(),now()+interval '5 minutes');
+insert into auth.sessions(id,user_id,created_at,updated_at,not_after)values('a7d94e14-6fd9-478d-9089-c7d3f9672212','a7d94e14-6fd9-478d-9089-c7d3f9672201',now(),now(),now()+interval '5 minutes'),('a7d94e14-6fd9-478d-9089-c7d3f9672213','a7d94e14-6fd9-478d-9089-c7d3f9672202',now(),now(),now()+interval '5 minutes');
 set local role service_role;
-do $$ declare c jsonb; saved jsonb; first_revision uuid; due text;begin
+do $$ declare c jsonb; saved jsonb; first_revision uuid; due text; page jsonb; anchor jsonb; total integer; seen uuid[];begin
  if not public.privacy_case_intake_available() then raise exception 'configured synthetic intake missing';end if;
  c:=public.create_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201','a7d94e14-6fd9-478d-9089-c7d3f9672220','correction','QA rättelse – åäö');
  if c->>'body'<>'QA rättelse – åäö' or c->>'is_mine'<>'false' then raise exception 'invalid projection';end if;
@@ -33,20 +34,41 @@ do $$ declare c jsonb; saved jsonb; first_revision uuid; due text;begin
  if not exists(select 1 from private.privacy_cases where id=(c->>'id')::uuid and retention_until=closed_at+interval '12 months') then raise exception 'retention marker';end if;
  c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'reopen','');
  if c->>'reply_due_at'<>due or c->>'closed_at' is not null then raise exception 'reopen changed deadline';end if;
+ if c->>'review_after' is null or public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672201')->'cases'->0->>'review_after' is not null then raise exception 'review date projection';end if;
+ insert into private.privacy_case_events(id,case_id,actor_id,action,public_message,created_at)
+ select gen_random_uuid(),(c->>'id')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672203','reply','QA older response '||i,'2026-10-01T10:00:00.123456Z'::timestamptz from generate_series(1,48)i;
+ c:=private.privacy_case_projection((c->>'id')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672203');
+ anchor:=c->'events'->0;select array_agg((e->>'id')::uuid) into seen from jsonb_array_elements(c->'events')e;
+ loop
+  page:=public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+  if page->>'id'<>c->>'id' or page->>'revision'<>c->>'revision' or page::text like '%actor_id%' then raise exception 'history projection';end if;
+  select seen||coalesce(array_agg((e->>'id')::uuid),'{}'::uuid[]) into seen from jsonb_array_elements(page->'events')e;
+  anchor:=page->'next';exit when anchor='null'::jsonb;
+ end loop;
+ select count(*) into total from private.privacy_case_events where case_id=(c->>'id')::uuid;
+ if cardinality(seen)<>total or (select count(distinct id) from unnest(seen)id)<>total then raise exception 'history pagination lost or repeated an event';end if;
+ anchor:=c->'events'->0;
+ page:=public.read_privacy_case_history(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+ if jsonb_array_length(page->'events')<>20 then raise exception 'handler history read';end if;
+ begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672202',null,'a7d94e14-6fd9-478d-9089-c7d3f9672213',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'foreign history accepted';exception when sqlstate 'PT404' then null;end;
+ begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,gen_random_uuid(),(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'stale history accepted';exception when sqlstate 'PT409' then null;end;
  update private.privacy_case_handlers set enabled=false where user_id='a7d94e14-6fd9-478d-9089-c7d3f9672203';
  begin perform public.list_privacy_cases(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'revoked handler read';exception when insufficient_privilege then null;end;
+ begin perform public.read_privacy_case_history(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'revoked handler history read';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
 set local role authenticated;
 do $$begin
+ begin perform public.read_privacy_case_history(null,null,null,null,null,null,null);raise exception 'authenticated history RPC bypass';exception when insufficient_privilege then null;end;
  begin perform public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672201');raise exception 'authenticated RPC bypass';exception when insufficient_privilege then null;end;
  begin perform * from private.privacy_cases;raise exception 'authenticated table bypass';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
 set local role anon;
 do $$begin
+ begin perform public.read_privacy_case_history(null,null,null,null,null,null,null);raise exception 'anonymous history RPC bypass';exception when insufficient_privilege then null;end;
  begin perform public.privacy_case_access('a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'anonymous RPC bypass';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
-select 'PASS DevStaging SQL: configured synthetic scope, own/idempotent create, foreign denial, explicit handler access, stale claim, public response, own/idempotent follow-up, close/reopen/deadline/retention, revoked grant and authenticated/anon direct denial. Auth challenges and parallel transactions are NOT tested here. All fixtures roll back.' as result;
+select 'PASS DevStaging SQL: configured synthetic scope, own/idempotent create, foreign denial, explicit handler access, stale claim, public response, own/idempotent follow-up, close/reopen/deadline/retention, review dates, complete tied-microsecond history paging, stale/foreign/revoked history denial and authenticated/anon direct denial. Auth challenges and parallel transactions are NOT tested here. All fixtures roll back.' as result;
 rollback;

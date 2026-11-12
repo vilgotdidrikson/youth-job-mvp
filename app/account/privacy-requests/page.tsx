@@ -15,15 +15,17 @@ export default function PrivacyRequestsPage() {
     {user ? <Workspace key={user.id} owner={user.id}/> : <section className={styles.panel}><p>Logga in för att skapa och följa ett eget ärende. Du kan också kontakta oss utan konto.</p><Link href="/login">Logga in</Link><p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p></section>}
   </main>;
 }
+type ReplyDraft = { text: string; id: string | null };
 function Workspace({ owner }: { owner: string }) {
   const [items,setItems] = useState<PrivacyCase[]>([]), [next,setNext] = useState<CaseCursor|null>(null);
   const [available,setAvailable] = useState(false), [loaded,setLoaded] = useState(false), [busy,setBusy] = useState(false), [check,setCheck] = useState(false), [note,setNote] = useState("");
   const [kind,setKind] = useState<PrivacyCaseKind>("access"), [body,setBody] = useState("");
+  const drafts=useRef(new Map<string,ReplyDraft>());
   const pending = useRef<{id:string;kind:PrivacyCaseKind;body:string}|null>(null), active = useRef(false), lock = useRef(false), task = useRef<AbortController|null>(null);
   useEffect(() => { active.current=true; return () => {active.current=false;task.current?.abort();lock.current=false;}; },[]);
   const run = async (operation: (signal:AbortSignal)=>Promise<void>, writes=false) => {
-    if(lock.current||!active.current)return;lock.current=true;setBusy(true);setNote("");const c=new AbortController();task.current=c;
-    try {await operation(c.signal);} catch(e) {if(active.current&&!c.signal.aborted){setNote(e instanceof Error?e.message:"Begäran kunde inte slutföras.");if(writes)setCheck(true);}}
+    if(lock.current||!active.current)return false;lock.current=true;setBusy(true);setNote("");const c=new AbortController();task.current=c;
+    try {await operation(c.signal);return active.current&&!c.signal.aborted;} catch(e) {if(active.current&&!c.signal.aborted){setNote(e instanceof Error?e.message:"Begäran kunde inte slutföras.");if(writes)setCheck(true);}return false;}
     finally {if(task.current===c){task.current=null;lock.current=false;if(active.current)setBusy(false);}}
   };
   const read = (cursor:CaseCursor|null=null) => run(async signal => {
@@ -53,12 +55,15 @@ function Workspace({ owner }: { owner: string }) {
       <button className="primary-btn" disabled={busy||check||!body.trim()}>{pending.current?"Försök spara samma ärende":"Skicka begäran"}</button>
     </form></section>}
     {loaded&&items.length===0&&<p>Du har inga sparade ärenden.</p>}
-    {items.map(item=><section key={item.id} className={styles.panel}><PrivacyCaseThread item={item}/>{item.status!=="closed"&&<ReplyForm key={item.revision} item={item} disabled={busy||check} send={reply}/>}</section>)}
+    {items.map(item=><section key={item.id} className={styles.panel}><PrivacyCaseThread item={item} owner={owner}/><ReplyForm key={item.id} drafts={drafts.current} item={item} disabled={busy||check||item.status==="closed"} send={reply}/></section>)}
     {next&&<div className={styles.actions}><button type="button" className="secondary-btn" disabled={busy} onClick={()=>void read(next)}>Visa äldre ärenden</button></div>}
     <p>Ärendeunderlag kan behöva bevaras efter att kontot raderats för att handlägga din begäran. Läs <Link href="/privacy">integritetsinformationen</Link> eller fråga oss om vad som gäller för ditt ärende.</p>
   </>;
 }
-function ReplyForm({item,disabled,send}:{item:PrivacyCase;disabled:boolean;send:(item:PrivacyCase,text:string,id:string)=>Promise<void>}) {
-  const [text,setText]=useState("");const id=useRef<string|null>(null);
-  return <form className={styles.form} onSubmit={e=>{e.preventDefault();if(disabled||!text.trim())return;id.current??=crypto.randomUUID();void send(item,text,id.current);}}><label>Komplettera ärendet<textarea required maxLength={4000} value={text} disabled={disabled} onChange={e=>setText(e.target.value)}/></label><button className="secondary-btn" disabled={disabled||!text.trim()}>Skicka komplettering</button></form>;
+function ReplyForm({item,disabled,send,drafts}:{item:PrivacyCase;disabled:boolean;drafts:Map<string,ReplyDraft>;send:(item:PrivacyCase,text:string,id:string)=>Promise<boolean>}) {
+  const [text,setText]=useState(()=>drafts.get(item.id)?.text??"");const id=useRef<string|null>(drafts.get(item.id)?.id??null),active=useRef(false),locked=useRef(false);
+  useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
+  useEffect(()=>{if(id.current&&item.events.some(event=>event.id===id.current&&event.action==="user_reply")){setText("");id.current=null;drafts.delete(item.id);}},[item,drafts]);
+  if(item.status==="closed"&&!text)return null;
+  return <form className={styles.form} onSubmit={async e=>{e.preventDefault();if(disabled||locked.current||!text.trim())return;locked.current=true;id.current??=crypto.randomUUID();drafts.set(item.id,{text,id:id.current});try{if(await send(item,text,id.current)&&active.current){setText("");id.current=null;drafts.delete(item.id);}}finally{locked.current=false;}}}><label>Komplettera ärendet<textarea required maxLength={4000} value={text} readOnly={item.status==="closed"} disabled={disabled&&item.status!=="closed"} onChange={e=>{setText(e.target.value);id.current=null;drafts.set(item.id,{text:e.target.value,id:null});}}/></label>{item.status==="closed"&&text&&<p role="status">Ärendet har avslutats. Din oskickade text finns kvar här för att du ska kunna kopiera den och kontakta oss.</p>}<button className="secondary-btn" disabled={disabled||!text.trim()}>Skicka komplettering</button></form>;
 }

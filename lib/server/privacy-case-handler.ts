@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { reauthenticateAccount, AccountReauthenticationError } from "./account-reauthentication";
 import { verifyPersonalDataSession, PersonalDataSessionError } from "./personal-data-session";
-import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, PRIVACY_CASE_KINDS } from "../privacy-cases";
+import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS } from "../privacy-cases";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Vary": "Authorization, X-Account-Id", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
 class CaseError extends Error { constructor(readonly status: number) { super("Ärendet kunde inte behandlas."); } }
@@ -67,6 +67,12 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const cursor = parseCaseCursor(input.cursor);
         const response = await service.rpc("list_privacy_cases", { p_subject: admin ? null : owner, p_admin: admin ? owner : null, p_before: cursor?.created_at ?? null, p_before_id: cursor?.id ?? null }).abortSignal(signal); rpcError(response.error);
         result = parsePrivacyCasePage(response.data, admin ? undefined : owner);
+      } else if (action === "history") {
+        fields(input, admin ? ["action", "id", "revision", "cursor", "password", "totpCode"] : ["action", "id", "revision", "cursor"]);
+        const cursor = parseCaseCursor(input.cursor);
+        if (!isUuid(input.id) || !isUuid(input.revision) || !cursor) throw new CaseError(400);
+        const response = await service.rpc("read_privacy_case_history", { p_subject: admin ? null : owner, p_admin: admin ? owner : null, p_session: session, p_id: input.id, p_revision: input.revision, p_before: cursor.created_at, p_before_id: cursor.id }).abortSignal(signal); rpcError(response.error);
+        result = parsePrivacyCaseHistory(response.data, { id: input.id, revision: input.revision }, cursor);
       } else if (!admin && action === "create") {
         fields(input, ["action", "id", "kind", "body"]);
         if (!isUuid(input.id) || typeof input.kind !== "string" || !Object.hasOwn(PRIVACY_CASE_KINDS, input.kind)) throw new CaseError(400);

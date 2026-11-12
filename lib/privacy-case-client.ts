@@ -1,6 +1,6 @@
 "use client";
 import { getSupabaseClient } from "./supabase";
-import { parsePrivacyCase, parsePrivacyCasePage, type CaseAction, type CaseCursor, type PrivacyCaseKind, type PrivacyCase } from "./privacy-cases";
+import { parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, type CaseAction, type CaseCursor, type PrivacyCaseKind, type PrivacyCase } from "./privacy-cases";
 export class PrivacyCaseRequestError extends Error {
   constructor(message: string, public readonly uncertain = false, public readonly status?: number) { super(message); }
 }
@@ -42,5 +42,11 @@ export async function adminPrivacyCases(owner: string, input: { action: "list"; 
   return input.action === "list" ? parsePrivacyCasePage(value) : parsePrivacyCase(value);
 }
 export async function replyToOwnPrivacyCase(owner: string, item: PrivacyCase, message: string, eventId: string, signal: AbortSignal) {
-  return parsePrivacyCase(await request(owner, { action: "reply", id: item.id, revision: item.revision, eventId, message }, signal, false, true), owner);
+  const result = parsePrivacyCase(await request(owner, { action: "reply", id: item.id, revision: item.revision, eventId, message }, signal, false, true), owner);
+  if (result.id !== item.id) throw new PrivacyCaseRequestError("Kompletteringen kunde inte bekräftas. Läs aktuell status igen.", true);
+  return result;
+}
+export async function readPrivacyCaseHistory(owner: string, item: PrivacyCase, cursor: CaseCursor, signal: AbortSignal, credentials?: { password: string; totpCode: string }) {
+  const input = { action: "history", id: item.id, revision: item.revision, cursor, ...credentials };
+  return parsePrivacyCaseHistory(await request(owner, input, signal, !!credentials, false), item, cursor);
 }

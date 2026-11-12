@@ -834,6 +834,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f20"></a>
 ### F20 Gör integritet villkor och hjälp lätta att nå
 
+- Fortsättning för granskning 2026-11-12: [PR #204](https://github.com/vilgotdidrikson/youth-job-mvp/pull/204), `codex/l16-l13-f20-case-followup-20261112`, Vilgot / Codex. L16: befintliga svars-/uppföljningsdatum och passerade frister i adminkön, sortering av inlästa öppna ärenden med tydlig sidbegränsning. L13: revisions-/konto-/sessionsbunden äldre historik samt bevarad komplettering vid statusläsning/sidbyte; bekräftad händelse tömmer utkastet. F20: statusanpassat nästa steg, svarsdatum och kontakt-/mejlbesked. 88 lokala API-/klient-/komponentkontroller, 54 lokala PostgreSQL-kontroller, verkligt återställt DevStaging-SQL-prov, sessions-/nyautentiserings-/inventeringsregressioner, riktad lint, TypeScript, designtokens och standardbygge passerar. Migrationen ändrar endast skyddade funktioner, inga tabeller/kolumner/buckets; inga verkliga handläggare eller QA-rester finns kvar. Positiv inloggad browser-/mobil-/fysisk MFA-acceptans kvarstår; previewmiljön stoppades av inkompatibel startflagga. Påminnelser, fristanpassning, femdagarsmål, mejl, incidenter och faktisk gallring är fortsatt öppna. Se `docs/L16_L13_F20_PRIVACY_CASES.md`. Hela kortets status bevaras.
+
+
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Codex, `codex/l16-l13-f20-case-followup-20261112`. L16: svarsfrist och uppföljningsbehov i skyddad adminkö. L13: sidvis äldre egen ärendehistorik och bevarad komplettering vid statusläsning. F20: tydlig ärendestatus, svarsdatum och nästa steg. Befintliga behörigheter/nyautentisering bevaras; inga nya handläggare, mejlutskick eller juridiska sluttexter. Aktuell dev och öppna PR:er kontrollerade; huvudkortens status och övriga reservationer bevaras.
 
 
@@ -1609,6 +1612,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Fortsättning för granskning 2026-11-12: [PR #204](https://github.com/vilgotdidrikson/youth-job-mvp/pull/204), `codex/l16-l13-f20-case-followup-20261112`, Vilgot / Codex. L16: befintliga svars-/uppföljningsdatum och passerade frister i adminkön, sortering av inlästa öppna ärenden med tydlig sidbegränsning. L13: revisions-/konto-/sessionsbunden äldre historik samt bevarad komplettering vid statusläsning/sidbyte; bekräftad händelse tömmer utkastet. F20: statusanpassat nästa steg, svarsdatum och kontakt-/mejlbesked. 88 lokala API-/klient-/komponentkontroller, 54 lokala PostgreSQL-kontroller, verkligt återställt DevStaging-SQL-prov, sessions-/nyautentiserings-/inventeringsregressioner, riktad lint, TypeScript, designtokens och standardbygge passerar. Migrationen ändrar endast skyddade funktioner, inga tabeller/kolumner/buckets; inga verkliga handläggare eller QA-rester finns kvar. Positiv inloggad browser-/mobil-/fysisk MFA-acceptans kvarstår; previewmiljön stoppades av inkompatibel startflagga. Påminnelser, fristanpassning, femdagarsmål, mejl, incidenter och faktisk gallring är fortsatt öppna. Se `docs/L16_L13_F20_PRIVACY_CASES.md`. Hela kortets status bevaras.
+
+
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Codex, `codex/l16-l13-f20-case-followup-20261112`. L16: svarsfrist och uppföljningsbehov i skyddad adminkö. L13: sidvis äldre egen ärendehistorik och bevarad komplettering vid statusläsning. F20: tydlig ärendestatus, svarsdatum och nästa steg. Befintliga behörigheter/nyautentisering bevaras; inga nya handläggare, mejlutskick eller juridiska sluttexter. Aktuell dev och öppna PR:er kontrollerade; huvudkortens status och övriga reservationer bevaras.
 
 
@@ -1780,6 +1786,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l16"></a>
 ### L16 Skyddade personuppgiftsärenden och incidenthantering
+
+- Fortsättning för granskning 2026-11-12: [PR #204](https://github.com/vilgotdidrikson/youth-job-mvp/pull/204), `codex/l16-l13-f20-case-followup-20261112`, Vilgot / Codex. L16: befintliga svars-/uppföljningsdatum och passerade frister i adminkön, sortering av inlästa öppna ärenden med tydlig sidbegränsning. L13: revisions-/konto-/sessionsbunden äldre historik samt bevarad komplettering vid statusläsning/sidbyte; bekräftad händelse tömmer utkastet. F20: statusanpassat nästa steg, svarsdatum och kontakt-/mejlbesked. 88 lokala API-/klient-/komponentkontroller, 54 lokala PostgreSQL-kontroller, verkligt återställt DevStaging-SQL-prov, sessions-/nyautentiserings-/inventeringsregressioner, riktad lint, TypeScript, designtokens och standardbygge passerar. Migrationen ändrar endast skyddade funktioner, inga tabeller/kolumner/buckets; inga verkliga handläggare eller QA-rester finns kvar. Positiv inloggad browser-/mobil-/fysisk MFA-acceptans kvarstår; previewmiljön stoppades av inkompatibel startflagga. Påminnelser, fristanpassning, femdagarsmål, mejl, incidenter och faktisk gallring är fortsatt öppna. Se `docs/L16_L13_F20_PRIVACY_CASES.md`. Hela kortets status bevaras.
+
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Codex, `codex/l16-l13-f20-case-followup-20261112`. L16: svarsfrist och uppföljningsbehov i skyddad adminkö. L13: sidvis äldre egen ärendehistorik och bevarad komplettering vid statusläsning. F20: tydlig ärendestatus, svarsdatum och nästa steg. Befintliga behörigheter/nyautentisering bevaras; inga nya handläggare, mejlutskick eller juridiska sluttexter. Aktuell dev och öppna PR:er kontrollerade; huvudkortens status och övriga reservationer bevaras.
 

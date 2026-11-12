@@ -13,3 +13,6 @@
 .panel blockquote { margin: 1rem 0; padding: .25rem 1rem; border-left: 3px solid var(--color-brand); }
 .list { display: grid; gap: .75rem; }
 .list button { text-align: left; min-height: 48px; padding: .75rem; }
+
+.message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.followup { display: block; color: var(--color-text); }
