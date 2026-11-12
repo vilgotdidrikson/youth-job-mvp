@@ -1,9 +1,10 @@
 "use client";
 import { JOB_CATEGORIES, categoryLabel, suggestJobCategories, type JobCategoryId } from "@/lib/job-categories";
+import styles from "./job-category-field.module.css";
 
 export function JobCategoryField({title,description,legacyCategory="",value,manual,onChange,disabled=false}:{title:string;description:string;legacyCategory?:string;value:JobCategoryId[];manual:boolean;onChange:(ids:JobCategoryId[],manual:boolean)=>void;disabled?:boolean}) {
   const suggestion=suggestJobCategories(title,description,legacyCategory);
-  return <section aria-label="Gemensam jobbtyp" style={{marginTop:"1.2rem"}}>
+  return <section aria-label="Gemensam jobbtyp" className={styles.field}>
     <p><strong>{value.length?`Jobbet visas under ${value.map(categoryLabel).join(" och ")}`:"Jobbet saknar gemensam jobbtyp"}</strong></p>
     {!value.length&&<p>{!manual&&suggestion.candidates.length>1?"Flera jobbtyper kan passa. Välj själv vilka roller annonsen gäller.":"Annonsen kan publiceras ändå och visas bland övriga jobb. Din egen titel behålls."}</p>}
     {legacyCategory&&<p><small>Tidigare kategoritext: {legacyCategory}. Originaltexten finns kvar.</small></p>}

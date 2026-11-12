@@ -7,7 +7,9 @@
 .layout { display:grid; grid-template-columns:15rem minmax(0,1fr); gap:2rem; align-items:start; }
 .topics { display:grid; gap:.5rem; padding:1rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); position:sticky; top:1rem; }
 .content a { color:var(--color-brand); text-underline-offset:.2em; }
-.topics a,.actions a,.contact,.content footer a { display:inline-flex; align-items:center; min-height:44px; overflow-wrap:anywhere; }
+.topics a,.actions a,.contact,.content footer a,.layout section > a { display:inline-flex; align-items:center; min-height:44px; overflow-wrap:anywhere; }
+/* Inline links keep their line; the padding gives a 44px tap area (DA-19). */
+.content p a { display:inline-block; padding-block:9px; margin-block:-9px; }
 .layout article { min-width:0; background:var(--color-surface); padding:1.5rem; border:1px solid var(--color-border); border-radius:var(--radius-lg); }
 .layout section { scroll-margin-top:2rem; padding-block:1.5rem; border-bottom:1px solid var(--color-border); }
 .layout section:first-child { padding-top:0; }

@@ -4,7 +4,7 @@
 .company-verification.is-success { --cv-accent:#1a7f4b; --cv-bg:#f1faf5; --cv-border:#b6e8cf; }
 .company-verification-heading { display:flex; gap:.7rem; align-items:flex-start; }
 .company-verification-heading svg { flex-shrink:0; margin-top:.15rem; color:var(--cv-accent); }
-.company-verification-eyebrow { margin:0; font-size:.68rem; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--cv-accent); }
+.company-verification-eyebrow { margin:0; font-size:var(--text-xs); font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--cv-accent); }
 .company-verification h2 { margin:.15rem 0 0; font-size:1rem; color:var(--cv-accent); }
 .company-verification > p { margin:.55rem 0 0; font-size:.84rem; line-height:1.6; }
 .company-verification-steps { display:flex; flex-wrap:wrap; gap:.4rem 1rem; list-style:none; margin:.8rem 0 0; padding:0; font-size:.78rem; color:#6f6268; }
