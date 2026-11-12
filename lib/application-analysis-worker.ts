@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { matchingJobContext } from "./matching-job-context";
 import { disclosedMatchingSource, type ApplicationDisclosure } from "./application-disclosure";
+import { matchingDistanceLine } from "./server/approximate-distance";
 import { requestMatchingEvidence } from "./matching-provider";
 import { matchingCriteria, candidateSourceDetails, assessCandidate, assessDisclosedCandidate, criteriaRequiringAi } from "./candidate-assessment";
 import { candidateAssessmentHash } from "./candidate-assessment-hash";
@@ -23,8 +24,9 @@ export async function processApplicationAnalysisJobs(client: SupabaseClient, api
       if(packetError || !packet) throw Error("Disclosure unavailable");
       if (!sameDisclosure(packet, job.profile)) throw Error("Disclosure changed");
       const pdf = await pdfCvSource(client, job.profile.documents, job.youthId);
-      const publicSource=disclosedMatchingSource(packet as ApplicationDisclosure,pdf.text).text;
-      const input = candidateSourceDetails({ ...job.profile, pdf_cv_text: pdf.text });
+      const distance = matchingDistanceLine(job.profile);
+      const publicSource=disclosedMatchingSource(packet as ApplicationDisclosure,pdf.text,distance).text;
+      const input = candidateSourceDetails({ ...job.profile, pdf_cv_text: pdf.text, estimated_distance_line: distance });
       const source = input.text;
       const jobContext=matchingJobContext(job.profile);
       const hash = candidateAssessmentHash(source, criteria, pdf.status, job.version, input.status, Number(job.profile.disclosure_revision ?? 0),jobContext);

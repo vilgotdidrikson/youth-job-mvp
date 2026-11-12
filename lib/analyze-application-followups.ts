@@ -1,3 +1,4 @@
+import { matchingDistanceLine } from "./server/approximate-distance";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 import { matchingJobContext } from "./matching-job-context";
@@ -25,7 +26,7 @@ export async function analyzeApplicationFollowups(client: SupabaseClient, jobId:
   if (pdf.status === "unreadable") return { queued: 0, temporary: true };
   const criteria = matchingCriteria(matchProfile.weighted_criteria);
   let input;
-  try { input = candidateSourceDetails({ ...context.profile, pdf_cv_text: pdf.text }); }
+  try { input = candidateSourceDetails({ ...context.profile, pdf_cv_text: pdf.text, estimated_distance_line: matchingDistanceLine(context.profile) }); }
   catch { return { queued: 0, temporary: true, inputStatus: "review_required" }; }
   if (input.status === "review_required") return { queued: 0, inputStatus: input.status };
   const source = input.text;
