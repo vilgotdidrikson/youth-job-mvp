@@ -267,9 +267,9 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
 | 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
-| 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | För granskning | William / Claude |
+| 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | Klar | William / Claude |
 | 74 | [DA-20](#da-20) | P3 | Text under 12 px i inloggade företagsvyer och på kartan | För granskning | William / Claude |
-| 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | För granskning | William / Claude |
+| 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | Klar | William / Claude |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
@@ -2050,19 +2050,19 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 <a id="da-19"></a>
 ### DA-19 Större tryckytor som hittades i webbläsargranskningen
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 73
-- Status: För granskning
+- Status: Klar
 - Ansvarig: William / Claude
-- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek. Införd via [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207), merge `7328d75`.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-19), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Ge minst 44×44 px tryckyta med padding, `min-height` eller `min-width`: länken Hjälp och kontakt i slutet av `/privacy` (19 px), två länkar på `/help` (20 px), jobbtiteln på swipe-kortet (30 px vid 375 px), Till era annonser i företagets kandidatflik (20 px), Ändra jobbtyp i annonsbyggaren (24 px), kartans zoomknappar (42 px), logolänken i datornavigeringen och onboardingens sidhuvud (42 px) samt branschchipset IT (39 px brett). Den synliga storleken kan vara kvar.
 - Klar när: Inget av de listade elementen är under 44 px vid 375 och 1280 px i driftsatt dev.
 - Samordning / beroenden: `/privacy` och `/help` med [F20](#f20); kartan med [L08](#l08); i övrigt samma regel som [DA-16](#da-16).
 - Implementerat: Se implementationsuppdateringen 2026-11-12 under [DA-19 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-19).
-- Verifierat: Lokalt enligt audit-dokumentet (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge). Inloggade vyer kontrolleras i driftsatt dev efter merge.
-- Återstår / blockerare: —
+- Verifierat: Lokalt (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge) och i driftsatt dev 2026-11-12 med fiktivt QA-företag och QA-ungdom (raderade efteråt), Chromium vid 375 och 1280 px; se audit-dokumentet.
+- Återstår / blockerare: Safari/Firefox och fysisk telefon inte kontrollerade.
 
 <a id="da-20"></a>
 ### DA-20 Text under 12 px i inloggade företagsvyer och på kartan
@@ -2072,31 +2072,31 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Global ordning: 74
 - Status: För granskning
 - Ansvarig: William / Claude
-- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek. Införd via [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207), merge `7328d75`.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-20), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Höj till minst `--text-xs` (12 px): etiketten Er rekrytering, annonsantalet i fliken och jobbtypschipsen i `app/company/company-design.css`, verifieringskortets etikett i `components/company-verification-status.css`, byggarens stegbeskrivningar, AI-knapp och (valfritt) i `app/globals.css`, onboardingens etikett Er nästa kollega börjar här samt etiketten och jobbantalet på `/kartan`.
 - Klar när: Ingen synlig text under 12 px på `/company` (annonslista, kandidatflik och byggare), `/company/onboarding` och `/kartan` vid 375 och 1280 px.
 - Samordning / beroenden: Reglerna är äldre än DA-12; samordna med [DA-12](#da-12) för företagsvyn och med [F08](#f08) för verifieringskortet.
 - Implementerat: Se implementationsuppdateringen 2026-11-12 under [DA-20 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-20).
-- Verifierat: Lokalt enligt audit-dokumentet (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge). Inloggade vyer kontrolleras i driftsatt dev efter merge.
-- Återstår / blockerare: —
+- Verifierat: Lokalt (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge) och i driftsatt dev 2026-11-12 med fiktivt QA-företag och QA-ungdom (raderade efteråt), Chromium vid 375 och 1280 px; se audit-dokumentet. Kartans jobblista hade text under 12 px och rättas i uppföljningen `claude/da20-map-list-text-20261112`.
+- Återstår / blockerare: Kontroll av kartans jobblista i driftsatt dev efter uppföljningens merge. Safari/Firefox och fysisk telefon inte kontrollerade.
 
 <a id="da-21"></a>
 ### DA-21 Enhetliga fältetiketter i annonsbyggarens första steg
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P3
 - Global ordning: 75
-- Status: För granskning
+- Status: Klar
 - Ansvarig: William / Claude
-- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek. Införd via [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207), merge `7328d75`.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-21), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Ge Krav i annonsen och Anställningsform – välj ovan eller skriv eget samma etikettstil och avstånd som Arbetstitel. Ge jobbtypsblocket i `components/job-category-field.tsx` byggarens sekundära stil, med mindre stödtext och Ändra jobbtyp som sekundär kontroll. Ingen ändring av text eller fält.
 - Klar när: Alla fältetiketter i steg 1 har samma stil och avstånd vid 375 och 1280 px, och jobbtypsblocket ser ut som en del av formuläret.
 - Samordning / beroenden: Annonsbyggaren ligger i företagsvyn ([DA-12](#da-12)); samordna med ägarna av byggarens fält.
 - Implementerat: Se implementationsuppdateringen 2026-11-12 under [DA-21 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-21).
-- Verifierat: Lokalt enligt audit-dokumentet (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge). Inloggade vyer kontrolleras i driftsatt dev efter merge.
-- Återstår / blockerare: —
+- Verifierat: Lokalt (TypeScript, ESLint, produktionsbygge, regressionstester, tokenkontroll, Chromium mot lokalt produktionsbygge) och i driftsatt dev 2026-11-12 med fiktivt QA-företag och QA-ungdom (raderade efteråt), Chromium vid 375 och 1280 px; se audit-dokumentet.
+- Återstår / blockerare: Safari/Firefox och fysisk telefon inte kontrollerade.
 
 <a id="n24"></a>
 ### N24 Företagets egna kompletteringsfrågor före matchning
