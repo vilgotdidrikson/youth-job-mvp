@@ -200,7 +200,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Pågår | Codex |
 | 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
-| 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Ej påbörjad | — |
+| 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | Pågår | Vilgot / Claude |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Pågår | Vilgot / Codex |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
@@ -1539,14 +1539,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 13.6
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Claude
+- Branch/PR: `claude/n21-cv-feedback-20261112`, reserverad före kodarbete 2026-11-12 efter användarens beställning av nya punkter. Aktuell dev `483612e` och öppna PR:er kontrollerade (äldre #40 samt egen #211 utan överlapp). Omfattning: valfri knapp Få förbättringsförslag för uppladdat CV, privat PDF-läsning med tydligt besked vid oläsbar fil, lokal rensning av kontaktuppgifter före AI-anrop, få prioriterade tips och frågor utan ifyllda svar, lokal upplysning om kontaktuppgifter i filen samt möjlighet att spara ett eget svar i profilen genom de sparade svaren från F12/N19. Originalfilen ändras aldrig. Ingen databasändring och ingen lagring av förslagen.
 - Åtgärd: Behåll original-PDF och erbjud Få förbättringsförslag för struktur, tydlighet, upprepningar och saknade relevanta uppgifter. Ge konkreta frivilliga frågor utan att fylla i svar. Godkända kompletteringar kan läggas i profilen och användaren väljer om nytt grund-CV ska skapas. Återanvänd PDF-läsning och åtkomstkontroll.
 - Klar när: Originalet ersätts aldrig utan uttryckligt val. Saknade fakta blir förslag/frågor, inte publicerade antaganden. Oåtkomlig/oläsbar/skannad PDF hanteras tydligt utan falskt genomläsningsbesked. Samma granskningskrav som N19/N20 gäller; uppladdning kräver inte AI-genomläsning.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
 - Tillägg 2026-10-18: Uppladdat CV kan innehålla kontaktuppgifter/exakt bostadsadress. Samordna granskad dokumentdelning, tydlig information och förhandsvisning med N19/L09; dolda profilfält maskerar inte PDF-innehåll. Godkända kompletteringar ger inte generell företagsåtkomst till profilen.
-- Implementerat: —
+- Implementerat 2026-11-12 (för granskning): valfri panel Få förbättringsförslag efter uppladdning, privat PDF-läsning med besked vid oläsbar fil, lokal rensning före AI-anrop, högst fem tips med öppna frågor, filtrerade känsliga ämnen, lokal upplysning om kontaktuppgifter i filen och frivilligt svar som sparas via sparade svar. Originalfilen ändras aldrig och förslagen sparas inte. Ingen databasändring. Kört: 45 kontroller i `test:cv-feedback`, sex regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: verklig modellkörning och inloggad kontroll, som ingår i [L17](#l17). Se `docs/N21_CV_FEEDBACK.md`.
 - Verifierat: —
 - Återstår / blockerare: —
 

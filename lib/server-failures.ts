@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-const events = ["job_generation_failed", "voice_session_upstream_failed", "voice_session_transport_failed", "voice_turn_failed", "cv_generation_failed", "account_delete_recipients_failed", "account_delete_files_failed", "account_delete_notification_failed", "application_submission_failed"] as const;
+const events = ["job_generation_failed", "voice_session_upstream_failed", "voice_session_transport_failed", "voice_turn_failed", "cv_generation_failed", "cv_feedback_failed", "account_delete_recipients_failed", "account_delete_files_failed", "account_delete_notification_failed", "application_submission_failed"] as const;
 type FailureEvent = typeof events[number];
 type FailureCategory = "permission" | "rate_limit" | "timeout" | "conflict" | "invalid_data" | "upstream" | "unknown";
 
