@@ -3,6 +3,7 @@
 import {createContext,useContext,useEffect,useState,type ReactNode} from "react";
 import {usePathname} from "next/navigation";
 import {useSession} from "./use-session";
+import {useIndicatorPreferences} from "./use-indicator-preferences";
 import {getSupabaseClient} from "@/lib/supabase";
 import {subscribeVisibleRefresh} from "@/lib/visible-refresh";
 import {supplementQuestions} from "@/lib/application-supplement";
@@ -13,6 +14,7 @@ const IndicatorsContext=createContext(empty);
 export const useNavigationIndicators=()=>useContext(IndicatorsContext);
 export function NavigationIndicatorsProvider({children}:{children:ReactNode}) {
   const {user,profile}=useSession();
+  const preferences=useIndicatorPreferences();
   const pathname=usePathname();
   const [state,setState]=useState({userId:"",...empty});
   const userId=user?.id, role=profile?.role;
@@ -43,5 +45,10 @@ export function NavigationIndicatorsProvider({children}:{children:ReactNode}) {
     window.addEventListener("mnw-navigation-refresh",run);
     return ()=>{active=false;stop();window.clearInterval(timer);window.removeEventListener("mnw-navigation-refresh",run);};
   },[userId,role,pathname]);
-  return <IndicatorsContext.Provider value={state.userId===userId ? state : empty}>{children}</IndicatorsContext.Provider>;
+  const visible=state.userId===userId ? {
+    messages:state.messages && preferences.messages,
+    questions:state.questions && preferences.questions,
+    notifications:state.notifications && preferences.notifications,
+  } : empty;
+  return <IndicatorsContext.Provider value={visible}>{children}</IndicatorsContext.Provider>;
 }

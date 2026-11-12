@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AccountTotpSettings } from "./account-totp-settings";
+import { IndicatorPreferencesSettings } from "./indicator-preferences-settings";
 import { PasswordInput } from "./password-input";
 import { AccountSettingsError, changeAccountPassword, readAccountEmail, requestAccountEmailChange, validAccountEmail, type AccountSessionCleanup } from "@/lib/account-settings";
 import { createLatestRead, type ReadState } from "@/lib/latest-read";
@@ -94,7 +95,7 @@ function AccountSecurityWorkspace({ userId, email, pendingEmail }: { userId: str
     finally { lock.current = false; if (active.current) setBusy(null); }
   };
   const disabled = !!busy || needsCleanup || readState?.status === "loading";
-  return <section className={`card ${styles.section}`} aria-label="E-post och lösenord">
+  return <><section className={`card ${styles.section}`} aria-label="E-post och lösenord">
     <h2>E-post och lösenord</h2>
     <p>Kontot använder: <strong>{emailState.email}</strong></p>
     {emailState.pendingEmail && <p>Begärt byte till: {emailState.pendingEmail}. Den adressen räknas inte som aktiv här förrän kontots status har lästs på nytt.</p>}
@@ -120,5 +121,5 @@ function AccountSecurityWorkspace({ userId, email, pendingEmail }: { userId: str
     <AccountTotpSettings userId={userId}/>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     {needsCleanup && <div><p role="alert">Den tillfälliga verifieringssessionens utloggning kunde inte bekräftas. Ett nytt ändringsförsök är spärrat tills den är avslutad.</p><button type="button" className="secondary-btn" disabled={!!busy} onClick={() => void retryCleanup()}>Försök avsluta verifieringssessionen</button></div>}
-  </section>;
+  </section><IndicatorPreferencesSettings userId={userId}/></>;
 }

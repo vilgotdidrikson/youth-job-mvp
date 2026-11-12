@@ -551,6 +551,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n10"></a>
 ### N10 Ge grundläggande kontoval
 
+- Leverans 2026-11-12, Vilgot / Codex, `codex/n10-l06-l13-indicator-preferences-20261111`: kontosparade olästmarkeringar (N10), kontobunden sparning och återläsning efter osäkert svar (L06), egen sluten inställningsprojektion i exporten (L13). Lokala regressioner, TypeScript, lint, bygge och 23 faktiska DevStaging-kontroller passerar. Se `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`. Inloggad browser/fysisk mobil och övriga kortkriterier återstår; inte Klar.
+
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 59
@@ -1228,6 +1230,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l06"></a>
 ### L06 Verifiera kontots grundläggande fel- och återställningsvägar
 
+- Leverans 2026-11-12, Vilgot / Codex, `codex/n10-l06-l13-indicator-preferences-20261111`: kontosparade olästmarkeringar (N10), kontobunden sparning och återläsning efter osäkert svar (L06), egen sluten inställningsprojektion i exporten (L13). Lokala regressioner, TypeScript, lint, bygge och 23 faktiska DevStaging-kontroller passerar. Se `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`. Inloggad browser/fysisk mobil och övriga kortkriterier återstår; inte Klar.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 22
@@ -1579,6 +1583,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Leverans 2026-11-12, Vilgot / Codex, `codex/n10-l06-l13-indicator-preferences-20261111`: kontosparade olästmarkeringar (N10), kontobunden sparning och återläsning efter osäkert svar (L06), egen sluten inställningsprojektion i exporten (L13). Lokala regressioner, TypeScript, lint, bygge och 23 faktiska DevStaging-kontroller passerar. Se `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`. Inloggad browser/fysisk mobil och övriga kortkriterier återstår; inte Klar.
 
 - Samordnat tillägg 2026-11-09: Automatisk export fortsätter enligt befintligt mål. Nya L16 tillför skyddad manuell handläggning och fristbevakning, inte en parallell exportmotor. Manuell rutin ska kunna komplettera ofullständiga paket och ge fullständiga svar inom tillämplig frist när automatiken inte räcker. L12 styr ärendebilagor/arbetskopior. Rättelse av aktuella AI-bedömningar och underrättelse till mottagare ska verifieras; status och pågående ägare bevaras.
 

@@ -7,6 +7,7 @@ import { COMPANY_ROUTES, companyView } from "@/lib/company-navigation";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { useSession } from "@/hooks/use-session";
+import { useNavigationIndicators } from "@/hooks/use-navigation-indicators";
 import { YouthNavigation } from "./youth-navigation";
 import { UiIcon, type IconName } from "./ui-icon";
 import styles from "./youth-navigation.module.css";
@@ -26,6 +27,7 @@ function subscribeWelcome(listener: () => void) {
 export function MobileNav() {
   const pathname = usePathname(), query = useSearchParams();
   const { user, profile } = useSession();
+  const indicators = useNavigationIndicators();
   const userId = user?.id;
   const welcomeParam = pathname === "/profile/build" && query.get("welcome") === "1";
   const welcomeFlow = useSyncExternalStore(subscribeWelcome, () => readWelcome(userId), () => false);
@@ -51,6 +53,7 @@ export function MobileNav() {
   return <nav className={styles.nav} aria-label="Huvudnavigation"><Link className={styles.brand} href={items[0].href}><BrandLogo/></Link><div className={styles.links}>{items.map(item => {
     const selectedCompanyView = companyView(query.get("view"));
     const active = pathname === item.href.split("?")[0] && (!item.view || selectedCompanyView === item.view || ((selectedCompanyView === "skapa" || selectedCompanyView === "redigera") && item.view === "annonser"));
-    return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined}><UiIcon name={item.icon}/><span>{item.label}</span></Link>;
+    const attention = item.href === "/chats" ? indicators.messages : item.href === "/notifications" ? indicators.notifications : false;
+    return <Link key={item.href} href={item.href} className={`${styles.item} ${active ? styles.active : ""}`} aria-current={active ? "page" : undefined} aria-label={attention ? `${item.label} – olästa händelser` : undefined}><span className={styles.icon}><UiIcon name={item.icon}/>{attention && <span className={styles.dot} aria-hidden="true"/>}</span><span>{item.label}</span></Link>;
   })}</div></nav>;
 }

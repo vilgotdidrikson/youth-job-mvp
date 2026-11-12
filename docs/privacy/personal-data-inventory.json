@@ -220,7 +220,7 @@
       "classification": "subject",
       "subjectScope": "Egen auth.users.id respektive user_id; identiteter kopplas till den serververifierade användaren.",
       "data": "Kontoidentitet, mejl/telefon, verifierings-/kontotider, relevanta metadata och inloggningsidentiteter.",
-      "review": "Använd strikt fältprojektion. Aldrig lösenordshashar, återställnings-/bekräftelse-/reauth-token eller privilegiehemligheter. raw_user_meta_data är persondata, inte betrodd behörighet. identity_data/resource kan innehålla fler identifierare/andra personer."
+      "review": "Använd strikt fältprojektion. Aldrig lösenordshashar, återställnings-/bekräftelse-/reauth-token eller privilegiehemligheter. raw_user_meta_data är persondata, inte betrodd behörighet. identity_data/resource kan innehålla fler identifierare/andra personer. N10 2026-11-11: egen Auth getUser används endast för sluten projektion av raw_user_meta_data.notification_indicators (version och tre booleska markeringar). Frånvaro redovisas uttryckligen, inte som sparade standardval. Övriga Auth-fält/identiteter återstår; ingen komplett Auth-export påstås."
     },
     {
       "id": "auth-security",
