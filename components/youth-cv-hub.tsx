@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getYouthProfile } from "@/lib/onboarding";
 import { openYouthDocument } from "@/lib/open-youth-document";
+import { CvFeedback } from "./cv-feedback";
 import { createCvSave, ownedCvHeaders, uploadOwnedCvPdf, verifyOwnedCvUpload, CvWorkflowError, CvSaveUnconfirmed, CvUploadUnconfirmed } from "@/lib/cv-save-workflow";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import { type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
@@ -319,6 +320,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB. Innehållet i filen, även eventuella kontaktuppgifter, blir synligt när du delar CV:t i en ansökan.</p>
     <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving || !!recovery} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
     {uploaded && <section className="cv-hub-status"><strong>PDF-fil</strong><p>{uploaded.name}</p><button disabled={saving} onClick={previewPdf}>Förhandsvisa PDF</button></section>}
+    {uploaded && user && !saving && !recovery && <CvFeedback key={`${user.id}:${uploaded.url}`} ownerId={user.id} />}
     {recoveryNotice}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
   {accountDraftPanel}</main>;
   const methodChoice = <fieldset className={styles.method} disabled={generating || saving || !!recovery}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { if(lock.current||recovery)return;setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;

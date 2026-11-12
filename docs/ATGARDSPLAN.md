@@ -1546,7 +1546,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Klar när: Originalet ersätts aldrig utan uttryckligt val. Saknade fakta blir förslag/frågor, inte publicerade antaganden. Oåtkomlig/oläsbar/skannad PDF hanteras tydligt utan falskt genomläsningsbesked. Samma granskningskrav som N19/N20 gäller; uppladdning kräver inte AI-genomläsning.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
 - Tillägg 2026-10-18: Uppladdat CV kan innehålla kontaktuppgifter/exakt bostadsadress. Samordna granskad dokumentdelning, tydlig information och förhandsvisning med N19/L09; dolda profilfält maskerar inte PDF-innehåll. Godkända kompletteringar ger inte generell företagsåtkomst till profilen.
-- Implementerat: —
+- Implementerat 2026-11-12 (för granskning): valfri panel Få förbättringsförslag efter uppladdning, privat PDF-läsning med besked vid oläsbar fil, lokal rensning före AI-anrop, högst fem tips med öppna frågor, filtrerade känsliga ämnen, lokal upplysning om kontaktuppgifter i filen och frivilligt svar som sparas via sparade svar. Originalfilen ändras aldrig och förslagen sparas inte. Ingen databasändring. Kört: 45 kontroller i `test:cv-feedback`, sex regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: verklig modellkörning och inloggad kontroll, som ingår i [L17](#l17). Se `docs/N21_CV_FEEDBACK.md`.
 - Verifierat: —
 - Återstår / blockerare: —
 

@@ -6,6 +6,7 @@ const limits = {
   "voice-turn": 30,
   "voice-speech": 60,
   "cv-generate": 10,
+  "cv-feedback": 6,
   "job-generate": 20,
   "application-analyze": 20,
   "application-followups": 20,

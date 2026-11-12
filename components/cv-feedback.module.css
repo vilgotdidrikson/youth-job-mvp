@@ -1,0 +1,17 @@
+/* N21: optional feedback on an uploaded CV. Theme tokens only. */
+.panel {display:grid;gap:14px;margin-top:16px;padding:20px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-text);text-align:left;}
+.head {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;}
+.head div {flex:1 1 260px;}
+.head p,.result p {margin:4px 0 0;font-size:var(--text-sm);line-height:1.6;color:var(--color-text-muted-strong);}
+.head button,.answer button {min-height:44px;}
+.result {display:grid;gap:12px;}
+.notice {padding:12px 14px;border-radius:var(--radius-md);background:var(--color-surface-soft);}
+.list {display:grid;gap:12px;margin:0;padding:0;list-style:none;}
+.list li {display:grid;gap:6px;padding:14px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-canvas);}
+.list small {font-size:var(--text-xs);color:var(--color-brand);}
+.list li p {margin:0;color:var(--color-text);}
+.list li .question {color:var(--color-text-muted-strong);}
+.answer {display:grid;gap:8px;justify-items:start;margin-top:4px;}
+.answer label,.note {font-size:var(--text-xs);color:var(--color-text-muted);}
+.answer textarea {width:100%;}
+.error {margin:0;font-size:var(--text-sm);color:var(--color-danger);}
