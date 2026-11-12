@@ -14,6 +14,7 @@
 .empty { padding:1.5rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); }
 .empty h1,.empty h2 { font-size:var(--text-lg); }
 .empty p { line-height:1.6; color:var(--color-text-muted); }
+.empty > a { display:inline-flex; align-items:center; min-height:44px; }
 .workspace :global(.company-application-tabs button),.workspace :global(.company-application-tabs button span),.workspace :global(.company-application-reviewed) { font-size:var(--text-sm); }
 .workspace :global(.company-applicant-row strong) { font-size:var(--text-md); }
 .workspace :global(.company-candidate-search input) { font-size:var(--text-md); min-height:44px; }

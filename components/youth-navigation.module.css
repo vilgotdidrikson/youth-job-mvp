@@ -12,7 +12,7 @@
 .nav a:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 4px; border-radius: 12px; }
 @media (min-width: 721px) {
   .nav { top: 0; bottom: auto; display: flex; align-items: center; gap: clamp(1rem, 3vw, 3rem); height: 88px; padding: 0 max(2rem, calc((100vw - 1180px) / 2)); border-top: 0; border-bottom: 1px solid var(--color-border); background: rgb(255 255 255 / .96); }
-  .brand { display: block; margin-right: auto; color: var(--color-brand); font-size: 1.45rem; letter-spacing: -.055em; text-decoration: none; font-weight: 550; }
+  .brand { display: flex; align-items: center; min-height: 44px; margin-right: auto; color: var(--color-brand); font-size: 1.45rem; letter-spacing: -.055em; text-decoration: none; font-weight: 550; }
   .desktopNotifications { display:grid; }
   .headerNotifications { display:none; }
   .links { gap: .35rem; margin: 0; max-width: none; }

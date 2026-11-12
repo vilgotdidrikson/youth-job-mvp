@@ -38,8 +38,8 @@
 .bookmark { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: 50%; color: var(--color-white); background: rgb(76 48 59 / .4); backdrop-filter: blur(8px); }
 .cardContent { position: absolute; inset-inline: 26px; bottom: 26px; }
 .company { margin: 0 0 .5rem; font-size: .85rem; color: var(--color-white); }
-.cardContent h2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0 0 16px; font-weight: 500; font-size: clamp(1.6rem, 2.7vw, 2.1rem); line-height: 1.16; letter-spacing: -.035em; }
-.cardContent h2 a { color: var(--color-white); text-decoration: none; }
+.cardContent h2 { margin: 0 0 16px; font-weight: 500; font-size: clamp(1.6rem, 2.7vw, 2.1rem); line-height: 1.16; letter-spacing: -.035em; }
+.cardContent h2 a { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding-block: 8px; margin-block: -8px; color: var(--color-white); text-decoration: none; }
 .cardChips { display: flex; flex-wrap: wrap; gap: 6px; }
 .cardChips span { padding: .35rem .65rem; border-radius: 999px; background: rgb(255 255 255 / .18); font-size: var(--text-xs); line-height: 1.3; }
 .actions { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 22px; }
