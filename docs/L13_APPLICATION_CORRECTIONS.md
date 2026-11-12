@@ -1,6 +1,6 @@
 # L13 – rättelse av delat ansökningsunderlag
 
-Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår. [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`.
+Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår. [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`, införd i dev 2026-11-12 som merge `73d195a`.
 
 ## Problem och beteende
 
@@ -31,11 +31,11 @@ Notisen innehåller bara neutral text och en länk till rätt annons, utan kandi
 
 Kör SQL-testet med `MNW_CASE_PGLITE_MODULE` satt till en extern PGlite-installations `dist/index.js`. Inga verkliga QA-konton eller filer skapades av dessa tester.
 
-## Före merge och återstående L13
+## Återstående verifiering och L13
 
-1. Migrationen är införd enligt Vilgots besked 2026-11-12. Kontroll av livefunktioner och färsk metadata kvarstår enligt ovan. PR #213 är redo för granskning; L13 förblir Pågår.
+1. Migrationen är införd enligt Vilgots besked 2026-11-12. Kontroll av livefunktioner och färsk metadata kvarstår enligt ovan. PR #213 är mergad i dev som `73d195a`, verifierat mot GitHub och origin/dev; L13 förblir Pågår.
 2. Verifiera i driftsatt dev inom L17 med fiktiva konton: två ansökningar, ändrat CV/urval, uttrycklig rättelse, en neutral notis till rätt företag, rätt underlag och spärrat gammalt bedömningsresultat. Kontrollera förlorad kvittens, versionskonflikt och återkallad ansökan. Verklig modellkörning kräver Vilgots verifierade QA-företag. Städa testdata efteråt.
 3. Verklig flertransaktionssamtidighet, inloggad webb-/mobilacceptans och fysisk Safari/telefon är inte verifierade. L08:s kriterier kvarstår.
 4. Detta bygger inte hela rättelsehanteringen: koppling av ett ärende om felaktig AI-bedömning till rätt ansökan, handläggarbeslut och mottagaruppföljning samt rättelse av historiska uppgifter kräver fortsatt L13/L16. Den befintliga ärendeingången finns kvar. Ingen individuell AI-bedömningsvy införs för ungdomen.
 
-Hela L13 får inte markeras Klar genom denna delleverans. PR #212 lämnas till Vilgot och N21-kortet kontrolleras först efter dess merge. N23/L12, N20:s omfattningsavstämning och övriga kort påbörjas inte här.
+Hela L13 får inte markeras Klar genom denna delleverans. PR #212 är mergad som `fa57e62`; N21-kort och översiktsrad är För granskning efter avstämning via PR #214. N23/L12, N20:s omfattningsavstämning och övriga kort påbörjas inte här.
