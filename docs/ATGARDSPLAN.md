@@ -261,12 +261,15 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 64 | [DA-05](#da-05) | P2 | Inför skala för typografi, vikter, radier och skuggor | Klar | Max / Claude |
 | 65 | [DA-06](#da-06) | P2 | Rätta textfärger som inte klarar WCAG AA | Klar | Max / Claude |
 | 66 | [DA-11](#da-11) | P2 | Serverrendera marknadssidorna och ladda Mapbox-CSS bara med karta | Klar | Max / Claude |
-| 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Ej påbörjad | — |
+| 67 | [DA-12](#da-12) | P2 | Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar | Pågår | William / Claude |
 | 68 | [DA-13](#da-13) | P3 | Gör prissidans huvudknapp till primär knapp | Klar | William / Claude |
 | 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
 | 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
 | 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
+| 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | Ej påbörjad | — |
+| 74 | [DA-20](#da-20) | P3 | Text under 12 px i inloggade företagsvyer och på kartan | Ej påbörjad | — |
+| 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | Ej påbörjad | — |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
@@ -1835,7 +1838,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 ## Designaudit 2026-10-22 – kort
 
-Kort skapade 2026-10-25 från [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md). Audit-dokumentet har fynd, filer och mått; korten nedan har status och ansvar. Följ AGENTS.md och reservera ett kort innan arbetet börjar. Ordningen följer audit-dokumentets förslag: DA-04 → DA-05 → DA-06 som ett designsystemblock, DA-12 parallellt en vy i taget, därefter P3-punkterna. Korten är placerade sist i den gemensamma ordningen (61–72) och kan prioriteras om.
+Kort skapade 2026-10-25 från [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md). Audit-dokumentet har fynd, filer och mått; korten nedan har status och ansvar. Följ AGENTS.md och reservera ett kort innan arbetet börjar. Ordningen följer audit-dokumentets förslag: DA-04 → DA-05 → DA-06 som ett designsystemblock, DA-12 parallellt en vy i taget, därefter P3-punkterna. Korten är placerade sist i den gemensamma ordningen (61–72) och kan prioriteras om. DA-19–DA-21 lades till 2026-11-12 från webbläsargranskningen i driftsatt dev (global ordning 73–75).
 
 Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort utan ligger som tillägg där: DA-03, DA-10 och DA-17 i [D05](#d05), DA-07 i [D07](#d07), DA-08 och DA-09 i [F20](#f20).
 
@@ -1948,16 +1951,16 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 67
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: William / Claude (tre leveranser införda); inget kodarbete pågår just nu
+- Branch/PR: Företagsvyn (`claude/da12-company-view-20261026`) och företagets onboarding (`claude/da12-company-onboarding-20261026`) i [PR #126](https://github.com/vilgotdidrikson/youth-job-mvp/pull/126), merge `f40f1d3`. Gemensamt laddningsläge och privatvyn (`claude/da12-loading-private-20261028`) i [PR #146](https://github.com/vilgotdidrikson/youth-job-mvp/pull/146), merge `7f342c2`. Statussynk 2026-11-12: kortet stod kvar som Ej påbörjad fast tre leveranser var införda i dev.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-12), som har fynd, filer och mått.
 - Åtgärd: Migrera en vy i taget till en CSS-modul med DA-04/DA-05-tokens och ta bort motsvarande `!important`- och `[style*=]`-överskrivningar i `app/product-design.css` i samma PR. Börja med `app/company/page.tsx` och ta `components/youth-onboarding-flow.tsx` sist.
 - Klar när: Varje migrerad vy saknar inline-färger och -avstånd, och dess överskrivningar är borta ur `product-design.css`.
 - Samordning / beroenden: Löper parallellt med DA-04/DA-05, en vy per leverans. Berör filer som ägs av andra punkter; samordna per vy. Visuell riktning: [företagsdemons hierarki och gruppering](DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction), inom befintlig omfattning och med auditens visuella kontroller vid vymigrering. Befintliga produktregler, navigation och tillgänglighetskrav bevaras.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Tre vyer/delar migrerade: `app/company/page.tsx` (inga renderade inline-stilar, status via `data-state`, matchande överskrivningar borttagna), `app/company/onboarding/page.tsx` (bara förloppsindikatorns bredd kvar) samt gemensamt `components/page-loading.tsx` och privatvyn `app/private/page.tsx`. Detaljer i [DA-12 i audit-dokumentet](DESIGN_AUDIT_2026-10-22_1.md#da-12).
+- Verifierat: Lokala produktionsbyggen enligt audit-dokumentet. Driftsatt dev 2026-11-12 (William / Claude, Chromium, 375 och 1280 px) med fiktivt QA-företag som raderades efteråt: annonslista tom och med en opublicerad annons, kandidatflik, annonsbyggare, onboardingens fyra frågor, valt chip, ogiltigt organisationsnummer och slutskärm, samt kortet utan åtkomst med ungdomskonto. 0 inline-stilar i annonslistan och på kortet utan åtkomst, 1 i byggaren (underkomponent), bara förloppsbredden i onboardingen; ingen horisontell scroll, inga sidfel. Laddningskortet kontrollerat i driftsatt dev utan JavaScript 2026-10-28; privatvyn bara lokalt.
+- Återstår / blockerare: Vyer kvar: `app/profile/page.tsx` (samordna med L03/L13), laddningsläget i `components/auth-page.tsx` (L02), de oåtkomliga blocken i företagsvyn och onboardingen (logikstädning för vyns ägare) och `components/youth-onboarding-flow.tsx` sist (N19). Inte granskat i driftsatt dev: kandidatlista, matchbanner, CV-fel och misslyckad annonsåtgärd, eftersom ett nytt QA-företag måste verifieras av admin innan ungdomar ser dess annonser. Text under 12 px och tryckytor i vyerna följs upp i [DA-19](#da-19)–[DA-21](#da-21). Safari/Firefox och fysisk telefon inte kontrollerade.
 
 <a id="da-13"></a>
 ### DA-13 Gör prissidans huvudknapp till primär knapp
@@ -2040,6 +2043,57 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Åtgärd: Besluta om en skrivskyddad förhandsvisning av några publicerade annonser för utloggade (utan ansökan). Gäller bara publicerat annonsinnehåll, aldrig ungdomsdata.
 - Klar när: Ett dokumenterat produkt- och integritetsbeslut finns. Kod påbörjas först efter beslutet.
 - Samordning / beroenden: Beslutas tillsammans med F26/N19, som definierar vilken jobbinformation som är publik.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-19"></a>
+### DA-19 Större tryckytor som hittades i webbläsargranskningen
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 73
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-19), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
+- Åtgärd: Ge minst 44×44 px tryckyta med padding, `min-height` eller `min-width`: länken Hjälp och kontakt i slutet av `/privacy` (19 px), två länkar på `/help` (20 px), jobbtiteln på swipe-kortet (30 px vid 375 px), Till era annonser i företagets kandidatflik (20 px), Ändra jobbtyp i annonsbyggaren (24 px), kartans zoomknappar (42 px), logolänken i datornavigeringen och onboardingens sidhuvud (42 px) samt branschchipset IT (39 px brett). Den synliga storleken kan vara kvar.
+- Klar när: Inget av de listade elementen är under 44 px vid 375 och 1280 px i driftsatt dev.
+- Samordning / beroenden: `/privacy` och `/help` med [F20](#f20); kartan med [L08](#l08); i övrigt samma regel som [DA-16](#da-16).
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-20"></a>
+### DA-20 Text under 12 px i inloggade företagsvyer och på kartan
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 74
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-20), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
+- Åtgärd: Höj till minst `--text-xs` (12 px): etiketten Er rekrytering, annonsantalet i fliken och jobbtypschipsen i `app/company/company-design.css`, verifieringskortets etikett i `components/company-verification-status.css`, byggarens stegbeskrivningar, AI-knapp och (valfritt) i `app/globals.css`, onboardingens etikett Er nästa kollega börjar här samt etiketten och jobbantalet på `/kartan`.
+- Klar när: Ingen synlig text under 12 px på `/company` (annonslista, kandidatflik och byggare), `/company/onboarding` och `/kartan` vid 375 och 1280 px.
+- Samordning / beroenden: Reglerna är äldre än DA-12; samordna med [DA-12](#da-12) för företagsvyn och med [F08](#f08) för verifieringskortet.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: —
+
+<a id="da-21"></a>
+### DA-21 Enhetliga fältetiketter i annonsbyggarens första steg
+
+- [ ] Klar
+- Prioritet: P3
+- Global ordning: 75
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-21), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
+- Åtgärd: Ge Krav i annonsen och Anställningsform – välj ovan eller skriv eget samma etikettstil och avstånd som Arbetstitel. Ge jobbtypsblocket i `components/job-category-field.tsx` byggarens sekundära stil, med mindre stödtext och Ändra jobbtyp som sekundär kontroll. Ingen ändring av text eller fält.
+- Klar när: Alla fältetiketter i steg 1 har samma stil och avstånd vid 375 och 1280 px, och jobbtypsblocket ser ut som en del av formuläret.
+- Samordning / beroenden: Annonsbyggaren ligger i företagsvyn ([DA-12](#da-12)); samordna med ägarna av byggarens fält.
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
