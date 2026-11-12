@@ -151,12 +151,15 @@
       "relations": [
         "public.user_blocks",
         "public.moderation_reports",
-        "public.company_recruitment_controls"
+        "public.company_recruitment_controls",
+        "private.privacy_case_handlers",
+        "private.privacy_cases",
+        "private.privacy_case_events"
       ],
       "classification": "review",
-      "subjectScope": "Rapporter: reporter_user_id eller mål via target_type/target_id, relaterad match/annons/meddelande/video och bevarad snapshot. Blockering och restriktion kan avse begärande person även när någon annan är aktör.",
-      "data": "Rapportinnehåll, mål-snapshots, säkerhetsbeslut, blockeringar och eventuella personuppgifter i granskningsanteckningar.",
-      "review": "Kräver individuell rättighets-/säkerhetsbedömning. Avslöja inte anmälare/blockerare eller alla bevis automatiskt. Nullat reporter_user_id garanterar inte att snapshot är anonym. Enbart filtrering på reporter_user_id missar uppgifter om anmäld person."
+      "subjectScope": "Rapporter: reporter_user_id eller mål via target_type/target_id, relaterad match/annons/meddelande/video och bevarad snapshot. Blockering och restriktion kan avse begärande person även när någon annan är aktör. Ärenden: requester_id = begärande person; handläggarbehörigheter och actor_id kan avse handläggaren. Kontoradering nullar requester_id/actor_id, men gör inte ärendetext anonym.",
+      "data": "Rapportinnehåll, mål-snapshots, säkerhetsbeslut, blockeringar och eventuella personuppgifter i granskningsanteckningar. Personuppgiftsärenden: ursprunglig begäran, offentliga svar/kompletteringar, status/ansvarig, revision, mottagnings-/svars-/uppföljnings-/avsluts-/planerad gallringstid; separat handläggarbehörighet. Inga bilagor i denna leverans.",
+      "review": "Kräver individuell rättighets-/säkerhetsbedömning. Avslöja inte anmälare/blockerare eller alla bevis automatiskt. Nullat reporter_user_id garanterar inte att snapshot är anonym. Enbart filtrering på reporter_user_id missar uppgifter om anmäld person. L16 2026-11-12: tre privata tabeller är endast åtkomliga för servern. Automatiska exportinsamlingen markerar dem not_collected; ärendefritext, eventhistorik och handläggaridentiteter kräver individuell prövning. Ursprunglig begäran dupliceras inte i händelseloggen. Automatisk ärendegallring är inte aktiverad; vid avslut sparas en planerad tolvmånadersfrist."
     },
     {
       "id": "videos",

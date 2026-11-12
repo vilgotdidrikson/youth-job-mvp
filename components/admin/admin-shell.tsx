@@ -10,6 +10,7 @@ const links = [
   { href: "/admin", label: "Översikt", icon: "⌂" },
   { href: "/admin/companies", label: "Företag", icon: "▦" },
   { href: "/admin/reports", label: "Anmälningar", icon: "!" },
+  { href: "/admin/privacy-cases", label: "Ärenden", icon: "≡" },
   { href: "/admin/recruitment", label: "Rekrytering", icon: "✓" },
   { href: "/admin/profile", label: "Profil", icon: "○" },
 ];
