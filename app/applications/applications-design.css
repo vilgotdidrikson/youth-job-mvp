@@ -91,3 +91,11 @@
 .application-withdraw-dialog::backdrop{background:var(--color-backdrop)}
 .application-withdraw-dialog p{line-height:1.6;margin:1rem 0}
 .application-withdraw-dialog button:focus-visible{outline:3px solid var(--color-brand);outline-offset:3px}
+
+/* F12/N19: optional choice to keep an answer in the profile. */
+.application-save-answer {display:grid;gap:8px;margin-top:10px;padding-top:12px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:var(--text-sm);line-height:1.6;}
+.application-save-answer p {margin:0;}
+.application-save-answer small {font-size:var(--text-xs);}
+.application-save-answer a {color:var(--color-brand);text-underline-offset:4px;}
+.application-save-answer-actions {display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;}
+.application-save-answer-actions .secondary-btn {min-height:44px;}
