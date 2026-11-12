@@ -211,7 +211,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Klar | Vilgot / Codex |
 | 22 | [L06](#l06) | P1 | Verifiera kontots grundläggande fel- och återställningsvägar | För granskning | Vilgot / Codex |
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
-| 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
+| 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex – rättelse |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Pågår | Vilgot / Codex |
 | 22.4 | [L15](#l15) | P1 | Avtal och rättsligt underlag för behandling på sidan | Pågår | Vilgot / Codex – underlag |
 | 22.5 | [L16](#l16) | P1 | Skyddade personuppgiftsärenden och incidenthantering | Pågår | Vilgot / Codex – säkerhetsgrund |
@@ -1645,6 +1645,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Avgränsad rättelseleverans 2026-11-12: `codex/l13-application-corrections-20261112`, Vilgot / Codex. Reproducerat att befintlig omdelning saknar mottagarnotis. Ny revisions-/kontobunden rättelse-RPC återanvänder befintlig delning och köning, med neutral företagsnotis i samma transaktion och återförsök utan dubbletter. Befintlig RLS nekar tidigare AI-revision efter omdelning; andra ansökningar bevaras. Lokalt: 35 PostgreSQL-/RLS-prov i PGlite 0.5.16, komponent-/SDK-prov för delning/rättelse, application-disclosure, assessment-snapshot (20 fall), inventeringsregression (26 fall), riktad lint och webpack-bygge/TypeScript. Ingen liveverifiering: migration `20261112180000_l13_application_corrections.sql` ska införas av Vilgot före merge. Inventeringskontrollen körd men kräver ny DevStaging-metadatafil; ingen gammal schemabild räknas som live. Inloggad acceptans/verklig modellkörning ligger i L17. Fullständig ärendekoppling/handläggning av AI-rättelse och mottagaruppföljning återstår. Huvudkortet förblir Pågår. Se `docs/L13_APPLICATION_CORRECTIONS.md`; PR/commit fylls i vid publicering.
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Codex, `codex/l13-application-corrections-20261112`, från origin/dev `dbf8013`. Avgränsad rättelse av redan skickat jobbspecifikt profil-/CV-underlag: uttrycklig granskning och omdelning, versionskonflikt och neutral mottagarnotis i samma transaktion. Återanvänder befintlig delnings-/AI-revision och behörighet; ingen generell adminåtkomst, automatiska mejl eller ändring av avtalsbevis. Öppna PR:er kontrollerade (#212 och #40); ingen överlappande reservation. Övrig L13-rättelse/ärendehantering och inloggad acceptans i L17 kvarstår. Status Pågår och tidigare ägarskap bevaras.
 

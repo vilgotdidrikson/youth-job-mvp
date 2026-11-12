@@ -8,6 +8,7 @@ import { AuthGateMessage } from "@/components/auth-gate-message";
 import { ApplicationDisclosureView } from "@/components/application-disclosure-view";
 import { DisclosureLoadState } from "@/components/disclosure-load-state";
 import type { DisclosurePreview } from "@/lib/application-disclosure";
+import { applicationDisclosureSaveRequest, verifyApplicationCorrectionReceipt } from "@/lib/application-correction";
 import { getSupabaseClient } from "@/lib/supabase";
 import { prepareApplication } from "@/lib/application-completions";
 import { applicationSourceInput } from "@/lib/application-evidence";
@@ -46,7 +47,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
           .select("status").eq("job_id", jobId).eq("youth_user_id", youthId).abortSignal(signal).maybeSingle();
         if (statusError) throw new Error("Ansökningsstatus kunde inte hämtas");
         if (application?.status === "withdrawn") return { withdrawn: true };
-        const { data, error } = await client.rpc("get_my_application_disclosure_preview", {
+        const { data, error } = await client.rpc("get_my_application_correction_preview", {
           p_job_id: jobId, ...(selected !== undefined ? { p_selection: selected } : {}),
         }).abortSignal(signal);
         if (error || !data || data.packet?.job_id !== jobId || data.packet?.youth_user_id !== youthId) throw new Error("Underlag saknas");
@@ -77,10 +78,10 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
     setSaving(true); setSaveError("");
     try {
       if (!preview.is_saved) {
-        const { error } = await getSupabaseClient().rpc("save_my_application_disclosure", {
-          p_job_id: jobId, p_selection: preview.selected_keys, p_source_token: preview.source_token,
-        });
+        const request = applicationDisclosureSaveRequest(jobId, preview, sent, youthId);
+        const { data, error } = await getSupabaseClient().rpc(request.name, request.args);
         if (error) throw new Error(error.message);
+        if (sent) verifyApplicationCorrectionReceipt(data, jobId, youthId, preview.base_revision!);
       }
       // Do not start a new submission after navigating away or switching account.
       if (!mounted.current) return;
@@ -111,6 +112,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
   return <main className={styles.page}>
     <Link href={sent ? "/applications" : `/jobb/${encodeURIComponent(jobId)}`}>Tillbaka</Link>
     <header className={styles.heading}><h1>Det här delar du med företaget</h1><p>CV och praktiska uppgifter ingår. Välj relevanta extra uppgifter för just det här jobbet. Privata utkast och samtal delas inte. Saknad video eller okänd matchning stoppar inte ansökan.</p></header>
+    {sent && <div><p className={styles.note}>När du delar rättat underlag får företaget en notis. Tidigare AI-bedömningar hör till den äldre versionen. Dina andra ansökningar ändras inte.</p><div className={styles.correctionLinks}><Link href="/profile">Rätta min profil eller mitt CV</Link><Link href="/account/privacy-requests">Begär hjälp med en rättelse</Link></div></div>}
     {state.status === "loading" && <p role="status">Uppdaterar förhandsvisningen…</p>}
     {state.status === "error" && <DisclosureLoadState error={state.message} retry={() => void reader.current?.load(selection.current)} />}
     {saveError && <div className={`${styles.error} ${surfaces.root}`}><p role="alert">{saveError}</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load(selection.current)}>Hämta aktuellt underlag</button></div>}

@@ -17,6 +17,8 @@
 .sources p { font-size: var(--text-sm); color: var(--color-text-muted); }
 .page .error { padding: 1rem; border: 1px solid var(--color-danger-border); border-radius: var(--radius-md); color: var(--color-danger); background: var(--color-danger-soft); }
 .actions { display: flex; justify-content: flex-end; }
+.correctionLinks { display: flex; flex-wrap: wrap; column-gap: 1.25rem; }
+.correctionLinks a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-brand-hover); font-size: var(--text-sm); }
 .actions button { white-space: normal; line-height: 1.5; font-size: var(--text-md); }
 .page > a { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--color-brand-hover); }
 @media (max-width: 720px) {
