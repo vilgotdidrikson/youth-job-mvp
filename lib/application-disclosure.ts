@@ -27,6 +27,8 @@ export function disclosedRecruitmentProfile(packet: ApplicationDisclosure): Recr
     if (kind === "licences" && typeof item.value === "string") profile.qualifications.licences.push(item.value);
     if (kind === "tools" && typeof item.value === "string") profile.qualifications.tools.push(item.value);
     if (kind === "languages" && item.value && typeof item.value === "object") profile.qualifications.languages.push(item.value as RecruitmentProfile["qualifications"]["languages"][number]);
+    // Only the text was shared; the question, date and source stay with the youth.
+    if (kind === "answer" && typeof item.value === "string" && item.value.trim()) (profile.savedAnswers ??= []).push({ text: item.value.trim().slice(0, 600), question: "Delad uppgift", savedAt: "2000-01-01", source: item.key });
     if (kind === "example" && item.value && typeof item.value === "object") profile.examples.push(item.value as RecruitmentProfile["examples"][number]);
   }
   return readRecruitmentProfile(profile);

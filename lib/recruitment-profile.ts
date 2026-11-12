@@ -4,13 +4,17 @@ export const DAYS = { mon: "Måndag", tue: "Tisdag", wed: "Onsdag", thu: "Torsda
 export const PERIODS = { day: "Dagtid", evening: "Kväll", night: "Natt", holidays: "Skollov" };
 export const STRENGTHS = { service: "Kundbemötande", teamwork: "Samarbete", responsibility: "Ansvar", initiative: "Initiativ", learning: "Lära nytt" };
 export const LANGUAGE_LEVELS = ["Grundläggande", "God", "Mycket god", "Flytande", "Modersmål"];
+/** A supplement answer the youth chose to keep. Only `text` is used in matching or shared. */
+export interface SavedAnswer { text: string; question: string; savedAt: string; source: string }
+export const MAX_SAVED_ANSWERS = 8;
 export interface RecruitmentProfile {
   availability: { days: string[]; periods: string[]; startDate: string; hours: string; notes?: string };
   preferences: { categoryIds?: JobCategoryId[]; roles: string[]; locations: string[]; travelMinutes: string; motivation: string };
   examples: { strength: string; context: string; action: string }[];
   qualifications: { licences: string[]; tools: string[]; languages: { language: string; level: string }[] };
+  savedAnswers?: SavedAnswer[];
 }
-export type ProfileSection = keyof RecruitmentProfile;
+export type ProfileSection = Exclude<keyof RecruitmentProfile, "savedAnswers">;
 export const PROFILE_SECTIONS: { key: ProfileSection; title: string; description: string; prompt: string }[] = [
   { key: "availability", title: "När jag kan jobba", description: "Dagar, tider och startdatum", prompt: "Hjälp företag att se om arbetstiderna passar dig." },
   { key: "preferences", title: "Vad jag söker", description: "Jobb, plats och motivation", prompt: "Berätta vilka jobb du är nyfiken på och vad du vill lära dig." },
@@ -34,7 +38,20 @@ export function validateRecruitmentProfile(raw: unknown): RecruitmentProfile {
   if (!Array.isArray(data.examples) || data.examples.length > 5 || !Array.isArray(q.languages) || q.languages.length > 8) throw new Error("För många exempel eller språk.");
   const examples = data.examples.map(value => { const e = object(value), strength = text(e.strength, 30), context = text(e.context, 200), action = text(e.action, 1000); if (!strength || !context || !action) throw new Error("Ange både situation och vad du gjorde i exemplet."); return { strength, context, action }; });
   const languages = q.languages.map(value => { const l = object(value), language = text(l.language, 60), level = text(l.level, 30); if (!language || !level) throw new Error("Ange språk och nivå."); return { language, level }; });
-  return { availability: { days, periods, startDate, hours, ...(a.notes !== undefined ? {notes:text(a.notes,1000)} : {}) }, preferences: { ...(p.categoryIds !== undefined ? {categoryIds: validJobCategoryIds(p.categoryIds,15)} : {}), roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
+  const savedAnswers = data.savedAnswers === undefined ? undefined : validateSavedAnswers(data.savedAnswers);
+  return { ...(savedAnswers ? { savedAnswers } : {}), availability: { days, periods, startDate, hours, ...(a.notes !== undefined ? {notes:text(a.notes,1000)} : {}) }, preferences: { ...(p.categoryIds !== undefined ? {categoryIds: validJobCategoryIds(p.categoryIds,15)} : {}), roles: list(p.roles, 8), locations: list(p.locations, 8), travelMinutes, motivation: text(p.motivation, 1000) }, examples, qualifications: { licences: list(q.licences, 8), tools: list(q.tools, 12), languages } };
+}
+export function validateSavedAnswers(raw: unknown): SavedAnswer[] {
+  if (!Array.isArray(raw) || raw.length > MAX_SAVED_ANSWERS) throw new Error(`Du kan spara högst ${MAX_SAVED_ANSWERS} svar i profilen. Ta bort ett svar i profilen först.`);
+  const items = raw.map(value => {
+    const item = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    const [text, question, savedAt, source] = ["text", "question", "savedAt", "source"].map(key => typeof item[key] === "string" ? (item[key] as string).trim() : "");
+    if (!text || text.length > 600) throw new Error("Skriv uppgiften med högst 600 tecken.");
+    if (!question || question.length > 300 || !source || source.length > 120 || !/^\d{4}-\d{2}-\d{2}$/.test(savedAt) || Number.isNaN(Date.parse(`${savedAt}T00:00:00Z`))) throw new Error("Ogiltiga profiluppgifter.");
+    return { text, question, savedAt, source };
+  });
+  if (new Set(items.map(item => item.source)).size !== items.length) throw new Error("Svaret finns redan sparat i profilen.");
+  return items;
 }
 export function readRecruitmentProfile(raw: unknown): RecruitmentProfile {
   try { return validateRecruitmentProfile(raw); } catch { return emptyRecruitmentProfile(); }
@@ -67,5 +84,6 @@ export function recruitmentProfileSource(raw: unknown): string {
   if (profile.qualifications.tools.length) lines.push(`Självuppgivna verktyg och kunskaper: ${profile.qualifications.tools.join(", ")}`);
   for (const l of profile.qualifications.languages) lines.push(`Språk: ${l.language}, självuppgiven nivå ${l.level}`);
   for (const e of profile.examples) lines.push(`Eget exempel på ${STRENGTHS[e.strength as keyof typeof STRENGTHS] ?? e.strength}: Situation: ${e.context}. Vad jag gjorde: ${e.action}`);
+  for (const saved of profile.savedAnswers ?? []) lines.push(`Sparad egen uppgift från tidigare komplettering: ${saved.text.replace(/\s+/g, " ")}`);
   return lines.join("\n");
 }
