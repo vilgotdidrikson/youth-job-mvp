@@ -267,9 +267,9 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
 | 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
 | 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
-| 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | Ej påbörjad | — |
-| 74 | [DA-20](#da-20) | P3 | Text under 12 px i inloggade företagsvyer och på kartan | Ej påbörjad | — |
-| 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | Ej påbörjad | — |
+| 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | Pågår | William / Claude |
+| 74 | [DA-20](#da-20) | P3 | Text under 12 px i inloggade företagsvyer och på kartan | Pågår | William / Claude |
+| 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | Pågår | William / Claude |
 
 Reserverat 2026-10-20: F07/N03 tillsammans för bild/text i lokala kontobundna annonsutkast och synlig återupptagning. Inga nya ungdomsuppgifter, AI-anrop, serverlagring eller publicering av utkast införs. Avsteg från mellanliggande punkter: profil/AI/data- och leverantörsbeslut inväntar separat GDPR-arbete; utkastets översikt är direkt beroende av F07.
 
@@ -2053,9 +2053,9 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 73
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: William / Claude
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-19), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Ge minst 44×44 px tryckyta med padding, `min-height` eller `min-width`: länken Hjälp och kontakt i slutet av `/privacy` (19 px), två länkar på `/help` (20 px), jobbtiteln på swipe-kortet (30 px vid 375 px), Till era annonser i företagets kandidatflik (20 px), Ändra jobbtyp i annonsbyggaren (24 px), kartans zoomknappar (42 px), logolänken i datornavigeringen och onboardingens sidhuvud (42 px) samt branschchipset IT (39 px brett). Den synliga storleken kan vara kvar.
 - Klar när: Inget av de listade elementen är under 44 px vid 375 och 1280 px i driftsatt dev.
@@ -2070,9 +2070,9 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 74
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: William / Claude
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-20), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Höj till minst `--text-xs` (12 px): etiketten Er rekrytering, annonsantalet i fliken och jobbtypschipsen i `app/company/company-design.css`, verifieringskortets etikett i `components/company-verification-status.css`, byggarens stegbeskrivningar, AI-knapp och (valfritt) i `app/globals.css`, onboardingens etikett Er nästa kollega börjar här samt etiketten och jobbantalet på `/kartan`.
 - Klar när: Ingen synlig text under 12 px på `/company` (annonslista, kandidatflik och byggare), `/company/onboarding` och `/kartan` vid 375 och 1280 px.
@@ -2087,9 +2087,9 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 75
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: William / Claude
+- Branch/PR: `claude/da19-da21-design-fixes-20261112`, reserverad 2026-11-12 före kodarbete från dev `717f61a`. Endast CSS och markup; ingen text, logik eller databas ändras. `/privacy`, `/help` (F20) och kartan (L08) ändras bara i storlek.
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-21), som har fynd, filer och mått (skapat 2026-11-12 av William / Claude).
 - Åtgärd: Ge Krav i annonsen och Anställningsform – välj ovan eller skriv eget samma etikettstil och avstånd som Arbetstitel. Ge jobbtypsblocket i `components/job-category-field.tsx` byggarens sekundära stil, med mindre stödtext och Ändra jobbtyp som sekundär kontroll. Ingen ändring av text eller fält.
 - Klar när: Alla fältetiketter i steg 1 har samma stil och avstånd vid 375 och 1280 px, och jobbtypsblocket ser ut som en del av formuläret.
