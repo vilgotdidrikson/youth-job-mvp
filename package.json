@@ -28,6 +28,7 @@
     "test:assessment-snapshot": "node scripts/test-assessment-snapshot.mjs",
     "test:matching": "node scripts/test-matching.mjs",
     "test:matching-fairness": "node scripts/test-matching-fairness.mjs",
+    "test:approximate-distance": "node scripts/test-approximate-distance.mjs",
     "test:open-youth-document": "node scripts/test-open-youth-document.mjs",
     "test:uploaded-cv-binding": "node scripts/test-uploaded-cv-binding.mjs",
     "test:live-cv-chain": "node scripts/test-live-cv-chain.mjs",

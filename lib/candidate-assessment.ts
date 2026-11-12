@@ -36,7 +36,9 @@ export function candidateSourceDetails(profile: Record<string, unknown>) {
   const answers = profile.answers && typeof profile.answers === "object" ? Object.values(profile.answers) : [];
   const followups = Array.isArray(profile.followup_answers) ? profile.followup_answers : [];
   const supplements = followups.flatMap((item) => item && typeof item.answer === "string" && item.answer.trim() ? [`Kompletteringssvar: ${item.answer.trim()}`] : []);
-  const combined = [...supplements, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`), base]
+  // Computed on the server from the postal town; never the postal code or address itself.
+  const distance = typeof profile.estimated_distance_line === "string" && profile.estimated_distance_line.trim() ? [profile.estimated_distance_line.trim()] : [];
+  const combined = [...supplements, ...answers.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => `Ansökningssvar: ${item}`), base, ...distance]
     .join("\n");
   return minimizeMatchingText(combined, matchingIdentities(profile));
 }
