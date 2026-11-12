@@ -1,6 +1,6 @@
 # L13 – rättelse av delat ansökningsunderlag
 
-Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår. Draft [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`.
+Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår. [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`.
 
 ## Problem och beteende
 
@@ -18,7 +18,7 @@ Notisen innehåller bara neutral text och en länk till rätt annons, utan kandi
 
 `supabase/migrations/20261112180000_l13_application_corrections.sql` skapar två privata SECURITY DEFINER-funktioner med låst search_path och två publika SECURITY INVOKER-omslag. Endast authenticated får anropa dem; identitet/ägarskap kontrolleras i databasen. Inga befintliga funktioner, tabeller, kolumner, ägarrelationer, RLS-regler, grants eller buckets ändras. Befintliga funktionsdefinitioner och exekveringsgrants jämförs före/efter i SQL-testet. Notiser använder befintlig notifications-källa; inget nytt exportregister krävs.
 
-**Inte införd i DevStaging. Vilgot inför migrationen före merge till dev.** Ingen `.env.local` används. Bygget använder fiktiva publika värden och en tillfällig preloader som stänger av Nexts inläsning av env-filer.
+**Vilgot bekräftade 2026-11-12 att migrationen är införd i DevStaging.** Detta är användarens införandebesked; agenten har inte själv verifierat livefunktionerna eller användarflödet. Ingen `.env.local` används. Bygget använder fiktiva publika värden och en tillfällig preloader som stänger av Nexts inläsning av env-filer.
 
 `test:personal-data-inventory` passerar med 26 syntetiska kontroller. `check:personal-data-inventory` kördes utan ny metadatafil och stoppade korrekt med krav på `--catalog`; det är inte godkänd liveinventering. Följ `docs/L13_EXPORT_INVENTORY.md`: fånga ny metadata med `scripts/capture-personal-data-catalog.sql` i DevStaging och kör `npm run check:personal-data-inventory -- --catalog <metadatafil>`. Inga nya schemabilder eller registerposter accepteras på grundval av gamla lokala metadata.
 
@@ -33,7 +33,7 @@ Kör SQL-testet med `MNW_CASE_PGLITE_MODULE` satt till en extern PGlite-installa
 
 ## Före merge och återstående L13
 
-1. Vilgot inför migrationen i DevStaging. Kontrollera nya funktioner och metadata enligt ovan. Merge får inte ske innan migrationen är införd.
+1. Migrationen är införd enligt Vilgots besked 2026-11-12. Kontroll av livefunktioner och färsk metadata kvarstår enligt ovan. PR #213 är redo för granskning; L13 förblir Pågår.
 2. Verifiera i driftsatt dev inom L17 med fiktiva konton: två ansökningar, ändrat CV/urval, uttrycklig rättelse, en neutral notis till rätt företag, rätt underlag och spärrat gammalt bedömningsresultat. Kontrollera förlorad kvittens, versionskonflikt och återkallad ansökan. Verklig modellkörning kräver Vilgots verifierade QA-företag. Städa testdata efteråt.
 3. Verklig flertransaktionssamtidighet, inloggad webb-/mobilacceptans och fysisk Safari/telefon är inte verifierade. L08:s kriterier kvarstår.
 4. Detta bygger inte hela rättelsehanteringen: koppling av ett ärende om felaktig AI-bedömning till rätt ansökan, handläggarbeslut och mottagaruppföljning samt rättelse av historiska uppgifter kräver fortsatt L13/L16. Den befintliga ärendeingången finns kvar. Ingen individuell AI-bedömningsvy införs för ungdomen.
