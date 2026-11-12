@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
@@ -8,6 +8,7 @@ try {
  const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
  for(const name of ['assessment-snapshot','application-disclosure','structured-cv','matching-job-context','matching-input-policy','trait-evidence','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','candidate-assessment-hash','application-followup-rules','openai-config']) writeFileSync(`${dir}/${name}.mjs`,compile(`lib/${name}.ts`));
  writeFileSync(`${dir}/provider.mjs`,`export let offline=false;export function fail(value){offline=value;}export default class OpenAI{constructor(){this.chat={completions:{create:async()=>{if(offline)throw Error('private provider detail');return {choices:[{message:{content:JSON.stringify({criteria:[{id:'c1',status:'fulfilled',evidence:'Invented evidence must be discarded'}]})}}]};}}};}}`);
+ mkdirSync(`${dir}/server`);writeFileSync(`${dir}/server/approximate-distance.mjs`,`export const matchingDistanceLine=()=>null;`);
  writeFileSync(`${dir}/pdf-cv-source.mjs`,`export let status='none';export function setStatus(value){status=value;}export const pdfCvSource=async()=>({status,text:''});`);
  writeFileSync(`${dir}/matching-provider.mjs`,compile('lib/matching-provider.ts').replace('from "openai"','from "./provider.mjs"'));
  writeFileSync(`${dir}/application-analysis-worker.mjs`,compile('lib/application-analysis-worker.ts').replace('from "openai"','from "./provider.mjs"'));

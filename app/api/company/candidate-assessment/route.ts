@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { matchingJobContext } from "@/lib/matching-job-context";
 import { disclosedMatchingSource, type ApplicationDisclosure } from "@/lib/application-disclosure";
+import { matchingDistanceLine } from "@/lib/server/approximate-distance";
 import { requestMatchingEvidence } from "@/lib/matching-provider";
 import { requireApiUser } from "@/lib/api-auth";
 import { matchingCriteria, candidateSourceDetails, assessCandidate, assessDisclosedCandidate, criteriaRequiringAi } from "@/lib/candidate-assessment";
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest) {
   };
   const pdf = await pdfCvSource(serverClient, internal.documents, body.youthUserId!);
   let input,publicSource;
-  try { input = candidateSourceDetails({ ...internal, pdf_cv_text: pdf.text }); publicSource=disclosedMatchingSource(packet as ApplicationDisclosure,pdf.text).text; }
+  const distance = matchingDistanceLine(internal);
+  try { input = candidateSourceDetails({ ...internal, pdf_cv_text: pdf.text, estimated_distance_line: distance }); publicSource=disclosedMatchingSource(packet as ApplicationDisclosure,pdf.text,distance).text; }
   catch { return NextResponse.json({ error: "Underlaget behöver granskas innan automatisk bedömning. Ansökan påverkas inte." }, { status: 422 }); }
   const source = input.text;
   const key = process.env.OPENAI_API_KEY;

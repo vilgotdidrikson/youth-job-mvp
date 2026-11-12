@@ -33,10 +33,10 @@ export function disclosedRecruitmentProfile(packet: ApplicationDisclosure): Recr
   }
   return readRecruitmentProfile(profile);
 }
-export function disclosedMatchingSource(packet: ApplicationDisclosure, pdfText = "") {
+export function disclosedMatchingSource(packet: ApplicationDisclosure, pdfText = "", distanceLine: string | null = null) {
   return candidateSourceDetails({ full_name:packet.identity.full_name, cv_text: packet.cv.text, cv_structured: packet.cv.structured, pdf_cv_text:pdfText,
     recruitment_profile: disclosedRecruitmentProfile(packet), answers: packet.answers,
-    followup_answers: packet.followup_answers });
+    followup_answers: packet.followup_answers, estimated_distance_line: distanceLine });
 }
 
 export function disclosedCvText(packet: ApplicationDisclosure): string {

@@ -32,9 +32,10 @@ try {
     export const candidateAssessmentHash=value=>value.includes('Uppgift från profil/CV:') ? 'b'.repeat(64):'a'.repeat(64);
     export const queueApplicationFollowups=async(...args)=>{calls.push(['queue',args]);return {queued:1};};
     export const pdfCvSource=async()=>({status:'none',text:''});
+    export const matchingDistanceLine=()=>null;
     export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
     export const openaiTextOptions=()=>({model:'test',store:false});`);
-  const imports=`import {createClient,OpenAI,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+  const imports=`import {createClient,OpenAI,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,matchingDistanceLine,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
   writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
   const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
   const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));

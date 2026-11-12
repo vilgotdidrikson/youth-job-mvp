@@ -1414,6 +1414,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`, tillsammans med N19. Uppskattat avstånd mellan ungdomens postort och närmaste arbetsort som neutral rad i matchningsunderlaget. Användarens beslut 2026-11-12: Claude väljer metod. Vald metod: statisk öppen postnummertabell (GeoNames, CC BY 4.0) på servern, så att postnumret inte skickas till någon leverantör och inget nytt leverantörsflöde tillkommer i L14. Precision på postortsnivå, redovisad i grova intervall; okänt postnummer eller okänd ort ger ingen rad och inget avstånd gissas. Ingen databasändring, inga nya fält och ingen ny företagsåtkomst. Huvudkortens status och ägare bevaras.
+- Leverans för granskning 2026-11-12, Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`: neutral rad om uppskattat avstånd mellan ungdomens postort och närmaste arbetsort i matchningsunderlaget, i fem breda intervall. Statisk tabell från GeoNames (CC BY 4.0) endast på servern; postnumret lämnar inte servern och varken postnummer, adress eller ortnamn finns i raden. Okänd indata ger ingen rad. Ingen databasändring. Kört: 34 kontroller mot verklig tabell och verkliga källbyggare, elva regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: verklig modellkörning och inloggad kontroll, som ingår i [L17](#l17). Se `docs/F26_N19_POSTAL_PROXIMITY.md`. Återstående kodarbete i F26 är därmed levererat; F26 förblir Pågår tills L17 är genomförd.
+
 - Samordnat tillägg 2026-11-09: Samordna minimering för både matchning och CV-generering med N19/L14. Kontrollera fritext, PDF, frågor och omanalys före externa anrop, med definierad stopp-/kompletteringsväg vid osäkerhet. Ordlistor och prompt är inte garanti mot känsliga uppgifter. Relevant godkänt underlag ska bevaras. AI får inte rangordna, sortera bort, dölja eller neka kandidater. Rättslig grund, AI-klassificering och faktisk DPIA fastställs i L15; varningstext/mänskligt slutbeslut är inte generella undantag.
 
 - Fortsättning reserverad före kodarbete 2026-10-28: Vilgot / Codex, `codex/f26-assessment-snapshot-20261028`. Avgränsat skydd mot blandade/inaktuella ansöknings- och kravversioner i kandidatbedömningens API och bakgrundsarbetare, samordnat med L13:s rättelsekrav. Befintliga RLS-/delningsgränser bevaras; inga nya datafält, modellpass eller databasändringar. Öppna PR:er kontrollerade.
@@ -1448,6 +1451,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`. Postnummerbaserad ungefärlig närhet utan exakt bostadsadress; se reservationen under [F26](#f26).
+- Leverans för granskning 2026-11-12: postnummerbaserad ungefärlig närhet är införd enligt `docs/F26_N19_POSTAL_PROXIMITY.md`. Kvar i N19: fullständig separation mellan godkända profilfakta och CV-urval samt inloggad acceptans enligt [L17](#l17). N19 förblir Pågår.
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`, tillsammans med F12. Återanvändbara kompletteringssvar efter separat aktivt val, med översikt/ändring/radering i profilen och eget delningsval per ansökan. Se reservationen under [F12](#f12). Övriga N19-delar, ägare och status bevaras.
 - Leverans för granskning 2026-11-12: se F12 och `docs/F12_N19_SAVED_ANSWERS.md`. Sparade kompletteringssvar lagras som valfri del i jobbprofilen med befintlig versionskontroll, översikt/ändring/radering och eget delningsval per ansökan. Migrationen är införd i DevStaging och sparning/validering är liveprovad med fiktivt ungdomskonto; delningsval och webbkontroll ingår i [L17](#l17). N19 förblir Pågår.
