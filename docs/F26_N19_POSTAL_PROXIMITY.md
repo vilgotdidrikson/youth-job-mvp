@@ -39,7 +39,7 @@ Raden beräknas på servern i de tre vägar som bygger matchningsunderlag: bakgr
 
 Ungdomens förhandsvisning förklarar nu att ett ungefärligt avstånd mellan postort och arbetsort används när postnummer är angivet, aldrig adressen.
 
-Ingen databasändring, inga nya fält, ingen ny företagsåtkomst och inga nya AI-anrop. Befintliga bedömningar räknas om först när underlaget ändras, eftersom raden ingår i underlagets kontrollsumma.
+Ingen databasändring, inga nya fält, ingen ny företagsåtkomst och inga nya AI-anrop. För ungdomar med känt postnummer ändras underlagets kontrollsumma, så nästa bedömning räknas om i stället för att läsas från cache.
 
 ## Faktiskt körda kontroller
 
