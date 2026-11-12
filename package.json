@@ -110,7 +110,11 @@
     "test:job-insight-recovery": "node scripts/test-job-insight-recovery.mjs && node scripts/test-job-insight-panel.mjs",
     "test:live-cv-drafts": "node --env-file=.env.local scripts/test-live-cv-drafts.mjs",
     "test:indicator-preferences": "node scripts/test-indicator-preferences.mjs && node scripts/test-indicator-preferences-ui.mjs",
-    "test:live-indicator-preferences": "node --env-file=.env.local scripts/test-live-indicator-preferences.mjs"
+    "test:live-indicator-preferences": "node --env-file=.env.local scripts/test-live-indicator-preferences.mjs",
+    "test:privacy-cases": "node scripts/test-privacy-case-api.mjs && node scripts/test-privacy-case-client.mjs && node scripts/test-privacy-case-ui.mjs",
+    "test:privacy-cases:postgres": "node scripts/test-privacy-cases-postgres.mjs",
+    "test:privacy-cases:browser": "node scripts/test-privacy-cases-browser.mjs",
+    "test:live-privacy-cases": "node --env-file=.env.local scripts/test-live-privacy-cases.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "0.1.100",

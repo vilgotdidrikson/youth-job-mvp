@@ -1,0 +1,131 @@
+{
+  "mode": "additions-only",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-12",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid"
+        },
+        {
+          "name": "action",
+          "type": "text"
+        },
+        {
+          "name": "public_message",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "privacy_case_events",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (actor_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+        "FOREIGN KEY (case_id) REFERENCES private.privacy_cases(id) ON DELETE CASCADE"
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "privacy_case_handlers",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (user_id) REFERENCES admin_users(user_id) ON DELETE CASCADE"
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "requester_id",
+          "type": "uuid"
+        },
+        {
+          "name": "kind",
+          "type": "text"
+        },
+        {
+          "name": "body",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "text"
+        },
+        {
+          "name": "assigned_to",
+          "type": "uuid"
+        },
+        {
+          "name": "revision",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "reply_due_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "review_after",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "closed_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "retention_until",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "privacy_cases",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (assigned_to) REFERENCES auth.users(id) ON DELETE SET NULL",
+        "FOREIGN KEY (requester_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+      ]
+    }
+  ],
+  "buckets": []
+}

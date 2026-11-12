@@ -16,6 +16,7 @@ export const readReviewedCatalog=()=>[
  'docs/privacy/catalog.export-storage-2026-10-30.json',
  'docs/privacy/catalog.storage-lifecycle-2026-11-10.json',
  'docs/privacy/catalog.account-cv-drafts-2026-11-10.json',
+ 'docs/privacy/catalog.privacy-cases-2026-11-12.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')));
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
