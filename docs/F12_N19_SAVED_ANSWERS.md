@@ -24,7 +24,7 @@ Beslutet 2026-10-20 och samordningen 2026-11-09: ett kompletteringssvar får åt
 
 ## Migration
 
-`supabase/migrations/20261112150000_f12_n19_saved_profile_answers.sql`. **Inte införd i DevStaging vid leveransen.**
+`supabase/migrations/20261112150000_f12_n19_saved_profile_answers.sql`. Införd i DevStaging av Vilgot 2026-11-12 och därefter kontrollerad med liveprovet nedan.
 
 - Ny validator `public.valid_saved_profile_answers(jsonb)` (inte anropbar för anon).
 - Tre befintliga funktioner patchas med samma mönster som N17: `public.valid_recruitment_profile`, `public.save_my_recruitment_profile` och `private.build_application_disclosure`. Varje patch stoppar med fel om den aktuella definitionen inte innehåller väntad text eller redan är patchad.
@@ -38,9 +38,13 @@ Beslutet 2026-10-20 och samordningen 2026-11-09: ett kompletteringssvar får åt
 - Regressioner som passerar: profile-journey, application-disclosure, disclosure-loading, application-supplement, supplement-recovery, matching-fairness, followup-batch, assessment-progress, recruitment, application-withdrawal och personal-data-inventory.
 - TypeScript utan fel, riktad ESLint utan nya fel och standardproduktionsbygge passerar (fiktiva publika Supabase-byggvärden).
 
+## Verkligt prov i DevStaging 2026-11-12
+
+`npm run test:live-saved-answers` med publik DevStaging-nyckel: **9 verkliga kontroller**, exit 0, `remainingFixtureIds=[]`. Ett tillfälligt fiktivt ungdomskonto, inget företag och ingen AI. Verklig Auth och RPC: sparad uppgift med versionsökning, PT409 vid gammal version, sex ogiltiga former och okänd sektion nekas med 22023, annan profildel bevarar sparade svar, ogiltig direktskrivning nekas av databasen och borttagning lämnar övrig profil orörd. Kontot raderades via eget konto-API.
+
 ## Begränsningar och det som återstår
 
-- Ingen verifiering i DevStaging eller driftsatt dev har gjorts. Migrationen är bara körd lokalt mot repots definitioner; om DevStaging avviker stoppar patchen med fel.
+- Liveprovet täcker sparning och validering för ungdomskontot. Delningsvalet för en sparad uppgift (kräver verifierat QA-företag och annons) är bara kört i lokal PostgreSQL och ingår i [L17](ATGARDSPLAN.md#l17).
 - Ingen inloggad webb- eller mobilkontroll av valet, granskningen eller profilavsnittet. Komponenterna är inte körda i webbläsare.
 - Ingen verklig modellkörning: att en sparad uppgift faktiskt minskar följdfrågor i ansökan B är bara visat genom att texten ingår i matchningsunderlaget.
 - Tre befintliga tester faller oberoende av leveransen: `test:profile-steps` (förväntar äldre felkodstext i redigeraren, rad som inte ändrats här), `test:matching` (kräver lokal fixtur `/tmp/mnw-qa-cv.pdf`) och `test:accessibility` (känd förväntan på företagsflikar).

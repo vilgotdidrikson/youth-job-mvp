@@ -242,6 +242,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | För granskning | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
+| 47.1 | [L17](#l17) | P1 | Samlad inloggad acceptans av levererade punkter | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
 | 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Klar | Max / Claude |
@@ -783,7 +784,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 ### F12 Förbättra kompletteringsfrågornas innehåll
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`. Avgränsad leverans av beslutet 2026-10-20/2026-11-09: uttryckligt val efter kompletteringssvar (Ja, spara i min profil / Nej, bara för den här ansökan), granskning/rättelse före sparning samt översikt, ändring och borttagning i profilen. Sparade uppgifter läggs som valfri del i befintlig jobbprofil och följer befintlig versionskontroll, matchningsminimering och N19:s jobbspecifika delningsval; ingen generell företagsåtkomst, ingen tyst ändring av skickade ansökningar eller grund-CV. Migrationsfil skrivs i repot och införs i DevStaging av Vilgot. Aktuell dev `6179fb7` och öppna PR:er kontrollerade (endast äldre #40). Huvudkortets status och ägare bevaras.
-- Leverans för granskning 2026-11-12, Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`, kod `fbeced8`: val efter besvarat kompletteringssvar (Ja, spara i min profil / Nej, bara för den här ansökan, inget förvalt), granskning och rättelse före sparning, avsnittet Sparade svar i Din jobbprofil med Ändra/Ta bort, högst åtta svar. Tids- och startdatumsvar erbjuds inte. Sparad text ingår i matchningsunderlaget och är ett valbart tillägg i delningsförhandsvisningen; fråga och källa delas aldrig. Migration `20261112150000_f12_n19_saved_profile_answers.sql` är skriven men **inte införd i DevStaging**; PR:en införs i dev först därefter. Kört: 39 kontroller i lokal PostgreSQL (PGlite) mot repots funktionsdefinitioner, 36 kontroller av delade moduler med kontrollerad transport, elva regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: DevStaging, driftsatt dev, inloggad webb/mobil och verklig modellkörning. Se `docs/F12_N19_SAVED_ANSWERS.md`. F12 förblir Pågår.
+- Leverans för granskning 2026-11-12, Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`, kod `fbeced8`: val efter besvarat kompletteringssvar (Ja, spara i min profil / Nej, bara för den här ansökan, inget förvalt), granskning och rättelse före sparning, avsnittet Sparade svar i Din jobbprofil med Ändra/Ta bort, högst åtta svar. Tids- och startdatumsvar erbjuds inte. Sparad text ingår i matchningsunderlaget och är ett valbart tillägg i delningsförhandsvisningen; fråga och källa delas aldrig. Migration `20261112150000_f12_n19_saved_profile_answers.sql` infördes i DevStaging av Vilgot 2026-11-12; nio verkliga kontroller med tillfälligt fiktivt ungdomskonto passerade därefter (`test:live-saved-answers`, kontot raderat). [PR #210](https://github.com/vilgotdidrikson/youth-job-mvp/pull/210). Kört: 39 kontroller i lokal PostgreSQL (PGlite) mot repots funktionsdefinitioner, 36 kontroller av delade moduler med kontrollerad transport, elva regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: inloggad webb/mobil, delningsval med QA-företag och verklig modellkörning; det ingår i [L17](#l17). Se `docs/F12_N19_SAVED_ANSWERS.md`. F12 förblir Pågår.
 
 - [ ] Klar
 - Prioritet: P2
@@ -1332,6 +1333,24 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Verifierat: —
 - Återstår / blockerare: —
 
+<a id="l17"></a>
+### L17 Samlad inloggad acceptans av levererade punkter
+
+- [ ] Klar
+- Prioritet: P1
+- Global ordning: 47.1
+- Typ: Samlad verifiering, beställd av användaren 2026-11-12
+- Status: Ej påbörjad
+- Ansvarig: —
+- Branch/PR: —
+- Åtgärd: Gör ett samlat test i driftsatt dev av de punkter som är byggda och införda men väntar på inloggad acceptans, i stället för ett separat testtillfälle per kort. Använd ett verifierat fiktivt QA-företag, minst två fiktiva QA-ungdomar och en QA-admin. Gå igenom varje kort med status För granskning samt de delar av F26, N19 och F12 vars återstående arbete är inloggad webb-/mobilkontroll eller verklig modellkörning. Notera per kort vad som faktiskt provades, resultat och eventuella fel. Fel som hittas rättas under respektive kort, inte här.
+- Klar när: Varje berört kort har ett dokumenterat utfall (godkänt, underkänt med felbeskrivning eller ej testbart med orsak), och de kort vars kriterium Klar när är uppfyllt har fått status Klar av sin ägare. Inga QA-konton, annonser eller filer finns kvar efter testet.
+- Samordning: Kompletterar [L07](#l07), som verifierar den sammanhängande rekryteringskedjan, och [L08](#l08), som kräver fysisk mobil och Safari. L17 ersätter inte dessa kriterier och ändrar inte andra korts ägare eller status. Verifiering av QA-företaget görs av behörig admin med ordinarie granskningsfunktion; inga beständiga adminmedlemskap skapas för testet.
+- Ingår uttryckligen från leveranser 2026-11-12: delningsval för sparade kompletteringssvar och färre följdfrågor i en senare ansökan (F12/N19, `docs/F12_N19_SAVED_ANSWERS.md`) samt verklig modellbedömning med fiktiva CV enligt F26:s klart-kriterier.
+- Implementerat: —
+- Verifierat: —
+- Återstår / blockerare: Kräver ett verifierat fiktivt QA-företag i DevStaging och en webbläsare med inloggning. Fysisk mobil ligger kvar i L08.
+
 <a id="l10"></a>
 ### L10 Lanseringsmiljö, domän och drift
 
@@ -1431,7 +1450,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 ### N19 Samlad jobbprofil och ett kort grund-CV
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`, tillsammans med F12. Återanvändbara kompletteringssvar efter separat aktivt val, med översikt/ändring/radering i profilen och eget delningsval per ansökan. Se reservationen under [F12](#f12). Övriga N19-delar, ägare och status bevaras.
-- Leverans för granskning 2026-11-12: se F12 och `docs/F12_N19_SAVED_ANSWERS.md`. Sparade kompletteringssvar lagras som valfri del i jobbprofilen med befintlig versionskontroll, översikt/ändring/radering och eget delningsval per ansökan. Migrationen är inte införd i DevStaging och ingen live- eller webbverifiering är gjord. N19 förblir Pågår.
+- Leverans för granskning 2026-11-12: se F12 och `docs/F12_N19_SAVED_ANSWERS.md`. Sparade kompletteringssvar lagras som valfri del i jobbprofilen med befintlig versionskontroll, översikt/ändring/radering och eget delningsval per ansökan. Migrationen är införd i DevStaging och sparning/validering är liveprovad med fiktivt ungdomskonto; delningsval och webbkontroll ingår i [L17](#l17). N19 förblir Pågår.
 
 - Komplettering 2026-11-09: Samordna återkallad ansökans omedelbara spärr av CV/svar/AI-underlag med L12:s omedelbara chattskrivskydd och neutrala notifiering. Bevara tidigare textmeddelanden enligt gallringsregeln, men öppna inte spärrat underlag via chattbilagor, gamla länkar, cache eller AI-historik. Följ L15:s begränsning till aktuell rekrytering och L16:s rutin för känsligt innehåll; inga nya profilåtkomster beställs.
 
