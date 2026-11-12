@@ -782,6 +782,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f12"></a>
 ### F12 Förbättra kompletteringsfrågornas innehåll
 
+- Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`. Avgränsad leverans av beslutet 2026-10-20/2026-11-09: uttryckligt val efter kompletteringssvar (Ja, spara i min profil / Nej, bara för den här ansökan), granskning/rättelse före sparning samt översikt, ändring och borttagning i profilen. Sparade uppgifter läggs som valfri del i befintlig jobbprofil och följer befintlig versionskontroll, matchningsminimering och N19:s jobbspecifika delningsval; ingen generell företagsåtkomst, ingen tyst ändring av skickade ansökningar eller grund-CV. Migrationsfil skrivs i repot och införs i DevStaging av Vilgot. Aktuell dev `6179fb7` och öppna PR:er kontrollerade (endast äldre #40). Huvudkortets status och ägare bevaras.
+
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 29
@@ -1426,6 +1428,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f12-n19-saved-answers-20261112`, tillsammans med F12. Återanvändbara kompletteringssvar efter separat aktivt val, med översikt/ändring/radering i profilen och eget delningsval per ansökan. Se reservationen under [F12](#f12). Övriga N19-delar, ägare och status bevaras.
 
 - Komplettering 2026-11-09: Samordna återkallad ansökans omedelbara spärr av CV/svar/AI-underlag med L12:s omedelbara chattskrivskydd och neutrala notifiering. Bevara tidigare textmeddelanden enligt gallringsregeln, men öppna inte spärrat underlag via chattbilagor, gamla länkar, cache eller AI-historik. Följ L15:s begränsning till aktuell rekrytering och L16:s rutin för känsligt innehåll; inga nya profilåtkomster beställs.
 
