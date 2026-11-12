@@ -167,6 +167,12 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 - Webbverifierat efter merge 2026-10-14: Inloggat fiktivt QA-konto i driftsatt dev kunde skriva om CV med AI utan API-fel. Redigering av svenska från Flytande till Grundläggande följt av Uppdatera profilfakta från texten gav motsvarande strukturerad språknivå. Godkännanderutan förblev avmarkerad och sparknappen spärrad. Inga CV-ändringar sparades till profilen under detta test. Dev-driftsättningen av merge-commit har godkänd byggstatus.
 - Återstår / begränsning: Lokal OpenAI-nyckel saknas, därför har ljudets modellåtkomst och svenska uppspelning/transkribering inte liveverifierats. Röstfunktionen är fortsatt avstängd och får inte aktiveras utan sådan separat verifiering. L11:s kriterium kräver uttryckligt redovisad ljudverifieringsnivå, inte aktivering. Inga nycklar har extraherats eller exponerats. N11 har reserverats separat efter denna leverans.
 
+### Statusavstämning 2026-11-12
+
+Översikt och berörda kort har stämts av mot mergade leveranser till och med PR #200. N09/F19, kontoval N10, textarbete D07 och CV/PDF L09 är För granskning. F12/F20, L15:s dokumentunderlag och L16:s säkerhetsgrund är Pågår med kvarvarande implementation uttryckligen angiven. Ingen punkt kryssas Klar genom dokumentavstämningen. Tidigare delreservationer och andra ägares arbete bevaras; detta är ingen ny produktreservation.
+
+Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad och 1 Blockerad** (87 kort). N11 är ett historikkort ersatt av N22 och ingår i översiktens 35 För granskning; aktiva återstående kort är därför 55. Pågår + Ej påbörjad är **20**, plus en separat blockerad punkt. Antalet öppna kort ändras inte av att byggda delar får rätt status. Ny status ersätter äldre statusbesked i historiska leveransanteckningar; respektive klart-kriterium och återstående acceptans gäller fortfarande.
+
 | Ordning | ID | Prioritet | Åtgärd | Status | Ansvarig |
 |---|---|---|---|---|---|
 | 1 | [L01](#l01) | P1 | Återställ ett godkänt produktionsbygge | Klar | Vilgot / Codex |
@@ -202,21 +208,21 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 22.1 | [L12](#l12) | P1 | Inför beslutade lagringstider och automatisk gallring | För granskning | Codex – videodel |
 | 22.2 | [L13](#l13) | P1 | Automatisk personuppgiftsexport och användarrättigheter | Pågår | Vilgot / Codex |
 | 22.3 | [L14](#l14) | P1 | Verifiera leverantörsavtal och produktionskonton | Pågår | Vilgot / Codex |
-| 22.4 | [L15](#l15) | P1 | Avtal och rättsligt underlag för behandling på sidan | Ej påbörjad | — |
-| 22.5 | [L16](#l16) | P1 | Skyddade personuppgiftsärenden och incidenthantering | Ej påbörjad | — |
+| 22.4 | [L15](#l15) | P1 | Avtal och rättsligt underlag för behandling på sidan | Pågår | Vilgot / Codex – underlag |
+| 22.5 | [L16](#l16) | P1 | Skyddade personuppgiftsärenden och incidenthantering | Pågår | Vilgot / Codex – säkerhetsgrund |
 | 23 | [F13](#f13) | P2 | Rätta status för väntande ansökningar | Klar | Max / Claude |
 | 24 | [F14](#f14) | P2 | Gör notiser och lässtatus användbara | Klar | Max / Claude |
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
 | 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | För granskning | Vilgot / Codex |
-| 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Ej påbörjad | — |
+| 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Pågår | Vilgot / Codex |
 | 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | För granskning | Vilgot / Codex |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
 | 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
 | 32.1 | [N25](#n25) | P2 | Välj annons före kandidatgranskning | För granskning | Vilgot / Codex |
-| 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Ej påbörjad | — |
+| 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Pågår | Vilgot / Codex |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
 | 35 | [F15](#f15) | P2 | Förenkla ungdomens första steg | För granskning | Vilgot / Codex |
 | 36 | [F16](#f16) | P2 | Ge ett stabilt nästa steg efter färdigt CV | För granskning | Vilgot / Codex |
@@ -227,8 +233,8 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | För granskning | Vilgot / Codex |
-| 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Ej påbörjad | — |
-| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Pågår | Vilgot / Codex |
+| 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | För granskning | Vilgot / Codex |
+| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | För granskning | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
@@ -238,11 +244,11 @@ Precisering 2026-10-26: Den förenklade företagsdemon ska erbjuda färdiga anno
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Klar | Max / Claude |
 | 53 | [D06](#d06) | P3 | Gör status och profilprogress begripliga | Klar | Max / Claude |
 | 54 | [D04](#d04) | P3 | Öka padding på kartans kortknapp | Klar | Max / Claude |
-| 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | Pågår | Vilgot / Codex – logotillägg |
+| 55 | [D07](#d07) | P3 | Rätta mikrocopy och varumärkestext | För granskning | Vilgot / Codex |
 | 56 | [F21](#f21) | P3 | Förtydliga konto och företagsuppgifter | Klar | Max / Claude |
-| 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | Ej påbörjad | — |
+| 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | För granskning | Vilgot / Codex |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | För granskning | Max / Claude |
-| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | Pågår | Vilgot / Codex |
+| 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | För granskning | Vilgot / Codex |
 | 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
@@ -408,6 +414,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n02"></a>
 ### N02 Återkalla ansökan och väntande intresse
 
+- Leveransavstämning 2026-11-12: PR #192 förstärker kompletteringar med kontobundna svar och skydd efter återkallad ansökan. SDK-/callbackregressioner och bygge passerade; full inloggad webb-/mobilacceptans återstår. Se `docs/F12_N24_N02_SUPPLEMENT_RECOVERY.md`. Status För granskning bevaras.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 20
@@ -439,6 +447,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n08"></a>
 ### N08 Erbjud CV utan obligatorisk AI
+
+- Leveransavstämning 2026-11-12: PR #196 förstärker det manuella CV-flödet med kontobundet sparande, synkront dubbelklickslås och skydd mot sena svar. Det gamla dubbelklicksfelet reproduceras; rättningen ger ett sparförsök. Regressioner/bygge passerar; full inloggad webb-/mobilacceptans återstår. Se `docs/L09_F18_N08_CV_RECOVERY.md`. Status För granskning bevaras.
 
 - [ ] Klar
 - Prioritet: P2
@@ -539,14 +549,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 44
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n09-account-cv-drafts-20261110`, [PR #197](https://github.com/vilgotdidrikson/youth-job-mvp/pull/197); backendacceptans i [PR #199](https://github.com/vilgotdidrikson/youth-job-mvp/pull/199).
 - Åtgärd: Låt CV-utkast fortsätta mellan mobil och dator med synlig sparstatus. Skydda utkastet som övriga privata profiluppgifter och behåll platsen i guiden.
 - Klar när: Ungdomen kan återuppta samma utkast på en annan enhet.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Privata kontoutkast med metod, steg, text och förhandsvisning; explicit öppning med ny granskning, versionskonflikter och läskontroll före nytt skrivförsök. Infört i dev via PR #197.
+- Verifierat: Migrationens behörighets-/versionsprov, lokala SDK-/komponent-/exportregressioner och bygge enligt `docs/N09_ACCOUNT_CV_DRAFTS.md`. PR #199 verifierar separata riktiga Auth-sessioner och samtidiga sparningar; 43 faktiska kontroller för hela N09/L09/L06-paketet, inte 43 separata N09-prov. QA-städning verifierad.
+- Återstår / blockerare: Inloggat mobil → dator → mobil, tangentbord/visuell acceptans och utgången browsersession. Separata backend-sessioner är verifierade; fysisk enhetsacceptans återstår. Se `docs/N09_ACCOUNT_CV_DRAFTS.md` och `docs/N09_L09_L06_LIVE_CV.md`.
 
 <a id="n10"></a>
 ### N10 Ge grundläggande kontoval
@@ -556,16 +566,16 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 59
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/n10-l02-l06-account-settings-20261109`, PR #186; reservation publicerad före kodarbete 2026-11-09.
+- Branch/PR: [PR #186](https://github.com/vilgotdidrikson/youth-job-mvp/pull/186) e-post/lösenord, [PR #189](https://github.com/vilgotdidrikson/youth-job-mvp/pull/189) autentiseringsapp och [PR #200](https://github.com/vilgotdidrikson/youth-job-mvp/pull/200) kontosparade olästmarkeringar; samtliga införda i dev.
 - Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Gör det möjligt att ändra e-post genom säker verifiering och välja de notispreferenser som motsvarar fungerande kanaler. Lägg inte val för ännu otillgängliga mailutskick.
 - Klar när: Användaren kan hålla sin kontaktuppgift aktuell och styra befintliga notiser.
 - Tillägg 2026-10-19: Integritetssektionens export/rättelse/radering hanteras separat som P1 i L13 och ska inte skjutas till denna P3-punkt.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Lösenordsverifierat e-postbyte med aktuell/väntande status, autentiseringsapp och kontosparade val för meddelande-, fråge- och notismarkeringar. Valen styr presentation och inga ännu otillgängliga mejlkanaler.
+- Verifierat: Kontobundna SDK-/komponent-/serverprov, kontobyte, dubbelklick, avbrott och osäkert resultat; TypeScript, lint och byggen. PR #200: 23 faktiska DevStaging-kontroller inklusive separat session och ZIP; separat efterkontroll visar inga QA-konton/sessioner/profiler kvar. Dev-alias READY på merge `f5f3f4815f15676cc0ba140baf267ce6e17629ee`.
+- Återstår / blockerare: Verklig mejlbekräftelsekedja enligt L02, fysisk autentiseringsapp samt sammanhängande inloggad webb-/mobilacceptans. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`, `docs/N10_L06_L16_TOTP.md` och `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`.
 
 ## Förbättringar av befintlig funktionalitet
 
@@ -767,9 +777,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 29
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: [PR #192](https://github.com/vilgotdidrikson/youth-job-mvp/pull/192), `codex/f12-n24-n02-supplement-recovery-20261109`; [PR #198](https://github.com/vilgotdidrikson/youth-job-mvp/pull/198), `codex/f12-f20-d07-help-20261111`. Båda införda i dev.
 - Åtgärd: Skilj språk och nivå från fri kravtext så att Svenska behövs för kundkontakt inte blir ett språknamn. Använd kända profilfakta och undvik att fråga igen om uppgifter som redan är tydliga. Behåll frågor frivilliga efter skickad ansökan.
 - Klar när: Frågorna är grammatiskt riktiga, relevanta och kompletterar faktiskt saknat underlag.
 - Beslut 2026-10-19 – kravinformation för ungdomen: Lägg till frivillig öppningsbar vy ”Se vad företaget söker” vid ansökan/kompletteringsfrågor. Visa relevanta bedömningsområden och konkreta avgörande jobbkrav, inte personens exakta AI-bedömning, poäng, procent, vikter eller interna trösklar. Förklara saknade uppgifter med neutrala jobbspecifika frågor; lova inte bättre matchning eller högre poäng. Undvik upprepning av kända svar. Låt ungdomen svara, rätta egna uppgifter eller avstå utan att blockera skickad ansökan/swipe. Fullständig specifikation: ”Ungdomens kravinformation och kompletteringar” i `docs/PROFIL_OCH_RELEVANS.md`.
@@ -782,9 +792,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Verifiering för återanvändning: Svara i ansökan A och kontrollera att godkänd generell fakta kan användas i ansökan B utan samma följdfråga, även med synonym formulering. Verifiera att Ja sparar först efter granskning, att Nej/obesvarat val inte sparar i profilen men låter den aktuella ansökans svar skickas, och att valet inte är förvalt. Testa rättelse/borttagning, motstridiga uppgifter, ändrad tillgänglighet, jobbspecifika svar, avstådd profilsparning och att ett annat företag inte får ospecificerad åtkomst till svar från A. Svar eller avstående får inte blockera ansökan.
 - Implementation av denna profilåteranvändning samordnas med den pausade profil-/AI-utvecklingen och pågående GDPR-/databeslut. Detta tillägg är ett beslutat produktkrav, inte en uppgift om genomförd funktion eller verifiering. Befintlig status och implementationsägare bevaras.
 - Dokumenttillägg 2026-10-20: `codex/f12-n19-reusable-followup-answers-20261020`, [PR #90](https://github.com/vilgotdidrikson/youth-job-mvp/pull/90). Krav och acceptanstest genomlästa; endast dokumentation ändrad, ingen funktion byggd eller aktiverad.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Begripliga automatiska språkfrågor med bevarad historik/företagstext samt annons-/kontobunden kravinformation med timeout, återförsök och explicit uppdatering efter nätverksfel. Frågorna är fortsatt frivilliga.
+- Verifierat: PR #192: faktiska service-/SDK-/komponentfunktioner med simulerad transport, regressioner och bygge. PR #198: reproducerat laddningsfel, 15 modell-/SDK-prov och komponentcallbacks, regressioner och bygge; båda leveranserna mergade i dev. Se `docs/F12_N24_N02_SUPPLEMENT_RECOVERY.md` och `docs/F12_F20_D07_HELP.md`.
+- Återstår / blockerare: Bredare godkänd profilåteranvändning mellan ansökningar enligt N19, kontroller mot upprepade kända fakta samt full inloggad webb-/mobilacceptans. Delarna ovan är levererade; hela kortet är ännu inte redo för slutgodkännande.
 
 <a id="f11"></a>
 ### F11 Visa vad AI överför till annonsfälten
@@ -826,17 +836,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 33
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/f12-f20-d07-help-20261111`, [PR #198](https://github.com/vilgotdidrikson/youth-job-mvp/pull/198); informationsutkast enligt kortets dokumentläge 2026-11-09.
 - Åtgärd: Lägg tydliga ingångar till befintlig integritetsinformation, AI-användning, villkor och kontakt på publika sidor och vid registrering samt konsekvent i båda rollerna. Förklara hur CV och profil används.
 - Klar när: Relevant information och hjälp är åtkomliga där användaren fattar beslut; den nödvändiga saktexten är genomgången.
 - Tillägg 2026-10-18: Förklara skillnaden mellan egen jobbprofil, jobbspecifikt delat ansökningsunderlag och uppgifter som används i matchningen. Förklara självuppgivna exempel, eventuell sekundär procent/täckningsgrad och kontaktuppgifter i uppladdade CV. Samordna med N19:s förhandsvisning; generell företagsåtkomst till profil får inte utlovas.
 - Tillägg 2026-10-19: Inställningar → Integritet och personuppgifter samlar automatisk export, rättelse, säker kontoradering och kontaktväg enligt L13. Rättighetsinformation och kontakt ska även kunna nås utan inloggning. Leverantörsuppgifter och AI-lagring ska bygga på verifieringen i L14, inte antaganden om kontonamn eller EU-region.
 - Tillägg från designaudit 2026-10-25 (DA-08, DA-09 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam marknadssidfot med länk till Integritet på alla publika sidor och en rad under skapa konto-knappen; `/privacy` visar marknadsnavigering för utloggade och profillänk bara med session. Notisen om juridisk granskning tas bort med den slutliga policyn (L10/L14).
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Publik `/help` och gemensamma hjälp-/integritetsingångar från marknadssidor, registrering/inloggning, integritetsvy och kontoinställningar. Hjälp finns även i autentiseringens laddningsvy före JavaScript. Informationsutkast finns; slutlig saktext är inte fastställd.
+- Verifierat: PR #198: regressioner, TypeScript, riktad lint, designtokens och bygge; verklig lokal produktions-HTML för `/help`, `/privacy`, `/signup` och `/login`. Mergad i dev och hjälpsidan kontrollerad efter publicering. Se `docs/F12_F20_D07_HELP.md`.
+- Återstår / blockerare: Slutlig juridisk information/villkor och ansvarstexter enligt L15/L14, information före AI/ansökan samt sammanhängande inloggad webb-/mobilacceptans. Tekniska hjälpingångar är införda; hela kortet är fortsatt Pågår.
 
 <a id="f23"></a>
 ### F23 Ge val och dialoger korrekt tillgänglighet
@@ -902,6 +912,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f18"></a>
 ### F18 Förbättra sparande i profilredigeringen
+
+- Leveransavstämning 2026-11-12: PR #196 skiljer sparat CV från okänt sparresultat och okänd ansökningsstatus; återläsning gör ingen ny skrivning och redan uppladdad PDF återanvänds. SDK-/komponentregressioner och bygge passerar; full webb-/mobilacceptans återstår. Se `docs/L09_F18_N08_CV_RECOVERY.md`. Status För granskning bevaras.
 
 - [ ] Klar
 - Prioritet: P2
@@ -1111,15 +1123,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P3
 - Global ordning: 55
-- Status: Pågår
-- Ansvarig: Vilgot / Codex – logotillägg
-- Branch/PR: `codex/d07-brand-logo-n24-plan-20261025`; [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), implementation `bb04598d`. Reserverad före kodarbete 2026-10-25 på uttrycklig beställning. Endast gemensam logotyp och avgränsad uppdatering av DA-02:s ikon-/delningsbildskällor; Max/Claudes övriga DA-02-arbete och status bevaras. Övrig D07-mikrocopy ingår inte.
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: Logotyp [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105); textarbete [PR #175](https://github.com/vilgotdidrikson/youth-job-mvp/pull/175), `codex/d07-product-copy-review-20261102`; hjälptexter [PR #198](https://github.com/vilgotdidrikson/youth-job-mvp/pull/198). Införda i dev.
 - Åtgärd: Rätta 1 ansökningar, blandade versaler och tekniska uttryck. Använd samma MatchnWork-namn och avsedd kontaktadress. Anpassa Tillbaka till Upptäck för företaget. Beskriv kort onboarding och manuell CV-väg korrekt; precisera lönecheck-löftet om tjänsten inte följer hela vägen.
 - Klar när: Etiketter, produktlöften och kontaktvägar är konsekventa och sakligt riktiga.
 - Tillägg från designaudit 2026-10-25 (DA-07 i `docs/DESIGN_AUDIT_2026-10-22_1.md`): en gemensam logotypkomponent (`components/brand-logo.tsx`, varianter full/märke och ljus/mörk) som används i marknadsnavigering och sidfot, på autentiseringssidorna, `/privacy`, ungdoms- och företagsnavigeringen och admin.
-- Implementerat: Uppladdad original-PNG bevarad i public/brand. Gemensam BrandLogo i marknadsnavigation/sidfot, autentisering, onboarding, integritet, ungdoms-/företagsnavigation, Upptäck och admin. Ikonpipeline och delningsbild använder samma original; favicon 16/32/48, Apple 180, manifest 192/512 och maskbar 512.
-- Verifierat: Originalfil oförändrad, ikonstorlekar/ICO-ramar och renderbar SVG kontrollerade. TypeScript, produktionsbygge, riktad ESLint utan fel (två befintliga img-varningar), test:accessibility, test:job-search, test:company-navigation och test:profile-journey passerar. Lokal produktionsserver: 200/rätt MIME för original, favicon, SVG, Apple, manifest och delningsbild; loggan finns i HTML för startsida/funktioner/priser/integritet.
-- Återstår / blockerare: D07 förblir Pågår eftersom övrig mikrocopy inte ingår. Visuell acceptans i dev, inloggade ytor och fysisk mobil/appinstallation återstår; lokalt saknas installerad Chromium. DA-02:s tidigare ägare/status och övriga verifiering bevaras.
+- Implementerat: Gemensam uppladdad logotyp och ikonpipeline samt avslutat namngivet textarbete: antal/singular/plural, rollriktiga tillbakalänkar, MatchnWork/kontaktadress, kort registrering och valfri CV-väg, sakliga produktlöften och konsekventa hjälp-/integritetsetiketter.
+- Verifierat: Logotyp-/ikon- och MIME-kontroller enligt tidigare leverans; PR #175: genomläst textdiff, sju faktiska formatterarprov, navigation/manuellt CV, lint och bygge. PR #198: hjälp-/auth-/profilregressioner och produktions-HTML. Se `docs/D07_PRODUCT_COPY.md` och `docs/F12_F20_D07_HELP.md`.
+- Återstår / blockerare: Inloggad visuell acceptans, fysisk mobil och tidigare logotyp-/appinstallationsacceptans. Den äldre uppgiften att övrig mikrocopy inte ingår ersätts av den levererade textdelen i PR #175. Kortet är För granskning, inte Klar.
 
 <a id="d08"></a>
 ### D08 Gör tomvyer och sidbredder konsekventa
@@ -1230,6 +1242,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l06"></a>
 ### L06 Verifiera kontots grundläggande fel- och återställningsvägar
 
+- Leveransavstämning 2026-11-12: PR #189/#191 tillför isolerad tvåfaktorsverifiering vid kontoändring, radering och export; #199 verifierar faktisk logout/radering inklusive utkast och filer; #200 verifierar återläsning efter osäkert inställningssparande. Se respektive N10-protokoll och `docs/N09_L09_L06_LIVE_CV.md`. Fysisk autentiseringsapp, SMTP-kedja och full webb-/mobilacceptans kvarstår. Status För granskning bevaras.
+
 - Leverans 2026-11-12, Vilgot / Codex, `codex/n10-l06-l13-indicator-preferences-20261111`: kontosparade olästmarkeringar (N10), kontobunden sparning och återläsning efter osäkert svar (L06), egen sluten inställningsprojektion i exporten (L13). Lokala regressioner, TypeScript, lint, bygge och 23 faktiska DevStaging-kontroller passerar. Se `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`. Inloggad browser/fysisk mobil och övriga kortkriterier återstår; inte Klar.
 
 - [ ] Klar
@@ -1254,15 +1268,16 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P2
 - Global ordning: 45
 - Typ: Verifiering och eventuell designförbättring
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l09-cv-pdf-layout-20261026`, [PR #117](https://github.com/vilgotdidrikson/youth-job-mvp/pull/117); reserverad före kodarbete. Avgränsat till befintlig CV-export, textbevarande, sidbrytningar och visuell PDF-kontroll med fiktiva uppgifter. Tidigare profil-/AI-/GDPR-, SMTP-, pris- och andra ägares pågående punkter inväntar sina beroenden. Ingen utökning av data-/AI-flöden eller åtkomstregler; inloggad fil-/uppladdningsverifiering i hela L09 återstår separat.
+- Branch/PR: PDF-layout [PR #117](https://github.com/vilgotdidrikson/youth-job-mvp/pull/117); CV-kedja #176/#177; delningsacceptans [PR #178](https://github.com/vilgotdidrikson/youth-job-mvp/pull/178); sparåterhämtning [PR #196](https://github.com/vilgotdidrikson/youth-job-mvp/pull/196); backendacceptans [PR #199](https://github.com/vilgotdidrikson/youth-job-mvp/pull/199). Införda i dev.
 - Åtgärd: Kontrollera uppladdat PDF-CV, behörig visning före match och exporterat CV. Granska faktisk PDF-layout med kort och långt innehåll, sidbrytningar, svenska tecken och läsbarhet. En startad nedladdning räcker inte som layoutverifiering.
 - Klar när: Uppladdat och genererat CV kan öppnas av rätt användare och PDF:en är läsbar utan klippt text eller felaktiga sidbrytningar.
 - Tillägg 2026-10-18 (N19/N21): Förhandsvisa den faktiskt delade CV-versionen, även uppladdad original-PDF med mejl, telefon eller bostadsadress. Förklara att sådant innehåll blir synligt i dokumentet och låt ungdomen byta/rätta filen före delning; dold kontaktsektion räcker inte. Påstå inte automatisk PDF-maskning. Testa behörighet och att dokumentet motsvarar delningsförhandsvisningen; detta tillägg är inte verifierat ännu.
 - Implementerat: Separat ren PDF-mall och texttolkning som bevarar fristående rubriker och inledande profiltext; namn från exportens namnargument utan att ta bort avvikande första textrad. Rubrik och inledande styckerader hålls ihop, långa namn radbryts utan automatisk avstavning, sida/antal och namn på fortsättningssidor. Inbäddad Inter (statiska 400/600 från befintlig licensierad font) och 11 pt brödtext med återhållna varumärkesfärger. PDF-motorn laddas först vid export. Exporterna körs i ordning med förnyad glyphdata så upprepade/samtidiga exporter inte kan förvanska extraherbar text. Auth och hämtning av verifierad erfarenhet bevaras.
 - Verifierat: Före/efter-PDF:er med fiktiv Åsa Öberg; tidigare förlust av fristående PROFIL/SPRÅK/ENSAMRUBRIK och felaktig jättestor namnrubrik reproducerad. test:cv-pdf kör riktiga PDF-exporter och PDF.js: 1, 2 och 4 sidor, svenska tecken, långa namn/URL:er, samtliga slutmarkörer, text-/sidgränser, inga ensamma avsnittsrubriker, upprepade och parallella exporter, auth-/historikfel och tomtext. Fontintegritet och licens kontrolleras. Slutliga korta/rubrikseparerade PDF:er samt alla fyra stressidor renderade med Poppler och granskade visuellt; jämförelse även med PDFium. Inter är inbäddat enligt pdffonts. test:application-disclosure, test:cv-quality, test:local-fonts, riktad ESLint och standardbygge med TypeScript passerar.
-- Återstår / blockerare: Inloggat dev-flöde för verklig uppladdning, originalfil, delad CV-version och före-match-åtkomst; negativ API-/Storage-verifiering i fullständigt användarflöde och faktisk fontladdning/export i avsedda webbläsare. De lokala PDF-proverna och simulerad auth/historik är inte dessa tester. L09 förblir Pågår; inga databas-/RLS-/AI-ändringar.
+- Leveransavstämning 2026-11-12: Faktisk uppladdning/ägarvy i #176/#177, 42 företags-/delningskontroller i #178 och 43 paketkontroller i #199; nya spar-/förhandsvisningsskydd i #196. Kontrollerna ersätter inte fysisk mobil eller full acceptans av den senaste UI-versionen.
+- Återstår / blockerare: Fysisk mobil/Safari, avsedda webbläsares font-/exportbeteende och full acceptans av det senaste uppladdnings-/återhämtningsflödet. Före-match-delningen verifierades i PR #178; omprovet i PR #199 kunde däremot inte slutföras och räknas inte som godkänt. Den äldre formuleringen att ingen faktisk uppladdning eller delningsåtkomst provats är inaktuell. Se `docs/L09_N19_LIVE_CV_CHAIN.md`, `docs/L09_N19_SHARING_ACCEPTANCE.md`, `docs/L09_F18_N08_CV_RECOVERY.md` och `docs/N09_L09_L06_LIVE_CV.md`.
 
 <a id="l08"></a>
 ### L08 Verifiera mobil, tangentbord och kartinteraktion
@@ -1584,6 +1599,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
 
+- Leveransavstämning 2026-11-12: PR #191 kräver befintlig tvåfaktor före exportskapande/återhämtning. #197 tillför privata CV-utkast till inventering/insamling och begränsad automatisk metadataprojektion. #200 tillför egen sluten projektion av notismarkeringar i insamling/ZIP; 23 faktiska paketkontroller passerar. Fritextgranskning, övriga källor/rättigheter, gallring och fullständigt exportflöde återstår; ingen komplett export påstås. Status Pågår bevaras.
+
 - Leverans 2026-11-12, Vilgot / Codex, `codex/n10-l06-l13-indicator-preferences-20261111`: kontosparade olästmarkeringar (N10), kontobunden sparning och återläsning efter osäkert svar (L06), egen sluten inställningsprojektion i exporten (L13). Lokala regressioner, TypeScript, lint, bygge och 23 faktiska DevStaging-kontroller passerar. Se `docs/N10_L06_L13_INDICATOR_PREFERENCES.md`. Inloggad browser/fysisk mobil och övriga kortkriterier återstår; inte Klar.
 
 - Samordnat tillägg 2026-11-09: Automatisk export fortsätter enligt befintligt mål. Nya L16 tillför skyddad manuell handläggning och fristbevakning, inte en parallell exportmotor. Manuell rutin ska kunna komplettera ofullständiga paket och ge fullständiga svar inom tillämplig frist när automatiken inte räcker. L12 styr ärendebilagor/arbetskopior. Rättelse av aktuella AI-bedömningar och underrättelse till mottagare ska verifieras; status och pågående ägare bevaras.
@@ -1716,9 +1733,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - [ ] Klar
 - Prioritet: P1, före berörd behandling och skarp kandidatåtkomst.
 - Global ordning: 22.4. Rättsligt underlag är beroende även för berörda delar av L12–L14/F20/F26/N19 oavsett tabellordning; tekniska förberedelser får ske med syntetiska data.
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —; reservera före produktkod enligt AGENTS.md.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex – underlag
+- Branch/PR: Dokumentunderlag `codex/l14-l15-dpia-documents-20261109`, [PR #195](https://github.com/vilgotdidrikson/youth-job-mvp/pull/195). Status Pågår avser påbörjat rättsligt underlag; produktimplementation är inte reserverad genom denna statusändring.
 - Åtgärd: Omsätt granskat företagsavtal/artikel 26-bilaga samt ungdomsvillkor/integritetsinformation till versionshanterat godkännande och information. Roller ska motsvara faktisk behandling.
 
 #### Företagets godkännande
@@ -1742,7 +1759,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 - Namngivna ansvariga, gränser/grunder, minderårigas flöde och nödvändiga texter är fastställda för verklig funktion; rådgivarbesked och kvarstående frågor är spårbara.
 - Fiktiva företag/ungdomar verifierar accept, exakt kopia/version, adminprövning, ändringar, åldersgräns och information före AI/ansökan. Fel konto/företag/version, gammal session, dubbla anrop och direkt API-/Storage-väg är negativt testade. L12:s frister följs.
-- Implementerat: —. Denna dokumentändring inför inga databasfält, avtal eller godkännanden.
+- Implementerat: Dokumentunderlag/DPIA-utkast finns enligt PR #195 och kortets dokumentläge. Versionshanterad avtalsaccept, företags-/åldersspärrar och övrig produktkod i detta kort återstår; inga avtal eller godkännanden aktiveras genom underlaget.
 - Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
 - Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
 
@@ -1754,9 +1771,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - [ ] Klar
 - Prioritet: P1, fungerande rutin före berörd skarp behandling; automatisering kan ske stegvis.
 - Global ordning: 22.5
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —; reservera före kodarbete och samordna med L05/L13.
+- Status: Pågår
+- Ansvarig: Vilgot / Codex – säkerhetsgrund
+- Branch/PR: Säkerhetsgrund `codex/n10-l06-l16-totp-20261109`, [PR #189](https://github.com/vilgotdidrikson/youth-job-mvp/pull/189). Ärende-/incidentprodukt och handläggarbehörigheter återstår; denna statusändring tilldelar ingen åtkomst.
 - Beslut 2026-11-09: Separat skyddad del av adminsidan för support- och personuppgiftsärenden; uppgifter lagras i Supabase. Eventuella bilagor lagras privat med samma åtkomstgräns. Alla fem (Vilgot, William, Melker, Tom och Max) ska uttryckligen ges ärende-/incidentbehörighet via varsitt personligt adminkonto med obligatorisk tvåfaktorsautentisering; alla fem får även åtkomst till den gemensamma mejlen. Det tidigare förslaget om bara Vilgot och Max ersätts av detta beslut. Juridiskt ansvar är en separat bedömning. L12 anger beslutade ärendefrister.
 - Avgränsning: Återanvänd L13:s export/radering och L05:s rapport-/adminskydd. Ingen ny generell rätt att läsa kandidater och ingen separat exportmotor.
 
@@ -1782,8 +1799,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Fiktiva ärenden kan tas emot, tilldelas, följas upp, avslutas och gallras. Frister och skyddade bilagor fungerar; vanliga ärenden skiljs från incidenter och modereringsrapporter.
 - Positiva tester för samtliga fem personliga handläggarkonton med tvåfaktor och negativa tester för admin utan särskild ärendebehörighet, otillräcklig tvåfaktor, anonym, ungdom, företag, fel ärende/bilage-ID och gammal session. Prova samtidig övertagning, uteblivna påminnelser/återförsök och att notismejl saknar innehåll. Inga direktanrop kringgår handläggarbehörighet.
 - Verifiera avslut/återöppning utan tyst evig förlängning, radering/återförsök, backup-/mejlkopior och rättelse till mottagare. Incidentövning sker med syntetiska data; skicka inte verklig IMY-anmälan som test.
-- Implementerat: —
-- Verifierat: Dokumentkrav och användarens beslut; ingen ny produktkod eller driftåtgärd.
+- Implementerat: Serverkontroll av aktiv AAL2/tvåfaktorssession och kontobunden autentiseringsapp som förberedelse i PR #189. Ärendehantering, obligatorisk MFA på alla relevanta adminvägar, handläggarbehörighet, bilagor och fristflöden är ännu inte byggda genom denna leverans.
+- Verifierat: PR #189: riktiga SDK-/komponent-/serverfunktioner med simulerad transport, regressioner, TypeScript/lint/bygge samt nekat oinloggat liveanrop. Ingen fysisk autentiseringsapp eller behörig ärendehantering har verifierats. Se `docs/N10_L06_L16_TOTP.md`.
 - Återstår / blockerare: Faktiska handläggarbehörigheter, implementation, dev-verifiering och fastställelse av kvarvarande juridiska gränser.
 
 
@@ -2000,6 +2017,8 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 
 <a id="n24"></a>
 ### N24 Företagets egna kompletteringsfrågor före matchning
+
+- Leveransavstämning 2026-11-12: PR #192 skiljer sparat kompletteringssvar från misslyckad återläsning, bevarar utkast och återläser utan nytt utskick. Kontobyte, dubbelklick och återkallande täcks av SDK-/callbackprov; full webb-/mobilacceptans återstår. Se `docs/F12_N24_N02_SUPPLEMENT_RECOVERY.md`. Status För granskning bevaras.
 
 - [ ] Klar
 - Prioritet: P2
