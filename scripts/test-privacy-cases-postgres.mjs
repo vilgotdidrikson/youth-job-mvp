@@ -14,6 +14,7 @@ create function public.is_personal_data_session_active(p_subject_id uuid,p_sessi
 `);
 await db.exec(readFileSync('supabase/migrations/20261112092530_privacy_request_cases.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261112093959_privacy_case_identity_checks.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261112101715_privacy_case_followup_history.sql','utf8'));
 const ids={owner:'11111111-1111-4111-8111-111111111111',other:'22222222-2222-4222-8222-222222222222',admin:'33333333-3333-4333-8333-333333333333',admin2:'44444444-4444-4444-8444-444444444444',noGrant:'55555555-5555-4555-8555-555555555555',session:'66666666-6666-4666-8666-666666666666',case:'77777777-7777-4777-8777-777777777777',factor:'88888888-8888-4888-8888-888888888888'};
 for(const v of [ids.owner,ids.other,ids.admin,ids.admin2,ids.noGrant])await db.query('insert into auth.users values($1,now())',[v]);
 for(const v of [ids.admin,ids.admin2,ids.noGrant])await db.query('insert into public.admin_users values($1)',[v]);
@@ -56,9 +57,33 @@ try{
  await denied(()=>update(c,'reply','Late reply'),'PT409','closed case cannot silently receive new response');
  const due=c.reply_due_at;c=await update(c,'reopen');ok(c.closed_at===null&&c.reply_due_at===due,'reopening preserves original reply deadline');
  ok(await scalar('select retention_until is null from private.privacy_cases where id=$1',[c.id]),'reopen removes obsolete close-retention marker');
+ // History pages use original live sessions and a fixed revision/anchor.
+ const ownSession=crypto.randomUUID();
+ await db.exec('reset role');await db.query('insert into auth.sessions values($1,$2)',[ownSession,ids.owner]);await db.exec('set role service_role');
+ for(let i=0;i<48;i++)await db.query("insert into private.privacy_case_events(id,case_id,actor_id,action,public_message,created_at)values($1,$2,$3,'reply',$4,'2026-10-01T10:00:00.123456Z'::timestamptz)",[crypto.randomUUID(),c.id,ids.admin,'QA history '+i]);
+ c=await scalar('select private.privacy_case_projection($1,$2)',[c.id,ids.admin]);
+ ok(!!c.review_after,'admin projection exposes the existing 30-day review date');
+ const ownProjection=await scalar('select private.privacy_case_projection($1,null)',[c.id]);
+ ok(ownProjection.review_after===null,'requester projection omits internal review date');
+ const history=(subject,admin,session,anchor,version=c.revision)=>scalar('select public.read_privacy_case_history($1,$2,$3,$4,$5,$6,$7)',[subject,admin,session,c.id,version,anchor.created_at,anchor.id]);
+ let anchor=c.events[0],all=[...c.events],pages=0;
+ while(anchor){const page=await history(ids.owner,null,ownSession,anchor);all=[...page.events,...all];anchor=page.next;pages++;}
+ const total=await scalar('select count(*) from private.privacy_case_events where case_id=$1',[c.id]);
+ ok(pages===2&&all.length===Number(total)&&new Set(all.map(e=>e.id)).size===all.length,'tied-microsecond keyset history covers all events exactly once over three pages');
+ const page=await history(null,ids.admin,ids.session,c.events[0]);
+ ok(page.events.length===20&&!JSON.stringify(page).includes('actor_id'),'authorized handler history returns only the closed event projection');
+ await denied(()=>history(ids.other,null,ownSession,c.events[0]),'42501','owner history rejects mismatched original session');
+ await db.exec('reset role');const otherSession=crypto.randomUUID();await db.query('insert into auth.sessions values($1,$2)',[otherSession,ids.other]);await db.exec('set role service_role');
+ await denied(()=>history(ids.other,null,otherSession,c.events[0]),'PT404','foreign owner cannot read another case history');
+ await denied(()=>history(ids.owner,ids.admin,ownSession,c.events[0]),'22023','history rejects mixed scopes');
+ await denied(()=>history(ids.owner,null,ownSession,c.events[0],crypto.randomUUID()),'PT409','history never mixes revisions');
+ await denied(()=>history(ids.owner,null,ownSession,{...c.events[0],id:crypto.randomUUID()}),'22023','history requires an anchor event in the same case');
+ await denied(()=>history(null,ids.noGrant,ids.session,c.events[0]),'42501','history denies an ungranted admin');
+ await denied(()=>history(ids.owner,null,crypto.randomUUID(),c.events[0]),'42501','history rejects an expired or missing session');
  await db.query('update private.privacy_case_handlers set enabled=false where user_id=$1',[ids.admin]);
  await denied(()=>list(null,ids.admin),'42501','revoked handler denied immediately');
  await denied(()=>update(c,'claim'),'42501','revoked handler cannot mutate');
+ await denied(()=>history(null,ids.admin,ids.session,c.events[0]),'42501','revoked handler cannot page old history');
  ok((await list(ids.owner)).cases.length===1,'revoked handler does not hide own history');
  await db.query('update private.privacy_case_handlers set enabled=true where user_id=$1',[ids.admin]);
  await db.exec('reset role');await db.query('delete from auth.sessions where id=$1',[ids.session]);await db.exec('set role service_role');
@@ -67,6 +92,7 @@ try{
  await db.exec('reset role;set role '+role);
  await denied(()=>db.query('select * from private.privacy_cases'),'42501',role+' cannot read private table directly');
  await denied(()=>db.query('select public.list_privacy_cases($1,null,null,null)',[ids.owner]),'42501',role+' cannot spoof service RPC actor');
+ await denied(()=>history(ids.owner,null,ownSession,c.events[0]),'42501',role+' cannot invoke the history RPC directly');
  await denied(()=>db.query('insert into private.privacy_case_handlers(user_id) values($1)',[ids.noGrant]),'42501',role+' cannot grant case permissions');
  }
  await db.exec('reset role');
