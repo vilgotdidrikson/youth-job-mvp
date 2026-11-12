@@ -1,6 +1,6 @@
 # L13 – rättelse av delat ansökningsunderlag
 
-Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår.
+Vilgot / Codex, `codex/l13-application-corrections-20261112`. Reservation publicerad som `e2a3f05` före kodarbete från dev `dbf8013`. Avgränsad delleverans; L13 förblir Pågår. Draft [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`.
 
 ## Problem och beteende
 
