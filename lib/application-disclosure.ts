@@ -15,6 +15,7 @@ export interface ApplicationDisclosure {
 export interface DisclosurePreview {
   packet: ApplicationDisclosure; options: DisclosureItem[]; selected_keys: string[];
   source_token: string; is_saved: boolean; matching_input: Record<string,unknown>;
+  base_revision?: number | null;
 }
 /** Reconstruct only explicitly shared optional facts, never a complete profile. */
 export function disclosedRecruitmentProfile(packet: ApplicationDisclosure): RecruitmentProfile {

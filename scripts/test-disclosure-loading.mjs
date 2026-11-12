@@ -38,7 +38,7 @@ let sdkOverride=null;
 let job='qa-job',user='qa-youth',statusMode='ok',completionStatus=null,refresh;
 const requests=[],writes=[],navigations=[];
 globalThis.window={dispatchEvent(){}};
-const client={rpc(name,args){const p=deferred();const request={name,args,...p};if(name==='save_my_application_disclosure'){writes.push(request);return p.promise;}return {abortSignal(signal){request.signal=signal;requests.push(request);return p.promise;}};},from(table){const filters={};const chain={select(){return chain;},eq(k,v){filters[k]=v;return chain;},abortSignal(signal){assert.ok(signal);return chain;},async maybeSingle(){assert.equal(table,'application_completions');assert.equal(filters.job_id,job);assert.equal(filters.youth_user_id,user);return {data:completionStatus?{status:completionStatus}:null,error:statusMode==='error'?{message:'Denied'}:null};}};return chain;}};
+const client={rpc(name,args){const p=deferred();const request={name,args,...p};if(['save_my_application_disclosure','correct_my_application_disclosure'].includes(name)){writes.push(request);return p.promise;}return {abortSignal(signal){request.signal=signal;requests.push(request);return p.promise;}};},from(table){const filters={};const chain={select(){return chain;},eq(k,v){filters[k]=v;return chain;},abortSignal(signal){assert.ok(signal);return chain;},async maybeSingle(){assert.equal(table,'application_completions');assert.equal(filters.job_id,job);assert.equal(filters.youth_user_id,user);return {data:completionStatus?{status:completionStatus}:null,error:statusMode==='error'?{message:'Denied'}:null};}};return chain;}};
 const original=Module._load;
 Module._load=function(name,parent,...rest){
  if(name==='react')return hooks;
@@ -54,6 +54,13 @@ Module._load=function(name,parent,...rest){
  return original.call(this,name,parent,...rest);
 };
 try {
+ const {applicationDisclosureSaveRequest,verifyApplicationCorrectionReceipt}=require('../lib/application-correction.ts');
+ const contract={selected_keys:[],source_token:'qa',base_revision:3};
+ assert.equal(applicationDisclosureSaveRequest('job',contract,false,'owner').name,'save_my_application_disclosure');
+ assert.equal(applicationDisclosureSaveRequest('job',contract,true,'owner').args.p_expected_youth_id,'owner');
+ for(const base_revision of [undefined,null,0,-1,1.5,NaN])assert.throws(()=>applicationDisclosureSaveRequest('job',{...contract,base_revision},true,'owner'));
+ assert.doesNotThrow(()=>verifyApplicationCorrectionReceipt({job_id:'job',youth_user_id:'owner',revision:4},'job','owner',3));
+ for(const value of [null,{}, {job_id:'foreign',youth_user_id:'owner',revision:4},{job_id:'job',youth_user_id:'foreign',revision:4},{job_id:'job',youth_user_id:'owner',revision:2}])assert.throws(()=>verifyApplicationCorrectionReceipt(value,'job','owner',3));
  const {CandidateRecruitmentProfile}=require('../components/candidate-recruitment-profile.tsx');
  const Page=require('../app/applications/preview/page.tsx').default;
  const nodes=root=>!root||typeof root!=='object'?[]:[root,...(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).flatMap(n=>nodes(n))];
@@ -71,7 +78,7 @@ try {
  view=new View(wrapper);view.render();view.effectsNow();requests.at(-1).resolve({data:{...packet,job_id:'other'}});await settle();assert.ok(view.render().props.error);view.stop();
  const previewWrapper=()=>{const suspense=Page();return suspense.props.children.type();};
  wrapper=previewWrapper();user='other';assert.notEqual(wrapper.key,previewWrapper().key);user='qa-youth';job='other-job';assert.notEqual(wrapper.key,previewWrapper().key);job='qa-job';
- const preview={packet,options:[{key:'skill:0',label:'Kunskap',text:'Servering'},{key:'licences:0',label:'Behörighet',text:'HLR'}],selected_keys:[],source_token:'review-token',is_saved:false,matching_input:{}};
+ const preview={packet,options:[{key:'skill:0',label:'Kunskap',text:'Servering'},{key:'licences:0',label:'Behörighet',text:'HLR'}],selected_keys:[],source_token:'review-token',is_saved:false,matching_input:{},base_revision:3};
  view=new View(previewWrapper());view.render();view.effectsNow();await settle();requests.at(-1).resolve({data:preview});await settle();
  const staleSend=nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Dela underlaget och skicka ansökan');
  const input=nodes(view.render()).find(n=>n.type==='input');input.props.onChange({target:{checked:true}});await settle();
@@ -95,7 +102,11 @@ try {
  send=nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Dela underlaget och skicka ansökan');send.props.onClick();writes.at(-1).resolve({error:null});await settle();
  assert.equal(writes.length,writeCount+2,'Successful initial share saves then submits');assert.equal(writes.at(-1).name,'prepare');assert.equal(navigations.at(-1),'/applications?job=qa-job');view.stop();
  completionStatus='submitted';view=await deliver();writeCount=writes.length;
- nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Spara uppdaterad delning').props.onClick();writes.at(-1).resolve({error:null});await settle();assert.equal(writes.length,writeCount+1,'Updating an existing submitted application never submits it again');view.stop();
+ send=nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Spara uppdaterad delning');send.props.onClick();send.props.onClick();assert.equal(writes.at(-1).name,'correct_my_application_disclosure');assert.equal(writes.at(-1).args.p_expected_revision,3);writes.at(-1).resolve({data:{...packet,revision:4},error:null});await settle();assert.equal(writes.length,writeCount+1,'Correcting an existing submitted application never submits it again or duplicates rapid clicks');view.stop();
+ // An ambiguous receipt must keep the user here and require status recovery.
+ view=await deliver();const navCount=navigations.length;
+ nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Spara uppdaterad delning').props.onClick();writes.at(-1).resolve({data:{...packet,job_id:'foreign',revision:4},error:null});await settle();assert.equal(navigations.length,navCount);assert.ok(nodes(view.render()).some(n=>n.props?.role==='alert'));view.stop();
+ view=await deliver();nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Spara uppdaterad delning').props.onClick();writes.at(-1).resolve({error:{code:'PT409',message:'Read current application'}});await settle();assert.ok(nodes(view.render()).some(n=>n.props?.role==='alert'));assert.equal(navigations.length,navCount);view.stop();
  view=await deliver(true);writeCount=writes.length;nodes(view.render()).find(n=>n.type==='button'&&n.props.children==='Till mina ansökningar').props.onClick();await settle();assert.equal(writes.length,writeCount,'Returning from saved sharing does not write');view.stop();
  completionStatus=null;
  view=await deliver();const inputs=nodes(view.render()).filter(n=>n.type==='input');
@@ -107,7 +118,7 @@ try {
   if(url.pathname.endsWith('/application_completions')){assert.equal(url.searchParams.get('select'),'status');assert.equal(url.searchParams.get('job_id'),'eq.qa-job');assert.equal(url.searchParams.get('youth_user_id'),'eq.qa-youth');return Response.json([{status:'submitted'}]);}
   const body=JSON.parse(init.body);assert.equal(body.p_job_id,'qa-job');
   if(url.pathname.endsWith('/get_application_disclosure')){assert.equal(body.p_youth_user_id,'qa-youth');return Response.json(packet);}
-  assert.ok(url.pathname.endsWith('/get_my_application_disclosure_preview'));return Response.json(preview);
+  assert.ok(url.pathname.endsWith('/get_my_application_correction_preview'));return Response.json(preview);
  }}});
  view=new View(previewWrapper());view.render();view.effectsNow();for(let i=0;i<8;i++)await settle();assert.ok(nodes(view.render()).some(n=>n.type==='button'&&n.props.children==='Spara uppdaterad delning'));view.stop();
  view=new View(CandidateRecruitmentProfile({jobId:job,youthId:user}));view.render();view.effectsNow();for(let i=0;i<8;i++)await settle();assert.equal(view.render().props.packet.job_id,'qa-job');view.stop();assert.equal(transports.length,3);
