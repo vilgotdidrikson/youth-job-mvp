@@ -1418,6 +1418,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Verifierat 2026-11-13, [PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217): L13:s fyra införda rättelsefunktioner matchar migrationskoden, funktionstyp/search_path/grants är kontrollerade i DevStaging. N19/F26:s faktiska ägar-/revisionspolicy och restriktiva gallringspolicy är avstämda. Fem negativa live-SQL-prov utan fixtures passerar; detta är syntetisk SQL-roll/JWT-kontext, inte riktig Auth-inloggning. Ny katalogkontroll matchar 92 relationer/fyra buckets. 35 lokala PostgreSQL-prov och 20 handlerfall passerar. Inga produkt-/schemaändringar; positivt inloggat flöde/notis/AI/samtidighet/webb/mobil ligger kvar i L17. Se docs/L13_APPLICATION_CORRECTIONS.md. Huvudkortets status bevaras.
+
+
 - Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
 
 
@@ -1458,6 +1461,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Verifierat 2026-11-13, [PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217): L13:s fyra införda rättelsefunktioner matchar migrationskoden, funktionstyp/search_path/grants är kontrollerade i DevStaging. N19/F26:s faktiska ägar-/revisionspolicy och restriktiva gallringspolicy är avstämda. Fem negativa live-SQL-prov utan fixtures passerar; detta är syntetisk SQL-roll/JWT-kontext, inte riktig Auth-inloggning. Ny katalogkontroll matchar 92 relationer/fyra buckets. 35 lokala PostgreSQL-prov och 20 handlerfall passerar. Inga produkt-/schemaändringar; positivt inloggat flöde/notis/AI/samtidighet/webb/mobil ligger kvar i L17. Se docs/L13_APPLICATION_CORRECTIONS.md. Huvudkortets status bevaras.
+
 
 - Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
 
@@ -1655,6 +1661,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Verifierat 2026-11-13, [PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217): L13:s fyra införda rättelsefunktioner matchar migrationskoden, funktionstyp/search_path/grants är kontrollerade i DevStaging. N19/F26:s faktiska ägar-/revisionspolicy och restriktiva gallringspolicy är avstämda. Fem negativa live-SQL-prov utan fixtures passerar; detta är syntetisk SQL-roll/JWT-kontext, inte riktig Auth-inloggning. Ny katalogkontroll matchar 92 relationer/fyra buckets. 35 lokala PostgreSQL-prov och 20 handlerfall passerar. Inga produkt-/schemaändringar; positivt inloggat flöde/notis/AI/samtidighet/webb/mobil ligger kvar i L17. Se docs/L13_APPLICATION_CORRECTIONS.md. Huvudkortets status bevaras.
+
 
 - Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
 
