@@ -1418,6 +1418,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
+
+
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`, tillsammans med N19. Uppskattat avstånd mellan ungdomens postort och närmaste arbetsort som neutral rad i matchningsunderlaget. Användarens beslut 2026-11-12: Claude väljer metod. Vald metod: statisk öppen postnummertabell (GeoNames, CC BY 4.0) på servern, så att postnumret inte skickas till någon leverantör och inget nytt leverantörsflöde tillkommer i L14. Precision på postortsnivå, redovisad i grova intervall; okänt postnummer eller okänd ort ger ingen rad och inget avstånd gissas. Ingen databasändring, inga nya fält och ingen ny företagsåtkomst. Huvudkortens status och ägare bevaras.
 - Leverans för granskning 2026-11-12, Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`: neutral rad om uppskattat avstånd mellan ungdomens postort och närmaste arbetsort i matchningsunderlaget, i fem breda intervall. Statisk tabell från GeoNames (CC BY 4.0) endast på servern; postnumret lämnar inte servern och varken postnummer, adress eller ortnamn finns i raden. Okänd indata ger ingen rad. Ingen databasändring. Kört: 34 kontroller mot verklig tabell och verkliga källbyggare, elva regressioner, TypeScript, riktad ESLint och standardbygge. Inte gjort: verklig modellkörning och inloggad kontroll, som ingår i [L17](#l17). Se `docs/F26_N19_POSTAL_PROXIMITY.md`. Återstående kodarbete i F26 är därmed levererat; F26 förblir Pågår tills L17 är genomförd.
 
@@ -1455,6 +1458,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV
+
+- Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
+
 
 - Fortsättning reserverad före kodarbete 2026-11-12: Vilgot / Claude, `claude/f26-n19-postal-proximity-20261112`. Postnummerbaserad ungefärlig närhet utan exakt bostadsadress; se reservationen under [F26](#f26).
 - Leverans för granskning 2026-11-12: postnummerbaserad ungefärlig närhet är införd enligt `docs/F26_N19_POSTAL_PROXIMITY.md`. Kvar i N19: fullständig separation mellan godkända profilfakta och CV-urval samt inloggad acceptans enligt [L17](#l17). N19 förblir Pågår.
@@ -1649,6 +1655,9 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 
 <a id="l13"></a>
 ### L13 Automatisk personuppgiftsexport och användarrättigheter
+
+- Verifiering reserverad 2026-11-13: Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`. Kontrollera införda rättelsefunktioner och grants (L13), faktisk delnings-/bedömningspolicy och revisionsgräns (N19/F26), samt färsk DevStaging-inventering. Läsningar och negativa prov utan verkliga användardata; inloggad positiv acceptans är fortsatt L17. Öppna PR:er kontrollerade, inga överlappande PR:er. Befintliga statusar/ägare bevaras.
+
 
 - Avgränsad rättelseleverans 2026-11-12: `codex/l13-application-corrections-20261112`, Vilgot / Codex. Reproducerat att befintlig omdelning saknar mottagarnotis. Ny revisions-/kontobunden rättelse-RPC återanvänder befintlig delning och köning, med neutral företagsnotis i samma transaktion och återförsök utan dubbletter. Befintlig RLS nekar tidigare AI-revision efter omdelning; andra ansökningar bevaras. Lokalt: 35 PostgreSQL-/RLS-prov i PGlite 0.5.16, komponent-/SDK-prov för delning/rättelse, application-disclosure, assessment-snapshot (20 fall), inventeringsregression (26 fall), riktad lint och webpack-bygge/TypeScript. Migration `20261112180000_l13_application_corrections.sql` är införd i DevStaging enligt Vilgots besked 2026-11-12; agentens egen livekontroll av funktioner och användarflöde återstår. Inventeringskontrollen körd men kräver ny DevStaging-metadatafil; ingen gammal schemabild räknas som live. Inloggad acceptans/verklig modellkörning ligger i L17. Fullständig ärendekoppling/handläggning av AI-rättelse och mottagaruppföljning återstår. Huvudkortet förblir Pågår. Se `docs/L13_APPLICATION_CORRECTIONS.md`. Publicerad för granskning som [PR #213](https://github.com/vilgotdidrikson/youth-job-mvp/pull/213), kodcommit `dc0aa64`; införd i dev via PR #213, merge `73d195a` 2026-11-12. Merge och commitens närvaro i origin/dev är kontrollerade; detta är inte liveacceptans. Publiceringskontroll 2026-11-12: all lokal kod på L13- och N21-brancherna motsvarar remote, F12/N19 `faeb138` och F26/N19 `7e98f81` finns i origin/dev och Vercel-kontrollerna för #212/#213 är gröna. PR #212 är mergad som `fa57e62`; N21 står För granskning efter statusavstämning i PR #214.
 
