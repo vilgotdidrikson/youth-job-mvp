@@ -22,8 +22,9 @@
 .admin-user-chip small { overflow: hidden; color: var(--color-text-muted); font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
 .admin-content { width: min(100%, 72rem); margin: 0 auto; padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 4vw, 2.5rem) 5rem; }
 .admin-header { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+.admin-header > div { min-width: 0; }
 .admin-header p { margin: 0 0 .38rem; color: var(--color-brand); font-size: .69rem; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
-.admin-header h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.45rem); font-weight: 600; letter-spacing: -.065em; line-height: 1; }
+.admin-header h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.45rem); font-weight: 600; letter-spacing: -.065em; line-height: 1; overflow-wrap: break-word; hyphens: auto; }
 .admin-access-badge { padding: .5rem .75rem; border: 1px solid var(--color-success-border); border-radius: 999px; color: var(--color-success); background: var(--color-success-soft); font-size: .7rem; font-weight: 800; }
 .admin-welcome { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 15rem; overflow: hidden; padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid var(--color-border); border-radius: 2rem; background: linear-gradient(135deg, var(--color-surface) 0%, #fff1f5 58%, #f8dce5 100%); box-shadow: 0 1.25rem 3rem rgb(99 63 75 / .08); }
 .admin-welcome > div:first-child { position: relative; z-index: 1; max-width: 36rem; }
@@ -100,7 +101,8 @@
   .admin-desktop-nav, .admin-user-chip { display: none; }
   .admin-content { padding: 1.25rem 1rem 6.5rem; }
   .admin-header { align-items: center; margin-bottom: 1.4rem; }
-  .admin-header h1 { font-size: 2.15rem; }
+  /* Long Swedish compounds (Rekryteringsuppföljning) must fit 375px without sideways scroll. */
+  .admin-header h1 { min-width: 0; font-size: var(--text-xl); line-height: 1.1; }
   .admin-welcome { min-height: 12.5rem; padding: 1.45rem; border-radius: 1.5rem; }
   .admin-welcome-mark { position: absolute; right: -2.4rem; bottom: -2.5rem; width: 7rem; height: 7rem; margin: 0; opacity: .2; }
   .admin-welcome p { max-width: 17rem; font-size: .86rem; }
@@ -1029,8 +1031,9 @@ button,
 
 @media (max-width: 600px) {
   .job-builder-steps { gap: .35rem; }
-  .job-builder-steps button { justify-content: center; padding: .65rem .4rem; }
-  .job-builder-steps button div { display: none; }
+  .job-builder-steps button { position: relative; justify-content: center; padding: .65rem .4rem; }
+  /* Visually hidden, not display:none, so each step button keeps its name on mobile (F23). */
+  .job-builder-steps button div { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .job-builder-match-note { align-items: flex-start; flex-direction: column; }
   .job-builder-onboarding .job-builder-actions { flex-wrap: wrap; }
   .job-builder-onboarding .job-builder-actions > span { width: 100%; }

@@ -86,7 +86,7 @@ opener.isConnected = true; document.activeElement = body; cleanup = effect(); cl
 assert.equal(document.activeElement, body, 'Without a previous focus target nothing is forced');
 
 // Every tab list on a page has a matching panel, and no tab bar still uses toggle semantics.
-const tabPages = { 'app/profile/page.tsx': ['company-profile', 'profile'], 'app/applications/page.tsx': ['applications'], 'app/company/page.tsx': ['company-workspace', 'company-applications'], 'app/admin/recruitment/page.tsx': ['admin-recruitment'], 'app/video/record/page.tsx': ['video-mode'] };
+const tabPages = { 'app/profile/page.tsx': ['company-profile', 'profile'], 'app/applications/page.tsx': ['applications'], 'app/company/page.tsx': ['company-workspace'], 'components/company-job-candidates.tsx': ['company-applications'], 'app/admin/recruitment/page.tsx': ['admin-recruitment'], 'app/video/record/page.tsx': ['video-mode'] };
 for (const [file, ids] of Object.entries(tabPages)) {
   const source = readFileSync(file, 'utf8');
   for (const id of ids) {
@@ -122,4 +122,10 @@ assert.match(readFileSync('components/recruitment-profile-editor.tsx', 'utf8'), 
 assert.match(readFileSync('components/youth-cv-hub.tsx', 'utf8'), /className="cv-hub-chips" role="group" aria-label=\{label\}/);
 assert.equal((readFileSync('components/company-match-profile-form.tsx', 'utf8').match(/className="company-match-chips" role="group" aria-label=/g) ?? []).length, 2);
 
-console.log('PASS accessibility: tab keys/skip/wrap, actual TabList stop/selection/panel link, actual ModalDialog focus return, tab panels on all pages, role radios, named chip and view groups, focus baseline.');
+// Job builder step buttons keep a descriptive name on mobile: decorative badge, visually hidden (not removed) labels.
+const builder = readFileSync('app/company/page.tsx', 'utf8'), globals = readFileSync('app/globals.css', 'utf8');
+assert.match(builder, /<span aria-hidden="true">\{builderStep > step\.number \? "✓" : step\.number\}<\/span>/, 'Step badge is hidden from assistive tech');
+assert.match(builder, /<span className="sr-only">Steg \{step\.number\}: <\/span>\{step\.label\}/, 'Step button is named "Steg n: label"');
+assert.match(builder, /builderStep > step\.number && <span className="sr-only"> \(klart\)<\/span>/, 'Completed step is announced');
+assert.doesNotMatch(globals, /\.job-builder-steps button div \{ display: none/, 'Mobile step labels are not removed from the accessibility tree');
+console.log('PASS accessibility: job builder step names, tab keys/skip/wrap, actual TabList stop/selection/panel link, actual ModalDialog focus return, tab panels on all pages, role radios, named chip and view groups, focus baseline.');

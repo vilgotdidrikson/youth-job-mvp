@@ -503,8 +503,9 @@ function CompanyPageContent() {
                     disabled={!editing && step.number > builderStep}
                     aria-current={builderStep === step.number ? "step" : undefined}
                   >
-                    <span>{builderStep > step.number ? "✓" : step.number}</span>
-                    <div><strong>{step.label}</strong><small>{step.description}</small></div>
+                    <span aria-hidden="true">{builderStep > step.number ? "✓" : step.number}</span>
+                    {/* The number badge is decorative; this text names the step for assistive tech, also on mobile where it is visually hidden (F23). */}
+                    <div><strong><span className="sr-only">Steg {step.number}: </span>{step.label}</strong><small>{step.description}</small>{builderStep > step.number && <span className="sr-only"> (klart)</span>}</div>
                   </button>
                 ))}
               </nav>
