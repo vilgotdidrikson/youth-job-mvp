@@ -39,3 +39,16 @@ Kör SQL-testet med `MNW_CASE_PGLITE_MODULE` satt till en extern PGlite-installa
 4. Detta bygger inte hela rättelsehanteringen: koppling av ett ärende om felaktig AI-bedömning till rätt ansökan, handläggarbeslut och mottagaruppföljning samt rättelse av historiska uppgifter kräver fortsatt L13/L16. Den befintliga ärendeingången finns kvar. Ingen individuell AI-bedömningsvy införs för ungdomen.
 
 Hela L13 får inte markeras Klar genom denna delleverans. PR #212 är mergad som `fa57e62`; N21-kort och översiktsrad är För granskning efter avstämning via PR #214. N23/L12, N20:s omfattningsavstämning och övriga kort påbörjas inte här.
+
+## Faktisk DevStaging-kontroll 2026-11-13
+
+[PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217), Vilgot / Codex, `codex/l13-n19-f26-live-verification-20261113`.
+
+- L13: samtliga fyra rättelsefunktioner finns i DevStaging. Deras funktionskroppar har jämförts med migrationsfilen efter enbart normalisering av blanktecken; alla fyra MD5-kontrollsummorna matchar. Båda publika omslagen är SECURITY INVOKER, båda privata är SECURITY DEFINER; samtliga har låst tom search_path, nekar anon och tillåter authenticated. Detta kontrollerar faktisk införsel, inte bara migrationshistorik.
+- N19/F26: faktisk SELECT-policy använder private.can_read_disclosed_assessment. Den kräver rätt företagsidentitet, policyVersion 10 och exakt aktuell disclosureRevision. Hjälpfunktionen kräver fortsatt tillgängligt ansökningsinnehåll, verifierat företag, rätt annonsägare/intresse och ingen blockering. Den andra SELECT-policyn, retained assessments only, är RESTRICTIVE och kan alltså inte ge separat OR-åtkomst förbi ägar-/revisionskravet.
+- Fem negativa prov på verklig DevStaging passerar: anonym preview/rättelse, authenticated utan identitet preview/rättelse samt inga bedömningsrader utan identitet. SQL-roll och JWT-kontext är syntetiska; detta är inte en riktig Auth-inloggning. Provet finns i scripts/test-application-corrections-staging.sql, använder rollback och skapar inga konton, notiser eller andra fixtures.
+- Färsk systemkatalog från DevStaging jämförd med befintligt register: 92 relationer och fyra buckets matchar utan avvikelser. Inget register eller äldre katalog har skrivits om för att få kontrollen att passera.
+- 35 befintliga lokala PostgreSQL-prov och 20 faktiska assessment-handlerfall passerar på aktuell dev-kod. De lokala proven verifierar revisionsbyte, gammal/ny bedömning, rollback vid notisfel, mottagarscope och idempotens med fiktiva datakällor. PGlite 0.5.16 installerades separat under /tmp efter att tidigare temporära installationen saknades; repots beroenden ändrades inte.
+- Inga produktfel hittades i denna avgränsade kontroll. Endast verifieringsunderlag/SQL-probe och berörda plankort ändras, därför behövs inget nytt applikationsbygge för denna leverans.
+
+Tidigare formuleringar om att agentens egen livekontroll och färsk metadata saknas är historik och ersätts för just dessa kontroller av detta avsnitt. Positivt driftsatt användarflöde med riktiga Auth-sessioner, två ansökningar, mottagarnotis, ny AI-bedömning, faktisk samtidighet och webb/mobil är fortfarande inte verifierat. Det ligger kvar i L17; huvudkorten L13/N19/F26 är fortsatt Pågår.
