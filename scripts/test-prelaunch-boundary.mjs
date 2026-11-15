@@ -20,13 +20,13 @@ for (const path of ['/profile', '/company', '/signup', '/login', '/auth', '/chat
     assert.equal(response.headers.get('location'), 'https://matchnwork.se/');
   }
 }
-for (const path of ['/api/account', '/api/company/job/generate', '/api/voice/turn', '/api/prelaunch/not-allowed']) {
+for (const path of ['/api/account', '/api/company/job/generate', '/api/voice/turn', '/api/prelaunch/not-allowed', '/api/demo', '/api/demo/chat/extra']) {
   assert.equal(unstable_doesProxyMatch({ config, url: `https://matchnwork.se${path}` }), true);
   const response = proxy(new NextRequest(`https://matchnwork.se${path}`, { method: 'POST' }));
   assert.equal(response.status,404);
   assert.equal(response.headers.get('cache-control'),'no-store');
 }
-for (const path of ['/', '/demo', '/launch-privacy', '/avregistrera', '/launch-admin', '/api/prelaunch', '/api/prelaunch/admin', '/api/prelaunch/unsubscribe']) {
+for (const path of ['/', '/demo', '/launch-privacy', '/avregistrera', '/launch-admin', '/api/prelaunch', '/api/prelaunch/admin', '/api/prelaunch/unsubscribe', '/api/demo/chat']) {
   const response = proxy(new NextRequest(`https://matchnwork.se${path}`));
   assert.equal(response.headers.get('x-middleware-next'), '1', path);
 }

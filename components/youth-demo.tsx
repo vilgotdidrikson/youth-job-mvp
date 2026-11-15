@@ -42,7 +42,7 @@ type Application = {
   status: "sent" | "contact" | "withdrawn";
   slot?: string;
 };
-type Message = { own: boolean; text: string };
+import { demoContacts, type DemoChatMessage as Message } from "@/lib/demo-chat";
 type Overlay =
   | "job"
   | "filters"
@@ -190,6 +190,23 @@ export function YouthDemo() {
   const [profileAnswers, setProfileAnswers] = useState<string[]>([]);
   const [buildingProfile, setBuildingProfile] = useState(false);
   const [profileBuilt, setProfileBuilt] = useState(false);
+  const [typing, setTyping] = useState<Record<string, boolean>>({});
+  const [chatErrors, setChatErrors] = useState<Record<string, string>>({});
+  const [unread, setUnread] = useState<Record<string, number>>({});
+  const requests = useRef<Record<string, AbortController>>({});
+  const activeThread = useRef<string | null>(null);
+  useEffect(() => {
+    activeThread.current = tab === "chat" ? threadId : null;
+    if (tab === "chat") setUnread((current) => ({ ...current, [threadId]: 0 }));
+  }, [tab, threadId]);
+  useEffect(
+    () => () => {
+      Object.values(requests.current).forEach((controller) =>
+        controller.abort(),
+      );
+    },
+    [],
+  );
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
@@ -237,7 +254,7 @@ export function YouthDemo() {
   useEffect(() => {
     if (tab === "chat" && logRef.current)
       logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [tab, threads, threadId]);
+  }, [tab, threads, threadId, typing]);
   function go(next: Tab) {
     setTab(next);
     setOverlay(null);
@@ -284,6 +301,31 @@ export function YouthDemo() {
     setTab("applications");
     setNotice(`Din ansökan till ${job.company} är skickad.`);
   }
+  function applyFromSwipe(id: string) {
+    const target = youthJobs.find((item) => item.id === id);
+    if (!target || profile.age < target.minAge) {
+      setNotice(
+        target
+          ? `${target.age} för det här jobbet.`
+          : "Jobbet kunde inte hittas.",
+      );
+      return;
+    }
+    setApplications((current) =>
+      current.some((item) => item.jobId === id)
+        ? current
+        : [
+            ...current,
+            {
+              jobId: id,
+              draft: freshDraft(profile),
+              profile: { ...profile, availability: [...profile.availability] },
+              status: "sent",
+            },
+          ],
+    );
+    setNotice(`Ansökan till ${target.company} är skickad.`);
+  }
   function openChat(id: string, reply = false) {
     setThreadId(id);
     setMessage("");
@@ -307,36 +349,98 @@ export function YouthDemo() {
       }));
     }
   }
+  const timeNow = () =>
+    new Date().toLocaleTimeString("sv-SE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  async function requestReply(id: string, history: Message[]) {
+    if (requests.current[id]) return;
+    const controller = new AbortController();
+    requests.current[id] = controller;
+    setTyping((current) => ({ ...current, [id]: true }));
+    setChatErrors((current) => ({ ...current, [id]: "" }));
+    const timeout = setTimeout(() => {
+      setChatErrors((current) => ({
+        ...current,
+        [id]: "Svaret dröjer för länge. Försök igen.",
+      }));
+      controller.abort();
+    }, 27000);
+    try {
+      const response = await fetch("/api/demo/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId: id,
+          messages: history.slice(-12).map(({ own, text }) => ({ own, text })),
+        }),
+        signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok || typeof data.text !== "string")
+        throw new Error(data.error || "AI:n kunde inte svara just nu.");
+      if (controller.signal.aborted) return;
+      setThreads((current) => ({
+        ...current,
+        [id]: [
+          ...(current[id] ?? history).map((entry) =>
+            entry.own ? { ...entry, read: true } : entry,
+          ),
+          { own: false, text: data.text, time: timeNow() },
+        ],
+      }));
+      if (activeThread.current !== id)
+        setUnread((current) => ({ ...current, [id]: (current[id] || 0) + 1 }));
+      setApplications((current) =>
+        current.map((item) =>
+          item.jobId === id && item.status === "sent"
+            ? { ...item, status: "contact" }
+            : item,
+        ),
+      );
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setChatErrors((current) => ({
+          ...current,
+          [id]:
+            error instanceof Error
+              ? error.message
+              : "Kunde inte hämta AI-svaret.",
+        }));
+    } finally {
+      clearTimeout(timeout);
+      if (requests.current[id] === controller) delete requests.current[id];
+      setTyping((current) => ({ ...current, [id]: false }));
+    }
+  }
   function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!message.trim()) return;
-    setThreads((current) => ({
-      ...current,
-      [chatJob.id]: [
-        ...(current[chatJob.id] ?? messages),
-        { own: true, text: message.trim() },
-      ],
-    }));
+    if (!message.trim() || requests.current[chatJob.id]) return;
+    const history = [
+      ...messages,
+      { own: true, text: message.trim(), time: timeNow(), read: false },
+    ];
+    setThreads((current) => ({ ...current, [chatJob.id]: history }));
     setMessage("");
+    void requestReply(chatJob.id, history);
   }
   function book(slot: string) {
+    if (requests.current[chatJob.id]) return;
     setApplications((current) =>
       current.map((a) => (a.jobId === chatJob.id ? { ...a, slot } : a)),
     );
-    setThreads((current) => ({
-      ...current,
-      [chatJob.id]: [
-        ...(current[chatJob.id] ?? messages),
-        {
-          own: true,
-          text: `Jag väljer ${slot.toLowerCase()} för samtalet.`,
-        },
-        {
-          own: false,
-          text: `Då säger vi ${slot.toLowerCase()}! Detta är en fiktiv bokning och hamnar inte i någon kalender.`,
-        },
-      ],
-    }));
+    const history = [
+      ...messages,
+      {
+        own: true,
+        text: `Jag väljer ${slot.toLowerCase()} för demosamtalet.`,
+        time: timeNow(),
+        read: false,
+      },
+    ];
+    setThreads((current) => ({ ...current, [chatJob.id]: history }));
+    void requestReply(chatJob.id, history);
     setNotice(`Samtal bokat: ${slot}. Ingen riktig bokning görs.`);
   }
   function withdraw() {
@@ -367,6 +471,11 @@ export function YouthDemo() {
               <DemoIcon name={item} />
             </span>
             <span>{labels[item]}</span>
+            {item === "chat" && Object.values(unread).some(Boolean) && (
+              <b>
+                {Object.values(unread).reduce((sum, count) => sum + count, 0)}
+              </b>
+            )}
             {item === "saved" && saved.length > 0 && <b>{saved.length}</b>}
             {item === "applications" && activeApplications.length > 0 && (
               <b>{activeApplications.length}</b>
@@ -468,15 +577,7 @@ export function YouthDemo() {
                 onSkip={(id) => setSkipped((current) => [...current, id])}
                 onSave={save}
                 onOpen={openJob}
-                onApply={(id) => {
-                  setSelected(id);
-                  setDrafts((current) => ({
-                    ...current,
-                    [id]: current[id] ?? freshDraft(profile),
-                  }));
-                  setConsent(false);
-                  setOverlay("apply");
-                }}
+                onApply={applyFromSwipe}
                 onReset={() => {
                   setSkipped([]);
                   setSearch("");
@@ -799,8 +900,15 @@ export function YouthDemo() {
                   <span className={`dx-emblem ${j.tone}`}>{j.mark}</span>
                   <span>
                     <strong>{j.company}</strong>
-                    <small>{j.title}</small>
+                    <small>
+                      {typing[j.id]
+                        ? `${demoContacts[j.id]} skriver…`
+                        : threads[j.id]?.at(-1)?.text || j.title}
+                    </small>
                   </span>
+                  {!!unread[j.id] && (
+                    <b className="yd-unread">{unread[j.id]}</b>
+                  )}
                 </button>
               ))}
             </div>
@@ -811,7 +919,12 @@ export function YouthDemo() {
                 </span>
                 <div>
                   <h3>{chatJob.company}</h3>
-                  <p>{chatJob.title}</p>
+                  <p>
+                    {demoContacts[chatJob.id]} · {chatJob.title}
+                  </p>
+                  <small className="yd-ai-disclosure">
+                    AI-demochatt · svar via OpenAI
+                  </small>
                 </div>
               </header>
               <div
@@ -820,16 +933,47 @@ export function YouthDemo() {
                 role="log"
                 aria-label="Demomeddelanden"
               >
+                <div className="yd-chat-day">Idag</div>
                 {messages.map((entry, i) => (
                   <div
                     key={i}
                     className={`yd-message ${entry.own ? "own" : ""}`}
                   >
-                    <small>{entry.own ? "Du" : chatJob.company}</small>
+                    <small>{entry.own ? "Du" : demoContacts[chatJob.id]}</small>
                     <p>{entry.text}</p>
+                    <div className="yd-message-meta">
+                      <time>
+                        {entry.time ||
+                          `14.${String(20 + i * 2).padStart(2, "0")}`}
+                      </time>
+                      {entry.own && (
+                        <span>
+                          {entry.read === false ? "Levererat" : "Läst"} ✓
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
+                {typing[chatJob.id] && (
+                  <div className="yd-typing" role="status">
+                    <i />
+                    <i />
+                    <i />
+                    <span>{demoContacts[chatJob.id]} skriver…</span>
+                  </div>
+                )}
               </div>
+              {chatErrors[chatJob.id] && (
+                <div className="yd-chat-error" role="alert">
+                  <p>{chatErrors[chatJob.id]}</p>
+                  <button
+                    className="yd-text"
+                    onClick={() => void requestReply(chatJob.id, messages)}
+                  >
+                    Försök igen
+                  </button>
+                </div>
+              )}
               <div className="yd-quick-replies" aria-label="Förslag på svar">
                 {[
                   "Jag kan jobba helger.",
@@ -841,23 +985,6 @@ export function YouthDemo() {
                   </button>
                 ))}
               </div>
-              <button
-                className="yd-text yd-example"
-                onClick={() =>
-                  setThreads((current) => ({
-                    ...current,
-                    [chatJob.id]: [
-                      ...(current[chatJob.id] ?? messages),
-                      {
-                        own: false,
-                        text: "Tack för ditt svar! Vi berättar gärna mer och kan ta ett kort samtal. Vilken av tiderna nedan passar dig?",
-                      },
-                    ],
-                  }))
-                }
-              >
-                Visa ett exempelsvar från företaget ↳
-              </button>
               <form onSubmit={sendMessage}>
                 <label className="dx-sr-only" htmlFor="yd-message">
                   Ditt meddelande
@@ -868,11 +995,11 @@ export function YouthDemo() {
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={500}
                   rows={1}
-                  placeholder="Skriv ett meddelande…"
+                  placeholder="Skriv ett demosvar…"
                 />
                 <button
                   className="yd-primary"
-                  disabled={!message.trim()}
+                  disabled={!message.trim() || typing[chatJob.id]}
                   aria-label="Skicka meddelande"
                 >
                   ↑
@@ -891,6 +1018,7 @@ export function YouthDemo() {
                       aria-pressed={applications.some(
                         (a) => a.jobId === chatJob.id && a.slot === slot,
                       )}
+                      disabled={!!typing[chatJob.id]}
                       onClick={() => book(slot)}
                     >
                       {slot}
@@ -1213,8 +1341,12 @@ export function YouthDemo() {
                       <p>{data.note}</p>
                     </>
                   )}
-                  <h4>{job.question}</h4>
-                  <p>{data.answer}</p>
+                  {data.answer && (
+                    <>
+                      <h4>{job.question}</h4>
+                      <p>{data.answer}</p>
+                    </>
+                  )}
                   {overlay === "review" && (
                     <label className="yd-check">
                       <input
