@@ -75,3 +75,25 @@ for (const job of youthJobs) {
 console.log(
   "Youth demo: search, combined filters, age boundaries, empty results and all example jobs passed.",
 );
+
+const { demoProfileQuestions, buildDemoProfile, initialYouthProfile } = load(
+  "../lib/youth-demo-data.ts", { "./demo-data": old },
+);
+assert.equal(demoProfileQuestions.length, 4);
+assert.ok(demoProfileQuestions.every(question => question.options.length === 3));
+const original = structuredClone(initialYouthProfile);
+const answers = demoProfileQuestions.map(question => question.options[2]);
+const built = buildDemoProfile(initialYouthProfile, answers);
+assert.equal(built.interest, "Idrott & aktiviteter");
+assert.equal(built.experience, "Jag har haft ett sommarjobb");
+assert.deepEqual(built.availability, ["Sommar"]);
+assert.equal(built.strengths, "Nyfiken och snabblärd");
+assert.ok(built.bio.includes("idrott & aktiviteter"));
+assert.ok(built.bio.includes("sommarjobb"));
+assert.ok(built.bio.includes("nyfiken och snabblärd"));
+assert.ok(built.bio.includes("under sommarlovet"));
+assert.deepEqual(initialYouthProfile, original, "Building a profile must not change existing application snapshots");
+const alternate = buildDemoProfile(initialYouthProfile, demoProfileQuestions.map(question => question.options[0]));
+assert.deepEqual(alternate.availability, ["Helger"]);
+assert.notEqual(alternate.bio, built.bio);
+console.log("Profile assistant: four questions, three answers each, selected details, availability and immutable snapshots passed.");

@@ -1577,3 +1577,705 @@
   color: white;
   border-color: #4e3142;
 }
+
+/* App-style demo: the workspace starts immediately. */
+.dx-page:has(.yd-app) {
+  padding: 0 24px 24px;
+}
+.dx-page:has(.yd-app) > .dx-top {
+  max-width: 1340px;
+  padding: 17px 0;
+}
+.yd-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.yd-top-controls button,
+.yd-top-controls a {
+  border: 0;
+  background: transparent;
+  color: #79566c;
+  font: inherit;
+  font-size: 12px;
+  min-height: 44px;
+  padding: 8px;
+  cursor: pointer;
+}
+.yd-top-controls a {
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+.yd-demo-badge {
+  color: #9b3e6b;
+  background: #f4e3ed;
+  border-radius: 7px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.yd-app {
+  min-height: calc(100dvh - 110px);
+}
+.yd-main {
+  padding: 24px;
+}
+.yd-heading {
+  margin-bottom: 18px;
+}
+.yd-heading h2 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 25px;
+  margin: 0;
+  letter-spacing: -0.8px;
+}
+.yd-activity-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 12px;
+  background: #f6edf2;
+  margin-bottom: 22px;
+}
+.yd-activity-tabs button {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  min-height: 44px;
+  background: transparent;
+  color: #8d6a80;
+  font-size: 13px;
+}
+.yd-activity-tabs button[aria-pressed="true"] {
+  background: white;
+  color: #5d364c;
+  box-shadow: 0 2px 6px #70405b0a;
+}
+.yd-activity-tabs b {
+  font-size: 10px;
+  margin-left: 7px;
+}
+.yd-discovery {
+  max-width: 460px;
+  margin: auto;
+}
+.yd-deck-count {
+  display: flex;
+  justify-content: space-between;
+  color: #6a455a;
+  font-size: 12px;
+  padding: 8px 4px 17px;
+}
+.yd-deck-count span {
+  color: #a08697;
+  font-size: 11px;
+}
+.yd-deck {
+  position: relative;
+  isolation: isolate;
+}
+.yd-deck-back {
+  position: absolute;
+  inset: 8px 12px -9px;
+  background: #ead4e0;
+  border-radius: 24px;
+  z-index: -1;
+  transform: rotate(2deg);
+}
+.yd-swipe-card {
+  border: 1px solid #e6d5df;
+  border-radius: 23px;
+  background: white;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  box-shadow: 0 10px 28px #6d3b5512;
+}
+.yd-swipe-art {
+  position: relative;
+  height: 205px;
+  overflow: hidden;
+  padding: 20px;
+  background: #ecd5c1;
+}
+.yd-swipe-art.leaf,
+.yd-swipe-art.sage {
+  background: #d5dfc8;
+}
+.yd-swipe-art.court {
+  background: #e2d2c0;
+}
+.yd-swipe-art.lilac {
+  background: #dfd4e9;
+}
+.yd-swipe-art:after {
+  content: "";
+  position: absolute;
+  border: 1px solid #fff7;
+  border-radius: 50%;
+  width: 240px;
+  height: 240px;
+  right: -80px;
+  bottom: -160px;
+  box-shadow:
+    0 0 0 35px #fff2,
+    0 0 0 70px #fff1;
+  pointer-events: none;
+}
+.yd-job-type {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #fff9;
+  font-size: 11px;
+}
+.yd-swipe-art > strong {
+  position: absolute;
+  right: 38px;
+  bottom: 4px;
+  font-family: var(--font-fraunces), serif;
+  font-size: 160px;
+  line-height: 1;
+  color: #755342;
+  letter-spacing: -15px;
+}
+.yd-swipe-location {
+  position: absolute;
+  bottom: 18px;
+  left: 20px;
+  font-size: 11px;
+  z-index: 1;
+}
+.yd-swipe-info {
+  padding: 23px;
+}
+.yd-swipe-info > span {
+  font-size: 12px;
+  color: #947388;
+}
+.yd-swipe-info h3 {
+  font-family: var(--font-fraunces), serif;
+  font-size: 30px;
+  letter-spacing: -0.8px;
+  line-height: 1.13;
+  margin: 8px 0 16px;
+  font-weight: 550;
+}
+.yd-swipe-info p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8c7281;
+  margin: 16px 0 8px;
+}
+.yd-swipe-info .yd-text {
+  min-height: 40px;
+}
+.yd-swipe-stamp {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  border: 3px solid #537258;
+  color: #537258;
+  background: #ffffffdc;
+  transform: rotate(-12deg);
+  font-size: 24px;
+  padding: 7px;
+  border-radius: 7px;
+  font-weight: 700;
+  z-index: 3;
+}
+.yd-swipe-stamp.skip {
+  color: #ad526e;
+  border-color: #ad526e;
+}
+.yd-swipe-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  margin: 25px 0 12px;
+}
+.yd-swipe-actions button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #ead7e2;
+  border-radius: 40px;
+  background: white;
+  color: #94667f;
+  padding: 10px 23px;
+  min-height: 55px;
+  font-size: 13px;
+  box-shadow: 0 3px 12px #74425c09;
+}
+.yd-swipe-actions button > span {
+  font-size: 27px;
+  line-height: 1;
+}
+.yd-swipe-actions .yd-swipe-apply {
+  background: #a64a78;
+  border-color: #a64a78;
+  color: white;
+}
+.yd-swipe-hint {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #997c8e;
+  padding: 0 10px;
+}
+.yd-swipe-hint span {
+  color: #ad98a5;
+}
+.yd-deck-empty {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.yd-deck-empty > span {
+  font-size: 40px;
+}
+.yd-map-wrap {
+  height: 620px;
+  max-height: calc(100dvh - 180px);
+  min-height: 400px;
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #e9e6e1;
+}
+.yd-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+.yd-map-pin {
+  background: #ac4d7b;
+  border: 3px solid white;
+  width: 44px;
+  height: 44px;
+  color: white;
+  border-radius: 50% 50% 50% 8px;
+  box-shadow: 0 4px 12px #5e314a33;
+  font:
+    600 18px var(--font-fraunces),
+    serif;
+  cursor: pointer;
+}
+.yd-map-state {
+  position: absolute;
+  left: 15px;
+  right: 60px;
+  top: 15px;
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  font-size: 12px;
+}
+.yd-map-job-picker {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 120px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 4px;
+}
+.yd-map-job-picker button {
+  min-height: 38px;
+  border: 1px solid #d8c4d0;
+  border-radius: 20px;
+  padding: 8px 14px;
+  background: #fff;
+  white-space: nowrap;
+  color: #83566f;
+  font-size: 11px;
+}
+.yd-map-job-picker button[aria-pressed="true"] {
+  background: #56364a;
+  color: white;
+}
+.yd-map-card {
+  position: absolute;
+  bottom: 29px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  padding: 15px;
+  border: 1px solid #eddee8;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 5px 22px #59354818;
+  color: #523448;
+}
+.yd-map-card > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.yd-map-card strong {
+  display: block;
+  font-size: 16px;
+  margin: 5px 0;
+}
+.yd-map-card small {
+  font-size: 10px;
+  color: #927487;
+}
+.yd-build-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #e6c9db;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+  color: #613d53;
+  background: linear-gradient(115deg, #f8eaf2, #f0eaf8);
+}
+.yd-build-cta > span:nth-child(2) {
+  flex: 1;
+}
+.yd-build-cta strong {
+  display: block;
+  font-size: 16px;
+}
+.yd-build-cta small {
+  display: block;
+  color: #9b708b;
+  font-size: 11px;
+  margin-top: 7px;
+}
+.yd-ai-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #a5527f;
+  color: white;
+  border-radius: 14px;
+  font-size: 26px;
+}
+.yd-profile-summary {
+  padding: 25px;
+  background: white;
+  border: 1px solid #ecdee7;
+  border-radius: 16px;
+}
+.yd-profile-summary h3 {
+  font-size: 13px;
+  margin: 20px 0 10px;
+}
+.yd-profile-summary h3:first-child {
+  margin-top: 0;
+}
+.yd-profile-summary p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #8f7283;
+}
+.yd-builder {
+  border: 1px solid #ebdbe5;
+  border-radius: 17px;
+  overflow: hidden;
+  background: #fdf9fc;
+  max-width: 700px;
+  margin: auto;
+}
+.yd-builder > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-bottom: 1px solid #eddee7;
+  padding: 18px;
+}
+.yd-builder > header h3 {
+  font-size: 14px;
+}
+.yd-builder > header small {
+  font-size: 10px;
+  color: #98788d;
+  display: block;
+  margin-top: 4px;
+}
+.yd-builder > header > button {
+  margin-left: auto;
+  white-space: nowrap;
+  padding: 4px;
+  font-size: 11px;
+}
+.yd-builder-log {
+  height: 380px;
+  overflow-y: auto;
+  padding: 23px 18px;
+  scroll-behavior: smooth;
+}
+.yd-ai-bubble,
+.yd-answer-bubble {
+  width: fit-content;
+  max-width: 88%;
+  padding: 14px 17px;
+  border-radius: 15px 15px 15px 3px;
+  background: #f0e6ee;
+  color: #78556c;
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+.yd-answer-bubble {
+  margin-left: auto;
+  background: #a5517e;
+  color: white;
+  border-radius: 15px 15px 3px 15px;
+}
+.yd-builder-options {
+  display: grid;
+  gap: 9px;
+  padding: 16px;
+  border-top: 1px solid #eddee7;
+  background: white;
+}
+.yd-builder-options > button {
+  padding: 13px 15px;
+  border: 1px solid #e7d4e0;
+  border-radius: 11px;
+  background: #fffafd;
+  color: #845b74;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 46px;
+  font-size: 13px;
+}
+.yd-builder-options > .yd-primary {
+  background: #543449;
+  color: white;
+}
+.yd-built-profile {
+  padding: 20px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #ead6e2;
+  margin-bottom: 10px;
+}
+.yd-built-profile h3 {
+  font-size: 22px;
+}
+.yd-built-profile > span {
+  font-size: 11px;
+  color: #98788d;
+}
+.yd-built-profile p {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 12px 0;
+}
+@media (max-width: 700px) {
+  .dx-page:has(.yd-app) {
+    padding: 0 0 calc(85px + env(safe-area-inset-bottom));
+  }
+  .dx-page:has(.yd-app) > .dx-top {
+    padding: 9px 16px;
+    min-height: 64px;
+  }
+  .dx-page:has(.yd-app) .dx-shell {
+    border: 0;
+    border-radius: 0;
+  }
+  .yd-top-controls {
+    gap: 2px;
+  }
+  .yd-top-controls button {
+    font-size: 10px;
+    padding: 6px;
+  }
+  .yd-demo-badge {
+    font-size: 9px;
+    padding: 4px 7px;
+  }
+  .yd-top-controls a {
+    font-size: 23px;
+    padding: 5px;
+  }
+  .yd-app {
+    min-height: calc(100dvh - 140px);
+  }
+  .yd-main {
+    padding: 16px 16px 24px;
+  }
+  .yd-heading {
+    margin-bottom: 16px;
+  }
+  .yd-heading h2 {
+    font-size: 24px;
+  }
+  .yd-profile-shortcut {
+    width: 35px;
+    height: 35px;
+  }
+  .yd-nav svg {
+    width: 22px;
+    height: 22px;
+  }
+  .yd-nav button {
+    font-size: 10px;
+  }
+  .yd-search-row {
+    margin-bottom: 9px;
+    gap: 7px;
+  }
+  .yd-search-row input {
+    padding: 12px 0;
+  }
+  .yd-search-row > button {
+    padding: 8px 12px;
+    gap: 9px;
+  }
+  .yd-category-chips {
+    margin-bottom: 3px;
+  }
+  .yd-category-chips > button {
+    font-size: 10px;
+    padding: 7px 12px;
+    min-height: 35px;
+  }
+  .yd-deck-count {
+    padding: 6px 3px 11px;
+    font-size: 11px;
+  }
+  .yd-deck-count span {
+    font-size: 10px;
+  }
+  .yd-swipe-art {
+    height: 160px;
+    padding: 16px;
+  }
+  .yd-swipe-art > strong {
+    font-size: 135px;
+  }
+  .yd-swipe-info {
+    padding: 18px;
+  }
+  .yd-swipe-info h3 {
+    font-size: 27px;
+    margin: 7px 0 12px;
+  }
+  .yd-swipe-info p {
+    font-size: 12px;
+    margin: 12px 0 0;
+    line-height: 1.6;
+  }
+  .yd-swipe-info .yd-tags {
+    gap: 5px;
+  }
+  .yd-swipe-info .yd-tags span {
+    font-size: 9px;
+  }
+  .yd-swipe-info .yd-text {
+    min-height: 38px;
+  }
+  .yd-swipe-actions {
+    margin-top: 22px;
+    gap: 23px;
+  }
+  .yd-swipe-actions button {
+    min-height: 52px;
+    padding: 9px 22px;
+  }
+  .yd-swipe-hint {
+    font-size: 9px;
+  }
+  .yd-map-wrap {
+    height: calc(100dvh - 220px);
+    max-height: none;
+    min-height: 350px;
+    margin: 0 -16px -24px;
+    border-radius: 0;
+  }
+  .yd-map-card {
+    left: 12px;
+    right: 12px;
+    padding: 12px;
+  }
+  .yd-map-card strong {
+    font-size: 14px;
+  }
+  .yd-profile-banner {
+    padding: 18px 14px;
+  }
+  .yd-profile-banner .yd-secondary {
+    font-size: 11px;
+    padding: 10px;
+  }
+  .yd-build-cta {
+    padding: 17px;
+    gap: 11px;
+  }
+  .yd-build-cta strong {
+    font-size: 14px;
+  }
+  .yd-build-cta small {
+    font-size: 10px;
+  }
+  .yd-profile-summary {
+    padding: 20px;
+  }
+  .yd-builder {
+    margin: 0 -4px;
+  }
+  .yd-builder > header {
+    padding: 14px 12px;
+    gap: 9px;
+  }
+  .yd-builder > header h3 {
+    font-size: 12px;
+  }
+  .yd-builder > header small {
+    font-size: 9px;
+  }
+  .yd-builder > header .yd-ai-avatar {
+    width: 33px;
+    height: 33px;
+    font-size: 23px;
+  }
+  .yd-builder > header button {
+    font-size: 10px;
+  }
+  .yd-builder-log {
+    height: calc(100dvh - 450px);
+    min-height: 180px;
+    padding: 18px 12px;
+  }
+  .yd-builder-options {
+    padding: 12px;
+  }
+  .yd-builder-options button {
+    font-size: 12px;
+  }
+  .yd-ai-bubble,
+  .yd-answer-bubble {
+    font-size: 13px;
+    padding: 12px 14px;
+    max-width: 90%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .yd-builder-log {
+    scroll-behavior: auto;
+  }
+}

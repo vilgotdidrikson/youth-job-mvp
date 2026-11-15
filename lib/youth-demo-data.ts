@@ -115,6 +115,9 @@ export type DemoProfile = {
   area: string;
   availability: string[];
   bio: string;
+  experience?: string;
+  strengths?: string;
+  interest?: string;
 };
 export const initialYouthProfile: DemoProfile = {
   age: 18,
@@ -150,4 +153,47 @@ export function filterYouthJobs(
       (filters.schedule === "Alla" || job.schedule === filters.schedule) &&
       (!filters.suitableAge || age >= job.minAge),
   );
+}
+
+export const demoProfileQuestions = [
+  {
+    text: "Hej Alex! Vi bygger din profil. Vilken typ av jobb lockar dig?",
+    options: ["Café & service", "Butik & kundmöten", "Idrott & aktiviteter"],
+  },
+  {
+    text: "Bra! Vad har du gjort tidigare?",
+    options: [
+      "Jag söker mitt första jobb",
+      "Jag har hjälpt till i en förening",
+      "Jag har haft ett sommarjobb",
+    ],
+  },
+  {
+    text: "När passar det dig att jobba?",
+    options: ["Helger", "Efter skolan", "Under sommarlovet"],
+  },
+  {
+    text: "Sista frågan! Vad beskriver dig bäst?",
+    options: [
+      "Social och hjälpsam",
+      "Noggrann och ansvarstagande",
+      "Nyfiken och snabblärd",
+    ],
+  },
+];
+
+export function buildDemoProfile(
+  profile: DemoProfile,
+  answers: string[],
+): DemoProfile {
+  return {
+    ...profile,
+    availability: [
+      answers[2] === "Under sommarlovet" ? "Sommar" : answers[2] || "Helger",
+    ],
+    experience: answers[1] || "",
+    strengths: answers[3] || "",
+    interest: answers[0] || "",
+    bio: `Jag går på gymnasiet och söker jobb inom ${(answers[0] || "service").toLocaleLowerCase("sv")}. ${answers[1] || ""}. Jag är ${(answers[3] || "nyfiken").toLocaleLowerCase("sv")} och kan jobba ${(answers[2] || "helger").toLocaleLowerCase("sv")}.`,
+  };
 }

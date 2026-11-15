@@ -11,11 +11,24 @@ import {
   emptyYouthFilters,
   filterYouthJobs,
   initialYouthProfile,
+  demoProfileQuestions,
   youthJobs,
   type DemoProfile,
 } from "@/lib/youth-demo-data";
 
-type Tab = "jobs" | "saved" | "applications" | "chat" | "profile";
+import dynamic from "next/dynamic";
+import {
+  DemoIcon,
+  DemoSwipe,
+  DemoProfileBuilder,
+} from "@/components/demo-discovery";
+
+const DemoJobMap = dynamic(
+  () => import("@/components/demo-job-map").then((module) => module.DemoJobMap),
+  { ssr: false, loading: () => <p role="status">Laddar kartan…</p> },
+);
+
+type Tab = "map" | "jobs" | "saved" | "applications" | "chat" | "profile";
 type Draft = {
   note: string;
   start: string;
@@ -40,18 +53,12 @@ type Overlay =
   | "cv"
   | null;
 const labels: Record<Tab, string> = {
-  jobs: "Hitta jobb",
+  jobs: "Upptäck",
+  map: "Karta",
   saved: "Sparade",
-  applications: "Ansökningar",
+  applications: "Aktivitet",
   chat: "Chatt",
   profile: "Min profil",
-};
-const icons: Record<Tab, string> = {
-  jobs: "⌖",
-  saved: "♡",
-  applications: "✓",
-  chat: "◌",
-  profile: "◎",
 };
 const freshDraft = (profile: DemoProfile): Draft => ({
   note: "",
@@ -111,18 +118,78 @@ function Sheet({
 
 export function YouthDemo() {
   const [tab, setTab] = useState<Tab>("jobs");
-  const [saved, setSaved] = useState<string[]>([]);
+  const [saved, setSaved] = useState<string[]>(["park", "bakery", "cinema"]);
+  const [skipped, setSkipped] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState(emptyYouthFilters);
   const [profile, setProfile] = useState(initialYouthProfile);
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({
+    event: {
+      ...freshDraft(initialYouthProfile),
+      note: "Hej! Jag gillar sport och vill gärna hjälpa till på matcher.",
+    },
+  });
+  const [applications, setApplications] = useState<Application[]>([
+    {
+      jobId: "cafe",
+      status: "contact",
+      profile: { ...initialYouthProfile },
+      draft: {
+        ...freshDraft(initialYouthProfile),
+        answer: "Jag gillar service och vill lära mig mer om kaffe.",
+      },
+    },
+    {
+      jobId: "shop",
+      status: "sent",
+      profile: { ...initialYouthProfile },
+      draft: {
+        ...freshDraft(initialYouthProfile),
+        answer: "Jag hjälper gärna kunder att hitta rätt.",
+      },
+    },
+    {
+      jobId: "sports",
+      status: "contact",
+      slot: "Onsdag 17.00",
+      profile: { ...initialYouthProfile },
+      draft: {
+        ...freshDraft(initialYouthProfile),
+        answer: "Jag hjälper till i min idrottsförening.",
+      },
+    },
+  ]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [selected, setSelected] = useState("cafe");
   const [consent, setConsent] = useState(false);
   const [applicationFilter, setApplicationFilter] = useState("Alla");
   const [threadId, setThreadId] = useState("cafe");
-  const [threads, setThreads] = useState<Record<string, Message[]>>({});
+  const [threads, setThreads] = useState<Record<string, Message[]>>({
+    cafe: [
+      { own: true, text: "Hej! Jag har precis sökt jobbet hos er." },
+      {
+        own: false,
+        text: "Hej Alex! Kul att du sökt. Kan du jobba varannan helg?",
+      },
+    ],
+    shop: [
+      { own: true, text: "Hej! Behöver jag ha jobbat i butik tidigare?" },
+      {
+        own: false,
+        text: "Hej! Nej, du får introduktion av oss. Det viktigaste är att du gillar att hjälpa kunder.",
+      },
+    ],
+    sports: [
+      {
+        own: false,
+        text: "Hej Alex! Din erfarenhet som ungdomsledare låter intressant. Vi hörs på onsdag 17.00!",
+      },
+      { own: true, text: "Det blir jättebra, vi hörs då!" },
+    ],
+  });
+  const [profileAnswers, setProfileAnswers] = useState<string[]>([]);
+  const [buildingProfile, setBuildingProfile] = useState(false);
+  const [profileBuilt, setProfileBuilt] = useState(false);
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
@@ -215,7 +282,7 @@ export function YouthDemo() {
     ]);
     setOverlay(null);
     setTab("applications");
-    setNotice(`Din demoansökan till ${job.company} är skickad.`);
+    setNotice(`Din ansökan till ${job.company} är skickad.`);
   }
   function openChat(id: string, reply = false) {
     setThreadId(id);
@@ -234,7 +301,7 @@ export function YouthDemo() {
         [id]: current[id] ?? [
           {
             own: false,
-            text: "Hej Alex! Vi har läst din demoansökan och vill gärna veta mer. När skulle du kunna ta ett kort samtal?",
+            text: "Hej Alex! Vi har läst din ansökan och vill gärna veta mer. När skulle du kunna ta ett kort samtal?",
           },
         ],
       }));
@@ -262,7 +329,7 @@ export function YouthDemo() {
         ...(current[chatJob.id] ?? messages),
         {
           own: true,
-          text: `Jag väljer ${slot.toLowerCase()} för demosamtalet.`,
+          text: `Jag väljer ${slot.toLowerCase()} för samtalet.`,
         },
         {
           own: false,
@@ -270,7 +337,7 @@ export function YouthDemo() {
         },
       ],
     }));
-    setNotice(`Demosamtal valt: ${slot}. Ingen riktig bokning görs.`);
+    setNotice(`Samtal bokat: ${slot}. Ingen riktig bokning görs.`);
   }
   function withdraw() {
     setApplications((current) =>
@@ -285,20 +352,28 @@ export function YouthDemo() {
   }
   const nav = (
     <nav className="yd-nav" aria-label="Ungdomsdemonavigation">
-      {(Object.keys(labels) as Tab[]).map((item) => (
-        <button
-          key={item}
-          aria-current={tab === item ? "page" : undefined}
-          onClick={() => go(item)}
-        >
-          <span aria-hidden="true">{icons[item]}</span>
-          <span>{labels[item]}</span>
-          {item === "saved" && saved.length > 0 && <b>{saved.length}</b>}
-          {item === "applications" && activeApplications.length > 0 && (
-            <b>{activeApplications.length}</b>
-          )}
-        </button>
-      ))}
+      {(["jobs", "map", "applications", "chat", "profile"] as Tab[]).map(
+        (item) => (
+          <button
+            key={item}
+            aria-current={
+              tab === item || (item === "applications" && tab === "saved")
+                ? "page"
+                : undefined
+            }
+            onClick={() => go(item)}
+          >
+            <span>
+              <DemoIcon name={item} />
+            </span>
+            <span>{labels[item]}</span>
+            {item === "saved" && saved.length > 0 && <b>{saved.length}</b>}
+            {item === "applications" && activeApplications.length > 0 && (
+              <b>{activeApplications.length}</b>
+            )}
+          </button>
+        ),
+      )}
     </nav>
   );
   return (
@@ -308,21 +383,15 @@ export function YouthDemo() {
           <span className="yd-avatar">A</span>
           <div>
             <strong>Alex, {profile.age} år</strong>
-            <small>Din fiktiva demoprofil</small>
+            <small>Södermalm · Stockholm</small>
           </div>
         </div>
         {nav}
-        <p className="yd-sidebar-note">
-          Prova hela vägen från ett jobb du gillar till ett första samtal.
-        </p>
       </aside>
       <section className="yd-main" aria-label="Ungdomsvy">
         <div className="yd-heading">
           <div>
-            <span className="yd-kicker">
-              {tab === "jobs" ? "DITT NÄSTA STEG" : "DIN DEMO"}
-            </span>
-            <h2>{tab === "jobs" ? "Hitta något som är du." : labels[tab]}</h2>
+            <h2>{tab === "applications" ? "Ansökningar" : labels[tab]}</h2>
           </div>
           <button
             className="yd-profile-shortcut"
@@ -335,13 +404,24 @@ export function YouthDemo() {
         <p className="yd-notice" role="status" aria-live="polite">
           {notice}
         </p>
+        {(tab === "applications" || tab === "saved") && (
+          <div className="yd-activity-tabs" aria-label="Din aktivitet">
+            <button
+              aria-pressed={tab === "applications"}
+              onClick={() => go("applications")}
+            >
+              Ansökningar <b>{activeApplications.length}</b>
+            </button>
+            <button aria-pressed={tab === "saved"} onClick={() => go("saved")}>
+              Sparade <b>{saved.length}</b>
+            </button>
+          </div>
+        )}
+        {tab === "map" && <DemoJobMap jobs={youthJobs} onOpen={openJob} />}
         {(tab === "jobs" || tab === "saved") && (
           <>
             {tab === "jobs" && (
               <>
-                <p className="yd-lead">
-                  Extrajobb, sommarjobb och nya möjligheter i Stockholm.
-                </p>
                 <div className="yd-search-row">
                   <label>
                     <span aria-hidden="true">⌕</span>
@@ -379,104 +459,118 @@ export function YouthDemo() {
                 </div>
               </>
             )}
-            <div className="yd-result-heading">
-              <span>
-                {visibleJobs.length}{" "}
-                {tab === "saved" ? "sparade jobb" : "exempeljobb"}
-              </span>
-              {tab === "jobs" && filterCount > 0 && (
-                <button
-                  onClick={() => {
-                    setFilters(emptyYouthFilters);
-                    setSearch("");
-                  }}
-                >
-                  Rensa filter
-                </button>
-              )}
-              {tab === "saved" && <span>Tryck på hjärtat för att ta bort</span>}
-            </div>
-            <div className="yd-job-grid">
-              {visibleJobs.map((item) => (
-                <article className="yd-job-card" key={item.id}>
-                  <div className={`yd-card-art ${item.tone}`}>
-                    <span>{item.category}</span>
-                    <strong aria-hidden="true">{item.mark}</strong>
-                    <button
-                      className="yd-save"
-                      aria-label={`${saved.includes(item.id) ? "Ta bort sparat jobb" : "Spara jobb"}: ${item.title}`}
-                      aria-pressed={saved.includes(item.id)}
-                      onClick={() => save(item.id)}
-                    >
-                      {saved.includes(item.id) ? "♥" : "♡"}
-                    </button>
-                    <span className="yd-art-area">⌖ {item.area}</span>
-                  </div>
-                  <button
-                    className="yd-card-open"
-                    onClick={() => openJob(item.id)}
-                    aria-label={`Visa jobbet ${item.title} hos ${item.company}`}
-                  >
-                    <span>{item.company}</span>
+            {tab === "jobs" ? (
+              <DemoSwipe
+                jobs={visibleJobs}
+                saved={saved}
+                excluded={applications.map((a) => a.jobId)}
+                skipped={skipped}
+                onSkip={(id) => setSkipped((current) => [...current, id])}
+                onSave={save}
+                onOpen={openJob}
+                onApply={(id) => {
+                  setSelected(id);
+                  setDrafts((current) => ({
+                    ...current,
+                    [id]: current[id] ?? freshDraft(profile),
+                  }));
+                  setConsent(false);
+                  setOverlay("apply");
+                }}
+                onReset={() => {
+                  setSkipped([]);
+                  setSearch("");
+                  setFilters(emptyYouthFilters);
+                }}
+              />
+            ) : (
+              <>
+                <div className="yd-result-heading">
+                  <span>{visibleJobs.length} sparade jobb</span>
+                  {tab === "saved" && (
+                    <span>Tryck på hjärtat för att ta bort</span>
+                  )}
+                </div>
+                <div className="yd-job-grid">
+                  {visibleJobs.map((item) => (
+                    <article className="yd-job-card" key={item.id}>
+                      <div className={`yd-card-art ${item.tone}`}>
+                        <span>{item.category}</span>
+                        <strong aria-hidden="true">{item.mark}</strong>
+                        <button
+                          className="yd-save"
+                          aria-label={`${saved.includes(item.id) ? "Ta bort sparat jobb" : "Spara jobb"}: ${item.title}`}
+                          aria-pressed={saved.includes(item.id)}
+                          onClick={() => save(item.id)}
+                        >
+                          {saved.includes(item.id) ? "♥" : "♡"}
+                        </button>
+                        <span className="yd-art-area">⌖ {item.area}</span>
+                      </div>
+                      <button
+                        className="yd-card-open"
+                        onClick={() => openJob(item.id)}
+                        aria-label={`Visa jobbet ${item.title} hos ${item.company}`}
+                      >
+                        <span>{item.company}</span>
+                        <h3>
+                          {item.title}
+                          <span aria-hidden="true">→</span>
+                        </h3>
+                        <p>{item.hours}</p>
+                        <div className="yd-tags">
+                          <span>{item.age}</span>
+                          <span>{item.tags[0]}</span>
+                        </div>
+                        {applications.some((a) => a.jobId === item.id) && (
+                          <span className="yd-card-status">
+                            {applications.find((a) => a.jobId === item.id)
+                              ?.status === "withdrawn"
+                              ? "Tidigare ansökan"
+                              : "✓ Ansökan skickad"}
+                          </span>
+                        )}
+                        {drafts[item.id] &&
+                          !applications.some((a) => a.jobId === item.id) && (
+                            <span className="yd-card-status">
+                              Ansökan påbörjad
+                            </span>
+                          )}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+                {visibleJobs.length === 0 && (
+                  <div className="yd-empty">
+                    <span>♡</span>
                     <h3>
-                      {item.title}
-                      <span aria-hidden="true">→</span>
+                      {tab === "saved"
+                        ? "Spara något som väcker din nyfikenhet."
+                        : "Inga jobb med de här valen."}
                     </h3>
-                    <p>{item.hours}</p>
-                    <div className="yd-tags">
-                      <span>{item.age}</span>
-                      <span>{item.tags[0]}</span>
-                    </div>
-                    {applications.some((a) => a.jobId === item.id) && (
-                      <span className="yd-card-status">
-                        {applications.find((a) => a.jobId === item.id)
-                          ?.status === "withdrawn"
-                          ? "Tidigare demoansökan"
-                          : "✓ Du har ansökt i demon"}
-                      </span>
-                    )}
-                    {drafts[item.id] &&
-                      !applications.some((a) => a.jobId === item.id) && (
-                        <span className="yd-card-status">
-                          Påbörjad demoansökan
-                        </span>
-                      )}
-                  </button>
-                </article>
-              ))}
-            </div>
-            {visibleJobs.length === 0 && (
-              <div className="yd-empty">
-                <span>♡</span>
-                <h3>
-                  {tab === "saved"
-                    ? "Spara något som väcker din nyfikenhet."
-                    : "Inga jobb med de här valen."}
-                </h3>
-                <p>
-                  {tab === "saved"
-                    ? "Hjärtat på ett jobb lägger det i din lista."
-                    : "Prova ett annat område, en annan tid eller färre filter."}
-                </p>
-                <button
-                  className="yd-primary"
-                  onClick={() => {
-                    setSearch("");
-                    setFilters(emptyYouthFilters);
-                    go("jobs");
-                  }}
-                >
-                  Visa alla jobb →
-                </button>
-              </div>
+                    <p>
+                      {tab === "saved"
+                        ? "Hjärtat på ett jobb lägger det i din lista."
+                        : "Prova ett annat område, en annan tid eller färre filter."}
+                    </p>
+                    <button
+                      className="yd-primary"
+                      onClick={() => {
+                        setSearch("");
+                        setFilters(emptyYouthFilters);
+                        go("jobs");
+                      }}
+                    >
+                      Visa alla jobb →
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
         {tab === "applications" && (
           <>
-            <p className="yd-lead">
-              Följ dina demoansökningar och prova vad som kan hända sedan.
-            </p>
             <div
               className="yd-category-chips"
               aria-label="Filtrera ansökningar"
@@ -503,7 +597,7 @@ export function YouthDemo() {
                     </div>
                     <span className="yd-status draft">Utkast</span>
                   </div>
-                  <p>Ditt utkast finns kvar under det här demobesöket.</p>
+                  <p>Inte skickad ännu.</p>
                   <button
                     className="yd-secondary"
                     onClick={() => {
@@ -543,7 +637,7 @@ export function YouthDemo() {
                         ? "Skickad"
                         : a.status === "contact"
                           ? a.slot
-                            ? "Demosamtal valt"
+                            ? "Samtal bokat"
                             : "Kontakt"
                           : "Tillbakadragen"}
                     </span>
@@ -560,7 +654,7 @@ export function YouthDemo() {
                     <i />
                     <span className={a.slot ? "done" : ""}>Samtal</span>
                   </div>
-                  {a.slot && <p>◷ Demosamtal: {a.slot}</p>}
+                  {a.slot && <p>◷ Samtal: {a.slot}</p>}
                   <div className="yd-actions">
                     <button
                       className="yd-secondary"
@@ -576,7 +670,7 @@ export function YouthDemo() {
                         className="yd-primary"
                         onClick={() => openChat(j.id, true)}
                       >
-                        Prova ett företagssvar →
+                        Se återkoppling →
                       </button>
                     )}
                     {a.status === "contact" && (
@@ -596,7 +690,7 @@ export function YouthDemo() {
                         setOverlay("withdraw");
                       }}
                     >
-                      Dra tillbaka demoansökan
+                      Dra tillbaka ansökan
                     </button>
                   )}
                 </article>
@@ -617,116 +711,78 @@ export function YouthDemo() {
             )}
           </>
         )}
-        {tab === "profile" && (
-          <>
-            <div className="yd-profile-banner">
-              <span className="yd-avatar">A</span>
-              <div>
-                <h3>Alex</h3>
-                <p>Fiktiv profil · ändras bara i din demo</p>
-              </div>
-              <button className="yd-secondary" onClick={() => setOverlay("cv")}>
-                Visa demo-CV
-              </button>
-            </div>
-            <form
-              className="yd-profile-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setNotice(
-                  "Din demoprofil är uppdaterad. Nya demoansökningar använder uppgifterna du ser här.",
-                );
+        {tab === "profile" &&
+          (buildingProfile ? (
+            <DemoProfileBuilder
+              profile={profile}
+              answers={profileAnswers}
+              onAnswer={(answer) =>
+                setProfileAnswers((current) =>
+                  current.length < demoProfileQuestions.length
+                    ? [...current, answer]
+                    : current,
+                )
+              }
+              onRestart={() => setProfileAnswers([])}
+              onComplete={(built) => {
+                setProfile(built);
+                setProfileBuilt(true);
+                setBuildingProfile(false);
+                setNotice("Din profil är uppdaterad.");
               }}
-            >
-              <div className="yd-field-grid">
-                <label>
-                  Ålder i demon
-                  <select
-                    value={profile.age}
-                    onChange={(e) =>
-                      setProfile((current) => ({
-                        ...current,
-                        age: Number(e.target.value),
-                      }))
-                    }
-                  >
-                    {[15, 16, 17, 18, 19, 20, 21, 22, 23].map((age) => (
-                      <option key={age} value={age}>
-                        {age} år
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Ort / område
-                  <select
-                    value={profile.area}
-                    onChange={(e) =>
-                      setProfile((current) => ({
-                        ...current,
-                        area: e.target.value,
-                      }))
-                    }
-                  >
-                    {[...new Set(youthJobs.map((j) => j.area))].map((area) => (
-                      <option key={area}>{area}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <fieldset>
-                <legend>När kan du jobba?</legend>
-                <div className="yd-choice-grid">
-                  {["Helger", "Kvällar", "Efter skolan", "Sommar"].map(
-                    (value) => (
-                      <label key={value}>
-                        <input
-                          type="checkbox"
-                          checked={profile.availability.includes(value)}
-                          onChange={(e) =>
-                            setProfile((current) => ({
-                              ...current,
-                              availability: e.target.checked
-                                ? [...current.availability, value]
-                                : current.availability.filter(
-                                    (x) => x !== value,
-                                  ),
-                            }))
-                          }
-                        />
-                        {value}
-                      </label>
-                    ),
-                  )}
+            />
+          ) : (
+            <>
+              <div className="yd-profile-banner">
+                <span className="yd-avatar">A</span>
+                <div>
+                  <h3>Alex, {profile.age}</h3>
+                  <p>{profile.area} · Stockholm</p>
                 </div>
-              </fieldset>
-              <label>
-                Presentation
-                <textarea
-                  value={profile.bio}
-                  maxLength={500}
-                  rows={4}
-                  onChange={(e) =>
-                    setProfile((current) => ({
-                      ...current,
-                      bio: e.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <div className="yd-profile-facts">
-                <h4>Erfarenhet & språk</h4>
-                <p>Ungdomsledare i idrottsförening · Gymnasiestudier</p>
-                <p>Svenska och engelska</p>
+                <button
+                  className="yd-secondary"
+                  onClick={() => setOverlay("cv")}
+                >
+                  Visa CV
+                </button>
               </div>
-              <button className="yd-primary">Bekräfta demoprofil</button>
-              <p className="yd-small">
-                Prova gärna med olika åldrar och arbetstider. Skriv inga riktiga
-                personuppgifter i demon.
-              </p>
-            </form>
-          </>
-        )}
+              <button
+                className="yd-build-cta"
+                onClick={() => setBuildingProfile(true)}
+              >
+                <span className="yd-ai-avatar">✦</span>
+                <span>
+                  <strong>
+                    {profileBuilt
+                      ? "Uppdatera din profil"
+                      : "Bygg din profil med AI"}
+                  </strong>
+                  <small>4 snabba frågor · tre val per fråga</small>
+                </span>
+                <span>→</span>
+              </button>
+              <section className="yd-profile-summary">
+                <h3>Om mig</h3>
+                <p>{profile.bio}</p>
+                <h3>Tillgänglighet</h3>
+                <div className="yd-tags">
+                  {profile.availability.map((value) => (
+                    <span key={value}>{value}</span>
+                  ))}
+                </div>
+                <h3>Erfarenhet</h3>
+                <p>{profile.experience || "Ungdomsledare i idrottsförening"}</p>
+                {profile.strengths && (
+                  <>
+                    <h3>Styrkor</h3>
+                    <p>{profile.strengths}</p>
+                  </>
+                )}
+                <h3>Språk</h3>
+                <p>Svenska och engelska</p>
+              </section>
+            </>
+          ))}
         {tab === "chat" && (
           <div className="yd-chat-layout">
             <div className="yd-thread-list" aria-label="Demokonversationer">
@@ -755,7 +811,7 @@ export function YouthDemo() {
                 </span>
                 <div>
                   <h3>{chatJob.company}</h3>
-                  <p>Fiktiv mottagare · {chatJob.title}</p>
+                  <p>{chatJob.title}</p>
                 </div>
               </header>
               <div
@@ -794,7 +850,7 @@ export function YouthDemo() {
                       ...(current[chatJob.id] ?? messages),
                       {
                         own: false,
-                        text: "Tack för ditt svar! Vi berättar gärna mer och kan ta ett kort samtal. Välj en av demotiderna nedan om du vill prova nästa steg.",
+                        text: "Tack för ditt svar! Vi berättar gärna mer och kan ta ett kort samtal. Vilken av tiderna nedan passar dig?",
                       },
                     ],
                   }))
@@ -804,7 +860,7 @@ export function YouthDemo() {
               </button>
               <form onSubmit={sendMessage}>
                 <label className="dx-sr-only" htmlFor="yd-message">
-                  Ditt demomeddelande
+                  Ditt meddelande
                 </label>
                 <textarea
                   id="yd-message"
@@ -812,12 +868,12 @@ export function YouthDemo() {
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={500}
                   rows={1}
-                  placeholder="Skriv ett demosvar…"
+                  placeholder="Skriv ett meddelande…"
                 />
                 <button
                   className="yd-primary"
                   disabled={!message.trim()}
-                  aria-label="Skicka demomeddelande"
+                  aria-label="Skicka meddelande"
                 >
                   ↑
                 </button>
@@ -826,8 +882,8 @@ export function YouthDemo() {
                 (a) => a.jobId === chatJob.id && a.status === "contact",
               ) && (
                 <div className="yd-slots">
-                  <strong>Prova att välja ett demosamtal</strong>
-                  <p>Fiktiva tider – ingen kalenderbokning görs.</p>
+                  <strong>Välj tid för ett samtal</strong>
+
                   {["Tisdag 16.30", "Onsdag 17.00"].map((slot) => (
                     <button
                       key={slot}
@@ -852,11 +908,11 @@ export function YouthDemo() {
             overlay === "filters"
               ? "Hitta ett jobb som passar"
               : overlay === "cv"
-                ? "Alex · Demo-CV"
+                ? "Alex · CV"
                 : overlay === "withdraw"
-                  ? "Dra tillbaka demoansökan?"
+                  ? "Dra tillbaka ansökan?"
                   : overlay === "review"
-                    ? "Granska din demoansökan"
+                    ? "Granska din ansökan"
                     : overlay === "apply"
                       ? "Din ansökan · steg 1 av 2"
                       : overlay === "application"
@@ -886,7 +942,7 @@ export function YouthDemo() {
                       go("applications");
                     }}
                   >
-                    Visa min demoansökan →
+                    Visa min ansökan →
                   </button>
                 ) : (
                   <button
@@ -898,7 +954,7 @@ export function YouthDemo() {
                       ? `${job.age} i det här exemplet`
                       : drafts[job.id]
                         ? "Fortsätt ansökan →"
-                        : "Ansök i demon →"}
+                        : "Ansök →"}
                   </button>
                 )}
               </>
@@ -915,7 +971,7 @@ export function YouthDemo() {
                   disabled={!consent || profile.age < job.minAge}
                   onClick={sendApplication}
                 >
-                  Skicka demoansökan →
+                  Skicka ansökan →
                 </button>
               </>
             ) : overlay === "filters" ? (
@@ -978,13 +1034,9 @@ export function YouthDemo() {
                 </div>
                 <div>
                   <dt>Lön</dt>
-                  <dd>Inte angiven i exemplet – fråga företaget.</dd>
+                  <dd>Enligt överenskommelse</dd>
                 </div>
               </dl>
-              <p className="yd-small">
-                Fiktiv annons. En riktig ansökan skickas aldrig från den här
-                demon.
-              </p>
             </>
           )}
           {overlay === "filters" && (
@@ -1041,9 +1093,6 @@ export function YouthDemo() {
                 />
                 Visa bara jobb för Alex ålder ({profile.age} år)
               </label>
-              <p className="yd-small">
-                Valen gäller bara de fiktiva jobben i demon.
-              </p>
             </div>
           )}
           {overlay === "apply" && (
@@ -1057,10 +1106,7 @@ export function YouthDemo() {
             >
               <span className="yd-kicker">{job.company}</span>
               <h3>{job.title}</h3>
-              <p>
-                Du söker med Alex demoprofil. Ditt utkast finns kvar om du
-                stänger vyn.
-              </p>
+
               <label>
                 Kort hälsning <span>(valfritt)</span>
                 <textarea
@@ -1119,7 +1165,7 @@ export function YouthDemo() {
                   maxLength={500}
                   rows={3}
                   required
-                  placeholder="Ett kort svar räcker i demon."
+                  placeholder="Berätta kort…"
                 />
               </label>
               <button
@@ -1153,7 +1199,10 @@ export function YouthDemo() {
                   <h4>Presentation</h4>
                   <p>{person.bio}</p>
                   <h4>Erfarenhet & CV</h4>
-                  <p>Ungdomsledare i idrottsförening. Gymnasiestudier.</p>
+                  <p>
+                    {person.experience || "Ungdomsledare i idrottsförening"}.
+                    Gymnasiestudier.
+                  </p>
                   <h4>Tillgänglighet & start</h4>
                   <p>
                     {data.availability.join(", ")} · {data.start}
@@ -1177,10 +1226,6 @@ export function YouthDemo() {
                       demoföretaget.
                     </label>
                   )}
-                  <p className="yd-small">
-                    Inga riktiga uppgifter skickas. I en inskickad demoansökan
-                    ligger den profilversion kvar som användes när du skickade.
-                  </p>
                 </div>
               );
             })()}
@@ -1200,7 +1245,7 @@ export function YouthDemo() {
           )}
           {overlay === "cv" && (
             <div className="yd-cv">
-              <span className="yd-kicker">FIKTIVT CV</span>
+              <span className="yd-kicker">CV</span>
               <h3>Alex</h3>
               <p>
                 {profile.age} år · {profile.area}
@@ -1209,8 +1254,8 @@ export function YouthDemo() {
               <p>{profile.bio}</p>
               <h4>Erfarenhet</h4>
               <p>
-                Ungdomsledare i idrottsförening. Hjälper till med aktiviteter
-                och möter barn och föräldrar.
+                {profile.experience ||
+                  "Ungdomsledare i idrottsförening. Hjälper till med aktiviteter och möter barn och föräldrar."}
               </p>
               <h4>Utbildning</h4>
               <p>Gymnasiestudier</p>
