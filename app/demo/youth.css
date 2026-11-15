@@ -2279,3 +2279,59 @@
     scroll-behavior: auto;
   }
 }
+.yd-raster-map {
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.yd-raster-map:active {
+  cursor: grabbing;
+}
+.yd-map-tile {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+.yd-raster-map .yd-map-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 2;
+}
+.yd-map-pin[aria-pressed="true"] {
+  background: #583246;
+  outline: 3px solid #d49dbd;
+  z-index: 3;
+}
+.yd-map-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  background: white;
+  border: 1px solid #e7d5df;
+  box-shadow: 0 3px 10px #61374d14;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.yd-map-controls button {
+  background: white;
+  border: 0;
+  border-bottom: 1px solid #eee3e9;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  color: #795168;
+}
+.yd-map-attribution {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: #fffc;
+  font-size: 10px;
+  padding: 3px 6px;
+  color: #604451;
+}
+.yd-map-job-picker {
+  bottom: 143px;
+}
