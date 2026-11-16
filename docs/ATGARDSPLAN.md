@@ -338,6 +338,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n12"></a>
 ### N12 Video i chatten
 
+- Fortsättning reserverad före kodarbete 2026-11-16: Vilgot / Codex, `codex/n12-playback-recovery-20261116`, från aktuell dev `890675e`. Avgränsad återhämtning i videospelaren: stoppa fortsatta hämtningar efter byte/stängning, avbryt gamla läsningar, begränsa väntetid och möjliggör nytt försök. Återanvänd privat uppspelning och befintliga komponenter; inga schema-, behörighets-, gallrings- eller produktionsändringar. Öppna PR:er kontrollerade (endast äldre #40 till master); inga överlappande reservationer. Huvudstatus och övriga ägare bevaras. Simulerade komponent-/transportprov skiljs från återstående browser-, Storage- och fysisk kameraacceptans.
+
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 6
