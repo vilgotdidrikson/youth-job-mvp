@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   demoProfileQuestions as questions,
   buildDemoProfile,
@@ -33,6 +33,57 @@ export function DemoIcon({ name }: { name: string }) {
   );
 }
 
+function SwipeJobBody({
+  job,
+  saved,
+  onSave,
+  onOpen,
+  disabled,
+}: {
+  job: YouthJob;
+  saved: boolean;
+  onSave?: () => void;
+  onOpen?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <>
+      <div className={`yd-swipe-art ${job.tone}`}>
+        <span className="yd-job-type">{job.category}</span>
+        <strong aria-hidden="true">{job.mark}</strong>
+        <span className="yd-swipe-location">{job.area} · Stockholm</span>
+        {onSave && (
+          <button
+            className="yd-save"
+            aria-label={`${saved ? "Ta bort sparat jobb" : "Spara jobb"}: ${job.title}`}
+            aria-pressed={saved}
+            onClick={onSave}
+            disabled={disabled}
+          >
+            {saved ? "♥" : "♡"}
+          </button>
+        )}
+      </div>
+      <div className="yd-swipe-info">
+        <span>{job.company}</span>
+        <h3>{job.title}</h3>
+        <div className="yd-tags">
+          <span>{job.hours}</span>
+          <span>{job.age}</span>
+        </div>
+        <p>{job.description}</p>
+        {onOpen ? (
+          <button className="yd-text" onClick={onOpen} disabled={disabled}>
+            Läs om jobbet →
+          </button>
+        ) : (
+          <span className="yd-card-preview-link">Läs om jobbet →</span>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function DemoSwipe({
   jobs,
   saved,
@@ -54,18 +105,107 @@ export function DemoSwipe({
   onApply: (id: string) => void;
   onReset: () => void;
 }) {
-  const [drag, setDrag] = useState(0);
-  const start = useRef<{ x: number; y: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const locked = useRef(false);
+  const card = useRef<HTMLElement>(null);
+  const nextCard = useRef<HTMLElement>(null);
+  const stamp = useRef<HTMLSpanElement>(null);
+  const animation = useRef<Animation | null>(null);
+  const frame = useRef(0);
+  const previousId = useRef<string | undefined>(undefined);
+  const gesture = useRef<{
+    x: number;
+    y: number;
+    offset: number;
+    lastX: number;
+    time: number;
+    velocity: number;
+  } | null>(null);
   const remaining = jobs.filter(
     (j) => !skipped.includes(j.id) && !excluded.includes(j.id),
   );
   const current = remaining[0];
-  function decide(direction: "left" | "right") {
-    setDrag(0);
-    start.current = null;
-    if (!current) return;
-    if (direction === "right") onApply(current.id);
-    else onSkip(current.id);
+  const reducedMotion = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function paint(x: number) {
+    if (card.current) {
+      card.current.style.transform = `translate3d(${x}px,0,0) rotate(${Math.max(-14, Math.min(14, x / 25))}deg)`;
+      card.current.dataset.direction = x < 0 ? "left" : "right";
+    }
+    if (stamp.current)
+      stamp.current.style.opacity = String(Math.min(1, Math.abs(x) / 100));
+    if (nextCard.current)
+      nextCard.current.style.transform = `translateY(${10 * (1 - Math.min(1, Math.abs(x) / 160))}px) scale(${0.96 + Math.min(1, Math.abs(x) / 160) * 0.04})`;
+  }
+  useLayoutEffect(() => {
+    cancelAnimationFrame(frame.current);
+    animation.current?.cancel();
+    gesture.current = null;
+    locked.current = false;
+    setBusy(false);
+    paint(0);
+    if (card.current && previousId.current && !reducedMotion()) {
+      animation.current = card.current.animate(
+        [
+          { transform: "translateY(8px) scale(.98)", opacity: 0.85 },
+          { transform: "translateY(0) scale(1)", opacity: 1 },
+        ],
+        { duration: 180, easing: "cubic-bezier(.2,.8,.3,1)" },
+      );
+    }
+    previousId.current = current?.id;
+  }, [current?.id]);
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(frame.current);
+      animation.current?.cancel();
+    },
+    [],
+  );
+  function settle(direction?: "left" | "right") {
+    const node = card.current;
+    if (!current || !node || locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    cancelAnimationFrame(frame.current);
+    animation.current?.cancel();
+    const x = gesture.current?.offset || 0;
+    gesture.current = null;
+    paint(x);
+    const distance = direction
+      ? (direction === "right" ? 1 : -1) *
+        Math.max(window.innerWidth, node.clientWidth + 100)
+      : 0;
+    const motion = node.animate(
+      [
+        { transform: node.style.transform, opacity: 1 },
+        {
+          transform: `translate3d(${distance}px,${direction ? 35 : 0}px,0) rotate(${direction ? (direction === "right" ? 18 : -18) : 0}deg)`,
+          opacity: direction ? 0 : 1,
+        },
+      ],
+      {
+        duration: reducedMotion() ? 0 : direction ? 280 : 260,
+        easing: direction
+          ? "cubic-bezier(.25,.7,.4,1)"
+          : "cubic-bezier(.2,1.3,.4,1)",
+        fill: "forwards",
+      },
+    );
+    animation.current = motion;
+    motion.onfinish = () => {
+      if (direction === "right") onApply(current.id);
+      else if (direction === "left") onSkip(current.id);
+      locked.current = false;
+      setBusy(false);
+      // A rejected decision or a short drag returns the same card to rest.
+      frame.current = requestAnimationFrame(() => {
+        if (card.current === node) {
+          motion.cancel();
+          paint(0);
+        }
+      });
+    };
   }
   if (!current)
     return (
@@ -88,72 +228,110 @@ export function DemoSwipe({
         Stockholm <span>{remaining.length} jobb att upptäcka</span>
       </div>
       <div className="yd-deck">
-        <div className="yd-deck-back" />
+        {remaining[1] ? (
+          <article
+            ref={nextCard}
+            className={`yd-swipe-card yd-next-card ${remaining[1].tone}`}
+            aria-hidden="true"
+            inert
+          >
+            <SwipeJobBody
+              job={remaining[1]}
+              saved={saved.includes(remaining[1].id)}
+            />
+          </article>
+        ) : (
+          <div className="yd-deck-back" />
+        )}
         <article
-          className={`yd-swipe-card ${current.tone}`}
-          style={{ transform: `translateX(${drag}px) rotate(${drag / 25}deg)` }}
+          key={current.id}
+          ref={card}
+          className={`yd-swipe-card yd-front-card ${current.tone}`}
           onPointerDown={(e) => {
-            if ((e.target as HTMLElement).closest("button")) return;
-            start.current = { x: e.clientX, y: e.clientY };
+            if (
+              locked.current ||
+              !e.isPrimary ||
+              e.button !== 0 ||
+              (e.target as HTMLElement).closest("button")
+            )
+              return;
+            animation.current?.cancel();
+            gesture.current = {
+              x: e.clientX,
+              y: e.clientY,
+              offset: 0,
+              lastX: e.clientX,
+              time: e.timeStamp,
+              velocity: 0,
+            };
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
           onPointerMove={(e) => {
-            if (start.current && Math.abs(e.clientY - start.current.y) < 80)
-              setDrag(e.clientX - start.current.x);
-          }}
-          onPointerUp={() => {
-            if (Math.abs(drag) > 75) decide(drag > 0 ? "right" : "left");
-            else {
-              setDrag(0);
-              start.current = null;
+            const start = gesture.current;
+            if (!start) return;
+            const dx = e.clientX - start.x,
+              dy = e.clientY - start.y;
+            if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+              gesture.current = null;
+              paint(0);
+              return;
             }
+            start.velocity =
+              (e.clientX - start.lastX) / Math.max(1, e.timeStamp - start.time);
+            start.lastX = e.clientX;
+            start.time = e.timeStamp;
+            start.offset = dx;
+            cancelAnimationFrame(frame.current);
+            frame.current = requestAnimationFrame(() => paint(dx));
+          }}
+          onPointerUp={(e) => {
+            const start = gesture.current;
+            if (!start) return;
+            const x = start.offset;
+            const flick =
+              Math.abs(x) > 30 &&
+              Math.abs(start.velocity) > 0.55 &&
+              e.timeStamp - start.time < 100;
+            settle(
+              Math.abs(x) > 85 || flick
+                ? x > 0
+                  ? "right"
+                  : "left"
+                : undefined,
+            );
           }}
           onPointerCancel={() => {
-            setDrag(0);
-            start.current = null;
+            if (gesture.current && !locked.current) settle();
+          }}
+          onLostPointerCapture={() => {
+            if (gesture.current && !locked.current) settle();
           }}
         >
-          <div className={`yd-swipe-art ${current.tone}`}>
-            <span className="yd-job-type">{current.category}</span>
-            <strong aria-hidden="true">{current.mark}</strong>
-            <span className="yd-swipe-location">
-              {current.area} · Stockholm
-            </span>
-            <button
-              className="yd-save"
-              aria-label={`${saved.includes(current.id) ? "Ta bort sparat jobb" : "Spara jobb"}: ${current.title}`}
-              aria-pressed={saved.includes(current.id)}
-              onClick={() => onSave(current.id)}
-            >
-              {saved.includes(current.id) ? "♥" : "♡"}
-            </button>
-            {Math.abs(drag) > 25 && (
-              <span className={`yd-swipe-stamp ${drag < 0 ? "skip" : ""}`}>
-                {drag > 0 ? "ANSÖK" : "NÄSTA"}
-              </span>
-            )}
-          </div>
-          <div className="yd-swipe-info">
-            <span>{current.company}</span>
-            <h3>{current.title}</h3>
-            <div className="yd-tags">
-              <span>{current.hours}</span>
-              <span>{current.age}</span>
-            </div>
-            <p>{current.description}</p>
-            <button className="yd-text" onClick={() => onOpen(current.id)}>
-              Läs om jobbet →
-            </button>
-          </div>
+          <SwipeJobBody
+            job={current}
+            saved={saved.includes(current.id)}
+            onSave={() => onSave(current.id)}
+            onOpen={() => onOpen(current.id)}
+            disabled={busy}
+          />
+          <span ref={stamp} className="yd-swipe-stamp" aria-hidden="true">
+            <span data-choice="right">ANSÖK</span>
+            <span data-choice="left">NÄSTA</span>
+          </span>
         </article>
       </div>
       <div className="yd-swipe-actions">
-        <button onClick={() => decide("left")} aria-label="Hoppa över jobbet">
+        <button
+          disabled={busy}
+          onClick={() => settle("left")}
+          aria-label="Hoppa över jobbet"
+        >
           <span>×</span>Nästa
         </button>
         <button
           className="yd-swipe-apply"
-          onClick={() => decide("right")}
+          disabled={busy}
+          onClick={() => settle("right")}
           aria-label="Ansök till jobbet"
         >
           <span>✓</span>Ansök

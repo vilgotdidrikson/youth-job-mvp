@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { JobMap } from "@/components/job-map";
+import type { JobPost } from "@/lib/types";
 import type { YouthJob } from "@/lib/youth-demo-data";
 
 const coordinates: Record<string, [number, number]> = {
@@ -13,6 +15,51 @@ const coordinates: Record<string, [number, number]> = {
   cinema: [18.066, 59.347],
   bakery: [18.045, 59.298],
 };
+export function DemoJobMap({
+  jobs,
+  onOpen,
+}: {
+  jobs: YouthJob[];
+  onOpen: (id: string) => void;
+}) {
+  const [fallback, setFallback] = useState(false);
+  const unavailable = useCallback(() => setFallback(true), []);
+  const mapJobs = useMemo<JobPost[]>(
+    () =>
+      jobs.map((job) => ({
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        city: "Stockholm",
+        longitude: coordinates[job.id][0],
+        latitude: coordinates[job.id][1],
+        salary_per_hour: "Lön enligt överenskommelse",
+        employment_type: job.hours,
+        category: job.category,
+        requirements: job.age,
+        benefits: job.tags.join(", "),
+        company_name: job.company,
+        company_user_id: "demo",
+        image_url: "",
+        is_active: true,
+        created_at: "2026-11-15T00:00:00Z",
+        min_age: job.minAge,
+      })),
+    [jobs],
+  );
+  if (fallback) return <RasterDemoMap jobs={jobs} onOpen={onOpen} />;
+  return (
+    <div className="yd-map-wrap yd-mapbox-wrap" data-map-provider="mapbox">
+      <JobMap
+        jobs={mapJobs}
+        userCoordinates={null}
+        onOpenJob={onOpen}
+        onUnavailable={unavailable}
+      />
+    </div>
+  );
+}
+
 // Web Mercator, matching the public raster tiles. No location permission needed.
 function project([longitude, latitude]: [number, number], zoom: number) {
   const scale = 256 * 2 ** zoom;
@@ -22,7 +69,7 @@ function project([longitude, latitude]: [number, number], zoom: number) {
     y: (0.5 - Math.log((1 + sine) / (1 - sine)) / (4 * Math.PI)) * scale,
   };
 }
-export function DemoJobMap({
+function RasterDemoMap({
   jobs,
   onOpen,
 }: {
@@ -100,7 +147,7 @@ export function DemoJobMap({
     }));
   }
   return (
-    <div className="yd-map-wrap">
+    <div className="yd-map-wrap" data-map-provider="raster">
       <div
         ref={container}
         className="yd-map-canvas yd-raster-map"

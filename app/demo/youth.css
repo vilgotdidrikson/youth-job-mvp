@@ -2426,3 +2426,76 @@
     animation: none;
   }
 }
+/* The same Mapbox component and palette as the main application. */
+.yd-mapbox-wrap {
+  --map-ink: #1f1a17;
+  --map-paper: #fff;
+  --map-cream: #f7f4ed;
+  --map-line: #ece7dc;
+  --map-line-strong: #e5dfd3;
+  --map-muted: #6b6259;
+  --map-subtle: #a39b8f;
+  --map-shadow: 0 1px 2px #1f1a170f, 0 4px 10px #1f1a170d;
+  --map-shadow-lift: 0 1px 2px #1f1a170f, 0 8px 18px #1f1a171f;
+  --map-serif: var(--font-fraunces), Georgia, serif;
+}
+.yd-main {
+  overflow-x: clip;
+}
+.yd-deck {
+  display: grid;
+}
+.yd-deck > .yd-swipe-card {
+  grid-area: 1/1;
+}
+.yd-front-card {
+  position: relative;
+  z-index: 2;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.yd-next-card {
+  position: relative;
+  z-index: 1;
+  transform: translateY(10px) scale(0.96);
+  pointer-events: none;
+}
+.yd-swipe-info h3 {
+  min-height: 2.26em;
+}
+.yd-swipe-info p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  min-height: 4.8em;
+}
+.yd-card-preview-link {
+  display: block;
+  min-height: 40px;
+  padding-top: 10px;
+  font-size: 12px;
+}
+.yd-front-card > .yd-swipe-stamp {
+  pointer-events: none;
+  opacity: 0;
+}
+.yd-swipe-stamp [data-choice] {
+  display: none;
+}
+.yd-front-card[data-direction="right"] .yd-swipe-stamp [data-choice="right"],
+.yd-front-card[data-direction="left"] .yd-swipe-stamp [data-choice="left"] {
+  display: inline;
+}
+.yd-front-card[data-direction="left"] .yd-swipe-stamp {
+  color: #ad526e;
+  border-color: #ad526e;
+}
+.yd-swipe-actions button:disabled {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .yd-next-card {
+    transform: none;
+  }
+}
