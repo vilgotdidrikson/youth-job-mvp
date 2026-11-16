@@ -50,6 +50,11 @@
   --color-danger-border: #ffd6d3;
   --color-warning: #7c5b08;
   --color-warning-soft: #fff5d9;
+  --color-warning-border: #f0c36d;
+  /* Neutral information and the MatchnWork verification mark (DA-04). */
+  --color-info: #36507a;
+  --color-info-soft: #f7f9fc;
+  --color-info-border: #d4dce9;
 
   /* Type, weight, shape and elevation scale (DA-05). New and touched CSS uses only these values. */
   --text-xs: .75rem;   /* 12px, the minimum for visible text */

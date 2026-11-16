@@ -167,6 +167,8 @@ Original audit sequencing advice (subject to current action-plan status and glob
 <a id="da-04"></a>
 ### DA-04 Colour tokens are bypassed, duplicated and drifting
 
+- **Implementation update — 2026-11-16 (Max / Claude, branch `Max`, not yet in dev):** The company-side files `components/recruitment.module.css`, `app/company/company-design.css` and `components/company-verification-status.css` no longer define colour values. New tokens: `--color-warning-border` and `--color-info`/`--color-info-soft`/`--color-info-border` for neutral information and the MatchnWork verification mark. 434 → 376 colour literals. Remaining: `globals.css` (287), `profile.css` (19), `profile-journey.module.css` (16) and `product-design.css` (15, DA-12).
+
 - **Implementation update — 2026-10-29 (Max / Claude, branch `Max`, not yet in dev):** Discovery (`job-discovery.module.css`), the password toggle hover and the profile-step error box use palette tokens (nearest value). The job card's image fallback, gradient and photo shade stay as illustration colours. With the DA-05 fixes below: 555 → 538 colour literals, baseline lowered. Remaining: `globals.css` (287), `video.module.css` (57) and the chat (47 one-off pinks, needs a signed-in visual check).
 
 - **Seen (code):** `app/styles/theme.css` says it is the single source of truth, but:

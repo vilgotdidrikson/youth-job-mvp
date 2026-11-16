@@ -5,7 +5,7 @@
 .company-workspace-heading > span { color:var(--color-text-muted);font-size:.9rem;line-height:1.7; }
 .company-workspace-tabs { display:flex;gap:6px;padding:5px;background:var(--color-rose);border:1px solid var(--color-border);border-radius:15px;width:fit-content;min-width:330px;margin-bottom:26px; }
 .company-workspace-tabs button { display:flex;align-items:center;justify-content:center;gap:9px;flex:1;min-height:44px;padding:10px 14px;background:transparent;border:0;border-radius:11px;color:var(--color-text-muted);font-size:.83rem;font-weight:500;white-space:nowrap; }
-.company-workspace-tabs button[aria-selected="true"] { background:white;color:var(--color-text);box-shadow:0 3px 12px #4c303b08; }
+.company-workspace-tabs button[aria-selected="true"] { background:var(--color-surface);color:var(--color-text);box-shadow:0 3px 12px rgba(var(--color-text-rgb),.03); }
 .company-workspace-tabs span { background:var(--color-rose);border-radius:7px;padding:2px 6px;font-size:var(--text-xs); }
 .company-jobs-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px; }
 .mnw-product .company-jobs-grid .job-list-card { padding:25px;display:flex;flex-direction:column;min-width:0; }
@@ -24,7 +24,7 @@
 .company-candidate-search input { width:100%;font-size:16px;padding:11px 12px; }
 .company-applicant-list { display:grid;gap:7px; }
 .mnw-product .company-applicant-row { border:1px solid transparent;border-radius:14px;padding:14px 12px;gap:12px; }
-.mnw-product .company-applicant-row.is-selected { background:var(--color-rose);border-color:#edcbd6; }
+.mnw-product .company-applicant-row.is-selected { background:var(--color-rose);border-color:var(--color-ring); }
 .company-applicant-row strong { font-size:.86rem;font-weight:500; }
 .company-applicant-row small { font-size:.75rem;color:var(--color-text-muted);line-height:1.7; }
 .mnw-product .company-applicant-avatar { width:39px;height:39px;border-radius:12px;background:var(--color-rose);color:var(--color-brand); }
@@ -57,13 +57,13 @@
 .candidate-assessment-note { font-size:.75rem!important;line-height:1.8;color:var(--color-text-muted); }
 @media(max-width:900px) { .company-applicants-layout { grid-template-columns:minmax(220px,.8fr) minmax(0,1.3fr);gap:18px; } .company-jobs-grid { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:720px) { .company-workspace-heading h1,.company-applicants-heading h1 { font-size:1.9rem; } .company-workspace-tabs { width:100%;min-width:0; } .company-workspace-tabs button { padding:10px 14px; } .company-applicants-layout { grid-template-columns:minmax(0,1fr);gap:20px; } .company-applicant-sidebar { position:static;padding:12px; } .company-applicant-list { max-height:270px;overflow:auto; } .mnw-product .company-candidate-profile { padding:21px; } .company-applicants-heading { margin-bottom:0; } }
-.candidate-criterion-status { width:fit-content;border-radius:8px;padding:5px 9px;background:#f4f0f2;color:#776773!important;font-size:.73rem!important; }
-.candidate-assessment-panel li[data-status="fulfilled"] .candidate-criterion-status { background:#edf6f0;color:var(--color-success-strong)!important; }
+.candidate-criterion-status { width:fit-content;border-radius:8px;padding:5px 9px;background:var(--color-divider);color:var(--color-text-muted-strong)!important;font-size:.73rem!important; }
+.candidate-assessment-panel li[data-status="fulfilled"] .candidate-criterion-status { background:var(--color-success-soft);color:var(--color-success-strong)!important; }
 .candidate-assessment-panel li[data-status="unfulfilled"] .candidate-criterion-status { background:var(--color-surface-soft);color:var(--color-brand-hover)!important; }
 
 .company-application-tabs {display:flex;gap:5px;width:fit-content;max-width:100%;padding:5px;background:var(--color-rose);border:1px solid var(--color-border);border-radius:15px;margin:0 0 25px;}
 .company-application-tabs button {display:flex;align-items:center;gap:9px;min-height:44px;border:0;border-radius:11px;padding:10px 17px;color:var(--color-text-muted);background:transparent;font:inherit;font-size:.81rem;cursor:pointer;}
-.company-application-tabs button[aria-selected="true"] {background:white;color:var(--color-brand);box-shadow:0 2px 8px #4c303b06;}
+.company-application-tabs button[aria-selected="true"] {background:var(--color-surface);color:var(--color-brand);box-shadow:0 2px 8px rgba(var(--color-text-rgb),.02);}
 .company-application-tabs button span {font-size:.67rem;min-width:20px;padding:2px 5px;border-radius:6px;background:var(--color-canvas);}
 .company-application-reviewed {display:block;font-size:.65rem;font-style:normal;margin-top:4px;color:var(--color-brand);}
 .company-reviewed-application {display:flex;align-items:flex-start;gap:12px;margin-top:24px;padding:18px;background:var(--color-rose);border:1px solid var(--color-border);border-radius:15px;}
@@ -98,15 +98,15 @@
 .company-reviewed-application {flex-wrap:wrap;}
 .company-reviewed-application .secondary-btn {min-height:44px;white-space:normal;}
 
-.job-workplace-fields{border:0;padding:0;min-width:0;display:grid;gap:1rem}.job-workplace-fields>legend{font-weight:700;margin-bottom:.5rem}.job-workplace-fields>p,.job-workplace-fields>small{color:#68645f;font-size:.88rem}.job-workplace-fields>section{padding:1rem;border:1px solid #e8e2da;border-radius:16px}.job-workplace-fields header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}.job-workplace-fields>.secondary-btn{justify-self:start}.job-workplace-fields input{width:100%;min-width:0}.workplace-editor{max-width:700px;padding:1.5rem;max-height:85dvh;overflow:auto}.workplace-editor h2{margin-bottom:1rem}.workplace-editor-actions{display:flex;gap:.75rem;margin-top:1rem}
+.job-workplace-fields{border:0;padding:0;min-width:0;display:grid;gap:1rem}.job-workplace-fields>legend{font-weight:700;margin-bottom:.5rem}.job-workplace-fields>p,.job-workplace-fields>small{color:var(--color-text-muted-strong);font-size:.88rem}.job-workplace-fields>section{padding:1rem;border:1px solid var(--color-border);border-radius:16px}.job-workplace-fields header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}.job-workplace-fields>.secondary-btn{justify-self:start}.job-workplace-fields input{width:100%;min-width:0}.workplace-editor{max-width:700px;padding:1.5rem;max-height:85dvh;overflow:auto}.workplace-editor h2{margin-bottom:1rem}.workplace-editor-actions{display:flex;gap:.75rem;margin-top:1rem}
 
 .job-workplace-fields .secondary-btn,.workplace-editor-actions .secondary-btn,.workplace-editor-actions .cta-btn{min-height:2.75rem;padding:.65rem 1rem;font-size:.85rem}
 
-.job-copy-notice{padding:1rem;border:1px solid #eadac0;border-radius:14px;background:#fff9ed;color:#57432d;line-height:1.5;margin-bottom:1rem;overflow-wrap:anywhere}.job-copy-notice p{margin:.4rem 0 0}.job-copy-dialog{width:min(36rem,calc(100vw - 2rem));padding:1.5rem;max-height:85dvh;overflow:auto}.job-copy-dialog h2{margin:0 0 .8rem}.job-copy-dialog>p{line-height:1.6;margin-bottom:1rem}.job-copy-dialog>div,.job-copy-image-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-block:1rem}.job-copy-dialog button,.job-copy-image-actions button{padding:.65rem 1rem;min-height:44px}.job-copy-review{display:flex;gap:.75rem;align-items:flex-start;padding:1rem;line-height:1.5;border:1px solid #e5dcd3;border-radius:14px;background:var(--color-surface)}.job-copy-review input{width:1.25rem;height:1.25rem;flex-shrink:0;margin-top:.15rem;accent-color:#9f3b63}@media(max-width:640px){.job-copy-dialog>div{flex-direction:column}.job-copy-dialog button{width:100%}.job-copy-dialog{padding:1.15rem}.job-copy-image-actions button{flex:1 1 11rem}}
+.job-copy-notice{padding:1rem;border:1px solid var(--color-warning-border);border-radius:14px;background:var(--color-warning-soft);color:var(--color-text);line-height:1.5;margin-bottom:1rem;overflow-wrap:anywhere}.job-copy-notice p{margin:.4rem 0 0}.job-copy-dialog{width:min(36rem,calc(100vw - 2rem));padding:1.5rem;max-height:85dvh;overflow:auto}.job-copy-dialog h2{margin:0 0 .8rem}.job-copy-dialog>p{line-height:1.6;margin-bottom:1rem}.job-copy-dialog>div,.job-copy-image-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-block:1rem}.job-copy-dialog button,.job-copy-image-actions button{padding:.65rem 1rem;min-height:44px}.job-copy-review{display:flex;gap:.75rem;align-items:flex-start;padding:1rem;line-height:1.5;border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface)}.job-copy-review input{width:1.25rem;height:1.25rem;flex-shrink:0;margin-top:.15rem;accent-color:var(--color-brand)}@media(max-width:640px){.job-copy-dialog>div{flex-direction:column}.job-copy-dialog button{width:100%}.job-copy-dialog{padding:1.15rem}.job-copy-image-actions button{flex:1 1 11rem}}
 
-.company-draft-card{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;padding:1.25rem;margin-bottom:1.25rem;border:1px dashed #b97b93}.company-draft-card h2{margin:.65rem 0 .4rem;overflow-wrap:anywhere}.company-draft-card p{margin:.3rem 0;color:#665b60}.company-draft-card small{display:block;margin-top:.65rem;color:#665b60}.company-draft-card button{min-height:44px;flex-shrink:0}@media(max-width:640px){.company-draft-card{align-items:stretch;flex-direction:column}.company-draft-card button{width:100%}}
+.company-draft-card{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;padding:1.25rem;margin-bottom:1.25rem;border:1px dashed var(--color-text-subtle)}.company-draft-card h2{margin:.65rem 0 .4rem;overflow-wrap:anywhere}.company-draft-card p{margin:.3rem 0;color:var(--color-text-muted-strong)}.company-draft-card small{display:block;margin-top:.65rem;color:var(--color-text-muted-strong)}.company-draft-card button{min-height:44px;flex-shrink:0}@media(max-width:640px){.company-draft-card{align-items:stretch;flex-direction:column}.company-draft-card button{width:100%}}
 
-.job-publication-notice{padding:1rem 1.25rem;margin-bottom:1.25rem;border:1px solid #d4dce9;background:#f7f9fc;overflow-wrap:anywhere}.job-publication-notice p{margin:.4rem 0 0;line-height:1.6}
+.job-publication-notice{padding:1rem 1.25rem;margin-bottom:1.25rem;border:1px solid var(--color-info-border);background:var(--color-info-soft);overflow-wrap:anywhere}.job-publication-notice p{margin:.4rem 0 0;line-height:1.6}
 
 /* DA-12: former inline styles of app/company/page.tsx. Tokens and DA-05 scale only.
    Selectors carry .mnw-company-workspace so they outrank the shared .mnw-product button and card rules,
