@@ -338,6 +338,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n12"></a>
 ### N12 Video i chatten
 
+- Leverans 2026-11-16, Vilgot / Codex, `codex/n12-playback-recovery-20261116`: reproducerat att sent metadatasvar efter avmontering startade videohämtning. Spelaren har nu avbrytbar läsning, 45 sekunders total tidsgräns, nytt försök, synkront dubbelklickslås och frigör sena lokala videoadresser. Befintlig privat uppspelning/RLS/gallring bevaras; ingen migration eller CSS-ändring. Komponent-/SDK-/klientprov med simulerad transport och videoregressioner passerar; bygg-/publiceringsresultat kompletteras före leverans. Designkontrollen fallerar på befintlig Windows-sökvägshantering. Inloggad browser/mobil, fysisk uppspelning och live-RLS återstår. Se `docs/N12_PLAYBACK_RECOVERY.md`. Status För granskning bevaras.
+
 - Fortsättning reserverad före kodarbete 2026-11-16: Vilgot / Codex, `codex/n12-playback-recovery-20261116`, från aktuell dev `890675e`. Avgränsad återhämtning i videospelaren: stoppa fortsatta hämtningar efter byte/stängning, avbryt gamla läsningar, begränsa väntetid och möjliggör nytt försök. Återanvänd privat uppspelning och befintliga komponenter; inga schema-, behörighets-, gallrings- eller produktionsändringar. Öppna PR:er kontrollerade (endast äldre #40 till master); inga överlappande reservationer. Huvudstatus och övriga ägare bevaras. Simulerade komponent-/transportprov skiljs från återstående browser-, Storage- och fysisk kameraacceptans.
 
 - [ ] Klar

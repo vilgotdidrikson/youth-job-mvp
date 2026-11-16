@@ -43,6 +43,20 @@ try{
   reset();await assert.rejects(videoPlaybackUrl({...video,conversation_id:null}),/Ogiltig/);assert.equal(calls.length,0);
   reset();await assert.rejects(videoPlaybackUrl({...video,storage_path:'https://example.org/a.mp4'}),/Ogiltig/);assert.equal(calls.length,0);
   reset({data:new Blob(['qa']),error:null});const src=await videoPlaybackUrl(video);assert.ok(src.startsWith('blob:'));URL.revokeObjectURL(src);assert.equal(calls[0][0],'playback');assert.equal(calls[0][1],'/api/videos/playback');assert.equal(calls[0][2].cache,'no-store');assert.deepEqual(JSON.parse(calls[0][2].body),{videoId:id});
+  const alreadyStopped=new AbortController();alreadyStopped.abort();reset();await assert.rejects(videoPlaybackUrl(video,alreadyStopped.signal));assert.equal(calls.length,0);
+  const sessionRead=db.auth.getSession,playbackFetch=globalThis.fetch;
+  const duringSession=new AbortController();
+  db.auth.getSession=async()=>{duringSession.abort();return sessionRead();};
+  reset();await assert.rejects(videoPlaybackUrl(video,duringSession.signal));assert.equal(calls.length,0,'Abort during session read prevents byte retrieval');db.auth.getSession=sessionRead;
+  const duringBody=new AbortController();let blobUrls=0;const createUrl=URL.createObjectURL;
+  try {
+    URL.createObjectURL=()=>{blobUrls++;return 'blob:unexpected';};
+    globalThis.fetch=async(_url,options)=>{
+      assert.equal(options.signal.aborted,false);
+      return {ok:true,blob:async()=>{duringBody.abort();assert.equal(options.signal.aborted,true,'Playback fetch combines caller cancellation with its own deadline');return new Blob(['qa']);}};
+    };
+    await assert.rejects(videoPlaybackUrl(video,duringBody.signal));assert.equal(blobUrls,0,'Late cancelled bytes cannot allocate a local playback URL');
+  } finally {globalThis.fetch=playbackFetch;URL.createObjectURL=createUrl;}
   reset({error:{code:'denied'}});await assert.rejects(videoPlaybackUrl(video),/behörighet/);
   reset();await assert.rejects(videoPlaybackUrl({...video,expires_at:new Date(Date.now()-1).toISOString()}),/tillgänglig/);assert.equal(calls.length,0);
   reset({data:[{id}],error:null});assert.equal(await revokeVideo(video),true);assert.equal(calls[0][1],'update');assert.ok(!calls.some(c=>c[0]==='remove'),'Only server cleanup removes bytes');

@@ -21,8 +21,11 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const video={id,owner_id:owner,conversation_id:'conversation',storage_path:`${owner}/${id}.mp4`,revoked_at:null,duration_seconds:20};
 try{
- const {readChatVideoAccess,sendVideoMessage,revokeVideo}=require('../lib/video-client.ts');
+ const {readChatVideoAccess,sendVideoMessage,revokeVideo,getVideo}=require('../lib/video-client.ts');
  const signal=new AbortController().signal;
+ reset({body:video});assert.deepEqual(await getVideo(id,signal),video);assert.equal(calls[0].url.searchParams.get('id'),`eq.${id}`);assert.equal(calls[0].signal,signal,'Metadata forwards task signal to installed SDK');
+ const stoppedRead=new AbortController();stoppedRead.abort();reset();await assert.rejects(getVideo(id,stoppedRead.signal));assert.equal(calls.length,0);
+ const lateRead=new AbortController();reset({body:video,before:()=>lateRead.abort()});await assert.rejects(getVideo(id,lateRead.signal),'Ignored HTTP abort must still reject late metadata');
  reset({body:{id:'conversation',match_id:'match'}});assert.equal(await readChatVideoAccess(owner,'conversation',signal),true);assert.equal(calls[0].url.searchParams.get('id'),'eq.conversation');assert.equal(calls[0].url.searchParams.get('youth_user_id'),`eq.${owner}`);assert.ok(calls[0].signal instanceof AbortSignal);
  for(const body of [null,{id:'wrong',match_id:'match'},{id:'conversation',match_id:null}]){reset({body});await assert.rejects(readChatVideoAccess(owner,'conversation',signal));}
  reset({body:{id:'conversation',match_id:'match'},before:()=>{user=other;}});await assert.rejects(readChatVideoAccess(owner,'conversation',signal));

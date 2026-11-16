@@ -18,23 +18,30 @@ export interface YouthVideo {
   revoked_at: string | null;
 }
 
-export async function getVideo(id: string): Promise<YouthVideo | null> {
-  const { data, error } = await getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at,first_sent_at,expires_at,deleted_at").eq("id", id).maybeSingle();
+export async function getVideo(id: string, signal?: AbortSignal): Promise<YouthVideo | null> {
+  signal?.throwIfAborted();
+  let query = getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at,first_sent_at,expires_at,deleted_at").eq("id", id);
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query.maybeSingle();
+  signal?.throwIfAborted();
   if (error) throw new Error("Kunde inte hämta videon. Försök igen.");
   return !data?.conversation_id || data.revoked_at ? null : data as YouthVideo;
 }
 
-export async function videoPlaybackUrl(video: YouthVideo): Promise<string> {
+export async function videoPlaybackUrl(video: YouthVideo, signal?: AbortSignal): Promise<string> {
+  signal?.throwIfAborted();
   if (videoHasExpired(video.expires_at) || video.deleted_at) throw new Error("Videon är inte längre tillgänglig.");
   if (!video.conversation_id || !video.storage_path || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
   const { data: { session } } = await getSupabaseClient().auth.getSession();
+  signal?.throwIfAborted();
   if (!session) throw new Error("Logga in igen för att se videon.");
   const response = await fetch("/api/videos/playback", {
     method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ videoId: video.id }), cache: "no-store", signal: AbortSignal.timeout(45000),
+    body: JSON.stringify({ videoId: video.id }), cache: "no-store", signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(45000)]) : AbortSignal.timeout(45000),
   });
   if (!response.ok) throw new Error("Videon är inte längre tillgänglig eller så saknar du behörighet.");
   const data = await response.blob();
+  signal?.throwIfAborted();
   // The server rechecks current RLS before returning bytes; no cached bearer URL.
   if (videoHasExpired(video.expires_at)) throw new Error("Videon är inte längre tillgänglig.");
   return URL.createObjectURL(data);
