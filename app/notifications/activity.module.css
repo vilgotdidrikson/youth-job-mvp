@@ -22,11 +22,11 @@
 .cardTitle time, .notification time { color: var(--color-text-muted); font-size: .7rem; }
 .badge { flex-shrink: 0; max-width: 160px; padding: 7px 10px; border-radius: 9px; font-size: .65rem; line-height: 1.4; }
 .rose { color: var(--color-brand-on-rose); background: var(--color-rose); }
-.green { color: var(--color-success-strong); background: #edf6f0; }
-.neutral { color: #776773; background: #f4f0f2; }
-.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 22px; border-top: 1px solid #f5e6eb; background: #fffcfd; }
+.green { color: var(--color-success-strong); background: var(--color-success-soft); }
+.neutral { color: var(--color-text-muted-strong); background: var(--color-divider); }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 22px; border-top: 1px solid var(--color-divider); background: var(--color-canvas); }
 .cardFooter p { margin: 0; color: var(--color-text-muted); font-size: .75rem; line-height: 1.7; max-width: 270px; }
-.cardAction { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; padding: 10px 12px; border: 1px solid #efd5de; border-radius: 11px; color: var(--accent); background: white; font-size: .75rem; text-decoration: none; transition: background 180ms, transform 140ms; }
+.cardAction { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 11px; color: var(--accent); background: white; font-size: .75rem; text-decoration: none; transition: background 180ms, transform 140ms; }
 .cardAction:hover { background: var(--color-rose); }
 .cardAction:active { transform: scale(.98); }
 .historyTitle { margin: 20px 0 14px; color: var(--color-text-muted); font-size: .82rem; font-weight: 500; }
@@ -36,7 +36,7 @@
 .shortcuts { padding: 22px; }
 .shortcuts h2 { margin: 0 0 14px; font-size: .9rem; font-weight: 550; }
 .shortcuts a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; color: var(--color-text); text-decoration: none; font-size: .82rem; }
-.shortcuts a + a { border-top: 1px solid #f5e6eb; }
+.shortcuts a + a { border-top: 1px solid var(--color-divider); }
 .shortcuts a span { display: flex; align-items: center; gap: 10px; }
 .shortcuts a span svg { width: 19px; color: var(--color-text-muted); }
 .tip { padding: 24px; border-radius: 22px; background: var(--color-rose); }
@@ -57,12 +57,12 @@
 .notification h2 { margin: 0; font-size: .94rem; line-height: 1.5; font-weight: 550; overflow-wrap: anywhere; }
 .notification p { margin: 8px 0 10px; color: var(--color-text-muted); font-size: .8rem; line-height: 1.7; overflow-wrap: anywhere; }
 .dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--color-brand); }
-.read { background: #fffcfd; }
+.read { background: var(--color-canvas); }
 .sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .textButton { min-height: 40px; padding: 8px 4px; border: 0; color: var(--accent); background: transparent; font: inherit; font-size: .78rem; cursor: pointer; }
 .textButton:disabled { color: var(--color-text-muted); cursor: default; }
 .textButton:hover:not(:disabled) { text-decoration: underline; }
-.read .notificationIcon { color: var(--color-text-muted); background: #f4f0f2; }
+.read .notificationIcon { color: var(--color-text-muted); background: var(--color-divider); }
 .error { padding: 16px; border-radius: 14px; color: var(--color-brand-on-rose); background: var(--color-surface-soft); font-size: .85rem; }
 @media (max-width: 900px) and (min-width: 721px) { .page { padding-inline: var(--page-gutter-tablet); } .layout { grid-template-columns: minmax(0,1fr) 230px; gap: 20px; } .cardTop { flex-wrap: wrap; } .badge { margin-left: 59px; } .cardFooter { flex-wrap: wrap; } }
 @media (max-width: 720px) {
