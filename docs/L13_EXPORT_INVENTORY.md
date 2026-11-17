@@ -54,3 +54,12 @@ Bygg nyautentisering, kontobunden beställning, sammanställning/JSON/filer, sä
 Fastställ personuppgiftsansvarig, ärendeansvarig och fungerande kontaktväg även utan konto. `info@matchnwork.se` är verifierad som utskicksadress; denna leverans utser inte automatiskt adressen till bevakad integritetsfunktion. Bedöm delade uppgifter, anteckningar och säkerhetsdata före automatisk projektion. Besluta hur automatiska och individuellt bedömda delar redovisas tillsammans utan att likställa ett databasuttag med komplett registerutdrag.
 
 L14 behöver fortfarande granska leverantörsinställningar, avtal, loggar och retention för Supabase, Vercel, OpenAI, Mapbox och SMTP. `store:false` bevisar inte att leverantörsloggar saknas. Vault/cron/net/realtime och övriga system-/extensionscheman ligger utanför den lästa katalogen. Inga nya konton/avtal/inställningar aktiveras. L12:s backup-/lagringsbeslut och resterande L13-kriterier kvarstår.
+
+
+## Aktualisering 2026-11-17 – interna ärendeuppföljningar
+
+PR #222: ny faktisk DevStaging-katalog före ändringen visade två befintliga Auth-kolumner utanför tidigare metadata: `auth.one_time_tokens.link_token_hash` (text) och `auth.saml_providers.dedicated_scope` (boolean). Inga värden lästes. Hashen omfattas uttryckligen av Auth-hemligheter som aldrig får exporteras; SAML-flaggan är konfigurationsmetadata och öppnar ingen ny åtkomst/insamling. Dessa fält skapades inte av leveransen.
+
+Efter migration `privacy_case_internal_reviews` var den enda nya schemaavvikelsen `private.privacy_case_events.review_after` (timestamp with time zone): datum för planerad uppföljning vid en intern audithändelse. Individuell rättighets-/säkerhetsbedömning enligt gruppen safety gäller fortsatt; ingen generell råexport eller ny insamlingsprojektion aktiveras.
+
+`catalog.column-additions-2026-11-17.json` innehåller exakt dessa tre granskade kolumntillägg. Verktyget accepterar bara nya kolumner på redan kända relationer; ersättning av fält/typ, okänd relation, extra relationsmetadata och dubblerade tillägg avvisas. Historiska katalogfiler är oförändrade. Baslinjekontrollen hittade först de två Auth-fälten; kontrollen efter migreringen hittade auditfältet innan det granskade tillägget lades in. Den färska slutkontrollen matchar 92 relationer/fyra buckets. 33 positiva/negativa driftkontroller passerar. Detta gäller metadata; innehålls-/rättighetsbedömningar och full exportacceptans kvarstår.

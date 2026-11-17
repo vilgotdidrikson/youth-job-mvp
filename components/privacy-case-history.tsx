@@ -6,9 +6,10 @@ import type { CaseCursor, PrivacyCase, PrivacyCaseEvent } from "@/lib/privacy-ca
 import styles from "@/app/account/privacy-requests/page.module.css";
 
 export function PrivacyCaseMessages({ events, admin = false }: { events: PrivacyCaseEvent[]; admin?: boolean }) {
-  return <>{events.filter(e => e.public_message).map(event => <blockquote key={event.id}>
-    <p>{event.action === "user_reply" ? admin ? "Användarens komplettering" : "Din komplettering" : "Svar från MatchnWork"} · {new Date(event.created_at).toLocaleString("sv-SE", { timeZone: "Europe/Stockholm" })}</p>
-    <p className={styles.message}>{event.public_message}</p>
+  return <>{events.filter(e=>(admin||!["review","schedule_review"].includes(e.action))&&(e.public_message||admin&&e.review_after)).map(event=><blockquote key={event.id}>
+    <p>{event.review_after?event.action==="review"?"Genomförd intern uppföljning":"Intern uppföljning planerad":event.action==="user_reply"?admin?"Användarens komplettering":"Din komplettering":"Svar från MatchnWork"} · {new Date(event.created_at).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>
+    {event.public_message&&<p className={styles.message}>{event.public_message}</p>}
+    {admin&&event.review_after&&<p>Nästa uppföljning: {new Date(event.review_after).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>}
   </blockquote>)}</>;
 }
 /** Mount with the case revision as key: old pages must never join a newer thread. */

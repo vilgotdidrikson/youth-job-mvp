@@ -158,7 +158,7 @@
       ],
       "classification": "review",
       "subjectScope": "Rapporter: reporter_user_id eller mål via target_type/target_id, relaterad match/annons/meddelande/video och bevarad snapshot. Blockering och restriktion kan avse begärande person även när någon annan är aktör. Ärenden: requester_id = begärande person; handläggarbehörigheter och actor_id kan avse handläggaren. Kontoradering nullar requester_id/actor_id, men gör inte ärendetext anonym.",
-      "data": "Rapportinnehåll, mål-snapshots, säkerhetsbeslut, blockeringar och eventuella personuppgifter i granskningsanteckningar. Personuppgiftsärenden: ursprunglig begäran, offentliga svar/kompletteringar, status/ansvarig, revision, mottagnings-/svars-/uppföljnings-/avsluts-/planerad gallringstid; separat handläggarbehörighet. Inga bilagor i denna leverans.",
+      "data": "Rapportinnehåll, mål-snapshots, säkerhetsbeslut, blockeringar och eventuella personuppgifter i granskningsanteckningar. Personuppgiftsärenden: ursprunglig begäran, offentliga svar/kompletteringar, status/ansvarig, revision, mottagnings-/svars-/uppföljnings-/avsluts-/planerad gallringstid; separat handläggarbehörighet. Interna uppföljningshändelser sparar ansvarig/tid och review_after som auditdatum utan publik svarstext. Inga bilagor i denna leverans.",
       "review": "Kräver individuell rättighets-/säkerhetsbedömning. Avslöja inte anmälare/blockerare eller alla bevis automatiskt. Nullat reporter_user_id garanterar inte att snapshot är anonym. Enbart filtrering på reporter_user_id missar uppgifter om anmäld person. L16 2026-11-12: tre privata tabeller är endast åtkomliga för servern. Automatiska exportinsamlingen markerar dem not_collected; ärendefritext, eventhistorik och handläggaridentiteter kräver individuell prövning. Ursprunglig begäran dupliceras inte i händelseloggen. Automatisk ärendegallring är inte aktiverad; vid avslut sparas en planerad tolvmånadersfrist."
     },
     {
@@ -248,7 +248,7 @@
       "classification": "review",
       "subjectScope": "Direkt user_id eller kontrollerad relation via session/faktor/kodset/auktorisering; audit payload och SAML for_email kräver särskild avgränsning.",
       "data": "Relevant kontoaktivitet, tid, IP/user-agent, samtycken och säkerhets-/inloggningsmetadata där personen omfattas.",
-      "review": "Aldrig aktiva/utgångna access-/refresh-/OTP-/OAuth-koder, tokenhashar, MFA-hemligheter/recoverykoder, PKCE-verifierare, challenge-/sessionsdata eller refresh_token_hmac_key. Dessa tabeller får inte serialiseras generiskt. Funktionen kanske inte används; detta har inte fastställts genom läsning av tabellinnehåll."
+      "review": "Aldrig aktiva/utgångna access-/refresh-/OTP-/OAuth-koder, tokenhashar, MFA-hemligheter/recoverykoder, PKCE-verifierare, challenge-/sessionsdata eller refresh_token_hmac_key/link_token_hash. Dessa tabeller får inte serialiseras generiskt. Funktionen kanske inte används; detta har inte fastställts genom läsning av tabellinnehåll."
     },
     {
       "id": "auth-configuration",
@@ -265,7 +265,7 @@
       "classification": "context",
       "subjectScope": "Leverantörskonfiguration, inte en godkänd användarexportkälla. Eventuella personkopplingar måste utredas separat.",
       "data": "Schema-/IdP-/klientkonfiguration.",
-      "review": "Aldrig client_secret/client_secret_hash/token_hash/SCIM-hemligheter eller raw_base_config. metadata_xml och fria klientnamn kan innehålla personuppgifter; utan innehållsgranskning kan ingen generell anonymitet fastställas."
+      "review": "Aldrig client_secret/client_secret_hash/token_hash/SCIM-hemligheter eller raw_base_config. dedicated_scope är befintlig SAML-konfigurationsmetadata; ingen klientåtkomst eller export aktiveras genom schemaregistret. metadata_xml och fria klientnamn kan innehålla personuppgifter; utan innehållsgranskning kan ingen generell anonymitet fastställas."
     },
     {
       "id": "storage-content",

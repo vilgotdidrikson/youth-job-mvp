@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {auditInventory,readInventory,readReviewedCatalog,mergeReviewedCatalogAdditions} from './check-personal-data-inventory.mjs';
+import {auditInventory,readInventory,readReviewedCatalog,mergeReviewedCatalogAdditions,mergeReviewedColumnAdditions} from './check-personal-data-inventory.mjs';
 const catalog=readReviewedCatalog(),inventory=readInventory(),copy=structuredClone;
 assert.deepEqual(auditInventory(catalog,inventory,catalog),[]);
 let passed=1;
 const base={projectRef:'qa',relations:[{schema_name:'public',table_name:'existing'}],buckets:[{id:'existing'}]},addition={mode:'additions-only',projectRef:'qa',capturedOn:'2026-10-30',relations:[{schema_name:'private',table_name:'added'}],buckets:[{id:'added'}]};
 assert.equal(mergeReviewedCatalogAdditions(base,addition).relations.length,2);assert.equal(base.relations.length,1);passed++;
 for(const mode of ['relation','bucket','project','mode']){const next=copy(addition);if(mode==='relation')next.relations=[base.relations[0]];if(mode==='bucket')next.buckets=[base.buckets[0]];if(mode==='project')next.projectRef='other';if(mode==='mode')next.mode='replace';assert.throws(()=>mergeReviewedCatalogAdditions(base,next));passed++;}
+const colBase={projectRef:'qa',relations:[{schema_name:'private',table_name:'events',columns:[{name:'id',type:'uuid'}]}]},colPatch={mode:'column-additions-only',projectRef:'qa',capturedOn:'2026-11-17',relations:[{schema_name:'private',table_name:'events',columns:[{name:'review_after',type:'timestamp with time zone'}]}]};
+assert.equal(mergeReviewedColumnAdditions(colBase,colPatch).relations[0].columns.length,2);assert.equal(colBase.relations[0].columns.length,1);passed++;
+for(const mode of ['replace','unknown','duplicate','malformed','extra','project']){const c=copy(colPatch);if(mode==='replace')c.relations[0].columns=[{name:'id',type:'text'}];if(mode==='unknown')c.relations[0].table_name='unknown';if(mode==='duplicate')c.relations.push(copy(c.relations[0]));if(mode==='malformed')c.relations[0].columns=[{name:'missing-type'}];if(mode==='extra')c.relations[0].rls_enabled=false;if(mode==='project')c.projectRef='wrong';assert.throws(()=>mergeReviewedColumnAdditions(colBase,c));passed++;}
 const rejects=(change,pattern)=>{const c=copy(catalog),i=copy(inventory);change(c,i);assert.match(auditInventory(c,i,catalog).join('\n'),pattern);passed++;};
 rejects(c=>c.relations.push({...copy(c.relations[0]),table_name:'new_private_ai_history'}),/Unclassified relation/);
 rejects(c=>c.relations[0].columns.push({name:'new_private_notes',type:'jsonb'}),/New\/changed column/);

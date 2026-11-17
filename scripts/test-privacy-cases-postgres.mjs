@@ -16,6 +16,7 @@ await db.exec(readFileSync('supabase/migrations/20261112092530_privacy_request_c
 await db.exec(readFileSync('supabase/migrations/20261112093959_privacy_case_identity_checks.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261112101715_privacy_case_followup_history.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261117163115_privacy_case_queue_lookup_response.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261117174521_privacy_case_internal_reviews.sql','utf8'));
 const ids={owner:'11111111-1111-4111-8111-111111111111',other:'22222222-2222-4222-8222-222222222222',admin:'33333333-3333-4333-8333-333333333333',admin2:'44444444-4444-4444-8444-444444444444',noGrant:'55555555-5555-4555-8555-555555555555',session:'66666666-6666-4666-8666-666666666666',case:'77777777-7777-4777-8777-777777777777',factor:'88888888-8888-4888-8888-888888888888'};
 for(const v of [ids.owner,ids.other,ids.admin,ids.admin2,ids.noGrant])await db.query('insert into auth.users values($1,now())',[v]);
 for(const v of [ids.admin,ids.admin2,ids.noGrant])await db.query('insert into public.admin_users values($1)',[v]);
@@ -122,6 +123,29 @@ try{
  await denied(()=>query('unexpected'),'22023','queue rejects unknown filter');
  for(const role of ['anon','authenticated']){await db.exec('reset role;set role '+role);await denied(()=>caseRead(ids.owner,null,ownSession,oldest.id),'42501',role+' cannot call exact lookup directly');await denied(()=>query('all'),'42501',role+' cannot spoof a queue actor');}
  await db.exec('reset role;set role service_role');await db.query('update private.privacy_case_handlers set enabled=false where user_id=$1',[ids.admin]);await denied(()=>query('all'),'42501','queue rejects revoked grant');await denied(()=>caseRead(null,ids.admin,ids.session,oldest.id),'42501','lookup rejects revoked grant');await db.query('update private.privacy_case_handlers set enabled=true where user_id=$1',[ids.admin]);
+ // Planned and completed internal reviews share revision/idempotency rules.
+ let rc=await update(oldest,'claim');const initialReview=rc,reviewEvent=crypto.randomUUID(),target=new Date(Date.now()+2*86400000).toISOString();
+ const recordReview=(item,action,date,event=crypto.randomUUID(),actor=ids.admin,session=ids.session)=>scalar('select public.record_privacy_case_review($1,$2,$3,$4,$5,$6,$7)',[actor,session,item.id,item.revision,event,action,date]);
+ rc=await recordReview(rc,'schedule_review',target,reviewEvent);ok(Date.parse(rc.review_after)===Date.parse(target)&&rc.reply_due_at===initialReview.reply_due_at&&rc.status===initialReview.status&&rc.first_reply_at===null,'planning changes only internal review date/revision, never external deadline/status/first response');
+ ok((await recordReview(initialReview,'schedule_review',target,reviewEvent)).revision===rc.revision,'review retry is idempotent with exact original payload');
+ await denied(()=>recordReview(initialReview,'review',target,reviewEvent),'PT409','event ID cannot change planned to completed review');
+ await denied(()=>recordReview(initialReview,'schedule_review',new Date(Date.now()+3*86400000).toISOString(),reviewEvent),'PT409','same event ID cannot change the planned date');
+ await denied(()=>recordReview(initialReview,'review',target),'PT409','stale revision cannot overwrite a newer review');
+ for(const date of [new Date(Date.now()-86400000).toISOString(),new Date(Date.now()+31*86400000).toISOString()])await denied(()=>recordReview(rc,'review',date),'22023','new review must be future and within 30 days');
+ await denied(()=>recordReview(rc,'review',target,crypto.randomUUID(),ids.noGrant),'42501','review needs explicit handler permission');
+ await denied(()=>recordReview(rc,'review',target,crypto.randomUUID(),ids.admin,otherSession),'42501','review binds original actor session');
+ rc=await recordReview(rc,'review',target);ok(rc.events.at(-1).action==='review'&&rc.events.at(-1).public_message===null&&rc.events.at(-1).review_after!==null&&rc.first_reply_at===null,'completed review is audited with its date and no public reply');
+ for(let i=0;i<30;i++)await db.query("insert into private.privacy_case_events(id,case_id,actor_id,action,created_at,review_after)values($1,$2,$3,'review',now()-($4||' minutes')::interval,$5)",[crypto.randomUUID(),rc.id,ids.admin,i+1,target]);
+ const publicRc=await scalar('select private.privacy_case_projection($1,null)',[rc.id]);rc=await scalar('select private.privacy_case_projection($1,$2)',[rc.id,ids.admin]);
+ ok(!publicRc.events_truncated&&rc.events_truncated&&publicRc.events.every(e=>!['review','schedule_review'].includes(e.action)&&!('review_after'in e)),'internal reviews cannot fill or truncate requester history');
+ const publicAnchor=publicRc.events[0];const ownHistory=await scalar('select public.read_privacy_case_history($1,null,$2,$3,$4,$5,$6)',[ids.owner,ownSession,rc.id,rc.revision,publicAnchor.created_at,publicAnchor.id]);ok(ownHistory.events.length===0&&ownHistory.next===null,'older owner history excludes all internal review events');
+ const internal=rc.events.find(e=>e.review_after);await denied(()=>scalar('select public.read_privacy_case_history($1,null,$2,$3,$4,$5,$6)',[ids.owner,ownSession,rc.id,rc.revision,internal.created_at,internal.id]),'22023','internal event cannot anchor owner pagination');
+ const internalHistory=await scalar('select public.read_privacy_case_history(null,$1,$2,$3,$4,$5,$6)',[ids.admin,ids.session,rc.id,rc.revision,rc.events[0].created_at,rc.events[0].id]);ok(internalHistory.events.some(e=>e.review_after),'authorized older history retains audit dates');
+ await db.query("update private.privacy_cases set review_after=now()-interval '1 minute',reply_due_at=now()+interval '1 day' where id=$1",[rc.id]);ok((await query('review_overdue')).cases.some(c=>c.id===rc.id)&&!(await query('reply_overdue')).cases.some(c=>c.id===rc.id),'overdue review queue is independent of external reply deadline');
+ await db.query("update private.privacy_cases set reply_due_at=now()-interval '1 minute' where id=$1",[rc.id]);rc=await recordReview(rc,'review',target);ok((await query('reply_overdue')).cases.some(c=>c.id===rc.id)&&!(await query('review_overdue')).cases.some(c=>c.id===rc.id),'a completed review clears internal queue but never hides overdue external response');
+ rc=await update(rc,'close','QA close reviewed case');await denied(()=>recordReview(rc,'review',target),'PT409','closed case cannot schedule a new internal review');
+ ok(!(await query('reply_overdue')).cases.some(c=>c.id===rc.id),'closed cases are excluded from overdue queues');
+ for(const role of ['anon','authenticated']){await db.exec('reset role;set role '+role);await denied(()=>recordReview(rc,'review',target),'42501',role+' cannot directly invoke review write');}await db.exec('reset role;set role service_role');
  await denied(()=>create().then(()=>scalar('select public.create_privacy_case($1,$2,$3,$4)',[ids.owner,crypto.randomUUID(),'other','\u0001bad'])),'22023','control characters rejected in SQL');
  await db.exec('reset role');await db.query('delete from auth.users where id=$1',[ids.owner]);ok(await scalar('select requester_id is null from private.privacy_cases where id=$1',[ids.case]),'account deletion retains case under its distinct retention rule without account FK');
  ok((await db.query("select count(*) n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='private' and c.relname like 'privacy_case%' and c.relrowsecurity")).rows[0].n===3,'all three new private tables have RLS');

@@ -43,24 +43,25 @@ export async function createOwnPrivacyCase(owner: string, id: string, kind: Priv
   try { const result = parsePrivacyCase(await request(owner, { action: "create", id, kind, body }, signal, false, true), owner); if (result.id !== id || result.kind !== kind || result.body !== body.trim()) throw Error("Receipt mismatch"); return result; }
   catch(e) { if(e instanceof PrivacyCaseRequestError) throw e; throw new PrivacyCaseRequestError("Sparningen kunde inte bekräftas. Läs dina ärenden innan du fortsätter.", true); }
 }
-export async function adminPrivacyCases(owner: string, input: { action: "list"; cursor: CaseCursor | null; filter?:CaseQueueFilter } | {action:"find";id:string} | { action: CaseAction; id: string; revision: string; eventId: string; message: string }, password: string, totpCode: string, signal: AbortSignal) {
+export async function adminPrivacyCases(owner: string, input: { action: "list"; cursor: CaseCursor | null; filter?:CaseQueueFilter } | {action:"find";id:string} | { action: CaseAction; id: string; revision: string; eventId: string; message: string; reviewAfter?:string }, password: string, totpCode: string, signal: AbortSignal) {
   const value = await request(owner, { ...input, password, totpCode }, signal, true, input.action !== "list"&&input.action!=="find");
-  if(input.action === "list"){const page=parsePrivacyCasePage(value);if(page.cases.some(c=>!matchesCaseQueue(c,input.filter??"all")))throw Error("Kön kunde inte verifieras. Läs den igen.");return page;}
+  if(input.action === "list"){const page=parsePrivacyCasePage(value);if(page.cases.some(c=>!matchesCaseQueue(c,input.filter??"all",page.as_of?Date.parse(page.as_of):Date.now())))throw Error("Kön kunde inte verifieras. Läs den igen.");return page;}
   if(input.action === "find")return readReceipt(value,input.id);
-  return actionReceipt(value,input.id,input.eventId,input.action,input.message);
+  return actionReceipt(value,input.id,input.eventId,input.action,input.message,undefined,input.reviewAfter);
 }
 export async function replyToOwnPrivacyCase(owner: string, item: PrivacyCase, message: string, eventId: string, signal: AbortSignal) {
   const value=await request(owner, { action: "reply", id: item.id, revision: item.revision, eventId, message }, signal, false, true);
   return actionReceipt(value,item.id,eventId,"user_reply",message,owner);
 }
-function actionReceipt(value:unknown,id:string,eventId:string,action:string,message:string,owner?:string) {
+function actionReceipt(value:unknown,id:string,eventId:string,action:string,message:string,owner?:string,reviewAfter?:string) {
   try {
     const result=parsePrivacyCase(value,owner);
-    if(result.id!==id||!result.events.some(e=>e.id===eventId&&e.action===action&&e.public_message===(message.trim()||null)))throw Error("Receipt mismatch");
+    if(result.id!==id||!result.events.some(e=>e.id===eventId&&e.action===action&&e.public_message===(message.trim()||null)&&(reviewAfter===undefined||e.review_after!=null&&Date.parse(e.review_after)===Date.parse(reviewAfter))))throw Error("Receipt mismatch");
+    if(reviewAfter!==undefined&&(!result.review_after||Date.parse(result.review_after)!==Date.parse(reviewAfter)))throw Error("Review receipt mismatch");
     return result;
   }catch{throw new PrivacyCaseRequestError("Sparningen kunde inte bekräftas. Läs aktuell ärendestatus innan du fortsätter.",true);}
 }
 export async function readPrivacyCaseHistory(owner: string, item: PrivacyCase, cursor: CaseCursor, signal: AbortSignal, credentials?: { password: string; totpCode: string }) {
   const input = { action: "history", id: item.id, revision: item.revision, cursor, ...credentials };
-  return parsePrivacyCaseHistory(await request(owner, input, signal, !!credentials, false), item, cursor);
+  return parsePrivacyCaseHistory(await request(owner, input, signal, !!credentials, false), item, cursor, credentials?undefined:owner);
 }
