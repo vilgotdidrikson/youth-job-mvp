@@ -23,10 +23,10 @@ async function request(owner: string, payload: object, signal: AbortSignal, admi
   await own(owner, active); active.throwIfAborted();
   try {
     const r = await fetch(admin ? "/api/admin/privacy-cases" : "/api/account/privacy-cases", { method: "POST", cache: "no-store", signal: active, headers: { "Authorization": `Bearer ${data.session.access_token}`, "X-Account-Id": owner, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    if (!r.ok) throw new PrivacyCaseRequestError(r.status === 403 ? "Åtgärden nekades. Kontrollera behörighet och tvåfaktorskod." : r.status === 409 ? "Ärendet har ändrats. Läs aktuell status innan du fortsätter." : r.status === 429 ? "För många försök. Försök igen senare." : r.status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : "Begäran kunde inte slutföras.", writes && r.status >= 500, r.status);
+    if (!r.ok) throw new PrivacyCaseRequestError(r.status === 403 ? "Åtgärden nekades. Kontrollera behörighet och tvåfaktorskod." : r.status === 409 ? "Ärendet har ändrats. Läs aktuell status innan du fortsätter." : r.status === 429 ? "För många försök. Försök igen senare." : r.status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : "Begäran kunde inte slutföras.", writes && (r.status >= 500 || r.status===408 || r.headers.get("X-Privacy-Case-Write")==="uncertain" || r.status===400&&r.headers.get("X-Privacy-Case-Write")!=="rejected"), r.status);
     const value: unknown = await r.json(); await own(owner, active); return value;
   } catch (e) {
-    if (e instanceof PrivacyCaseRequestError) throw e;
+    if (e instanceof PrivacyCaseRequestError) {if(writes&&e.status===undefined)throw new PrivacyCaseRequestError(e.message,true);throw e;}
     throw new PrivacyCaseRequestError(writes ? "Resultatet är okänt. Läs dina ärenden innan du försöker igen." : "Ärenden kunde inte läsas. Försök igen.", writes);
   }
 }
@@ -39,12 +39,19 @@ export async function createOwnPrivacyCase(owner: string, id: string, kind: Priv
 }
 export async function adminPrivacyCases(owner: string, input: { action: "list"; cursor: CaseCursor | null } | { action: CaseAction; id: string; revision: string; eventId: string; message: string }, password: string, totpCode: string, signal: AbortSignal) {
   const value = await request(owner, { ...input, password, totpCode }, signal, true, input.action !== "list");
-  return input.action === "list" ? parsePrivacyCasePage(value) : parsePrivacyCase(value);
+  if(input.action === "list")return parsePrivacyCasePage(value);
+  return actionReceipt(value,input.id,input.eventId,input.action,input.message);
 }
 export async function replyToOwnPrivacyCase(owner: string, item: PrivacyCase, message: string, eventId: string, signal: AbortSignal) {
-  const result = parsePrivacyCase(await request(owner, { action: "reply", id: item.id, revision: item.revision, eventId, message }, signal, false, true), owner);
-  if (result.id !== item.id) throw new PrivacyCaseRequestError("Kompletteringen kunde inte bekräftas. Läs aktuell status igen.", true);
-  return result;
+  const value=await request(owner, { action: "reply", id: item.id, revision: item.revision, eventId, message }, signal, false, true);
+  return actionReceipt(value,item.id,eventId,"user_reply",message,owner);
+}
+function actionReceipt(value:unknown,id:string,eventId:string,action:string,message:string,owner?:string) {
+  try {
+    const result=parsePrivacyCase(value,owner);
+    if(result.id!==id||!result.events.some(e=>e.id===eventId&&e.action===action&&e.public_message===(message.trim()||null)))throw Error("Receipt mismatch");
+    return result;
+  }catch{throw new PrivacyCaseRequestError("Sparningen kunde inte bekräftas. Läs aktuell ärendestatus innan du fortsätter.",true);}
 }
 export async function readPrivacyCaseHistory(owner: string, item: PrivacyCase, cursor: CaseCursor, signal: AbortSignal, credentials?: { password: string; totpCode: string }) {
   const input = { action: "history", id: item.id, revision: item.revision, cursor, ...credentials };

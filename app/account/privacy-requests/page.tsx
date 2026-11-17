@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSession } from "@/hooks/use-session";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { PrivacyCaseThread } from "@/components/privacy-case-thread";
-import { PRIVACY_CASE_KINDS, type CaseCursor, type PrivacyCase, type PrivacyCaseKind } from "@/lib/privacy-cases";
-import { createOwnPrivacyCase, readOwnPrivacyCases, replyToOwnPrivacyCase } from "@/lib/privacy-case-client";
+import { PRIVACY_CASE_KINDS, caseText, type CaseCursor, type PrivacyCase, type PrivacyCaseKind } from "@/lib/privacy-cases";
+import { PrivacyCaseRequestError, createOwnPrivacyCase, readOwnPrivacyCases, replyToOwnPrivacyCase } from "@/lib/privacy-case-client";
 import { CONTACT_EMAIL } from "@/lib/product-copy";
 import styles from "./page.module.css";
 export default function PrivacyRequestsPage() {
@@ -25,22 +25,23 @@ function Workspace({ owner }: { owner: string }) {
   useEffect(() => { active.current=true; return () => {active.current=false;task.current?.abort();lock.current=false;}; },[]);
   const run = async (operation: (signal:AbortSignal)=>Promise<void>, writes=false) => {
     if(lock.current||!active.current)return false;lock.current=true;setBusy(true);setNote("");const c=new AbortController();task.current=c;
-    try {await operation(c.signal);return active.current&&!c.signal.aborted;} catch(e) {if(active.current&&!c.signal.aborted){setNote(e instanceof Error?e.message:"Begäran kunde inte slutföras.");if(writes)setCheck(true);}return false;}
+    try {await operation(c.signal);return active.current&&!c.signal.aborted;} catch(e) {if(active.current&&!c.signal.aborted){setNote(e instanceof Error?e.message:"Begäran kunde inte slutföras.");if(writes)setCheck(!(e instanceof PrivacyCaseRequestError)||e.uncertain||e.status===409);}return false;}
     finally {if(task.current===c){task.current=null;lock.current=false;if(active.current)setBusy(false);}}
   };
   const read = (cursor:CaseCursor|null=null) => run(async signal => {
     const page=await readOwnPrivacyCases(owner,cursor,signal);if(!active.current||signal.aborted)return;
     const combined=cursor?[...items,...page.cases.filter(c=>!items.some(x=>x.id===c.id))]:page.cases;
     setItems(combined);setNext(page.next);setAvailable(page.available);setLoaded(true);setCheck(false);
-    const saved=pending.current&&combined.find(c=>c.id===pending.current!.id);
+    const saved=pending.current&&combined.find(c=>c.id===pending.current!.id&&c.kind===pending.current!.kind&&c.body===pending.current!.body);
     if(saved){pending.current=null;setBody("");setNote("Ärendet finns sparat. Inget nytt ärende skickades vid kontrollen.");}
   });
   // First read has no writes. A keyed workspace prevents cross-account state reuse.
   useEffect(() => {void read();},[]); // eslint-disable-line react-hooks/exhaustive-deps
   const create = (event:FormEvent<HTMLFormElement>) => {
     event.preventDefault();if(!loaded||!available||check||lock.current)return;
+    try{caseText(body);}catch(e){setNote(e instanceof Error?e.message:"Kontrollera beskrivningen.");return;}
     pending.current??={id:crypto.randomUUID(),kind,body:body.trim()};const input=pending.current;
-    void run(async signal=>{const item=await createOwnPrivacyCase(owner,input.id,input.kind,input.body,signal);if(!active.current||signal.aborted)return;pending.current=null;setItems(current=>[item,...current.filter(c=>c.id!==item.id)]);setBody("");setCheck(false);setNote("Ditt ärende är mottaget. Följ svaret här; inget mejl skickas automatiskt.");},true);
+    void run(async signal=>{let item:PrivacyCase;try{item=await createOwnPrivacyCase(owner,input.id,input.kind,input.body,signal);}catch(e){if(e instanceof PrivacyCaseRequestError&&!e.uncertain&&e.status!==409)pending.current=null;throw e;}if(!active.current||signal.aborted)return;pending.current=null;setItems(current=>[item,...current.filter(c=>c.id!==item.id)]);setBody("");setCheck(false);setNote("Ditt ärende är mottaget. Följ svaret här; inget mejl skickas automatiskt.");},true);
   };
   const reply = (item:PrivacyCase,text:string,id:string)=>run(async signal=>{const result=await replyToOwnPrivacyCase(owner,item,text,id,signal);if(!active.current||signal.aborted)return;setItems(current=>current.map(c=>c.id===result.id?result:c));setNote("Din komplettering är sparad.");},true);
   return <>
@@ -63,7 +64,7 @@ function Workspace({ owner }: { owner: string }) {
 function ReplyForm({item,disabled,send,drafts}:{item:PrivacyCase;disabled:boolean;drafts:Map<string,ReplyDraft>;send:(item:PrivacyCase,text:string,id:string)=>Promise<boolean>}) {
   const [text,setText]=useState(()=>drafts.get(item.id)?.text??"");const id=useRef<string|null>(drafts.get(item.id)?.id??null),active=useRef(false),locked=useRef(false);
   useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
-  useEffect(()=>{if(id.current&&item.events.some(event=>event.id===id.current&&event.action==="user_reply")){setText("");id.current=null;drafts.delete(item.id);}},[item,drafts]);
+  useEffect(()=>{if(id.current&&item.events.some(event=>event.id===id.current&&event.action==="user_reply"&&event.public_message===text.trim())){setText("");id.current=null;drafts.delete(item.id);}},[item,drafts,text]);
   if(item.status==="closed"&&!text)return null;
   return <form className={styles.form} onSubmit={async e=>{e.preventDefault();if(disabled||locked.current||!text.trim())return;locked.current=true;id.current??=crypto.randomUUID();drafts.set(item.id,{text,id:id.current});try{if(await send(item,text,id.current)&&active.current){setText("");id.current=null;drafts.delete(item.id);}}finally{locked.current=false;}}}><label>Komplettera ärendet<textarea required maxLength={4000} value={text} readOnly={item.status==="closed"} disabled={disabled&&item.status!=="closed"} onChange={e=>{setText(e.target.value);id.current=null;drafts.set(item.id,{text:e.target.value,id:null});}}/></label>{item.status==="closed"&&text&&<p role="status">Ärendet har avslutats. Din oskickade text finns kvar här för att du ska kunna kopiera den och kontakta oss.</p>}<button className="secondary-btn" disabled={disabled||!text.trim()}>Skicka komplettering</button></form>;
 }

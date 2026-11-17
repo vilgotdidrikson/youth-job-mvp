@@ -6,7 +6,7 @@ import { AuthGateMessage } from "@/components/auth-gate-message";
 import { PasswordInput } from "@/components/password-input";
 import { PrivacyCaseThread } from "@/components/privacy-case-thread";
 import { useAdminAccess } from "@/hooks/use-admin-access";
-import { adminPrivacyCases } from "@/lib/privacy-case-client";
+import { PrivacyCaseRequestError, adminPrivacyCases } from "@/lib/privacy-case-client";
 import { PRIVACY_CASE_KINDS, PRIVACY_CASE_STATUSES, privacyCaseFollowup, type CaseAction, type CaseCursor, type PrivacyCase, type PrivacyCasePage } from "@/lib/privacy-cases";
 import styles from "../../account/privacy-requests/page.module.css";
 export default function AdminPrivacyCasesPage() {
@@ -15,14 +15,17 @@ export default function AdminPrivacyCasesPage() {
   if(!isAdmin)return <main className="mobile-shell"><h1>Ingen ärendeåtkomst</h1><p>{adminError||"Logga in med ett behörigt adminkonto."}</p>{adminError&&<button type="button" onClick={retryAdmin}>Kontrollera åtkomst igen</button>}</main>;
   return <AdminShell title="Personuppgiftsärenden" email={user?.email}>{user&&<Workspace key={user.id} owner={user.id}/>}</AdminShell>;
 }
+type ActionDraft={action:CaseAction;text:string;eventId:string|null};
 function Workspace({owner}:{owner:string}) {
   const [items,setItems]=useState<PrivacyCase[]>([]),[next,setNext]=useState<CaseCursor|null>(null),[selected,setSelected]=useState<string|null>(null);
   const [busy,setBusy]=useState(false),[needsRead,setNeedsRead]=useState(true),[note,setNote]=useState("");
   const [now,setNow]=useState(Date.now);
   useEffect(()=>{const clock=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(clock);},[]);
   const active=useRef(false),lock=useRef(false),task=useRef<AbortController|null>(null),idle=useRef<ReturnType<typeof setTimeout>|null>(null);
-  const clear=()=>{setItems([]);setNext(null);setSelected(null);setNeedsRead(true);};
-  useEffect(()=>{active.current=true;return()=>{active.current=false;task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
+  const drafts=useRef(new Map<string,ActionDraft>());
+  const clear=(keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setNeedsRead(true);if(!keepDrafts)drafts.current.clear();};
+  const expire=()=>{if(idle.current)clearTimeout(idle.current);idle.current=setTimeout(()=>{if(active.current){clear();setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");}},300000);};
+  useEffect(()=>{active.current=true;return()=>{active.current=false;drafts.current.clear();task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
   const verify = (form:HTMLFormElement) => {
     const data=new FormData(form), password=String(data.get("password")||""),code=String(data.get("totpCode")||"");
     form.querySelectorAll<HTMLInputElement>('input[name="password"],input[name="totpCode"]').forEach(input=>{input.value="";});
@@ -36,10 +39,10 @@ function Workspace({owner}:{owner:string}) {
     try{
       const result=await adminPrivacyCases(owner,input,password,code,controller.signal);if(!active.current||controller.signal.aborted)return;
       if(input.action==="list"){
-        const page=result as PrivacyCasePage;setItems(current=>input.cursor?[...current,...page.cases.filter(c=>!current.some(x=>x.id===c.id))]:page.cases);setNext(page.next);setSelected(null);setNeedsRead(false);setNote("Aktuell ärendestatus är läst.");
-      }else{const item=result as PrivacyCase;setItems(current=>current.map(c=>c.id===item.id?item:c));setNote("Åtgärden är sparad. Ett svar visas i användarens ärende; inget mejl skickas automatiskt.");}
-      idle.current=setTimeout(()=>{if(active.current){clear();setNote("Ärendevyn har tömts efter fem minuter. Verifiera dig för att läsa igen.");}},300000);
-    }catch(e){if(active.current&&!controller.signal.aborted){clear();setNote((e instanceof Error?e.message:"Åtgärden kunde inte bekräftas.")+" Läs ärendena igen före nästa åtgärd.");}}
+        const page=result as PrivacyCasePage;for(const item of page.cases){const draft=drafts.current.get(item.id);if(draft?.eventId&&item.events.some(e=>e.id===draft.eventId&&e.action===draft.action&&["reply","waiting","close"].includes(draft.action)&&e.public_message===draft.text.trim()))drafts.current.delete(item.id);}setItems(current=>input.cursor?[...current,...page.cases.filter(c=>!current.some(x=>x.id===c.id))]:page.cases);setNext(page.next);setSelected(null);setNeedsRead(false);setNote("Aktuell ärendestatus är läst.");
+      }else{const item=result as PrivacyCase;const draft=drafts.current.get(item.id);if(["claim","reopen"].includes(input.action)&&draft?.text)drafts.current.set(item.id,{action:"reply",text:draft.text,eventId:null});else drafts.current.delete(item.id);setItems(current=>current.map(c=>c.id===item.id?item:c));setNote("Åtgärden är sparad. Ett svar visas i användarens ärende; inget mejl skickas automatiskt.");}
+      expire();
+    }catch(e){if(active.current&&!controller.signal.aborted){const keep=e instanceof PrivacyCaseRequestError&&(e.uncertain||e.status===400||e.status===409||e.status===429)&&e.status!==401&&e.status!==403;clear(keep);if(keep)expire();setNote((e instanceof Error?e.message:"Åtgärden kunde inte bekräftas.")+" Läs ärendena igen före nästa åtgärd."+(keep?" Ditt oskickade svar finns kvar när du öppnar ärendet igen.":""));}}
     finally{if(task.current===controller){task.current=null;lock.current=false;if(active.current)setBusy(false);}}
   };
   const ordered=[...items].sort((a,b)=>(privacyCaseFollowup(a,now)?.due??Infinity)-(privacyCaseFollowup(b,now)?.due??Infinity)||a.id.localeCompare(b.id));
@@ -55,7 +58,7 @@ function Workspace({owner}:{owner:string}) {
     <p>Inlästa öppna ärenden visas efter närmast svars- eller uppföljningsdatum. Avslutade visas sist.{next&&" Det finns fler ärenden: läs nästa sida för att ta med dem i översikten."}</p>
     <div className="admin-profile-grid"><section className={styles.list} aria-label="Ärendekö">{ordered.map(item=><button type="button" className="secondary-btn" key={item.id} disabled={busy} aria-pressed={selected===item.id} onClick={()=>setSelected(item.id)}><strong>{PRIVACY_CASE_KINDS[item.kind]}</strong><br/>{PRIVACY_CASE_STATUSES[item.status]} · {item.is_mine?"Du hanterar":item.assigned?"Tilldelat":"Ej tilldelat"}<br/>{new Date(item.created_at).toLocaleDateString("sv-SE",{timeZone:"Europe/Stockholm"})} · {item.id}<Followup item={item} now={now}/></button>)}</section>
       {chosen&&<section className={styles.panel}><PrivacyCaseThread item={chosen} owner={owner} admin/>
-        <ActionForm key={chosen.revision} item={chosen} disabled={busy||needsRead} execute={execute}/>
+        <ActionForm key={chosen.id+":"+chosen.revision} drafts={drafts.current} item={chosen} disabled={busy||needsRead} execute={execute}/>
       </section>}
     </div>
     <p>Avslut sparar en planerad gallringsdag tolv månader senare. Automatisk ärendegallring, fristpåminnelser, bilagor och incidentflöde är ännu inte aktiverade i denna leverans. Ett ärendeavslut utför ingen export eller radering av konto.</p>
@@ -67,12 +70,16 @@ function Followup({item,now}:{item:PrivacyCase;now:number}) {
   return <span className={styles.followup}>Svarsdatum: {date(item.reply_due_at)}{due.replyOverdue&&" – passerat"}{item.review_after&&<><br/>Uppföljning: {date(item.review_after)}{due.reviewOverdue&&" – behöver följas upp"}</>}</span>;
 }
 function Credentials({disabled}:{disabled:boolean}) {return <><label>Lösenord<PasswordInput name="password" autoComplete="current-password" required disabled={disabled}/></label><label>Aktuell tvåfaktorskod<input name="totpCode" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required disabled={disabled}/></label></>;}
-function ActionForm({item,disabled,execute}:{item:PrivacyCase;disabled:boolean;execute:(form:HTMLFormElement,input:{action:CaseAction;id:string;revision:string;eventId:string;message:string})=>Promise<void>}) {
-  const [action,setAction]=useState<CaseAction>(item.status==="closed"?"reopen":item.is_mine?"reply":"claim");const attempt=useRef<string|null>(null);
-  const submit=(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();if(disabled)return;attempt.current??=crypto.randomUUID();const form=e.currentTarget,data=new FormData(form);void execute(form,{action,id:item.id,revision:item.revision,eventId:attempt.current,message:String(data.get("message")||"")});};
+function ActionForm({item,disabled,execute,drafts}:{drafts:Map<string,ActionDraft>;item:PrivacyCase;disabled:boolean;execute:(form:HTMLFormElement,input:{action:CaseAction;id:string;revision:string;eventId:string;message:string})=>Promise<void>}) {
+  const saved=drafts.get(item.id),fallback=item.status==="closed"?"reopen":item.is_mine?"reply":"claim";
+  const [action,setAction]=useState<CaseAction>(()=>saved&&(item.status==="closed"?saved.action==="reopen":saved.action!=="reopen"&&(item.is_mine||saved.action==="claim"))?saved.action:fallback);
+  const [text,setText]=useState(saved?.text??"");const attempt=useRef<string|null>(saved?.action===action?saved.eventId:null),locked=useRef(false);
+  const remember=(nextAction:CaseAction,nextText:string)=>{attempt.current=null;drafts.set(item.id,{action:nextAction,text:nextText,eventId:null});};
+  const submit=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();if(disabled||locked.current)return;locked.current=true;attempt.current??=crypto.randomUUID();const message=["reply","waiting","close"].includes(action)?text:"";drafts.set(item.id,{action,text,eventId:attempt.current});try{await execute(e.currentTarget,{action,id:item.id,revision:item.revision,eventId:attempt.current,message});}finally{locked.current=false;}};
   return <form className={styles.form} onSubmit={submit}>
-    <label>Åtgärd<select value={action} disabled={disabled} onChange={e=>{setAction(e.target.value as CaseAction);}}>{item.status==="closed"?<option value="reopen">Återöppna och ta ärendet</option>:<><option value="claim">Jag hanterar detta / ta över</option>{item.is_mine&&<><option value="reply">Svara</option><option value="waiting">Svara och invänta komplettering</option><option value="close">Svara och avsluta</option></>}</>}</select></label>
-    {["reply","waiting","close"].includes(action)&&<label>Svar till användaren<textarea name="message" required maxLength={4000} disabled={disabled}/><span>Texten visas för användaren. Lägg inga interna anteckningar eller onödiga personuppgifter här.</span></label>}
+    <label>Åtgärd<select value={action} disabled={disabled} onChange={e=>{const value=e.target.value as CaseAction;setAction(value);remember(value,text);}}>{item.status==="closed"?<option value="reopen">Återöppna och ta ärendet</option>:<><option value="claim">Jag hanterar detta / ta över</option>{item.is_mine&&<><option value="reply">Svara</option><option value="waiting">Svara och invänta komplettering</option><option value="close">Svara och avsluta</option></>}</>}</select></label>
+    {["reply","waiting","close"].includes(action)&&<label>Svar till användaren<textarea name="message" value={text} onChange={e=>{setText(e.target.value);remember(action,e.target.value);}} required maxLength={4000} disabled={disabled}/><span>Texten visas för användaren. Lägg inga interna anteckningar eller onödiga personuppgifter här.</span></label>}
+    {!["reply","waiting","close"].includes(action)&&text&&<label>Oskickat svar<textarea value={text} readOnly/><span>Ärendets status eller tilldelning har ändrats. Du kan kopiera texten.</span></label>}
     <Credentials disabled={disabled}/><button className="primary-btn" disabled={disabled}>Verifiera och utför åtgärden</button>
   </form>;
 }

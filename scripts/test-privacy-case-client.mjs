@@ -28,5 +28,17 @@ try{
  v=model.privacyCaseFollowup({...record(),review_after:'2026-11-11T09:00:00Z'},Date.parse('2026-11-12T09:00:00Z'));ok(v.reviewOverdue&&!v.replyOverdue&&v.due===Date.parse('2026-11-11T09:00:00Z'),'review date and reply deadline remain separate');
  ok(model.parsePrivacyCase({...record(),review_after:old.created_at},A).review_after===null,'own parser never exposes the internal review date');
  reset();onFetch=()=>Response.json({...record(),id:B});await assert.rejects(()=>client.replyToOwnPrivacyCase(A,record(),'QA',B,signal()),e=>e.uncertain===true);ok(requests.length===1,'foreign reply receipt is discarded without another write');
+ const event={id:B,action:'reply',public_message:'QA svar',created_at:'2026-11-12T10:00:00Z'},input={action:'reply',id,revision:rev,eventId:B,message:' QA svar '};
+ reset();onFetch=()=>Response.json({...record(),events:[event]});v=await client.adminPrivacyCases(A,input,'QA_PASSWORD','123456',signal());ok(v.id===id,'admin acknowledges only its own exact event and trimmed message');
+ for(const bad of [{...record(),id:A,events:[event]},{...record(),events:[]},{...record(),events:[{...event,id:A}]},{...record(),events:[{...event,action:'waiting'}]},{...record(),events:[{...event,public_message:'Annat svar'}]},null]){
+  reset();onFetch=()=>Response.json(bad);await assert.rejects(()=>client.adminPrivacyCases(A,input,'QA_PASSWORD','123456',signal()),e=>e.uncertain===true);ok(requests.length===1,'unconfirmed admin receipt stays uncertain and never retries automatically');
+ }
+ reset();onFetch=()=>Response.json({...record(),events:[{...event,action:'user_reply'}]});v=await client.replyToOwnPrivacyCase(A,record(),'QA svar',B,signal());ok(v.id===id,'own reply confirms its exact public event');
+ reset();onFetch=()=>Response.json(record());await assert.rejects(()=>client.replyToOwnPrivacyCase(A,record(),'QA svar',B,signal()),e=>e.uncertain===true);ok(requests.length===1,'same case without the submitted reply is not a success');
+ reset();onFetch=()=>Response.json({error:'PRIVATE'},{status:400,headers:{'X-Privacy-Case-Write':'rejected'}});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>!e.uncertain&&e.status===400);ok(requests.length===1,'definite validation rejection is distinguishable from unknown write');
+ reset();onFetch=()=>Response.json({error:'PRIVATE'},{status:400,headers:{'X-Privacy-Case-Write':'uncertain'}});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain&&e.status===400);ok(requests.length===1,'400 after dispatch still requires read-back when the server cannot confirm outcome');
+ reset();onFetch=()=>Response.json({error:'Timeout'},{status:408});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain);ok(requests.length===1,'server timeout keeps the original idempotent request');
+ reset();onFetch=()=>{user=B;return Response.json(record());};await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain===true);ok(requests.length===1,'identity failure after dispatch never permits a new create UUID');
+ reset();onFetch=()=>Response.json({error:'Unknown proxy error'},{status:400});await assert.rejects(()=>client.createOwnPrivacyCase(A,id,'access','QA',signal()),e=>e.uncertain===true);ok(requests.length===1,'unmarked 400 cannot prove a definite rejection');
  console.log('PASS '+count+' model/client checks; simulated Auth and fetch. No live account or browser claim.');
 }finally{Module._load=load;globalThis.fetch=network;}
