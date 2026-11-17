@@ -35,7 +35,8 @@ function fields(input: Record<string, unknown>, expected: string[]) {
  * out before service-only data access; it never upgrades shared browser storage. */
 export async function handlePrivacyCases(request: Request, admin = false): Promise<Response> {
   const token = /^Bearer ([^\s]+)$/i.exec(request.headers.get("authorization") ?? "")?.[1], owner = request.headers.get("x-account-id");
-  const fail = (status: number) => Response.json({ error: status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : status === 409 ? "Ärendet har ändrats. Läs aktuell status igen." : "Begäran kunde inte slutföras." }, { status, headers });
+  let writePending=false;
+  const fail = (status: number) => Response.json({ error: status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : status === 409 ? "Ärendet har ändrats. Läs aktuell status igen." : "Begäran kunde inte slutföras." }, { status, headers:{...headers,"X-Privacy-Case-Write":writePending?"uncertain":"rejected"} });
   if (!token || token.length > 16384 || !isUuid(owner)) return fail(401);
   if (new URL(request.url).search || request.headers.get("sec-fetch-site") === "cross-site" || request.headers.get("origin") !== null && request.headers.get("origin") !== new URL(request.url).origin) return fail(403);
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") return fail(415);
@@ -77,17 +78,20 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         fields(input, ["action", "id", "kind", "body"]);
         if (!isUuid(input.id) || typeof input.kind !== "string" || !Object.hasOwn(PRIVACY_CASE_KINDS, input.kind)) throw new CaseError(400);
         const text = caseText(input.body);
-        const response = await service.rpc("create_privacy_case", { p_subject: owner, p_id: input.id, p_kind: input.kind, p_body: text }).abortSignal(signal); rpcError(response.error);
+        writePending=true;
+        const response = await service.rpc("create_privacy_case", { p_subject: owner, p_id: input.id, p_kind: input.kind, p_body: text }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data, owner);
       } else if (!admin && action === "reply") {
         fields(input, ["action", "id", "revision", "eventId", "message"]);
         if (!isUuid(input.id) || !isUuid(input.revision) || !isUuid(input.eventId)) throw new CaseError(400);
-        const response = await service.rpc("reply_privacy_case", { p_subject: owner, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_message: caseText(input.message) }).abortSignal(signal); rpcError(response.error);
+        const message=caseText(input.message);writePending=true;
+        const response = await service.rpc("reply_privacy_case", { p_subject: owner, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_message: message }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data, owner);
       } else if (admin && ["claim", "reply", "waiting", "close", "reopen"].includes(String(action))) {
         fields(input, ["action", "id", "revision", "eventId", "message", "password", "totpCode"]);
         if (!isUuid(input.id) || !isUuid(input.revision) || !isUuid(input.eventId)) throw new CaseError(400);
-        const response = await service.rpc("update_privacy_case", { p_actor: owner, p_session: session, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_action: action, p_message: caseText(input.message, false) }).abortSignal(signal); rpcError(response.error);
+        const message=caseText(input.message,false);writePending=true;
+        const response = await service.rpc("update_privacy_case", { p_actor: owner, p_session: session, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_action: action, p_message: message }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data);
       } else throw new CaseError(400);
       if (await verifyPersonalDataSession(user, service, owner, token, signal) !== session) throw new CaseError(401);
