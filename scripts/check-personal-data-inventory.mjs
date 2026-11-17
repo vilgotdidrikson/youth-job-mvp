@@ -12,13 +12,26 @@ export function mergeReviewedCatalogAdditions(base,additions) {
  if(new Set(relations.map(r=>r.schema_name+'.'+r.table_name)).size!==relations.length||new Set(buckets.map(b=>b.id)).size!==buckets.length)throw Error('Catalog additions cannot replace existing metadata.');
  return{...base,capturedOn:additions.capturedOn,relations,buckets};
 }
-export const readReviewedCatalog=()=>[
+/** Reviewed column additions only: never replace old fields/types/ownership. */
+export function mergeReviewedColumnAdditions(base,addition) {
+ if(!base||!addition||addition.mode!=="column-additions-only"||addition.projectRef!==base.projectRef||!/^\d{4}-\d{2}-\d{2}$/.test(addition.capturedOn)||!Array.isArray(addition.relations))throw Error("Malformed column additions.");
+ const result=structuredClone(base),seen=new Set();
+ for(const entry of addition.relations){
+  if(!entry||Object.keys(entry).sort().join()!=="columns,schema_name,table_name"||!Array.isArray(entry.columns)||entry.columns.length===0)throw Error("Malformed column entry.");
+  const id=entry.schema_name+"."+entry.table_name,relation=result.relations.find(r=>r.schema_name===entry.schema_name&&r.table_name===entry.table_name);
+  if(!relation||seen.has(id))throw Error("Column addition needs one known relation.");seen.add(id);
+  for(const column of entry.columns){if(!column||Object.keys(column).sort().join()!=="name,type"||typeof column.name!=="string"||!column.name||typeof column.type!=="string"||!column.type||relation.columns.some(c=>c.name===column.name))throw Error("Column additions cannot replace fields or types.");relation.columns.push({...column});}
+ }
+ return {...result,capturedOn:addition.capturedOn};
+}
+const readBaseReviewedCatalog=()=>[
  'docs/privacy/catalog.export-storage-2026-10-30.json',
  'docs/privacy/catalog.storage-lifecycle-2026-11-10.json',
  'docs/privacy/catalog.account-cv-drafts-2026-11-10.json',
  'docs/privacy/catalog.privacy-cases-2026-11-12.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')));
+export const readReviewedCatalog=()=>mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8')));
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;

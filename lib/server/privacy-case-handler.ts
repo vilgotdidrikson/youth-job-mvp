@@ -80,7 +80,7 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const cursor = parseCaseCursor(input.cursor);
         if (!isUuid(input.id) || !isUuid(input.revision) || !cursor) throw new CaseError(400);
         const response = await service.rpc("read_privacy_case_history", { p_subject: admin ? null : owner, p_admin: admin ? owner : null, p_session: session, p_id: input.id, p_revision: input.revision, p_before: cursor.created_at, p_before_id: cursor.id }).abortSignal(signal); rpcError(response.error);
-        result = parsePrivacyCaseHistory(response.data, { id: input.id, revision: input.revision }, cursor);
+        result = parsePrivacyCaseHistory(response.data, { id: input.id, revision: input.revision }, cursor,admin?undefined:owner);
       } else if (!admin && action === "create") {
         fields(input, ["action", "id", "kind", "body"]);
         if (!isUuid(input.id) || typeof input.kind !== "string" || !Object.hasOwn(PRIVACY_CASE_KINDS, input.kind)) throw new CaseError(400);
@@ -94,6 +94,12 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const message=caseText(input.message);writePending=true;
         const response = await service.rpc("reply_privacy_case", { p_subject: owner, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_message: message }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data, owner);
+      } else if(admin&&["review","schedule_review"].includes(String(action))) {
+        fields(input,["action","id","revision","eventId","message","reviewAfter","password","totpCode"]);
+        if(!isUuid(input.id)||!isUuid(input.revision)||!isUuid(input.eventId)||input.message!=="")throw new CaseError(400);
+        // SQL also bounds a new review. An exact replay may have passed its date.
+        if(typeof input.reviewAfter!=="string"||!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(input.reviewAfter)||!Number.isFinite(Date.parse(input.reviewAfter)))throw new CaseError(400);
+        writePending=true;const response=await service.rpc("record_privacy_case_review",{p_actor:owner,p_session:session,p_id:input.id,p_revision:input.revision,p_event:input.eventId,p_action:action,p_review_after:input.reviewAfter}).abortSignal(signal);if(response.error)writePending=false;rpcError(response.error);result=parsePrivacyCase(response.data);
       } else if (admin && ["claim", "reply", "waiting", "close", "reopen"].includes(String(action))) {
         fields(input, ["action", "id", "revision", "eventId", "message", "password", "totpCode"]);
         if (!isUuid(input.id) || !isUuid(input.revision) || !isUuid(input.eventId)) throw new CaseError(400);

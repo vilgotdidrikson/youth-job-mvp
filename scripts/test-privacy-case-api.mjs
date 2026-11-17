@@ -49,5 +49,12 @@ try{
  reset();access=false;r=await handlePrivacyCases(request({action:'find',id,...credentials}),true);ok(r.status===403&&!calls.some(c=>c.name==='read_privacy_case'),'ungranted admin cannot look up by ID');
  reset();r=await handlePrivacyCases(request({action:'find',id:'bad'}));ok(r.status===400&&!calls.some(c=>c.name==='read_privacy_case'),'malformed exact lookup rejected');
  reset();rpcFailure={code:'PT404'};r=await handlePrivacyCases(request({action:'find',id}));ok(r.status===404,'missing or foreign exact lookup remains unavailable');
+ const review={...credentials,action:'review',id,revision,eventId:other,message:'',reviewAfter:new Date(Date.now()+86400000).toISOString()};
+ reset();r=await handlePrivacyCases(request(review),true);ok(r.status===200&&calls.find(c=>c.name==='record_privacy_case_review').args.p_session===revision,'review write carries verified original session and actor');ok(calls.findIndex(c=>c.name==='reauth')<calls.findIndex(c=>c.name==='record_privacy_case_review'),'review write happens only after fresh password/TOTP');
+ reset();r=await handlePrivacyCases(request({...review,message:'Private note'}),true);ok(r.status===400&&!calls.some(c=>c.name==='record_privacy_case_review'),'internal review cannot smuggle text into public message');
+ reset();r=await handlePrivacyCases(request({...review,reviewAfter:'invalid'}),true);ok(r.status===400&&!calls.some(c=>c.name==='record_privacy_case_review'),'invalid review time rejected before write');
+ reset();access=false;r=await handlePrivacyCases(request(review),true);ok(r.status===403&&!calls.some(c=>c.name==='record_privacy_case_review'),'ungranted admin cannot review');
+ reset();const {password,totpCode,...ownReview}=review;r=await handlePrivacyCases(request(ownReview));ok(r.status===400&&!calls.some(c=>c.name==='record_privacy_case_review'),'requester cannot record an internal review');
+ reset();r=await handlePrivacyCases(request({...list,...credentials,filter:'review_overdue'}),true);ok(r.status===200&&calls.find(c=>c.name==='list_privacy_case_queue').args.p_filter==='review_overdue','overdue queue remains a server-side filtered read');
  console.log('PASS '+count+' route checks; actual handler/contracts, simulated Auth/session/RPC boundaries. No hosted/MFA acceptance claim.');
 }finally{Module._load=load;}

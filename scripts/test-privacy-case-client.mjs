@@ -52,5 +52,16 @@ try{
  ok(model.firstPrivacyCaseResponse(record())===null,'old backend without first-reply summary is not called unanswered');
  v=model.firstPrivacyCaseResponse({...received,first_reply_at:'2026-11-10T10:00:00Z'},Date.parse('2026-12-01'));ok(v.responded&&!v.overdue,'real earlier response satisfies internal target even when recent events omit it');
  ok(model.parsePrivacyCase({...record(),first_reply_at:'2026-11-12T10:00:00Z'},A).first_reply_at===null,'own parser strips internal first-response summary');
+ const reviewAt=new Date(Date.now()+86400000).toISOString(),reviewEvent={id:B,action:'review',created_at:'2026-11-11T09:00:00Z',public_message:null,review_after:reviewAt};
+ const reviewed={...record(),review_after:reviewAt,events:[reviewEvent]};
+ ok(model.parsePrivacyCase(reviewed).events[0].review_after===reviewAt,'admin projection retains internal audit target');assert.throws(()=>model.parsePrivacyCase(reviewed,A));count++;
+ assert.throws(()=>model.parsePrivacyCaseHistory({id,revision:rev,events:[reviewEvent],next:null},record(),before,A));count++;
+ ok(model.reviewTime(reviewAt)===reviewAt,'review date is normalized and future');
+ for(const invalid of ['invalid','Infinity','2026-11-18T12:00',new Date(Date.now()-1000).toISOString(),new Date(Date.now()+31*86400000).toISOString()]){assert.throws(()=>model.reviewTime(invalid));count++;}
+ const reviewInput={action:'review',id,revision:rev,eventId:B,message:'',reviewAfter:reviewAt};reset();onFetch=()=>Response.json(reviewed);await client.adminPrivacyCases(A,reviewInput,'QA_PASSWORD','123456',signal());ok(JSON.parse(requests[0].body).reviewAfter===reviewAt,'review sends exact target and verifies its receipt');
+ reset();onFetch=()=>Response.json({...reviewed,review_after:new Date(Date.now()+2*86400000).toISOString()});await assert.rejects(()=>client.adminPrivacyCases(A,reviewInput,'QA_PASSWORD','123456',signal()),e=>e.uncertain);ok(requests.length===1,'wrong review date is not confirmed as a save');
+ reset();onFetch=()=>Response.json({...reviewed,events:[{...reviewEvent,public_message:'Unexpected public reply'}]});await assert.rejects(()=>client.adminPrivacyCases(A,reviewInput,'QA_PASSWORD','123456',signal()),e=>e.uncertain);ok(requests.length===1,'internal action cannot be accepted with a public reply');
+ const serverClock='2026-11-12T10:00:00Z';reset();onFetch=()=>Response.json({as_of:serverClock,available:true,cases:[{...record(),reply_due_at:'2026-11-12T09:00:00Z'}],next:null});await client.adminPrivacyCases(A,{action:'list',cursor:null,filter:'reply_overdue'},'QA_PASSWORD','123456',signal());ok(requests.length===1,'overdue receipt uses server clock rather than device clock');
+ reset();onFetch=()=>Response.json({as_of:serverClock,available:true,cases:[{...record(),reply_due_at:'2026-11-13T09:00:00Z'}],next:null});await assert.rejects(()=>client.adminPrivacyCases(A,{action:'list',cursor:null,filter:'reply_overdue'},'QA_PASSWORD','123456',signal()));ok(requests.length===1,'future external deadline is rejected in server overdue queue');
  console.log('PASS '+count+' model/client checks; simulated Auth and fetch. No live account or browser claim.');
 }finally{Module._load=load;globalThis.fetch=network;}
