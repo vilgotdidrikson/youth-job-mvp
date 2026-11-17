@@ -4,9 +4,9 @@ import {createRequire} from 'node:module';
 import ts from 'typescript';
 const require=createRequire(import.meta.url);
 function compile(file,imports={}) {
- const module={exports:{}};
+ const compiled={exports:{}};
  const code=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
- new Function('module','exports','require',code)(module,module.exports,name=>imports[name]??require(name));return module.exports;
+ new Function('module','exports','require',code)(compiled,compiled.exports,name=>imports[name]??require(name));return compiled.exports;
 }
 const retention=compile('lib/video-retention.ts');
 const deadline='2026-10-18T14:00:00Z',at=Date.parse(deadline);
@@ -37,7 +37,7 @@ assert.deepEqual(await processVideoCleanup({rpc:async()=>({data:[],error:null})}
 // Execute the actual Edge handler with simulated RPC/transport. It authenticates
 // before cleanup, accepts POST only and never takes paths from the request body.
 let handler,valid=false,rpcError=null,cleanups=0;
-const edge=readFileSync('supabase/functions/video-cleanup/index.js','utf8').replace(/^import .*;\n/gm,'');
+const edge=readFileSync('supabase/functions/video-cleanup/index.js','utf8').replace(/^import .*;\r?\n/gm,'');
 new Function('Deno','createClient','processVideoCleanup',edge)(
  {serve:fn=>handler=fn,env:{get:()=> 'test-only'}},
  ()=>({rpc:async()=>({data:valid,error:rpcError})}),async()=>{cleanups++;return{claimed:0};}
@@ -58,6 +58,7 @@ function harness() {
  return {react:{
   useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],v=>slots[i]=typeof v==='function'?v(slots[i]):v];},
   useRef(initial){const i=cursor++;return slots[i]??={current:initial};},
+  useCallback(fn,deps){const i=cursor++,prev=slots[i];if(!prev||deps.some((v,n)=>v!==prev.deps[n]))slots[i]={fn,deps};return slots[i].fn;},
   useEffect(fn,deps){const i=cursor++,prev=slots[i];if(!prev||deps.some((v,n)=>v!==prev.deps[n])){const state={deps,cleanup:prev?.cleanup};slots[i]=state;effects.push(()=>{state.cleanup?.();state.cleanup=fn();});}}
  },render(fn){cursor=0;return fn();},effects(){effects.splice(0).forEach(fn=>fn());},unmount(){slots.forEach(s=>s?.cleanup?.());}};
 }
@@ -68,13 +69,14 @@ Date.now=()=>now;globalThis.setTimeout=fn=>{timers.set(++timerId,fn);return time
 globalThis.window=globalThis.document={addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
 URL.revokeObjectURL=url=>revoked.push(url);
 try {
+ const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  const ui=harness(),video={id:'qa',expires_at:deadline};
- const imports={react:ui.react,'@/lib/video-client':{getVideo:async()=>video,videoPlaybackUrl:async()=>{downloads++;return 'blob:qa';}},'@/lib/video-retention':retention,'./ui-icon':{UiIcon:()=>null},'./video.module.css':{default:{}}};
+ const imports={react:ui.react,'@/lib/latest-read':compile('lib/latest-read.ts'),'@/lib/video-client':{getVideo:async()=>video,videoPlaybackUrl:async()=>{downloads++;return 'blob:qa';}},'@/lib/video-retention':retention,'./ui-icon':{UiIcon:()=>null},'./video.module.css':{default:{}}};
  const {VideoPlayer}=compile('components/video-player.tsx',imports);
- const render=()=>ui.render(()=>VideoPlayer({videoId:'qa'}));
- render();ui.effects();await Promise.resolve();let tree=render();ui.effects();
+ const render=()=>ui.render(()=>{const workspace=VideoPlayer({videoId:'qa'});return workspace.type(workspace.props);});
+ render();ui.effects();await settle();let tree=render();ui.effects();
  assert.match(content(tree),/Tillgänglig till/);assert.equal(downloads,0,'Metadata does not download video automatically');
- await nodes(tree).find(n=>n.type==='button').props.onClick();await Promise.resolve();tree=render();ui.effects();
+ nodes(tree).find(n=>n.type==='button').props.onClick();await settle();tree=render();ui.effects();
  assert.equal(downloads,1);const element=nodes(tree).find(n=>n.type==='video');assert.ok(element);
  let paused=0;element.props.ref.current={pause:()=>paused++,removeAttribute(){},load(){}};
  now=at;for(const fn of timers.values())fn();tree=render();
@@ -82,8 +84,8 @@ try {
  now=at-1000;
  const other=harness();imports.react=other.react;imports['@/lib/video-client'].videoPlaybackUrl=()=>new Promise(resolve=>resolveDownload=resolve);
  const Player=compile('components/video-player.tsx',imports).VideoPlayer;
- const renderOther=()=>other.render(()=>Player({videoId:'qa'}));renderOther();other.effects();await Promise.resolve();tree=renderOther();other.effects();
- const pending=nodes(tree).find(n=>n.type==='button').props.onClick();await Promise.resolve();other.unmount();resolveDownload('blob:late');await pending;await Promise.resolve();assert.ok(revoked.includes('blob:late'),'Late result is released after unmount');
+ const renderOther=()=>other.render(()=>{const workspace=Player({videoId:'qa'});return workspace.type(workspace.props);});renderOther();other.effects();await settle();tree=renderOther();other.effects();
+ nodes(tree).find(n=>n.type==='button').props.onClick();await settle();other.unmount();resolveDownload('blob:late');await settle();assert.ok(revoked.includes('blob:late'),'Late result is released after unmount');
 } finally {
  Date.now=previous.now;globalThis.setTimeout=previous.setTimeout;globalThis.clearTimeout=previous.clearTimeout;
  globalThis.window=previous.window;globalThis.document=previous.document;URL.revokeObjectURL=previous.revoke;
