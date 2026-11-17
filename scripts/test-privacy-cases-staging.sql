@@ -52,6 +52,18 @@ do $$ declare c jsonb; saved jsonb; first_revision uuid; due text; page jsonb; a
  if jsonb_array_length(page->'events')<>20 then raise exception 'handler history read';end if;
  begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672202',null,'a7d94e14-6fd9-478d-9089-c7d3f9672213',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'foreign history accepted';exception when sqlstate 'PT404' then null;end;
  begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,gen_random_uuid(),(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'stale history accepted';exception when sqlstate 'PT409' then null;end;
+ if c->>'first_reply_at' is null then raise exception 'full first response missing';end if;
+ if public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid)->>'first_reply_at' is not null then raise exception 'internal first response leaked';end if;
+ begin perform public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672202',null,'a7d94e14-6fd9-478d-9089-c7d3f9672213',(c->>'id')::uuid);raise exception 'foreign exact read';exception when sqlstate 'PT404' then null;end;
+ begin perform public.read_privacy_case(null,'a7d94e14-6fd9-478d-9089-c7d3f9672204','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid);raise exception 'ordinary admin exact read';exception when insufficient_privilege then null;end;
+ if public.read_privacy_case(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid)->>'id'<>c->>'id' then raise exception 'exact handler lookup';end if;
+ insert into private.privacy_cases(id,requester_id,kind,body,created_at) select gen_random_uuid(),'a7d94e14-6fd9-478d-9089-c7d3f9672201','other','QA filtered pagination',now()-(i||' days')::interval from generate_series(1,22)i;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','unassigned');
+ if jsonb_array_length(page->'cases')<>20 then raise exception 'filtered first page';end if;
+ anchor:=page->'next';page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','unassigned',(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+ if jsonb_array_length(page->'cases')<>2 or page->'next'<>'null'::jsonb then raise exception 'filtered last page';end if;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','mine');if jsonb_array_length(page->'cases')<>1 then raise exception 'mine filter';end if;
+ begin perform public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672213','all');raise exception 'foreign queue session';exception when insufficient_privilege then null;end;
  update private.privacy_case_handlers set enabled=false where user_id='a7d94e14-6fd9-478d-9089-c7d3f9672203';
  begin perform public.list_privacy_cases(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'revoked handler read';exception when insufficient_privilege then null;end;
  begin perform public.read_privacy_case_history(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'revoked handler history read';exception when insufficient_privilege then null;end;
@@ -60,6 +72,8 @@ reset role;
 set local role authenticated;
 do $$begin
  begin perform public.read_privacy_case_history(null,null,null,null,null,null,null);raise exception 'authenticated history RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.list_privacy_case_queue(null,null,'all');raise exception 'authenticated queue RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.read_privacy_case(null,null,null,null);raise exception 'authenticated lookup RPC bypass';exception when insufficient_privilege then null;end;
  begin perform public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672201');raise exception 'authenticated RPC bypass';exception when insufficient_privilege then null;end;
  begin perform * from private.privacy_cases;raise exception 'authenticated table bypass';exception when insufficient_privilege then null;end;
 end$$;
@@ -70,5 +84,5 @@ do $$begin
  begin perform public.privacy_case_access('a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'anonymous RPC bypass';exception when insufficient_privilege then null;end;
 end$$;
 reset role;
-select 'PASS DevStaging SQL: configured synthetic scope, own/idempotent create, foreign denial, explicit handler access, stale claim, public response, own/idempotent follow-up, close/reopen/deadline/retention, review dates, complete tied-microsecond history paging, stale/foreign/revoked history denial and authenticated/anon direct denial. Auth challenges and parallel transactions are NOT tested here. All fixtures roll back.' as result;
+select 'PASS DevStaging SQL: configured synthetic scope, own/idempotent create, foreign denial, explicit handler access, stale claim, public response, own/idempotent follow-up, close/reopen/deadline/retention, review dates, full-history first-response summary, exact own/handler lookup with foreign denial, session-bound filtered keyset queue, complete tied-microsecond history paging, stale/foreign/revoked history denial and authenticated/anon direct denial. Auth challenges and parallel transactions are NOT tested here. All fixtures roll back.' as result;
 rollback;
