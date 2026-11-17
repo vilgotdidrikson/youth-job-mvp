@@ -5,7 +5,7 @@ const {PGlite}=await import(process.env.MNW_CASE_PGLITE_MODULE??'@electric-sql/p
 const db=new PGlite();
 await db.exec(`create role authenticated;create role anon;create role service_role bypassrls;
 create schema auth;create schema private;grant usage on schema auth,private,public to service_role,authenticated,anon;
-create table auth.users(id uuid primary key,email_confirmed_at timestamptz);
+create table auth.users(id uuid primary key,email_confirmed_at timestamptz,email text);
 create table auth.mfa_factors(id uuid primary key,user_id uuid references auth.users on delete cascade,factor_type text,status text);
 create table public.admin_users(user_id uuid primary key references auth.users on delete cascade);
 create table auth.sessions(id uuid primary key,user_id uuid references auth.users on delete cascade);
@@ -17,6 +17,7 @@ await db.exec(readFileSync('supabase/migrations/20261112093959_privacy_case_iden
 await db.exec(readFileSync('supabase/migrations/20261112101715_privacy_case_followup_history.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261117163115_privacy_case_queue_lookup_response.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261117174521_privacy_case_internal_reviews.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261117182648_privacy_case_email_intake.sql','utf8'));
 const ids={owner:'11111111-1111-4111-8111-111111111111',other:'22222222-2222-4222-8222-222222222222',admin:'33333333-3333-4333-8333-333333333333',admin2:'44444444-4444-4444-8444-444444444444',noGrant:'55555555-5555-4555-8555-555555555555',session:'66666666-6666-4666-8666-666666666666',case:'77777777-7777-4777-8777-777777777777',factor:'88888888-8888-4888-8888-888888888888'};
 for(const v of [ids.owner,ids.other,ids.admin,ids.admin2,ids.noGrant])await db.query('insert into auth.users values($1,now())',[v]);
 for(const v of [ids.admin,ids.admin2,ids.noGrant])await db.query('insert into public.admin_users values($1)',[v]);
@@ -146,6 +147,31 @@ try{
  rc=await update(rc,'close','QA close reviewed case');await denied(()=>recordReview(rc,'review',target),'PT409','closed case cannot schedule a new internal review');
  ok(!(await query('reply_overdue')).cases.some(c=>c.id===rc.id),'closed cases are excluded from overdue queues');
  for(const role of ['anon','authenticated']){await db.exec('reset role;set role '+role);await denied(()=>recordReview(rc,'review',target),'42501',role+' cannot directly invoke review write');}await db.exec('reset role;set role service_role');
+ // Manual email intake never links a contact address to an Auth identity.
+ await db.exec('reset role');await db.query('update auth.users set email=$1 where id=$2',['qa-contact@example.invalid',ids.owner]);await db.exec('set role service_role');
+ const mailId=crypto.randomUUID(),received=new Date(Date.now()-10*86400000).toISOString();
+ const mailCreate=(id=mailId,email=' QA-CONTACT@example.invalid ',at=received,actor=ids.admin,session=ids.session)=>scalar('select public.create_email_privacy_case($1,$2,$3,$4,$5,$6,$7)',[actor,session,id,'access','QA manual request',email,at]);
+ let mail=await mailCreate();ok(mail.intake_source==='email'&&mail.requester_id===null&&mail.contact_email==='qa-contact@example.invalid'&&Date.parse(mail.created_at)===Date.parse(received),'email intake preserves received time/contact without assigning a matching account');
+ ok(await scalar("select reply_due_at=created_at+interval '1 month' and review_after=created_at+interval '30 days' from private.privacy_cases where id=$1",[mail.id]),'manual case clocks start at actual receipt, never registration');
+ ok((await mailCreate()).revision===mail.revision&&Number(await scalar('select count(*) from private.privacy_case_events where case_id=$1',[mail.id]))===1,'exact intake retry creates one case and one event');
+ await denied(()=>mailCreate(mailId,'other@example.invalid'),'PT409','same intake ID cannot change contact');await denied(()=>mailCreate(mailId,'qa-contact@example.invalid',new Date(Date.parse(received)+3600000).toISOString()),'PT409','same intake ID cannot change receipt time');
+ await denied(()=>mailCreate(ids.case),'PT409','email intake cannot replace a portal case');
+ await denied(()=>mailCreate(crypto.randomUUID(),'qa-contact@example.invalid',received,ids.noGrant),'42501','ungranted admin cannot create email case');
+ await denied(()=>mailCreate(crypto.randomUUID(),'qa-contact@example.invalid',received,ids.admin,otherSession),'42501','email intake binds original handler session');
+ await denied(()=>mailCreate(crypto.randomUUID(),'qa-contact@example.invalid',new Date(Date.now()+86400000).toISOString()),'22023','future receipt time is rejected');
+ await denied(()=>mailCreate(crypto.randomUUID(),'not-an-email'),'22023','malformed contact is rejected');
+ ok(!(await list(ids.owner)).cases.some(c=>c.id===mail.id),'matching Auth email grants no owner-list access');await denied(()=>caseRead(ids.owner,null,ownSession,mail.id),'PT404','matching Auth email grants no exact read');ok(await scalar('select private.privacy_case_projection($1,null)',[mail.id])===null,'owner projection refuses manual email case');
+ await denied(()=>scalar('select public.create_privacy_case($1,$2,$3,$4)',[ids.owner,mail.id,'access','QA manual request']),'PT409','requester cannot claim email case via own creation ID');
+ mail=await update(mail,'claim');const beforeMail=mail,sentAt=new Date(Date.parse(received)+86400000).toISOString(),mailEvent=crypto.randomUUID();
+ const external=(item,confirmed=true,at=sentAt,event=mailEvent,action='waiting')=>scalar('select public.update_privacy_case($1,$2,$3,$4,$5,$6,$7,$8,$9)',[ids.admin,ids.session,item.id,item.revision,event,action,'QA already sent reply',confirmed,at]);
+ await denied(()=>update(mail,'reply','Unsent'),'22023','email response cannot be recorded as an ordinary portal response');await denied(()=>external(mail,false),'22023','external reply requires explicit sent confirmation');
+ await denied(()=>external(mail,true,new Date(Date.parse(received)-1000).toISOString()),'22023','response cannot predate receipt');await denied(()=>external(mail,true,new Date(Date.now()+86400000).toISOString()),'22023','response cannot claim future delivery');
+ mail=await external(mail);ok(mail.status==='waiting_for_user'&&Date.parse(mail.first_reply_at)===Date.parse(sentAt)&&Date.parse(mail.events.at(-1).external_sent_at)===Date.parse(sentAt)&&Date.parse(mail.events.at(-1).created_at)>Date.parse(sentAt),'external sent time is separate from audit registration and drives first response');
+ ok((await external(beforeMail)).revision===mail.revision,'external response retry is idempotent');await denied(()=>external(beforeMail,true,new Date(Date.parse(sentAt)+1000).toISOString()),'PT409','same external event cannot change sent time');
+ const emailPage=await query('email');ok(emailPage.cases.length===1&&emailPage.cases[0].id===mail.id,'source filter finds manual case outside first portal pages');
+ mail=await external(mail,true,sentAt,crypto.randomUUID(),'close');ok(mail.status==='closed'&&await scalar("select retention_until=closed_at+interval '12 months' from private.privacy_cases where id=$1",[mail.id]),'email close reuses existing retention marker without sending mail');
+ const portal=await update(rc,'reopen');await denied(()=>external(portal,true,sentAt,crypto.randomUUID(),'reply'),'22023','portal case cannot carry external-email proof');
+ for(const role of ['anon','authenticated']){await db.exec('reset role;set role '+role);await denied(()=>mailCreate(),'42501',role+' cannot directly create manual email case');}await db.exec('reset role;set role service_role');
  await denied(()=>create().then(()=>scalar('select public.create_privacy_case($1,$2,$3,$4)',[ids.owner,crypto.randomUUID(),'other','\u0001bad'])),'22023','control characters rejected in SQL');
  await db.exec('reset role');await db.query('delete from auth.users where id=$1',[ids.owner]);ok(await scalar('select requester_id is null from private.privacy_cases where id=$1',[ids.case]),'account deletion retains case under its distinct retention rule without account FK');
  ok((await db.query("select count(*) n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='private' and c.relname like 'privacy_case%' and c.relrowsecurity")).rows[0].n===3,'all three new private tables have RLS');
