@@ -7,20 +7,20 @@ declare
   accepted boolean;
   counted integer;
 begin
-  -- More than eight different people can register from one shared network.
-  for i in 1..120 loop
+  -- Eight new signups per IP are accepted; the ninth is rejected.
+  for i in 1..8 loop
     accepted := public.register_prelaunch_signup('youth', 'Regression Person', prefix || '-' || i || '@example.com', '', 'launch-2026-11-02', test_bucket);
     if accepted is distinct from true then raise exception 'Shared network signup % rejected', i; end if;
   end loop;
   select attempts into counted from public.prelaunch_rate_limits where prelaunch_rate_limits.bucket = test_bucket;
-  if counted <> 120 then raise exception 'Incorrect network counter'; end if;
+  if counted <> 8 then raise exception 'Incorrect network counter'; end if;
   -- A duplicate succeeds even at the cap, without replacing details or consent.
   update public.prelaunch_signups set unsubscribed_at = now() where email = prefix || '-1@example.com';
   accepted := public.register_prelaunch_signup('youth', 'Do Not Overwrite', upper(prefix || '-1@example.com'), '', 'launch-2026-11-02', test_bucket);
   if accepted is distinct from true then raise exception 'Existing signup retry rejected'; end if;
   if not exists(select 1 from public.prelaunch_signups where email = prefix || '-1@example.com' and name = 'Regression Person' and unsubscribed_at is not null) then raise exception 'Existing signup modified'; end if;
   select attempts into counted from public.prelaunch_rate_limits where prelaunch_rate_limits.bucket = test_bucket;
-  if counted <> 120 then raise exception 'Retry consumed quota'; end if;
+  if counted <> 8 then raise exception 'Retry consumed quota'; end if;
   -- The anti-abuse limit still rejects new entries at the boundary.
   accepted := public.register_prelaunch_signup('youth', 'Regression Person', prefix || '-blocked@example.com', '', 'launch-2026-11-02', test_bucket);
   if accepted is distinct from false then raise exception 'Network cap not enforced'; end if;
