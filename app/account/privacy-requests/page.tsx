@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSession } from "@/hooks/use-session";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { PrivacyCaseThread } from "@/components/privacy-case-thread";
-import { PRIVACY_CASE_KINDS, caseText, type CaseCursor, type PrivacyCase, type PrivacyCaseKind } from "@/lib/privacy-cases";
-import { PrivacyCaseRequestError, createOwnPrivacyCase, readOwnPrivacyCases, replyToOwnPrivacyCase } from "@/lib/privacy-case-client";
+import { PRIVACY_CASE_KINDS, caseText, isUuid, type CaseCursor, type PrivacyCase, type PrivacyCaseKind } from "@/lib/privacy-cases";
+import { PrivacyCaseRequestError, findOwnPrivacyCase, createOwnPrivacyCase, readOwnPrivacyCases, replyToOwnPrivacyCase } from "@/lib/privacy-case-client";
 import { CONTACT_EMAIL } from "@/lib/product-copy";
 import styles from "./page.module.css";
 export default function PrivacyRequestsPage() {
@@ -19,6 +19,7 @@ type ReplyDraft = { text: string; id: string | null };
 function Workspace({ owner }: { owner: string }) {
   const [items,setItems] = useState<PrivacyCase[]>([]), [next,setNext] = useState<CaseCursor|null>(null);
   const [available,setAvailable] = useState(false), [loaded,setLoaded] = useState(false), [busy,setBusy] = useState(false), [check,setCheck] = useState(false), [note,setNote] = useState("");
+  const [caseId,setCaseId]=useState("");
   const [kind,setKind] = useState<PrivacyCaseKind>("access"), [body,setBody] = useState("");
   const drafts=useRef(new Map<string,ReplyDraft>());
   const pending = useRef<{id:string;kind:PrivacyCaseKind;body:string}|null>(null), active = useRef(false), lock = useRef(false), task = useRef<AbortController|null>(null);
@@ -56,6 +57,9 @@ function Workspace({ owner }: { owner: string }) {
       <button className="primary-btn" disabled={busy||check||!body.trim()}>{pending.current?"Försök spara samma ärende":"Skicka begäran"}</button>
     </form></section>}
     {loaded&&items.length===0&&<p>Du har inga sparade ärenden.</p>}
+    <form className={styles.form} onSubmit={e=>{e.preventDefault();const id=caseId.trim().toLowerCase();if(!isUuid(id)){setNote("Ange ett fullständigt ärendenummer.");return;}void run(async signal=>{const item=await findOwnPrivacyCase(owner,id,signal);if(!active.current||signal.aborted)return;setItems(current=>[item,...current.filter(c=>c.id!==item.id)]);setNote("Ärendet är läst.");});}}>
+      <label>Ärendenummer<input value={caseId} onChange={e=>setCaseId(e.target.value)} maxLength={36} autoComplete="off" required disabled={busy}/></label><button className="secondary-btn" disabled={busy}>Öppna mitt ärende</button>
+    </form>
     {items.map(item=><section key={item.id} className={styles.panel}><PrivacyCaseThread item={item} owner={owner}/><ReplyForm key={item.id} drafts={drafts.current} item={item} disabled={busy||check||item.status==="closed"} send={reply}/></section>)}
     {next&&<div className={styles.actions}><button type="button" className="secondary-btn" disabled={busy} onClick={()=>void read(next)}>Visa äldre ärenden</button></div>}
     <p>Ärendeunderlag kan behöva bevaras efter att kontot raderats för att handlägga din begäran. Läs <Link href="/privacy">integritetsinformationen</Link> eller fråga oss om vad som gäller för ditt ärende.</p>

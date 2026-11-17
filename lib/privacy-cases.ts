@@ -1,11 +1,17 @@
+import { firstResponseTarget } from "./privacy-case-response";
 /** Shared contracts; no Auth metadata or UI framework is used for authorization. */
 export const PRIVACY_CASE_KINDS = { access: "Tillgång till mina uppgifter", correction: "Rätta uppgifter", deletion: "Radering", restriction: "Begränsa behandling", objection: "Invända mot behandling", portability: "Dataportabilitet", other: "Annan personuppgiftsfråga" } as const;
 export const PRIVACY_CASE_STATUSES = { new: "Mottaget", in_progress: "Handläggs", waiting_for_user: "Väntar på ditt svar", closed: "Avslutat" } as const;
 export type PrivacyCaseKind = keyof typeof PRIVACY_CASE_KINDS;
 export type PrivacyCaseStatus = keyof typeof PRIVACY_CASE_STATUSES;
+export const CASE_QUEUE_FILTERS = {all:"Alla ärenden",open:"Öppna",unassigned:"Ej tilldelade",mine:"Mina öppna",waiting:"Väntar på användaren",closed:"Avslutade"} as const;
+export type CaseQueueFilter=keyof typeof CASE_QUEUE_FILTERS;
+export function matchesCaseQueue(item:PrivacyCase,filter:CaseQueueFilter) {
+  return filter==="all"||filter==="closed"&&item.status==="closed"||filter==="open"&&item.status!=="closed"||filter==="waiting"&&item.status==="waiting_for_user"||filter==="unassigned"&&item.status!=="closed"&&!item.assigned||filter==="mine"&&item.status!=="closed"&&item.is_mine;
+}
 export type CaseCursor = { created_at: string; id: string };
 export type PrivacyCaseEvent = { id: string; action: string; public_message: string | null; created_at: string };
-export type PrivacyCase = { id: string; requester_id: string | null; kind: PrivacyCaseKind; body: string; status: PrivacyCaseStatus; revision: string; created_at: string; updated_at: string; reply_due_at: string; closed_at: string | null; review_after?: string | null; assigned: boolean; is_mine: boolean; events: PrivacyCaseEvent[]; events_truncated: boolean };
+export type PrivacyCase = { id: string; requester_id: string | null; kind: PrivacyCaseKind; body: string; status: PrivacyCaseStatus; revision: string; created_at: string; updated_at: string; reply_due_at: string; closed_at: string | null; review_after?: string | null; first_reply_at?: string | null; assigned: boolean; is_mine: boolean; events: PrivacyCaseEvent[]; events_truncated: boolean };
 export type PrivacyCasePage = { available: boolean; cases: PrivacyCase[]; next: CaseCursor | null };
 export type PrivacyCaseHistoryPage = { id: string; revision: string; events: PrivacyCaseEvent[]; next: CaseCursor | null };
 export type CaseAction = "claim" | "reply" | "waiting" | "close" | "reopen";
@@ -22,10 +28,10 @@ export function parseCaseCursor(v: unknown): CaseCursor | null {
   return { id: v.id, created_at: v.created_at };
 }
 export function parsePrivacyCase(v: unknown, owner?: string): PrivacyCase {
-  if (!object(v) || !isUuid(v.id) || !isUuid(v.revision) || v.requester_id !== null && !isUuid(v.requester_id) || owner && v.requester_id !== owner || typeof v.kind !== "string" || !Object.hasOwn(PRIVACY_CASE_KINDS, v.kind) || typeof v.status !== "string" || !Object.hasOwn(PRIVACY_CASE_STATUSES, v.status) || ![v.created_at, v.updated_at, v.reply_due_at].every(timestamp) || v.closed_at !== null && !timestamp(v.closed_at) || v.review_after != null && !timestamp(v.review_after) || ![v.assigned,v.is_mine,v.events_truncated].every(x => typeof x === "boolean") || !Array.isArray(v.events) || v.events.length > 20) throw Error("Ärendet kunde inte verifieras.");
+  if (!object(v) || !isUuid(v.id) || !isUuid(v.revision) || v.requester_id !== null && !isUuid(v.requester_id) || owner && v.requester_id !== owner || typeof v.kind !== "string" || !Object.hasOwn(PRIVACY_CASE_KINDS, v.kind) || typeof v.status !== "string" || !Object.hasOwn(PRIVACY_CASE_STATUSES, v.status) || ![v.created_at, v.updated_at, v.reply_due_at].every(timestamp) || v.closed_at !== null && !timestamp(v.closed_at) || v.first_reply_at != null && !timestamp(v.first_reply_at) || v.review_after != null && !timestamp(v.review_after) || ![v.assigned,v.is_mine,v.events_truncated].every(x => typeof x === "boolean") || !Array.isArray(v.events) || v.events.length > 20) throw Error("Ärendet kunde inte verifieras.");
   const events = parseCaseEvents(v.events);
   // Explicit projection: never forward extra server fields, handler identities or notes.
-  return { id: v.id, requester_id: v.requester_id as string | null, kind: v.kind as PrivacyCaseKind, body: caseText(v.body), status: v.status as PrivacyCaseStatus, revision: v.revision, created_at: v.created_at as string, updated_at: v.updated_at as string, reply_due_at: v.reply_due_at as string, closed_at: v.closed_at as string | null, review_after: owner ? null : v.review_after as string | null ?? null, assigned: v.assigned as boolean, is_mine: v.is_mine as boolean, events_truncated: v.events_truncated as boolean, events };
+  return { id: v.id, requester_id: v.requester_id as string | null, kind: v.kind as PrivacyCaseKind, body: caseText(v.body), status: v.status as PrivacyCaseStatus, revision: v.revision, created_at: v.created_at as string, updated_at: v.updated_at as string, reply_due_at: v.reply_due_at as string, closed_at: v.closed_at as string | null, first_reply_at: owner ? null : v.first_reply_at as string | null | undefined, review_after: owner ? null : v.review_after as string | null ?? null, assigned: v.assigned as boolean, is_mine: v.is_mine as boolean, events_truncated: v.events_truncated as boolean, events };
 }
 function parseCaseEvents(value: unknown): PrivacyCaseEvent[] {
   if (!Array.isArray(value) || value.length > 20) throw Error("Ärendehistoriken kunde inte verifieras.");
@@ -49,11 +55,18 @@ export function parsePrivacyCaseHistory(v: unknown, item: Pick<PrivacyCase, "id"
 export function privacyCaseFollowup(item: PrivacyCase, now = Date.now()) {
   if (item.status === "closed") return null;
   const reply = Date.parse(item.reply_due_at), review = item.review_after ? Date.parse(item.review_after) : Infinity;
-  return { due: Math.min(reply, review), replyOverdue: reply <= now, reviewOverdue: review <= now };
+  const first=firstPrivacyCaseResponse(item,now);
+  return { due: Math.min(reply, review,first&&!first.responded?first.due:Infinity), replyOverdue: reply <= now, reviewOverdue: review <= now };
 }
 export function parsePrivacyCasePage(v: unknown, owner?: string): PrivacyCasePage {
   if (!object(v) || typeof v.available !== "boolean" || !Array.isArray(v.cases) || v.cases.length > 20) throw Error("Ärenden kunde inte läsas.");
   const cases = v.cases.map(c => parsePrivacyCase(c, owner));
   if (new Set(cases.map(c => c.id)).size !== cases.length) throw Error("Dubbla ärenden i svaret.");
   return { available: v.available, cases, next: parseCaseCursor(v.next) };
+}
+
+export function firstPrivacyCaseResponse(item:PrivacyCase,now=Date.now()) {
+  if(item.first_reply_at===undefined)return null; // Older backend: never infer no reply from a truncated thread.
+  const due=firstResponseTarget(item.created_at),responded=item.first_reply_at!==null;
+  return {due,responded,overdue:(responded?Date.parse(item.first_reply_at!):now)>due};
 }

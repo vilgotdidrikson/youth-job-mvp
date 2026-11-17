@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { reauthenticateAccount, AccountReauthenticationError } from "./account-reauthentication";
 import { verifyPersonalDataSession, PersonalDataSessionError } from "./personal-data-session";
-import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS } from "../privacy-cases";
+import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS, CASE_QUEUE_FILTERS } from "../privacy-cases";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Vary": "Authorization, X-Account-Id", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
 class CaseError extends Error { constructor(readonly status: number) { super("Ärendet kunde inte behandlas."); } }
@@ -64,10 +64,17 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
       }
       let result: unknown;
       if (action === "list") {
-        fields(input, admin ? ["action", "cursor", "password", "totpCode"] : ["action", "cursor"]);
+        fields(input, admin ? ["action", "cursor", "password", "totpCode",...(input.filter===undefined?[]:["filter"])] : ["action", "cursor"]);
         const cursor = parseCaseCursor(input.cursor);
-        const response = await service.rpc("list_privacy_cases", { p_subject: admin ? null : owner, p_admin: admin ? owner : null, p_before: cursor?.created_at ?? null, p_before_id: cursor?.id ?? null }).abortSignal(signal); rpcError(response.error);
+        if(admin&&input.filter!==undefined&&(typeof input.filter!=="string"||!Object.hasOwn(CASE_QUEUE_FILTERS,input.filter)))throw new CaseError(400);
+        const response = await (admin&&input.filter!==undefined?service.rpc("list_privacy_case_queue",{p_admin:owner,p_session:session,p_filter:input.filter,p_before:cursor?.created_at??null,p_before_id:cursor?.id??null}):service.rpc("list_privacy_cases", { p_subject: admin ? null : owner, p_admin: admin ? owner : null, p_before: cursor?.created_at ?? null, p_before_id: cursor?.id ?? null })).abortSignal(signal); rpcError(response.error);
         result = parsePrivacyCasePage(response.data, admin ? undefined : owner);
+      } else if(action==="find") {
+        fields(input,admin?["action","id","password","totpCode"]:["action","id"]);
+        if(!isUuid(input.id))throw new CaseError(400);
+        const response=await service.rpc("read_privacy_case",{p_subject:admin?null:owner,p_admin:admin?owner:null,p_session:session,p_id:input.id}).abortSignal(signal);rpcError(response.error);
+        const item=parsePrivacyCase(response.data,admin?undefined:owner);result=item;
+        if(item.id!==input.id.toLowerCase())throw new CaseError(503);
       } else if (action === "history") {
         fields(input, admin ? ["action", "id", "revision", "cursor", "password", "totpCode"] : ["action", "id", "revision", "cursor"]);
         const cursor = parseCaseCursor(input.cursor);

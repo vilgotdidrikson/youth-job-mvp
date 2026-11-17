@@ -15,6 +15,7 @@ create function public.is_personal_data_session_active(p_subject_id uuid,p_sessi
 await db.exec(readFileSync('supabase/migrations/20261112092530_privacy_request_cases.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261112093959_privacy_case_identity_checks.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261112101715_privacy_case_followup_history.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261117163115_privacy_case_queue_lookup_response.sql','utf8'));
 const ids={owner:'11111111-1111-4111-8111-111111111111',other:'22222222-2222-4222-8222-222222222222',admin:'33333333-3333-4333-8333-333333333333',admin2:'44444444-4444-4444-8444-444444444444',noGrant:'55555555-5555-4555-8555-555555555555',session:'66666666-6666-4666-8666-666666666666',case:'77777777-7777-4777-8777-777777777777',factor:'88888888-8888-4888-8888-888888888888'};
 for(const v of [ids.owner,ids.other,ids.admin,ids.admin2,ids.noGrant])await db.query('insert into auth.users values($1,now())',[v]);
 for(const v of [ids.admin,ids.admin2,ids.noGrant])await db.query('insert into public.admin_users values($1)',[v]);
@@ -44,7 +45,9 @@ try{
  await denied(()=>list(ids.owner,ids.admin),'22023','mixed owner and admin scopes rejected');
  const original=c,claimed=await update(c,'claim');ok(claimed.is_mine&&claimed.status==='in_progress','claim assigns the verified actor');
  await denied(()=>update(original,'claim'),'PT409','stale concurrent claim cannot overwrite newer assignment');
+ ok(claimed.first_reply_at===null,'claim without a public message never counts as first response');
  const event=crypto.randomUUID();c=await update(claimed,'waiting','QA fråga till användaren',event);
+ ok((await scalar('select public.list_privacy_case_queue($1,$2,$3)',[ids.admin,ids.session,'waiting'])).cases[0].id===c.id&&!!c.first_reply_at,'waiting filter selects the case and public question counts as first response');
  ok(c.status==='waiting_for_user'&&c.events.at(-1).public_message==='QA fråga till användaren','waiting requires a public response');
  ok((await update(claimed,'waiting','QA fråga till användaren',event)).revision===c.revision,'lost update receipt can replay the exact event once');
  await denied(()=>update(claimed,'waiting','Changed',event),'PT409','same event ID cannot change the public response');
@@ -64,6 +67,7 @@ try{
  c=await scalar('select private.privacy_case_projection($1,$2)',[c.id,ids.admin]);
  ok(!!c.review_after,'admin projection exposes the existing 30-day review date');
  const ownProjection=await scalar('select private.privacy_case_projection($1,null)',[c.id]);
+ ok(ownProjection.first_reply_at===null&&c.first_reply_at!==null,'first response is computed from all history and hidden from requester projection');
  ok(ownProjection.review_after===null,'requester projection omits internal review date');
  const history=(subject,admin,session,anchor,version=c.revision)=>scalar('select public.read_privacy_case_history($1,$2,$3,$4,$5,$6,$7)',[subject,admin,session,c.id,version,anchor.created_at,anchor.id]);
  let anchor=c.events[0],all=[...c.events],pages=0;
@@ -98,6 +102,26 @@ try{
  await db.exec('reset role');
  for(let i=0;i<22;i++)await db.query("insert into private.privacy_cases(id,requester_id,kind,body,created_at)values($1,$2,'other','QA pagination',now()-($3||' days')::interval)",[crypto.randomUUID(),ids.owner,i+1]);
  await db.exec('set role service_role');const first=await list(ids.owner),second=await list(ids.owner,null,first.next);ok(first.cases.length===20&&second.cases.length===3&&new Set([...first.cases,...second.cases].map(c=>c.id)).size===23,'actual keyset pages preserve all owned cases without duplicates');
+ const caseRead=(subject,admin,session,id)=>scalar('select public.read_privacy_case($1,$2,$3,$4)',[subject,admin,session,id]);
+ const query=(filter,cursor=null,actor=ids.admin,session=ids.session)=>scalar('select public.list_privacy_case_queue($1,$2,$3,$4,$5)',[actor,session,filter,cursor?.created_at??null,cursor?.id??null]);
+ await db.exec('reset role');await db.query('insert into auth.sessions values($1,$2)',[ids.session,ids.admin]);await db.exec('set role service_role');
+ const oldest=second.cases.at(-1);ok((await caseRead(ids.owner,null,ownSession,oldest.id)).id===oldest.id,'exact lookup finds an owned case beyond the first page');
+ await denied(()=>caseRead(ids.other,null,otherSession,oldest.id),'PT404','foreign exact lookup returns the same unavailable error as a missing case');
+ await denied(()=>caseRead(ids.owner,null,ownSession,crypto.randomUUID()),'PT404','missing exact lookup is unavailable');
+ await denied(()=>caseRead(ids.owner,ids.admin,ownSession,oldest.id),'22023','exact lookup rejects mixed scope');
+ await denied(()=>caseRead(ids.owner,null,otherSession,oldest.id),'42501','exact lookup binds the original requester session');
+ ok((await caseRead(null,ids.admin,ids.session,oldest.id)).id===oldest.id,'verified handler can open an exact case');
+ await denied(()=>caseRead(null,ids.noGrant,ids.session,oldest.id),'42501','ordinary admin cannot use exact lookup');
+ let q=await query('unassigned');ok(q.cases.length===20&&q.cases.every(c=>!c.assigned&&c.status!=='closed'),'queue filters before taking its first page');
+ const q2=await query('unassigned',q.next);ok(q2.cases.length===2&&q2.next===null&&new Set([...q.cases,...q2.cases].map(c=>c.id)).size===22,'filtered keyset pagination has no duplicates or false final cursor');
+ ok((await query('mine')).cases.length===1,'mine queue excludes unassigned cases');ok((await query('closed')).cases.length===0,'closed queue does not include open cases');
+ const closed=await update(c,'close','QA closed filter');ok((await query('closed')).cases[0].id===closed.id&&!(await query('mine')).cases.length,'close moves a case between filtered queues');
+ ok((await query('open')).cases.every(c=>c.id!==closed.id),'open queue excludes a closed case');
+ await denied(()=>query('all',null,ids.noGrant),'42501','queue requires explicit handler grant and matching session');
+ await denied(()=>query('all',null,ids.admin,otherSession),'42501','queue rejects foreign original session');
+ await denied(()=>query('unexpected'),'22023','queue rejects unknown filter');
+ for(const role of ['anon','authenticated']){await db.exec('reset role;set role '+role);await denied(()=>caseRead(ids.owner,null,ownSession,oldest.id),'42501',role+' cannot call exact lookup directly');await denied(()=>query('all'),'42501',role+' cannot spoof a queue actor');}
+ await db.exec('reset role;set role service_role');await db.query('update private.privacy_case_handlers set enabled=false where user_id=$1',[ids.admin]);await denied(()=>query('all'),'42501','queue rejects revoked grant');await denied(()=>caseRead(null,ids.admin,ids.session,oldest.id),'42501','lookup rejects revoked grant');await db.query('update private.privacy_case_handlers set enabled=true where user_id=$1',[ids.admin]);
  await denied(()=>create().then(()=>scalar('select public.create_privacy_case($1,$2,$3,$4)',[ids.owner,crypto.randomUUID(),'other','\u0001bad'])),'22023','control characters rejected in SQL');
  await db.exec('reset role');await db.query('delete from auth.users where id=$1',[ids.owner]);ok(await scalar('select requester_id is null from private.privacy_cases where id=$1',[ids.case]),'account deletion retains case under its distinct retention rule without account FK');
  ok((await db.query("select count(*) n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='private' and c.relname like 'privacy_case%' and c.relrowsecurity")).rows[0].n===3,'all three new private tables have RLS');
