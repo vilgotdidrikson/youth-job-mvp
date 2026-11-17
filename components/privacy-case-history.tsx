@@ -7,7 +7,8 @@ import styles from "@/app/account/privacy-requests/page.module.css";
 
 export function PrivacyCaseMessages({ events, admin = false }: { events: PrivacyCaseEvent[]; admin?: boolean }) {
   return <>{events.filter(e=>(admin||!["review","schedule_review"].includes(e.action))&&(e.public_message||admin&&e.review_after)).map(event=><blockquote key={event.id}>
-    <p>{event.review_after?event.action==="review"?"Genomförd intern uppföljning":"Intern uppföljning planerad":event.action==="user_reply"?admin?"Användarens komplettering":"Din komplettering":"Svar från MatchnWork"} · {new Date(event.created_at).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>
+    <p>{admin&&event.external_sent_at?"Registrerat mejlsvar":event.review_after?event.action==="review"?"Genomförd intern uppföljning":"Intern uppföljning planerad":event.action==="user_reply"?admin?"Användarens komplettering":"Din komplettering":"Svar från MatchnWork"} · {new Date(event.created_at).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>
+    {admin&&event.external_sent_at&&<p>Skickat via mejl: {new Date(event.external_sent_at).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>}
     {event.public_message&&<p className={styles.message}>{event.public_message}</p>}
     {admin&&event.review_after&&<p>Nästa uppföljning: {new Date(event.review_after).toLocaleString("sv-SE",{timeZone:"Europe/Stockholm"})}</p>}
   </blockquote>)}</>;

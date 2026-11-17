@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { reauthenticateAccount, AccountReauthenticationError } from "./account-reauthentication";
 import { verifyPersonalDataSession, PersonalDataSessionError } from "./personal-data-session";
-import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS, CASE_QUEUE_FILTERS } from "../privacy-cases";
+import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS, CASE_QUEUE_FILTERS,caseContactEmail,casePastTime,matchesEmailCase,type PrivacyCaseKind } from "../privacy-cases";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Vary": "Authorization, X-Account-Id", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
 class CaseError extends Error { constructor(readonly status: number) { super("Ärendet kunde inte behandlas."); } }
@@ -75,6 +75,11 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const response=await service.rpc("read_privacy_case",{p_subject:admin?null:owner,p_admin:admin?owner:null,p_session:session,p_id:input.id}).abortSignal(signal);rpcError(response.error);
         const item=parsePrivacyCase(response.data,admin?undefined:owner);result=item;
         if(item.id!==input.id.toLowerCase())throw new CaseError(503);
+      } else if(admin&&action==="email_create") {
+        fields(input,["action","id","kind","body","contactEmail","receivedAt","password","totpCode"]);
+        if(!isUuid(input.id)||typeof input.kind!=="string"||!Object.hasOwn(PRIVACY_CASE_KINDS,input.kind))throw new CaseError(400);
+        const body=caseText(input.body),email=caseContactEmail(input.contactEmail),received=casePastTime(input.receivedAt);
+        writePending=true;const response=await service.rpc("create_email_privacy_case",{p_actor:owner,p_session:session,p_id:input.id,p_kind:input.kind,p_body:body,p_contact_email:email,p_received_at:received}).abortSignal(signal);if(response.error)writePending=false;rpcError(response.error);const item=parsePrivacyCase(response.data);if(!matchesEmailCase(item,{action:"email_create",id:input.id.toLowerCase(),kind:input.kind as PrivacyCaseKind,body,contactEmail:email,receivedAt:received}))throw new CaseError(503);result=item;
       } else if (action === "history") {
         fields(input, admin ? ["action", "id", "revision", "cursor", "password", "totpCode"] : ["action", "id", "revision", "cursor"]);
         const cursor = parseCaseCursor(input.cursor);
@@ -101,10 +106,11 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         if(typeof input.reviewAfter!=="string"||!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(input.reviewAfter)||!Number.isFinite(Date.parse(input.reviewAfter)))throw new CaseError(400);
         writePending=true;const response=await service.rpc("record_privacy_case_review",{p_actor:owner,p_session:session,p_id:input.id,p_revision:input.revision,p_event:input.eventId,p_action:action,p_review_after:input.reviewAfter}).abortSignal(signal);if(response.error)writePending=false;rpcError(response.error);result=parsePrivacyCase(response.data);
       } else if (admin && ["claim", "reply", "waiting", "close", "reopen"].includes(String(action))) {
-        fields(input, ["action", "id", "revision", "eventId", "message", "password", "totpCode"]);
+        fields(input, ["action", "id", "revision", "eventId", "message", "password", "totpCode",...(input.externalReplyConfirmed===undefined?[]:["externalReplyConfirmed"]),...(input.externalSentAt===undefined?[]:["externalSentAt"])]);
         if (!isUuid(input.id) || !isUuid(input.revision) || !isUuid(input.eventId)) throw new CaseError(400);
+        if(input.externalReplyConfirmed!==undefined&&input.externalReplyConfirmed!==true)throw new CaseError(400);const sent=input.externalSentAt===undefined?null:casePastTime(input.externalSentAt);
         const message=caseText(input.message,false);writePending=true;
-        const response = await service.rpc("update_privacy_case", { p_actor: owner, p_session: session, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_action: action, p_message: message }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
+        const response = await service.rpc("update_privacy_case", { p_actor: owner, p_session: session, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_action: action, p_message: message,p_external_reply_confirmed:input.externalReplyConfirmed??false,p_external_sent_at:sent }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data);
       } else throw new CaseError(400);
       if (await verifyPersonalDataSession(user, service, owner, token, signal) !== session) throw new CaseError(401);

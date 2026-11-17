@@ -16,3 +16,6 @@
 
 .message { white-space: pre-wrap; overflow-wrap: anywhere; }
 .followup { display: block; color: var(--color-text); }
+
+.form .checkbox { display: flex; align-items: center; min-height: 48px; gap: .75rem; }
+.form .checkbox input { width: 1.25rem; height: 1.25rem; flex-shrink: 0; padding: 0; accent-color: var(--color-brand); }

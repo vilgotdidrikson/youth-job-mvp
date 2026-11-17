@@ -8,6 +8,7 @@ export function PrivacyCaseThread({ item, admin = false, owner }: { item: Privac
     <h2>{PRIVACY_CASE_KINDS[item.kind]}</h2>
     <p><strong>{PRIVACY_CASE_STATUSES[item.status]}</strong> · {date(item.created_at)}</p>
     <p>Ärendenummer: <span>{item.id}</span></p>
+    {admin&&item.intake_source==="email"&&<p>Mejlärende utan kontokoppling. Kontakt: {item.contact_email}. Kontrollera identiteten proportionerligt innan uppgifter lämnas ut eller ändras.</p>}
     <p className={styles.message}>{item.body}</p>
     {admin && <p>Beräknat svarsdatum: {date(item.reply_due_at)}. Kontrollera tillämplig tidsfrist vid handläggningen; vänteläge och återöppning flyttar inte datumet.</p>}
     {!admin && <p>{item.status === "new" ? "Din begäran är mottagen. Du kan följa svaren här." : item.status === "in_progress" ? "Vi handlägger din begäran. Du kan komplettera den här." : item.status === "waiting_for_user" ? "Läs vår fråga nedan och komplettera ärendet när du kan." : "Läs vårt avslutande svar nedan. Kontakta oss om du behöver mer hjälp."}</p>}
