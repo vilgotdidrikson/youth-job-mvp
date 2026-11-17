@@ -25,7 +25,7 @@ function Workspace({owner}:{owner:string}) {
   const drafts=useRef(new Map<string,ActionDraft>());
   const clear=(keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setNeedsRead(true);if(!keepDrafts)drafts.current.clear();};
   const expire=()=>{if(idle.current)clearTimeout(idle.current);idle.current=setTimeout(()=>{if(active.current){clear();setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");}},300000);};
-  useEffect(()=>{active.current=true;return()=>{active.current=false;drafts.current.clear();task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
+  useEffect(()=>{const memory=drafts.current;active.current=true;return()=>{active.current=false;memory.clear();task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
   const verify = (form:HTMLFormElement) => {
     const data=new FormData(form), password=String(data.get("password")||""),code=String(data.get("totpCode")||"");
     form.querySelectorAll<HTMLInputElement>('input[name="password"],input[name="totpCode"]').forEach(input=>{input.value="";});
