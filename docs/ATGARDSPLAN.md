@@ -338,6 +338,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="n12"></a>
 ### N12 Video i chatten
 
+- Granskningsuppföljning 2026-11-17, Vilgot / Codex, [PR #218](https://github.com/vilgotdidrikson/youth-job-mvp/pull/218): N12:s avbrytbara metadata-/bytehämtning och återförsök är granskade mot aktuell dev inklusive Max senaste färgtokenändringar, utan konflikt eller ändrad delnings-/gallringsregel. N13:s inspelnings-/studioprov samt L12:s utgångs-/frigörings-/arbetarprov passerar. Samtliga fem videosviter, TypeScript och riktad lint passerar. Produktionsbygget på den lokalt sammanslagna koden och Linux-kontrollen av designtokens (309 färgliteraler, baslinje 309) passerar. Inga ytterligare produktändringar behövdes i granskningen. Simulerade hooks/HTTP/media är inte fysisk kamera, inloggad browser eller live-RLS; dessa och full acceptans ligger kvar. Huvudkortets status och övriga ägare bevaras.
+
+
 - Leverans 2026-11-16, Vilgot / Codex, `codex/n12-playback-recovery-20261116`, kodcommit `eb351d0`, [PR #218](https://github.com/vilgotdidrikson/youth-job-mvp/pull/218): reproducerat att sent metadatasvar efter avmontering startade videohämtning. Spelaren har nu avbrytbar läsning, eget tillstånd per video, 45 sekunders total tidsgräns, nytt försök, synkront dubbelklickslås och frigör sena lokala videoadresser. Befintlig privat uppspelning/RLS/gallring bevaras; ingen migration eller CSS-ändring. Komponent-/SDK-/klientprov med simulerad transport, fem videoregressioner, TypeScript, riktad ESLint, diffkontroll och slutligt produktionsbygge passerar. Designkontrollen fallerar på befintlig Windows-sökvägshantering. Publicerad för granskning, inte införd i dev. Inloggad browser/mobil, fysisk uppspelning och live-RLS återstår. Se `docs/N12_PLAYBACK_RECOVERY.md`. Status För granskning bevaras.
 
 - Fortsättning reserverad före kodarbete 2026-11-16: Vilgot / Codex, `codex/n12-playback-recovery-20261116`, från aktuell dev `890675e`. Avgränsad återhämtning i videospelaren: stoppa fortsatta hämtningar efter byte/stängning, avbryt gamla läsningar, begränsa väntetid och möjliggör nytt försök. Återanvänd privat uppspelning och befintliga komponenter; inga schema-, behörighets-, gallrings- eller produktionsändringar. Öppna PR:er kontrollerade (endast äldre #40 till master); inga överlappande reservationer. Huvudstatus och övriga ägare bevaras. Simulerade komponent-/transportprov skiljs från återstående browser-, Storage- och fysisk kameraacceptans.
@@ -443,6 +446,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n13"></a>
 ### N13 Spela in presentationsvideo direkt
+
+- Granskningsuppföljning 2026-11-17, Vilgot / Codex, [PR #218](https://github.com/vilgotdidrikson/youth-job-mvp/pull/218): N12:s avbrytbara metadata-/bytehämtning och återförsök är granskade mot aktuell dev inklusive Max senaste färgtokenändringar, utan konflikt eller ändrad delnings-/gallringsregel. N13:s inspelnings-/studioprov samt L12:s utgångs-/frigörings-/arbetarprov passerar. Samtliga fem videosviter, TypeScript och riktad lint passerar. Produktionsbygget på den lokalt sammanslagna koden och Linux-kontrollen av designtokens (309 färgliteraler, baslinje 309) passerar. Inga ytterligare produktändringar behövdes i granskningen. Simulerade hooks/HTTP/media är inte fysisk kamera, inloggad browser eller live-RLS; dessa och full acceptans ligger kvar. Huvudkortets status och övriga ägare bevaras.
+
 
 - [ ] Klar
 - Prioritet: P2
@@ -1611,6 +1617,9 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 
 <a id="l12"></a>
 ### L12 Inför beslutade lagringstider och automatisk gallring
+
+- Granskningsuppföljning 2026-11-17, Vilgot / Codex, [PR #218](https://github.com/vilgotdidrikson/youth-job-mvp/pull/218): N12:s avbrytbara metadata-/bytehämtning och återförsök är granskade mot aktuell dev inklusive Max senaste färgtokenändringar, utan konflikt eller ändrad delnings-/gallringsregel. N13:s inspelnings-/studioprov samt L12:s utgångs-/frigörings-/arbetarprov passerar. Samtliga fem videosviter, TypeScript och riktad lint passerar. Produktionsbygget på den lokalt sammanslagna koden och Linux-kontrollen av designtokens (309 färgliteraler, baslinje 309) passerar. Inga ytterligare produktändringar behövdes i granskningen. Simulerade hooks/HTTP/media är inte fysisk kamera, inloggad browser eller live-RLS; dessa och full acceptans ligger kvar. Huvudkortets status och övriga ägare bevaras.
+
 
 - Nytt uttryckligt beslut 2026-11-09: Vid återkallad ansökan skrivskyddas textchatten omedelbart för båda parter. Befintliga textmeddelanden ligger kvar enligt den tidigaste av ansökans gallringsdag och tolv månaders chattinaktivitet; ordinarie sexmånadersskrivskydd gäller annars. Företaget notifieras neutralt om återkallandet, samtidigt spärras CV, svar och AI-bedömning direkt. Åtkomstspärr och fysisk radering är skilda åtgärder. Samordna N19/L15 och testa redan öppnad vy, gamla länkar och samtidiga meddelanden.
 

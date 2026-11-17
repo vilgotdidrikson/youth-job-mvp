@@ -24,3 +24,14 @@ Privat API, autentisering, serverns dubbla RLS-kontroll, cacheförbud och gallri
 ## Återstående acceptans
 
 Inga inloggade browser-, mobil-, fysiska kamera-/uppspelnings-, verkliga nätavbrotts- eller live-RLS-prov ingår. Samtliga nya komponent-/transportfall är simulerade. Ingen ny QA-data skapad i DevStaging. N12 förblir För granskning; denna avgränsade leverans uppfyller inte hela kortets acceptanskrav. Kodcommit `eb351d0`, [PR #218](https://github.com/vilgotdidrikson/youth-job-mvp/pull/218) till dev. Publicerad för granskning, inte införd i dev.
+
+## Granskning inför införande 2026-11-17
+
+Vilgot / Codex granskade PR #218 och kontrollerade dess sammanslagning med aktuell dev `a53b049`. Max senare CSS-/färgtokenarbete bevaras. Inga ytterligare produktändringar behövdes.
+
+- N12: de faktiska spelar-/klientproven passerar för avmontering, video-ID-byte, försenad metadata/blob, timeout, återförsök och dubbelklick. Metadata laddar inga videobytes automatiskt. Privat endpoint, autentisering/RLS och cacheförbud är bevarade.
+- N13: inspelnings-/studio-/kompositörsregressioner passerar för stängda mediespår, sent behörighetssvar, avbrott, nekad kamera och uttryckligt skickande. Simulerade media-API:er; ingen fysisk kamera har använts.
+- L12: utgångsgräns, stoppad befintlig spelare, sena frigjorda blob-adresser samt befintliga worker-/Edge-prov passerar. Ingen ändrad serverfrist eller aktiverad gallring.
+- Samtliga `test:video-playback`, `test:video-recovery`, `test:profile-video`, `test:video-retirement`, `test:video-retention`, riktad ESLint och TypeScript passerar. Produktionsbygget på den sammanslagna koden passerar. Spelar-/gallringsproven och designtokens kördes även efter sammanslagningen.
+- `check:design-tokens` passerar på Linux med aktuell dev-baslinje: 309 färgliteraler, 139 textstorlekar, 56 radier och 10 vikter. Det tidigare dokumenterade Windows-problemet är inte rättat här.
+- Inloggad browser/mobil, verklig mediaöverföring, fysisk kamera och live-RLS är fortsatt inte verifierade. De tre huvudkorten markeras inte Klar. Införandets slutliga commit/driftsättning följs i PR #218.
