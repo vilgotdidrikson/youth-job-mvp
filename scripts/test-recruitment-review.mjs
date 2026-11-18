@@ -48,11 +48,13 @@ assert.deepEqual(events,['mnw-navigation-refresh','mnw-recruitment-refresh']);
 
 const nodes = root => !root || typeof root !== 'object' ? [] : [root,...(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).flatMap(child=>child===root?[]:nodes(child))];
 const text = node => node==null||typeof node==='boolean' ? '' : typeof node!=='object'?String(node):Array.isArray(node)?node.map(text).join(''):text(node.props?.children);
-function harness({company=false,record=employment,write=async()=>{},reload=async()=>{}}={}) {
+function harness({company=false,record=employment,invoiceOffer,write=async()=>{},reload=async()=>{}}={}) {
   const slots=[];let cursor=0,props;const calls=[],closed=[];
   const react={useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],value=>slots[i]=value];},useRef(initial){const i=cursor++;return slots[i]??={current:initial};},useId:()=>'hint'};
   const module=compile('components/recruitment-panel.tsx',{
     react,
+    "next/link":{default:"a"},
+    "@/lib/hire-test-invoices":{},
     '@/components/modal-dialog':{ModalDialog:()=>null},
     '@/lib/recruitment':{RecruitmentConflictError:api.RecruitmentConflictError,recruitmentAction:async(...args)=>{calls.push(args);await write(...args);}},
     '@/lib/recruitment-types':types,
@@ -60,7 +62,7 @@ function harness({company=false,record=employment,write=async()=>{},reload=async
     '@/lib/current-offer':offer,
     './recruitment.module.css':{default:{}},
   },'\nmodule.exports.__form=EmploymentForm;');
-  props={item:{match_id:'match-a',job_title:'QA ad',youth_name:'QA Youth',employment:record},company,onClose:()=>closed.push(true),onSaved:reload};
+  props={item:{match_id:'match-a',job_title:'QA ad',youth_name:'QA Youth',employment:record},company,invoiceOffer,onClose:()=>closed.push(true),onSaved:reload};
   const render=()=>{cursor=0;return module.__form(props);};
   const button=label=>nodes(render()).find(n=>n.type==='button'&&text(n)===label);
   const submit=()=>nodes(render()).find(n=>n.type==='form').props.onSubmit({preventDefault(){}});
@@ -88,5 +90,12 @@ for(const file of ['components/recruitment-panel.tsx','components/close-recruitm
 assert.match(readFileSync('components/close-recruitment-dialog.tsx','utf8'),/REGISTER_EMPLOYMENT/);
 ui=harness({record:{...employment,response:'approved'}});assert.ok(ui.button('Spara synlighet och CV'));assert.ok(ui.button('Begär rättelse av anställningen'));
 await ui.submit();assert.equal(ui.calls[0][2].show_on_profile,false);assert.equal(ui.calls[0][2].include_in_cv,false);
+assert.match(offer.CURRENT_COMPANY_OFFER.future, /500 kr per bekräftad anställning.*planerat pris.*1 000 kr/i);
+ui=harness({company:true,record:null,invoiceOffer:offer.HIRE_TEST_TERMS});
+assert.match(text(ui.render()), /testfaktura på 500 kr/);
+await ui.submit();assert.equal(ui.calls.length,0,'Test invoice requires consent before registering');
+nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='checkbox').props.onChange({target:{checked:true}});
+await ui.submit();assert.equal(ui.calls[0][2].test_invoice_terms,offer.HIRE_TEST_TERMS);
+ui=harness({company:true,record:null,invoiceOffer:'error'});await ui.submit();assert.equal(ui.calls.length,0);
 assert.notEqual(ui.wrapper({matchId:'a'}).key,ui.wrapper({matchId:'b'}).key,'Changing conversations resets open dialogs and records');
 console.log('PASS: reviewed facts, stale form props, conflict recovery, no duplicate writes, successful-write/read-failure, independent consent, correction after approval, current pricing, exact-match chat links and one hire entry name with explained next steps.');

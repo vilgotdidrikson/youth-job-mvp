@@ -28,6 +28,16 @@
       "review": "Redovisningskontakt kan vara annan person. Tabellen är skild från publik profil; inga skarpa fakturor finns implementerade genom denna källa."
     },
     {
+      "id": "hire-test-invoices",
+      "relations": [
+        "private.hire_test_invoices"
+      ],
+      "classification": "review",
+      "subjectScope": "company_user_id = eget uttryckligen aktiverat fiktivt företagskonto. Adminavstämning kräver verifierad andra faktor.",
+      "data": "Fiktiv fakturaadress och företagsnamn, internt rekryterings-ID, godkända testvillkor, belopp, datum, rättelse och simulerad betalningsreferens.",
+      "review": "Enbart testdata. Ägarens fakturavy visar inga kandidat- eller kontonycklar. Ingen skarp export, skarp betalning eller lagring av bankuppgifter. Raden raderas med testanställningen eller testföretaget."
+    },
+    {
       "id": "private-cv-work",
       "relations": [
         "public.ai_onboarding_sessions",

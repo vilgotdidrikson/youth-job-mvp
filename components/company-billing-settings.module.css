@@ -12,3 +12,8 @@
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 .actions button { min-height: 44px; }
 @media(max-width:640px) { .card { padding: 18px; } .fields { grid-template-columns: minmax(0,1fr); } .actions button { width: 100%; } }
+
+.invoiceList { display: grid; gap: 20px; padding-left: 0; list-style: none; }
+.invoiceList li { padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+.invoiceList form { display: grid; gap: 12px; margin-top: 16px; }
+.invoiceList form button { justify-self: start; }
