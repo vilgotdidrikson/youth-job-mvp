@@ -5,7 +5,8 @@ const normalizeLabel = (label: string) => label.normalize("NFKC").trim().replace
 
 /** Unknown is missing evidence, never a negative decision. Traits are not inferred. */
 export function missingApplicationCriteria(assessment: CandidateAssessment, existing: string[] = [], source = ""): string[] {
-  const knownStart = /^Kan börja arbeta: \d{4}-\d{2}-\d{2}$/m.test(source);
+  const dates = new Set([...source.matchAll(/^Kan börja arbeta: (\d{4}-\d{2}-\d{2})$/gm)].map(match => match[1]));
+  const knownStart = dates.size === 1;
   const seen = new Set(existing.map(normalizeLabel));
   const eligible = assessment.criteria.filter(({ label, status, weight, category }) => {
     const startOnly = /(?:börja|start|tillträde|omgående)/i.test(label) && !/(?:helg|kväll|arbetstid|tider|skift)/i.test(label);
