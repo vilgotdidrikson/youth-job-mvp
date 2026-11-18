@@ -31,9 +31,11 @@ const readBaseReviewedCatalog=()=>[
  'docs/privacy/catalog.privacy-cases-2026-11-12.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')));
-export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
- mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))),
- JSON.parse(readFileSync(new URL('docs/privacy/catalog.hire-test-invoices-2026-11-18.json',root),'utf8')));
+export const readReviewedCatalog=()=>[
+ 'docs/privacy/catalog.hire-test-invoices-2026-11-18.json',
+ 'docs/privacy/catalog.hire-invoice-mail-2026-11-18.json',
+].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
+ mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))));
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;
