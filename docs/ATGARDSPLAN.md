@@ -466,6 +466,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n08"></a>
 ### N08 Erbjud CV utan obligatorisk AI
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
 - Leveransavstämning 2026-11-12: PR #196 förstärker det manuella CV-flödet med kontobundet sparande, synkront dubbelklickslås och skydd mot sena svar. Det gamla dubbelklicksfelet reproduceras; rättningen ger ett sparförsök. Regressioner/bygge passerar; full inloggad webb-/mobilacceptans återstår. Se `docs/L09_F18_N08_CV_RECOVERY.md`. Status För granskning bevaras.
 
@@ -566,6 +567,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n09"></a>
 ### N09 Spara CV utkast på kontot
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
 - [ ] Klar
 - Prioritet: P2
@@ -1311,6 +1313,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="l09"></a>
 ### L09 Verifiera CV-uppladdning och PDF-layout
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
 - [ ] Klar
 - Prioritet: P2
