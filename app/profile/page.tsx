@@ -1,4 +1,5 @@
 "use client";
+import styles from "./profile-form.module.css";
 import {SupportLinks} from "@/components/support-links";
 
 import { useRecruitmentProfile } from "@/hooks/use-recruitment-profile";
@@ -309,16 +310,6 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const accountSecurityCard = <AccountSecuritySettings userId={user.id} email={user.email} pendingEmail={user.new_email}/>;
 
   if (profile?.role === "company") {
-    const labelStyle: React.CSSProperties = {
-      fontSize: "0.78rem",
-      fontWeight: 700,
-      textTransform: "uppercase",
-      letterSpacing: "0.06em",
-      color: "#737373",
-      display: "block",
-      marginBottom: "0.35rem",
-    };
-
     return <main className="mobile-shell mnw-company-profile">
       <header className="company-profile-header"><div className="company-profile-cover" aria-hidden="true"/><div className="company-profile-identity"><span className="company-profile-avatar"><UiIcon name="briefcase" width="30" height="30" /></span><div><p>Företagsprofil</p><h1>{companyName || "Ert företag"}</h1><span>{companyCity || "Plats ej angiven"}</span></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("details")}>Redigera profil</button></div></header>
       <TabList id="company-profile" label="Delar av företagsprofilen" className="company-profile-tabs" items={[{value:"overview",label:"Översikt"},{value:"details",label:"Företagsuppgifter"},{value:"cv",label:"Matchprofil"},{value:"settings",label:"Inställningar"}]} value={profileTab} onChange={setProfileTab} />
@@ -328,31 +319,28 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
       {profileTab === "details" && <section className="company-profile-details" {...tabPanelProps("company-profile", "details")}><header><h2>Företagsuppgifter</h2><p>Uppgifterna hjälper kandidater att lära känna er och används för företagsverifieringen.</p></header>
         <CompanyVerificationStatus profile={savedCompany} />
         {/* Edit form */}
-        <div className="card company-profile-form">
-          <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a3a3a3", marginBottom: "1rem" }}>Redigera profil</p>
+        <div className={`card company-profile-form ${styles.form}`}>
+          <p className={styles.eyebrow}>Redigera profil</p>
 
-          <label htmlFor="company-profile-name" style={labelStyle}>Företagsnamn</label>
+          <label htmlFor="company-profile-name" >Företagsnamn</label>
           <input id="company-profile-name"
-            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-            style={{ marginBottom: "0.85rem" }}
+            className={styles.field}
             placeholder="T.ex. Bergströms Bageri AB"
             value={companyName}
             onChange={(e) => { setCompanyName(e.target.value); setSavedNote(""); }}
           />
 
-          <label htmlFor="company-profile-city" style={labelStyle}>Stad</label>
+          <label htmlFor="company-profile-city" >Stad</label>
           <input id="company-profile-city"
-            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-            style={{ marginBottom: "0.85rem" }}
+            className={styles.field}
             placeholder="T.ex. Stockholm"
             value={companyCity}
             onChange={(e) => { setCompanyCity(e.target.value); setSavedNote(""); }}
           />
 
-          <label htmlFor="company-profile-industry" style={labelStyle}>Bransch</label>
+          <label htmlFor="company-profile-industry" >Bransch</label>
           <input id="company-profile-industry"
-            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-            style={{ marginBottom: "0.85rem" }}
+            className={styles.field}
             placeholder="T.ex. Café och restaurang"
             required
             maxLength={80}
@@ -360,10 +348,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             onChange={(e) => { setCompanyIndustry(e.target.value); setSavedNote(""); }}
           />
 
-          <label htmlFor="company-profile-organization" style={labelStyle}>Organisationsnummer</label>
+          <label htmlFor="company-profile-organization" >Organisationsnummer</label>
           <input id="company-profile-organization"
-            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-            style={{ marginBottom: "0.85rem" }}
+            className={styles.field}
             placeholder="XXXXXX-XXXX"
             inputMode="numeric"
             value={companyOrganizationNumber}
@@ -378,21 +365,19 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
             <p>Krävs för verifieringen. Driver ni ett UF-företag anger ni UF-företagets eget organisationsnummer; utan ett eget nummer kan företaget inte verifieras ännu.</p>
           </div>
 
-          <label htmlFor="company-profile-administrator" style={labelStyle}>Kontaktperson (administratör)</label>
+          <label htmlFor="company-profile-administrator" >Kontaktperson (administratör)</label>
           <input id="company-profile-administrator"
-            className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-            style={{ marginBottom: "0.85rem" }}
+            className={styles.field}
             placeholder="För- och efternamn"
             autoComplete="name"
             value={companyAdministrator}
             onChange={(e) => { setCompanyAdministrator(e.target.value); setSavedNote(""); }}
           />
 
-          <label htmlFor="company-profile-description" style={labelStyle}>Beskrivning</label>
+          <label htmlFor="company-profile-description" >Beskrivning</label>
           <textarea id="company-profile-description"
             rows={4}
-            className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
-            style={{ marginBottom: "1rem" }}
+            className={styles.description}
             placeholder="Beskriv er verksamhet kort..."
             value={companyDescription}
             onChange={(e) => { setCompanyDescription(e.target.value); setSavedNote(""); }}
@@ -400,8 +385,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
           <button
             type="button"
-            className="cta-btn"
-            style={{ width: "100%", padding: "0.875rem", fontSize: "0.9rem" }}
+            className={`cta-btn ${styles.save}`}
             disabled={saving}
             onClick={() => void handleSaveCompanyProfile()}
           >
@@ -425,9 +409,9 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   if (profile?.role !== "youth") {
     return (
       <main className="mobile-shell">
-        <div className="card" style={{ padding: "1.25rem" }}>
-          <h1 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#111111", margin: 0 }}>Den här profilsidan är för ungdomskonton</h1>
-          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "#737373" }}>Logga in med ett ungdomskonto för att bygga din jobbprofil.</p>
+        <div className={`card ${styles.unavailable}`}>
+          <h1 className={styles.unavailableTitle}>Den här profilsidan är för ungdomskonton</h1>
+          <p className={styles.unavailableText}>Logga in med ett ungdomskonto för att bygga din jobbprofil.</p>
         </div>
       </main>
     );
