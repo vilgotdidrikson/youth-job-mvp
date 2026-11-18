@@ -51,3 +51,7 @@ Beslutet 2026-10-20 och samordningen 2026-11-09: ett kompletteringssvar får åt
 - `check:design-tokens` jämför filsökvägar med snedstreck och faller därför på Windows oavsett ändring. Leveransen lägger bara till tokenreferenser.
 - Befintligt lintfel för setState i effekt i `recruitment-profile-editor.tsx` finns kvar från dev.
 - Heuristiken för tidsbundna svar är ordbaserad och kan missa ovanliga formuleringar. Ungdomen granskar alltid texten före sparning.
+
+## F12 – undvik frågor om kända fakta
+
+Vilgot / Codex reserverar `codex/f12-known-answer-followups` från `dev` `c1b0b5a` för återanvändning av tydliga sparade svar och unika relevanta följdfrågor.
