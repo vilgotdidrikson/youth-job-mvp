@@ -63,3 +63,9 @@ Matchnings-, följdfråge-, delnings-, komponent- och arbetartester passerade me
 ## F12 – slutför kompletteringsfrågorna
 
 Vilgot / Codex reserverar `codex/f12-complete-followup-questions` från dev `49d3e76` för att slutföra F12:s frågetexter och hantering av kända uppgifter inför granskning.
+
+**Huvudpunkt F12 – För granskning.** Den gemensamma databasfunktionen formaterar nya automatiska språkfrågor för båda köflödena. Språknamn skiljs från kravtexten och flera språk visas utan upprepning. Klienten fortsätter att visa äldre obesvarade språkfrågor i rättad form och bevarar historiken. Motstridiga startdatum kan ge en kompletteringsfråga, medan ett entydigt datum återanvänds. Den befintliga modellkörningen får tydligare instruktion om återanvändning av sparade uppgifter och om att arbetstider från en annan rekrytering inte gäller per automatik.
+
+Migration `20261118205436_f12_followup_question_formatter` införd i DevStaging. Tio SQL-kontroller passerade före införandet i en återställd transaktion och igen efter införandet. De kontrollerar språk, schema för frågetyp, funktionsåtkomst och båda köanropen. Matchning, rättvisa, följdfrågeflöde, sparade svar, frivilliga kompletteringar, felåterhämtning, bakgrundsarbetaren, TypeScript och riktad ESLint verifierades lokalt.
+
+Återstår i granskningen: logga in som fiktiv ungdom i dev och spara en generell uppgift från ansökan A. Skicka ansökan B till ett annat fiktivt företag med motsvarande, annorlunda formulerat krav och kör den verkliga modellen. Kontrollera att den kända uppgiften inte ger en ny fråga, att företaget inte ser den utan aktuellt delningsval samt att Nej eller avstående lämnar ansökan inskickad. Prova samma flöde i mobilvyn.

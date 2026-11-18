@@ -31,7 +31,7 @@ Använd tydligt fiktiva QA-konton i dev för användartester. Hantera inte rikti
 
 ## Omfattning för den aktuella insatsen
 
-Användaren har godkänt fortsatt kodarbete enligt den globala prioriteringslistan. Arbeta i avgränsade leveranser: en större punkt eller flera små sammanhängande punkter, följt av publicering och verifiering. Reservera varje punkt innan arbetet börjar och redovisa faktisk verifiering innan nästa leverans.
+När användaren ber om arbete på en punkt, välj en hel huvudpunkt med status Pågår eller Ej påbörjad enligt den globala prioriteringslistan. Reservera punkten före arbetet. Slutför byggarbetet mot hela punktens kriterier, kör tillgängliga kontroller och uppdatera arbetsplanen till För granskning innan leveransen publiceras till dev. Om ett specifikt acceptanstest återstår, dokumentera testfallet. Om byggarbetet fortfarande är blockerat, dokumentera den konkreta blockeraren och behåll punkten öppen.
 
 ## Design vid löpande utveckling
 

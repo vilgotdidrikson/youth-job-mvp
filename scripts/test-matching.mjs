@@ -38,6 +38,10 @@ try {
  assert.equal(fixedCriterionEvidence('Svenska','Språk: Svenska, självuppgiven nivå Lite').status,'unknown');
  const knownStart=assessCandidate(matchingCriteria([{label:'Kan börja omgående',required:true}]),[],dateSource);
  assert.deepEqual(missingApplicationCriteria(knownStart,[],dateSource),[]);
+ const conflictingDates=dateSource+'\nKan börja arbeta: 2026-10-20';
+ assert.deepEqual(missingApplicationCriteria(assessCandidate(matchingCriteria([{label:'Kan börja omgående',required:true}]),[],conflictingDates),[],conflictingDates),['Kan börja omgående']);
+ assert.deepEqual(missingApplicationCriteria(knownStart,[],dateSource+'\n'+dateSource),[]);
+
  assert.equal(knownStart.criteria[0].evidence,dateSource);
  assert.equal(fixedCriterionEvidence('Kan börja omgående','Kan börja arbeta: 2026-10-11','2026-10-12').status,'fulfilled');
  const own=validateRecruitmentProfile({...expanded,examples:[{strength:'Kreativitet',context:'Skolprojekt',action:'Jag gjorde affischer.'}],availability:{...expanded.availability,notes:'Efter skolan från 16'},qualifications:{...expanded.qualifications,languages:[{language:'Svenska',level:'Vardagligt tal'}]}});
