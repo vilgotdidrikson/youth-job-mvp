@@ -204,8 +204,8 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Pågår | Vilgot / Codex |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
-| 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | För granskning | Codex |
-| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | För granskning | Codex |
+| 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Klar | Codex |
+| 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Klar | Codex |
 | 19 | [N01](#n01) | P1 | Redigera hela publicerade annonsen | Klar | Max / Claude |
 | 20 | [N02](#n02) | P1 | Återkalla ansökan och väntande intresse | För granskning | Vilgot / Codex |
 | 21 | [L05](#l05) | P1 | Säkerhet, blockering, rapportering och administration | Klar | Vilgot / Codex |
@@ -225,7 +225,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | För granskning | Vilgot / Codex |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
 | 31 | [F22](#f22) | P2 | Validera inmatning nära fälten | För granskning | Max / Claude (annonsbyggaren) |
-| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | För granskning | Codex |
+| 32 | [N03](#n03) | P2 | Visa annonsutkast i översikten | Klar | Codex |
 | 32.1 | [N25](#n25) | P2 | Välj annons före kandidatgranskning | För granskning | Vilgot / Codex |
 | 33 | [F20](#f20) | P2 | Gör integritet villkor och hjälp lätta att nå | Pågår | Vilgot / Codex |
 | 34 | [F23](#f23) | P2 | Ge val och dialoger korrekt tillgänglighet | För granskning | Max / Claude |
@@ -488,17 +488,18 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 - Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 32
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Codex
 - Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20, [PR #85](https://github.com/vilgotdidrikson/youth-job-mvp/pull/85).
 - Åtgärd: Lägg en synlig Återuppta utkast-post bland företagets annonser med titel, aktuell del och senast sparat. Skilj utkast från publicerade, pausade och stängda annonser. Koppla till bildsparandet i F07.
 - Klar när: Ett sparat utkast går att hitta utan att välja Ny annons.
 - Implementerat: Separat utkastskort bland företagets annonser med titel, aktuellt steg, sparstatus, verkligt sparat datum och Återuppta utkast. Tydligt märkt inte publicerat och endast på denna enhet/webbläsare. Se docs/F07_N03.md.
-- Verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår. Inget inloggat webbprov påstås genomfört.
-- Återstår / blockerare: Inloggat driftsatt test av spara/omladdning/återupptagning/beskärning/kopia/publicering och fysisk mobil. Lokal webbläsarlagring kan rensas; ingen synkning mellan enheter utlovas. Ingen ny serverlagring, AI-data eller migration. Avgränsad leverans införs i dev innan Klar kan övervägas.
+- Verifierat 2026-11-18 i driftsatt dev `5a3431d`, Chromium vid 1280 och 375 px. Det sparade utkastet hittades och återupptogs från Mina annonser utan att välja Ny annons. Rätt steg och bild återställdes. 41 kontroller per körning. Båda fiktiva kontona, annonserna och bilderna är borttagna och efterkontrollerade i DevStaging. [PR #228](https://github.com/vilgotdidrikson/youth-job-mvp/pull/228)
+- Tidigare verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår.
+- Återstår inom kortet: —. Fysisk mobil och Safari följs upp i [L08](#l08).
 
 <a id="n04"></a>
 ### N04 Öppna en läsbar företagsprofil från annonsen
@@ -708,17 +709,18 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 ### F09 Anpassa publicering till verifieringsstatus
 - Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex, `codex/f07-n03-f09-acceptance-20261118` från dev `5a3431d`. Samlad slutverifiering av de tre huvudpunkterna F07, N03 och F09 med fiktiva företagskonton i driftsatt dev. Test av bildbevarande, återupptagning och väntande publicering vid olika vybredder. Inga öppna PR:er vid start.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 17
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Codex
 - Branch/PR: `codex/f09-verification-publication-20261020`, reserverad före kodarbete 2026-10-20, [PR #86](https://github.com/vilgotdidrikson/youth-job-mvp/pull/86).
 - Åtgärd: Anpassa knapp, förhandsvisning och bekräftelse till om företaget är godkänt. Före godkännande ska det framgå om annonsen sparas eller väntar på publicering och om den publiceras automatiskt efter beslut.
 - Klar när: Ingen vy lovar omedelbar publicering när annonsen fortfarande väntar på verifiering.
 - Implementerat: Gemensamma verifieringsanpassade knappar, väntetexter och förhandsvisning i båda annonsvägarna. Bekräftelse i översikten utifrån faktisk serverstatus för den egna annonsen. Automatisk publicering efter godkännande förklaras med bevarad paus/stängning; lokala utkast skiljs från sparade väntande annonser. Okänd status framställs inte som publicerad. Se docs/F09.md.
-- Verifierat: test:job-publication med verklig rendering, test:company-navigation, test:job-copy, test:job-drafts, test:job-workplaces samt produktionsbygge/TypeScript (51 routes) passerar. Riktad ESLint utan fel, tre befintliga img-varningar. Verkligt rollbackprov i DevStaging verifierar publiceringsspärr, egen verifiering nekad, dold väntande annons, automatisk publicering vid adminbeslut och fortsatt dold paus/stängning.
-- Återstår / blockerare: Inloggat visuellt test i driftsatt dev på mobil/dator för status, förhandsvisning och bekräftelse återstår. Inga schema-, AI-, personuppgifts- eller produktionsändringar. F08:s verifieringsunderlag/handläggning ingår inte.
+- Verifierat 2026-11-18 i driftsatt dev `5a3431d`, Chromium vid 1280 och 375 px. Förhandsvisningen uppgav att företagsgodkännande krävs. Formuläret visade Spara inför publicering och saknade en direkt publiceringsknapp. Sparbesked och annonsöversikt visade samma väntande status som DevStaging. Tidigare rollbackprov täcker publicering vid godkännande och att pausade eller stängda annonser förblir dolda. 41 kontroller per körning. Båda fiktiva kontona, annonserna och bilderna är borttagna och efterkontrollerade i DevStaging. [PR #228](https://github.com/vilgotdidrikson/youth-job-mvp/pull/228)
+- Tidigare verifierat: test:job-publication med verklig rendering, test:company-navigation, test:job-copy, test:job-drafts, test:job-workplaces samt produktionsbygge/TypeScript (51 routes) passerar. Riktad ESLint utan fel, tre befintliga img-varningar. Verkligt rollbackprov i DevStaging verifierar publiceringsspärr, egen verifiering nekad, dold väntande annons, automatisk publicering vid adminbeslut och fortsatt dold paus/stängning.
+- Återstår inom kortet: —. Fysisk mobil och Safari följs upp i [L08](#l08).
 
 <a id="f07"></a>
 ### F07 Bevara bilden i sparade annonsutkast
@@ -726,17 +728,18 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 - Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P1
 - Global ordning: 18
-- Status: För granskning
+- Status: Klar
 - Ansvarig: Codex
 - Branch/PR: `codex/f07-n03-durable-job-drafts-20261020`, reserverad före kodarbete 2026-10-20, [PR #85](https://github.com/vilgotdidrikson/youth-job-mvp/pull/85).
 - Åtgärd: Spara omslagsbilden och beskärningen tillsammans med resten av annonsutkastet. Använd inte en generell Utkast sparat-bekräftelse om någon del saknas; ange då exakt vad som återstår att spara.
 - Klar när: Bild, text och praktiska uppgifter finns kvar när utkastet återöppnas efter omladdning.
 - Implementerat: Bildens beskurna bytes, text och steg sparas atomärt i ett lokalt kontobundet IndexedDB-utkast; autosparning, uttrycklig sparning, tydliga fel och bakåtkompatibel återläsning. Kopiering/publicering använder ordnad sparning/rensning. Se docs/F07_N03.md.
-- Verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår. Inget inloggat webbprov påstås genomfört.
-- Återstår / blockerare: Inloggat driftsatt test av spara/omladdning/återupptagning/beskärning/kopia/publicering och fysisk mobil. Lokal webbläsarlagring kan rensas; ingen synkning mellan enheter utlovas. Ingen ny serverlagring, AI-data eller migration. Avgränsad leverans införs i dev innan Klar kan övervägas.
+- Verifierat 2026-11-18 i driftsatt dev `5a3431d`, Chromium vid 1280 och 375 px. Beskuren bild återlästes med samma SHA-256 efter omladdning och visades i utkastet. Titel, steg, båda adresserna och lön bevarades. Bilden i Storage matchade den beskurna bilden. Flikkonflikt bevarade den nyare lagrade revisionen. 41 kontroller per körning. Båda fiktiva kontona, annonserna och bilderna är borttagna och efterkontrollerade i DevStaging. [PR #228](https://github.com/vilgotdidrikson/youth-job-mvp/pull/228)
+- Tidigare verifierat: test:job-drafts med IndexedDB-emulator och hookens faktiska callbacks, test:company-navigation (inklusive återupptagning), test:job-copy, test:job-workplaces och test:job-categories. Produktionsbygge/TypeScript (51 routes) och riktad ESLint passerar; en befintlig img-varning kvarstår.
+- Återstår inom kortet: —. Fysisk mobil och Safari följs upp i [L08](#l08).
 
 <a id="f13"></a>
 ### F13 Rätta status för väntande ansökningar
