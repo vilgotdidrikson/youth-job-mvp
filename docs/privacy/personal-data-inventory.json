@@ -38,6 +38,16 @@
       "review": "Enbart testdata. Ägarens fakturavy visar inga kandidat- eller kontonycklar. Ingen skarp export, skarp betalning eller lagring av bankuppgifter. Raden raderas med testanställningen eller testföretaget."
     },
     {
+      "id": "hire-test-invoice-mail",
+      "relations": [
+        "private.hire_test_invoice_mail"
+      ],
+      "classification": "review",
+      "subjectScope": "invoice_id kopplar via private.hire_test_invoices till ägande testföretag. Endast behörig server kan behandla kön.",
+      "data": "Fakturaadress för e-post vid utfärdande, fakturanyckel, leveransstatus, antal försök, låsnyckel och tidsstämplar.",
+      "review": "Endast fiktiva anställningar och godkänd testinkorg. PDF och mejltext lagras inte i kön. Ingen klientåtkomst. Raden raderas med testfakturan."
+    },
+    {
       "id": "private-cv-work",
       "relations": [
         "public.ai_onboarding_sessions",
