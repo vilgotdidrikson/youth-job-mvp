@@ -142,3 +142,7 @@ Kalenderunderlag kontrollerat 2026-11-17: [SFS 1989:253, Sveriges riksdag](https
 - Ett oväntat kast från intagsanropet fångas i formuläret, bevarar ursprungligt underlag/UUID och låser nytt försök tills återläsning. Ingen automatisk omsändning; sena fel efter avmontering ändrar ingen vy.
 
 241 lokala kontroller passerar (57 API, 106 modell/klient, 78 faktiska komponentcallbackfall med kontrollerade gränser). Nya datumfall körs i Europe/Stockholm, inklusive ogiltigt kalenderdatum, sommartidsgap, fel indataformat och giltig tid efter gapet. Komponentproven kontrollerar återställd sändningsbekräftelse och fryst underlag efter oväntat kast. TypeScript, riktad ESLint, diffkontroll och standardbygge passerar. Ingen schema-/behörighetsändring, ny datakälla eller faktisk mejlsändning; ingen ny SQL-/datainventering krävs. Inloggad browser-/mobil-/fysisk MFA-acceptans och tidigare kvarvarande arbete återstår.
+
+## Fortsättning – ärendeåterläsning, handläggarvy och hjälp
+
+Vilgot / Codex reserverar L13, L16 och F20 på `codex/l13-l16-f20-case-navigation` från dev `eebe599`. Avgränsning: exakt återläsning efter osäker ärendeskapning, femminuterstömning även under pågående handläggaranrop och tydlig återgång från hjälp och inloggning till egna ärenden.
