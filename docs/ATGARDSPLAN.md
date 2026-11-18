@@ -484,6 +484,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n03"></a>
 ### N03 Visa annonsutkast i översikten
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex, `codex/f07-n03-f09-acceptance-20261118` från dev `5a3431d`. Samlad slutverifiering av de tre huvudpunkterna F07, N03 och F09 med fiktiva företagskonton i driftsatt dev. Test av bildbevarande, återupptagning och väntande publicering vid olika vybredder. Inga öppna PR:er vid start.
 
 - Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
@@ -705,6 +706,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f09"></a>
 ### F09 Anpassa publicering till verifieringsstatus
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex, `codex/f07-n03-f09-acceptance-20261118` från dev `5a3431d`. Samlad slutverifiering av de tre huvudpunkterna F07, N03 och F09 med fiktiva företagskonton i driftsatt dev. Test av bildbevarande, återupptagning och väntande publicering vid olika vybredder. Inga öppna PR:er vid start.
 
 - [ ] Klar
 - Prioritet: P2
@@ -720,6 +722,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f07"></a>
 ### F07 Bevara bilden i sparade annonsutkast
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex, `codex/f07-n03-f09-acceptance-20261118` från dev `5a3431d`. Samlad slutverifiering av de tre huvudpunkterna F07, N03 och F09 med fiktiva företagskonton i driftsatt dev. Test av bildbevarande, återupptagning och väntande publicering vid olika vybredder. Inga öppna PR:er vid start.
 
 - Fortsättning 2026-11-08: [PR #180](https://github.com/vilgotdidrikson/youth-job-mvp/pull/180), `codex/n14-n15-drafts-20261108`, Vilgot / Codex. Versionsskydd för lokala bild-/textutkast, kopiering/publiceringsstädning och arbetsplatsredigering; konto-/jobbskydd för arbetsplatsval. Riktade regressioner, bygge och 35 riktiga DevStaging-kontroller passerar. Inloggad browseracceptans samt blockerad preferensfördjupning/teststädning återstår. Se [N14_N15_DRAFT_ACCEPTANCE.md](N14_N15_DRAFT_ACCEPTANCE.md) för faktisk evidens, PR/commit och begränsningar. Huvudstatus bevaras.
 
