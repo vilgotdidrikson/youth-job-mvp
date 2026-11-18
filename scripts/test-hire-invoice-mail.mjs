@@ -26,15 +26,15 @@ const invoice = {
   postal_code: "11111", city: "Testort", issued_on: "2026-11-18", due_on: "2026-12-18",
 };
 const job = { recipient, invoice, lease: "00000000-0000-4000-a000-000000000002" };
-function fixture({ ready = true, claimed = job, completion = true } = {}) {
+function fixture({ ready = true, claimed = job, completion = true, scope = "hire_test" } = {}) {
   const logs = [];
   return {
     logs,
     async rpc(name, args) {
       logs.push([name, args]);
-      if (name === "claim_hire_test_invoice_mail") return { data: claimed };
-      if (name === "hire_test_invoice_mail_ready") return { data: ready };
-      if (name === "finish_hire_test_invoice_mail") return { data: completion };
+      if (name === `claim_${scope}_invoice_mail`) return { data: claimed };
+      if (name === `${scope}_invoice_mail_ready`) return { data: ready };
+      if (name === `finish_${scope}_invoice_mail`) return { data: completion };
       throw Error("Unexpected RPC");
     },
   };
@@ -93,4 +93,15 @@ assert.equal(await processHireInvoiceMail(fixture(), recipient, async () => { th
 assert.equal(await processHireInvoiceMail(fixture(), recipient, async () => { throw Error("Connection lost"); }), "review");
 assert.equal(await processHireInvoiceMail(fixture(), recipient, async () => ({ accepted: [] })), "review");
 await assert.rejects(processHireInvoiceMail(fixture({ completion: false }), recipient, async () => ({ accepted: [recipient] })), /record invoice email/);
+const bankJob = { ...job, invoice: { ...invoice, invoice_number: "MNW-000001", buyer_org: "559000-0000",
+  seller: { name: "Fiktivt övningsföretag", address: "Testgatan 1", reference: "Testreferens", bankgiro: "1234567" } } };
+const liveFixture = fixture({ scope: "hire_bank", claimed: bankJob });
+assert.equal(await processHireInvoiceMail(liveFixture, null, async message => {
+  assert.match(message.subject, /^Faktura MNW-000001/);
+  assert.equal(message.attachments[0].filename, "MNW-000001.pdf");
+  assert.equal(message.attachments[0].content.subarray(0, 5).toString(), "%PDF-");
+  return { accepted: [recipient] };
+}), "sent");
+assert.equal(await processHireInvoiceMail(fixture({ claimed: bankJob }), recipient, mustNotSend), "review");
+assert.equal(await processHireInvoiceMail(fixture({ scope: "hire_bank" }), null, mustNotSend), "review");
 console.log("PASS: real local SMTP envelope and PDF attachment, holds/recipient guard, known retry and uncertain-delivery handling.");
