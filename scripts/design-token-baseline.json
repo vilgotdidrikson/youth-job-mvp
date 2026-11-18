@@ -1,12 +1,12 @@
 {
-  "hex": 309,
+  "hex": 308,
   "fontSizes": 139,
   "radii": 56,
   "fontWeights": 10,
   "hexPerFile": {
     "app/globals.css": 287,
     "app/jobb/[jobId]/job-detail.module.css": 3,
-    "app/product-design.css": 15,
+    "app/product-design.css": 14,
     "components/job-discovery.module.css": 4
   }
 }
