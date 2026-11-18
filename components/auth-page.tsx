@@ -12,6 +12,7 @@ import { UiIcon } from "@/components/ui-icon";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { getUserProfile, signIn, signUp } from "@/lib/auth";
+import { hasAuthEmailLinkError } from "@/lib/auth-email-link";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
@@ -37,9 +38,20 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [linkError, setLinkError] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (sessionLoading || !user || isRedirectingAfterSignup.current) return;
+    const readLink = () => setLinkError(hasAuthEmailLinkError(window.location.search, window.location.hash));
+    const timer = window.setTimeout(readLink, 0);
+    window.addEventListener("hashchange", readLink);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("hashchange", readLink);
+    };
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (sessionLoading || !user || linkError !== false || isRedirectingAfterSignup.current) return;
     let active = true;
     void (async () => {
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
@@ -57,7 +69,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       router.replace(loginDestination(profile.role, safeRedirectTarget));
     })();
     return () => { active = false; };
-  }, [profile, router, safeRedirectTarget, sessionLoading, user]);
+  }, [linkError, profile, router, safeRedirectTarget, sessionLoading, user]);
 
   useEffect(() => {
     if (searchParams.get("role") === "company") {
@@ -153,6 +165,11 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
           <div className="auth-card-heading"><h1>{isSignup ? "Skapa konto" : "Logga in"}</h1><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
           {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div>{([["youth", "Arbetssökande"], ["company", "Företag"]] as const).map(([value, label]) => <label key={value} className={role === value ? "auth-role-selected" : ""}><input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />{label}</label>)}</div></fieldset>}
+          {linkError && <div className="auth-message auth-error">
+            <p role="alert">Mejllänken gick inte att bekräfta. Den kan ha gått ut eller redan ha använts.</p>
+            {user ? <button type="button" className="auth-switch" onClick={() => setLinkError(false)}>Fortsätt med din inloggning</button>
+              : <p>Om det gäller ett byte av e-postadress, logga in och kontrollera e-poststatus under kontoinställningarna.</p>}
+          </div>}
           <div className="auth-fields">
             <label>E-postadress<input name="email" className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
             <label>Lösenord<PasswordInput key={mode} name="password" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} aria-describedby={isSignup ? "signup-password-hint" : undefined} required minLength={isSignup ? 8 : undefined} />{isSignup && <span id="signup-password-hint" className="auth-field-hint">Minst 8 tecken.</span>}</label>

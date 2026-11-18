@@ -9,7 +9,7 @@ let now=100000;
 Date.now=()=>now;
 const originals={window:globalThis.window,formData:globalThis.FormData,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout};
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
-let view, reply, calls=[], navigations=[], timers=new Map(), timerId=0;
+let view, reply, calls=[], navigations=[], timers=new Map(), timerId=0, signedInUser=null;
 const nodes=root=>!root||typeof root!=='object'?[]:[root,...(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).flatMap(nodes)];
 const text=root=>root==null||typeof root==='boolean'?'':typeof root!=='object'?String(root):(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).map(text).join('');
 const router={replace:p=>navigations.push(p),push:p=>navigations.push(p)};
@@ -19,7 +19,7 @@ Module._load=function(name,parent,...rest){
  if(name==='react')return hooks;
  if(name==='next/navigation')return{useRouter:()=>router,useSearchParams:()=>new URLSearchParams()};
  if(name==='next/link')return{__esModule:true,default:'a'};
- if(name==='@/hooks/use-session')return{useSession:()=>({user:null,profile:null,loading:false})};
+ if(name==='@/hooks/use-session')return{useSession:()=>({user:signedInUser,profile:null,loading:false})};
  if(name==='@/lib/auth')return{signUp:(...args)=>{calls.push(['signup',...args]);return reply.promise;},signIn:(...args)=>{calls.push(['login',...args]);return reply.promise;},resendSignupConfirmation:email=>{calls.push(['resend',email]);return reply.promise;}};
  if(name.startsWith('@/components/')&&name!=='@/components/auth-page')return new Proxy({},{get:(_,key)=>key});
  if(name.startsWith('@/'))return originalLoad.call(this,path.resolve(name.slice(2)),parent,...rest);
@@ -27,12 +27,29 @@ Module._load=function(name,parent,...rest){
 };
 globalThis.FormData=class{constructor(form){this.values=form;}get(name){return this.values[name];}};
 globalThis.setTimeout=(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id;};globalThis.clearTimeout=id=>timers.delete(id);
-const create=(Component,props={})=>{reply=deferred();calls=[];navigations=[];timers.clear();globalThis.window={location:{replace:p=>navigations.push(p)}};view={slots:[],effects:[],index:0,updates:0,render(){this.index=0;return Component(props);},stop(){for(const e of this.effects.filter(Boolean))e.cleanup?.();}};view.render();for(const e of view.effects.filter(Boolean))e.cleanup=e.fn();return view;};
+const create=(Component,props={},location={})=>{reply=deferred();calls=[];navigations=[];timers.clear();globalThis.window={location:{search:"",hash:"",...location,replace:p=>navigations.push(p)},setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout,addEventListener(){},removeEventListener(){}};view={slots:[],effects:[],index:0,updates:0,render(){this.index=0;return Component(props);},stop(){for(const e of this.effects.filter(Boolean))e.cleanup?.();}};view.render();for(const e of view.effects.filter(Boolean))e.cleanup=e.fn();return view;};
 const event={preventDefault(){},currentTarget:{email:'auto@example.invalid',password:'test-password',confirmPassword:'test-password'}};
 const submit=()=>nodes(view.render()).find(n=>n.type==='form').props.onSubmit;
 try{
  const Auth=require('../components/auth-page.tsx').AuthPage({}).props.children.type;
  const Resend=require('../app/resend-confirmation/page.tsx').default;
+ const readLink=()=>{for(const [id,timer] of timers){timers.delete(id);timer.fn();}};
+ for(const location of [{hash:'#error_code=otp_expired&error_description=private-diagnostic'},{search:'?error=access_denied'}]){
+   create(Auth,{},location);readLink();
+   assert.match(text(view.render()),/Mejllänken gick inte att bekräfta/);
+   assert.doesNotMatch(text(view.render()),/private-diagnostic/);
+   assert.ok(nodes(view.render()).some(n=>n.props?.href==='/resend-confirmation'));
+   view.stop();
+ }
+ signedInUser={id:'qa'};
+ create(Auth,{}, {hash:'#error_code=otp_expired'});readLink();
+ assert.deepEqual(navigations,[]);
+ const continueButton=nodes(view.render()).find(n=>n.type==='button'&&text(n)==='Fortsätt med din inloggning');
+ assert.ok(continueButton);continueButton.props.onClick();
+ assert.doesNotMatch(text(view.render()),/Mejllänken gick inte att bekräfta/);
+ view.stop();signedInUser=null;
+ create(Auth,{}, {hash:'#type=signup&access_token=fake'});readLink();
+ assert.doesNotMatch(text(view.render()),/Mejllänken gick inte att bekräfta/);view.stop();
  create(Auth,{initialMode:'signup'});
  const handler=submit(),one=handler(event),two=handler(event);
  assert.equal(calls.length,1,'Immediate duplicate signup is blocked before rendering');
