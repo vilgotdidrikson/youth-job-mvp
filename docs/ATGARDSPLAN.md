@@ -220,7 +220,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 25 | [D02](#d02) | P2 | Håll chattens skrivfält inom vyn | För granskning | Vilgot / Codex |
 | 26 | [N13](#n13) | P2 | Spela in presentationsvideo direkt | För granskning | Vilgot / Codex |
 | 27 | [F10](#f10) | P2 | Återanvänd redan sparade uppgifter | För granskning | Max / Claude (företagsdelen) |
-| 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | För granskning | Vilgot / Codex |
+| 28 | [N08](#n08) | P2 | Erbjud CV utan obligatorisk AI | Klar | Vilgot / Codex |
 | 29 | [F12](#f12) | P2 | Förbättra kompletteringsfrågornas innehåll | Pågår | Vilgot / Codex |
 | 29.1 | [N24](#n24) | P2 | Företagets egna kompletteringsfrågor före matchning | För granskning | Vilgot / Codex |
 | 30 | [F11](#f11) | P2 | Visa vad AI överför till annonsfälten | Klar | Max / Claude |
@@ -238,8 +238,8 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 41 | [N06](#n06) | P2 | Utöka jobbsökningen med relevanta val | För granskning | Vilgot / Codex |
 | 42 | [F18](#f18) | P2 | Förbättra sparande i profilredigeringen | För granskning | Vilgot / Codex |
 | 43 | [F24](#f24) | P2 | Gör kartans reservvy användbar | För granskning | Vilgot / Codex |
-| 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | För granskning | Vilgot / Codex |
-| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | För granskning | Vilgot / Codex |
+| 44 | [N09](#n09) | P2 | Spara CV utkast på kontot | Klar | Vilgot / Codex |
+| 45 | [L09](#l09) | P2 | Verifiera CV-uppladdning och PDF-layout | Klar | Vilgot / Codex |
 | 46 | [L08](#l08) | P1 | Verifiera mobil, tangentbord och kartinteraktion | Pågår | Vilgot / Codex |
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | Ej påbörjad | — |
 | 47.1 | [L17](#l17) | P1 | Samlad inloggad acceptans av levererade punkter | Ej påbörjad | — |
@@ -466,13 +466,15 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n08"></a>
 ### N08 Erbjud CV utan obligatorisk AI
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
 - Leveransavstämning 2026-11-12: PR #196 förstärker det manuella CV-flödet med kontobundet sparande, synkront dubbelklickslås och skydd mot sena svar. Det gamla dubbelklicksfelet reproduceras; rättningen ger ett sparförsök. Regressioner/bygge passerar; full inloggad webb-/mobilacceptans återstår. Se `docs/L09_F18_N08_CV_RECOVERY.md`. Status För granskning bevaras.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 28
-- Status: För granskning
+- Status: Klar
+- Slutverifierat 2026-11-18 i driftsatt dev `122eac2`. Det fiktiva ungdomskontot valde Skriv själv, fyllde i formuläret, öppnade manuell förhandsvisning, godkände uppgifterna och sparade CV:t till sin riktiga dev-profil. Inget anrop för AI-generering gjordes. Tidigare manuella regressioner täcker ändring och metodbyte. [PR #229](https://github.com/vilgotdidrikson/youth-job-mvp/pull/229)
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n08-manual-cv-20261027`, reservation före kodarbete från dev `d52f5d2`. Avgränsad manuell CV-väg med befintliga profilfakta, granskning och sparning. Tidigare obesvarade profil-/AI-beslut, e-post/pris/leverantörsberoenden samt slutverifiering bevaras; inga nya AI-dataflöden införs. Öppna PR:er kontrollerade.
 - Åtgärd: Visa Skriv själv som ett tydligt val från början, med samma sparade fakta och redigering som AI-guiden. AI ska vara en valfri hjälp och PDF-uppladdning ett separat alternativ.
@@ -480,7 +482,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Kodreferens: `abbaa9bdf4899acbac23e14dc7b790823115eb3a`, målbranch `dev`; källträdet matchar det verifierade lokala bygget.
 - Implementerat 2026-10-27: Tydliga val Skriv själv, Ta hjälp av AI och Ladda upp ett CV. Manuellt och AI använder samma formulär/faktamodell/granskning/sparfunktion. Manuell förhandsvisning renderas lokalt utan CV-generation eller AI-synk. Texten ändras genom samma formulär-/faktaredigering så text och profilfakta hålls ihop. Metodval sparas i enhetens befintliga utkast; äldre utkast väljer inte AI automatiskt. Kontobyte monterar om arbetsytan. PDF och befintlig profil-/ansökningslogik bevaras; ingen AI-chatt enligt N20 byggs här. Se [N08.md](N08.md).
 - Verifierat: `test:manual-cv` kör faktiska komponentcallbacks för metodval, metodbyte, återöppnat utkast, formulär → förhandsvisning → rättelse → godkännande → sparning, befintliga strukturerade fakta, kontonycklar och spärrad AI-synk; ingen nätverksbegäran för CV-generation/synk i den manuella vägen. Explicit AI-fel kan följas av manuell förhandsvisning med bevarade svar utan nytt AI-anrop. Spartransporten är simulerad. F02/F03-, profilflödes-/profilhämtningstester, riktad ESLint och produktionsbygge med TypeScript/56 routes passerar.
-- Återstår / blockerare: Verkligt inloggat spara/återläs/PDF-/ansökningsprov samt visuell kontroll på dator/mobil och med tangentbord. Inget live-AI-anrop eller nytt backend-acceptanstest påstås. N09:s kontolagrade utkast och N20:s profilchatt förblir separata; befintliga utkast sparas bara på enheten. Manuellt metodval gäller CV-skrivandet; redan beslutade matchnings-/ansökningsflöden ändras inte. Markeras inte Klar före verklig slutverifiering.
+- Fortsatt verifiering i andra kort. Fysisk mobil och webbläsaracceptans följs upp i [L08](#l08) och [L17](#l17). Ansökningskedjan verifieras i [L07](#l07).
 
 <a id="n03"></a>
 ### N03 Visa annonsutkast i översikten
@@ -566,18 +568,20 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="n09"></a>
 ### N09 Spara CV utkast på kontot
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 44
-- Status: För granskning
+- Status: Klar
+- Slutverifierat 2026-11-18 i driftsatt dev `122eac2`. Utkastet sparades vid 375 px. En separat inloggad Chromium-process på 1280 px återställde steg och uppgifter, sparade en ny version och den första sessionen återupptog den senare versionen i rätt steg. Det färdiga CV:t påverkades inte av utkastssparningen. Tidigare prov verifierar samtidiga revisioner, behörighetsgränser och avslutade sessioner. [PR #229](https://github.com/vilgotdidrikson/youth-job-mvp/pull/229)
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/n09-account-cv-drafts-20261110`, [PR #197](https://github.com/vilgotdidrikson/youth-job-mvp/pull/197); backendacceptans i [PR #199](https://github.com/vilgotdidrikson/youth-job-mvp/pull/199).
 - Åtgärd: Låt CV-utkast fortsätta mellan mobil och dator med synlig sparstatus. Skydda utkastet som övriga privata profiluppgifter och behåll platsen i guiden.
 - Klar när: Ungdomen kan återuppta samma utkast på en annan enhet.
 - Implementerat: Privata kontoutkast med metod, steg, text och förhandsvisning; explicit öppning med ny granskning, versionskonflikter och läskontroll före nytt skrivförsök. Infört i dev via PR #197.
 - Verifierat: Migrationens behörighets-/versionsprov, lokala SDK-/komponent-/exportregressioner och bygge enligt `docs/N09_ACCOUNT_CV_DRAFTS.md`. PR #199 verifierar separata riktiga Auth-sessioner och samtidiga sparningar; 43 faktiska kontroller för hela N09/L09/L06-paketet, inte 43 separata N09-prov. QA-städning verifierad.
-- Återstår / blockerare: Inloggat mobil → dator → mobil, tangentbord/visuell acceptans och utgången browsersession. Separata backend-sessioner är verifierade; fysisk enhetsacceptans återstår. Se `docs/N09_ACCOUNT_CV_DRAFTS.md` och `docs/N09_L09_L06_LIVE_CV.md`.
+- Fortsatt verifiering i andra kort. Fysisk mobil i [L08](#l08). Fullständig återställningskedja för session ligger i [L06](#l06).
 
 <a id="n10"></a>
 ### N10 Ge grundläggande kontoval
@@ -1311,12 +1315,14 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="l09"></a>
 ### L09 Verifiera CV-uppladdning och PDF-layout
+- Reserverad före verifieringsarbete 2026-11-18. Vilgot / Codex på `codex/n08-n09-l09-live-acceptance-20261118` från dev `122eac2`. Prova manuellt CV utan AI, privat kontoutkast i separata webbläsarsessioner och faktiskt genererad och uppladdad PDF med fiktivt ungdomskonto i driftsatt dev. Tidigare delningsprov ingår som befintlig evidens. Inga öppna PR:er.
 
-- [ ] Klar
+- [x] Klar
 - Prioritet: P2
 - Global ordning: 45
 - Typ: Verifiering och eventuell designförbättring
-- Status: För granskning
+- Status: Klar
+- Slutverifierat 2026-11-18 i driftsatt dev `122eac2`. Den uppladdade ensidiga filen och det tresidiga exporterade CV:t öppnades via den egna dev-profilen och matchade originalen byte för byte. Layout granskad med Poppler och PDF.js. Alla 36 erfarenhetsstycken, svenska tecken, merittext, språkavsnitt och sidnummer fanns kvar, utan klippt text eller en ensam rubrik. Tidigare delningsprov [#178](https://github.com/vilgotdidrikson/youth-job-mvp/pull/178) täcker rätt företag före match och nekad åtkomst för främmande roller. [PR #229](https://github.com/vilgotdidrikson/youth-job-mvp/pull/229)
 - Ansvarig: Vilgot / Codex
 - Branch/PR: PDF-layout [PR #117](https://github.com/vilgotdidrikson/youth-job-mvp/pull/117); CV-kedja #176/#177; delningsacceptans [PR #178](https://github.com/vilgotdidrikson/youth-job-mvp/pull/178); sparåterhämtning [PR #196](https://github.com/vilgotdidrikson/youth-job-mvp/pull/196); backendacceptans [PR #199](https://github.com/vilgotdidrikson/youth-job-mvp/pull/199). Införda i dev.
 - Åtgärd: Kontrollera uppladdat PDF-CV, behörig visning före match och exporterat CV. Granska faktisk PDF-layout med kort och långt innehåll, sidbrytningar, svenska tecken och läsbarhet. En startad nedladdning räcker inte som layoutverifiering.
@@ -1325,7 +1331,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: Separat ren PDF-mall och texttolkning som bevarar fristående rubriker och inledande profiltext; namn från exportens namnargument utan att ta bort avvikande första textrad. Rubrik och inledande styckerader hålls ihop, långa namn radbryts utan automatisk avstavning, sida/antal och namn på fortsättningssidor. Inbäddad Inter (statiska 400/600 från befintlig licensierad font) och 11 pt brödtext med återhållna varumärkesfärger. PDF-motorn laddas först vid export. Exporterna körs i ordning med förnyad glyphdata så upprepade/samtidiga exporter inte kan förvanska extraherbar text. Auth och hämtning av verifierad erfarenhet bevaras.
 - Verifierat: Före/efter-PDF:er med fiktiv Åsa Öberg; tidigare förlust av fristående PROFIL/SPRÅK/ENSAMRUBRIK och felaktig jättestor namnrubrik reproducerad. test:cv-pdf kör riktiga PDF-exporter och PDF.js: 1, 2 och 4 sidor, svenska tecken, långa namn/URL:er, samtliga slutmarkörer, text-/sidgränser, inga ensamma avsnittsrubriker, upprepade och parallella exporter, auth-/historikfel och tomtext. Fontintegritet och licens kontrolleras. Slutliga korta/rubrikseparerade PDF:er samt alla fyra stressidor renderade med Poppler och granskade visuellt; jämförelse även med PDFium. Inter är inbäddat enligt pdffonts. test:application-disclosure, test:cv-quality, test:local-fonts, riktad ESLint och standardbygge med TypeScript passerar.
 - Leveransavstämning 2026-11-12: Faktisk uppladdning/ägarvy i #176/#177, 42 företags-/delningskontroller i #178 och 43 paketkontroller i #199; nya spar-/förhandsvisningsskydd i #196. Kontrollerna ersätter inte fysisk mobil eller full acceptans av den senaste UI-versionen.
-- Återstår / blockerare: Fysisk mobil/Safari, avsedda webbläsares font-/exportbeteende och full acceptans av det senaste uppladdnings-/återhämtningsflödet. Före-match-delningen verifierades i PR #178; omprovet i PR #199 kunde däremot inte slutföras och räknas inte som godkänt. Den äldre formuleringen att ingen faktisk uppladdning eller delningsåtkomst provats är inaktuell. Se `docs/L09_N19_LIVE_CV_CHAIN.md`, `docs/L09_N19_SHARING_ACCEPTANCE.md`, `docs/L09_F18_N08_CV_RECOVERY.md` och `docs/N09_L09_L06_LIVE_CV.md`.
+- Fortsatt verifiering i andra kort. Fysisk mobil och Safari följs upp i [L08](#l08).
 
 <a id="l08"></a>
 ### L08 Verifiera mobil, tangentbord och kartinteraktion
