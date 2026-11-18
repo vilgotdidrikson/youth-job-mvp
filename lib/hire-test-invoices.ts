@@ -14,6 +14,8 @@ export type HireTestInvoice = {
   due_on: string;
   held_at: string | null;
   paid_at: string | null;
+  invoice_email?: string | null;
+  mail_state?: "pending" | "sending" | "sent" | "review" | "cancelled" | "not_queued" | "test_recipient_mismatch";
 };
 
 export type HireBankInvoice = HireTestInvoice & {

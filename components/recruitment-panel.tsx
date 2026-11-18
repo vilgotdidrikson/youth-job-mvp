@@ -58,7 +58,7 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
       {invoiceOffer === "error" && <p role="alert">Pris och villkor kunde inte hämtas. Stäng formuläret och öppna det igen.</p>}
       {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>}
       {testInvoice && <div className={styles.offer}>
-        <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=settings">företagets inställningar</Link> och ska aldrig betalas.</p>
+        <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=invoices">företagets fakturavy</Link> och ska aldrig betalas.</p>
         <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
       </div>}
       {bankInvoice && <div className={styles.offer}>
@@ -139,6 +139,7 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
     <div id={panelId} hidden={compact && !expanded} className={compact ? styles.compactBody : undefined}><h3>{presentation.title}</h3>
     {employment && <p>{employment.role_name} · {employment.company_name}<br/>{experiencePeriod(employment.start_date)}</p>}
     <p>{presentation.description}</p>
+    {company && employment?.response === "approved" && <Link href="/profile?tab=invoices">Öppna fakturor</Link>}
     {eligible && <div className={styles.actions}>{company ? <>
       {employment?.response !== "approved" && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{presentation.action}</button>}
       {!employment && (item.requested_at || item.reminder_sent_at) && item.review_state !== "resolved" && <><button type="button" className="secondary-btn" disabled={busy} onClick={() => void action("company_reply", { reply: "ongoing" })}>Rekryteringen pågår</button><button type="button" className="secondary-btn" disabled={busy} onClick={() => void action("company_reply", { reply: "no_hire" })}>Ingen anställning avtalad</button></>}

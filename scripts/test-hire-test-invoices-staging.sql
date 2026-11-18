@@ -69,6 +69,10 @@ begin
   perform public.save_company_billing_details(c,2,billing||'{"invoice_email":"after-issue@example.invalid"}');
   invoices := public.list_hire_test_invoices();
   if jsonb_array_length(invoices)<>2 then raise exception 'Duplicate invoice or missing approved invoice'; end if;
+  if invoices->0->>'invoice_email' is distinct from 'at-issue@example.invalid'
+    or invoices->0->>'mail_state' is distinct from 'test_recipient_mismatch' then
+    raise exception 'Company cannot see the original address and restricted delivery status';
+  end if;
   select value into bill from jsonb_array_elements(invoices) where value->>'id'=(invoices->0->>'id');
   paid_invoice := (bill->>'id')::uuid;
   if (bill->>'amount_ore')::integer<>50000 or bill->>'address_line1'<>'Ursprunglig testadress 1'
@@ -80,6 +84,7 @@ begin
   begin perform public.list_hire_test_invoices(true); raise exception 'Admin at AAL1'; exception when insufficient_privilege then null; end;
   perform pg_temp.invoice_actor(a,'aal2');
   if jsonb_array_length(public.list_hire_test_invoices(true))<>2 then raise exception 'Admin cannot see issued synthetic invoices'; end if;
+  if public.list_hire_test_invoices(true)->0->>'invoice_email' is not null then raise exception 'Admin list exposes invoice email'; end if;
   begin perform public.record_hire_test_payment(paid_invoice,100000,'TEST-001'); raise exception 'Wrong amount settled'; exception when invalid_parameter_value then null; end;
   begin perform public.record_hire_test_payment(paid_invoice,50000,'REAL-001'); raise exception 'Non-test reference settled'; exception when invalid_parameter_value then null; end;
   perform public.record_hire_test_payment(paid_invoice,50000,'TEST-001');

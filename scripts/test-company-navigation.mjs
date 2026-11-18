@@ -12,7 +12,8 @@ for (const verified of [true, false]) {
 assert.equal(companyView('swipe', true), 'kandidater');
 assert.equal(companyView('swipe', false), 'skapa');
 for (const tab of ['work', 'cv', 'details', 'settings']) assert.equal(profileTabFromQuery(tab), tab);
-for (const tab of [null, '', 'overview', 'unknown']) assert.equal(profileTabFromQuery(tab), 'overview');
+assert.equal(profileTabFromQuery('invoices', true), 'invoices');
+for (const tab of [null, '', 'overview', 'unknown', 'invoices']) assert.equal(profileTabFromQuery(tab), 'overview');
 
 // Execute the actual JSX navigation callbacks, not copies of their destination logic.
 const calls = [];
@@ -58,7 +59,7 @@ assert.doesNotMatch(page, /setTab\(/, 'Company view may not have a second local 
 assert.match(page, /const tab = companyView\(searchParams\.get\("view"\)/);
 assert.match(page, /window\.history\.pushState\(null, "", item === "skapa" \? COMPANY_ROUTES\.create : COMPANY_ROUTES\.listings/);
 const profile = readFileSync('app/profile/page.tsx', 'utf8');
-assert.match(profile, /profileTabFromQuery\(query\.get\("tab"\)\)/);
+assert.match(profile, /profileTabFromQuery\(query\.get\("tab"\), profile\?\.role === "company"\)/);
 assert.match(profile, /setProfileTab\(requestedProfileTab\); }, \[requestedProfileTab\]/);
 const onboarding = readFileSync('app/company/onboarding/page.tsx', 'utf8');
 assert.match(onboarding, /if \(step !== "profil"\) return;/);

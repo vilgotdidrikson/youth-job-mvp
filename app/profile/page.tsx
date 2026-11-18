@@ -16,7 +16,7 @@ import { CvFactReview } from "@/components/cv-fact-review";
 import { cvReviewSnapshot, hasApprovedCv } from "@/lib/cv-fact-review";
 import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
 import Link from "next/link";
-import { profileTabFromQuery, type ProfileTab } from "@/lib/company-navigation";
+import { COMPANY_ROUTES, profileTabFromQuery, type ProfileTab } from "@/lib/company-navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -69,7 +69,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   const [cvApproval, setCvApproval] = useState<string | null>(null);
   const cvApproved = cvStructured ? hasApprovedCv(cvApproval, cvEditText, cvStructured) : false;
 
-  const requestedProfileTab = profileTabFromQuery(query.get("tab"));
+  const requestedProfileTab = profileTabFromQuery(query.get("tab"), profile?.role === "company");
   const [profileTab, setProfileTab] = useState<ProfileTab>(requestedProfileTab);
   useEffect(() => { setProfileTab(requestedProfileTab); }, [requestedProfileTab]);
   const documentOpen = useRef<AbortController | null>(null);
@@ -313,7 +313,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
   if (profile?.role === "company") {
     return <main className="mobile-shell mnw-company-profile">
       <header className="company-profile-header"><div className="company-profile-cover" aria-hidden="true"/><div className="company-profile-identity"><span className="company-profile-avatar"><UiIcon name="briefcase" width="30" height="30" /></span><div><p>Företagsprofil</p><h1>{companyName || "Ert företag"}</h1><span>{companyCity || "Plats ej angiven"}</span></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("details")}>Redigera profil</button></div></header>
-      <TabList id="company-profile" label="Delar av företagsprofilen" className="company-profile-tabs" items={[{value:"overview",label:"Översikt"},{value:"details",label:"Företagsuppgifter"},{value:"cv",label:"Matchprofil"},{value:"settings",label:"Inställningar"}]} value={profileTab} onChange={setProfileTab} />
+      <TabList id="company-profile" label="Delar av företagsprofilen" className="company-profile-tabs" items={[{value:"overview",label:"Översikt"},{value:"details",label:"Företagsuppgifter"},{value:"cv",label:"Matchprofil"},{value:"invoices",label:"Fakturor"},{value:"settings",label:"Inställningar"}]} value={profileTab} onChange={setProfileTab} />
       {error && <p role="alert" className="company-profile-message is-error">{error}</p>}
       {savedNote && <p role="status" className="company-profile-message">{savedNote}</p>}
       {profileTab === "overview" && <div className="company-profile-overview" {...tabPanelProps("company-profile", "overview")}><section className="card company-profile-about"><p className="company-profile-eyebrow">Om er</p><h2>Det här är {companyName || "ert företag"}</h2><p>{companyDescription || "Beskriv er verksamhet så att kandidater kan lära känna er. Lägg till en beskrivning under Företagsuppgifter."}</p><button type="button" className="company-profile-text-action" onClick={() => setProfileTab("details")}>Redigera företagsuppgifter <UiIcon name="arrow" width="16" /></button></section><aside><CompanyVerificationStatus profile={savedCompany} compact action={{ onClick: () => setProfileTab("details"), label: "Visa vad som krävs" }} /><Link className="card company-profile-job-count" href="/company?view=annonser"><strong>{companyJobCount}</strong><span>Aktiva annonser</span><UiIcon name="arrow" width="19" /></Link></aside><section className="card company-profile-culture"><UiIcon name="discover" width="25" /><div><h2>Vad gör er till en bra arbetsplats?</h2><p>Er matchprofil samlar kultur, värderingar och det ni erbjuder. Den återanvänds som grund för varje jobb.</p></div><button type="button" className="secondary-btn" onClick={() => setProfileTab("cv")}>Visa matchprofil</button></section></div>}
@@ -396,7 +396,8 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
       </section>}
       {profileTab === "cv" && <div {...tabPanelProps("company-profile", "cv")}><CompanyMatchProfileForm userId={user.id} /></div>}
-      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><SupportLinks/></section><CompanyBillingSettings userId={user.id}/><HireTestInvoices key={user.id}/>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="company-profile-delete"/></section></div>}
+      {profileTab === "invoices" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "invoices")}><HireTestInvoices key={user.id} companyView/><CompanyBillingSettings userId={user.id}/></div>}
+      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><SupportLinks/><Link href={COMPANY_ROUTES.invoices}>Hantera fakturor och fakturauppgifter</Link></section>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="company-profile-delete"/></section></div>}
     </main>;
   }
 
