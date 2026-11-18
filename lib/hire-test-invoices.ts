@@ -45,6 +45,16 @@ export async function getHireTestOffer(): Promise<typeof HIRE_TEST_TERMS | null>
   return data;
 }
 
+export type RecruitmentInvoiceStatus = "none" | "pending" | "issued" | "held";
+
+export async function getRecruitmentInvoiceStatus(matchId: string, signal: AbortSignal): Promise<RecruitmentInvoiceStatus> {
+  const { data, error } = await getSupabaseClient().rpc("get_recruitment_invoice_status", { p_match_id: matchId }).abortSignal(signal);
+  if (error || (data !== "none" && data !== "pending" && data !== "issued" && data !== "held")) {
+    throw new Error("Fakturastatusen kunde inte hämtas.");
+  }
+  return data;
+}
+
 export async function listHireInvoices(admin: boolean, signal: AbortSignal, live: boolean): Promise<(HireTestInvoice | HireBankInvoice)[]> {
   const { data, error } = await getSupabaseClient().rpc(live ? "list_hire_bank_invoices" : "list_hire_test_invoices", { p_admin: admin }).abortSignal(signal);
   if (error || !Array.isArray(data)) throw new Error("Fakturorna kunde inte hämtas.");

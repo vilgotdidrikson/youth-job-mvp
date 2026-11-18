@@ -12,7 +12,7 @@ declare
   a uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); y uuid:=gen_random_uuid();
   tc uuid:=gen_random_uuid(); ty uuid:=gen_random_uuid();
   j uuid:=gen_random_uuid(); m uuid:=gen_random_uuid();
-  activation uuid; invoice_id uuid; link_match uuid;
+  activation uuid; invoice_id uuid; test_invoice_id uuid; link_match uuid;
   cfg jsonb:='{"enabled":true,"uf_tax_reviewed":true,"tax_decision_reference":"Fiktivt beslut i rollbackprov","terms_version":"bankgiro-test-v1","terms":"Testvillkor för ett fiktivt återställningsprov.","seller":{"name":"Fiktivt övningsföretag","address":"Testgatan 1, 12345 Testort","reference":"Fiktiv referens","bankgiro":"1234567"}}';
   form jsonb:=jsonb_build_object('role_name','Fiktiv tjänst','start_date',current_date::text,'expected_employment',null);
   approval jsonb:=jsonb_build_object('response','approved','expected_employment',jsonb_build_object('role_name','Fiktiv tjänst','start_date',current_date::text,'response','pending'));
@@ -43,12 +43,32 @@ begin
   perform pg_temp.pilot_actor(ty);
   begin perform public.hire_invoice_pilot_accounts(); raise exception 'Candidate sees admin fixtures'; exception when insufficient_privilege then null; end;
   perform pg_temp.pilot_actor(tc);
-  if public.hire_invoice_test_offer() is null then raise exception 'Pilot company not set up for test invoices'; end if;
+  if public.hire_invoice_test_offer() is distinct from 'test-launch-500-sek-v1' then raise exception 'Pilot company not set up for test invoices'; end if;
+  perform public.recruitment_action('register',link_match,form||'{"test_invoice_terms":"test-launch-500-sek-v1"}');
+  if public.get_recruitment_invoice_status(link_match) is distinct from 'pending' or public.list_hire_test_invoices() <> '[]' then
+    raise exception 'Company cannot see pending status before candidate approval';
+  end if;
+  perform pg_temp.pilot_actor(ty);
+  if public.get_recruitment_invoice_status(link_match) is not null then raise exception 'Candidate can read company invoice status'; end if;
+  perform public.recruitment_action('respond',link_match,approval);
+  perform pg_temp.pilot_actor(tc);
+  invoice:=public.list_hire_test_invoices()->0;
+  test_invoice_id:=(invoice->>'id')::uuid;
+  if public.get_recruitment_invoice_status(link_match) is distinct from 'issued' or test_invoice_id is null
+    or invoice->>'invoice_email' is distinct from 'info@matchnwork.se' or invoice->>'mail_state' is distinct from 'pending' then
+    raise exception 'Pilot candidate approval failed to issue company invoice and queue for the approved test mailbox';
+  end if;
+  perform pg_temp.pilot_actor(a,'aal2');
+  if not exists(select 1 from jsonb_array_elements(public.list_hire_test_invoices(true)) item where item->>'id'=test_invoice_id::text)
+    or not exists(select 1 from jsonb_array_elements(public.get_recruitment_records()) item
+      where item->>'match_id'=link_match::text and item#>>'{employment,response}'='approved') then
+    raise exception 'Confirmed pilot missing from an admin list';
+  end if;
   perform pg_temp.pilot_actor(c);
   if public.get_hire_bank_invoice_offer() is not null then raise exception 'Paid offer exposed without config'; end if;
   perform public.save_company_billing_details(c,null,details);
   reset role;
-  if not exists (select 1 from public.youth_profiles where user_id=ty and short_onboarding_completed) then raise exception 'Candidate routed away from test chat'; end if;
+  if not exists (select 1 from public.youth_profiles where user_id=ty and short_onboarding_completed and nullif(btrim(cv_text),'') is not null) then raise exception 'Candidate cannot pass both onboarding and CV gates'; end if;
   activation:=vault.create_secret(cfg::text,'mnw_hire_bank_invoice_config');
 
   set local role authenticated;

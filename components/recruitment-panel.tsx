@@ -6,7 +6,8 @@ import { getRecruitmentRecords, recruitmentAction, RecruitmentConflictError } fr
 import { EMPLOYMENT_STEPS, REGISTER_EMPLOYMENT, employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { CURRENT_COMPANY_OFFER, HIRE_LAUNCH_PRICE, HIRE_TEST_TERMS } from "@/lib/current-offer";
-import { getHireBankInvoiceOffer, getHireTestOffer, type HireBankInvoiceOffer } from "@/lib/hire-test-invoices";
+import { getHireBankInvoiceOffer, getHireTestOffer, getRecruitmentInvoiceStatus, type HireBankInvoiceOffer, type RecruitmentInvoiceStatus } from "@/lib/hire-test-invoices";
+import { isInvoicePilotDev } from "@/lib/invoice-pilot";
 import styles from "./recruitment.module.css";
 
 type InvoiceOffer = typeof HIRE_TEST_TERMS | HireBankInvoiceOffer | "loading" | "error" | null;
@@ -56,7 +57,7 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
     {company ? <>{expected ? <p>Kandidaten granskar de ändrade uppgifterna igen innan anställningen blir bekräftad.</p> : <ol className={styles.steps}>{EMPLOYMENT_STEPS.map(step => <li key={step}>{step}</li>)}</ol>}
       {invoiceOffer === "loading" && <p role="status">Hämtar pris och villkor…</p>}
       {invoiceOffer === "error" && <p role="alert">Pris och villkor kunde inte hämtas. Stäng formuläret och öppna det igen.</p>}
-      {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>}
+      {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}{isInvoicePilotDev() && " För att prova fakturering, använd företagskontot från Testa fakturaflödet i admin."}</p>}
       {testInvoice && <div className={styles.offer}>
         <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=invoices">företagets fakturavy</Link> och ska aldrig betalas.</p>
         <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
@@ -80,6 +81,33 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
       <button type="button" className="secondary-btn" disabled={busy} onClick={onClose}>Avbryt</button>
     </div>
   </form></ModalDialog>;
+}
+
+const invoiceStatusText: Record<RecruitmentInvoiceStatus, string> = {
+  none: "Ingen faktura är kopplad till den här anställningen.",
+  pending: "Test- eller betalningsvillkoren är sparade. Fakturan utfärdas när kandidaten bekräftar.",
+  issued: "Fakturan är utfärdad.",
+  held: "Fakturan behöver följas upp.",
+};
+
+function EmploymentInvoiceStatus({ matchId, compact }: { matchId: string; compact: boolean }) {
+  const [status, setStatus] = useState<RecruitmentInvoiceStatus | "error" | null>(null);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    void getRecruitmentInvoiceStatus(matchId, controller.signal).then(
+      value => { if (!controller.signal.aborted) setStatus(value); },
+      () => { if (!controller.signal.aborted) setStatus("error"); },
+    );
+    return () => controller.abort();
+  }, [matchId, retry]);
+
+  const message = status === null ? "Hämtar fakturastatus…" : status === "error" ? "Fakturastatusen kunde inte hämtas." : invoiceStatusText[status];
+  return <div>
+    {compact ? <span role="status">{message}</span> : <p role="status">{message}</p>}
+    {status === "error" && <button type="button" className={styles.textButton} onClick={() => { setStatus(null); setRetry(value => value + 1); }}>Försök igen</button>}
+    {(status === "issued" || status === "held") && <Link href="/profile?tab=invoices">Öppna fakturor och mejlstatus</Link>}
+  </div>;
 }
 
 export function RecruitmentPanel({ matchId, jobId, company = false, compact = false, onChanged }: { matchId?: string; jobId?: string; company?: boolean; compact?: boolean; onChanged?: () => void }) {
@@ -135,11 +163,11 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
   const attention = employment?.response === "disputed" || (!company && employment?.response === "pending");
   const panelId = `recruitment-${item.match_id}`;
   return <section className={`${styles.panel} ${compact ? styles.compact : ""}`} aria-label="Rekryteringsavslut">
-    {compact && <div className={styles.compactHeader}><div><strong>{employment ? presentation.title : "Rekrytering"}</strong>{employment && <span>{employment.role_name}</span>}</div>{attention && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{presentation.action}</button>}{company && eligible && !employment && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{REGISTER_EMPLOYMENT}</button>}<button type="button" className={styles.textButton} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded(current => !current)}>{expanded ? "Dölj detaljer" : "Visa alternativ"}</button></div>}
+    {compact && <div className={styles.compactHeader}><div><strong>{employment ? presentation.title : "Rekrytering"}</strong>{employment && <span>{employment.role_name}</span>}{company && employment && <EmploymentInvoiceStatus key={employment.response} matchId={item.match_id} compact/>}</div>{attention && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{presentation.action}</button>}{company && eligible && !employment && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{REGISTER_EMPLOYMENT}</button>}<button type="button" className={styles.textButton} aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpanded(current => !current)}>{expanded ? "Dölj detaljer" : "Visa alternativ"}</button></div>}
     <div id={panelId} hidden={compact && !expanded} className={compact ? styles.compactBody : undefined}><h3>{presentation.title}</h3>
     {employment && <p>{employment.role_name} · {employment.company_name}<br/>{experiencePeriod(employment.start_date)}</p>}
     <p>{presentation.description}</p>
-    {company && employment?.response === "approved" && <Link href="/profile?tab=invoices">Öppna fakturor</Link>}
+    {!compact && company && employment && <EmploymentInvoiceStatus key={employment.response} matchId={item.match_id} compact={false}/>}
     {eligible && <div className={styles.actions}>{company ? <>
       {employment?.response !== "approved" && <button type="button" className="secondary-btn" onClick={() => setEdit(true)}>{presentation.action}</button>}
       {!employment && (item.requested_at || item.reminder_sent_at) && item.review_state !== "resolved" && <><button type="button" className="secondary-btn" disabled={busy} onClick={() => void action("company_reply", { reply: "ongoing" })}>Rekryteringen pågår</button><button type="button" className="secondary-btn" disabled={busy} onClick={() => void action("company_reply", { reply: "no_hire" })}>Ingen anställning avtalad</button></>}

@@ -55,6 +55,7 @@ function harness({company=false,record=employment,invoiceOffer,write=async()=>{}
     react,
     "next/link":{default:"a"},
     "@/lib/hire-test-invoices":{},
+    "@/lib/invoice-pilot":{isInvoicePilotDev:()=>true},
     '@/components/modal-dialog':{ModalDialog:()=>null},
     '@/lib/recruitment':{RecruitmentConflictError:api.RecruitmentConflictError,recruitmentAction:async(...args)=>{calls.push(args);await write(...args);}},
     '@/lib/recruitment-types':types,
@@ -79,6 +80,7 @@ await ui.submit();assert.equal(ui.calls.length,1,'Refresh failure after a succes
 let resolveWrite;ui=harness({write:()=>new Promise(resolve=>{resolveWrite=resolve;})});
 const first=ui.submit();await ui.submit();assert.equal(ui.calls.length,1,'Double submit must be locked before rerender');resolveWrite();await first;
 ui=harness({company:true,record:null});assert.ok(text(ui.render()).includes(offer.CURRENT_COMPANY_OFFER.registration));
+assert.match(text(ui.render()), /Testa fakturaflödet i admin/);
 const registerForm=nodes(ui.render());assert.ok(ui.button(types.REGISTER_EMPLOYMENT),'New registration uses the shared action name');
 assert.deepEqual(registerForm.filter(n=>n.type==='li').map(text),[...types.EMPLOYMENT_STEPS],'Registration explains review and next status');
 for(const input of registerForm.filter(n=>n.type==='input'))assert.ok(registerForm.some(n=>n.props?.id===input.props['aria-describedby']&&text(n)),'Role and start date have a described hint');
