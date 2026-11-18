@@ -1,5 +1,6 @@
 "use client";
 import styles from "./youth-cv-entry.module.css";
+import formStyles from "./youth-cv-forms.module.css";
 import { PageLoading } from "@/components/page-loading";
 
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
@@ -687,27 +688,29 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   if (showCvStep) {
     return (
       <main
-        className="youth-onboarding"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          maxWidth: 430,
-          margin: "0 auto",
-          background: "#ffffff",
-          padding: "0 1.25rem",
-        }}
+        className={`youth-onboarding ${formStyles.review}`}
       >
-        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#4c303b" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Ta bild</button></div></div></ModalDialog>}
-        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Använd bild</button></div></div></ModalDialog>}
-        <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
-          <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
+        {cameraOpen && (
+          <ModalDialog label="Ta en profilbild" onClose={closeCamera} className={formStyles.photoDialog}>
+            <div className={formStyles.photoPanel}>
+              <h2 className={formStyles.photoTitle}>Ta en profilbild</h2>
+              <video ref={cameraVideoRef} autoPlay playsInline muted className={formStyles.cameraPreview} />
+              <div className={formStyles.photoActions}>
+                <button type="button" onClick={closeCamera} className={formStyles.photoCancel}>Avbryt</button>
+                <button type="button" onClick={takeCameraPhoto} className={formStyles.photoConfirm}>Ta bild</button>
+              </div>
+            </div>
+          </ModalDialog>
+        )}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoDialog}><div className={formStyles.photoPanel}><h2 className={formStyles.photoTitle}>Beskär din profilbild</h2><div className={formStyles.cropSquare}><img src={cropSource} alt="Förhandsgranskning" className={formStyles.cropPreview} style={{ transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div className={formStyles.cropMask} /></div><label className={formStyles.cropControl}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><div className={formStyles.photoActions}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoCancel}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} className={formStyles.photoConfirm}>Använd bild</button></div></div></ModalDialog>}
+        <div className={formStyles.reviewHeader}>
+          <p className={formStyles.reviewKicker}>
             Ditt CV är klart!
           </p>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--color-text)", margin: 0 }}>
+          <h1 className={formStyles.reviewTitle}>
             Granska ditt CV
           </h1>
-          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+          <p className={formStyles.reviewHint}>
             Redigera texten nedan om du vill ändra något.
           </p>
         </div>
@@ -718,21 +721,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           disabled={saving}
           onChange={(e) => { setApprovedCvSnapshot(null); setCvText(e.target.value); }}
           rows={18}
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            flex: 1,
-            borderRadius: 12,
-            border: "1px solid var(--color-border)",
-            padding: "1rem",
-            fontSize: "0.85rem",
-            fontFamily: "inherit",
-            resize: "vertical",
-            color: "var(--color-text)",
-            lineHeight: 1.65,
-            outline: "none",
-            background: "#fafafa",
-          }}
+          className={formStyles.reviewText}
         />
 
         <CvFactReview text={cvText} onSync={(cv) => { setApprovedCvSnapshot(null); setCvReviewSource(cvText); setStructuredCv(cv); }} cv={reviewCv} sourceText={cvReviewSource || cvSourceText(structuredCvFromForm({ ...answers, work_experiences: workExperiences, educations, certificate_entries: certificates, other_entries: otherEntries }))}
@@ -741,27 +730,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           onChange={(cv) => { setApprovedCvSnapshot(null); setStructuredCv(cv); setCvText(renderStructuredCv(cv)); }} />
 
         {error && (
-          <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "#c0392b" }}>{error}</p>
+          <p role="alert" className={formStyles.reviewError}>{error}</p>
         )}
 
-        <div style={{ paddingBottom: "3rem", paddingTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div className={formStyles.reviewActions}>
           <button
             type="button"
             onClick={() => void handleSaveCv()}
             disabled={saving || !cvFactsApproved}
-            style={{
-              width: "100%",
-              padding: "1rem",
-              borderRadius: 12,
-              border: "none",
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              fontSize: "1rem",
-              fontWeight: 500,
-              cursor: saving ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-              opacity: saving ? 0.6 : 1,
-            }}
+            aria-busy={saving}
+            className={formStyles.reviewSave}
           >
             {saving ? "Sparar CV och PDF..." : "Spara mitt CV"}
           </button>
@@ -785,8 +763,19 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
           padding: "0 1.25rem",
         }}
       >
-        {cameraOpen && <ModalDialog label="Ta en profilbild" onClose={closeCamera} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ta en profilbild</h2><video ref={cameraVideoRef} autoPlay playsInline muted style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, background: "#4c303b" }} /><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={closeCamera} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={takeCameraPhoto} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Ta bild</button></div></div></ModalDialog>}
-        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal"><div style={{ width: "min(100%, 25rem)", display: "grid", gap: ".8rem", padding: "1rem", borderRadius: 16, background: "#fff" }}><h2 style={{ margin: 0, fontSize: "1.1rem" }}>Beskär din profilbild</h2><div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#ddd" }}><img src={cropSource} alt="Förhandsgranskning" style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div style={{ position: "absolute", inset: 12, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.45)", pointerEvents: "none" }} /></div><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", fontWeight: 500 }}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div style={{ display: "flex", gap: ".6rem" }}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500 }}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500 }}>Använd bild</button></div></div></ModalDialog>}
+        {cameraOpen && (
+          <ModalDialog label="Ta en profilbild" onClose={closeCamera} className={formStyles.photoDialog}>
+            <div className={formStyles.photoPanel}>
+              <h2 className={formStyles.photoTitle}>Ta en profilbild</h2>
+              <video ref={cameraVideoRef} autoPlay playsInline muted className={formStyles.cameraPreview} />
+              <div className={formStyles.photoActions}>
+                <button type="button" onClick={closeCamera} className={formStyles.photoCancel}>Avbryt</button>
+                <button type="button" onClick={takeCameraPhoto} className={formStyles.photoConfirm}>Ta bild</button>
+              </div>
+            </div>
+          </ModalDialog>
+        )}
+        {cropSource && <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoDialog}><div className={formStyles.photoPanel}><h2 className={formStyles.photoTitle}>Beskär din profilbild</h2><div className={formStyles.cropSquare}><img src={cropSource} alt="Förhandsgranskning" className={formStyles.cropPreview} style={{ transform: `scale(${cropZoom}) translate(${cropOffset.x * 20}%, ${cropOffset.y * 20}%)` }} /><div className={formStyles.cropMask} /></div><label className={formStyles.cropControl}>Zoom<input type="range" min="1" max="3" step=".01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label><label className={formStyles.cropControl}>Flytta vågrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label><label className={formStyles.cropControl}>Flytta lodrätt<input type="range" min="-1" max="1" step=".01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label><div className={formStyles.photoActions}><button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoCancel}>Avbryt</button><button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} className={formStyles.photoConfirm}>Använd bild</button></div></div></ModalDialog>}
         <div style={{ paddingTop: "3rem", paddingBottom: "1.5rem" }}>
           <div
             style={{
@@ -1542,7 +1531,6 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         padding: "0 1.25rem",
       }}
     >
-      <style>{'label:has(input[type="file"][accept*=".pdf"]) { color: #a3a3a3 !important; font-size: .85rem !important; font-weight: 400 !important; }'}</style>
       <datalist id="youth-job-title-suggestions">
         {JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
       </datalist>
@@ -1556,30 +1544,30 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
         {ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}
       </datalist>
       {cropSource && (
-        <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className="mnw-onboarding-photo-modal">
-          <div style={{ width: "min(100%, 25rem)", display: "grid", gap: "1rem", padding: "1.25rem", borderRadius: 16, background: "#fff" }}>
+        <ModalDialog label="Beskär din profilbild" busy={docUploading} onClose={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoDialog}>
+          <div className={formStyles.photoPanel}>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.15rem", color: "var(--color-text)" }}>Beskär din profilbild</h2>
-              <p style={{ margin: ".35rem 0 0", color: "var(--color-text-muted)", fontSize: ".82rem", lineHeight: 1.45 }}>Cirkeln visar den bild som kommer att användas i din profil.</p>
+              <h2 className={formStyles.photoTitle}>Beskär din profilbild</h2>
+              <p className={formStyles.photoDescription}>Cirkeln visar den bild som kommer att användas i din profil.</p>
             </div>
-            <div onPointerDown={startCropDrag} onPointerMove={moveCropDrag} onPointerUp={endCropDrag} onPointerCancel={endCropDrag} style={{ width: cropSize, height: cropSize, maxWidth: "100%", justifySelf: "center", position: "relative", overflow: "hidden", background: "#e8e8e8", cursor: "grab", touchAction: "none" }}>
-              <img src={cropSource} alt="Förhandsgranskning för beskärning" style={{ position: "absolute", width: cropImageWidth, height: cropImageHeight, maxWidth: "none", left: cropImageLeft, top: cropImageTop, userSelect: "none", pointerEvents: "none" }} />
-              <div aria-hidden="true" style={{ position: "absolute", inset: 10, border: "2px solid #fff", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,.46)", pointerEvents: "none" }} />
+            <div onPointerDown={startCropDrag} onPointerMove={moveCropDrag} onPointerUp={endCropDrag} onPointerCancel={endCropDrag} className={formStyles.cropDrag} style={{ width: cropSize, height: cropSize }}>
+              <img src={cropSource} alt="Förhandsgranskning för beskärning" className={formStyles.cropDragImage} style={{ width: cropImageWidth, height: cropImageHeight, left: cropImageLeft, top: cropImageTop }} />
+              <div aria-hidden="true" className={formStyles.cropMask} />
             </div>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Zoom<input type="range" min="1" max="3" step="0.01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label>
-            <label style={{ display: "grid", gap: ".35rem", color: "#555", fontSize: ".8rem", fontWeight: 500 }}>Flytta lodrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label>
-            <div style={{ display: "flex", gap: ".65rem" }}>
-              <button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} style={{ flex: 1, padding: ".8rem", border: "1px solid #ddd", borderRadius: 10, background: "#fff", font: "inherit", fontWeight: 500, cursor: "pointer" }}>Avbryt</button>
-              <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} style={{ flex: 1, padding: ".8rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}>{docUploading ? "Sparar..." : "Använd bild"}</button>
+            <label className={formStyles.cropControl}>Zoom<input type="range" min="1" max="3" step="0.01" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} /></label>
+            <label className={formStyles.cropControl}>Flytta vågrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.x} onChange={(e) => setCropOffset((previous) => ({ ...previous, x: Number(e.target.value) }))} /></label>
+            <label className={formStyles.cropControl}>Flytta lodrätt<input type="range" min="-1" max="1" step="0.01" value={cropOffset.y} onChange={(e) => setCropOffset((previous) => ({ ...previous, y: Number(e.target.value) }))} /></label>
+            <div className={formStyles.photoActions}>
+              <button type="button" onClick={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} className={formStyles.photoCancel}>Avbryt</button>
+              <button type="button" onClick={() => void saveCroppedProfileImage()} disabled={docUploading} className={formStyles.photoConfirm}>{docUploading ? "Sparar..." : "Använd bild"}</button>
             </div>
           </div>
         </ModalDialog>
       )}
       {/* Progress bar */}
-      <div style={{ paddingTop: "3rem", paddingBottom: "2.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-muted)", fontWeight: 500, letterSpacing: "0.05em" }}>
+      <div className={formStyles.progress}>
+        <div className={formStyles.progressHeader}>
+          <span className={formStyles.progressCount}>
             {flowStep} / {flowTotal}
           </span>
           {((isAccountDetailsFlow && !accountDetailsSaved && step > 0) || (!voiceFinalize && !isAccountDetailsFlow && (step > FIRST_CV_STEP || cvBuilder))) && (
@@ -1592,22 +1580,16 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
               }}
               aria-label={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
               title={step === FIRST_CV_STEP ? "Tillbaka till CV-val" : "Tillbaka"}
-              style={{ minWidth: step === FIRST_CV_STEP ? 32 : undefined, minHeight: step === FIRST_CV_STEP ? 32 : undefined, fontSize: "0.8rem", color: "var(--color-text-muted)", background: "none", border: "none", cursor: "pointer", padding: step === FIRST_CV_STEP ? 0 : undefined }}
+              className={formStyles.progressBack}
             >
               {step === FIRST_CV_STEP ? "←" : "← Tillbaka"}
             </button>
           )}
         </div>
-        <div className="onboarding-progress-track" style={{ height: 8, borderRadius: 999, background: "#f0f0f0" }}>
+        <div className={formStyles.progressTrack} role="progressbar" aria-label="Steg i formuläret" aria-valuemin={0} aria-valuemax={flowTotal} aria-valuenow={flowStep}>
           <div
-            className="onboarding-progress-value"
-            style={{
-              height: 8,
-              borderRadius: 999,
-              background: "var(--color-brand)",
-              width: `${progress}%`,
-              transition: "width 0.3s ease",
-            }}
+            className={formStyles.progressValue}
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>
@@ -1853,10 +1835,14 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
                       </label>;
                     })}
                   </div>
-                  <div style={{ display: "grid", gap: ".55rem" }}><p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 500 }}>Bifoga ett intyg</p><label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "var(--color-text-muted)", boxSizing: "border-box", padding: "0 1rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }} /></label><label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1px solid var(--color-border)", borderRadius: 10, color: "var(--color-text-muted)", fontSize: ".85rem", fontWeight: 400, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />Bifoga fil som intyg</label></div>
+                  <div style={{ display: "grid", gap: ".55rem" }}>
+                    <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 500 }}>Bifoga ett intyg</p>
+                    <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}><input type="url" value={certificate.credential_url} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, credential_url: e.target.value } : item))} placeholder="Klistra in en länk till intyget, t.ex. https://..." style={{ width: "100%", height: "3rem", color: "var(--color-text-muted)", boxSizing: "border-box", padding: "0 1rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit" }} /></label>
+                    <label className={formStyles.filePicker} data-uploading={docUploading}><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,text/plain" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />Bifoga fil som intyg</label>
+                  </div>
                   <label style={{ display: "grid", gap: ".3rem", color: "var(--color-text-muted)", fontSize: ".72rem", fontWeight: 600 }}>Beskrivning<textarea value={certificate.description} onChange={(e) => setCertificates((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, description: e.target.value } : item))} placeholder="T.ex. Vad certifikatet eller stipendiet gällde" rows={2} style={{ width: "100%", boxSizing: "border-box", padding: ".7rem 1rem", border: "1px solid var(--color-border)", borderRadius: 10, font: "inherit", resize: "vertical" }} /></label>
                   {false && (
-                  <label style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".8rem", border: "1.5px dashed #d1d1d1", borderRadius: 10, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 600, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {certificate.pdf_url ? "PDF-intyg bifogat – byt fil" : "Bifoga PDF-intyg (valfritt)"}</label>
+                  <label className={formStyles.filePicker} data-uploading={docUploading}><input type="file" accept="application/pdf" onChange={(e) => void handleCertificatePdfSelect(index, e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {certificate.pdf_url ? "PDF-intyg bifogat – byt fil" : "Bifoga PDF-intyg (valfritt)"}</label>
                   )}
                   <button type="button" onClick={() => { if (!certificateIsComplete(certificate)) { setError("Fyll i alla fält för att spara certifikatet."); return; } setError(""); setSavedCertificates((previous) => previous.map((saved, savedIndex) => savedIndex === index ? true : saved)); }} style={{ justifySelf: "start", padding: ".55rem .8rem", border: 0, borderRadius: 8, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: ".8rem", fontWeight: 500, cursor: "pointer" }}>Spara certifikat</button>
                 </>}
@@ -1897,7 +1883,7 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
             {otherType && <input type="text" value={otherTitle} onChange={(e) => setOtherTitle(e.target.value)} placeholder="Titel" style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", font: "inherit" }} />}
             {otherType === "write" && <textarea value={answers.extracurriculars} onChange={(e) => handleTextChange(e.target.value)} placeholder="Skriv ditt tillägg här" rows={4} style={{ width: "100%", boxSizing: "border-box", padding: ".875rem 1rem", borderRadius: 12, border: "1px solid var(--color-border)", font: "inherit", resize: "vertical" }} />}
             {otherType === "link" && <input type="url" value={otherLink} onChange={(e) => setOtherLink(e.target.value)} placeholder="https://linkedin.com/in/..." style={{ width: "100%", boxSizing: "border-box", height: "3rem", padding: "0 1rem", borderRadius: 10, border: "1px solid var(--color-border)", font: "inherit" }} />}
-            {otherType === "pdf" && <label style={{ display: "grid", placeItems: "center", gap: ".4rem", minHeight: "8rem", padding: "1rem", border: "1.5px dashed #d1d1d1", borderRadius: 12, color: "var(--color-brand)", fontSize: ".85rem", fontWeight: 500, cursor: docUploading ? "wait" : "pointer" }}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
+            {otherType === "pdf" && <label className={formStyles.pdfPicker} data-uploading={docUploading}><input type="file" accept="application/pdf" onChange={(e) => void handleOtherPdfSelect(e)} disabled={docUploading} className="mnw-onboarding-file-input" />📎 {docUploading ? "Laddar upp..." : otherPdf ? `PDF bifogad: ${otherPdf.name}` : "Tryck för att bifoga en PDF"}</label>}
             <button type="button" onClick={saveOtherEntry} style={{ justifySelf: "start", padding: ".65rem .9rem", border: 0, borderRadius: 10, color: "#fff", background: "var(--color-brand)", font: "inherit", fontSize: ".85rem", fontWeight: 500, cursor: "pointer" }}>Spara tillägg</button>
           </div>
         ) : current.field === "skills_text" ? (

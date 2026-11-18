@@ -156,14 +156,6 @@ button,
   background: var(--color-canvas) !important;
 }
 
-.youth-onboarding-pink .onboarding-progress-track {
-  background: var(--color-surface-rose) !important;
-}
-
-.youth-onboarding-pink .onboarding-progress-value {
-  background: var(--color-brand) !important;
-}
-
 .youth-onboarding-pink .onboarding-question-bubble {
   background: var(--color-surface-rose) !important;
 }

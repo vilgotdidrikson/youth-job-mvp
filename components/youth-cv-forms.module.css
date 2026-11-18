@@ -1,0 +1,44 @@
+.progress { padding-block:3rem 2.5rem; }
+.progressHeader { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.6rem; }
+.progressCount,.progressBack { color:var(--color-text-muted); font-size:var(--text-sm); font-weight:var(--weight-medium); }
+.progressBack { min-width:44px; min-height:44px; padding:0 .5rem; border:0; background:none; cursor:pointer; }
+.progressTrack,.progressValue { height:8px; border-radius:var(--radius-pill); }
+.progressTrack { background:var(--color-rose-track); overflow:hidden; }
+.progressValue { background:var(--color-brand); transition:width .3s ease; }
+
+.review { display:flex; flex-direction:column; min-height:100svh; max-width:430px; margin-inline:auto; padding-inline:1.25rem; background:var(--color-surface); }
+.reviewHeader { padding-block:3rem 1.5rem; }
+.reviewKicker,.reviewHint { color:var(--color-text-muted); }
+.reviewKicker { margin:0 0 .4rem; font-size:var(--text-xs); font-weight:var(--weight-semibold); }
+.reviewTitle { margin:0; font-size:var(--text-xl); }
+.reviewHint { margin:.4rem 0 0; font-size:var(--text-sm); }
+.reviewText { box-sizing:border-box; width:100%; flex:1; padding:1rem; border:1px solid var(--color-border); border-radius:var(--radius-md); color:var(--color-text); background:var(--color-canvas); font:inherit; font-size:var(--text-md); line-height:1.65; resize:vertical; }
+.reviewError { margin:.75rem 0 0; color:var(--color-danger); font-size:var(--text-sm); }
+.reviewActions { padding-block:1.5rem 3rem; }
+
+.photoDialog:global(.mnw-modal-dialog) { width:min(440px,calc(100vw - 32px)); border-radius:var(--radius-xl); }
+.photoPanel { box-sizing:border-box; width:100%; display:grid; gap:.8rem; padding:26px; border-radius:inherit; color:var(--color-text); background:var(--color-surface); }
+.photoTitle { margin:0; font-size:var(--text-lg); font-weight:var(--weight-medium); }
+.photoDescription { margin:.35rem 0 0; color:var(--color-text-muted); font-size:var(--text-sm); line-height:1.75; }
+.cameraPreview { width:100%; aspect-ratio:1; object-fit:cover; border-radius:var(--radius-md); background:var(--color-plum-900); }
+.cropSquare,.cropDrag { position:relative; overflow:hidden; background:var(--color-divider); }
+.cropSquare { width:100%; aspect-ratio:1; }
+.cropDrag { max-width:100%; justify-self:center; cursor:grab; touch-action:none; }
+.cropPreview { width:100%; height:100%; object-fit:cover; }
+.cropDragImage { position:absolute; max-width:none; user-select:none; pointer-events:none; }
+.cropMask { position:absolute; inset:10px; border:2px solid var(--color-white); border-radius:50%; box-shadow:0 0 0 999px var(--color-backdrop); pointer-events:none; }
+.cropControl { display:grid; gap:.35rem; color:var(--color-text-muted); font-size:var(--text-sm); font-weight:var(--weight-medium); line-height:1.75; }
+.photoActions { display:flex; gap:.65rem; }
+.photoCancel,.photoConfirm,.reviewSave { min-height:46px; padding:.8rem; border:1px solid var(--color-border); border-radius:var(--radius-md); font:inherit; font-weight:var(--weight-medium); cursor:pointer; }
+.photoCancel,.photoConfirm { flex:1; }
+.photoCancel { color:var(--color-text); background:var(--color-surface); }
+.photoConfirm,.reviewSave { border-color:var(--color-brand); color:var(--color-on-brand); background:var(--color-brand); }
+.reviewSave { width:100%; }
+.photoConfirm:disabled,.reviewSave:disabled { opacity:.55; cursor:not-allowed; }
+.photoConfirm:disabled,.reviewSave[aria-busy="true"] { cursor:wait; }
+@media(max-width:480px) { .photoPanel { padding:22px; } }
+
+.filePicker,.pdfPicker { gap:.5rem; min-height:44px; padding:.8rem; border:1px solid var(--color-border); border-radius:var(--radius-sm); color:var(--color-text-muted); font-size:var(--text-sm); cursor:pointer; }
+.filePicker { display:flex; align-items:center; }
+.pdfPicker { display:grid; place-items:center; min-height:8rem; padding:1rem; border:1.5px dashed var(--color-dashed); text-align:center; }
+.filePicker[data-uploading="true"],.pdfPicker[data-uploading="true"] { cursor:wait; }
