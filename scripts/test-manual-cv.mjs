@@ -18,6 +18,20 @@ class View{
 }
 const hooks={...React,useState(initial){const v=active,i=v.index++;if(!(i in v.slots))v.slots[i]=typeof initial==='function'?initial():initial;return[v.slots[i],value=>{v.slots[i]=typeof value==='function'?value(v.slots[i]):value}]},useRef(initial){const v=active,i=v.index++;return v.slots[i]??={current:initial}},useMemo(fn){active.index++;return fn()},useEffect(fn,deps){const v=active,i=v.index++,old=v.effects[i];if(!old||deps.some((d,n)=>!Object.is(d,old.deps[n])))v.effects[i]={fn,deps,pending:true,cleanup:old?.cleanup}}};
 const cv=require('../lib/structured-cv.ts'),review=require('../lib/cv-fact-review.ts');
+const completeFacts=cv.createEmptyStructuredCv({name:'QA'});
+completeFacts.skills=[{name:'Kassa',category:'other',evidence:''},{name:'Privat verktyg',category:'other',evidence:''}];
+const fullText=cv.renderStructuredCv(completeFacts), fullApproval=review.cvReviewSnapshot(fullText,completeFacts);
+const selected=cv.setCvItemIncluded(completeFacts,'skills',1,false);
+const selectedText=cv.renderStructuredCv(selected);
+assert.match(selectedText,/Kassa/);
+assert.doesNotMatch(selectedText,/Privat verktyg/);
+assert.equal(review.hasApprovedCv(fullApproval,selectedText,selected),false);
+const savedSelection=review.reviewedCvPayload(selectedText,selected,review.cvReviewSnapshot(selectedText,selected));
+assert.equal(savedSelection.cv_structured.skills.length,2,'Full facts stay in the approved profile');
+assert.deepEqual(savedSelection.cv_structured.cvOmitted,{skills:[1]});
+assert.match(cv.renderStructuredCv(cv.setCvItemIncluded(selected,'skills',1,true)),/Privat verktyg/);
+assert.equal(review.isCvTextAligned(fullText,{...selected,textBasis:fullText}),false);
+
 savedProfile={full_name:'Alex QA',city:'Stockholm',documents:[],cv_structured:null,certificates:null,extracurriculars:null};
 globalThis.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
 globalThis.window={scrollTo(){}};
