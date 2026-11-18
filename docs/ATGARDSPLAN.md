@@ -2043,6 +2043,7 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 
 <a id="da-12"></a>
 ### DA-12 Flytta äldre inline-stilar till CSS-moduler och ta bort överskrivningar
+- Reserverad före kodarbete 2026-11-18: Vilgot / Codex, `codex/da12-profile-auth-20261118`, från dev `8254190`. Användaren godkänner nu arbete även på andras pågående punkter efter kodgranskning. Granskat befintlig profil, auth, PageLoading och product-design.css; inga öppna PR:er. Tre delar: företagsprofilens inline-formulärstilar till CSS-modul, fel-kontotyp-kort till samma modul, auth-laddning till befintlig PageLoading. Endast presentation; tidigare ägare/status bevaras.
 
 - [ ] Klar
 - Prioritet: P2
