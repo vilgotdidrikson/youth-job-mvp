@@ -9,6 +9,7 @@ import { UiIcon } from "@/components/ui-icon";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { updatePassword } from "@/lib/auth";
+import { hasAuthEmailLinkError } from "@/lib/auth-email-link";
 import { createLatestRead } from "@/lib/latest-read";
 
 export default function ResetPasswordPage() {
@@ -32,7 +33,7 @@ export default function ResetPasswordPage() {
     const url = new URL(window.location.href);
     const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
     const recoveryLink = url.searchParams.has("code") || url.searchParams.get("type") === "recovery" || hash.get("type") === "recovery";
-    const linkError = url.searchParams.get("error_description") || hash.get("error_description");
+    const linkError = hasAuthEmailLinkError(url.search, url.hash);
 
     const check = createLatestRead<string | null>({
       read: async () => {
