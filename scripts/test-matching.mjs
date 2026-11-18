@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 const tmp=mkdtempSync(resolve('.matching-tests-'));
 try {
- for(const name of ['matching-input-policy','trait-evidence','matching-provider','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules']) {
+ for(const name of ['matching-input-policy','trait-evidence','matching-provider','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules','queue-application-followups']) {
   let code=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   code=code.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
   writeFileSync(`${tmp}/${name}.mjs`,code);
@@ -68,6 +68,34 @@ try {
  const eligible=assessCandidate(matchingCriteria([{label:'React',required:true},{label:'Social',category:'trait'},{label:'Kassa',category:'trainable'},{label:'Nationalitet'},{label:'Körkort'}]),[], '');
  assert.deepEqual(missingApplicationCriteria(eligible),['React','Körkort']);
  assert.deepEqual(missingApplicationCriteria(eligible,['React']),['Körkort']);
+ const repeated=assessCandidate(matchingCriteria([
+   {label:'Kassa vana'}, {label:'KASSA  VANA',required:true}, {label:'Kassa vana',required:true},
+   {label:'Körkort',required:true}, {label:'Truckkort'}, {label:'Lagerarbete'},
+ ]),[], '');
+ assert.deepEqual(missingApplicationCriteria(repeated),['KASSA  VANA','Körkort','Truckkort']);
+ assert.deepEqual(missingApplicationCriteria(repeated,['Ｋassa vana']),['Körkort','Truckkort','Lagerarbete']);
+ const savedProfile=emptyRecruitmentProfile();
+ savedProfile.savedAnswers=[{source:'job-a:followup:1',question:'Har du behörighet?',text:'Jag har B-körkort.',savedAt:'2026-11-18'}];
+ const savedSource=candidateSource({recruitment_profile:savedProfile});
+ assert.match(savedSource,/tidigare komplettering/);
+ const nextJob=matchingCriteria([{label:'Körkort B',required:true},{label:'Kassavana'}]);
+ const nextAssessment=assessCandidate(nextJob,[],savedSource);
+ assert.equal(nextAssessment.criteria[0].status,'fulfilled');
+ assert.deepEqual(missingApplicationCriteria(nextAssessment,[],savedSource),['Kassavana']);
+ assert.equal(assessCandidate(nextJob,[],savedSource+'\nJag saknar B-körkort').criteria[0].status,'unknown');
+ assert.equal(fixedCriterionEvidence('Kan arbeta helger','Sparad egen uppgift från tidigare komplettering: Jag kan arbeta helger').status,'unknown');
+ const {queueApplicationFollowups}=await load('queue-application-followups');
+ let history={data:[{criterion_label:'Kassavana'}]}, queuedLabels;
+ const followupClient={
+   from:()=>({select(){return this;},eq(column){return column==='youth_user_id'?Promise.resolve(history):this;}}),
+   rpc:async (_,args)=>{queuedLabels=args.p_labels;return {data:{queued:args.p_labels.length}};},
+ };
+ assert.equal((await queueApplicationFollowups(followupClient,'job','candidate',1,nextAssessment,'hash',undefined,savedSource)).queued,0);
+ assert.deepEqual(queuedLabels,[]);
+ history={error:{message:'offline'}};queuedLabels=undefined;
+ assert.deepEqual(await queueApplicationFollowups(followupClient,'job','candidate',1,nextAssessment,'hash',undefined,savedSource),{queued:0,unavailable:true});
+ assert.equal(queuedLabels,undefined);
+
  const uid='test-user';
  for(const url of ['other/cv.pdf','test-user/../other/cv.pdf','https://evil.test/cv.pdf','test-user/cv.docx']) assert.equal(uploadedCvPath([{type:'cv',url}],uid),null);
  assert.equal(uploadedCvPath([{type:'other',url:'test-user/not-cv.pdf'},{type:'cv',url:'test-user/cv.pdf'}],uid),'test-user/cv.pdf');

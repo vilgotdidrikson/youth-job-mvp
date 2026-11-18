@@ -31,9 +31,12 @@ export function fixedCriterionEvidence(label: string, source: string, today = ne
   const sentences = source.split(/\n|[.!?](?:\s|$)/).map((item) => item.trim());
   const matches: { status: "fulfilled" | "unfulfilled"; evidence: string }[] = [];
   for (const sentence of sentences) {
+    // Only reuse saved answers for durable qualifications here. Old availability
+    // from another job must not stand in for the current application's schedule.
+    const qualification = licence ? sentence.replace(/^Sparad egen uppgift från tidigare komplettering:\s*/i, "") : sentence;
     // Conditional wishes/plans cannot establish a qualification or availability.
-    if (/\b(om|kanske|vill|planerar|tidigare|utgånget)\b/i.test(sentence)) continue;
-    const text = sentence.replace(/^(?:cv_text|Ansökningssvar|Kompletteringssvar|Uppgift från profil\/CV):\s*/i, "").trim();
+    if (/\b(om|kanske|vill|planerar|tidigare|utgånget)\b/i.test(qualification)) continue;
+    const text = qualification.replace(/^(?:cv_text|Ansökningssvar|Kompletteringssvar|Uppgift från profil\/CV):\s*/i, "").trim();
     if (licence) {
       if (/^(?:jag )?(?:har|saknar) (?:inte |inget )?b[- ]körkort$/i.test(text)) {
         matches.push({ status: /(?:saknar|inte|inget)/i.test(text) ? "unfulfilled" : "fulfilled", evidence: sentence });
