@@ -10,6 +10,8 @@ const base = 'https://vwcfjvwfeatvuisojwrh.supabase.co';
 const app = process.env.MNW_DRAFT_APP || 'http://127.0.0.1:3020';
 assert.ok(['http://127.0.0.1:3020', 'https://youth-job-mvp-dev.vercel.app'].includes(app), 'Dev-only application');
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.MNW_CV_ANON_KEY;
+const width = Number(process.env.MNW_DRAFT_WIDTH || 1280);
+assert.ok([375, 1280].includes(width), 'Use a 375 or 1280 px viewport');
 assert.ok(key);
 if (!key.startsWith('sb_publishable_')) {
   const claims = JSON.parse(Buffer.from(key.split('.')[1], 'base64url'));
@@ -37,7 +39,7 @@ const rows = async () => { const r = await c.from('jobs').select('*').eq('compan
 const saved = async page => { await page.getByRole('button', { name: 'Spara utkast', exact: true }).click(); await page.getByRole('status').filter({ hasText: 'Utkast sparat på den här enheten' }).waitFor(); };
 const listingTab = page => page.getByRole('tab', { name: /Mina annonser/ }).click();
 async function login(page) {
-  await page.goto(`${app}/login`);
+  await page.goto(`${app}/login`, { waitUntil: 'domcontentloaded' });
   await page.locator('input[name=email]').fill(email); await page.locator('input[name=password]').fill(password);
   await page.getByRole('button', { name: 'Logga in', exact: true }).click();
   await page.waitForURL(u => u.pathname !== '/login');
@@ -46,17 +48,19 @@ try {
   const signed = await c.auth.signUp({ email, password, options: { data: { role: 'company' } } });
   id = signed.data.user?.id; token = signed.data.session?.access_token;
   check(!signed.error && !!id && !!token, 'real temporary company session');
-  writeFileSync('/tmp/mnw-job-draft-fixtures.json', JSON.stringify({ prefix, ids: [id] }));
+  writeFileSync(`/tmp/mnw-job-draft-fixtures-${width}.json`, JSON.stringify({ prefix, ids: [id] }));
   const profile = await c.from('company_profiles').update({ company_name: `QA ${prefix}`, administrator: 'QA Testkontakt', organization_number: '000000-0000', city: 'Stockholm' }).eq('user_id', id);
   assert.ok(!profile.error, `company fixture ${profile.error?.code}`);
-  browser = await chromium.launch({ headless: true, executablePath: process.env.MNW_CV_CHROMIUM || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  const args = ['--no-sandbox', '--disable-dev-shm-usage'];
+  if (process.env.MNW_DRAFT_HEADLESS_SHELL === '1') args.push('--single-process', '--no-zygote', '--use-gl=angle', '--use-angle=swiftshader');
+  browser = await chromium.launch({ headless: true, executablePath: process.env.MNW_CV_CHROMIUM || '/usr/bin/chromium', args,
     ...(proxy ? { proxy: { server: proxy.origin, bypass: '127.0.0.1,localhost', ...(proxy.username ? { username: decodeURIComponent(proxy.username), password: decodeURIComponent(proxy.password) } : {}) } } : {}) });
-  const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width, height: 900 } });
   context.on('request', request => { if (/\/api\/(?:ai\/|youth\/cv\/generate|company\/(?:job\/generate|candidate-assessment))/.test(new URL(request.url()).pathname)) aiRequests++; });
   const page = await context.newPage(); page.setDefaultTimeout(25000);
   page.on('pageerror', error => console.log(`BROWSER_ERROR ${error.name}: ${error.message.slice(0, 180)}`));
   step = 'login and form'; await login(page);
-  await page.goto(`${app}/company?view=skapa`);
+  await page.goto(`${app}/company?view=skapa`, { waitUntil: 'domcontentloaded' });
   const title = `QA DRAFT ${prefix} – EJ RIKTIGT JOBB`;
   await page.getByLabel('Arbetstitel *', { exact: true }).fill(title);
   await page.locator('#job-builder-description').fill('Fiktiv teknisk QA-annons. Ingen verklig rekrytering.');
@@ -86,13 +90,24 @@ try {
   const before = await record(page), cropHash = hash(before.images[0].bytes);
   check(before.images.length === 1 && before.images[0].bytes.length > 1000 && before.builderStep === 3, 'real cropped image/text/step saved atomically');
   check(before.form.workplaces.length === 2 && before.form.city === 'Stockholm', 'two workplaces and primary address saved');
-  await page.reload(); await page.getByRole('heading', { name: 'Plats och praktiska detaljer', exact: true }).waitFor();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: 'Plats och praktiska detaljer', exact: true }).waitFor();
   const after = await record(page);
   check(hash(after.images[0].bytes) === cropHash && after.form.title === title && await page.locator('.job-builder-image-grid img').count() === 1, 'reload restores exact cropped bytes and preview');
   await listingTab(page); await page.getByRole('button', { name: 'Återuppta utkast', exact: true }).click();
   check(await page.getByRole('heading', { name: 'Plats och praktiska detaljer', exact: true }).isVisible(), 'listing overview resumes correct saved step');
+  step = 'pending verification preview and receipt';
+  await page.getByRole('button', { name: 'Förhandsvisa', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Förhandsvisa annonsen' });
+  await preview.waitFor();
+  check((await preview.innerText()).includes('Den blir synlig först efter företagsgodkännande'), 'preview explains that company approval is required for visibility');
+  await page.keyboard.press('Escape');
+  await preview.waitFor({ state: 'detached' });
+  check(await page.getByRole('button', { name: 'Publicera annons', exact: true }).count() === 0, 'pending company has no immediate publication action');
   await page.getByRole('button', { name: 'Spara inför publicering', exact: true }).click();
   await page.waitForURL(u => u.searchParams.has('created'));
+  await page.getByText(/Annonsen är sparad hos MatchnWork och väntar på företagsverifiering/).waitFor();
+  check(await page.getByText(/Inväntar företagsverifiering/, { exact: true }).first().isVisible(), 'overview status agrees with saved receipt');
   const originals = await rows(); check(originals.length === 1 && originals[0].publication_status === 'pending_verification', 'one real ad saved and still hidden before verification');
   const original = originals[0];
   check(original.workplaces.length === 2 && original.salary_per_hour === '130–150 kr/tim', 'real database preserves both workplaces and exact salary');
@@ -108,7 +123,7 @@ try {
       ? await c.rpc('recruitment_action', { p_action: 'close_job', p_match_id: null, p_payload: { job_id: original.id, outcome: 'no_hire' } })
       : await c.from('jobs').update({ status }).eq('id', original.id);
     assert.ok(!updated.error);
-    await page.goto(`${app}/company?view=annonser`);
+    await page.goto(`${app}/company?view=annonser`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Kopiera annons', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Kopiera annons', exact: true });
     if (status !== 'active') {
@@ -140,31 +155,33 @@ try {
   check(preserved.status === 'closed' && preserved.title === original.title && preserved.image_url === original.image_url && JSON.stringify(preserved.workplaces) === JSON.stringify(original.workplaces), 'publishing copy leaves original status/content/workplaces unchanged');
 
   step = 'two actual browser tabs';
-  for (const width of [375, 1280]) {
-    await page.setViewportSize({ width, height: 900 }); await page.goto(`${app}/company?view=skapa`);
-    const a = `QA tab A ${width}`, b = `QA tab B ${width}`;
+  for (const tabWidth of [375, 1280]) {
+    await page.setViewportSize({ width: tabWidth, height: 900 });
+    await page.goto(`${app}/company?view=skapa`, { waitUntil: 'domcontentloaded' });
+    const a = `QA tab A ${tabWidth}`, b = `QA tab B ${tabWidth}`;
     await page.getByLabel('Arbetstitel *', { exact: true }).fill(a); await saved(page);
-    const tab = await context.newPage(); tab.setDefaultTimeout(25000); await tab.goto(`${app}/company?view=skapa`);
+    const tab = await context.newPage(); tab.setDefaultTimeout(25000); await tab.goto(`${app}/company?view=skapa`, { waitUntil: 'domcontentloaded' });
     await tab.getByLabel('Arbetstitel *', { exact: true }).fill(b); await saved(tab);
-    await page.getByLabel('Arbetstitel *', { exact: true }).fill(`QA unsaved A ${width}`);
+    await page.getByLabel('Arbetstitel *', { exact: true }).fill(`QA unsaved A ${tabWidth}`);
     await page.getByRole('alert').filter({ hasText: 'Utkastet har ändrats i en annan flik' }).waitFor();
-    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === `QA unsaved A ${width}` && (await record(page)).form.title === b, `real tab conflict preserves local text and stored winner ${width}`);
-    check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `conflict notice fits viewport ${width}`);
+    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === `QA unsaved A ${tabWidth}` && (await record(page)).form.title === b, `real tab conflict preserves local text and stored winner ${tabWidth}`);
+    check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `conflict notice fits viewport ${tabWidth}`);
     await page.getByRole('button', { name: 'Öppna sparat utkast', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Öppna sparat utkast', exact: true });
     await dialog.getByRole('button', { name: 'Avbryt', exact: true }).click();
-    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === `QA unsaved A ${width}`, `cancel reload keeps local edits ${width}`);
+    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === `QA unsaved A ${tabWidth}`, `cancel reload keeps local edits ${tabWidth}`);
     await page.getByRole('button', { name: 'Öppna sparat utkast', exact: true }).click();
-    await dialog.waitFor(); await page.screenshot({ path: `/tmp/mnw-job-draft-conflict-${width}.png`, fullPage: true });
+    await dialog.waitFor();
+    await page.screenshot({ path: `/tmp/mnw-job-draft-conflict-${width}-${tabWidth}.png`, fullPage: true });
     await dialog.getByRole('button', { name: 'Öppna sparat utkast', exact: true }).click();
     await dialog.waitFor({ state: 'hidden' });
-    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === b, `explicit reload reads latest real IndexedDB revision ${width}`);
-    await page.getByLabel('Arbetstitel *', { exact: true }).fill(`QA fresh ${width}`); await saved(page);
-    check((await record(page)).form.title === `QA fresh ${width}`, `reviewed fresh save succeeds ${width}`);
+    check(await page.getByLabel('Arbetstitel *', { exact: true }).inputValue() === b, `explicit reload reads latest real IndexedDB revision ${tabWidth}`);
+    await page.getByLabel('Arbetstitel *', { exact: true }).fill(`QA fresh ${tabWidth}`); await saved(page);
+    check((await record(page)).form.title === `QA fresh ${tabWidth}`, `reviewed fresh save succeeds ${tabWidth}`);
     await tab.close();
   }
   check(aiRequests === 0, 'no AI requests during the complete workflow');
-  console.log(JSON.stringify({ prefix, checks, result: 'PASS', app, fixtureIds: [id], jobs: (await rows()).map(j => j.id) }));
+  console.log(JSON.stringify({ prefix, checks, result: 'PASS', app, width, fixtureIds: [id], jobs: (await rows()).map(j => j.id) }));
 } catch (error) {
   console.error(JSON.stringify({ result: 'FAIL', step, checks, error: error.message })); process.exitCode = 1;
 } finally {
