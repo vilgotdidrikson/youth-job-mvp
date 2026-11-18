@@ -6,10 +6,10 @@ import { getRecruitmentRecords, recruitmentAction, RecruitmentConflictError } fr
 import { EMPLOYMENT_STEPS, REGISTER_EMPLOYMENT, employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { CURRENT_COMPANY_OFFER, HIRE_LAUNCH_PRICE, HIRE_TEST_TERMS } from "@/lib/current-offer";
-import { getHireTestOffer } from "@/lib/hire-test-invoices";
+import { getHireBankInvoiceOffer, getHireTestOffer, type HireBankInvoiceOffer } from "@/lib/hire-test-invoices";
 import styles from "./recruitment.module.css";
 
-type InvoiceOffer = typeof HIRE_TEST_TERMS | "loading" | "error" | null;
+type InvoiceOffer = typeof HIRE_TEST_TERMS | HireBankInvoiceOffer | "loading" | "error" | null;
 
 function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }: { item: RecruitmentRecord; company: boolean; onClose: () => void; onSaved: () => Promise<void>; invoiceOffer?: InvoiceOffer }) {
   const [role, setRole] = useState(item.employment?.role_name ?? item.job_title);
@@ -19,12 +19,13 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
   const [expected] = useState(() => employmentSnapshot(item.employment));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [reload, setReload] = useState(false);
-  const [testTermsAccepted, setTestTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const lock = useRef(false);
   const hintId = useId();
   const approved = expected?.response === "approved";
   const testInvoice = invoiceOffer === HIRE_TEST_TERMS;
-  const invoiceUnavailable = invoiceOffer === "loading" || invoiceOffer === "error" || (testInvoice && !testTermsAccepted);
+  const bankInvoice = invoiceOffer && typeof invoiceOffer === "object" ? invoiceOffer : null;
+  const invoiceUnavailable = invoiceOffer === "loading" || invoiceOffer === "error" || ((testInvoice || bankInvoice !== null) && !termsAccepted);
   const reloadLatest = async () => {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError("");
@@ -41,6 +42,7 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
         expected_employment: expected,
         ...(company ? { role_name: role.trim(), start_date: start } : { response, show_on_profile: show, include_in_cv: cv }),
         ...(testInvoice ? { test_invoice_terms: HIRE_TEST_TERMS } : {}),
+        ...(bankInvoice ? { bank_invoice_terms: bankInvoice.acceptance } : {}),
       });
       saved = true;
       await onSaved(); onClose();
@@ -57,7 +59,12 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
       {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>}
       {testInvoice && <div className={styles.offer}>
         <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=settings">företagets inställningar</Link> och ska aldrig betalas.</p>
-        <label className={styles.checkbox}><input type="checkbox" checked={testTermsAccepted} onChange={event => setTestTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
+        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
+      </div>}
+      {bankInvoice && <div className={styles.offer}>
+        <p>{bankInvoice.seller} fakturerar {HIRE_LAUNCH_PRICE} när kandidaten bekräftar anställningen. Fakturan skickas till er sparade fakturaadress med 30 dagars betalningsfrist.</p>
+        <p className={styles.terms}>{bankInvoice.terms}</p>
+        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag får företräda företaget och godkänner avgiften och betalningsvillkoren.</label>
       </div>}
       <label>Befattning<input required maxLength={120} aria-describedby={`${hintId}-role`} disabled={reload} value={role} onChange={event => setRole(event.target.value)}/></label><p id={`${hintId}-role`} className={styles.hint}>Det kandidaten anställs som. Kandidaten väljer själv om den visas på profilen och i CV:t.</p>
       <label>Startdatum<input required type="date" min="2000-01-01" aria-describedby={`${hintId}-start`} disabled={reload} value={start} onChange={event => setStart(event.target.value)}/></label><p id={`${hintId}-start`} className={styles.hint}>Första arbetsdagen. Ett kommande datum går bra.</p></> : <>
@@ -88,7 +95,7 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
   useEffect(() => {
     if (!needsInvoiceOffer) return;
     let active = true;
-    void getHireTestOffer().then(
+    void getHireTestOffer().then(async test => test ?? await getHireBankInvoiceOffer()).then(
       offer => { if (active) setInvoiceOffer(offer); },
       () => { if (active) setInvoiceOffer("error"); },
     );

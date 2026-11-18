@@ -16,6 +16,23 @@ export type HireTestInvoice = {
   paid_at: string | null;
 };
 
+export type HireBankInvoice = HireTestInvoice & {
+  invoice_number: string;
+  buyer_org: string;
+  seller: { name: string; address: string; reference: string; bankgiro: string };
+  mail_state: "pending" | "sending" | "sent" | "review";
+};
+
+export type HireBankInvoiceOffer = { version: string; acceptance: string; terms: string; seller: string };
+
+export async function getHireBankInvoiceOffer(): Promise<HireBankInvoiceOffer | null> {
+  const { data, error } = await getSupabaseClient().rpc("get_hire_bank_invoice_offer");
+  if (error || (data !== null && (typeof data?.version !== "string" || typeof data.acceptance !== "string" || typeof data.terms !== "string" || typeof data.seller !== "string"))) {
+    throw new Error("Pris och betalningsvillkor kunde inte hämtas.");
+  }
+  return data;
+}
+
 export function invoiceAmount(amountOre: number) {
   return new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: 2 }).format(amountOre / 100);
 }
@@ -26,17 +43,17 @@ export async function getHireTestOffer(): Promise<typeof HIRE_TEST_TERMS | null>
   return data;
 }
 
-export async function listHireTestInvoices(admin: boolean, signal: AbortSignal): Promise<HireTestInvoice[]> {
-  const { data, error } = await getSupabaseClient().rpc("list_hire_test_invoices", { p_admin: admin }).abortSignal(signal);
-  if (error || !Array.isArray(data)) throw new Error("Testfakturorna kunde inte hämtas.");
+export async function listHireInvoices(admin: boolean, signal: AbortSignal, live: boolean): Promise<(HireTestInvoice | HireBankInvoice)[]> {
+  const { data, error } = await getSupabaseClient().rpc(live ? "list_hire_bank_invoices" : "list_hire_test_invoices", { p_admin: admin }).abortSignal(signal);
+  if (error || !Array.isArray(data)) throw new Error("Fakturorna kunde inte hämtas.");
   return data;
 }
 
-export async function recordHireTestPayment(id: string, amountOre: number, reference: string) {
-  const { error } = await getSupabaseClient().rpc("record_hire_test_payment", {
+export async function recordHireInvoicePayment(id: string, amountOre: number, reference: string, live: boolean) {
+  const { error } = await getSupabaseClient().rpc(live ? "record_hire_bank_payment" : "record_hire_test_payment", {
     p_invoice: id,
     p_amount_ore: amountOre,
     p_reference: reference,
   });
-  if (error) throw new Error(getSupabaseErrorMessage(error, "Testbetalningen kunde inte bekräftas."));
+  if (error) throw new Error(getSupabaseErrorMessage(error, "Betalningen kunde inte stämmas av."));
 }

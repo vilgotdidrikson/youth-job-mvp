@@ -48,6 +48,14 @@
       "review": "Endast fiktiva anställningar och godkänd testinkorg. PDF och mejltext lagras inte i kön. Ingen klientåtkomst. Raden raderas med testfakturan."
     },
     {
+      "id": "hire-bank-invoices",
+      "relations": ["private.hire_bank_invoices"],
+      "classification": "review",
+      "subjectScope": "company_user_id kopplar fakturan till företagsägaren. match_id kopplas till anställningen och tas bort om matchningen raderas.",
+      "data": "Frysta säljar- och fakturamottagaruppgifter, organisationsnummer, fakturaadress, fakturamottagarens e-post, accepterade villkor, belopp, fakturanummer, bankavstämning, rättelse och mejlets leveransstatus.",
+      "review": "Bokföringsunderlag kräver separat bedömning av bevarande och rättelse före skarp drift. Kopplingarna sätts till null vid radering av rekryteringen eller företagskontot. Ägar- och adminvyer använder en begränsad projektion. Bara mejlprocessen läser faktura-e-post. Produktläge är avstängt i dev."
+    },
+    {
       "id": "private-cv-work",
       "relations": [
         "public.ai_onboarding_sessions",

@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { getHireTestOffer, invoiceAmount, listHireTestInvoices, recordHireTestPayment, type HireTestInvoice } from "@/lib/hire-test-invoices";
+import { getHireTestOffer, invoiceAmount, listHireInvoices, recordHireInvoicePayment, type HireBankInvoice, type HireTestInvoice } from "@/lib/hire-test-invoices";
 import styles from "./company-billing-settings.module.css";
 
-async function download(invoice: HireTestInvoice) {
+type Invoice = HireTestInvoice | HireBankInvoice;
+
+async function download(invoice: Invoice) {
   const [{ pdf }, { HireTestInvoicePdf }, { downloadPdfFile }] = await Promise.all([
     import("@react-pdf/renderer"), import("@/lib/hire-test-invoice-pdf"), import("@/lib/cv-pdf"),
   ]);
   const blob = await pdf(<HireTestInvoicePdf invoice={invoice} amount={invoiceAmount(invoice.amount_ore)} />).toBlob();
-  downloadPdfFile(new File([blob], `TEST-${invoice.id}.pdf`, { type: "application/pdf" }));
+  const number = "invoice_number" in invoice ? invoice.invoice_number : `TEST-${invoice.id}`;
+  downloadPdfFile(new File([blob], `${number}.pdf`, { type: "application/pdf" }));
 }
 
-function InvoiceRow({ invoice, admin, onPaid }: { invoice: HireTestInvoice; admin: boolean; onPaid: () => void }) {
+function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boolean; onPaid: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const lock = useRef(false);
@@ -25,35 +28,37 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: HireTestInvoice; admi
     catch (reason) { setError(reason instanceof Error ? reason.message : "Åtgärden kunde inte slutföras."); }
     finally { lock.current = false; setBusy(false); }
   };
+  const bank = "invoice_number" in invoice ? invoice : null;
   const settle = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
     const amountOre = Number(fields.get("amount")) * 100;
     const reference = String(fields.get("reference")).trim().toUpperCase();
     void run(async () => {
-      await recordHireTestPayment(invoice.id, amountOre, reference);
+      await recordHireInvoicePayment(invoice.id, amountOre, reference, bank !== null);
       onPaid();
     });
   };
   return <li>
     <h3>{invoice.buyer_name} · {invoiceAmount(invoice.amount_ore)}</h3>
-    <p>TEST-{invoice.id}</p>
-    <p>{invoice.issued_on} · {invoice.held_at ? "Pausad för rättelse" : invoice.paid_at ? "Testbetalning avstämd" : "Inväntar testavstämning"}</p>
-    <button className="secondary-btn" type="button" disabled={busy} onClick={() => void run(() => download(invoice))}>Ladda ner testfaktura (PDF)</button>
+    <p>{bank?.invoice_number ?? `TEST-${invoice.id}`}</p>
+    <p>{invoice.issued_on} · {invoice.held_at ? "Pausad för rättelse" : invoice.paid_at ? "Betalning avstämd" : "Inväntar avstämning"}</p>
+    {bank && <p>Förfallodatum {bank.due_on} · {bank.mail_state === "sent" ? "Mejlet skickat" : bank.mail_state === "review" ? "Mejlet behöver följas upp" : "Mejlet väntar på utskick"}</p>}
+    <button className="secondary-btn" type="button" disabled={busy} onClick={() => void run(() => download(invoice))}>{bank ? "Ladda ner faktura (PDF)" : "Ladda ner testfaktura (PDF)"}</button>
     {admin && !invoice.held_at && !invoice.paid_at && <form onSubmit={settle}>
       <div className={styles.fields}>
-        <label className={styles.field}>Simulerat belopp (kr)<input name="amount" type="number" min="1" max="1000" step="1" required disabled={busy}/></label>
-        <label className={styles.field}>Fiktiv referens<input name="reference" placeholder="TEST-001" maxLength={40} required disabled={busy}/></label>
+        <label className={styles.field}>{bank ? "Inbetalt belopp (kr)" : "Simulerat belopp (kr)"}<input name="amount" type="number" min="1" max="1000" step="1" required disabled={busy}/></label>
+        <label className={styles.field}>{bank ? "Bankens transaktionsreferens" : "Fiktiv referens"}<input name="reference" placeholder={bank ? undefined : "TEST-001"} maxLength={bank ? 60 : 40} required disabled={busy}/></label>
       </div>
-      <button className="secondary-btn" type="submit" disabled={busy}>Stäm av testbetalning</button>
+      <button className="secondary-btn" type="submit" disabled={busy}>{bank ? "Stäm av bankbetalning" : "Stäm av testbetalning"}</button>
     </form>}
     {error && <p role="alert" className={styles.error}>{error}</p>}
   </li>;
 }
 
-export function HireTestInvoices({ admin = false }: { admin?: boolean }) {
-  const [invoices, setInvoices] = useState<HireTestInvoice[]>([]);
-  const [available, setAvailable] = useState(admin);
+function HireInvoices({ admin = false, live }: { admin?: boolean; live: boolean }) {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [available, setAvailable] = useState(!live && admin);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
@@ -62,27 +67,32 @@ export function HireTestInvoices({ admin = false }: { admin?: boolean }) {
     const controller = new AbortController();
     const load = async () => {
       try {
-        const enabled = admin || Boolean(await getHireTestOffer());
+        const enabled = live || admin || Boolean(await getHireTestOffer());
         if (controller.signal.aborted) return;
-        setAvailable(enabled);
+        if (!live) setAvailable(enabled);
         if (!enabled) return;
-        const rows = await listHireTestInvoices(admin, controller.signal);
-        if (!controller.signal.aborted) { setInvoices(rows); setError(""); }
+        const rows = await listHireInvoices(admin, controller.signal, live);
+        if (!controller.signal.aborted) { setInvoices(rows); setError(""); if (live) setAvailable(rows.length > 0); }
       } catch {
-        if (!controller.signal.aborted) setError("Testfakturorna kunde inte hämtas. För admin krävs tvåstegsverifiering.");
+        if (!controller.signal.aborted) setError("Fakturorna kunde inte hämtas. För admin krävs tvåstegsverifiering.");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     };
     void load();
     return () => controller.abort();
-  }, [admin, refresh]);
+  }, [admin, live, refresh]);
   if (!available) return null;
-  return <section className={styles.card} aria-label="Testfakturor">
-    <h2>Testfakturor</h2>
-    <p className={styles.intro}>All betalning i det här flödet är simulerad. Testfakturorna ska inte betalas.</p>
-    {loading ? <p role="status">Hämtar testfakturor…</p> : error ? <p className={styles.error} role="alert">{error}</p> : invoices.length ?
+  const title = live ? "Bankgirofakturor" : "Testfakturor";
+  return <section className={styles.card} aria-label={title}>
+    <h2>{title}</h2>
+    {!live && <p className={styles.intro}>All betalning i det här flödet är simulerad. Testfakturorna ska inte betalas.</p>}
+    {loading ? <p role="status">Hämtar fakturor…</p> : error ? <p className={styles.error} role="alert">{error}</p> : invoices.length ?
       <ul className={styles.invoiceList}>{invoices.map(invoice => <InvoiceRow key={invoice.id} invoice={invoice} admin={admin} onPaid={reload}/>)}</ul> : <p>Inga utfärdade testfakturor.</p>}
-    <button className="secondary-btn" type="button" disabled={loading} onClick={reload}>Uppdatera testfakturor</button>
+    <button className="secondary-btn" type="button" disabled={loading} onClick={reload}>Uppdatera fakturor</button>
   </section>;
+}
+
+export function HireTestInvoices({ admin }: { admin?: boolean }) {
+  return <><HireInvoices admin={admin} live={false}/><HireInvoices admin={admin} live/></>;
 }

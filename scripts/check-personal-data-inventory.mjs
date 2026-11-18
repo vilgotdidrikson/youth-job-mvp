@@ -34,6 +34,7 @@ const readBaseReviewedCatalog=()=>[
 export const readReviewedCatalog=()=>[
  'docs/privacy/catalog.hire-test-invoices-2026-11-18.json',
  'docs/privacy/catalog.hire-invoice-mail-2026-11-18.json',
+ 'docs/privacy/catalog.hire-bank-invoices-2026-11-18.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))));
 export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
