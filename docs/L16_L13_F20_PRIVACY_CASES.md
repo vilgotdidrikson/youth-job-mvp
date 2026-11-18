@@ -132,3 +132,13 @@ Kalenderunderlag kontrollerat 2026-11-17: [SFS 1989:253, Sveriges riksdag](https
 - Färsk katalogkontroll före ändringen passerade; efter migreringen upptäcktes exakt tre förväntade kolumner innan granskad metadata/register uppdaterades. Slutkontroll passerar för 92 relationer/fyra buckets, liksom 33 inventeringskontroller. Se L13_EXPORT_INVENTORY.md. Ärendefritext och kontakt kräver individuell bedömning och ingår inte i automatisk råexport.
 - Befintlig session/lösenord/MFA (37 + 24 + 53), insamling (122), strukturerad exportpolicy (232), TypeScript, riktad ESLint, designtokens (309, oförändrad färgbaslinje), diffkontroll och standardproduktionsbygge passerar.
 - Ingen positiv inloggad browser-, mobil- eller fysisk MFA-acceptans påstås. Tidigare Chromium-startspärr kvarstår som begränsning. Verkliga handläggare, bevakad kontaktfunktion, identitetsprövning, kompletteringar från mejlavsändare, bilagor, incidentflöde, friständringar, bakgrundspåminnelser och faktisk gallring återstår. Inga riktiga behörigheter eller produktionsändringar införs.
+
+## Fortsättning 2026-11-18 – säkrare formulärunderlag
+
+[PR #224](https://github.com/vilgotdidrikson/youth-job-mvp/pull/224), `codex/l16-case-input-safety-20261118`, reserverad före kodarbete från dev `685afff`. L16 förblir Pågår.
+
+- Lokala datum för mejlmottagning, redan skickat svar och intern uppföljning kontrolleras mot de inmatade kalenderdelarna. JavaScript fick tidigare normalisera exempelvis 30 februari eller obefintlig 02:30 vid vårens sommartidsbyte till en annan tid. Sådana tider avvisas nu. Tidszonen är fortsatt handläggarens lokala; höstens upprepade timme följer JavaScripts tidigare val av offset.
+- Ändrat svar, åtgärd eller sändningsdatum avmarkerar bekräftelsen om redan skickat mejl. Handläggaren måste bekräfta det aktuella underlaget före registrering.
+- Ett oväntat kast från intagsanropet fångas i formuläret, bevarar ursprungligt underlag/UUID och låser nytt försök tills återläsning. Ingen automatisk omsändning; sena fel efter avmontering ändrar ingen vy.
+
+241 lokala kontroller passerar (57 API, 106 modell/klient, 78 faktiska komponentcallbackfall med kontrollerade gränser). Nya datumfall körs i Europe/Stockholm, inklusive ogiltigt kalenderdatum, sommartidsgap, fel indataformat och giltig tid efter gapet. Komponentproven kontrollerar återställd sändningsbekräftelse och fryst underlag efter oväntat kast. TypeScript, riktad ESLint, diffkontroll och standardbygge passerar. Ingen schema-/behörighetsändring, ny datakälla eller faktisk mejlsändning; ingen ny SQL-/datainventering krävs. Inloggad browser-/mobil-/fysisk MFA-acceptans och tidigare kvarvarande arbete återstår.

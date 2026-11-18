@@ -10,6 +10,11 @@ const record=()=>({id,revision:rev,requester_id:A,kind:'access',body:'QA',status
 globalThis.fetch=async(url,init)=>{requests.push({url,...init});return onFetch?onFetch(url,init):Response.json({available:true,cases:[record()],next:null});};
 let count=0;const ok=(v,m)=>{assert.ok(v,m);console.log('PASS '+m);count++;};const signal=()=>new AbortController().signal;const reset=()=>{user=A;hanging=false;requests=[];onFetch=null;};
 try{
+ const oldTZ=process.env.TZ;process.env.TZ='Europe/Stockholm';
+ try{
+  for(const invalid of ['2026-02-30T10:00','2026-03-29T02:30','2026-11-17','2026-11-17T09:00Z','2026-13-01T10:00']){assert.throws(()=>model.localCaseTime(invalid));count++;}
+  ok(model.localCaseTime('2026-03-29T03:30')==='2026-03-29T01:30:00.000Z','valid local time after DST gap preserves entered wall time');
+ }finally{if(oldTZ===undefined)delete process.env.TZ;else process.env.TZ=oldTZ;}
  let v=model.parsePrivacyCase({...record(),secret:'MUST_DROP'},A);ok(!('secret'in v),'closed record projection omits extra values');
  for(const bad of [null,{...record(),requester_id:B},{...record(),kind:'__proto__'},{...record(),revision:'bad'},{...record(),events:[{id,action:'leak',created_at:'2026-11-12T09:00:00Z',public_message:'QA'}]}]){assert.throws(()=>model.parsePrivacyCase(bad,A));count++;}
  ok(model.caseText('  Åäö\nQA  ')==='Åäö\nQA','text preserves content and trims edges');assert.throws(()=>model.caseText('\u0001bad'));count++;

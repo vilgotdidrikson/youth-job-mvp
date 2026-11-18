@@ -98,5 +98,13 @@ export function matchesEmailCase(item:PrivacyCase,input:EmailCaseInput) {
 }
 
 export function localCasePastTime(value:string,earliest?:string):string {
- const time=new Date(value);if(!Number.isFinite(time.getTime()))throw Error("Ange en giltig tid.");return casePastTime(time.toISOString(),earliest);
+ return casePastTime(localCaseTime(value),earliest);
+}
+
+export function localCaseTime(value:string):string {
+ const match=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+ if(!match)throw Error("Ange en giltig lokal tid.");
+ const parts=match.slice(1).map(Number),time=new Date(value);
+ if(!Number.isFinite(time.getTime())||[time.getFullYear(),time.getMonth()+1,time.getDate(),time.getHours(),time.getMinutes()].some((part,i)=>part!==parts[i]))throw Error("Tiden finns inte i din lokala kalender. Välj en annan tid.");
+ return time.toISOString();
 }
