@@ -78,7 +78,12 @@ export interface CvOtherExperience {
   sourceNotes: string[];
 }
 
+export const CV_SELECTION_SECTIONS = ["workExperience", "education", "projects", "skills", "certifications", "languages", "otherExperience"] as const;
+export type CvSelectionSection = (typeof CV_SELECTION_SECTIONS)[number];
+
 export interface StructuredCvData {
+  /** Zero-based items kept as approved profile facts and omitted from the résumé. */
+  cvOmitted?: Partial<Record<CvSelectionSection, number[]>>;
   // Exact freely edited text from which these reviewed facts were extracted.
   textBasis?: string;
   personalInfo: CvPersonalInfo;
@@ -190,7 +195,27 @@ function bullets(values: string[], limit = 4) {
   return [...new Set(values.map(clean).filter(Boolean))].slice(0, limit).map((value) => `- ${value}`);
 }
 
-export function renderStructuredCv(cv: StructuredCvData): string {
+export function setCvItemIncluded(cv: StructuredCvData, section: CvSelectionSection, index: number, included: boolean): StructuredCvData {
+  const current = cv.cvOmitted?.[section] ?? [];
+  const next = { ...cv, cvOmitted: { ...cv.cvOmitted, [section]: included ? current.filter(item => item !== index) : [...new Set([...current, index])].sort((a, b) => a - b) } };
+  delete next.textBasis; // A new selection must be reviewed against the newly rendered text.
+  return next;
+}
+
+export function selectedCvFacts(cv: StructuredCvData): StructuredCvData {
+  const result = { ...cv };
+  if (cv.cvOmitted) {
+    for (const section of CV_SELECTION_SECTIONS) {
+      const omitted = new Set(cv.cvOmitted[section] ?? []);
+      if (omitted.size) Object.assign(result, { [section]: cv[section].filter((_, index) => !omitted.has(index)) });
+    }
+  }
+  delete result.cvOmitted;
+  return result;
+}
+
+export function renderStructuredCv(profile: StructuredCvData): string {
+  const cv = selectedCvFacts(profile);
   const output: string[] = [];
   const section = (title: string, lines: string[]) => { if (lines.length) output.push(title, ...lines, ""); };
   const contact = compact([cv.personalInfo.city, cv.personalInfo.phone, cv.personalInfo.email, cv.personalInfo.linkedin, cv.personalInfo.portfolio]);
@@ -220,7 +245,7 @@ export function renderStructuredCv(cv: StructuredCvData): string {
   return output.filter((line,index,lines)=>line || (index>0 && lines[index-1])).join("\n").trim();
 }
 
-export function appendInterviewAnswer(cv: StructuredCvData, area: keyof Omit<StructuredCvData, "personalInfo"> | "personalInfo", transcript: string): StructuredCvData {
+export function appendInterviewAnswer(cv: StructuredCvData, area: keyof Omit<StructuredCvData, "cvOmitted" | "textBasis">, transcript: string): StructuredCvData {
   const answer = clean(transcript);
   if (!answer) return cv;
   const next = structuredClone(cv);

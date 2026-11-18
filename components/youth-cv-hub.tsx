@@ -231,7 +231,34 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     setError("");
     setApprovedSnapshot(null);
     if (!skip && step === "about" && !draft.about.trim()) { setError("Skriv några ord om dig själv, eller hoppa över och fyll i senare."); return; }
-    if (returnToReview) { setEditedSections((current) => current.includes(step as FormStep) ? current : [...current, step as FormStep]); setGenerated({ text: renderStructuredCv(source), structured: source }); setStep("preview"); setReturnToReview(false); return; }
+    if (returnToReview) {
+      const field = step as FormStep;
+      setEditedSections((current) => current.includes(field) ? current : [...current, field]);
+      const previous = generated?.structured;
+      const patch = {
+        about: { profile: source.profile },
+        education: { education: source.education },
+        experience: { workExperience: source.workExperience },
+        skills: { skills: source.skills },
+        languages: { languages: source.languages },
+        merits: {
+          certifications: source.certifications,
+          personalInfo: { ...previous?.personalInfo, linkedin: source.personalInfo.linkedin, portfolio: source.personalInfo.portfolio },
+          otherExperience: [...(previous?.otherExperience ?? []).filter(entry => entry.type !== "link"), ...source.otherExperience],
+        },
+      }[field];
+      const structured = previous ? { ...previous, ...patch } : source;
+      if (previous && structured.cvOmitted) {
+        const omitted = { ...structured.cvOmitted };
+        for (const section of Object.keys(patch) as (keyof typeof omitted)[]) delete omitted[section];
+        structured.cvOmitted = omitted;
+      }
+      delete structured.textBasis;
+      setGenerated({ text: renderStructuredCv(structured), structured });
+      setStep("preview");
+      setReturnToReview(false);
+      return;
+    }
     if (step === "merits") { if (canUseAi) void generate(); else prepareManualPreview(); return; }
     setStep(STEPS[index + 1]);
   };

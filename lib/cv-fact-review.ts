@@ -7,7 +7,8 @@ export function cvReviewSnapshot(text: string, cv: StructuredCvData): string {
 }
 
 export function isCvTextAligned(text: string, cv: StructuredCvData): boolean {
-  return Boolean(text.trim() && (text === renderStructuredCv(cv) || text === cv.textBasis));
+  const filtered = Object.values(cv.cvOmitted ?? {}).some(entries => entries.length > 0);
+  return Boolean(text.trim() && (text === renderStructuredCv(cv) || (!filtered && text === cv.textBasis)));
 }
 
 export function reviewedCvPayload(text: string, cv: StructuredCvData, approval: string | null) {
@@ -47,7 +48,7 @@ export function cvFactFields(cv: StructuredCvData): CvFactField[] {
       fields.push({ path, label: path.map((part) => /^\d+$/.test(part) ? String(Number(part) + 1) : CV_FACT_LABELS[part] ?? part).join(" · "), value: value ?? "" });
     } else if (Array.isArray(value)) value.forEach((item, index) => visit(item, [...path, String(index)]));
     else if (value && typeof value === "object") Object.entries(value).forEach(([key, item]) => {
-      if (key !== "sourceNotes" && key !== "textBasis") visit(item, [...path, key]);
+      if (key !== "sourceNotes" && key !== "textBasis" && key !== "cvOmitted") visit(item, [...path, key]);
     });
   }
   visit(cv, []);
