@@ -192,7 +192,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | För granskning | Vilgot / Codex |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Klar | Vilgot / Codex (kod), Max / Claude (verifiering) |
 | 10 | [F05](#f05) | P1 | Gör matchningsanalysen begriplig och användbar | Klar | Vilgot / Codex |
-| 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Blockerad | Vilgot / Codex |
+| 11 | [F06](#f06) | P1 | Förklara pris och anställningsavgift | Pågår | Vilgot / Codex |
 | 12 | [L04](#l04) | P1 | Färdigställ och verifiera anställningsbekräftelsen | För granskning | Vilgot / Codex |
 | 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | För granskning | Vilgot / Codex |
 | 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | För granskning | Codex |
@@ -681,11 +681,12 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f06"></a>
 ### F06 Förklara pris och anställningsavgift
+- Reserverad 2026-11-18 före kodarbete. Vilgot / Codex på `codex/f06-l03-hire-invoice-20261118` från dev `ccacdac`. Användaren beslutade 500 kr vid lansering och planerar 1 000 kr senare. F06 flyttas till Pågår. Arbetet omfattar introduktionspris, avgränsad testfakturering efter bekräftelse från båda parter och manuell betalningsavstämning i dev. Inga öppna PR:er.
 
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 11
-- Status: Blockerad
+- Status: Pågår
 - Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/l04-recruitment-20261018`, reserverad före kodarbete 2026-10-18. L04: status, rättelse, samtidighet och båda rollerna. F06: korrekt information om nuvarande kostnadsfria läge; framtida avgiftsbeslut återstår.
 - Åtgärd: Beskriv den avsedda avgiften, vad som utlöser den, vem som faktureras och när. Gör gratis konto och eventuell avgift vid anställning begripliga på prissidan och före anställningsregistrering. Förklara också en aktiv rekrytering och 20 kandidater, inklusive vad som händer vid gränsen.
@@ -1259,6 +1260,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="l03"></a>
 ### L03 Automatiserad fakturering vid bekräftad anställning
+- Reserverad 2026-11-18 före kodarbete. Vilgot / Codex på `codex/f06-l03-hire-invoice-20261118` från dev `ccacdac`. Användaren beslutade 500 kr vid lansering och planerar 1 000 kr senare. F06 flyttas till Pågår. Arbetet omfattar introduktionspris, avgränsad testfakturering efter bekräftelse från båda parter och manuell betalningsavstämning i dev. Inga öppna PR:er.
 
 - [ ] Klar
 - Prioritet: P1

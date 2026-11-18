@@ -9,6 +9,7 @@ import { ModalDialog } from "@/components/modal-dialog";
 import { RecruitmentProfileEditor } from "@/components/recruitment-profile-editor";
 
 import { CompanyBillingSettings } from "@/components/company-billing-settings";
+import { HireTestInvoices } from "@/components/hire-test-invoices";
 import { BlockedContacts } from "@/components/blocked-contacts";
 
 import { CvFactReview } from "@/components/cv-fact-review";
@@ -395,7 +396,7 @@ const { user, profile, loading, logout, status, error: sessionError } = useRequi
 
       </section>}
       {profileTab === "cv" && <div {...tabPanelProps("company-profile", "cv")}><CompanyMatchProfileForm userId={user.id} /></div>}
-      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><SupportLinks/></section><CompanyBillingSettings userId={user.id}/>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="company-profile-delete"/></section></div>}
+      {profileTab === "settings" && <div className="company-profile-settings" {...tabPanelProps("company-profile", "settings")}><section className="card company-profile-account"><h2>Ditt konto</h2><p>{user.email}</p><SupportLinks/></section><CompanyBillingSettings userId={user.id}/><HireTestInvoices key={user.id}/>{accountSecurityCard}<BlockedContacts key={user.id} userId={user.id} /><section className="card company-profile-session"><h2>Kontoinställningar</h2><button type="button" className="secondary-btn" disabled={loggingOut} onClick={() => void handleLogout()}>{loggingOut ? "Loggar ut…" : "Logga ut"}</button><ExportAccountControl userId={user.id}/><DeleteAccountControl userId={user.id} email={user.email} role={profile.role} className="company-profile-delete"/></section></div>}
     </main>;
   }
 

@@ -1,13 +1,17 @@
 "use client";
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { ModalDialog } from "@/components/modal-dialog";
 import { getRecruitmentRecords, recruitmentAction, RecruitmentConflictError } from "@/lib/recruitment";
 import { EMPLOYMENT_STEPS, REGISTER_EMPLOYMENT, employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
-import { CURRENT_COMPANY_OFFER } from "@/lib/current-offer";
+import { CURRENT_COMPANY_OFFER, HIRE_LAUNCH_PRICE, HIRE_TEST_TERMS } from "@/lib/current-offer";
+import { getHireTestOffer } from "@/lib/hire-test-invoices";
 import styles from "./recruitment.module.css";
 
-function EmploymentForm({ item, company, onClose, onSaved }: { item: RecruitmentRecord; company: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+type InvoiceOffer = typeof HIRE_TEST_TERMS | "loading" | "error" | null;
+
+function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }: { item: RecruitmentRecord; company: boolean; onClose: () => void; onSaved: () => Promise<void>; invoiceOffer?: InvoiceOffer }) {
   const [role, setRole] = useState(item.employment?.role_name ?? item.job_title);
   const [start, setStart] = useState(item.employment?.start_date ?? "");
   const [show, setShow] = useState(item.employment?.show_on_profile ?? false);
@@ -15,9 +19,12 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
   const [expected] = useState(() => employmentSnapshot(item.employment));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [reload, setReload] = useState(false);
+  const [testTermsAccepted, setTestTermsAccepted] = useState(false);
   const lock = useRef(false);
   const hintId = useId();
   const approved = expected?.response === "approved";
+  const testInvoice = invoiceOffer === HIRE_TEST_TERMS;
+  const invoiceUnavailable = invoiceOffer === "loading" || invoiceOffer === "error" || (testInvoice && !testTermsAccepted);
   const reloadLatest = async () => {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError("");
@@ -26,13 +33,14 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
     finally { lock.current = false; setBusy(false); }
   };
   const submit = async (event: FormEvent, response = "approved") => {
-    event.preventDefault(); if (lock.current || reload) return;
+    event.preventDefault(); if (lock.current || reload || invoiceUnavailable) return;
     lock.current = true; setBusy(true); setError("");
     let saved = false;
     try {
       await recruitmentAction(company ? "register" : "respond", item.match_id, {
         expected_employment: expected,
         ...(company ? { role_name: role.trim(), start_date: start } : { response, show_on_profile: show, include_in_cv: cv }),
+        ...(testInvoice ? { test_invoice_terms: HIRE_TEST_TERMS } : {}),
       });
       saved = true;
       await onSaved(); onClose();
@@ -44,7 +52,13 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
   return <ModalDialog label={company ? expected ? "Rätta anställningsuppgifter" : REGISTER_EMPLOYMENT : approved ? "Synlighet och CV" : "Granska anställning"} onClose={onClose} busy={busy} className={styles.dialog}><form onSubmit={submit}>
     <h2>{company ? `${expected ? "Rätta anställningsuppgifter" : REGISTER_EMPLOYMENT} för ${item.youth_name}` : approved ? "Synlighet och CV" : "Granska din anställning"}</h2>
     {company ? <>{expected ? <p>Kandidaten granskar de ändrade uppgifterna igen innan anställningen blir bekräftad.</p> : <ol className={styles.steps}>{EMPLOYMENT_STEPS.map(step => <li key={step}>{step}</li>)}</ol>}
-      <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>
+      {invoiceOffer === "loading" && <p role="status">Hämtar pris och villkor…</p>}
+      {invoiceOffer === "error" && <p role="alert">Pris och villkor kunde inte hämtas. Stäng formuläret och öppna det igen.</p>}
+      {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}</p>}
+      {testInvoice && <div className={styles.offer}>
+        <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=settings">företagets inställningar</Link> och ska aldrig betalas.</p>
+        <label className={styles.checkbox}><input type="checkbox" checked={testTermsAccepted} onChange={event => setTestTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
+      </div>}
       <label>Befattning<input required maxLength={120} aria-describedby={`${hintId}-role`} disabled={reload} value={role} onChange={event => setRole(event.target.value)}/></label><p id={`${hintId}-role`} className={styles.hint}>Det kandidaten anställs som. Kandidaten väljer själv om den visas på profilen och i CV:t.</p>
       <label>Startdatum<input required type="date" min="2000-01-01" aria-describedby={`${hintId}-start`} disabled={reload} value={start} onChange={event => setStart(event.target.value)}/></label><p id={`${hintId}-start`} className={styles.hint}>Första arbetsdagen. Ett kommande datum går bra.</p></> : <>
       <p><strong>{expected?.role_name} · {item.employment?.company_name}</strong><br/>Startdatum: {expected?.start_date}</p><p>{approved ? "Anställningen är redan bekräftad. Här väljer du var erfarenheten visas." : "Arbetsgivaren har registrerat uppgifterna. Godkänn bara om de stämmer. Du kan be om en rättelse utan att godkänna dem."}</p>
@@ -53,7 +67,7 @@ function EmploymentForm({ item, company, onClose, onSaved }: { item: Recruitment
     </>}
     {error && <p role="alert" className={styles.error}>{error}</p>}<div className={styles.actions}>
       {reload ? <button type="button" className="cta-btn" disabled={busy} onClick={() => void reloadLatest()}>{busy ? "Hämtar…" : "Hämta senaste uppgifter"}</button> : <>
-        <button type="submit" className="cta-btn" disabled={busy || (company && (!role.trim() || !start))}>{busy ? "Sparar…" : company ? expected ? "Skicka rättelse" : "Registrera anställning" : approved ? "Spara synlighet och CV" : "Uppgifterna stämmer"}</button>
+        <button type="submit" className="cta-btn" disabled={busy || invoiceUnavailable || (company && (!role.trim() || !start))}>{busy ? "Sparar…" : company ? expected ? "Skicka rättelse" : "Registrera anställning" : approved ? "Spara synlighet och CV" : "Uppgifterna stämmer"}</button>
         {!company && <button type="button" className="secondary-btn" disabled={busy} onClick={event => void submit(event, "disputed")}>{approved ? "Begär rättelse av anställningen" : "Uppgifterna behöver rättas"}</button>}
       </>}
       <button type="button" className="secondary-btn" disabled={busy} onClick={onClose}>Avbryt</button>
@@ -69,6 +83,21 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
   const [item, setItem] = useState<RecruitmentRecord | null>(null), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [edit, setEdit] = useState(false), [report, setReport] = useState(false), [details, setDetails] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [invoiceOffer, setInvoiceOffer] = useState<InvoiceOffer>("loading");
+  const needsInvoiceOffer = edit && company && item !== null && !item.employment;
+  useEffect(() => {
+    if (!needsInvoiceOffer) return;
+    let active = true;
+    void getHireTestOffer().then(
+      offer => { if (active) setInvoiceOffer(offer); },
+      () => { if (active) setInvoiceOffer("error"); },
+    );
+    return () => { active = false; };
+  }, [needsInvoiceOffer]);
+  const closeEmploymentForm = () => {
+    setEdit(false);
+    setInvoiceOffer("loading");
+  };
   const load = useCallback(async () => {
     const items = await getRecruitmentRecords();
     setItem(items.find(entry => matchId ? entry.match_id === matchId : entry.job_id === jobId) ?? null); setError("");
@@ -111,7 +140,7 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
       {item.reported_at && !["resolved", "dismissed"].includes(item.review_state ?? "") ? <p>Admin har fått ditt ärende.</p> : <button type="button" className={styles.textButton} onClick={() => setReport(true)}>Jag har börjat arbeta, men anställningen är inte registrerad</button>}
     </>}</div>}
   </div>{notice && <p role="status" className={styles.notice}>{notice}</p>}{error && <p role="alert" className={styles.error}>{error}</p>}
-    {edit && <EmploymentForm key={item.match_id} item={item} company={company} onClose={() => setEdit(false)} onSaved={async () => { await load(); onChanged?.(); }}/>}
+    {edit && <EmploymentForm key={item.match_id} item={item} company={company} invoiceOffer={needsInvoiceOffer ? invoiceOffer : null} onClose={closeEmploymentForm} onSaved={async () => { await load(); onChanged?.(); }}/>}
     {report && <ModalDialog label="Kontakta admin om anställningen" onClose={() => setReport(false)} busy={busy} className={styles.dialog}><h2>Anställningen är inte registrerad</h2><p>Beskriv när du började och vad ni kommit överens om. Ärendet är privat för dig och admin. Ingen avgift eller begränsning skapas automatiskt.</p><label>Vad har hänt?<textarea rows={4} maxLength={2000} value={details} onChange={event => setDetails(event.target.value)}/></label>{error && <p role="alert" className={styles.error}>{error}</p>}<div className={styles.actions}><button type="button" className="cta-btn" disabled={busy || details.trim().length < 10} onClick={() => void action("report", { details })}>{busy ? "Skickar…" : "Skicka till admin"}</button><button type="button" className="secondary-btn" disabled={busy} onClick={() => setReport(false)}>Avbryt</button></div></ModalDialog>}
   </section>;
 }
