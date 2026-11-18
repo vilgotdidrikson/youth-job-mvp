@@ -17,7 +17,7 @@ const hooks={...react,useState(initial){const v=view,i=v.index++;if(!(i in v.slo
 for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(m,file)=>m._compile(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
 Module._load=function(name,parent,...rest){
  if(name==='react')return hooks;
- if(name==='next/navigation')return{useRouter:()=>router,useSearchParams:()=>new URLSearchParams()};
+ if(name==='next/navigation')return{useRouter:()=>router,useSearchParams:()=>new URLSearchParams(globalThis.window?.location.search)};
  if(name==='next/link')return{__esModule:true,default:'a'};
  if(name==='@/hooks/use-session')return{useSession:()=>({user:signedInUser,profile:null,loading:false})};
  if(name==='@/lib/auth')return{signUp:(...args)=>{calls.push(['signup',...args]);return reply.promise;},signIn:(...args)=>{calls.push(['login',...args]);return reply.promise;},resendSignupConfirmation:email=>{calls.push(['resend',email]);return reply.promise;}};
@@ -64,6 +64,9 @@ try{
  create(Auth,{initialMode:'signup'});const pending=submit()(event);view.stop();const updates=view.updates;reply.resolve({session:{user:{id:'qa'}}});await pending;assert.equal(view.updates,updates);assert.equal(navigations.length,0,'Detached signup must not navigate');
  create(Auth,{initialMode:'signup'});const confirmed=submit()(event);reply.resolve({session:{user:{id:'qa'}}});await confirmed;assert.deepEqual(navigations,['/youth/onboarding']);view.stop();
  create(Auth,{initialMode:'login'});const login=submit()(event);reply.reject(Object.assign(new Error('Bekräfta din e-postadress innan du loggar in.'),{name:'EmailConfirmationRequiredError'}));await login;assert.match(text(view.render()),/Bekräfta din e-postadress/);assert.ok(nodes(view.render()).some(n=>n.props?.href==='/resend-confirmation'));view.stop();
+ create(Auth,{}, {search:'?redirect=%2Faccount%2Fprivacy-requests'});
+ const rightsLogin=submit()(event);reply.resolve({user:{id:'qa'}});await rightsLogin;
+ assert.deepEqual(navigations,['/account/privacy-requests'],'Sign-in for a rights request returns directly even before onboarding');view.stop();
  create(Resend);const send=submit(),first=send(event),duplicate=send(event);assert.deepEqual(calls,[['resend','auto@example.invalid']]);reply.resolve();await Promise.all([first,duplicate]);assert.match(text(view.render()),/Om adressen hör till/);assert.equal(nodes(view.render()).find(n=>n.props?.type==='submit').props.disabled,true);await send(event);assert.equal(calls.length,1,'Cooldown also applies to stale submit handlers');now+=60000;for(const timer of timers.values())timer.fn();timers.clear();assert.equal(nodes(view.render()).find(n=>n.props?.type==='submit').props.disabled,false);reply=deferred();const retry=submit()(event);assert.equal(calls.length,2);reply.resolve();await retry;view.stop();assert.equal(timers.size,0);
  create(Resend);const detached=submit()(event);view.stop();const before=view.updates;reply.reject(new Error('offline'));await detached;assert.equal(view.updates,before);assert.equal(timers.size,0);
  create(Resend);const failure=submit()(event);reply.reject(new Error('För många försök. Vänta en stund och försök igen.'));await failure;assert.match(text(view.render()),/För många försök/);view.stop();

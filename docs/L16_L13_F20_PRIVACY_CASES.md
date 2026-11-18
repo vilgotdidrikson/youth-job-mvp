@@ -146,3 +146,9 @@ Kalenderunderlag kontrollerat 2026-11-17: [SFS 1989:253, Sveriges riksdag](https
 ## Fortsättning – ärendeåterläsning, handläggarvy och hjälp
 
 Vilgot / Codex reserverar L13, L16 och F20 på `codex/l13-l16-f20-case-navigation` från dev `eebe599`. Avgränsning: exakt återläsning efter osäker ärendeskapning, femminuterstömning även under pågående handläggaranrop och tydlig återgång från hjälp och inloggning till egna ärenden.
+
+- **L13.** Efter ett osäkert skapandesvar kontrolleras ärendenumret med ett eget behörighetsbundet uppslag om det saknas på första sidan. Samma typ och beskrivning krävs för att kvittera sparningen. Ett definitivt saknat ärende kan skickas om med ursprungligt ärendenummer och oförändrat innehåll. Avvikande kvitto eller misslyckad kontroll håller försöket spärrat.
+- **L16.** Femminuterstömningen gäller medan ett handläggaranrop pågår. Tömningen avbryter klientanropet och sena svar får inte återställa ärenderader, urval eller oskickade utkast. Handläggaren läser om aktuell status efter ny verifiering.
+- **F20.** Hjälpens innehållsmeny länkar till personuppgiftsärenden. Från ärendesidan leder inloggningen tillbaka till samma vy, även före slutförd onboarding. Kontakt utan konto är tillgänglig även när sessionskontrollen misslyckas.
+
+Privacy-case-API-, klient- och komponentproven, kontomejl, kontots återställningsprov, destinationsprov, riktad ESLint och TypeScript passerade. Komponentproven använde kontrollerade tjänster och täcker återläsning utanför första sidan, avvikande kvitto, samma id vid återförsök och sent svar efter tömning. Inga nya datakällor, grants eller migrationer ingår. Fysisk MFA och inloggad helhetsacceptans återstår.

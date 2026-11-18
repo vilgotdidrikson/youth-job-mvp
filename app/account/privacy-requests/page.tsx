@@ -7,12 +7,13 @@ import { PrivacyCaseThread } from "@/components/privacy-case-thread";
 import { PRIVACY_CASE_KINDS, caseText, isUuid, type CaseCursor, type PrivacyCase, type PrivacyCaseKind } from "@/lib/privacy-cases";
 import { PrivacyCaseRequestError, findOwnPrivacyCase, createOwnPrivacyCase, readOwnPrivacyCases, replyToOwnPrivacyCase } from "@/lib/privacy-case-client";
 import { CONTACT_EMAIL } from "@/lib/product-copy";
+import { PRIVACY_REQUESTS_LOGIN } from "@/lib/login-destination";
 import styles from "./page.module.css";
 export default function PrivacyRequestsPage() {
   const { user, loading, error } = useSession();
-  if (loading || error) return <AuthGateMessage status={error ? "error" : "checking"} error={error}/>;
-  return <main className={styles.page}><Link href="/help">Hjälp och kontakt</Link><h1>Mina personuppgiftsärenden</h1>
-    {user ? <Workspace key={user.id} owner={user.id}/> : <section className={styles.panel}><p>Logga in för att skapa och följa ett eget ärende. Du kan också kontakta oss utan konto.</p><Link href="/login">Logga in</Link><p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p></section>}
+  if (loading) return <AuthGateMessage status="checking"/>;
+  return <main className={styles.page}><Link href="/help#privacy-requests">Hjälp med personuppgifter</Link><h1>Mina personuppgiftsärenden</h1>
+    {user && !error ? <Workspace key={user.id} owner={user.id}/> : <section className={styles.panel}>{error && <p role="alert">Sessionen kunde inte kontrolleras.</p>}<p>Logga in för att skapa och följa ett eget ärende. Du kan också kontakta oss utan konto.</p><Link href={PRIVACY_REQUESTS_LOGIN}>Logga in till mina ärenden</Link><p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p></section>}
   </main>;
 }
 type ReplyDraft = { text: string; id: string | null };
@@ -31,9 +32,25 @@ function Workspace({ owner }: { owner: string }) {
   };
   const read = (cursor:CaseCursor|null=null) => run(async signal => {
     const page=await readOwnPrivacyCases(owner,cursor,signal);if(!active.current||signal.aborted)return;
-    const combined=cursor?[...items,...page.cases.filter(c=>!items.some(x=>x.id===c.id))]:page.cases;
-    setItems(combined);setNext(page.next);setAvailable(page.available);setLoaded(true);setCheck(false);
-    const saved=pending.current&&combined.find(c=>c.id===pending.current!.id&&c.kind===pending.current!.kind&&c.body===pending.current!.body);
+    let combined=cursor?[...items,...page.cases.filter(c=>!items.some(x=>x.id===c.id))]:page.cases;
+    const request=pending.current;
+    let saved=request && combined.find(item=>item.id===request.id);
+    if (request && check && !cursor && !saved) {
+      try {
+        saved=await findOwnPrivacyCase(owner,request.id,signal);
+      } catch (reason) {
+        if (!(reason instanceof PrivacyCaseRequestError) || reason.status!==404) throw reason;
+      }
+      if (!active.current || signal.aborted) return;
+      if (saved) combined=[saved,...combined];
+    }
+    setItems(combined);setNext(page.next);setAvailable(page.available);setLoaded(true);
+    if (request && saved && (saved.kind!==request.kind || saved.body!==request.body)) {
+      setCheck(true);
+      setNote("Ärendenumret stämmer men innehållet skiljer sig. Kontakta oss innan du försöker skicka igen.");
+      return;
+    }
+    setCheck(false);
     if(saved){pending.current=null;setBody("");setNote("Ärendet finns sparat. Inget nytt ärende skickades vid kontrollen.");}
   });
   // First read has no writes. A keyed workspace prevents cross-account state reuse.
@@ -61,7 +78,7 @@ function Workspace({ owner }: { owner: string }) {
       <label>Ärendenummer<input value={caseId} onChange={e=>setCaseId(e.target.value)} maxLength={36} autoComplete="off" required disabled={busy}/></label><button className="secondary-btn" disabled={busy}>Öppna mitt ärende</button>
     </form>
     {items.map(item=><section key={item.id} className={styles.panel}><PrivacyCaseThread item={item} owner={owner}/><ReplyForm key={item.id} drafts={drafts.current} item={item} disabled={busy||check||item.status==="closed"} send={reply}/></section>)}
-    {next&&<div className={styles.actions}><button type="button" className="secondary-btn" disabled={busy} onClick={()=>void read(next)}>Visa äldre ärenden</button></div>}
+    {next&&!check&&<div className={styles.actions}><button type="button" className="secondary-btn" disabled={busy} onClick={()=>void read(next)}>Visa äldre ärenden</button></div>}
     <p>Ärendeunderlag kan behöva bevaras efter att kontot raderats för att handlägga din begäran. Läs <Link href="/privacy">integritetsinformationen</Link> eller fråga oss om vad som gäller för ditt ärende.</p>
   </>;
 }

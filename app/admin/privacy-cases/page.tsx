@@ -27,8 +27,19 @@ function Workspace({owner}:{owner:string}) {
   const active=useRef(false),lock=useRef(false),task=useRef<AbortController|null>(null),idle=useRef<ReturnType<typeof setTimeout>|null>(null);
   const drafts=useRef(new Map<string,ActionDraft>());
   const confirmDraft=(item:PrivacyCase)=>{const draft=drafts.current.get(item.id);if(draft?.eventId&&item.events.some(e=>e.id===draft.eventId&&e.action===draft.action&&(["review","schedule_review"].includes(draft.action)?e.review_after!=null&&!!draft.reviewAfter&&Date.parse(e.review_after)===new Date(draft.reviewAfter).getTime():["reply","waiting","close"].includes(draft.action)&&e.public_message===draft.text.trim()&&(item.intake_source!=="email"||e.external_sent_at!=null&&!!draft.externalSentAt&&Date.parse(e.external_sent_at)===new Date(draft.externalSentAt).getTime())))){if(["review","schedule_review"].includes(draft.action)&&draft.text)drafts.current.set(item.id,{action:"reply",text:draft.text,eventId:null,externalSentAt:draft.externalSentAt});else drafts.current.delete(item.id);}};
-  const clear=(keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setNeedsRead(true);if(!keepDrafts){drafts.current.clear();setManualOpen(false);}};
-  const expire=()=>{if(idle.current)clearTimeout(idle.current);idle.current=setTimeout(()=>{if(active.current){clear();setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");}},300000);};
+  const clear=(keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setLookup(false);setNeedsRead(true);if(!keepDrafts){drafts.current.clear();setManualOpen(false);}};
+  const expire=()=>{
+    if(idle.current)clearTimeout(idle.current);
+    idle.current=setTimeout(()=>{
+      if(!active.current)return;
+      task.current?.abort();
+      task.current=null;
+      lock.current=false;
+      setBusy(false);
+      clear();
+      setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");
+    },300000);
+  };
   useEffect(()=>{const memory=drafts.current;active.current=true;return()=>{active.current=false;memory.clear();task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
   const verify = (form:HTMLFormElement) => {
     const data=new FormData(form), password=String(data.get("password")||""),code=String(data.get("totpCode")||"");
@@ -38,7 +49,6 @@ function Workspace({owner}:{owner:string}) {
   const execute=async(form:HTMLFormElement,input:AdminCaseInput):Promise<CaseActionResult>=>{
     if(lock.current||!active.current)return {ok:false,rejected:false};
     const {password,code}=verify(form);lock.current=true;setBusy(true);setNote("");
-    if(idle.current)clearTimeout(idle.current);
     const controller=new AbortController();task.current=controller;
     try{
       const result=await adminPrivacyCases(owner,input,password,code,controller.signal);if(!active.current||controller.signal.aborted)return {ok:false,rejected:false};
