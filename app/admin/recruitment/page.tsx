@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { InvoiceSession } from "@/components/admin/invoice-session";
 import { InvoicePilot } from "@/components/admin/invoice-pilot";
 import { isInvoicePilotDev } from "@/lib/invoice-pilot";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -62,7 +63,6 @@ export default function RecruitmentAdminPage() {
   return <AdminShell title="Rekryteringsuppföljning" email={user?.email}><p>Granska uteblivna registreringar och motstridiga uppgifter. Inga fakturor eller begränsningar skapas automatiskt från en ungdoms rapport.</p>
     <div className={styles.filters}><TabList id="admin-recruitment" label="Visa rekryteringar" className={styles.filterTabs} itemClassName="secondary-btn" items={[{ value: "review", label: "Behöver följas upp" }, { value: "waiting", label: "Inväntar svar" }, { value: "all", label: "Alla rekryteringar" }]} value={filter} onChange={setFilter} /><button className="secondary-btn" type="button" onClick={() => void refresh().catch(reason => setError(reason instanceof Error ? reason.message : "Kunde inte uppdatera."))}>Uppdatera</button></div>
     {error && <p role="alert" className={styles.error}>{error}</p>}{loading ? <p role="status">Hämtar rekryteringar…</p> : <div className={styles.adminList} {...tabPanelProps("admin-recruitment", filter)}>{visible.map(item => <ReviewCard key={`${item.match_id}:${item.restriction}:${item.review_state}`} item={item} refresh={refresh}/>)}{!visible.length && <section className={styles.adminCard}>Inga ärenden i den här vyn.</section>}</div>}
-    {user && isInvoicePilotDev() && <InvoicePilot key={user.id} userId={user.id}/>}
-    {user && <HireTestInvoices key={user.id} admin/>}
+    {user && <InvoiceSession key={user.id} userId={user.id}>{isInvoicePilotDev() && <InvoicePilot userId={user.id}/>}<HireTestInvoices admin/></InvoiceSession>}
   </AdminShell>;
 }

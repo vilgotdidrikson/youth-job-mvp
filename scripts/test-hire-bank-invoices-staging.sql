@@ -79,6 +79,7 @@ begin
   invoice:=public.list_hire_bank_invoices()->0;
   invoice_id:=(invoice->>'id')::uuid;
   if (invoice->>'amount_ore')::integer<>50000 or invoice->>'address_line1' is distinct from 'Avtalad testadress 1'
+    or invoice->>'invoice_email' is distinct from 'fake-invoice@example.invalid'
     or (invoice->>'due_on')::date-(invoice->>'issued_on')::date<>30
     or invoice->>'invoice_number' not like 'MNW-%' or invoice ? 'recipient'
     or jsonb_array_length(public.list_hire_bank_invoices())<>1 then raise exception 'Issued invoice facts wrong'; end if;

@@ -49,7 +49,7 @@ export function createTotpInstallation(userId: string) {
       if (stopped || busy || verification) throw new Error("Avsluta den pågående installationen först.");
       busy = true; mayRemovePending = true; const active = signal();
       try {
-        verification = await openVerifiedAccount(password, { expectedUserId: userId, signal: active, totpCode });
+        verification = await openVerifiedAccount(password, { expectedUserId: userId, signal: active, totpCode }, undefined, true);
         if (stopped || active.aborted) throw new Error("Installationen avbröts.");
         await verification.assertCurrent(active);
         const { data, error } = await verification.client.auth.mfa.enroll({ factorType: "totp", friendlyName: `MatchnWork ${crypto.randomUUID().slice(0,8)}`, issuer: "MatchnWork" });

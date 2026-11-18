@@ -3,6 +3,7 @@ export const COMPANY_ROUTES = {
   create: "/company?view=skapa",
   candidates: "/company?view=kandidater",
   account: "/profile?tab=settings",
+  invoices: "/profile?tab=invoices",
 } as const;
 
 export function createdCompanyJobHref(jobId: string): string {
@@ -22,8 +23,9 @@ export function companyView(view: string | null, verified = false): CompanyView 
   return "annonser";
 }
 
-export type ProfileTab = "overview" | "work" | "cv" | "details" | "settings";
-export function profileTabFromQuery(tab: string | null): ProfileTab {
+export type ProfileTab = "overview" | "work" | "cv" | "details" | "settings" | "invoices";
+export function profileTabFromQuery(tab: string | null, company = false): ProfileTab {
+  if (company && tab === "invoices") return tab;
   return tab === "work" || tab === "cv" || tab === "details" || tab === "settings" ? tab : "overview";
 }
 

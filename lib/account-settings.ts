@@ -15,8 +15,26 @@ export function validAccountEmail(value: string): boolean {
   return value.length <= 254 && /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(value);
 }
 
-/** Short-lived, account-bound session. Caller MUST close it; never publish its tokens to the shared client. */
-export async function openVerifiedAccount(currentPassword: string, options: AccountChangeOptions = {}, newEmail?: string) {
+/** Upgrade the signed-in session. Verifying a temporary session can revoke the active AAL1 session. */
+export async function verifyCurrentAccountTotp(userId: string, factorId: string, code: string, signal?: AbortSignal) {
+  if (!/^\d{6}$/.test(code)) throw new AccountSettingsError("Ange den sexsiffriga koden från autentiseringsappen.");
+  signal?.throwIfAborted();
+  const client = getSupabaseClient();
+  const current = await client.auth.getUser();
+  signal?.throwIfAborted();
+  if (current.error || current.data.user?.id !== userId || !current.data.user.factors?.some(factor => factor.id === factorId && factor.factor_type === "totp" && factor.status === "verified")) {
+    throw new AccountSettingsError("Kontot eller autentiseringsappen har ändrats. Kontrollera din inloggning.");
+  }
+  const result = await client.auth.mfa.challengeAndVerify({ factorId, code });
+  signal?.throwIfAborted();
+  if (result.error || result.data?.user?.id !== userId) throw new AccountSettingsError(result.error?.status === 429 ? "För många kodförsök. Vänta en stund." : "Koden kunde inte verifieras. Försök med en aktuell kod.");
+  const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel(result.data.access_token);
+  signal?.throwIfAborted();
+  if (error || data.currentLevel !== "aal2") throw new AccountSettingsError("Tvåfaktorssessionen kunde inte verifieras.");
+}
+
+/** Password proof is isolated. MFA and factor enrollment use the active browser session. */
+export async function openVerifiedAccount(currentPassword: string, options: AccountChangeOptions = {}, newEmail?: string, enrollment = false) {
   if (!currentPassword || currentPassword.length > 1024) throw new AccountSettingsError("Ange ditt nuvarande lösenord.");
   let signal = options.signal ?? AbortSignal.timeout(30_000);
   signal.throwIfAborted();
@@ -35,8 +53,10 @@ export async function openVerifiedAccount(currentPassword: string, options: Acco
     } },
   });
   if (temporary === shared || temporary.auth === shared.auth) throw new AccountSettingsError("Kontot kunde inte verifieras säkert. Försök igen.");
+  let closed = false;
   const close: AccountSessionCleanup = async () => {
-    try { const result = await temporary.auth.signOut({ scope: "local" }); return !result.error; } catch { return false; }
+    if (closed) return true;
+    try { const result = await temporary.auth.signOut({ scope: "local" }); closed = !result.error; return closed; } catch { return false; }
   };
   const assertCurrent = async (active = signal) => {
     active.throwIfAborted(); const current = await shared.auth.getUser(); active.throwIfAborted();
@@ -47,20 +67,18 @@ export async function openVerifiedAccount(currentPassword: string, options: Acco
     signal.throwIfAborted();
     if (verified.error || verified.data.user?.id !== user.id) throw new AccountSettingsError(verified.error?.status === 429
       ? "För många försök. Vänta en stund." : "Ditt nuvarande lösenord kunde inte verifieras. Kontrollera det och försök igen.");
-    const factors = user.factors?.filter(factor => factor.status === "verified") ?? [];
+    const factors = [...(verified.data.user.factors ?? []), ...(user.factors ?? [])].filter(factor => factor.status === "verified");
+    const useShared = enrollment || factors.length > 0;
+    if (useShared && !await close()) throw new AccountSettingsError("Verifieringssessionen kunde inte avslutas. Försök igen.");
     if (factors.length) {
       const factor = factors.find(item => item.factor_type === "totp");
       if (!factor) throw new AccountSettingsError("Kontot använder en tvåfaktormetod som inte stöds här. Kontakta supporten.");
       if (!/^\d{6}$/.test(options.totpCode ?? "")) throw new AccountSettingsError("Bekräfta även med en sexsiffrig kod från kontots autentiseringsapp.");
       await assertCurrent();
-      const result = await temporary.auth.mfa.challengeAndVerify({ factorId: factor.id, code: options.totpCode! });
-      signal.throwIfAborted();
-      if (result.error || result.data?.user?.id !== user.id) throw new AccountSettingsError("Tvåfaktorskoden kunde inte verifieras. Använd en aktuell kod och försök igen.");
-      const level = await temporary.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (level.error || level.data.currentLevel !== "aal2") throw new AccountSettingsError("Tvåfaktorssessionen kunde inte verifieras.");
+      await verifyCurrentAccountTotp(user.id, factor.id, options.totpCode!, signal);
     }
     await assertCurrent();
-    return { client: temporary, user, close, assertCurrent, assertActive() { signal.throwIfAborted(); }, setSignal(next: AbortSignal) { signal = next; } };
+    return { client: useShared ? shared : temporary, useShared, user, close, assertCurrent, assertActive() { signal.throwIfAborted(); }, setSignal(next: AbortSignal) { signal = next; } };
   } catch (error) {
     const failure = error instanceof AccountSettingsError ? error : new AccountSettingsError("Kontot kunde inte verifieras just nu. Försök igen.");
     if (!await close()) failure.cleanup = close;
@@ -72,13 +90,17 @@ async function changeAccount(currentPassword: string, attributes: UserAttributes
   const verification = await openVerifiedAccount(currentPassword, options, attributes.email);
   let failure: AccountSettingsError | null = null, cleanup: AccountSessionCleanup | null = null;
   try {
-    verification.assertActive();
-    const result = await verification.client.auth.updateUser(attributes, attributes.email ? {
+    await verification.assertCurrent();
+    const result = await verification.client.auth.updateUser(verification.useShared && attributes.password ? { ...attributes, current_password: currentPassword } : attributes, attributes.email ? {
       emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
     } : undefined);
     verification.assertActive();
     if (result.error || result.data.user?.id !== verification.user.id) throw new AccountSettingsError(
-      result.error?.status === 429 ? "För många försök. Vänta en stund innan du försöker igen." : "Ändringen kunde inte bekräftas. Kontrollera kontots status innan du försöker igen.", true);
+      result.error?.status === 429 ? "För många försök. Vänta en stund innan du försöker igen."
+        : result.error?.code === "same_password" ? "Välj ett annat nytt lösenord."
+        : result.error?.code === "email_exists" ? "E-postadressen används redan."
+        : result.error?.code === "reauthentication_needed" ? "Logga in igen och gör ändringen direkt efter inloggningen."
+        : "Ändringen kunde inte bekräftas. Kontrollera kontots status innan du försöker igen.", true);
   } catch (error) {
     failure = error instanceof AccountSettingsError ? error : new AccountSettingsError("Ändringen kunde inte bekräftas. Kontrollera kontots status innan du försöker igen.", true);
   } finally { if (!await verification.close()) cleanup = verification.close; }

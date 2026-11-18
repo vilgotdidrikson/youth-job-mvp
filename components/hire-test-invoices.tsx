@@ -2,9 +2,19 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getHireTestOffer, invoiceAmount, listHireInvoices, recordHireInvoicePayment, type HireBankInvoice, type HireTestInvoice } from "@/lib/hire-test-invoices";
+import { isInvoicePilotDev } from "@/lib/invoice-pilot";
 import styles from "./company-billing-settings.module.css";
 
 type Invoice = HireTestInvoice | HireBankInvoice;
+const deliveryLabels: Record<NonNullable<HireTestInvoice["mail_state"]>, string> = {
+  pending: "Väntar på utskick",
+  sending: "Utskick pågår",
+  sent: "Skickat",
+  review: "Behöver följas upp",
+  cancelled: "Stoppat för rättelse",
+  not_queued: "Utskick saknas",
+  test_recipient_mismatch: "Adressen matchar inte devs godkända testinkorg",
+};
 
 async function download(invoice: Invoice) {
   const [{ pdf }, { HireTestInvoicePdf }, { downloadPdfFile }] = await Promise.all([
@@ -42,8 +52,10 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
   return <li>
     <h3>{invoice.buyer_name} · {invoiceAmount(invoice.amount_ore)}</h3>
     <p>{bank?.invoice_number ?? `TEST-${invoice.id}`}</p>
-    <p>{invoice.issued_on} · {invoice.held_at ? "Pausad för rättelse" : invoice.paid_at ? "Betalning avstämd" : "Inväntar avstämning"}</p>
-    {bank && <p>Förfallodatum {bank.due_on} · {bank.mail_state === "sent" ? "Mejlet skickat" : bank.mail_state === "review" ? "Mejlet behöver följas upp" : "Mejlet väntar på utskick"}</p>}
+    <p>Utfärdad {invoice.issued_on} · {invoice.held_at ? "Pausad för rättelse" : invoice.paid_at ? "Betalning avstämd" : "Inväntar avstämning"}</p>
+    <p>{bank ? "Förfallodatum" : "Simulerat förfallodatum"} {invoice.due_on}</p>
+    {invoice.invoice_email && <p>Fakturaadress för mejl <strong>{invoice.invoice_email}</strong></p>}
+    {invoice.mail_state && <p>Mejlet · {deliveryLabels[invoice.mail_state]}</p>}
     <button className="secondary-btn" type="button" disabled={busy} onClick={() => void run(() => download(invoice))}>{bank ? "Ladda ner faktura (PDF)" : "Ladda ner testfaktura (PDF)"}</button>
     {admin && !invoice.held_at && !invoice.paid_at && <form onSubmit={settle}>
       <div className={styles.fields}>
@@ -56,9 +68,9 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
   </li>;
 }
 
-function HireInvoices({ admin = false, live }: { admin?: boolean; live: boolean }) {
+function HireInvoices({ admin = false, live, showEmpty = false }: { admin?: boolean; live: boolean; showEmpty?: boolean }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [available, setAvailable] = useState(!live && admin);
+  const [available, setAvailable] = useState(showEmpty || (!live && admin));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
@@ -67,32 +79,33 @@ function HireInvoices({ admin = false, live }: { admin?: boolean; live: boolean 
     const controller = new AbortController();
     const load = async () => {
       try {
-        const enabled = live || admin || Boolean(await getHireTestOffer());
+        const enabled = live || showEmpty || admin || Boolean(await getHireTestOffer());
         if (controller.signal.aborted) return;
         if (!live) setAvailable(enabled);
         if (!enabled) return;
         const rows = await listHireInvoices(admin, controller.signal, live);
-        if (!controller.signal.aborted) { setInvoices(rows); setError(""); if (live) setAvailable(rows.length > 0); }
+        if (!controller.signal.aborted) { setInvoices(rows); setError(""); if (live) setAvailable(showEmpty || rows.length > 0); }
       } catch {
-        if (!controller.signal.aborted) setError("Fakturorna kunde inte hämtas. För admin krävs tvåstegsverifiering.");
+        if (!controller.signal.aborted) setError("Fakturorna kunde inte hämtas. Försök igen.");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     };
     void load();
     return () => controller.abort();
-  }, [admin, live, refresh]);
+  }, [admin, live, refresh, showEmpty]);
   if (!available) return null;
-  const title = live ? "Bankgirofakturor" : "Testfakturor";
+  const title = live ? admin ? "Bankgirofakturor" : "Fakturor" : "Testfakturor";
   return <section className={styles.card} aria-label={title}>
     <h2>{title}</h2>
     {!live && <p className={styles.intro}>All betalning i det här flödet är simulerad. Testfakturorna ska inte betalas.</p>}
     {loading ? <p role="status">Hämtar fakturor…</p> : error ? <p className={styles.error} role="alert">{error}</p> : invoices.length ?
-      <ul className={styles.invoiceList}>{invoices.map(invoice => <InvoiceRow key={invoice.id} invoice={invoice} admin={admin} onPaid={reload}/>)}</ul> : <p>Inga utfärdade testfakturor.</p>}
+      <ul className={styles.invoiceList}>{invoices.map(invoice => <InvoiceRow key={invoice.id} invoice={invoice} admin={admin} onPaid={reload}/>)}</ul> : <p>{live ? "Inga utfärdade fakturor ännu." : "En testfaktura visas här när kandidaten bekräftar en anställning som registrerats med testvillkoren."}</p>}
     <button className="secondary-btn" type="button" disabled={loading} onClick={reload}>Uppdatera fakturor</button>
   </section>;
 }
 
-export function HireTestInvoices({ admin }: { admin?: boolean }) {
-  return <><HireInvoices admin={admin} live={false}/><HireInvoices admin={admin} live/></>;
+export function HireTestInvoices({ admin, companyView = false }: { admin?: boolean; companyView?: boolean }) {
+  const dev = isInvoicePilotDev();
+  return <><HireInvoices admin={admin} live={false} showEmpty={companyView && dev}/><HireInvoices admin={admin} live showEmpty={companyView && !dev}/></>;
 }
