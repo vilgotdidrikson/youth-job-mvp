@@ -77,7 +77,7 @@ function canonical(value:unknown):string{
   if(value&&typeof value==="object")return `{${Object.entries(value).filter(([,v])=>v!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
   return JSON.stringify(value)??"null";
 }
-export type CvSaveInput={kind:"reviewed";text:string;structured:StructuredCvData;approval:string|null}|{kind:"uploaded";document:YouthDocument};
+export type CvSaveInput={kind:"reviewed";text:string;structured:StructuredCvData;approval:string|null;previousStructured?:StructuredCvData|null;keepRecruitmentProfile?:boolean}|{kind:"uploaded";document:YouthDocument};
 /** One save attempt, then read-only recovery. No implicit resave, file deletion or AI. */
 export function createCvSave(ownerId:string,input:CvSaveInput){
   const snapshot=structuredClone(input),reviewed=snapshot.kind==="reviewed"?reviewedCvPayload(snapshot.text,snapshot.structured,snapshot.approval):null;
@@ -88,8 +88,9 @@ export function createCvSave(ownerId:string,input:CvSaveInput){
       if(attempted)throw new CvSaveUnconfirmed();
       const active=AbortSignal.any([signal,AbortSignal.timeout(20_000)]),{client}=await bind(ownerId,active),before=await profile(client,ownerId,active);
       if(snapshot.kind==="reviewed"&&reviewed){
+        if ("previousStructured" in snapshot && canonical(before.cv_structured ?? null) !== canonical(snapshot.previousStructured)) throw new CvWorkflowError("Ditt CV har ändrats sedan du öppnade utkastet. Läs in det på nytt först.");
         for(const key of Object.keys(reviewed))if(!(key in before))throw new CvWorkflowError("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
-        expected={...reviewed,documents:(before.documents??[]).filter(d=>d.type!=="generated_cv"),...("recruitment_profile" in before?{recruitment_profile:syncRecruitmentCvLanguages(before.recruitment_profile,before.cv_structured,snapshot.structured)}:{})};
+        expected={...reviewed,documents:(before.documents??[]).filter(d=>d.type!=="generated_cv"),...(!snapshot.keepRecruitmentProfile && "recruitment_profile" in before?{recruitment_profile:syncRecruitmentCvLanguages(before.recruitment_profile,before.cv_structured,snapshot.structured)}:{})};
       }else if(snapshot.kind==="uploaded"){
         await verifyFile(client,snapshot.document,ownerId,active);
         expected={documents:[...(before.documents??[]).filter(d=>d.type!=="cv"),snapshot.document],cv_uploaded:true,onboarding_completed:true,cv_generated:false};
@@ -97,7 +98,9 @@ export function createCvSave(ownerId:string,input:CvSaveInput){
       if(!expected)throw new CvWorkflowError("CV:t kunde inte förberedas för sparning.");
       await current(ownerId,active);active.throwIfAborted();attempted=true;
       try{
-        const result=await wait(()=>client.from("youth_profiles").update(expected!).eq("user_id",ownerId).select("*").abortSignal(active).single(),active);
+        const write=client.from("youth_profiles").update(expected!).eq("user_id",ownerId);
+        if(snapshot.kind==="reviewed" && "previousStructured" in snapshot && before.updated_at)write.eq("updated_at",before.updated_at);
+        const result=await wait(()=>write.select("*").abortSignal(active).single(),active);
         if(result.error||result.data?.user_id!==ownerId)throw new CvSaveUnconfirmed();
       }catch{throw new CvSaveUnconfirmed();}
     },

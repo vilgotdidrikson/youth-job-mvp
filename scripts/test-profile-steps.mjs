@@ -90,7 +90,7 @@ assert.deepEqual(validateRecruitmentProfile({ ...emptyRecruitmentProfile(), exam
 // The editor keeps the protected save contract and only swaps the preferences markup.
 const editor = readFileSync('components/recruitment-profile-editor.tsx', 'utf8');
 assert.match(editor, /rpc\("save_my_recruitment_profile", \{ p_section: section, p_value: clean\[section\], p_expected_version: version \}\)/);
-assert.match(editor, /failure\.code === "40001" \? "Profilen har ändrats i en annan vy\./);
+assert.match(editor, /\["PT409", "40001"\]\.includes\(failure\.code \?\? ""\) \? "Profilen har ändrats i en annan vy\./);
 assert.match(editor, /const leave=\(\)=>\{if\(dirty&&!window\.confirm\(/, 'Skip/cancel still warns about unsaved changes');
 assert.match(editor, /onDirtyChange\?\.\(dirty\)/);
 assert.match(editor, /onBusyChange\?\.\(true\)/);

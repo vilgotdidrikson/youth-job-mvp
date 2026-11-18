@@ -9,6 +9,7 @@ import { AuthGateMessage } from "./auth-gate-message";
 import { completedProfileSections } from "@/lib/recruitment-profile";
 import { PROFILE_JOURNEY, isProfileJourneyStep, profileStepUrl, resumeProfileStep, restoredProfileStep } from "@/lib/profile-journey";
 import { ProfileJourneyHeader, ProfileStepComplete } from "./profile-journey";
+import { ProfileChat } from "./profile-chat";
 import { UiIcon } from "./ui-icon";
 import styles from "./recruitment-profile.module.css";
 
@@ -36,10 +37,13 @@ export function ProfileBuilder() {
   const failure=data.error;
   const saved=[...completedProfileSections(data.profile),...(cvCompleted?['cv']:[])];
   const next=resume??resumeProfileStep(saved);
+  const mode=query.get("mode");
+  if (!loading && !failure && user && (mode === "chat" || mode === "form")) return <ProfileChat key={user.id} owner={user.id} initialMode={mode} profile={data.profile} version={data.version} />;
   // Kort översikt: rubrik, en rad om vad som krävs och de fem stegen. Bara CV får
   // en etikett ("Krävs"); att övriga steg är valfria sägs en gång i ingressen.
   return <main className={styles.page}><header className={`${styles.heading} ${styles.headingCentered}`}><h1>{saved.length?'Fortsätt bygga din jobbprofil':'Bygg din jobbprofil'}</h1><p>{saved.length?`${saved.length} av ${PROFILE_JOURNEY.length} steg sparade. Resten är valfritt.`:'Bara CV krävs för att söka jobb. Resten är valfritt och du kan pausa när du vill.'}</p></header>
     {loading?<p role="status">Hämtar sparade uppgifter…</p>:failure?<section className={styles.form}><p role="alert">Kunde inte läsa dina sparade profildelar.</p><button type="button" className="secondary-btn" onClick={()=>{void data.reload();}}>Försök igen</button></section>:<>
+      <section className={styles.form} aria-label="Så vill du bygga profilen"><Link className="cta-btn" href="/profile/build?mode=chat">Bygg med AI-chatt</Link><Link className="secondary-btn" href="/profile/build?mode=form">Fyll i själv</Link></section>
       <section className={styles.form} aria-label="Profilens steg"><div className={styles.journeyList}>{PROFILE_JOURNEY.map((part,index)=><div key={part.key}><span>{saved.includes(part.key)?<UiIcon name="check" width="16"/>:index+1}</span><div><strong>{part.title}</strong><small>{part.description}</small></div>{saved.includes(part.key)?<em>Sparad</em>:!part.optional&&<em>Krävs</em>}</div>)}</div><footer><Link className="secondary-btn" href="/swipe">Bygg senare</Link><Link className="cta-btn" href={profileStepUrl(next)}>{saved.length?'Fortsätt bygga profil':'Bygg profil'}<UiIcon name="arrow" width="18"/></Link></footer></section>
     </>}
   </main>;
