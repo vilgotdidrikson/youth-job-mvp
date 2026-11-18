@@ -1,4 +1,5 @@
 "use client";
+import { PageLoading } from "@/components/page-loading";
 import {SupportLinks} from "@/components/support-links";
 
 import { BrandLogo } from "@/components/brand-logo";
@@ -141,24 +142,7 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
     }
   };
 
-  if (sessionLoading) {
-    return (
-      <main
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#ffffff",
-          maxWidth: 430,
-          margin: "0 auto",
-        }}
-      >
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Laddar...</p>
-      </main>
-    );
-  }
+  if (sessionLoading) return <PageLoading label="Laddar…" />;
 
   const isSignup = mode === "signup";
   return (

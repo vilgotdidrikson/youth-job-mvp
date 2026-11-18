@@ -1,0 +1,9 @@
+.form label { display:block; margin-bottom:.35rem; text-transform:none; letter-spacing:0; font-weight:var(--weight-medium); color:var(--color-text); font-size:var(--text-sm); }
+.form .field,.form .description { display:block; width:100%; min-height:50px; padding:13px; border:1px solid var(--color-border); border-radius:var(--radius-md); color:var(--color-text); background:var(--color-canvas); font:inherit; font-size:var(--text-md); }
+.field { margin-bottom:.85rem; }
+.description { margin-bottom:1rem; }
+.eyebrow { margin-bottom:1rem; font-size:var(--text-xs); font-weight:var(--weight-bold); text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-muted); }
+.save { width:100%; padding:.875rem; font-size:var(--text-md); }
+.unavailable { padding:1.25rem; }
+.unavailableTitle { margin:0; font-size:var(--text-lg); font-weight:var(--weight-bold); color:var(--color-text); }
+.unavailableText { margin-top:.4rem; font-size:var(--text-sm); color:var(--color-text-muted); }
