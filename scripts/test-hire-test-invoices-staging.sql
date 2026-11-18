@@ -62,9 +62,14 @@ begin
   perform public.recruitment_action('respond',m,approval);
   perform public.recruitment_action('respond',old_free,approval);
   perform public.recruitment_action('respond',regular,approval);
+  if public.get_recruitment_invoice_status(regular) is not null then raise exception 'Candidate read status for unfactured hire'; end if;
   if public.list_hire_test_invoices() <> '[]' then raise exception 'Candidate can read company invoices'; end if;
   perform pg_temp.invoice_actor(other_c);
   if public.list_hire_test_invoices() <> '[]' then raise exception 'Other company has test invoices'; end if;
+  if public.get_recruitment_invoice_status(regular) is distinct from 'none'
+    or public.get_recruitment_invoice_status(m) is not null then
+    raise exception 'Confirmed free recruitment not reported accurately or other company saw invoice status';
+  end if;
   perform pg_temp.invoice_actor(c);
   perform public.save_company_billing_details(c,2,billing||'{"invoice_email":"after-issue@example.invalid"}');
   invoices := public.list_hire_test_invoices();

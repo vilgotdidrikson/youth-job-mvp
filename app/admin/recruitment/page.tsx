@@ -49,7 +49,7 @@ function ReviewCard({ item, refresh }: { item: RecruitmentRecord; refresh: () =>
 export default function RecruitmentAdminPage() {
   const { user, status, error: sessionError, adminReady, isAdmin } = useAdminAccess();
   const [items, setItems] = useState<RecruitmentRecord[]>([]), [error, setError] = useState(""), [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"review" | "waiting" | "all">("review");
+  const [filter, setFilter] = useState<"review" | "waiting" | "confirmed" | "all">("review");
   const refresh = useCallback(async () => { const data = await getRecruitmentRecords(); setItems(data); setError(""); }, []);
   useEffect(() => {
     if (!adminReady || !isAdmin) return;
@@ -59,9 +59,9 @@ export default function RecruitmentAdminPage() {
   }, [adminReady, isAdmin, refresh]);
   if (!adminReady) return <AuthGateMessage status={status === "ready" ? "checking" : status} error={sessionError}/>;
   if (!isAdmin) return <main className="mobile-shell"><p>Ingen administratörsåtkomst.</p></main>;
-  const visible = items.filter(item => filter === "all" || (filter === "review" ? needsRecruitmentReview(item) || item.restriction !== "none" : !["resolved","dismissed"].includes(item.review_state ?? "") && (item.employment?.response === "pending" || item.requested_at || item.reminder_sent_at)));
+  const visible = items.filter(item => filter === "all" || (filter === "confirmed" ? item.employment?.response === "approved" : filter === "review" ? needsRecruitmentReview(item) || item.restriction !== "none" : !["resolved","dismissed"].includes(item.review_state ?? "") && (item.employment?.response === "pending" || item.requested_at || item.reminder_sent_at)));
   return <AdminShell title="Rekryteringsuppföljning" email={user?.email}><p>Granska uteblivna registreringar och motstridiga uppgifter. Inga fakturor eller begränsningar skapas automatiskt från en ungdoms rapport.</p>
-    <div className={styles.filters}><TabList id="admin-recruitment" label="Visa rekryteringar" className={styles.filterTabs} itemClassName="secondary-btn" items={[{ value: "review", label: "Behöver följas upp" }, { value: "waiting", label: "Inväntar svar" }, { value: "all", label: "Alla rekryteringar" }]} value={filter} onChange={setFilter} /><button className="secondary-btn" type="button" onClick={() => void refresh().catch(reason => setError(reason instanceof Error ? reason.message : "Kunde inte uppdatera."))}>Uppdatera</button></div>
+    <div className={styles.filters}><TabList id="admin-recruitment" label="Visa rekryteringar" className={styles.filterTabs} itemClassName="secondary-btn" items={[{ value: "review", label: "Behöver följas upp" }, { value: "waiting", label: "Inväntar svar" }, { value: "confirmed", label: "Bekräftade" }, { value: "all", label: "Alla rekryteringar" }]} value={filter} onChange={setFilter} /><button className="secondary-btn" type="button" onClick={() => void refresh().catch(reason => setError(reason instanceof Error ? reason.message : "Kunde inte uppdatera."))}>Uppdatera</button></div>
     {error && <p role="alert" className={styles.error}>{error}</p>}{loading ? <p role="status">Hämtar rekryteringar…</p> : <div className={styles.adminList} {...tabPanelProps("admin-recruitment", filter)}>{visible.map(item => <ReviewCard key={`${item.match_id}:${item.restriction}:${item.review_state}`} item={item} refresh={refresh}/>)}{!visible.length && <section className={styles.adminCard}>Inga ärenden i den här vyn.</section>}</div>}
     {user && <InvoiceSession key={user.id} userId={user.id}>{isInvoicePilotDev() && <InvoicePilot userId={user.id}/>}<HireTestInvoices admin/></InvoiceSession>}
   </AdminShell>;

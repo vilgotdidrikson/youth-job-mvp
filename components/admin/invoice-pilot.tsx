@@ -38,7 +38,7 @@ export function InvoicePilot({ userId }: { userId: string }) {
 
   return <section className={styles.adminCard} aria-labelledby="invoice-pilot-heading">
     <h2 id="invoice-pilot-heading">Testa fakturaflödet</h2>
-    <p>Skapa två fiktiva konton med en färdig matchning. Öppna ett privat webbläsarfönster så att din adminsession finns kvar.</p>
+    <p>Fakturor i dev skapas för testföretaget nedan när testkandidaten bekräftar. Använd ett separat privat fönster för testkontona så att adminsessionen finns kvar.</p>
     <div className={styles.actions}>
       <button className="secondary-btn" type="button" disabled={busy || Boolean(fixture)} onClick={() => void run("POST")}>Skapa testkonton</button>
       <button className="secondary-btn" type="button" disabled={busy} onClick={() => void run("DELETE")}>Rensa mina testkonton</button>
@@ -53,7 +53,7 @@ export function InvoicePilot({ userId }: { userId: string }) {
         <label>E-post<input readOnly value={account.email} onFocus={event => event.currentTarget.select()}/></label>
         <label>Tillfälligt lösenord<input readOnly value={account.password} onFocus={event => event.currentTarget.select()}/></label>
       </div>)}
-      <p>Logga in som företaget och registrera anställningen i matchningens chatt. Byt sedan till kandidatkontot och bekräfta i samma chatt.</p>
+      <p>Logga in som testföretaget, godkänn testvillkoren och registrera anställningen i chatten. Logga sedan in som testkandidaten och välj Uppgifterna stämmer i samma chatt. Uppdatera fakturalistan här innan du rensar testkontona.</p>
       <Link href={`/login?redirect=${encodeURIComponent(fixture.chat)}`}>Inloggning för testmatchningen</Link>
     </>}
   </section>;
