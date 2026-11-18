@@ -8,7 +8,11 @@ import ts from 'typescript';
 const dir = mkdtempSync(join(tmpdir(), 'mnw-login-'));
 try {
   writeFileSync(join(dir, 'destination.mjs'), ts.transpileModule(readFileSync('lib/login-destination.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
-  const { loginDestination } = await import(pathToFileURL(join(dir, 'destination.mjs')));
+  const { loginDestination, PRIVACY_REQUESTS_LOGIN, PRIVACY_REQUESTS_PATH } = await import(pathToFileURL(join(dir, 'destination.mjs')));
+  assert.equal(new URL(PRIVACY_REQUESTS_LOGIN, 'https://example.invalid').searchParams.get('redirect'), PRIVACY_REQUESTS_PATH);
+  for (const role of ['company', 'youth', 'private']) assert.equal(loginDestination(role, PRIVACY_REQUESTS_PATH), PRIVACY_REQUESTS_PATH);
+  assert.equal(loginDestination('youth', PRIVACY_REQUESTS_PATH, true), PRIVACY_REQUESTS_PATH);
+  assert.equal(loginDestination('youth', PRIVACY_REQUESTS_PATH + '/other'), '/swipe');
   assert.equal(loginDestination('company', '/swipe?saved=1'), '/company?view=annonser');
   assert.equal(loginDestination('company', '/applications'), '/company?view=annonser');
   assert.equal(loginDestination('youth', '/company?view=kandidater'), '/swipe');

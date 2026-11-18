@@ -16,7 +16,7 @@ import { hasAuthEmailLinkError } from "@/lib/auth-email-link";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 import { getYouthFlowState } from "@/lib/youth-job-flow";
-import { loginDestination } from "@/lib/login-destination";
+import { loginDestination, PRIVACY_REQUESTS_PATH } from "@/lib/login-destination";
 
 type Mode = "login" | "signup";
 
@@ -52,6 +52,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
 
   useEffect(() => {
     if (sessionLoading || !user || linkError !== false || isRedirectingAfterSignup.current) return;
+    if (safeRedirectTarget === PRIVACY_REQUESTS_PATH) {
+      router.replace(PRIVACY_REQUESTS_PATH);
+      return;
+    }
     let active = true;
     void (async () => {
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
@@ -123,6 +127,10 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
       }
       const session = await signIn(submittedEmail, submittedPassword);
       if (!active.current) return;
+      if (safeRedirectTarget === PRIVACY_REQUESTS_PATH) {
+        router.replace(PRIVACY_REQUESTS_PATH);
+        return;
+      }
       const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
       if (!active.current) return;
       if (!adminError && isAdmin === true) {
