@@ -53,7 +53,7 @@ export function InvoicePilot({ userId }: { userId: string }) {
         <label>E-post<input readOnly value={account.email} onFocus={event => event.currentTarget.select()}/></label>
         <label>Tillfälligt lösenord<input readOnly value={account.password} onFocus={event => event.currentTarget.select()}/></label>
       </div>)}
-      <p>Logga in som testföretaget, godkänn testvillkoren och registrera anställningen i chatten. Logga sedan in som testkandidaten och välj Uppgifterna stämmer i samma chatt. Uppdatera fakturalistan här innan du rensar testkontona.</p>
+      <p>Logga in som testföretaget, godkänn testvillkoren och registrera anställningen i chatten. Logga sedan in som testkandidaten och välj Jobbet och nästa steg → Granska uppgifterna → Uppgifterna stämmer. Uppdatera fakturalistan här innan du rensar testkontona.</p>
       <Link href={`/login?redirect=${encodeURIComponent(fixture.chat)}`}>Inloggning för testmatchningen</Link>
     </>}
   </section>;

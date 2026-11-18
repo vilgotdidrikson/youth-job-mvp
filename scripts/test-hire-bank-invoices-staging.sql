@@ -68,7 +68,7 @@ begin
   if public.get_hire_bank_invoice_offer() is not null then raise exception 'Paid offer exposed without config'; end if;
   perform public.save_company_billing_details(c,null,details);
   reset role;
-  if not exists (select 1 from public.youth_profiles where user_id=ty and short_onboarding_completed) then raise exception 'Candidate routed away from test chat'; end if;
+  if not exists (select 1 from public.youth_profiles where user_id=ty and short_onboarding_completed and nullif(btrim(cv_text),'') is not null) then raise exception 'Candidate cannot pass both onboarding and CV gates'; end if;
   activation:=vault.create_secret(cfg::text,'mnw_hire_bank_invoice_config');
 
   set local role authenticated;
