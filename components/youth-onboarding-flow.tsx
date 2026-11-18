@@ -1,4 +1,6 @@
 "use client";
+import styles from "./youth-cv-entry.module.css";
+import { PageLoading } from "@/components/page-loading";
 
 import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 
@@ -633,13 +635,13 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
 
   if (showAccountCreated) {
     return (
-      <main className="mobile-shell mnw-onboarding-success" style={{ display: "flex", width: "100%", maxWidth: 560, minHeight: "100svh", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+      <main className={`mobile-shell mnw-onboarding-success ${styles.success}`} >
         <span className="mnw-onboarding-success-mark"><UiIcon name="check" width="32" height="32" /></span>
-        <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>Välkommen till MatchnWork</p>
-        <h1 style={{ margin: "0.75rem 0", color: "var(--text-primary)", fontSize: "clamp(2.3rem, 7vw, 3.2rem)", letterSpacing: "-0.06em", lineHeight: 0.95 }}>Kontot är skapat!</h1>
-        <p style={{ maxWidth: "31rem", margin: "0 0 2.25rem", color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8 }}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
-        <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ width: "min(100%, 31rem)", padding: "1.3rem", fontSize: ".95rem" }}>Fortsätt skapa mitt CV</button>
-        <button type="button" className="secondary-btn" onClick={() => router.push("/swipe")} style={{ width: "min(100%, 31rem)", marginTop: "0.85rem", padding: "1.3rem", fontSize: ".95rem" }}>Upptäck jobb</button>
+        <p className={styles.eyebrow}>Välkommen till MatchnWork</p>
+        <h1 className={styles.successTitle}>Kontot är skapat!</h1>
+        <p className={styles.successText}>Vill du fortsätta skapa ditt CV nu eller gå in på ditt konto?</p>
+        <button type="button" className={`cta-btn ${styles.primary}`} onClick={() => router.push("/youth/cv")} >Fortsätt skapa mitt CV</button>
+        <button type="button" className={`secondary-btn ${styles.secondary}`} onClick={() => router.push("/swipe")} >Upptäck jobb</button>
       </main>
     );
   }
@@ -647,40 +649,36 @@ export function YouthOnboardingFlow({ flow, cvBuilder = false, voiceFinalize = f
   // Do not briefly show the first flow to a returning user while their account
   // details are being loaded.
   if (!loading && user && profile?.role === "youth" && (!accountDetailsLoaded || redirectingBetweenFlows)) {
-    return (
-      <main className="youth-onboarding" style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
-        <p style={{ color: "var(--color-text-muted)" }}>Laddar…</p>
-      </main>
-    );
+    return <PageLoading label="Laddar…" />;
   }
 
   /* ── CV preview / edit step ─────────────────────── */
   if (flow === "cv" && showCvMethodChoice) {
     return (
-      <main className="youth-onboarding mnw-onboarding-methods" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: 430, margin: "0 auto", padding: "2rem 1.25rem", background: "var(--color-canvas)" }}>
-        <div style={{ marginTop: "auto", marginBottom: "auto" }}>
-          <p style={{ margin: 0, color: "var(--accent)", fontSize: ".76rem", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Ditt CV</p>
-          <h1 style={{ margin: ".45rem 0 0", color: "var(--text-primary)", fontSize: "2.2rem", letterSpacing: "-.06em", lineHeight: 1 }}>Hur vill du skapa ditt CV?</h1>
-          <p style={{ margin: "1rem 0 1.6rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
+      <main className={`youth-onboarding mnw-onboarding-methods ${styles.methods}`} >
+        <div className={styles.content}>
+          <p className={styles.kicker}>Ditt CV</p>
+          <h1 className={styles.title}>Hur vill du skapa ditt CV?</h1>
+          <p className={styles.intro}>Välj det som passar dig. Du kan alltid uppdatera ditt CV senare.</p>
 
-          <div style={{ display: "grid", gap: ".75rem" }}>
-            {returnJobId && <div style={{ marginBottom: ".8rem", padding: ".75rem", borderRadius: 10, background: "#fff8eb", fontSize: ".85rem" }}>Ansökan gäller: <strong>{returnJobTitle || "valt jobb"}</strong><Link href={returnPath} style={{ display: "block", marginTop: ".45rem" }}>Tillbaka till jobbet</Link></div>}
-            <button type="button" className="cv-method-card" onClick={() => router.push(`/youth/cv/create${cvQuery}`)} style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", font: "inherit", textAlign: "left", cursor: "pointer" }}>
-              <span className="mnw-cv-method-icon"><UiIcon name="file" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV i MatchnWork</strong>
-              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
+          <div className={styles.choices}>
+            {returnJobId && <div className={styles.job}>Ansökan gäller: <strong>{returnJobTitle || "valt jobb"}</strong><Link href={returnPath} className={styles.back}>Tillbaka till jobbet</Link></div>}
+            <button type="button" className={`cv-method-card ${styles.card}`} onClick={() => router.push(`/youth/cv/create${cvQuery}`)} >
+              <span className="mnw-cv-method-icon"><UiIcon name="file" /></span><strong className={styles.cardTitle}>Skapa CV i MatchnWork</strong>
+              <span className={styles.cardText}>Svara på några frågor så bygger vi CV:t tillsammans.</span>
             </button>
-            {VOICE_CV_ENABLED && <Link href={`/voice-cv${cvQuery}`} className="cv-method-card" style={{ position: "relative", display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--color-brand)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", textDecoration: "none", overflow: "hidden" }}>
-              <span style={{ position: "absolute", top: 14, right: -35, width: 126, padding: ".28rem 0", color: "#ffffff", background: "var(--color-brand)", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em", lineHeight: 1, textAlign: "center", textTransform: "uppercase", transform: "rotate(45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(190,24,93,.28)" }}>Beta</span>
-              <span className="mnw-cv-method-icon"><UiIcon name="microphone" /></span><strong style={{ fontSize: "1rem" }}>Skapa CV med röstsamtal</strong>
-              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Prata med AI:n och svara på frågorna med din röst.</span>
+            {VOICE_CV_ENABLED && <Link href={`/voice-cv${cvQuery}`} className={`cv-method-card ${styles.voice}`} >
+              <span className={styles.beta}>Beta</span>
+              <span className="mnw-cv-method-icon"><UiIcon name="microphone" /></span><strong className={styles.voiceTitle}>Skapa CV med röstsamtal</strong>
+              <span className={styles.voiceText}>Prata med AI:n och svara på frågorna med din röst.</span>
             </Link>}
-            <label className="cv-method-card" style={{ display: "grid", gap: ".3rem", padding: "1.15rem", border: "1px solid var(--border)", borderRadius: 16, color: "var(--text-primary)", background: "var(--surface)", cursor: docUploading ? "wait" : "pointer" }}>
+            <label className={`cv-method-card ${styles.upload}`} data-uploading={docUploading} >
               <input type="file" accept="application/pdf,.pdf" onChange={(event) => void handleUploadedCvFinish(event)} disabled={docUploading} className="mnw-cv-file-input" />
-              <span className="mnw-cv-method-icon"><UiIcon name="upload" /></span><strong style={{ fontSize: "1rem" }}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
-              <span style={{ color: "var(--text-secondary)", fontSize: ".82rem" }}>Använd ditt befintliga CV som underlag för dina ansökningar.</span>
+              <span className="mnw-cv-method-icon"><UiIcon name="upload" /></span><strong className={styles.uploadTitle}>{docUploading ? "Laddar upp PDF..." : "Bifoga eget CV som PDF"}</strong>
+              <span className={styles.uploadText}>Använd ditt befintliga CV som underlag för dina ansökningar.</span>
             </label>
           </div>
-          {error && <p role="alert" style={{ margin: "1rem 0 0", color: "var(--color-danger)", fontSize: ".85rem" }}>{error}</p>}
+          {error && <p role="alert" className={styles.error}>{error}</p>}
         </div>
       </main>
     );
