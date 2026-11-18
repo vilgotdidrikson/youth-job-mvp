@@ -59,3 +59,7 @@ Vilgot / Codex reserverar `codex/f12-known-answer-followups` från `dev` `c1b0b5
 Ett uttryckligen sparat och otvetydigt svar om B-körkort kan besvara motsvarande krav i en senare ansökan, även med formuleringen ”Körkort B”. Villkorliga och motsägande uppgifter räknas inte som kända. Tidigare sparade arbetstider räknas inte som aktuell tillgänglighet. Samma urval av högst tre skilda automatiska frågor används i direktflödet och bakgrundsanalysen. Om direktflödet inte kan läsa tidigare frågor väntar det med att köa nya. Frågor förblir frivilliga. Det tidigare delningsvalet per ansökan gäller även för sparat körkortssvar.
 
 Matchnings-, följdfråge-, delnings-, komponent- och arbetartester passerade med simulerad transport. TypeScript och riktad ESLint passerade. Ingen databasmigration. Inloggat tvåansökningsprov med den verkliga modellen återstår inom L17. F12:s kodleverans är redo för granskning.
+
+## F12 – slutför kompletteringsfrågorna
+
+Vilgot / Codex reserverar `codex/f12-complete-followup-questions` från dev `49d3e76` för att slutföra F12:s frågetexter och hantering av kända uppgifter inför granskning.
