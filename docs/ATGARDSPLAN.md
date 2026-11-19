@@ -197,11 +197,11 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 13 | [N16](#n16) | P1 | Slopa obligatoriskt platsantal och behåll manuell annonsstatus | För granskning | Vilgot / Codex |
 | 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | För granskning | Codex |
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | För granskning | Codex |
-| 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
+| 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | För granskning | Codex |
 | 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | För granskning | Vilgot / Codex |
 | 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | För granskning | Vilgot / Codex |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | För granskning | Vilgot / Claude |
-| 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
+| 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | För granskning | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | För granskning | Vilgot / Codex |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Klar | Codex |
@@ -1240,6 +1240,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l02"></a>
 ### L02 SMTP och tillförlitliga e-postutskick
 
+- Samlad leverans för granskning 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, reservation `4f65a6c`. Kontomejl och L03:s redan införda beständiga fakturamejlkö är samordnade i [docs/L02.md](L02.md). Reproducerat ohanterat kastat RPC-fel före mejlroutens felgräns; databas-/SMTP-konstruktion omfattas nu av ett tomt 503-svar. Tio nya faktiska routefall, riktig lokal SMTP/PDF och auth-/kontoregressioner passerar. TypeScript, riktad ESLint, diff-check och standardproduktionsbygge (69 sidor) passerar; befintlig metadataBase-varning kvarstår. Ingen migration, nytt externt utskick eller hosted konfigurationsändring. Kvar för acceptans: verklig registreringsbekräftelse, full lösenordsåterställning/adressbyteskedja, hosted konfigurationskontroll och upprepat godkänt fakturamejlprov enligt fyra konkreta testfall i L02.md. Kodleverans för granskning, inte ny verifierad drift eller Klar.
+
 - Fortsättning reserverad före kodarbete 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, från aktuell dev `92b8069`. Samlad kodgranskning av kontomejl och L03:s införda beständiga fakturamejlkö, kvarvarande felhantering och acceptansprotokoll före För granskning. Öppna PR:er kontrollerade: endast äldre #40 mot master, ingen överlappande arbets-PR. Samordnas med F26; inga verkliga mejlutskick, SMTP-inställningar eller migrationer körs i denna etapp.
 
 - Fortsättning reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/l02-confirmation-flow-20261027`. Återanvänd Supabase Auth för ny bekräftelselänk, tydlig utgången-länkhantering och dubbelförsöksskydd. Användaren bekräftade att mejl från info@matchnwork.se når mottagaren och återställningslänken fungerar i dev efter rättad redirect-lista. Ingen ny automatiserad leveransverifiering påstås; obligatorisk verifiering aktiveras inte. Föregående leverans införd genom PR #135, merge 24e87fd.
@@ -1248,9 +1250,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P1
 - Global ordning: 14
 - Typ: Tidigare beslutad funktion / återstående införande
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Vilgot / Codex
-- Branch/PR: `codex/l02-auth-email-20261027`, reserverad före kodarbete. Avgränsad första leverans: auth-mejl, miljöriktiga länkar, svenska mallar och konfigurationskontroll. SMTP-uppgifter och verklig leverans saknas; ingen produktionskonfiguration eller aktivering.
+- Branch/PR: `codex/f26-l02-review-readiness-20261119`, reservation `4f65a6c`. Tidigare kontomejl: `codex/l02-auth-email-20261027`; fakturakö och tidigare Zoho-prov: L03. Senaste kodleverans och samlad acceptans finns i L02.md.
 - Leverans 2026-11-09, Vilgot / Codex, `codex/n10-l02-l06-account-settings-20261109`, PR #186: tre kontodelar – lösenordsverifierat e-postbyte (N10), miljöriktig retur/väntande kontra serverläst e-poststatus och återförsöksspärr (L02), ägar-/avbrottskontroller och städning av isolerad verifieringssession utan upprepad ändring (L06). Nya faktiska SDK-/komponentprov, fem regressioner, TypeScript, riktad lint och bygge passerade. Före/efter-provet visar saknad lokal logout i tidigare lösenordsbyte. Ingen hosted konfiguration eller live-mejl ändrades/testades. Se `docs/N10_L02_L06_ACCOUNT_SETTINGS.md`. Notispreferenser, verklig bekräftelsekedja och övrig acceptans kvarstår; inte Klar.
 - Åtgärd: Inventera befintlig e-postkod och konfigurera fungerande avsändare och leverans. Prioritera verifiering, återställning av lösenord och fakturautskick. Koppla mallar, leveransstatus och återförsök till rätt händelser och undvik dubbla utskick. Match- och meddelandemail är en senare del, med notispreferenser.
 - Klar när: Kritiska mejl når testmottagare, länkar leder till rätt miljö och misslyckade eller upprepade försök hanteras spårbart.
@@ -1259,7 +1261,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat 2026-10-27: Explicit miljöriktig bekräftelseretur till /login, svenska bekräftelse-/återställnings-/e-postbytesmallar, lokala exakta returadresser och read-only hosted Auth-preflight utan känslig loggning. Inventering och anslutnings-/acceptanssteg i docs/L02.md. Inga hosted inställningar eller produktionsändringar.
 - Fortsättning verifierad lokalt: Utökat test:auth-email kör installerad SDK och faktiska komponentcallbacks med simulerad transport: resend, neutral status, fel/taktgräns, dubbla klick, avmontering, autofill och 60 s väntetid/återförsök. Dubbelklicksprovet fallerar mot föregående komponent och passerar med rättningen. Account-recovery, riktad ESLint och standardproduktionsbygge med TypeScript/57 routes passerar (fiktiva publika Supabase-byggvärden). Inloggad registreringsbekräftelse och mobilvisuell kontroll återstår.
 - Verifierat: test:auth-email kör faktiska auth-funktioner och installerad SDK mot simulerad HTTP i tre miljöer, negativa konfigurationsprov och mallkontroller. test:account-recovery, riktad ESLint och standardproduktionsbygge inklusive TypeScript/56 routes passerar (fiktiva publika Supabase-byggvärden). Verkliga utskick har inte körts.
-- Återstår / blockerare: Beslutad Zoho-avsändare: info@matchnwork.se (MatchnWork), bekräftad av användaren 2026-10-27. Kan användas efter verifierad SMTP-åtkomst, hosted konfiguration och verkliga leverans-/länkprov. SMTP-autentisering anges direkt i tjänstens inställningar. Fakturamejl och beständig leverans-/retryhantering återstår. L02 markeras inte Klar.
+- Återstår / blockerare: Sammanhängande externa mejl-/länkprov och faktisk konfigurationskontroll enligt L02.md; produktion samordnas separat. Avsändare info@matchnwork.se (MatchnWork). Fakturakö/retry är nu levererade i L03 och dess dokumenterade Zoho-prov 2026-11-18 är tidigare underlag; inga nya externa leveransprov i denna etapp. Ingen migration behövs. L02 markeras inte Klar.
 
 <a id="l03"></a>
 ### L03 Automatiserad fakturering vid bekräftad anställning
@@ -1454,6 +1456,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
 
+- Samlad leverans för granskning 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, reservation `4f65a6c`. Hela F26-kriteriet är kopplat till befintlig implementation och konkreta kvarvarande acceptanstest i [docs/F26.md](F26.md). Reproducerat att ”Jag kommer i tidningen varje vecka” gav belägg för Punktlig; Unicode-medveten ordgräns stoppar nu längre ord, med tre nya regressionsfall. Engine 14 för nya beräkningar; inga gamla ansökningar skrivs om. PDF-testets temporära sökväg fungerar nu även på Windows. Matching/fairness, 20 snapshotfall, disclosure, followup-batch, assessment-progress, arbetartest och 34 avståndskontroller passerar, liksom TypeScript, riktad ESLint, diff-check och standardbygge (69 sidor). Ingen migration, schema-/RLS-ändring, verkligt modellanrop eller nytt dev-acceptanstest. Inloggad flerparts-/fil-/mobilacceptans, verklig modell-/metodgranskning och rättelse/samtidighet återstår i L17; rättsliga/leverantörsbeslut i L14/L15. Kodleverans För granskning, inte Klar.
+
 - Fortsättning reserverad före kodarbete 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, från aktuell dev `92b8069`. Samlad granskning mot hela F26-kriteriet, kvarvarande lokala rättelser och explicit acceptansprotokoll före För granskning. Tidigare leveranser och ägare bevaras. Öppna PR:er kontrollerade: endast äldre #40 mot master, ingen överlappande arbets-PR. Samordnas med L02 som andra huvudkort i användarens beställda tvåkortsetapp. Inga skarpa modell-/persondataanrop eller databasändringar beställs genom reservationen.
 
 - Verifierat 2026-11-13, [PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217): L13:s fyra införda rättelsefunktioner matchar migrationskoden, funktionstyp/search_path/grants är kontrollerade i DevStaging. N19/F26:s faktiska ägar-/revisionspolicy och restriktiva gallringspolicy är avstämda. Fem negativa live-SQL-prov utan fixtures passerar; detta är syntetisk SQL-roll/JWT-kontext, inte riktig Auth-inloggning. Ny katalogkontroll matchar 92 relationer/fyra buckets. 35 lokala PostgreSQL-prov och 20 handlerfall passerar. Inga produkt-/schemaändringar; positivt inloggat flöde/notis/AI/samtidighet/webb/mobil ligger kvar i L17. Se docs/L13_APPLICATION_CORRECTIONS.md. Huvudkortets status bevaras.
@@ -1477,9 +1481,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P1
 - Global ordning: 13.3
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Codex
-- Branch/PR: `codex/f26-evidence-review-20261019`, [PR #81](https://github.com/vilgotdidrikson/youth-job-mvp/pull/81), avgränsad leverans 1. Fortsättning: `codex/f26-n19-application-disclosure-20261019`, [PR #82](https://github.com/vilgotdidrikson/youth-job-mvp/pull/82), för jobbspecifikt underlag och åtkomst. Reservation publicerad före kodarbete.
+- Branch/PR: `codex/f26-l02-review-readiness-20261119`, reservation `4f65a6c`. Tidigare grund: [PR #81](https://github.com/vilgotdidrikson/youth-job-mvp/pull/81) och [PR #82](https://github.com/vilgotdidrikson/youth-job-mvp/pull/82). Senaste kodleverans och samlad acceptans finns i F26.md.
 - Åtgärd: Granska faktiskt kriterieflöde, AI-instruktioner, regler, belägg och beräkning; F05 täckte teknisk leverans, inte detta kvalitetskrav. Ersätt den generella rutan Mer om kandidaten med jobbspecifikt ansökningsunderlag tillsammans med N19. Låt jobbkrav, relevanta belägg från godkända uppgifter och skillnaden stöd/uttrycklig motsägelse/okänd dominera. Eventuell matchprocent visas sekundärt tillsammans med täckningsgrad. Förstå likvärdiga formuleringar utan nya sakpåståenden. Märk egna exempel som självuppgivna, aldrig verifierade personlighetsomdömen eller personlighetspoäng. Använd bara relevant godkänt underlag; läck inte hela profilen genom AI-resultat. Ingen ansökan nekas eller döljs automatiskt på grund av matchningsgrad eller saknad video.
 - Klar när: Synonympar som punktlig/bra på att passa tider återges rättvist med självuppgivet belägg. Fotbollstränare ger inte automatiskt punktlighet, ansvar eller ledarskap. Saknad uppgift är okänd, inte underkänd. Kriterier/belägg är primära, eventuell procent sekundär med täckningsgrad; mer text ger inte i sig bättre poäng. Inaktuella/ogranskade/avvisade AI-förslag, råa textsamtal, orelaterade profiluppgifter och känsliga attribut används inte. Företagsunderlaget har rätt jobb-/ansökningsscope även via API/databas enligt L05; ungdomen ser vilka uppgifter som används. Testa låg/okänd matchning och ingen/nekad video: ansökan är fortsatt synlig och skickas enligt ordinarie behörighets-/CV-regler.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
@@ -1495,7 +1499,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Leverans för Unicode-/payloadfortsättningen: [PR #137](https://github.com/vilgotdidrikson/youth-job-mvp/pull/137).
 - Fortsättning implementerad 2026-10-27: Unicode-gränser, formatering/NFKC i separat detektionsvy, Unicode-kontakt-/identitetskontroller och bevarade orörda källpassager. Explicit kriterie-/frågeprojektion före AI-SDK; cache-engine 11 vid nya beräkningar. Inga nya AI-pass, datafält eller databasändringar. Se docs/F26.md.
 - Fortsättning verifierad: Utökade faktiska policy-/käll-/SDK-payloadtester med 81 kombinerade känsliga textfall och nio extra payloadfall. Unicode- respektive extrafältsregression fallerar mot föregående kod. Matching, application-disclosure, followup-batch, assessment-progress, application-supplement, application-analysis-worker, riktad ESLint och standardproduktionsbygge med TypeScript/57 routes passerar (fiktiva publika Supabase-byggvärden). Modelltransport är simulerad; heuristikens begränsningar och fortsatt helhetsverifiering bevaras.
-- Återstår / blockerare: Den nya delningsgränsen är byggd/SQL-testad men inloggat end-to-end-flöde, riktiga filnedladdningar och verklig modellbedömning återstår. Tillförlitlig geografisk uppskattning och N19:s fullständiga profilfakta/CV-urval återstår. Heuristisk minimering kan missa namn/okända indirekta känsliga uppgifter och får inte betraktas som ett fullständigt integritetsskydd; fortsatt metod- och rättelseverifiering krävs före lansering. Inloggade flöden, verklig modellbedömning, negativa åtkomsttester samt ansökan vid AI-fel/ingen video återstår.
+- Återstår / blockerare: Fyra uttryckliga acceptanstest i F26.md/L17: inloggad flerparts-/fil-/mobilgräns, verklig modell-/metodgranskning, fortsatt synlig ansökan vid låg/okänd/felande AI och utan video, samt rättelse/återkallande under samtidiga anrop. Geografisk uppskattning och profilfakta/CV-urval är levererade enligt senare N19/F26-noteringar. Heuristisk minimering kan missa namn/indirekta känsliga uppgifter; fortsatt metodverifiering och rättsliga/leverantörsbeslut krävs före lansering. Ingen migration behövs för denna etapp. F26 markeras inte Klar.
 
 <a id="n19"></a>
 ### N19 Samlad jobbprofil och ett kort grund-CV

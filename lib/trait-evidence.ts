@@ -11,7 +11,9 @@ export function selfReportedTraitEvidence(label: string, source: string): {statu
   const found: {status:"fulfilled"|"unfulfilled";evidence:string}[] = [];
   for (const line of source.split(/\n|(?<=[.!?])\s+/)) {
     if (/\b(?:kanske|vill|hoppas|önskar|om|tidigare|förut|förra året|inte längre|min kompis|min bror|min syster)\b/i.test(line)) continue;
-    const negative = group.negative.exec(line), positive = group.positive.exec(line);
+    // A phrase must end at a word boundary: "kommer i tidningen" is not "kommer i tid".
+    const phrase = (pattern: RegExp) => new RegExp(`(?:${pattern.source})(?![\\p{L}\\p{N}_])`, "iu").exec(line);
+    const negative = phrase(group.negative), positive = phrase(group.positive);
     const match = negative ?? positive;
     if (!match || /\b(?:kanske|ibland|inte|aldrig|sällan|när|om)\b/i.test(line.slice(match.index + match[0].length))) continue;
     // A reported quotation or hypothetical statement is not the candidate's own claim.
