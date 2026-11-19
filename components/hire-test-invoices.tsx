@@ -70,23 +70,27 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
 
 function HireInvoices({ admin = false, live, showEmpty = false }: { admin?: boolean; live: boolean; showEmpty?: boolean }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [available, setAvailable] = useState(showEmpty || (!live && admin));
+  const [available, setAvailable] = useState(showEmpty || admin);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const reload = () => { setLoading(true); setRefresh(value => value + 1); };
   useEffect(() => {
     const controller = new AbortController();
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]);
     const load = async () => {
       try {
-        const enabled = live || showEmpty || admin || Boolean(await getHireTestOffer());
+        const enabled = live || showEmpty || admin || Boolean(await getHireTestOffer(signal));
         if (controller.signal.aborted) return;
         if (!live) setAvailable(enabled);
         if (!enabled) return;
-        const rows = await listHireInvoices(admin, controller.signal, live);
-        if (!controller.signal.aborted) { setInvoices(rows); setError(""); if (live) setAvailable(showEmpty || rows.length > 0); }
+        const rows = await listHireInvoices(admin, signal, live);
+        if (!controller.signal.aborted) { setInvoices(rows); setError(""); if (live) setAvailable(admin || showEmpty || rows.length > 0); }
       } catch {
-        if (!controller.signal.aborted) setError("Fakturorna kunde inte hämtas. Försök igen.");
+        if (!controller.signal.aborted) {
+          setAvailable(true);
+          setError("Fakturorna kunde inte hämtas. Försök igen.");
+        }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }

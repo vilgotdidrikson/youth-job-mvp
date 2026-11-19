@@ -27,8 +27,9 @@ export type HireBankInvoice = HireTestInvoice & {
 
 export type HireBankInvoiceOffer = { version: string; acceptance: string; terms: string; seller: string };
 
-export async function getHireBankInvoiceOffer(): Promise<HireBankInvoiceOffer | null> {
-  const { data, error } = await getSupabaseClient().rpc("get_hire_bank_invoice_offer");
+export async function getHireBankInvoiceOffer(signal?: AbortSignal): Promise<HireBankInvoiceOffer | null> {
+  const request = getSupabaseClient().rpc("get_hire_bank_invoice_offer");
+  const { data, error } = await (signal ? request.abortSignal(signal) : request);
   if (error || (data !== null && (typeof data?.version !== "string" || typeof data.acceptance !== "string" || typeof data.terms !== "string" || typeof data.seller !== "string"))) {
     throw new Error("Pris och betalningsvillkor kunde inte hämtas.");
   }
@@ -39,8 +40,9 @@ export function invoiceAmount(amountOre: number) {
   return new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: 2 }).format(amountOre / 100);
 }
 
-export async function getHireTestOffer(): Promise<typeof HIRE_TEST_TERMS | null> {
-  const { data, error } = await getSupabaseClient().rpc("hire_invoice_test_offer");
+export async function getHireTestOffer(signal?: AbortSignal): Promise<typeof HIRE_TEST_TERMS | null> {
+  const request = getSupabaseClient().rpc("hire_invoice_test_offer");
+  const { data, error } = await (signal ? request.abortSignal(signal) : request);
   if (error || (data !== null && data !== HIRE_TEST_TERMS)) throw new Error("Pris och villkor kunde inte hämtas.");
   return data;
 }

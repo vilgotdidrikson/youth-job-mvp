@@ -4,10 +4,10 @@ import { createRequire } from 'node:module';
 import ts from 'typescript';
 const require = createRequire(import.meta.url);
 function compile(file, imports = {}, extra = '') {
-  const module = { exports: {} };
+  const compiled = { exports: {} };
   const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-  new Function('module','exports','require',code + extra)(module,module.exports,name => imports[name] ?? require(name));
-  return module.exports;
+  new Function('module','exports','require',code + extra)(compiled,compiled.exports,name => imports[name] ?? require(name));
+  return compiled.exports;
 }
 const types = compile('lib/recruitment-types.ts');
 const nav = compile('lib/chat-navigation.ts');
@@ -48,10 +48,10 @@ assert.deepEqual(events,['mnw-navigation-refresh','mnw-recruitment-refresh']);
 
 const nodes = root => !root || typeof root !== 'object' ? [] : [root,...(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).flatMap(child=>child===root?[]:nodes(child))];
 const text = node => node==null||typeof node==='boolean' ? '' : typeof node!=='object'?String(node):Array.isArray(node)?node.map(text).join(''):text(node.props?.children);
-function harness({company=false,record=employment,invoiceOffer,write=async()=>{},reload=async()=>{}}={}) {
+function harness({company=false,record=employment,invoiceOffer,write=async()=>{},reload=async()=>{},retry}={}) {
   const slots=[];let cursor=0,props;const calls=[],closed=[];
   const react={useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],value=>slots[i]=value];},useRef(initial){const i=cursor++;return slots[i]??={current:initial};},useId:()=>'hint'};
-  const module=compile('components/recruitment-panel.tsx',{
+  const panel=compile('components/recruitment-panel.tsx',{
     react,
     "next/link":{default:"a"},
     "@/lib/hire-test-invoices":{},
@@ -63,11 +63,11 @@ function harness({company=false,record=employment,invoiceOffer,write=async()=>{}
     '@/lib/current-offer':offer,
     './recruitment.module.css':{default:{}},
   },'\nmodule.exports.__form=EmploymentForm;');
-  props={item:{match_id:'match-a',job_title:'QA ad',youth_name:'QA Youth',employment:record},company,invoiceOffer,onClose:()=>closed.push(true),onSaved:reload};
-  const render=()=>{cursor=0;return module.__form(props);};
+  props={item:{match_id:'match-a',job_title:'QA ad',youth_name:'QA Youth',employment:record},company,invoiceOffer,onClose:()=>closed.push(true),onSaved:reload,onRetryInvoiceOffer:retry};
+  const render=()=>{cursor=0;return panel.__form(props);};
   const button=label=>nodes(render()).find(n=>n.type==='button'&&text(n)===label);
   const submit=()=>nodes(render()).find(n=>n.type==='form').props.onSubmit({preventDefault(){}});
-  return {render,button,submit,calls,closed,updateRecord(record){props={...props,item:{...props.item,employment:record}};},wrapper:module.RecruitmentPanel};
+  return {render,button,submit,calls,closed,updateRecord(record){props={...props,item:{...props.item,employment:record}};},updateOffer(invoiceOffer){props={...props,invoiceOffer};},wrapper:panel.RecruitmentPanel};
 }
 let ui=harness();ui.render();ui.updateRecord({...employment,role_name:'new facts',start_date:'2026-10-19'});
 await ui.submit();assert.deepEqual(ui.calls[0][2].expected_employment,snapshot,'Open review must submit the displayed facts, not refreshed props');
@@ -93,11 +93,66 @@ assert.match(readFileSync('components/close-recruitment-dialog.tsx','utf8'),/REG
 ui=harness({record:{...employment,response:'approved'}});assert.ok(ui.button('Spara synlighet och CV'));assert.ok(ui.button('Begär rättelse av anställningen'));
 await ui.submit();assert.equal(ui.calls[0][2].show_on_profile,false);assert.equal(ui.calls[0][2].include_in_cv,false);
 assert.match(offer.CURRENT_COMPANY_OFFER.future, /500 kr per bekräftad anställning.*planerat pris.*1 000 kr/i);
+assert.match(offer.CURRENT_COMPANY_OFFER.future, /Arbetsgivaren faktureras först när kandidaten har bekräftat/);
 ui=harness({company:true,record:null,invoiceOffer:offer.HIRE_TEST_TERMS});
 assert.match(text(ui.render()), /testfaktura på 500 kr/);
 await ui.submit();assert.equal(ui.calls.length,0,'Test invoice requires consent before registering');
 nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='checkbox').props.onChange({target:{checked:true}});
 await ui.submit();assert.equal(ui.calls[0][2].test_invoice_terms,offer.HIRE_TEST_TERMS);
-ui=harness({company:true,record:null,invoiceOffer:'error'});await ui.submit();assert.equal(ui.calls.length,0);
+let retries=0;
+ui=harness({company:true,record:null,invoiceOffer:'error',retry:()=>{retries++;}});
+let startInput=nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='date');
+startInput.props.onChange({target:{value:'2026-12-01'}});
+await ui.submit();assert.equal(ui.calls.length,0);
+ui.button('Hämta pris och villkor igen').props.onClick();
+assert.equal(retries,1);
+ui.updateOffer({seller:'Fiktiv säljare',terms:'Granskade fiktiva villkor',acceptance:'approved-version',version:'v1'});
+assert.match(text(ui.render()), /fakturerar ert företag 500 kr när kandidaten bekräftar/);
+assert.equal(nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='date').props.value,'2026-12-01');
+await ui.submit();assert.equal(ui.calls.length,0);
+nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='checkbox').props.onChange({target:{checked:true}});
+await ui.submit();assert.equal(ui.calls[0][2].bank_invoice_terms,'approved-version');
 assert.notEqual(ui.wrapper({matchId:'a'}).key,ui.wrapper({matchId:'b'}).key,'Changing conversations resets open dialogs and records');
+
+const invoiceSlots = [];
+let invoiceCursor = 0, lastInvoiceAttempt, invoiceRequest, invoiceReads = 0;
+let rejectInvoiceRead = true;
+const invoicePanel = compile('components/hire-test-invoices.tsx',{
+  react:{
+    useState(initial) {
+      const i=invoiceCursor++;
+      if(!(i in invoiceSlots)) invoiceSlots[i]=initial;
+      return [invoiceSlots[i],value=>{invoiceSlots[i]=typeof value==='function'?value(invoiceSlots[i]):value;}];
+    },
+    useEffect(run,[,,attempt]) {
+      if(attempt===lastInvoiceAttempt) return;
+      lastInvoiceAttempt=attempt;
+      run();
+    },
+  },
+  '@/lib/hire-test-invoices':{
+    async listHireInvoices(admin,signal,live) {
+      assert.equal(admin,true);assert.equal(live,true);assert.ok(signal instanceof AbortSignal);
+      invoiceReads++;
+      if(rejectInvoiceRead) throw new Error('Simulerat läsfel');
+      return [];
+    },
+  },
+  '@/lib/invoice-pilot':{isInvoicePilotDev:()=>true},
+  './company-billing-settings.module.css':{default:{}},
+},'\nmodule.exports.__list=HireInvoices;');
+const bankInvoices=()=>{
+  invoiceCursor=0;
+  return invoicePanel.__list({admin:true,live:true});
+};
+assert.match(text(bankInvoices()),/Hämtar fakturor/);
+await new Promise(setImmediate);
+invoiceRequest=bankInvoices();
+assert.match(text(invoiceRequest),/Fakturorna kunde inte hämtas/);
+rejectInvoiceRead=false;
+nodes(invoiceRequest).find(n=>n.type==='button'&&text(n)==='Uppdatera fakturor').props.onClick();
+bankInvoices();
+await new Promise(setImmediate);
+assert.match(text(bankInvoices()),/Inga utfärdade fakturor ännu/);
+assert.equal(invoiceReads,2);
 console.log('PASS: reviewed facts, stale form props, conflict recovery, no duplicate writes, successful-write/read-failure, independent consent, correction after approval, current pricing, exact-match chat links and one hire entry name with explained next steps.');

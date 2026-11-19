@@ -7,5 +7,5 @@ export const CURRENT_COMPANY_OFFER = {
   title: "Kostnadsfritt just nu",
   description: "Det är kostnadsfritt att skapa konto, publicera annonser och rekrytera via MatchnWork just nu.",
   registration: "Ingen avgift tas ut och ingen faktura skapas när ni registrerar en anställning i den nuvarande versionen.",
-  future: `När faktureringen öppnar är lanseringspriset ${HIRE_LAUNCH_PRICE} per bekräftad anställning. Planerat pris efter introduktionen är ${HIRE_PLANNED_PRICE}.`,
+  future: `När faktureringen öppnar är lanseringspriset ${HIRE_LAUNCH_PRICE} per bekräftad anställning. Arbetsgivaren faktureras först när kandidaten har bekräftat den registrerade anställningen. Planerat pris efter introduktionen är ${HIRE_PLANNED_PRICE}.`,
 };
