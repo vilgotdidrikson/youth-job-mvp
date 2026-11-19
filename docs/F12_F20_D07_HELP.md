@@ -23,3 +23,7 @@ D07: samma benämningar för Hjälp och kontakt respektive Integritet och AI sam
 - Kompletterings-, delnings-, profil-, företagsnavigations- och autentiseringsregressioner, TypeScript, riktad lint, designtokens och produktionsbygge kontrolleras inför publicering.
 
 Slutlig juridisk saktext/villkor (F20/L15), F12:s bredare profilåteranvändning och inloggad mobil-/webbacceptans återstår. Dessa tre kort markeras inte Klar genom denna avgränsade leverans.
+
+## F12 och F20 – uppföljning 2026-11-19
+
+Vilgot / Codex reserverar `codex/f12-f20-application-support-20261119`. Slutför kravinformation, förklaring av frivillig komplettering och hjälp vid ansöknings- och CV-beslut. Öppen PR #245 arbetar på F26 och L02. Juridiska sluttexter följer L15.
