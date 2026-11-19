@@ -13,6 +13,11 @@ for(const claim of ['Jag är punktlig.','Jag är bra på att passa tider.','Jag 
  assert.equal(result.criteria[0].status,'fulfilled');assert.equal(result.score,null);assert.equal(result.criteria[0].weight,0);
 }
 assert.equal(assessCandidate(trait,[],candidateSource({cv_text:'Jag är inte bra på att passa tider.'})).criteria[0].status,'unfulfilled');
+for (const text of ['Jag kommer i tidningen varje vecka.', 'Jag är punktlighetsansvarig i föreningen.', 'Jag är inte punktlighetsansvarig i föreningen.']) {
+ const result=assessCandidate(trait,[],candidateSource({cv_text:text}));
+ assert.equal(result.criteria[0].status,'unknown',text);
+ assert.equal(result.criteria[0].evidence,null,text);
+}
 for(const text of ['Jag var fotbollstränare.','Min bror är punktlig.','Jag vill vara punktlig.','Jag är punktlig om jag får skjuts.','Jag har aldrig sagt att jag är punktlig.','Jag är punktlig. Jag kommer inte i tid.'])assert.equal(assessCandidate(trait,[{id:'c0',status:'fulfilled',evidence:text}],candidateSource({cv_text:text})).criteria[0].status,'unknown',text);
 assert.equal(matchingCriteria([{label:'Punktlig',category:'must_have',required:true}])[0].weight,0,'Trait cannot become a personality score by choosing another category');
 const rawProfile=emptyRecruitmentProfile();rawProfile.examples=[{strength:'responsibility',context:'Fotbollstränare',action:'Jag planerade träningar för tolv barn.'}];
