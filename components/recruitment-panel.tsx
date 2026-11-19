@@ -12,7 +12,9 @@ import styles from "./recruitment.module.css";
 
 type InvoiceOffer = typeof HIRE_TEST_TERMS | HireBankInvoiceOffer | "loading" | "error" | null;
 
-function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }: { item: RecruitmentRecord; company: boolean; onClose: () => void; onSaved: () => Promise<void>; invoiceOffer?: InvoiceOffer }) {
+function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null, onRetryInvoiceOffer }: {
+  item: RecruitmentRecord; company: boolean; onClose: () => void; onSaved: () => Promise<void>; invoiceOffer?: InvoiceOffer; onRetryInvoiceOffer?: () => void;
+}) {
   const [role, setRole] = useState(item.employment?.role_name ?? item.job_title);
   const [start, setStart] = useState(item.employment?.start_date ?? "");
   const [show, setShow] = useState(item.employment?.show_on_profile ?? false);
@@ -56,14 +58,14 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null }
     <h2>{company ? `${expected ? "Rätta anställningsuppgifter" : REGISTER_EMPLOYMENT} för ${item.youth_name}` : approved ? "Synlighet och CV" : "Granska din anställning"}</h2>
     {company ? <>{expected ? <p>Kandidaten granskar de ändrade uppgifterna igen innan anställningen blir bekräftad.</p> : <ol className={styles.steps}>{EMPLOYMENT_STEPS.map(step => <li key={step}>{step}</li>)}</ol>}
       {invoiceOffer === "loading" && <p role="status">Hämtar pris och villkor…</p>}
-      {invoiceOffer === "error" && <p role="alert">Pris och villkor kunde inte hämtas. Stäng formuläret och öppna det igen.</p>}
+      {invoiceOffer === "error" && <div><p role="alert">Pris och villkor kunde inte hämtas.</p><button type="button" className="secondary-btn" onClick={onRetryInvoiceOffer}>Hämta pris och villkor igen</button></div>}
       {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}{isInvoicePilotDev() && " För att prova fakturering, använd företagskontot från Testa fakturaflödet i admin."}</p>}
       {testInvoice && <div className={styles.offer}>
         <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=invoices">företagets fakturavy</Link> och ska aldrig betalas.</p>
         <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
       </div>}
       {bankInvoice && <div className={styles.offer}>
-        <p>{bankInvoice.seller} fakturerar {HIRE_LAUNCH_PRICE} när kandidaten bekräftar anställningen. Fakturan skickas till er sparade fakturaadress med 30 dagars betalningsfrist.</p>
+        <p>{bankInvoice.seller} fakturerar ert företag {HIRE_LAUNCH_PRICE} när kandidaten bekräftar anställningen. Fakturan mejlas till er sparade fakturaadress med 30 dagars betalningsfrist.</p>
         <p className={styles.terms}>{bankInvoice.terms}</p>
         <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag får företräda företaget och godkänner avgiften och betalningsvillkoren.</label>
       </div>}
@@ -119,16 +121,25 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [edit, setEdit] = useState(false), [report, setReport] = useState(false), [details, setDetails] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [invoiceOffer, setInvoiceOffer] = useState<InvoiceOffer>("loading");
+  const [invoiceOfferAttempt, setInvoiceOfferAttempt] = useState(0);
   const needsInvoiceOffer = edit && company && item !== null && !item.employment;
   useEffect(() => {
     if (!needsInvoiceOffer) return;
-    let active = true;
-    void getHireTestOffer().then(async test => test ?? await getHireBankInvoiceOffer()).then(
-      offer => { if (active) setInvoiceOffer(offer); },
-      () => { if (active) setInvoiceOffer("error"); },
+    const controller = new AbortController();
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]);
+    void getHireTestOffer(signal).then(async test => {
+      signal.throwIfAborted();
+      return test ?? await getHireBankInvoiceOffer(signal);
+    }).then(
+      offer => { if (!controller.signal.aborted) setInvoiceOffer(signal.aborted ? "error" : offer); },
+      () => { if (!controller.signal.aborted) setInvoiceOffer("error"); },
     );
-    return () => { active = false; };
-  }, [needsInvoiceOffer]);
+    return () => controller.abort();
+  }, [needsInvoiceOffer, invoiceOfferAttempt]);
+  const retryInvoiceOffer = () => {
+    setInvoiceOffer("loading");
+    setInvoiceOfferAttempt(value => value + 1);
+  };
   const closeEmploymentForm = () => {
     setEdit(false);
     setInvoiceOffer("loading");
@@ -176,7 +187,7 @@ function RecruitmentPanelContent({ matchId, jobId, company = false, compact = fa
       {item.reported_at && !["resolved", "dismissed"].includes(item.review_state ?? "") ? <p>Admin har fått ditt ärende.</p> : <button type="button" className={styles.textButton} onClick={() => setReport(true)}>Jag har börjat arbeta, men anställningen är inte registrerad</button>}
     </>}</div>}
   </div>{notice && <p role="status" className={styles.notice}>{notice}</p>}{error && <p role="alert" className={styles.error}>{error}</p>}
-    {edit && <EmploymentForm key={item.match_id} item={item} company={company} invoiceOffer={needsInvoiceOffer ? invoiceOffer : null} onClose={closeEmploymentForm} onSaved={async () => { await load(); onChanged?.(); }}/>}
+    {edit && <EmploymentForm key={item.match_id} item={item} company={company} invoiceOffer={needsInvoiceOffer ? invoiceOffer : null} onRetryInvoiceOffer={retryInvoiceOffer} onClose={closeEmploymentForm} onSaved={async () => { await load(); onChanged?.(); }}/>}
     {report && <ModalDialog label="Kontakta admin om anställningen" onClose={() => setReport(false)} busy={busy} className={styles.dialog}><h2>Anställningen är inte registrerad</h2><p>Beskriv när du började och vad ni kommit överens om. Ärendet är privat för dig och admin. Ingen avgift eller begränsning skapas automatiskt.</p><label>Vad har hänt?<textarea rows={4} maxLength={2000} value={details} onChange={event => setDetails(event.target.value)}/></label>{error && <p role="alert" className={styles.error}>{error}</p>}<div className={styles.actions}><button type="button" className="cta-btn" disabled={busy || details.trim().length < 10} onClick={() => void action("report", { details })}>{busy ? "Skickar…" : "Skicka till admin"}</button><button type="button" className="secondary-btn" disabled={busy} onClick={() => setReport(false)}>Avbryt</button></div></ModalDialog>}
   </section>;
 }
