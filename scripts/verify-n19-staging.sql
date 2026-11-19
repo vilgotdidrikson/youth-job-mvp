@@ -4,7 +4,7 @@ do $$ begin
  if not exists(select 1 from public.youth_profiles where user_id='40416000-07aa-4416-9098-fb4be9928558' and full_name='Alex Testsson') or not exists(select 1 from public.company_profiles where user_id='120c7407-1e8a-488c-9047-f52d79325011' and company_name like 'QA Bistro%') then raise exception 'QA identities changed'; end if;
 end $$;
 update public.youth_profiles set cv_text='QA N19 ORIGINAL CV. Jag har B-körkort.',cv_generated=true,
- cv_structured='{"profile":{"summary":"QA approved summary","sourceNotes":["PRIVATE_RAW_NOTES"]},"workExperience":[{"role":"QA approved role","sourceNotes":["PRIVATE_NESTED_NOTES"]}],"education":[],"skills":[],"languages":[],"certifications":[],"projects":[],"otherExperience":[]}',
+ cv_structured='{"profile":{"summary":"QA approved summary","sourceNotes":["PRIVATE_RAW_NOTES"]},"workExperience":[{"role":"QA approved role","sourceNotes":["PRIVATE_NESTED_NOTES"]},{"role":"QA PROFILE_ONLY_ROLE"}],"education":[],"skills":[],"languages":[],"certifications":[],"projects":[],"otherExperience":[],"cvOmitted":{"workExperience":[1]}}',
  address='QA Hemgatan 91',documents='[{"type":"cv","name":"QA-original.pdf","url":"40416000-07aa-4416-9098-fb4be9928558/qa-n19-original.pdf"},{"type":"other","name":"Private.pdf","url":"40416000-07aa-4416-9098-fb4be9928558/qa-private.pdf"}]',
  recruitment_profile='{"availability":{"days":["sat","sun"],"periods":["evening"],"startDate":"2026-11-01","hours":"10"},"preferences":{"roles":["PRIVATE_ROLE_PREFERENCE"],"locations":[],"travelMinutes":"","motivation":"PRIVATE_MOTIVATION"},"examples":[{"strength":"responsibility","context":"QA SELECTED EXAMPLE","action":"Jag planerade träningar."},{"strength":"service","context":"PRIVATE_UNSELECTED_EXAMPLE","action":"Jag hjälpte kunder."}],"qualifications":{"licences":["B-körkort"],"tools":[],"languages":[]}}'
  where user_id='40416000-07aa-4416-9098-fb4be9928558';
@@ -29,6 +29,7 @@ do $$ begin
  if (select preview->'packet' from n19_fixture)::text like '%PRIVATE_%' then raise exception 'Preview leaked private data'; end if;
  if (select preview->'packet' from n19_fixture)::text like '%QA Hemgatan%' then raise exception 'Residential address leaked'; end if;
 end $$;
+update n19_fixture set preview=public.get_my_application_disclosure_preview(job,array['example:0']);
 select public.save_my_application_disclosure(job,array['example:0'],preview->>'source_token') from n19_fixture;
 select public.prepare_my_application(job) from n19_fixture;
 update n19_fixture set packet=public.get_application_disclosure(job,auth.uid());
@@ -41,6 +42,8 @@ end $$;
 do $$ begin
  if (select packet->'profile_items'->0->>'text' from n19_fixture) not like '%QA SELECTED EXAMPLE%' then raise exception 'Selected example missing'; end if;
  if (select packet from n19_fixture)::text like '%PRIVATE_%' then raise exception 'Private facts leaked in packet'; end if;
+ if (select packet->'cv'->'structured' from n19_fixture)::text like '%PROFILE_ONLY_ROLE%' then raise exception 'Omitted CV fact leaked in packet'; end if;
+ if (select packet->'cv'->'structured' from n19_fixture)::text not like '%QA approved role%' then raise exception 'Selected CV fact missing'; end if;
  if (select packet->'cv'->'documents' from n19_fixture)::text like '%qa-private%' then raise exception 'Unrelated file shared'; end if;
  begin perform * from private.application_disclosures; raise exception 'Direct private table access permitted'; exception when insufficient_privilege then null; end;
 end $$;
@@ -78,7 +81,7 @@ select set_config('request.jwt.claims','{"sub":"40416000-07aa-4416-9098-fb4be992
 set local role authenticated;
 do $$ begin
  if (public.get_application_disclosure((select job from n19_fixture),auth.uid())->'cv'->>'text') not like '%ORIGINAL%' then raise exception 'Profile edit changed shared CV'; end if;
- begin perform public.save_my_application_disclosure((select job from n19_fixture),array['example:0'],(select preview->>'source_token' from n19_fixture)); raise exception 'Stale approval accepted'; exception when serialization_failure then null; end;
+ begin perform public.save_my_application_disclosure((select job from n19_fixture),array['example:0'],(select preview->>'source_token' from n19_fixture)); raise exception 'Stale approval accepted'; exception when sqlstate 'PT409' then null; end;
 end $$;
 update n19_fixture set preview=public.get_my_application_disclosure_preview(job,array['example:0']);
 select public.save_my_application_disclosure(job,array['example:0'],preview->>'source_token') from n19_fixture;
@@ -115,6 +118,7 @@ set local role service_role;
 do $$ declare internal jsonb; begin
  select public.get_application_matching_input(job,'40416000-07aa-4416-9098-fb4be9928558','120c7407-1e8a-488c-9047-f52d79325011') into internal from n19_fixture;
  if internal::text not like '%PRIVATE_UNSELECTED_EXAMPLE%' then raise exception 'Internal matching lost approved breadth'; end if;
+ if internal::text not like '%PROFILE_ONLY_ROLE%' then raise exception 'Matching lost a fact omitted only from the CV'; end if;
  if internal::text like '%PRIVATE_NESTED_NOTES%' then raise exception 'Private extraction notes in matching'; end if;
  if private.application_matching_input((select job from n19_fixture),'40416000-07aa-4416-9098-fb4be9928558') is null then raise exception 'Worker lacks private helper permission'; end if;
 end $$;
