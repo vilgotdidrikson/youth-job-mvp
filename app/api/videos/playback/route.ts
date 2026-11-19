@@ -28,10 +28,17 @@ export async function POST(request: NextRequest) {
     accessToken: async () => auth.token, auth: authOptions, global: transport,
   });
   const readAuthorized = async () => {
-    const { data, error } = await userClient.from("youth_videos")
-      .select("id,owner_id,storage_path,conversation_id,mime_type,size_bytes,expires_at,revoked_at,deleted_at,cleanup_started_at")
+    const fields = "id,owner_id,storage_path,conversation_id,mime_type,size_bytes,expires_at,revoked_at,deleted_at,cleanup_started_at";
+    const columns = process.env.NEXT_PUBLIC_APPLICATION_VIDEO_ENABLED === "true" ? fields + ",application_job_id" : fields;
+    const { data: result, error } = await userClient.from("youth_videos")
+      .select(columns)
       .eq("id", body.videoId).maybeSingle();
-    if (error || !data?.conversation_id || data.revoked_at || data.deleted_at || data.cleanup_started_at ||
+    const data = result as unknown as {
+      owner_id: string; storage_path: string; conversation_id: string | null; application_job_id?: string | null;
+      mime_type: string; size_bytes: number; expires_at: string; revoked_at: string | null;
+      deleted_at: string | null; cleanup_started_at: string | null;
+    } | null;
+    if (error || !data || (!data.conversation_id && !data.application_job_id) || data.revoked_at || data.deleted_at || data.cleanup_started_at ||
         !Number.isFinite(Date.parse(data.expires_at)) || Date.parse(data.expires_at) <= Date.now() ||
         !isProfileVideoPath(data.storage_path, data.owner_id) ||
         !(data.mime_type in PROFILE_VIDEO_POLICY.formats) || !Number.isFinite(data.size_bytes) || data.size_bytes <= 0 || data.size_bytes > PROFILE_VIDEO_POLICY.maxBytes) return null;

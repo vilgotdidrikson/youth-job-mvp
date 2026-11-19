@@ -125,7 +125,7 @@
       ],
       "classification": "mixed",
       "subjectScope": "Företag: eget company_user_id eller join jobs.company_user_id. Ungdom: enbart relevant annons-/kriteriekontext kopplad till egna uppgifter.",
-      "data": "Annonser/utkast, arbetsplatser, AI-källanteckningar, företagsmatchprofil och historiska kravprofiler.",
+      "data": "Annonser/utkast, arbetsplatser, frivillig videoinstruktion per annons, AI-källanteckningar, företagsmatchprofil och historiska kravprofiler.",
       "review": "Generisk företagsinformation är inte automatiskt personuppgift men kan innehålla personers kontaktuppgifter/fritext. Alla kandidatprofiler och privata ansökningsunderlag får inte följa med som jobbkontext."
     },
     {
@@ -196,7 +196,7 @@
         "public.youth_profile_videos"
       ],
       "classification": "mixed",
-      "subjectScope": "owner_id = egen identitet; legacy profile-video via user_id. Mottagarrelaterat material bedöms via egen konversation.",
+      "subjectScope": "owner_id = egen identitet; legacy profile-video via user_id. Mottagarrelaterat material bedöms via egen konversation eller uttryckligen delad video för en behörig, jobbspecifik ansökan (application_job_id).",
       "data": "Mediareferenser, uppladdnings-/skickandetid, utgång/radering och kvarvarande filer.",
       "review": "Legacy-tabellen måste inventeras trots avvecklad permanent profilvideo. Respektera L12/rapportsäkring; återställ inte gallrad video. Egen tillgång till kvarvarande ägarmaterial måste bedömas separat från vanlig mottagaruppspelning."
     },
@@ -338,7 +338,7 @@
     {
       "id": "youth-profile-videos",
       "scope": "Egen videoägare och uttrycklig bedömning av mottagar-/rapportreferenser.",
-      "data": "Chattvideo och eventuella kvarvarande legacy-filer.",
+      "data": "Chattvideo, frivillig ansökningsvideo och eventuella kvarvarande legacy-filer.",
       "review": "L12:s åtkomst-/gallringsregler och fysisk filstatus måste skiljas åt. Ingen återskapning av gallrad video."
     },
     {

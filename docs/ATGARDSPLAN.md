@@ -187,7 +187,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 4.1 | [N22](#n22) | P1 | Ta bort permanent profilvideo | För granskning | Vilgot / Codex |
 | 5 | [N11](#n11) | P1 | Tidigare profilvideo – ersatt av N22, historik | För granskning | Vilgot / Codex |
 | 6 | [N12](#n12) | P1 | Video i chatten | För granskning | Vilgot / Codex |
-| 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | Ej påbörjad | — |
+| 6.1 | [N23](#n23) | P2 | Frivillig videoförfrågan vid ansökan | För granskning | Vilgot / Codex |
 | 7 | [N14](#n14) | P1 | Publicera samma annons på flera adresser | För granskning | Vilgot / Codex |
 | 8 | [N15](#n15) | P1 | Kopiera befintliga annonser till nya utkast | För granskning | Vilgot / Codex |
 | 9 | [F04](#f04) | P1 | Rätta företagets första navigation | Klar | Vilgot / Codex (kod), Max / Claude (verifiering) |
@@ -1624,15 +1624,15 @@ Dokumentationsleverans: `codex/n22-n23-video-plan-20261018`. Detta tillägg änd
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 6.1
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/n23-application-video`. Se [N23.md](N23.md).
 - Åtgärd: Företaget kan lägga till en kort jobbspecifik videoförfrågan med instruktioner i annonsen. Video är alltid frivillig och får inte vara ett absolut ansökningskrav, inte heller via framtida premium. Ungdomen kan spela in/ladda upp och granska före uttryckligt skickande, välja Avstå eller helt lämna förfrågan obesvarad. Ansökan skickas till företaget enligt ordinarie CV-/behörighetsregler oavsett video. Intresse/swipe får inte stoppas av ett videoval, inspelning, kameraavslag, misslyckad uppladdning eller avbruten navigering. Erbjud komplettering efter skickad ansökan, med diskret ingång/notis i befintligt ansökningsflöde. Gör ingen väntande-videostatus till spärr för företagsvisning, matchning eller chatt.
 - Klar när: Företagets instruktioner kan sparas, redigeras och ses av rätt sökande. Testa skicka med video, avstå, inget svar, kameran nekad, fel vid uppladdning och avbrott: ansökan skickas i samtliga fall när ordinarie ansökningskrav är uppfyllda, exakt en gång. Senare videokomplettering behåller samma ansökan utan dubbletter och blir tillgänglig endast för behörig mottagare. Ingen automatisk bortsortering, poängsänkning eller sämre ansökningsstatus för avstående/saknad video. Ingen AI-analys av video. Åtkomst, blockering, borttagning och eventuell chattreferens fungerar utan att återinföra permanent profilvideo.
 - Samordning 2026-10-18 (F26/N19): Visa bara video och svar som ungdomen uttryckligen delat för aktuell ansökan, även i API/databas och fillänkar. Ungdomen kan förhandsvisa delningen. Saknad video får inte automatiskt neka eller dölja ansökan eller påverka personlighetspoäng; ingen AI-analys av video. Ingen generell företagsåtkomst till jobbprofilen.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: Produktkod och verifiering. Återanvänd privat videohantering; inför och verifiera beslutad 14-dagarsgallring från skickandet enligt L12 innan ansökningsvideo aktiveras. Ingen premiumkoppling eller debitering beställd. N23 ersätter den äldre idén om obligatoriska videokrav; den frivilliga funktionen är nu beställd, inte bara en pausad premiumidé.
+- Implementerat: Jobbspecifik videoförfrågan, frivillig förhandsgranskad komplettering efter skickad ansökan och behörighetsstyrd uppspelning. Servern sätter åtkomstfristen till 14 dagar från skickandet. Nya videor kan registreras och skickas när gallringsschemat och filraderingen är konfigurerade.
+- Verifierat: SQL med fiktiva konton i DevStaging verifierade gallringsspärr, mottagaråtkomst, blockering, återkallande, tidsgräns och arbetarens hämtning och kvittens. Datainventering, TypeScript, riktad ESLint samt regressionsprov för video och ansökningar passerade.
+- Återstår / blockerare: N23 är avstängd. Verifiera att den konfigurerade L12-arbetaren raderar en utgången ansökningsvideofil i Storage samt kör det inloggade webbläsarprovet i [N23.md](N23.md) före aktivering.
 
 
 ## Lagring och gallring – beslutat 2026-10-18
