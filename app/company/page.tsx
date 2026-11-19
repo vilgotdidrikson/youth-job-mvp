@@ -6,6 +6,7 @@ import { CompanyJobCandidates } from "@/components/company-job-candidates";
 import { BrandLogo } from "@/components/brand-logo";
 
 import { JobWorkplaceFields } from "@/components/job-workplace-fields";
+import { ApplicationVideoPromptEditor, applicationVideoEnabled } from "@/components/application-video";
 import { JobWorkplaceEditor } from "@/components/job-workplace-editor";
 import { validateJobWorkplaces, jobCities, type JobWorkplace } from "@/lib/job-workplaces";
 
@@ -103,6 +104,7 @@ function CompanyPageContent() {
   const [cityPrefill, setCityPrefill] = useState("");
   const [showMatchProfileEditor, setShowMatchProfileEditor] = useState(false);
   const [editingCategory,setEditingCategory]=useState<JobPost|null>(null);
+  const [videoPromptJob, setVideoPromptJob] = useState<string | null>(null);
   const [editingWorkplaces, setEditingWorkplaces] = useState<JobPost | null>(null);
   const [editingCriteria, setEditingCriteria] = useState<JobPost | null>(null);
   const [copyingJob, setCopyingJob] = useState<JobPost | null>(null);
@@ -633,6 +635,7 @@ function CompanyPageContent() {
                       <button type="button" className="cta-btn" disabled={isWorking || busy} onClick={() => { setError(""); setEditReceipt(""); window.history.pushState(null, "", editCompanyJobHref(job.id)); window.scrollTo({ top: 0 }); }}>Redigera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking || busy || copyBusy || !draftHydrated} onClick={() => { setCopyError(""); setCopyingJob(job); }}>Kopiera annons</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCategory(job)}>Redigera jobbtyp</button>
+                      {applicationVideoEnabled && verificationStatus === "verified" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setVideoPromptJob(job.id)}>Videoförfrågan</button>}
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingWorkplaces(job)}>Redigera arbetsplatser</button>
                       <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => setEditingCriteria(job)}>Redigera matchkriterier</button>
                       {status !== "active" && <button type="button" className="secondary-btn" disabled={isWorking} onClick={() => void handleJobStatus(job, "active")}>{pending === "active" ? "Återaktiverar…" : "Återaktivera"}</button>}
@@ -658,6 +661,7 @@ function CompanyPageContent() {
       )}
       {copyingJob && <ModalDialog label="Kopiera annons" busy={copyBusy} onClose={() => { if (!copyBusy) setCopyingJob(null); }} className="job-copy-dialog"><h2>Kopiera annons</h2><p>Skapa ett nytt redigerbart utkast från ”{copyingJob.title}”. Originalet och dess kandidater finns kvar.</p>{hasJobDraftContent(jobDraft.form) && <p className="job-copy-notice">Du har redan ett annonsutkast på den här enheten. Om du fortsätter ersätts det med kopian.</p>}{copyError && <p role="alert">{copyError}</p>}<div><button type="button" className="cta-btn" disabled={copyBusy} onClick={() => void handleCopyJob()}>{copyBusy ? "Kopierar…" : hasJobDraftContent(jobDraft.form) ? "Ersätt utkast med kopia" : "Skapa annonskopia"}</button><button type="button" className="secondary-btn" disabled={copyBusy} onClick={() => setCopyingJob(null)}>Avbryt</button></div></ModalDialog>}
       {editingCategory && <JobCategoryEditor key={editingCategory.id} job={editingCategory} onClose={()=>setEditingCategory(null)} onSaved={updated=>{setJobs(current=>current.map(job=>job.id===updated.id?updated:job));setEditingCategory(null);}}/>}
+      {videoPromptJob && user && <ApplicationVideoPromptEditor key={videoPromptJob} jobId={videoPromptJob} owner={user.id} onClose={() => setVideoPromptJob(null)} />}
       {editingWorkplaces && <JobWorkplaceEditor key={editingWorkplaces.id} job={editingWorkplaces} onClose={() => setEditingWorkplaces(null)} onSaved={updated => { setJobs(current => current.map(job => job.id === updated.id ? updated : job)); setEditingWorkplaces(null); }}/>}
       {editingCriteria && <JobMatchProfileEditor key={editingCriteria.id} jobId={editingCriteria.id} title={editingCriteria.title} onClose={closeCriteria} onSaved={() => { setEditingCriteria(null); setError(""); }} />}
       {imageToCrop && <ImageCropDialog file={imageToCrop} onCancel={() => setImageToCrop(null)} onConfirm={useCroppedJobImage} />}

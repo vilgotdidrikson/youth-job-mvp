@@ -11,6 +11,7 @@ export interface YouthVideo {
   owner_id: string;
   storage_path: string | null;
   conversation_id: string | null;
+  application_job_id?: string | null;
   duration_seconds: number | null;
   first_sent_at?: string | null;
   expires_at?: string;
@@ -20,18 +21,21 @@ export interface YouthVideo {
 
 export async function getVideo(id: string, signal?: AbortSignal): Promise<YouthVideo | null> {
   signal?.throwIfAborted();
-  let query = getSupabaseClient().from("youth_videos").select("id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at,first_sent_at,expires_at,deleted_at").eq("id", id);
+  const fields = "id,owner_id,storage_path,conversation_id,duration_seconds,revoked_at,first_sent_at,expires_at,deleted_at";
+  const columns = process.env.NEXT_PUBLIC_APPLICATION_VIDEO_ENABLED === "true" ? fields + ",application_job_id" : fields;
+  let query = getSupabaseClient().from("youth_videos").select(columns).eq("id", id);
   if (signal) query = query.abortSignal(signal);
   const { data, error } = await query.maybeSingle();
   signal?.throwIfAborted();
   if (error) throw new Error("Kunde inte hämta videon. Försök igen.");
-  return !data?.conversation_id || data.revoked_at ? null : data as YouthVideo;
+  const video = data as YouthVideo | null;
+  return !video || (!video.conversation_id && !video.application_job_id) || video.revoked_at ? null : video;
 }
 
 export async function videoPlaybackUrl(video: YouthVideo, signal?: AbortSignal): Promise<string> {
   signal?.throwIfAborted();
   if (videoHasExpired(video.expires_at) || video.deleted_at) throw new Error("Videon är inte längre tillgänglig.");
-  if (!video.conversation_id || !video.storage_path || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
+  if ((!video.conversation_id && !video.application_job_id) || !video.storage_path || !isProfileVideoPath(video.storage_path, video.owner_id)) throw new Error("Ogiltig videosökväg.");
   const { data: { session } } = await getSupabaseClient().auth.getSession();
   signal?.throwIfAborted();
   if (!session) throw new Error("Logga in igen för att se videon.");
@@ -62,17 +66,19 @@ export async function revokeVideo(video: YouthVideo, signal?: AbortSignal): Prom
 
 /** Standard upload with a task-scoped fetch abort signal; never modify the shared
  * client's transport or upload through a service-role client. */
-export async function uploadVideo(file: File, duration: number, userId: string, conversationId: string, signal: AbortSignal): Promise<YouthVideo> {
-  if (!conversationId) throw new Error("Välj en chatt innan du laddar upp video.");
+export async function uploadVideo(file: File, duration: number, userId: string, conversationId: string, signal: AbortSignal, application?: { jobId: string; videoId: string }): Promise<YouthVideo> {
+  if (!application && !conversationId) throw new Error("Välj en chatt innan du laddar upp video.");
   const validation = validateProfileVideo({name:file.name,type:file.type.split(";")[0],size:file.size,durationSeconds:duration});
   if (!validation.ok) throw new Error(validation.message);
   signal.throwIfAborted();
   if ((await getCurrentUser())?.id !== userId) throw new Error("Kontot har ändrats. Öppna videoflödet igen.");
   signal.throwIfAborted();
   const db = getSupabaseClient();
-  const id = crypto.randomUUID();
-  const video: YouthVideo = {id,owner_id:userId,storage_path:`${userId}/${id}.${validation.extension}`,conversation_id:conversationId,duration_seconds:duration,revoked_at:null};
-  const { error } = await db.from("youth_videos").insert({...video,mime_type:validation.mimeType,size_bytes:file.size}).abortSignal(signal);
+  const id = application?.videoId ?? crypto.randomUUID();
+  const video: YouthVideo = {id,owner_id:userId,storage_path:`${userId}/${id}.${validation.extension}`,conversation_id:conversationId || null,duration_seconds:duration,revoked_at:null};
+  const { error } = application
+    ? await db.rpc("manage_application_video", { p_job_id: application.jobId, p_video_id: id, p_action: "reserve", p_mime: validation.mimeType, p_size: file.size, p_duration: duration }).abortSignal(signal)
+    : await db.from("youth_videos").insert({...video,mime_type:validation.mimeType,size_bytes:file.size}).abortSignal(signal);
   if (error) throw new Error("Kunde inte förbereda videon. Kontrollera din session och försök igen.");
   try {
     signal.throwIfAborted();
@@ -90,7 +96,8 @@ export async function uploadVideo(file: File, duration: number, userId: string, 
     return video;
   } catch (reason) {
     // An aborted request may have reached storage: revoke and attempt cleanup.
-    await revokeVideo(video).catch(() => false);
+    if (application) await manageApplicationVideo(application.jobId, id, "revoke", AbortSignal.timeout(5000)).catch(() => false);
+    else await revokeVideo(video).catch(() => false);
     throw reason;
   }
 }
@@ -128,4 +135,19 @@ export async function readChatVideoAccess(ownerId: string, conversationId: strin
   if (error || data?.id !== conversationId || !data.match_id || (await getCurrentUser())?.id !== ownerId) throw new Error("Kunde inte öppna videoflödet för den här chatten.");
   signal.throwIfAborted();
   return true;
+}
+
+export async function manageApplicationVideo(jobId: string, videoId: string, action: "send" | "revoke", signal: AbortSignal) {
+  const { data, error } = await getSupabaseClient().rpc("manage_application_video", {
+    p_job_id: jobId, p_video_id: videoId, p_action: action,
+  }).abortSignal(signal);
+  if (error || data !== (action === "send" ? "sent" : "revoked")) throw new Error("Kunde inte bekräfta ändringen. Kontrollera ansökan och försök igen.");
+}
+
+export async function readApplicationVideo(jobId: string, youthId: string | undefined, signal: AbortSignal) {
+  const { data, error } = await getSupabaseClient().rpc("get_application_video", {
+    p_job_id: jobId, ...(youthId ? { p_youth_id: youthId } : {}),
+  }).abortSignal(signal);
+  if (error) throw new Error("Kunde inte hämta videokompletteringen.");
+  return data as { videoId: string | null; prompt: string | null } | null;
 }

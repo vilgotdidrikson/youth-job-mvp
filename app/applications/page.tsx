@@ -11,6 +11,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getApplicationCompletions, prepareApplication, saveApplicationAnswers, type ApplicationCompletion, getApplicationFollowups, requestApplicationFollowups, type ApplicationFollowup, type FollowupAnalysisResult } from "@/lib/application-completions";
 
+import { ApplicationVideo } from "@/components/application-video";
 import { ApplicationFollowupCard } from "@/components/application-followup-card";
 import { UiIcon } from "@/components/ui-icon";
 import { TabList } from "@/components/tab-list";
@@ -60,6 +61,7 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     {stage && recruitmentLabels[stage.status] && <div className="application-recruitment-stage"><span>{recruitmentLabels[stage.status]}</span>{!["rejected","cancelled"].includes(stage.status) && <Link href={`/chats?job=${item.job_id}`}>Öppna meddelanden <UiIcon name="arrow" width="16"/></Link>}</div>}
     {pending && <p>Den här äldre ansökan är inte skickad ännu. Du kan skicka den direkt utan att svara på frågor. Eventuell komplettering görs efteråt.</p>}
     <JobRequirementsInsight jobId={item.job_id}/>
+    {item.status === "submitted" && !hidden && <ApplicationVideo key={item.job_id} jobId={item.job_id} readOnly={Boolean(retention?.closed_at)} />}
     <ApplicationFollowupCard manualReadOnly={Boolean(retention?.closed_at)} application={item} items={followups} initiallyOpen={initiallyOpen} onSaved={onFollowupsSaved} />
     <Link className="application-job-link" href={`/applications/preview?job=${encodeURIComponent(item.job_id)}`}>Se och uppdatera delat underlag</Link>
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
