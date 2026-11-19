@@ -1240,6 +1240,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 <a id="l02"></a>
 ### L02 SMTP och tillförlitliga e-postutskick
 
+- Fortsättning reserverad före kodarbete 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, från aktuell dev `92b8069`. Samlad kodgranskning av kontomejl och L03:s införda beständiga fakturamejlkö, kvarvarande felhantering och acceptansprotokoll före För granskning. Öppna PR:er kontrollerade: endast äldre #40 mot master, ingen överlappande arbets-PR. Samordnas med F26; inga verkliga mejlutskick, SMTP-inställningar eller migrationer körs i denna etapp.
+
 - Fortsättning reserverad före kodarbete 2026-10-27: Vilgot / Codex, `codex/l02-confirmation-flow-20261027`. Återanvänd Supabase Auth för ny bekräftelselänk, tydlig utgången-länkhantering och dubbelförsöksskydd. Användaren bekräftade att mejl från info@matchnwork.se når mottagaren och återställningslänken fungerar i dev efter rättad redirect-lista. Ingen ny automatiserad leveransverifiering påstås; obligatorisk verifiering aktiveras inte. Föregående leverans införd genom PR #135, merge 24e87fd.
 
 - [ ] Klar
@@ -1451,6 +1453,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 
 <a id="f26"></a>
 ### F26 Granska matchningens rättvisa och faktaunderlag
+
+- Fortsättning reserverad före kodarbete 2026-11-19: Vilgot / Codex, `codex/f26-l02-review-readiness-20261119`, från aktuell dev `92b8069`. Samlad granskning mot hela F26-kriteriet, kvarvarande lokala rättelser och explicit acceptansprotokoll före För granskning. Tidigare leveranser och ägare bevaras. Öppna PR:er kontrollerade: endast äldre #40 mot master, ingen överlappande arbets-PR. Samordnas med L02 som andra huvudkort i användarens beställda tvåkortsetapp. Inga skarpa modell-/persondataanrop eller databasändringar beställs genom reservationen.
 
 - Verifierat 2026-11-13, [PR #217](https://github.com/vilgotdidrikson/youth-job-mvp/pull/217): L13:s fyra införda rättelsefunktioner matchar migrationskoden, funktionstyp/search_path/grants är kontrollerade i DevStaging. N19/F26:s faktiska ägar-/revisionspolicy och restriktiva gallringspolicy är avstämda. Fem negativa live-SQL-prov utan fixtures passerar; detta är syntetisk SQL-roll/JWT-kontext, inte riktig Auth-inloggning. Ny katalogkontroll matchar 92 relationer/fyra buckets. 35 lokala PostgreSQL-prov och 20 handlerfall passerar. Inga produkt-/schemaändringar; positivt inloggat flöde/notis/AI/samtidighet/webb/mobil ligger kvar i L17. Se docs/L13_APPLICATION_CORRECTIONS.md. Huvudkortets status bevaras.
 
