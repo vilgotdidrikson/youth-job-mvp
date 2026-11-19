@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CvFactReview } from "./cv-fact-review";
 import styles from "./recruitment-profile.module.css";
 import { getYouthProfile } from "@/lib/onboarding";
@@ -14,19 +14,20 @@ import { cvFromProfileChat, hasProfileChatAnswer, profileChatFields, profileChat
 
 type Mode = "chat" | "form";
 type Intent = "profile" | "cv";
-type StoredDraft = { answers: ProfileChatDraft; mode: Mode; step?: ProfileChatField; cvEdit?: { source: string; value: StructuredCvData } };
+type StoredDraft = { answers: ProfileChatDraft; mode: Mode; step?: ProfileChatField; cvApplied?: ProfileChatDraft; cvEdit?: { source: string; value: StructuredCvData } };
 const draftKey = (owner: string) => `mnw-profile-chat:${owner}`;
 
 function loadDraft(owner: string, initialMode: Mode): StoredDraft {
   try {
     const stored = JSON.parse(window.localStorage.getItem(draftKey(owner)) ?? "{}");
-    return { answers: readProfileChatDraft(stored.answers), mode: initialMode, step: profileChatKeys.includes(stored.step) ? stored.step : undefined, cvEdit: stored.cvEdit };
+    return { answers: readProfileChatDraft(stored.answers), mode: initialMode, step: profileChatKeys.includes(stored.step) ? stored.step : undefined, cvApplied: readProfileChatDraft(stored.cvApplied), cvEdit: stored.cvEdit };
   } catch {
     return { answers: {}, mode: initialMode };
   }
 }
 
-export function ProfileChat({ owner, initialMode, profile, version }: { owner: string; initialMode: Mode; profile: RecruitmentProfile; version: number }) {
+export function ProfileChat({ owner, initialMode, profile: initialProfile, version: initialVersion }: { owner: string; initialMode: Mode; profile: RecruitmentProfile; version: number }) {
+  const [{ profile, version }, setProfileBase] = useState({ profile: initialProfile, version: initialVersion });
   const [cvBase, setCvBase] = useState<{ cv?: StructuredCvData | null; name?: string; uploaded: boolean; hasUnstructuredCv: boolean } | null>(null);
   const [stored, setStored] = useState<StoredDraft | null>(null);
   const [reviewing, setReviewing] = useState(false);
@@ -38,6 +39,8 @@ export function ProfileChat({ owner, initialMode, profile, version }: { owner: s
   const [help, setHelp] = useState<Partial<Record<ProfileChatField, string>>>({});
   const [helpBusy, setHelpBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  const activeSave = useRef<AbortController | null>(null);
+  useEffect(() => () => activeSave.current?.abort(), []);
 
   useEffect(() => {
     let active = true;
@@ -62,7 +65,8 @@ export function ProfileChat({ owner, initialMode, profile, version }: { owner: s
   try { proposal = profileFromChat(profile, answers); }
   catch (reason) { validationError = reason instanceof Error ? reason.message : "Kontrollera ditt utkast."; }
   const snapshot = proposal ? JSON.stringify([version, proposal]) : "";
-  const baseCv = cvFromProfileChat(answers, currentCv);
+  const cvAnswers = Object.fromEntries(profileChatKeys.filter(key => answers[key] !== stored.cvApplied?.[key]).map(key => [key, answers[key]]));
+  const baseCv = cvFromProfileChat(cvAnswers, currentCv);
   const cvSource = cvReviewSnapshot(renderStructuredCv(baseCv), baseCv);
   let cv = { ...baseCv, personalInfo: { ...baseCv.personalInfo, name: baseCv.personalInfo.name || cvBase.name } };
   if (stored.cvEdit?.source === cvSource) {
@@ -83,7 +87,7 @@ export function ProfileChat({ owner, initialMode, profile, version }: { owner: s
     setCvApproval(null);
     setSaved({ profile: false, cv: false });
     setMessage("");
-    keep({ ...stored!, cvEdit: undefined, answers: { ...answers, [key]: value } });
+    keep({ ...stored!, answers: { ...answers, [key]: value } });
   }
   function next() {
     const nextStep = profileChatKeys.slice(current + 1).find(key => !answers[key]?.trim() && !hasProfileChatAnswer(key, profile, currentCv));
@@ -113,30 +117,41 @@ export function ProfileChat({ owner, initialMode, profile, version }: { owner: s
     }
   }
   async function save(kind: Intent) {
-    if (saving || (kind === "profile" && (!proposal || snapshot !== profileApproval)) || (kind === "cv" && cvApproval !== cvSnapshot)) return;
+    if (activeSave.current || saved[kind] || (kind === "profile" && (!proposal || snapshot !== profileApproval)) || (kind === "cv" && cvApproval !== cvSnapshot)) return;
+    const controller = new AbortController();
+    activeSave.current = controller;
     setSaving(true);
     setFailure("");
     setMessage("");
     try {
-      const signal = AbortSignal.timeout(25_000);
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(25_000)]);
       if (kind === "profile") {
+        if (!proposal) return;
         const client = getSupabaseClient();
         const identity = await client.auth.getUser();
+        signal.throwIfAborted();
         if (identity.error || identity.data.user?.id !== owner) throw new Error("Kontot har ändrats. Öppna jobbprofilen igen.");
         const { data, error } = await client.from("youth_profiles").update({ recruitment_profile: proposal })
-          .eq("user_id", owner).eq("recruitment_profile_version", version).select("user_id").abortSignal(signal).maybeSingle();
-        if (error || data?.user_id !== owner) throw new Error("Sparningen kunde inte bekräftas. Ladda om sidan för att läsa eventuell ny profilversion. Utkastet finns kvar.");
+          .eq("user_id", owner).eq("recruitment_profile_version", version).select("user_id,recruitment_profile_version").abortSignal(signal).maybeSingle();
+        signal.throwIfAborted();
+        if (error || data?.user_id !== owner || typeof data.recruitment_profile_version !== "number") throw new Error("Sparningen kunde inte bekräftas. Ladda om sidan för att läsa eventuell ny profilversion. Utkastet finns kvar.");
+        setProfileBase({ profile: proposal, version: data.recruitment_profile_version });
+        setProfileApproval("");
       } else {
         const operation = createCvSave(owner, { kind: "reviewed", text: cvText, structured: cv, approval: cvApproval, previousStructured: currentCv ?? null, keepRecruitmentProfile: true });
         await operation.save(signal);
+        signal.throwIfAborted();
         setCvBase(previous => previous ? { ...previous, cv } : previous);
+        keep({ ...stored!, cvApplied: answers, cvEdit: undefined });
+        setCvApproval(null);
       }
       setSaved(previous => ({ ...previous, [kind]: true }));
       setMessage(kind === "profile" ? "Jobbprofilen är sparad." : "CV:t är sparat.");
     } catch (reason) {
-      setFailure(reason instanceof Error ? reason.message : "Kunde inte spara. Utkastet finns kvar.");
+      if (!controller.signal.aborted) setFailure(reason instanceof Error ? reason.message : "Kunde inte spara. Utkastet finns kvar.");
     } finally {
-      setSaving(false);
+      activeSave.current = null;
+      if (!controller.signal.aborted) setSaving(false);
     }
   }
 
@@ -176,7 +191,7 @@ export function ProfileChat({ owner, initialMode, profile, version }: { owner: s
         <label><input type="checkbox" checked={Boolean(snapshot) && snapshot === profileApproval} disabled={!proposal || saving} onChange={event => setProfileApproval(event.target.checked ? snapshot : "")} /> Jag godkänner att dessa uppgifter sparas i min jobbprofil och används vid matchning.</label>
         <button type="button" className="cta-btn" disabled={!snapshot || snapshot !== profileApproval || saving || saved.profile} onClick={() => void save("profile")}>Spara jobbprofil</button>
         <h2>Ditt CV</h2>
-        {cvChanged && !cvBase.hasUnstructuredCv && !cvBase.uploaded ? <>
+        {(cvChanged || Boolean(currentCv && cvText.trim())) && !cvBase.hasUnstructuredCv && !cvBase.uploaded ? <>
           <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", font: "inherit" }}>{cvText}</pre>
           <CvFactReview manual cv={cv} text={cvText} sourceText={draftKeys.map(key => answers[key]).join("\n")} approved={cvApproval === cvSnapshot} disabled={saving} onApprove={checked => setCvApproval(checked ? cvSnapshot : null)} onChange={next => { keep({ ...stored, cvEdit: { source: cvSource, value: next } }); setCvApproval(null); setSaved(previous => ({ ...previous, cv: false })); }} />
           <button type="button" className="cta-btn" disabled={!cvText.trim() || cvApproval !== cvSnapshot || saving || saved.cv} onClick={() => void save("cv")}>Spara CV</button>

@@ -198,8 +198,8 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 13.1 | [N17](#n17) | P1 | Gemensamma jobbtyper med fria annonstitlar | För granskning | Codex |
 | 13.2 | [N18](#n18) | P2 | Relevant och varierat jobbflöde | För granskning | Codex |
 | 13.3 | [F26](#f26) | P1 | Granska matchningens rättvisa och faktaunderlag | Pågår | Codex |
-| 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | Pågår | Codex |
-| 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | Ej påbörjad | — |
+| 13.4 | [N19](#n19) | P2 | Samlad jobbprofil och ett kort grund-CV | För granskning | Vilgot / Codex |
+| 13.5 | [N20](#n20) | P2 | Bygg hela jobbprofilen med chatt eller formulär | För granskning | Vilgot / Codex |
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | För granskning | Vilgot / Claude |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | Pågår | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | Pågår | Vilgot / Codex |
@@ -1541,8 +1541,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 13.4
-- Status: Pågår
-- Ansvarig: Codex
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
 - Branch/PR: `codex/f26-n19-application-disclosure-20261019`, [PR #82](https://github.com/vilgotdidrikson/youth-job-mvp/pull/82), samordnad F26/N19-leverans; reservation publicerad före kodarbete.
 - Åtgärd: Gör Bygg din profil till övergripande flöde. Återanvänd F02/F03/F15/F18 och separera godkända profilfakta, CV-urval och privat arbetsmaterial. Ett generellt granskat grund-CV, normalt en sida, upp till två vid behov; ingen tyst kapning vid 500 ord. Företaget får ett jobbspecifikt ansökningsunderlag, inte generell tillgång till hela jobbprofilen: granskat CV, relevanta direkt läsbara praktiska uppgifter (tillgänglighet, tidigaste start, ungefärligt bostadsområde), F26:s kriterier/belägg och svar/frivillig video uttryckligen delade för aktuell ansökan. Använd postnummer vid behov, inte exakt bostadsadress. Bevara arbetsplatsens adress i annons/karta. Låt ungdomen förhandsvisa verklig delning och förstå vilka godkända uppgifter som används i matchningen, inklusive kontaktuppgifter som kan finnas i uppladdat CV. Begränsa åtkomsten även i API/RPC/databas/RLS och privata fillänkar; returnera inte hela profilrader för klientfiltrering.
 - Klar när: Alla skapande-/redigeringsvägar använder samma granskningskrav och aktuella faktakällor. Ungdomen kan välja/rätta CV-urval, pausa/fortsätta och förhandsvisa delat ansökningsunderlag för rätt jobb inklusive PDF-innehåll/kontaktuppgifter. Dokumentera hantering av ändringar/versioner av redan skickat underlag. CV är kort/läsbart enligt L09; fler godkända fakta kan finnas i egen profil utan generell företagsåtkomst. Praktiska fakta är läsbara utan AI. Privata utkast, råa textsamtal, avvisade/ogranskade AI-förslag, orelaterade uppgifter och exakt bostadsadress läcker inte genom strukturerade företagsdata eller AI-belägg; original-CV hanteras med uttrycklig granskad delning. L05:s negativa API-/databastester passerar. Låg matchningsgrad/saknad video stoppar eller döljer inte ansökan.
@@ -1556,7 +1556,8 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Dokumentleverans: Vilgot / Codex, `codex/f12-criteria-insight-plan-20261019`. Endast plan/specifikation ändrade och genomlästa; ingen produktkod eller webbverifiering. Befintlig status och ansvar för implementation bevaras.
 - Implementerat: Jobbspecifikt ansökningsunderlag och gemensam delningsförhandsvisning, explicit val av extra profiluppgifter, sparad CV-/ansökningsversion och kontrollerad uppdatering. Intern AI-indata separeras från företagsåtkomst; gamla RPC:er, bekräftad jobbhistorik, Storage och AI-resultat begränsas till delningen. Ungdomens kravinformation visar inga individuella betyg/vikter. Ingen tyst 500-ordskapning; gemensam granskning visar ordantal. Två migreringar införda i DevStaging: `20261019155114_n19_application_disclosures.sql`, `20261019155522_n19_private_disclosure_rpcs.sql`. Se `docs/N19.md`. Uppföljning 2026-10-20: publika krav separata från interna kriterier även i nya/äldre utkast; RPC-/databastester efter införd migration, renderings-/frågebatchregressioner och produktionsbygge passerar. Inloggad visuell kontroll återstår; denna avgränsning gör inte hela N19 Klar.
 - Verifierat: Produktionsbygge (51 routes), TypeScript, riktad ESLint, `test:application-disclosure` och relevanta matching-/fråge-/profil-/CV-regressioner passerar. Rollbacktest i faktisk DevStaging verifierar samma företag/ungdomspaket, ägande och negativa åtkomster, versions-/stale-skydd, nästlade privata anteckningar/bilagor, alternativ jobbhistorik och Storage-predikat. Rådgivare körda; privata tabellens RLS utan klientpolicy och nya oanvända FK-index är avsiktliga informationsnotiser.
-- Återstår / blockerare: Hela N19 förblir Pågår. Fullständig separering mellan alla godkända profilfakta och CV-urval återstår; nuvarande CV-synkning är inte ett generellt profilfaktaarkiv. Tillförlitlig postnummerbaserad närhet, inloggad mobil/dator, verkliga filnedladdningar, modell-/minimeringsverifiering och L09:s PDF-layout återstår. Live-testet `test:cv` kunde inte köras utan lokal API-server (ECONNREFUSED); räknas inte som godkänt. Se detaljer i `docs/N19.md`.
+- Statusavstämning 2026-11-19: [PR #240](https://github.com/vilgotdidrikson/youth-job-mvp/pull/240) separerade godkända profilfakta från grund-CV kring samma urval och sparade ansökningsversioner. Uppföljningen är reserverad av Vilgot / Codex på `codex/n19-n20-profile-review-20261119`. Ett befintligt strukturerat CV kan granskas direkt i profilguiden. Lokalt komponentprov och rollback-SQL i DevStaging bekräftar att bortval finns kvar som godkända fakta för matchning men försvinner från företagets strukturerade CV. Tidigare skickade versioner bevaras. Se [N19.md](N19.md) och [N20.md](N20.md).
+- Återstår / blockerare: Inloggad granskning på mobil och dator av CV-urval, nya och redan skickade ansökningsunderlag och verklig filöppning. Fortsatt utvärdering av AI-minimering följer F26/L17.
 
 
 - Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
@@ -1567,16 +1568,16 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 13.5
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: [PR #241](https://github.com/vilgotdidrikson/youth-job-mvp/pull/241), uppföljning på `codex/n19-n20-profile-review-20261119`. Se [N20.md](N20.md).
 - Åtgärd: Erbjud valfritt textsamtal med en fråga åt gången, relevanta öppna följdfrågor, hoppa över och fortsätt senare. Samma profilmodell som N19 och vanliga formuläret. Hjälp mig utveckla texten öppnar lokalt i avsnittet, inte en kedja av modaler. Återanvänd relevanta frågeområden från avstängd röstfunktion utan att aktivera ljud.
 - Klar när: Guiden undviker upprepade/ledande frågor, håller isär erfarenheter och producerar ett användbart utkast. Förslag kan godkännas/ändras/avvisas; nya lärdomar/egenskaper förs inte in utan bekräftelse. Godkännande gäller aktuell text, återställs efter ändring och krävs före profil-/CV-publicering och matchningsanvändning. Mobil med tangentbord och avbrott fungerar.
 - Specifikation: `docs/PROFIL_OCH_RELEVANS.md`, beslutad 2026-10-18.
 - Tillägg 2026-10-18: Råa textsamtal, privata utkast och avvisade AI-förslag stannar utanför företagets underlag och matchning. Endast godkända relevanta fakta kan ingå enligt N19/F26; guiden ska hjälpa ungdomen förstå delningen utan att tillföra generell profilåtkomst.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Chatt och formulär delar ett kontobundet utkast på enheten. Jobbprofil och CV har separata godkännanden. Guiden uppdaterar profilversionen efter sparning och låter användaren fortsätta granska ett befintligt strukturerat CV. Ett CV som redan sparats tar inte åter in samma, äldre svar när utkastet öppnas igen.
+- Verifierat: Komponentprov för två profilsparningar i följd, dubbelklick, separata godkännanden, bevarat CV-urval och återupptaget utkast. Profilresa, profilfält, manuellt CV, delningsunderlag, CV-sparåterhämtning, TypeScript och riktad ESLint passerade.
+- Återstår / blockerare: Granska inloggat med mobil och tangentbord. Växla metod, pausa och återuppta, prova en följdfråga och spara i båda ordningar. Jämför exakt vad som sparas i profilen och vad företaget får för en specifik ansökan.
 
 
 - Beslut 2026-10-25: Chatten bygger hela jobbprofilen, inte bara CV:t. Startvalen är Bygg med AI-chatt och Fyll i själv. Båda använder samma profilfakta och kan bytas utan omstart eller dataförlust. Samtalet täcker jobbönskemål, erfarenheter från arbete/skola/fritid, kunskaper, språk, egna exempel och praktisk tillgänglighet; återanvänd kända uppgifter. Visa en redigerbar sammanställning under samtalet. Efteråt granskar ungdomen Din jobbprofil och Ditt CV separat; CV:t är ett kort urval. Hoppa över, pausa och fortsätt senare ska fungera. Ingen publicering, matchningsanvändning eller ändring av skickade ansökningar utan relevant uttrycklig granskning. Nya egenskaper/lärdomar kräver bekräftelse; råchatten är privat arbetsmaterial och inget matchningsunderlag. Detta är beslutat produktflöde, inte implementerad chatt eller godkända nya AI-dataflöden.
