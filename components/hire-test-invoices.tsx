@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getHireTestOffer, invoiceAmount, listHireInvoices, recordHireInvoicePayment, type HireBankInvoice, type HireTestInvoice } from "@/lib/hire-test-invoices";
 import { isInvoicePilotDev } from "@/lib/invoice-pilot";
 import styles from "./company-billing-settings.module.css";
+import { stripeCheckoutUrl, stripeTestCheckoutVisible } from "@/lib/stripe-test-checkout";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type Invoice = HireTestInvoice | HireBankInvoice;
 const deliveryLabels: Record<NonNullable<HireTestInvoice["mail_state"]>, string> = {
@@ -25,7 +27,7 @@ async function download(invoice: Invoice) {
   downloadPdfFile(new File([blob], `${number}.pdf`, { type: "application/pdf" }));
 }
 
-function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boolean; onPaid: () => void }) {
+function InvoiceRow({ invoice, admin, onPaid, stripeUser }: { invoice: Invoice; admin: boolean; onPaid: () => void; stripeUser?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const lock = useRef(false);
@@ -39,6 +41,24 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
     finally { lock.current = false; setBusy(false); }
   };
   const bank = "invoice_number" in invoice ? invoice : null;
+  const checkout = () => void run(async () => {
+    const auth = getSupabaseClient().auth;
+    const current = await auth.getSession();
+    const session = current.data.session;
+    if (!stripeUser || current.error || session?.user.id !== stripeUser) throw new Error("Logga in igen för att fortsätta.");
+    const response = await fetch(`/api/company/stripe-test-checkout?invoice=${encodeURIComponent(invoice.id)}`, {
+      method: "POST", cache: "no-store", credentials: "omit", redirect: "error",
+      headers: { Authorization: `Bearer ${session.access_token}` }, signal: AbortSignal.timeout(25000),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(typeof result?.error === "string" ? result.error : "Stripe kunde inte öppnas.");
+    const latest = await auth.getSession();
+    if (latest.error || latest.data.session?.user.id !== stripeUser) throw new Error("Kontot har ändrats. Öppna fakturan igen.");
+    if (result?.paid === true) { onPaid(); return; }
+    const url = stripeCheckoutUrl(result?.url);
+    if (!url) throw new Error("Stripe kunde inte öppnas.");
+    window.location.assign(url);
+  });
   const settle = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -57,6 +77,7 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
     {invoice.invoice_email && <p>Fakturaadress för mejl <strong>{invoice.invoice_email}</strong></p>}
     {invoice.mail_state && <p>Mejlet · {deliveryLabels[invoice.mail_state]}</p>}
     <button className="secondary-btn" type="button" disabled={busy} onClick={() => void run(() => download(invoice))}>{bank ? "Ladda ner faktura (PDF)" : "Ladda ner testfaktura (PDF)"}</button>
+    {stripeUser && !bank && !invoice.held_at && !invoice.paid_at && <button className="cta-btn" type="button" onClick={checkout} disabled={busy}>Testbetala med Stripe</button>}
     {admin && !invoice.held_at && !invoice.paid_at && <form onSubmit={settle}>
       <div className={styles.fields}>
         <label className={styles.field}>{bank ? "Inbetalt belopp (kr)" : "Simulerat belopp (kr)"}<input name="amount" type="number" min="1" max="1000" step="1" required disabled={busy}/></label>
@@ -68,7 +89,7 @@ function InvoiceRow({ invoice, admin, onPaid }: { invoice: Invoice; admin: boole
   </li>;
 }
 
-function HireInvoices({ admin = false, live, showEmpty = false }: { admin?: boolean; live: boolean; showEmpty?: boolean }) {
+function HireInvoices({ admin = false, live, showEmpty = false, stripeUser }: { admin?: boolean; live: boolean; showEmpty?: boolean; stripeUser?: string }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [available, setAvailable] = useState(showEmpty || admin);
   const [loading, setLoading] = useState(true);
@@ -102,14 +123,15 @@ function HireInvoices({ admin = false, live, showEmpty = false }: { admin?: bool
   const title = live ? admin ? "Bankgirofakturor" : "Fakturor" : "Testfakturor";
   return <section className={styles.card} aria-label={title}>
     <h2>{title}</h2>
-    {!live && <p className={styles.intro}>All betalning i det här flödet är simulerad. Testfakturorna ska inte betalas.</p>}
+    {!live && <p className={styles.intro}>Använd bara testuppgifter här. Testbetalningar drar inga riktiga pengar.</p>}
     {loading ? <p role="status">Hämtar fakturor…</p> : error ? <p className={styles.error} role="alert">{error}</p> : invoices.length ?
-      <ul className={styles.invoiceList}>{invoices.map(invoice => <InvoiceRow key={invoice.id} invoice={invoice} admin={admin} onPaid={reload}/>)}</ul> : <p>{live ? "Inga utfärdade fakturor ännu." : "En testfaktura visas här när kandidaten bekräftar en anställning som registrerats med testvillkoren."}</p>}
+      <ul className={styles.invoiceList}>{invoices.map(invoice => <InvoiceRow key={invoice.id} invoice={invoice} admin={admin} onPaid={reload} stripeUser={stripeUser}/>)}</ul> : <p>{live ? "Inga utfärdade fakturor ännu." : "En testfaktura visas här när kandidaten bekräftar en anställning som registrerats med testvillkoren."}</p>}
     <button className="secondary-btn" type="button" disabled={loading} onClick={reload}>Uppdatera fakturor</button>
   </section>;
 }
 
-export function HireTestInvoices({ admin, companyView = false }: { admin?: boolean; companyView?: boolean }) {
+export function HireTestInvoices({ admin, companyView = false, userId }: { admin?: boolean; companyView?: boolean; userId?: string }) {
   const dev = isInvoicePilotDev();
-  return <><HireInvoices admin={admin} live={false} showEmpty={companyView && dev}/><HireInvoices admin={admin} live showEmpty={companyView && !dev}/></>;
+  const stripeUser = companyView && stripeTestCheckoutVisible() ? userId : undefined;
+  return <><HireInvoices admin={admin} live={false} showEmpty={companyView && dev} stripeUser={stripeUser}/><HireInvoices admin={admin} live showEmpty={companyView && !dev}/></>;
 }
