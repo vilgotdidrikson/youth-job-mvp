@@ -11,7 +11,7 @@ const invoice = "11111111-1111-4111-8111-111111111111";
 const owner = "22222222-2222-4222-8222-222222222222";
 const attempt = "33333333-3333-4333-8333-333333333333";
 const sessionId = "cs_test_Example123";
-const stripeUrl = "https://checkout.stripe.com/c/pay/" + sessionId + "#fake";
+const stripeUrl = "https://checkout.stripe.com/pay/" + sessionId + "#fake";
 const state = { attempt, reservedAt: new Date().toISOString(), amount: 50000, session: null };
 const sdk = new Stripe("sk_test_FAKE_ONLY");
 const openSession = {
@@ -83,9 +83,12 @@ try {
   assert.equal((await startStripeTestCheckout(request("wrong"))).status, 401);
   assert.equal((await startStripeTestCheckout(request("qa-owner", owner))).status, 404);
   assert.equal(creates.length, 0);
-  for (const url of ["https://checkout.stripe.com.evil.invalid/c/pay/cs_test_ABC", "https://checkout.stripe.com/c/pay/cs_live_ABC", "http://checkout.stripe.com/c/pay/cs_test_ABC"]) {
+  for (const url of ["https://checkout.stripe.com.evil.invalid/pay/cs_test_ABC", "https://checkout.stripe.com/pay/cs_live_ABC", "http://checkout.stripe.com/pay/cs_test_ABC", "https://checkout.stripe.com/pay/cs_test_ABC/extra", "https://user@checkout.stripe.com/pay/cs_test_ABC"]) {
     assert.equal(stripeCheckoutUrl(url), null);
   }
+  const legacyUrl = "https://checkout.stripe.com/c/pay/" + sessionId + "#fake";
+  assert.equal(stripeCheckoutUrl(legacyUrl, sessionId), legacyUrl);
+  assert.equal(stripeCheckoutUrl(stripeUrl), stripeUrl);
   const opened = await startStripeTestCheckout(request("qa-owner"));
   assert.deepEqual(await opened.json(), { url: stripeUrl });
   assert.equal(creates[0].options.idempotencyKey, attempt);
@@ -98,6 +101,11 @@ try {
   saved = { ...state, reservedAt: new Date(Date.now() - 24 * 3600000).toISOString() };
   assert.equal((await startStripeTestCheckout(request("qa-owner"))).status, 409);
   assert.equal(creates.length, 2, "Expired idempotency window never creates a second session");
+  const beforeMismatchedUrl = writes.length;
+  saved = state;
+  provider = { ...openSession, url: "https://checkout.stripe.com/pay/cs_test_Different" };
+  assert.equal((await startStripeTestCheckout(request("qa-owner"))).status, 503);
+  assert.deepEqual(writes.slice(beforeMismatchedUrl).map(write => write.p_action), ["reserve"]);
   saved = { ...state, session: sessionId };
   provider = { ...openSession, status: "complete", payment_status: "paid" };
   assert.deepEqual(await (await startStripeTestCheckout(request("qa-owner"))).json(), { paid: true });
