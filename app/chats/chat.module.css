@@ -88,10 +88,10 @@
  .inboxEmpty { display:block; }
  .page { max-width:var(--page-width-mobile);padding:var(--page-top-mobile) var(--page-gutter-mobile) calc(100px + env(safe-area-inset-bottom)); }.heading { margin-bottom:20px; }.heading h1 { font-size:1.8rem; }
  .workspace { display:block;height:auto;min-height:0;border-radius:20px; }.inbox { border:0; }.conversation { display:none; }
- .hasConversation { max-width:100%;padding:0;height:calc(100dvh - 66px - env(safe-area-inset-bottom)); }.hasConversation > .heading,.hasConversation .inbox { display:none; }.hasConversation .workspace { height:100%;border:0;border-radius:0; }.hasConversation .conversation { display:flex;height:100%; }
+ .hasConversation { max-width:100%;padding:0;height:var(--chat-visible-height,calc(100dvh - 66px - env(safe-area-inset-bottom))); }.hasConversation > .heading,.hasConversation .inbox { display:none; }.hasConversation .workspace { height:100%;border:0;border-radius:0; }.hasConversation .conversation { display:flex;height:100%; }
  .conversationHeader { padding:calc(12px + env(safe-area-inset-top)) 14px 12px;gap:10px; }.conversationHeader .avatar { width:38px;height:38px;border-radius:13px; }.conversationHeader h2 { font-size:.88rem; }.conversationHeader p { font-size:.7rem; }.matchStatus { display:none; }
- .mobileBack { display:grid;place-items:center;width:32px;height:44px;padding:0;border:0;background:none;color:var(--color-text-muted); }.mobileBack svg { transform:rotate(180deg);width:18px; }
- .nextSteps > summary { padding:12px 20px; }.messages { padding:20px 16px;gap:14px; }.bubble { max-width:88%;padding:12px 13px 8px; }.bubble p { font-size:.83rem; }
+ .mobileBack { display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:none;color:var(--color-text-muted); }.mobileBack svg { transform:rotate(180deg);width:18px; }
+ .nextSteps > summary { padding:12px 20px; }.messages { padding:20px 16px;gap:14px;min-height:0; }.nextSteps { max-height:min(35dvh,calc(var(--chat-visible-height,100dvh) * .3)); }.bubble { max-width:88%;padding:12px 13px 8px; }.bubble p { font-size:.83rem; }
  .composer { padding:8px 12px 14px;gap:9px; }.composer textarea { font-size:16px;min-height:46px;padding:12px 14px; }.composer button { width:46px;height:46px;border-radius:14px; }
 }
 @media(max-height:600px) and (min-width:721px) { .page { padding-top:98px; }.workspace { height:calc(100dvh - 164px);min-height:220px; }.conversationHeader { padding:12px 20px; } }

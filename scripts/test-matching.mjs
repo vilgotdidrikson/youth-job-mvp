@@ -41,6 +41,11 @@ try {
  const conflictingDates=dateSource+'\nKan börja arbeta: 2026-10-20';
  assert.deepEqual(missingApplicationCriteria(assessCandidate(matchingCriteria([{label:'Kan börja omgående',required:true}]),[],conflictingDates),[],conflictingDates),['Kan börja omgående']);
  assert.deepEqual(missingApplicationCriteria(knownStart,[],dateSource+'\n'+dateSource),[]);
+ const startOrSkill=assessCandidate(matchingCriteria([{label:'Startdatum'}, {label:'Starta kassa'}, {label:'Kan börja och jobba helger'}]),[],dateSource);
+ assert.deepEqual(missingApplicationCriteria(startOrSkill,[],dateSource),['Starta kassa','Kan börja och jobba helger']);
+ const licenceVariants=assessCandidate(matchingCriteria([{label:'B-körkort'}, {label:'Körkort B',required:true},{label:'Truckkort'}]),[], '');
+ assert.deepEqual(missingApplicationCriteria(licenceVariants),['Körkort B','Truckkort']);
+ assert.deepEqual(missingApplicationCriteria(licenceVariants,['Krav på B-körkort']),['Truckkort']);
 
  assert.equal(knownStart.criteria[0].evidence,dateSource);
  assert.equal(fixedCriterionEvidence('Kan börja omgående','Kan börja arbeta: 2026-10-11','2026-10-12').status,'fulfilled');
