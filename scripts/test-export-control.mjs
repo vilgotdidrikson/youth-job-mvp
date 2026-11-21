@@ -36,8 +36,18 @@ try{
  await test('account switch closes dialog and blocks late delivery',async()=>{const p=submit()(event);authCallback('SIGNED_IN',{user:{id:'B'}});reply.resolve(file());await p;assert.equal(nodes(view.render()).some(n=>n.type==='dialog'),false);assert.equal(clicks,0);});
  await test('unmount cancels and leaves no stale state updates or download',async()=>{const p=submit()(event);view.stop();const before=view.updates;reply.resolve(file());await p;assert.equal(view.updates,before);assert.equal(clicks,0);});
  await test('stale submit callback after unmount performs no work',async()=>{const send=submit();view.stop();const pending=send(event);assert.equal(calls.length,0);reply.resolve(file());await pending;});
- await test('timeout tells the truth about unknown result and never retries automatically',async()=>{const p=submit()(event);for(const [id,t]of [...timers])if(t.ms===125000){timers.delete(id);t.fn();}reply.reject(new DOMException('Aborted','AbortError'));await p;assert.match(text(view.render()),/Paketet kan ha skapats/);assert.match(text(view.render()),/Ingen ny beställning/);assert.equal(calls.length,1);assert.equal(clicks,0);});
- await test('raw upstream error is hidden and busy state recovers',async()=>{const p=submit()(event);reply.reject(Error('QA_PRIVATE'));await p;assert.ok(!text(view.render()).includes('QA_PRIVATE'));assert.equal(nodes(view.render()).find(n=>n.props?.type==='submit').props.disabled,false);});
+ await test('timeout tells the truth about unknown result and never retries automatically',async()=>{const p=submit()(event);for(const [id,t]of [...timers])if(t.ms===125000){timers.delete(id);t.fn();}reply.reject(new DOMException('Aborted','AbortError'));await p;assert.match(text(view.render()),/Paketet kan ha skapats/);assert.match(text(view.render()),/Kontrollera det befintliga paketet/);assert.equal(calls.length,1);assert.equal(clicks,0);});
+ await test('uncertain network result requires reading the existing export before a new order',async()=>{
+  const p=submit()(event);reply.reject(Error('QA_PRIVATE'));await p;
+  assert.ok(!text(view.render()).includes('QA_PRIVATE'));
+  assert.equal(nodes(view.render()).find(n=>n.props?.type==='submit').props.disabled,true);
+  await submit()(event);assert.equal(calls.length,1);
+  let resolve;reply={promise:new Promise(r=>{resolve=r;})};
+  const recovery=submit()({...event,nativeEvent:{submitter:{getAttribute:()=> 'recover'}}});
+  assert.equal(calls.at(-1)[0],'recover');
+  resolve({status:'none'});await recovery;
+  assert.equal(nodes(view.render()).find(n=>n.props?.type==='submit').props.disabled,false);
+});
  await test('known client error is presented and password stays empty',async()=>{const p=submit()(event);reply.reject(new AccountExportError('Kontrollera lösenordet.'));await p;assert.match(text(view.render()),/Kontrollera lösenordet/);assert.equal(nodes(view.render()).find(n=>n.type==='input').props.value,'');});
  await test('failed browser click removes anchor and releases URL',async()=>{clickError=true;const p=submit()(event);reply.resolve(file());await p;assert.equal(removed,1);assert.equal(revoked,1);assert.equal(clicks,0);assert.ok(!text(view.render()).includes('QA_PRIVATE'));});
  await test('Blob URL is released on deadline',async()=>{const p=submit()(event);reply.resolve(file());await p;for(const [id,t]of [...timers])if(t.ms===30000){timers.delete(id);t.fn();}assert.equal(revoked,1);});

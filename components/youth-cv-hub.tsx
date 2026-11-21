@@ -380,6 +380,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
       onChange={(cv) => { setApprovedSnapshot(null); setGenerated({ text: renderStructuredCv(cv), structured: cv }); }} />}
     {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
     {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
+    {canUseAi && <p className={styles.note}><Link href="/privacy#ai-cv">Så används dina uppgifter när du skriver om CV:t med AI</Link>.</p>}
     {canUseAi && <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
     <button className="cta-btn" disabled={saving || generating || !!recovery || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
     {recoveryNotice}{error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
@@ -403,6 +404,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
     </div>
     {error && <p role="alert" className="cv-hub-error">{error}</p>}
     {methodChoice}
+    {canUseAi && step === "merits" && !returnToReview && <p className={styles.note}>AI använder dina svar för att skriva ett CV-förslag som du granskar. <Link href="/privacy#ai-cv">Så används dina uppgifter</Link>.</p>}
     <div className="cv-hub-question-actions">
       <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
       <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "merits" ? canUseAi ? "Hoppa över och skapa CV-förslag" : "Hoppa över och förhandsvisa" : "Hoppa över"}</button>

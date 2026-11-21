@@ -1,0 +1,70 @@
+.tabs { display:flex; gap:5px; padding:5px; margin-bottom:24px; border-radius:16px; background:var(--color-rose); }
+.tabs button { flex:1; min-height:44px; padding:10px; border:0; border-radius:12px; color:var(--color-text-muted); background:transparent; font:inherit; font-size:.8rem; cursor:pointer; }
+.tabs [aria-selected="true"] { color:var(--color-text); background:var(--color-surface); box-shadow:0 2px 8px rgba(var(--color-text-rgb), .05); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.card { min-width:0; padding:26px; border:1px solid var(--color-border); border-radius:22px; background:var(--color-surface); }
+.card h2 { margin:0 0 16px; font-size:1.05rem; font-weight:550; }
+.cardHeading { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
+.cardHeading h2 { margin:0; }
+.card p { font-size:.85rem; line-height:1.8; color:var(--color-text-muted); }
+.icon { display:grid; place-items:center; width:50px; height:50px; margin-bottom:24px; border-radius:16px; color:var(--color-brand); background:var(--color-rose); }
+.textlink { display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:4px 0; border:0; color:var(--color-brand); background:transparent; font:inherit; font-size:.78rem; cursor:pointer; }
+.shortcut { display:flex; align-items:center; gap:14px; padding:17px 0; color:var(--color-text); text-decoration:none; }
+.shortcut + .shortcut { border-top:1px solid var(--color-divider); }
+.shortcut > svg { color:var(--color-text-muted); flex-shrink:0; }
+.shortcut span { flex:1; display:grid; gap:7px; }
+.shortcut strong { font-size:.85rem; font-weight:500; }
+.shortcut small { color:var(--color-text-muted); font-size:.73rem; }
+.panel { max-width:760px; margin-inline:auto; }
+.panel > .card { margin-bottom:18px; }
+.buttons { display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; }
+.preview { max-height:55svh; overflow:auto; padding:24px; border:1px solid var(--color-border); border-radius:16px; color:var(--color-text); background:var(--color-canvas); font:inherit; font-size:.85rem; line-height:1.85; white-space:pre-wrap; overflow-wrap:anywhere; }
+.fields { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.field { display:grid; gap:8px; color:var(--color-text-muted); font-size:.8rem; }
+.field input, .field textarea { width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:13px; color:var(--color-text); background:var(--color-canvas); font:inherit; font-size:16px; }
+.field textarea { resize:vertical; }
+.alert, .success { padding:14px 18px; margin-bottom:20px; border-radius:14px; color:var(--color-brand-on-rose); background:var(--color-surface-soft); font-size:.82rem; }
+.success { color:var(--color-success-strong); background:var(--color-success-soft); }
+:global(.mnw-profile) .danger { color:var(--color-brand-on-rose); }
+.compactHeader { display:flex;align-items:center;gap:16px;padding:10px 0 26px; }
+.smallAvatar { display:grid;place-items:center;width:62px;height:62px;background:var(--color-rose);color:var(--color-brand-on-rose);border-radius:21px;font-size:1.4rem;flex-shrink:0; }
+.compactHeader > div { flex:1; }
+.compactHeader p { margin:0 0 4px;color:var(--color-text-muted);font-size:.7rem; }
+.compactHeader h1 { font-size:1.7rem;font-weight:500;letter-spacing:-.04em;margin:0 0 4px; }
+.compactHeader div > span { font-size:.76rem;color:var(--color-text-muted); }
+.jobProfile > header { display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:22px; }
+.jobProfile h2 { font-size:1.3rem;font-weight:500;margin:0 0 7px; }
+.jobProfile header p { color:var(--color-text-muted);font-size:.83rem;margin:0; }
+.jobProfileParts { display:grid;gap:14px; }
+.jobProfileParts > button { display:flex;align-items:center;gap:18px;width:100%;padding:23px 24px;border:1px solid var(--color-border);border-radius:20px;background:var(--color-surface);text-align:left;color:var(--color-text);cursor:pointer;font:inherit; }
+.jobProfileParts > button:hover { border-color:var(--color-text-subtle);background:var(--color-canvas); }
+.jobProfileParts .icon { margin:0;width:48px;height:48px;flex-shrink:0; }
+.jobProfileParts > button > span:nth-child(2) { display:grid;gap:8px;flex:1; }
+.jobProfileParts strong { font-size:.98rem;font-weight:500; }
+.jobProfileParts small { font-size:.76rem;line-height:1.6;color:var(--color-text-muted); }
+.jobProfileParts > button > svg { color:var(--color-text-subtle);flex-shrink:0; }
+.confirmed { margin-top:20px; }
+.card > summary { min-height:44px;cursor:pointer;line-height:1.6;display:list-item;font-size:.9rem;font-weight:500; }
+.frame { width:min(980px,calc(100vw - 40px));max-height:90dvh;padding:24px;border:1px solid var(--color-border);border-radius:24px;color:var(--color-text);background:var(--color-surface);box-shadow:var(--shadow-dialog);overflow-y:auto; }
+.frame::backdrop { background:var(--color-backdrop);backdrop-filter:blur(4px); }
+.frameHeading { position:sticky;top:-24px;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:12px 0 18px;margin-bottom:12px;background:var(--color-surface);z-index:2; }
+.frameHeading h2 { font-size:1.3rem;font-weight:500;margin:0;letter-spacing:-.025em; }
+.frameHeading > button { min-width:44px;padding:8px!important;display:grid;place-items:center; }
+.frame .card { border:0;padding:8px 0; }
+.frame .preview { max-height:48vh; }
+.frame .panel { max-width:none; }
+@media(max-width:720px) { .jobProfile > header { align-items:flex-start;flex-direction:column;gap:14px; }.compactHeader h1 { font-size:1.35rem; }.smallAvatar { width:52px;height:52px;border-radius:18px; }.jobProfileParts > button { padding:18px 16px;gap:12px; }.jobProfileParts small { font-size:.7rem; }.frame { width:calc(100vw - 20px);max-height:92dvh;padding:18px;border-radius:20px; }.frameHeading { top:-18px; }.frame .cardHeading { align-items:flex-start;flex-direction:column; } }
+@media(max-width:720px) {
+ .tabs { gap:2px; padding:4px; } .tabs button { font-size:.68rem; padding:8px 4px; }
+ .grid { grid-template-columns:1fr; gap:16px; }
+ .card { padding:20px; border-radius:20px; }
+ .cardHeading { flex-wrap:wrap; }
+ .fields { grid-template-columns:1fr; }
+ .preview { padding:18px; }
+}
+.card > p {margin:0 0 18px;}
+.card > p:last-child {margin-bottom:0;}
+.textlink {min-height:44px;padding-block:10px;line-height:1.5;}
+.cardHeading {flex-wrap:wrap;}
+.cardHeading > :is(a,button) {line-height:1.5;text-align:center;}
+.shortcut span {min-width:0;overflow-wrap:anywhere;}

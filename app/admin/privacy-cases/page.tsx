@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { PasswordInput } from "@/components/password-input";
@@ -27,27 +27,47 @@ function Workspace({owner}:{owner:string}) {
   const active=useRef(false),lock=useRef(false),task=useRef<AbortController|null>(null),idle=useRef<ReturnType<typeof setTimeout>|null>(null);
   const drafts=useRef(new Map<string,ActionDraft>());
   const confirmDraft=(item:PrivacyCase)=>{const draft=drafts.current.get(item.id);if(draft?.eventId&&item.events.some(e=>e.id===draft.eventId&&e.action===draft.action&&(["review","schedule_review"].includes(draft.action)?e.review_after!=null&&!!draft.reviewAfter&&Date.parse(e.review_after)===new Date(draft.reviewAfter).getTime():["reply","waiting","close"].includes(draft.action)&&e.public_message===draft.text.trim()&&(item.intake_source!=="email"||e.external_sent_at!=null&&!!draft.externalSentAt&&Date.parse(e.external_sent_at)===new Date(draft.externalSentAt).getTime())))){if(["review","schedule_review"].includes(draft.action)&&draft.text)drafts.current.set(item.id,{action:"reply",text:draft.text,eventId:null,externalSentAt:draft.externalSentAt});else drafts.current.delete(item.id);}};
-  const clear=(keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setLookup(false);setNeedsRead(true);if(!keepDrafts){drafts.current.clear();setManualOpen(false);}};
-  const expire=()=>{
-    if(idle.current)clearTimeout(idle.current);
-    idle.current=setTimeout(()=>{
-      if(!active.current)return;
-      task.current?.abort();
-      task.current=null;
-      lock.current=false;
-      setBusy(false);
-      clear();
-      setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");
-    },300000);
+  const clear=useCallback((keepDrafts=false)=>{setItems([]);setNext(null);setSelected(null);setLookup(false);setNeedsRead(true);if(!keepDrafts){drafts.current.clear();setManualOpen(false);}},[]);
+  const expiresAt = useRef(0);
+  const checkExpiry = useCallback(() => {
+    if (!active.current || !expiresAt.current || Date.now() < expiresAt.current) return false;
+    expiresAt.current = 0;
+    task.current?.abort();
+    task.current = null;
+    lock.current = false;
+    setBusy(false);
+    clear();
+    setNote("Ärendevyn och oskickade svar har tömts efter fem minuter. Verifiera dig för att läsa igen.");
+    return true;
+  }, [clear]);
+  const expire = () => {
+    if (idle.current) clearTimeout(idle.current);
+    expiresAt.current = Date.now() + 300000;
+    idle.current = setTimeout(checkExpiry, 300000);
   };
-  useEffect(()=>{const memory=drafts.current;active.current=true;return()=>{active.current=false;memory.clear();task.current?.abort();if(idle.current)clearTimeout(idle.current);};},[]);
+  useEffect(() => {
+    const memory = drafts.current;
+    const onReturn = () => { checkExpiry(); };
+    active.current = true;
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+    return () => {
+      active.current = false;
+      expiresAt.current = 0;
+      memory.clear();
+      task.current?.abort();
+      if (idle.current) clearTimeout(idle.current);
+      document.removeEventListener("visibilitychange", onReturn);
+      window.removeEventListener("focus", onReturn);
+    };
+  }, [checkExpiry]);
   const verify = (form:HTMLFormElement) => {
     const data=new FormData(form), password=String(data.get("password")||""),code=String(data.get("totpCode")||"");
     form.querySelectorAll<HTMLInputElement>('input[name="password"],input[name="totpCode"]').forEach(input=>{input.value="";});
     return {password,code};
   };
   const execute=async(form:HTMLFormElement,input:AdminCaseInput):Promise<CaseActionResult>=>{
-    if(lock.current||!active.current)return {ok:false,rejected:false};
+    if(checkExpiry()||lock.current||!active.current)return {ok:false,rejected:false};
     const {password,code}=verify(form);lock.current=true;setBusy(true);setNote("");
     const controller=new AbortController();task.current=controller;
     try{
@@ -68,10 +88,10 @@ function Workspace({owner}:{owner:string}) {
       <form className={styles.form} onSubmit={e=>{e.preventDefault();void execute(e.currentTarget,{action:"list",cursor:null,filter});}}>
         <label>Visa ärenden<select value={filter} disabled={busy} onChange={e=>{if(lock.current)return;setFilter(e.target.value as CaseQueueFilter);clear(true);setLookup(false);}}>{Object.entries(CASE_QUEUE_FILTERS).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
         <label>Ärendenummer<input name="caseId" maxLength={36} autoComplete="off" disabled={busy}/></label>
-        <Credentials disabled={busy}/><div className={styles.actions}><button className="primary-btn" disabled={busy}>{busy?"Verifierar…":"Läs aktuell ärendekö"}</button>{next&&!needsRead&&!lookup&&<button type="submit" className="secondary-btn" disabled={busy} onClick={e=>{e.preventDefault();const form=e.currentTarget.form;if(form?.reportValidity())void execute(form,{action:"list",cursor:next,filter});}}>Visa nästa sida</button>}<button type="button" className="secondary-btn" disabled={busy} onClick={()=>{clear();if(idle.current)clearTimeout(idle.current);}}>Töm ärendevyn</button><button type="button" className="secondary-btn" disabled={busy} onClick={e=>{const form=e.currentTarget.form;if(!form?.reportValidity())return;const id=String(new FormData(form).get("caseId")||"").trim().toLowerCase();if(!isUuid(id)){setNote("Ange ett fullständigt ärendenummer.");return;}void execute(form,{action:"find",id});}}>Öppna ärendenummer</button></div>
+        <Credentials disabled={busy}/><div className={styles.actions}><button className="primary-btn" disabled={busy}>{busy?"Verifierar…":"Läs aktuell ärendekö"}</button>{next&&!needsRead&&!lookup&&<button type="submit" className="secondary-btn" disabled={busy} onClick={e=>{e.preventDefault();const form=e.currentTarget.form;if(form?.reportValidity())void execute(form,{action:"list",cursor:next,filter});}}>Visa nästa sida</button>}<button type="button" className="secondary-btn" disabled={busy} onClick={()=>{clear();if(idle.current)clearTimeout(idle.current);expiresAt.current=0;}}>Töm ärendevyn</button><button type="button" className="secondary-btn" disabled={busy} onClick={e=>{const form=e.currentTarget.form;if(!form?.reportValidity())return;const id=String(new FormData(form).get("caseId")||"").trim().toLowerCase();if(!isUuid(id)){setNote("Ange ett fullständigt ärendenummer.");return;}void execute(form,{action:"find",id});}}>Öppna ärendenummer</button></div>
       </form>
     </section>
-    <button type="button" className="secondary-btn" disabled={busy} onClick={()=>{setManualOpen(v=>!v);expire();}}>{manualOpen?"Stäng mejlregistrering":"Registrera inkommet mejl"}</button>
+    <button type="button" className="secondary-btn" disabled={busy} onClick={()=>{if(!checkExpiry()){setManualOpen(v=>!v);if(!expiresAt.current)expire();}}}>{manualOpen?"Stäng mejlregistrering":"Registrera inkommet mejl"}</button>
     {manualOpen&&<PrivacyEmailCaseForm disabled={busy} items={items} readTick={readTick} credentials={<Credentials disabled={busy}/>} send={execute}/>}
     {note&&<p role="status">{note}</p>}
     {!needsRead&&items.length===0&&<p>Det finns inga ärenden på den här sidan.</p>}

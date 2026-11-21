@@ -126,6 +126,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
         </label>) : <p>Inga ytterligare profiluppgifter finns att välja.</p>}</fieldset>}
       <details className={styles.sources}><summary>Vilka källuppgifter används i matchningen?</summary><p>Matchningen använder ditt granskade CV, sparade profilfakta och delade ansökningssvar. Om du har angett postnummer används också ett ungefärligt avstånd mellan din postort och arbetsorten, aldrig din adress. Rensning sker före AI-anrop. Företaget får inte hela jobbprofilen: belägg får bara visas från det delade underlaget ovan. Detta visar källuppgifter, inget individuellt AI-betyg.</p><pre>{applicationSourceInput(preview.matching_input)}</pre></details>
     </div>
+    {!sent && <p className={styles.note}>AI hjälper företaget att läsa ansökningsunderlaget. Företaget fattar rekryteringsbeslutet. <Link href="/privacy#profile-data">Så används dina uppgifter</Link>.</p>}
     <p className={styles.note}>Uppladdade CV delas som originalfiler. Öppna filen ovan och kontrollera kontaktuppgifter eller bostadsadress innan du skickar. En borttagen gammal CV-fil kan bli otillgänglig; en ny fil delas först när du uppdaterar underlaget.</p>
     <footer className={styles.actions}><button type="button" className="cta-btn" disabled={saving || state.status !== "ready"} aria-busy={saving} onClick={() => void save()}>{saving ? "Sparar…" : sent ? (preview.is_saved ? "Till mina ansökningar" : "Spara uppdaterad delning") : "Dela underlaget och skicka ansökan"}</button></footer>
   </main>;
