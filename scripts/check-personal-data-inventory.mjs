@@ -37,16 +37,10 @@ const readReviewedCatalogBeforeApplicationVideo=()=>[
  'docs/privacy/catalog.hire-bank-invoices-2026-11-18.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))));
-const readStripeCheckoutCatalog=()=>JSON.parse(readFileSync(new URL('docs/privacy/catalog.hire-test-stripe-checkout-2026-11-21.json',root),'utf8'));
-export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
- mergeReviewedColumnAdditions(
-  readReviewedCatalogBeforeApplicationVideo(),
-  JSON.parse(readFileSync(new URL('docs/privacy/catalog.application-video-2026-11-19.json',root),'utf8'))),
- readStripeCheckoutCatalog());
-export const readInventory=()=>{
- const inventory=JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
- return {...inventory,groups:[...inventory.groups,readStripeCheckoutCatalog().inventoryGroup]};
-};
+export const readReviewedCatalog=()=>mergeReviewedColumnAdditions(
+ readReviewedCatalogBeforeApplicationVideo(),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.application-video-2026-11-19.json',root),'utf8')));
+export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;
 const text=value=>typeof value==='string'&&value.trim().length>0;
@@ -102,9 +96,14 @@ export function auditInventory(catalog,inventory=readInventory(),reviewed=readRe
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
  try {
-  if(process.argv.length!==4||process.argv[2]!=='--catalog')throw Error('Usage: npm run check:personal-data-inventory -- --catalog /path/to/metadata.json (run capture-personal-data-catalog.sql first).');
+  const args=process.argv.slice(2);
+  if((args.length!==2&&args.length!==4)||args[0]!=='--catalog'||(args.length===4&&args[2]!=='--reviewed-additions'))throw Error('Usage: npm run check:personal-data-inventory -- --catalog /path/to/metadata.json [--reviewed-additions /path/to/reviewed-additions.json].');
   const catalog=JSON.parse(readFileSync(process.argv[3],'utf8'));
-  const errors=auditInventory(catalog);
+  const reviewed=readReviewedCatalog(),inventory=readInventory();
+  const addition=args[3]?JSON.parse(readFileSync(args[3],'utf8')):null;
+  if(addition&&(!object(addition.inventoryGroup)||!Array.isArray(addition.inventoryGroup.relations)||!Array.isArray(addition.relations)
+    ||sorted(addition.inventoryGroup.relations)!==sorted(addition.relations.map(r=>r.schema_name+'.'+r.table_name))))throw Error('Reviewed additions must classify exactly the added relations.');
+  const errors=addition?auditInventory(catalog,{...inventory,groups:[...inventory.groups,addition.inventoryGroup]},mergeReviewedCatalogAdditions(reviewed,addition)):auditInventory(catalog,inventory,reviewed);
   if(errors.length){console.error(errors.join('\n'));process.exitCode=1;}
   else console.log(`PASS metadata coverage: ${catalog.relations.length} relations and ${catalog.buckets.length} buckets match the reviewed inventory. No live connection, row-content review or export verification was performed by this command.`);
  }catch(error){console.error(error instanceof SyntaxError?'Invalid metadata JSON.':error.message);process.exitCode=1;}
