@@ -2,7 +2,7 @@
 import { getSupabaseClient } from "./supabase";
 
 export class AccountExportError extends Error {
-  constructor(message = "Exportprovet kunde inte hämtas. Försök igen senare.") { super(message); this.name = "AccountExportError"; }
+  constructor(message = "Exportprovet kunde inte hämtas. Försök igen senare.", readonly shouldRecover = false) { super(message); this.name = "AccountExportError"; }
 }
 const MAX = 64 * 1024 * 1024;
 export type AccountExportFile = { blob: Blob; filename: string; expiresAt: string };
@@ -34,7 +34,7 @@ async function requestExport(expectedUserId: string, password: string, signal: A
   const response = await fetch(recover ? "/api/account/export-preview/recover" : "/api/account/export-preview", { method: "POST", cache: "no-store", credentials: "omit", redirect: "error", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ expectedUserId, password, ...(totpCode ? { totpCode } : {}) }), signal });
   if (!response.ok) {
     const messages: Record<number, string> = { 401: "Logga in igen och försök på nytt.", 403: "Kontrollera lösenordet och eventuell tvåfaktorskod.", 409: "Ett exportpaket finns redan eller kontot har ändrats.", 429: "För många försök. Försök igen senare.", 503: "Exportprovet är inte tillgängligt just nu." };
-    throw new AccountExportError(messages[response.status]);
+    throw new AccountExportError(messages[response.status], !recover && (response.status === 409 || response.status >= 500));
   }
   if (recover && response.headers.get("content-type") === "application/json") {
     const length = response.headers.get("content-length");
@@ -60,7 +60,7 @@ async function requestExport(expectedUserId: string, password: string, signal: A
       if (value.status === "building") {
         if (Object.keys(value).sort().join() !== "expiresAt,status" || typeof value.expiresAt !== "string" || !Number.isFinite(Date.parse(value.expiresAt)) || Date.parse(value.expiresAt) <= Date.now()) throw new AccountExportError();
       } else if (!["none", "expired", "failed"].includes(value.status) || Object.keys(value).join() !== "status") throw new AccountExportError();
-      if (await snapshot() !== token) throw new AccountExportError();
+      if (await snapshot() !== token || (value.status === "building" && Date.parse(value.expiresAt) <= Date.now())) throw new AccountExportError();
       signal.throwIfAborted();
       return value.status === "building" ? { status: "building", expiresAt: value.expiresAt } : { status: value.status };
     } finally { if (!done) void reader.cancel().catch(() => {}); reader.releaseLock(); }
@@ -85,7 +85,7 @@ async function requestExport(expectedUserId: string, password: string, signal: A
       for (const byte of part.value.subarray(0, 2-prefix.length)) prefix.push(byte);
       chunks.push(new Uint8Array(part.value));
     }
-    if (count !== Number(length) || prefix[0] !== 80 || prefix[1] !== 75 || Date.parse(expiresAt) <= Date.now() || await snapshot() !== token) throw new AccountExportError();
+    if (count !== Number(length) || prefix[0] !== 80 || prefix[1] !== 75 || await snapshot() !== token || Date.parse(expiresAt) <= Date.now()) throw new AccountExportError();
     signal.throwIfAborted();
     return { blob: new Blob(chunks, { type: "application/zip" }), filename, expiresAt };
   } finally { if (!done) void reader.cancel().catch(() => {}); reader.releaseLock(); }
