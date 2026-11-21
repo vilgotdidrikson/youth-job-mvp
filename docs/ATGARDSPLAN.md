@@ -203,6 +203,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 13.6 | [N21](#n21) | P2 | Valfri genomläsning av uppladdat CV | För granskning | Vilgot / Claude |
 | 14 | [L02](#l02) | P1 | SMTP och tillförlitliga e-postutskick | För granskning | Vilgot / Codex |
 | 15 | [L03](#l03) | P1 | Automatiserad fakturering vid bekräftad anställning | För granskning | Vilgot / Codex |
+| 15.1 | [N26](#n26) | P2 | Stripe Checkout och avstämning för testfakturor | För granskning | Vilgot / Codex |
 | 16 | [F08](#f08) | P2 | Tydliggör verifieringsunderlag och handläggning | Klar | Max / Claude |
 | 17 | [F09](#f09) | P2 | Anpassa publicering till verifieringsstatus | Klar | Codex |
 | 18 | [F07](#f07) | P1 | Bevara bilden i sparade annonsutkast | Klar | Codex |
@@ -1281,6 +1282,19 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Verifierat: Faktiska DevStaging-rollbackprov för egna/andras/youth/anon, direkt skrivförbud, normalisering/validering/CRLF, version/dubbla create och kontoraderingscascade; noll QA-konton kvar. Installerad SDK och faktiska UI-callbacks med simulerad HTTP, profile-journey, company-navigation, riktad ESLint och standardbygge/TypeScript/57 routes passerar. Ingen faktisk browser-/mobil- eller parallell transaktionsverifiering påstås.
 - Statusavstämning 2026-11-19: Testfakturering med belopp, mottagarsnapshot, PDF, e-postkö, rättelsespärr och administrativ avstämning är redo för granskning i dev. Gemensam uppföljning på `codex/f06-l03-invoice-review-20261119` gör fakturans läsfel synliga och möjliga att försöka igen från admin. DevStaging-proven för test och bankgiro passerade med fiktiva konton och rollback. Se [L03.md](L03.md) för tidigare verklig testleverans, provning och klicktest.
 - Återstår / blockerare: Gör klicktestet i dev med de fiktiva pilotkontona och den godkända testinkorgen. Skarp fakturering kräver skattebesked, slutliga säljar-/betalningsuppgifter, villkor, hantering av kreditering och bevarande samt separat beslut om aktivering.
+
+<a id="n26"></a>
+### N26 Stripe Checkout och avstämning för testfakturor
+
+- [ ] Klar
+- Prioritet: P2
+- Global ordning: 15.1, samordnas med L03.
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Leverans: Stripe Checkout för fiktiva företagsfakturor i [PR #247](https://github.com/vilgotdidrikson/youth-job-mvp/pull/247). Länkkontrollen rättad i [PR #249](https://github.com/vilgotdidrikson/youth-job-mvp/pull/249), driftsatt i dev som `6779ccf`. Regressionstest och verifiering i [PR #250](https://github.com/vilgotdidrikson/youth-job-mvp/pull/250).
+- Klar när: Företaget kan öppna Checkout från sin testfaktura, genomföra testköpet med fakturans belopp och se automatisk avstämning i fakturavyn. Avstämningen ska höra till rätt testsession.
+- Verifierat: Fiktivt köp på 500 SEK i Stripes sandbox. Fakturavyn visade **Betalning avstämd** vid återgång. DevStaging bekräftade belopp, betald status och samma testsession. Stripe-regressioner och lokala PostgreSQL-prov passerade. Se [granskningsprotokollet](REVIEW_2026-11-21_BATCH_2.md#n26--verifiering-av-testköp).
+- Återstår: Granska testflödet och bocka av kortet. Skarp Stripe-aktivering hanteras separat.
 
 <a id="l05"></a>
 ### L05 Säkerhet, blockering, rapportering och administration
