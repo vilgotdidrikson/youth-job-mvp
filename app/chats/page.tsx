@@ -51,7 +51,11 @@ function ChatsWorkspace({ user, profile }: { user: { id: string }; profile: { ro
   const [historyRetry, setHistoryRetry] = useState(0);
   const retention = useConversationRetention(selectedId, user?.id);
   const [blocking, setBlocking] = useState(false);
+  const pageRef = useRef<HTMLElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const mobileBackRef = useRef<HTMLButtonElement>(null);
+  const inboxOpener = useRef<HTMLButtonElement | null>(null);
+  const returningToInbox = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
   const active = useRef(false), foreground = useRef(true);
   const inboxReader = useRef<ReturnType<typeof createLatestRead<ChatInboxItem[], boolean>> | null>(null);
@@ -155,6 +159,42 @@ function ChatsWorkspace({ user, profile }: { user: { id: string }; profile: { ro
     finally { sendLock.current=false; if(active.current) setSending(false); }
   };
   const selected = conversations.find(item => item.conv.id === selectedId);
+  const hasConversation = Boolean(selected);
+  useEffect(() => {
+    if (hasConversation && inboxOpener.current && window.matchMedia("(max-width: 720px)").matches) {
+      mobileBackRef.current?.focus({ preventScroll: true });
+    } else if (!hasConversation && returningToInbox.current) {
+      inboxOpener.current?.focus();
+      returningToInbox.current = false;
+      inboxOpener.current = null;
+    }
+  }, [hasConversation]);
+  useEffect(() => {
+    const page = pageRef.current;
+    const viewport = window.visualViewport;
+    if (!hasConversation || !page || !viewport) return;
+    const mobile = window.matchMedia("(max-width: 720px)");
+    const resize = () => {
+      // Mobile keyboards may resize only the visual viewport. Preserve pinch zoom.
+      if (mobile.matches && viewport.scale === 1 && window.innerHeight - viewport.height > 100) {
+        const visibleBottom = viewport.height + viewport.offsetTop;
+        const height = Math.max(0, visibleBottom - page.getBoundingClientRect().top);
+        page.style.setProperty("--chat-visible-height", `${height}px`);
+      } else {
+        page.style.removeProperty("--chat-visible-height");
+      }
+    };
+    resize();
+    viewport.addEventListener("resize", resize);
+    viewport.addEventListener("scroll", resize);
+    window.addEventListener("resize", resize);
+    return () => {
+      viewport.removeEventListener("resize", resize);
+      viewport.removeEventListener("scroll", resize);
+      window.removeEventListener("resize", resize);
+      page.style.removeProperty("--chat-visible-height");
+    };
+  }, [hasConversation]);
   const handleBlock = async () => {
     if(!selected || blocking || !window.confirm(`Blockera ${selected.otherName}? Ingen av er kommer kunna skicka fler meddelanden i chatten.`)) return;
     setBlocking(true); try { await blockConversationUser(selected.conv.id); select(null); setMessages({id:"",items:[]}); await loadConversations(false); } catch(reason) { setError(reason instanceof Error ? reason.message : "Kunde inte blockera användaren."); } finally { setBlocking(false); }
@@ -168,13 +208,13 @@ function ChatsWorkspace({ user, profile }: { user: { id: string }; profile: { ro
     ? <Link href="/company?view=kandidater" className={styles.primary}>Granska kandidater <UiIcon name="arrow"/></Link>
     : <><Link href="/swipe" className={styles.primary}>Upptäck jobb <UiIcon name="arrow"/></Link><Link href="/applications" className={styles.secondary}>Se dina ansökningar</Link></>;
 
-  return <main className={`${styles.page} ${selected ? styles.hasConversation : ""}`}>
+  return <main ref={pageRef} className={`${styles.page} ${selected ? styles.hasConversation : ""}`}>
     <header className={styles.heading}><div className={styles.headingRow}><div className={styles.headingTitle}><Link href={profile?.role==="youth" ? "/applications" : "/company?view=kandidater"} className={styles.back}><UiIcon name="arrow"/>Tillbaka</Link><h1>Meddelanden</h1></div><NotificationLink/></div></header>
     <div className={styles.workspace}><aside className={styles.inbox} aria-label="Inkorg"><div className={styles.inboxHeader}><h2>Meddelanden <span>{conversations.length}</span></h2><label className={styles.search}><span className="sr-only">Sök bland chattar</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Sök namn eller jobb"/></label></div>
       {error && listState !== "error" && <div className={styles.listNote}><p role="alert">{error}</p><button type="button" className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div>}
-      {listState === "loading" ? <p className={styles.listNote} role="status">Hämtar matchningar…</p> : listState === "error" ? <div className={styles.listNote}><p role="alert">{error}</p><button className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div> : visible.length === 0 ? <div className={`${styles.listNote} ${search ? "" : styles.inboxEmpty}`}><UiIcon name="chat"/><h3>{search ? "Ingen chatt hittades" : "Dina matchningar landar här"}</h3><p>{search ? "Prova ett annat namn eller jobb." : "När båda visar intresse kan ni börja prata."}</p>{!search && <div className={styles.listActions}>{emptyNextStep}</div>}</div> : <div className={styles.contacts}>{visible.map(item => <button key={item.conv.id} className={`${styles.contact} ${selectedId === item.conv.id ? styles.contactActive : ""}`} type="button" aria-pressed={selectedId === item.conv.id} onClick={() => select(item.conv.id)}><span className={styles.avatar}>{initials(item.otherName)}</span><span className={styles.contactText}><strong>{item.otherName}</strong><span>{item.jobTitle || "Din matchning"}</span><small>{statusLabels[item.status] || item.status}</small></span><UiIcon name="arrow" width="16"/></button>)}</div>}
+      {listState === "loading" ? <p className={styles.listNote} role="status">Hämtar matchningar…</p> : listState === "error" ? <div className={styles.listNote}><p role="alert">{error}</p><button className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div> : visible.length === 0 ? <div className={`${styles.listNote} ${search ? "" : styles.inboxEmpty}`}><UiIcon name="chat"/><h3>{search ? "Ingen chatt hittades" : "Dina matchningar landar här"}</h3><p>{search ? "Prova ett annat namn eller jobb." : "När båda visar intresse kan ni börja prata."}</p>{!search && <div className={styles.listActions}>{emptyNextStep}</div>}</div> : <div className={styles.contacts}>{visible.map(item => <button key={item.conv.id} className={`${styles.contact} ${selectedId === item.conv.id ? styles.contactActive : ""}`} type="button" aria-pressed={selectedId === item.conv.id} onClick={event => { inboxOpener.current = event.currentTarget; select(item.conv.id); }}><span className={styles.avatar}>{initials(item.otherName)}</span><span className={styles.contactText}><strong>{item.otherName}</strong><span>{item.jobTitle || "Din matchning"}</span><small>{statusLabels[item.status] || item.status}</small></span><UiIcon name="arrow" width="16"/></button>)}</div>}
     </aside><section className={styles.conversation} aria-label={selected ? `Samtal med ${selected.otherName}` : "Konversation"}>{selected ? <>
-      <header className={styles.conversationHeader}><button className={styles.mobileBack} type="button" aria-label="Tillbaka till inkorgen" onClick={() => select(null)}><UiIcon name="arrow"/></button><span className={styles.avatar}>{initials(selected.otherName)}</span><div><h2>{selected.otherName}</h2><p>{selected.jobTitle || "Din matchning"}</p></div><span className={styles.matchStatus}>{statusLabels[selected.status] || selected.status}</span><details className={styles.options}><summary aria-label="Alternativ för chatten">•••</summary><div>{selected.conv.job_id && <Link className={styles.jobLink} href={`/jobb/${selected.conv.job_id}`}>Visa jobbannons</Link>}<ReportDialog targetType="conversation" targetId={selected.conv.id} label="Anmäl chatt"/><button type="button" disabled={blocking} onClick={() => void handleBlock()}>{blocking ? "Blockerar…" : "Blockera kontakt"}</button></div></details></header>
+      <header className={styles.conversationHeader}><button className={styles.mobileBack} ref={mobileBackRef} type="button" aria-label="Tillbaka till inkorgen" onClick={() => { returningToInbox.current = true; select(null); }}><UiIcon name="arrow"/></button><span className={styles.avatar}>{initials(selected.otherName)}</span><div><h2>{selected.otherName}</h2><p>{selected.jobTitle || "Din matchning"}</p></div><span className={styles.matchStatus}>{statusLabels[selected.status] || selected.status}</span><details className={styles.options}><summary aria-label="Alternativ för chatten">•••</summary><div>{selected.conv.job_id && <Link className={styles.jobLink} href={`/jobb/${selected.conv.job_id}`}>Visa jobbannons</Link>}<ReportDialog targetType="conversation" targetId={selected.conv.id} label="Anmäl chatt"/><button type="button" disabled={blocking} onClick={() => void handleBlock()}>{blocking ? "Blockerar…" : "Blockera kontakt"}</button></div></details></header>
 
       {selected.matchId && <details className={styles.nextSteps} key={selected.matchId}><summary>Jobbet och nästa steg</summary><RecruitmentPanel compact matchId={selected.matchId} company={profile?.role === "company"} onChanged={() => void loadConversations(false)} /></details>}
       <div className={styles.messages} aria-label="Meddelanden">{retention.value?.expired ? <p className={styles.messageNote} role="status">{retention.value.purged_at ? "Chattens meddelanden har raderats." : "Chattens meddelanden är inte längre tillgängliga."}</p> : loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}>{!message.video_kind&&<p>{message.message_text}</p>}{message.video_kind&&<VideoMessage message={message} own={message.sender_user_id===user?.id}/>}<time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
