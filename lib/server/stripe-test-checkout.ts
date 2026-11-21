@@ -92,19 +92,9 @@ export async function startStripeTestCheckout(request: Request) {
         if (!await change(services, "settle", invoice, binding)) throw new Error("Settlement not confirmed");
         return Response.json({ paid: true }, { headers });
       }
-      const url = stripeCheckoutUrl(session.url);
       if (session.status !== "open") return fail(409, "Stripe behandlar den befintliga testbetalningen. Försök igen senare.");
-      if (!url) {
-        const destination = session.url ? URL.parse(session.url) : null;
-        console.warn("Stripe test Checkout returned an unexpected destination", {
-          mode: session.ui_mode,
-          hasUrl: Boolean(session.url),
-          hostname: destination?.hostname,
-          hasTestSessionPath: destination?.pathname.endsWith(`/${session.id}`),
-          hasCardCheckoutPath: destination?.pathname.startsWith("/c/pay/"),
-        });
-        return fail(503, "Stripe returnerade ingen godkänd testbetalningssida. Försök igen senare.");
-      }
+      const url = stripeCheckoutUrl(session.url, binding.session);
+      if (!url) return fail(503, "Stripe returnerade ingen godkänd testbetalningssida. Försök igen senare.");
       const attached = await change(services, "attach", invoice, binding);
       if (attached?.paid) return Response.json({ paid: true }, { headers });
       if (attached?.ok) return Response.json({ url }, { headers });
