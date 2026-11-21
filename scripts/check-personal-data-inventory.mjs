@@ -37,10 +37,16 @@ const readReviewedCatalogBeforeApplicationVideo=()=>[
  'docs/privacy/catalog.hire-bank-invoices-2026-11-18.json',
 ].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
  mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))));
-export const readReviewedCatalog=()=>mergeReviewedColumnAdditions(
- readReviewedCatalogBeforeApplicationVideo(),
- JSON.parse(readFileSync(new URL('docs/privacy/catalog.application-video-2026-11-19.json',root),'utf8')));
-export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
+const readStripeCheckoutCatalog=()=>JSON.parse(readFileSync(new URL('docs/privacy/catalog.hire-test-stripe-checkout-2026-11-21.json',root),'utf8'));
+export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
+ mergeReviewedColumnAdditions(
+  readReviewedCatalogBeforeApplicationVideo(),
+  JSON.parse(readFileSync(new URL('docs/privacy/catalog.application-video-2026-11-19.json',root),'utf8'))),
+ readStripeCheckoutCatalog());
+export const readInventory=()=>{
+ const inventory=JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
+ return {...inventory,groups:[...inventory.groups,readStripeCheckoutCatalog().inventoryGroup]};
+};
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const name=value=>typeof value==='string'&&value.length>0&&value.length<256;
 const text=value=>typeof value==='string'&&value.trim().length>0;
