@@ -1,3 +1,4 @@
+import { applicationAiAllowed } from "@/lib/application-ai-consent";
 import { candidateAssessmentHash } from "@/lib/candidate-assessment-hash";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!serviceKey) return NextResponse.json({error:"Bedömningen är tillfälligt otillgänglig. Ansökan finns kvar."},{status:503});
   const serverClient=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
+  const allowed = () => applicationAiAllowed(serverClient, body.jobId!, body.youthUserId!);
+  if (!await allowed()) return NextResponse.json({code:"assessment_unavailable",error:"AI-bedömning är inte tillgänglig för den här ansökan."},{status:409});
   const {data:internal,error:inputError}=await serverClient.rpc("get_application_matching_input",{p_job_id:body.jobId,p_youth_user_id:body.youthUserId,p_company_user_id:auth.user.id});
   if(inputError || !internal) return NextResponse.json({error:"Underlaget kunde inte läsas."},{status:403});
   const changed = () => NextResponse.json({error:"Underlaget har ändrats. Hämta ansökan igen."},{status:409});
@@ -44,12 +47,13 @@ export async function POST(request: NextRequest) {
   const jobContext=matchingJobContext(internal);
   const currentSnapshot = async () => {
     try {
-      const [disclosure, match, source] = await Promise.all([
+      const [disclosure, match, source, consent] = await Promise.all([
         supabase.rpc("get_application_disclosure", {p_job_id:body.jobId,p_youth_user_id:body.youthUserId}),
         supabase.from("job_match_profiles").select("profile_version, weighted_criteria, status").eq("job_id",body.jobId).maybeSingle(),
         serverClient.rpc("get_application_matching_input", {p_job_id:body.jobId,p_youth_user_id:body.youthUserId,p_company_user_id:auth.user.id}),
+        allowed(),
       ]);
-      return !disclosure.error && !match.error && !source.error
+      return consent && !disclosure.error && !match.error && !source.error
         && sameDisclosure(disclosure.data, internal) && sameDisclosure(disclosure.data, source.data)
         && match.data?.status === "approved" && match.data.profile_version === matchProfile.profile_version
         && JSON.stringify(matchingCriteria(match.data.weighted_criteria)) === JSON.stringify(criteria)

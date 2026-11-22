@@ -156,15 +156,6 @@ button,
   background: var(--color-canvas) !important;
 }
 
-.youth-onboarding-pink .onboarding-question-bubble {
-  background: var(--color-surface-rose) !important;
-}
-
-.youth-onboarding-pink .onboarding-question-bubble h1,
-.youth-onboarding-pink .onboarding-question-bubble p {
-  color: var(--color-text) !important;
-}
-
 .youth-onboarding-pink input:not([type="checkbox"]),
 .youth-onboarding-pink select,
 .youth-onboarding-pink textarea {
@@ -180,15 +171,9 @@ button,
   border-color: var(--color-brand) !important;
 }
 
-.youth-onboarding-pink .onboarding-primary-action,
-.youth-onboarding-pink button[style*="background: rgb(17, 17, 17)"] {
+.youth-onboarding-pink .onboarding-primary-action {
   background: var(--color-brand) !important;
   color: var(--color-on-brand) !important;
-}
-
-.youth-onboarding-pink button[style*="border: 1.5px solid rgb(232, 232, 232)"],
-.youth-onboarding-pink div[style*="border: 1.5px solid rgb(232, 232, 232)"] {
-  border-color: var(--color-border) !important;
 }
 
 /* Landing page */
@@ -355,8 +340,6 @@ button,
   padding: 1rem 1rem calc(5.25rem + env(safe-area-inset-bottom));
 }
 
-.mobile-shell.voice-cv-page { position: relative; padding-top: calc(env(safe-area-inset-top) + 4.75rem); }
-.voice-cv-back { position: absolute; z-index: 70; top: calc(env(safe-area-inset-top) + 1rem); left: 1.25rem; display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--text-primary); background: var(--surface); box-shadow: 0 .25rem .8rem color-mix(in srgb, var(--color-logo-mark) 8%, transparent); font: inherit; font-size: 1.35rem; cursor: pointer; }
 
 @media (max-width: 520px) {
   .job-creation-details {
@@ -1129,8 +1112,6 @@ button,
 @media (min-width: 721px) {
   body { background: var(--color-canvas); }
   .mobile-shell { width: min(100%, 88rem); max-width: none; min-height: 100svh; padding: 7.25rem clamp(2rem, 6vw, 6.5rem) 3rem; }
-  .mobile-shell.voice-cv-page { padding-top: 8.75rem; }
-  .voice-cv-back { position: fixed; top: 7.1rem; left: max(2rem, calc((100vw - 88rem) / 2)); }
   .mobile-shell.pb-20 { padding-bottom: 3rem; }
   .company-applicants-layout { grid-template-columns: minmax(18rem, .75fr) minmax(0, 1.25fr); align-items: start; }
   .company-applicant-list { max-height: 44rem; overflow-y: auto; padding-right: .2rem; }

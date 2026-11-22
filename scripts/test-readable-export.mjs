@@ -15,7 +15,7 @@ const info={controller:'QA',contact:'qa@example.invalid',purposes:['QA'],recipie
 let passed=0,browser;const dir=mkdtempSync(join(tmpdir(),'mnw-readable-'));
 function check(ok,label){assert.ok(ok,label);passed++;console.log('PASS '+label);}
 function packageFor(role){const rows={...historyRows(role),'public.profiles':[{id:subject,role}]};if(role==='youth')Object.assign(rows,{
- 'public.youth_profiles':[{user_id:subject,onboarding_completed:true,cv_generated:false,cv_uploaded:null,short_onboarding_completed:true,recruitment_profile_version:3,updated_at:time}],
+ 'public.youth_profiles':[{user_id:subject,full_name:"Fiktiv Sökande",date_of_birth:"2008-02-29",city:"Testort",address:null,postal_code:"123 45",onboarding_completed:true,cv_generated:false,cv_uploaded:null,short_onboarding_completed:true,recruitment_profile_version:3,updated_at:time}],
  'public.youth_application_drafts':[{id,youth_user_id:subject,job_id:id,created_at:time,updated_at:time}],
  'public.youth_saved_jobs':[{id,youth_user_id:subject,job_id:id,created_at:time}],
  'public.youth_job_impressions':[{youth_user_id:subject,job_id:id,first_seen_at:time}],
@@ -30,7 +30,8 @@ try{
   const {rows,result}=packageFor(role),entries=unzipSync(result.bytes),html=strFromU8(entries['LAS-MIG.html']);samples[role]=html;
   check(html.includes('class="record"')&&!html.includes('QA_PRIVATE'),role+' actual ZIP shows projected records without excluded raw material');
   check(!html.includes('<script')&&!html.includes('<iframe')&&!html.includes('<img'),role+' HTML contains no executable injected elements');
-  check(result.manifest.coverage==='needs_completion'&&result.manifest.pendingCategories.length===25,role+' readable view retains incomplete coverage');
+  assert.deepEqual(result.manifest.pendingCategories,groups.map(group=>group.id));
+  check(result.manifest.coverage==='needs_completion',role+' readable view retains incomplete coverage');
   for(const [relation,records]of Object.entries(rows)){
    const category=groups.find(g=>g.relations?.includes(relation)).id;
    const json=JSON.parse(strFromU8(entries['uppgifter/'+category+'.json'])),actual=json.records.find(r=>r.source===relation);

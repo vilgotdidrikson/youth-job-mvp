@@ -45,7 +45,9 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
       update: (data) => {
         setAutomaticStatus(data.status === "failed" && data.retrying ? "pending" : data.status);
         setError("");
-        if (data.assessment) {
+        if (data.status === "unavailable") {
+          setAssessment(null); setTemporary(false); setPdfStatus(""); setUpdatedAt(null);
+        } else if (data.assessment) {
           setAssessment(data.assessment); setTemporary(false);
           setPdfStatus((data.assessment as CandidateAssessment & { pdfStatus?: string }).pdfStatus ?? "none");
           setUpdatedAt(data.updated_at ?? null);
@@ -86,6 +88,11 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
       const response = await assessmentDeadline(fetch("/api/company/candidate-assessment", { method: "POST", signal: controller.signal,
         headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ jobId, youthUserId }) }), controller.signal);
       const data = await assessmentDeadline(response.json(), controller.signal);
+      if (data.code === "assessment_unavailable" && !response.ok) {
+        setAssessment(null); setTemporary(false); setPdfStatus(""); setUpdatedAt(null);
+        setAutomaticStatus("unavailable");
+        return;
+      }
       if (!response.ok) throw new Error(data.error || "Kunde inte bedöma underlaget.");
       if (!data.assessment || !Array.isArray(data.assessment.criteria)) throw new Error("Svaret saknade en bedömning. Försök igen.");
       setAssessment(data.assessment);
@@ -106,9 +113,10 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
       if (request.current === controller) { setBusy(false); request.current = null; }
     }
   };
+  const unavailable = automaticStatus === "unavailable";
   return <section className="candidate-assessment-panel" aria-label="Matchningsunderlag" aria-busy={busy}>
-    <header><h3>Matchningsunderlag</h3><button type="button" className="secondary-btn" disabled={busy} onClick={() => void analyze()}>{busy ? "Beräknar…" : error || temporary ? "Försök igen" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button></header>
-    <p role="status" aria-live="polite">{busy ? "Beräknar" : error ? "Kunde inte uppdateras" : ["pending", "processing"].includes(automaticStatus) ? "Beräknar automatiskt – du kan också uppdatera bedömningen direkt." : assessment ? temporary ? "Preliminärt underlag" : "Klart" : "Hämtar bedömning…"}</p>
+    <header><h3>Matchningsunderlag</h3>{!unavailable && <button type="button" className="secondary-btn" disabled={busy} onClick={() => void analyze()}>{busy ? "Beräknar…" : error || temporary ? "Försök igen" : assessment ? "Uppdatera bedömning" : "Visa matchningsbedömning"}</button>}</header>
+    <p role="status" aria-live="polite">{busy ? "Beräknar" : unavailable ? "Ingen AI-bedömning är tillgänglig. Du kan läsa ansökan och CV:t som vanligt." : error ? "Kunde inte uppdateras" : ["pending", "processing"].includes(automaticStatus) ? "Beräknar automatiskt – du kan också uppdatera bedömningen direkt." : assessment ? temporary ? "Preliminärt underlag" : "Klart" : "Hämtar bedömning…"}</p>
     {error && <p role="alert">{error}{assessment ? " Tidigare underlag visas nedan." : " Du kan fortfarande öppna kandidatens CV för egen granskning."}</p>}
     {updatedAt && <p>Senaste färdiga bedömning: <time dateTime={updatedAt}>{new Date(updatedAt).toLocaleString("sv-SE")}</time></p>}
     {pdfStatus === "read" && <p>Texten i uppladdat PDF-CV ingår i underlaget.</p>}
@@ -119,7 +127,7 @@ function AssessmentPanel({ jobId, youthUserId, application }: { jobId: string; y
     {application && application.questions.length > 0 && <div className="candidate-application-answers"><h3>Ansökningsfrågor</h3>{application.questions.map((question) => <div key={question.id}><strong>{question.question}</strong><p>{application.answers[question.id]?.trim() || "Uppgift saknas"}</p></div>)}</div>}
     {followupMessage && <p role="status" className="candidate-followup-notice">{followupMessage}</p>}
     {followups.length > 0 && <section className="candidate-application-answers"><h3>Individuella kompletteringar</h3><p>Skickade svar ingår i nästa uppdatering av matchningsunderlaget.</p>{followups.map((item) => <div key={item.id}><strong>{item.question}</strong><p>{item.status === "answered" ? item.answer : item.status === "skipped" ? "Uppgift saknas – kandidaten valde att inte svara" : "Frågan har skickats. Inv väntar svar.".replace("Inv väntar", "Inväntar")}</p></div>)}</section>}
-    <CandidateAssessmentHistory jobId={jobId} youthId={youthUserId} revision={updatedAt} />
+    {!unavailable && <CandidateAssessmentHistory jobId={jobId} youthId={youthUserId} revision={updatedAt} />}
     <p className="candidate-assessment-note">Bedömningen visar vilket underlag som finns. Saknade uppgifter räknas inte som avslag. Ni fattar alltid beslutet själva.</p>
   </section>;
 }

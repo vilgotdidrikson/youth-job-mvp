@@ -1,6 +1,7 @@
 "use client";
+import { isCasePdfBase64, parseCaseAttachmentReceipt, type CaseAttachmentInput } from "./privacy-case-attachments";
 import { getSupabaseClient } from "./supabase";
-import { parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, matchesCaseQueue,matchesEmailCase, type AdminCaseInput, type CaseCursor, type PrivacyCaseKind, type PrivacyCase } from "./privacy-cases";
+import { parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, matchesCaseQueue,matchesEmailCase,matchesIncidentCase, type AdminCaseInput, type CaseCursor, type PrivacyCaseKind, type PrivacyCase } from "./privacy-cases";
 export class PrivacyCaseRequestError extends Error {
   constructor(message: string, public readonly uncertain = false, public readonly status?: number) { super(message); }
 }
@@ -15,14 +16,14 @@ async function own(owner: string, signal: AbortSignal) {
   signal.throwIfAborted();
   if (error || data.user?.id !== owner || data.user.is_anonymous) throw new PrivacyCaseRequestError("Kontot har ändrats. Öppna sidan för rätt konto igen.");
 }
-async function request(owner: string, payload: object, signal: AbortSignal, admin: boolean, writes: boolean) {
+async function request(owner: string, payload: object, signal: AbortSignal, admin: boolean, writes: boolean, attachments = false, delivery = false) {
   const active = AbortSignal.any([signal, AbortSignal.timeout(admin ? 55000 : 25000)]);
   await own(owner, active);
   const { data, error } = await wait(getSupabaseClient().auth.getSession(),active);
   if (error || data.session?.user.id !== owner || !data.session.access_token) throw new PrivacyCaseRequestError("Logga in igen.");
   await own(owner, active); active.throwIfAborted();
   try {
-    const r = await fetch(admin ? "/api/admin/privacy-cases" : "/api/account/privacy-cases", { method: "POST", cache: "no-store", signal: active, headers: { "Authorization": `Bearer ${data.session.access_token}`, "X-Account-Id": owner, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const r = await fetch(delivery ? "/api/account/privacy-case-delivery" : attachments ? "/api/admin/privacy-case-attachments" : admin ? "/api/admin/privacy-cases" : "/api/account/privacy-cases", { method: "POST", cache: "no-store", signal: active, headers: { "Authorization": `Bearer ${data.session.access_token}`, "X-Account-Id": owner, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     if (!r.ok) throw new PrivacyCaseRequestError(r.status === 404 ? "Ärendet kunde inte hittas eller är inte tillgängligt för det här kontot." : r.status === 403 ? "Åtgärden nekades. Kontrollera behörighet och tvåfaktorskod." : r.status === 409 ? "Ärendet har ändrats. Läs aktuell status innan du fortsätter." : r.status === 429 ? "För många försök. Försök igen senare." : r.status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : "Begäran kunde inte slutföras.", writes && (r.status >= 500 || r.status===408 || r.headers.get("X-Privacy-Case-Write")==="uncertain" || r.status===400&&r.headers.get("X-Privacy-Case-Write")!=="rejected"), r.status);
     const value: unknown = await r.json(); await own(owner, active); return value;
   } catch (e) {
@@ -46,11 +47,23 @@ export async function createOwnPrivacyCase(owner: string, id: string, kind: Priv
 export async function adminPrivacyCases(owner: string, input: AdminCaseInput, password: string, totpCode: string, signal: AbortSignal) {
   const value = await request(owner, { ...input, password, totpCode }, signal, true, input.action !== "list"&&input.action!=="find");
   if(input.action === "list"){const page=parsePrivacyCasePage(value);if(page.cases.some(c=>!matchesCaseQueue(c,input.filter??"all",page.as_of?Date.parse(page.as_of):Date.now())))throw Error("Kön kunde inte verifieras. Läs den igen.");return page;}
+  if (input.action === "incident_create") {
+    const result = parsePrivacyCase(value);
+    if (!matchesIncidentCase(result, input)) throw new PrivacyCaseRequestError("Registreringen kunde inte bekräftas. Läs incidentkön.", true);
+    return result;
+  }
   if(input.action==="email_create"){
     try{const result=parsePrivacyCase(value);if(!matchesEmailCase(result,input))throw Error("Intake receipt mismatch");return result;}
     catch{throw new PrivacyCaseRequestError("Registreringen kunde inte bekräftas. Läs ärendekön före nytt försök.",true);}
   }
   if(input.action === "find")return readReceipt(value,input.id);
+  if (input.action === "purge") {
+    const receipt = value as { purged?: unknown; id?: unknown; revision?: unknown } | null;
+    if (receipt?.purged !== true || receipt.id !== input.id.toLowerCase() || receipt.revision !== input.revision.toLowerCase()) {
+      throw new PrivacyCaseRequestError("Gallringen kunde inte bekräftas. Läs ärendekön innan du fortsätter.", true);
+    }
+    return { purged: true as const, id: input.id, revision: input.revision };
+  }
   return actionReceipt(value,input.id,input.eventId,input.action,input.message,undefined,input.reviewAfter,input.externalSentAt);
 }
 export async function replyToOwnPrivacyCase(owner: string, item: PrivacyCase, message: string, eventId: string, signal: AbortSignal) {
@@ -68,4 +81,15 @@ function actionReceipt(value:unknown,id:string,eventId:string,action:string,mess
 export async function readPrivacyCaseHistory(owner: string, item: PrivacyCase, cursor: CaseCursor, signal: AbortSignal, credentials?: { password: string; totpCode: string }) {
   const input = { action: "history", id: item.id, revision: item.revision, cursor, ...credentials };
   return parsePrivacyCaseHistory(await request(owner, input, signal, !!credentials, false), item, cursor, credentials?undefined:owner);
+}
+
+export async function adminCaseAttachment(owner: string, input: CaseAttachmentInput, password: string, totpCode: string, signal: AbortSignal) {
+  const result = await request(owner, { ...input, ...(input.action === "publish" ? { confirmed: true } : {}), password, totpCode }, signal, true, input.action === "upload" || input.action === "publish" || input.action === "revoke", true);
+  return parseCaseAttachmentReceipt(result, input);
+}
+
+export async function readReviewedCaseDelivery(owner: string, id: string, password: string, totpCode: string, signal: AbortSignal) {
+  const result = await request(owner, { action: "delivery", id, password, totpCode }, signal, false, false, false, true) as {caseId?: unknown;content?:unknown} | null;
+  if (result?.caseId !== id || !isCasePdfBase64(result.content)) throw Error("Leveransen kunde inte verifieras.");
+  return result.content;
 }

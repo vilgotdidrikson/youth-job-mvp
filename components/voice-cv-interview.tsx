@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./voice-cv-interview.module.css";
 import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
 
 import { useEffect, useRef, useState } from "react";
@@ -27,7 +28,6 @@ interface VoiceInterviewState {
   conversation?: InterviewTurn[];
   structuredCv: StructuredCvData;
 }
-const VOICE_BUTTON_COLOR = "var(--color-brand)";
 
 export default function VoiceCvInterview() {
   const router = useRouter();
@@ -330,24 +330,24 @@ export default function VoiceCvInterview() {
 
   if (authStatus !== "ready") return <AuthGateMessage status={authStatus} error={sessionError} />;
   if (!profile) return <PageLoading label="Hämtar innehåll..." />;
-  return <main className="mobile-shell voice-cv-page" style={{ minHeight: "100svh" }}>
-    <button type="button" onClick={goBack} aria-label="Tillbaka till CV-val" title="Tillbaka till CV-val" className="voice-cv-back">←</button>
-    <section className="card" style={{ display: "grid", gap: "1.1rem", padding: "1.35rem", textAlign: "center" }}>
-      <p style={{ margin: 0, color: "var(--accent)", fontSize: ".72rem", fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase" }}>Röstsamtal</p>
-      <h1 style={{ margin: "-.6rem 0 0", color: "var(--text-primary)", fontSize: "1.9rem", letterSpacing: "-.05em" }}>Prata fram ditt CV</h1>
-      <p style={{ margin: "-.5rem 0 0", color: "var(--text-secondary)", fontSize: ".9rem", lineHeight: 1.55 }}>AI:n frågar, du svarar. Samtalet går vidare när du har pratat klart.</p>
-      <div style={{ display: "grid", width: "5.5rem", height: "5.5rem", margin: ".4rem auto", placeItems: "center", borderRadius: "50%", color: status === "recording" ? "var(--color-on-brand)" : "var(--accent)", background: status === "recording" ? VOICE_BUTTON_COLOR : "var(--color-rose)", fontSize: "1.6rem" }} aria-hidden="true"><UiIcon name="microphone" width="34" height="34" /></div>
-      {question && <p style={{ margin: 0, color: "var(--text-primary)", fontSize: ".95rem", lineHeight: 1.5 }}>{question}</p>}
-      {lastTranscript && <details style={{ textAlign: "left", color: "var(--text-secondary)", fontSize: ".82rem" }}><summary>Det här hörde vi senast</summary><p>{lastTranscript}</p></details>}
-      {status !== "complete" && <label style={{ fontSize: ".8rem", color: "var(--text-secondary)" }}><input type="checkbox" checked={longerPauses} onChange={(event) => { setLongerPauses(event.target.checked); silenceDelay.current = event.target.checked ? 2200 : 1100; }} /> Ge mig mer betänketid mellan meningarna</label>}
-      <p aria-live="polite" style={{ minHeight: "1.4rem", margin: 0, color: "var(--text-secondary)", fontSize: ".85rem" }}>{status === "connecting" ? "AI:n förbereder första frågan..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "AI:n lyssnar på ditt svar..." : status === "processing" ? "AI:n bearbetar ditt svar..." : status === "paused" ? "Samtalet är pausat. Dina tidigare svar finns kvar." : status === "complete" ? "Samtalet är klart." : "Tryck på Starta så börjar AI:n."}</p>
-      {error && <p style={{ margin: 0, color: "var(--color-danger)", fontSize: ".84rem" }}>{error}</p>}
-      {status === "speaking" && <button type="button" onClick={() => { responseAudio.current?.pause(); finishResponseAudio.current?.(); }} style={{ border: 0, background: "transparent", color: "var(--text-secondary)", cursor: "pointer" }}>Hoppa över uppläsningen</button>}
-      <button type="button" onClick={status === "idle" ? () => void startCall() : status === "recording" ? stopRecording : status === "paused" ? () => void resumeCall() : status === "complete" ? () => { stopCall(); const params = new URLSearchParams(window.location.search); const job = params.get("job"); const title = params.get("title"); router.push(`/youth/cv/create?voice=finalize${job ? `&job=${encodeURIComponent(job)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`); } : undefined} disabled={status === "connecting" || status === "speaking" || status === "processing"} className="cta-btn" style={{ minHeight: "3.35rem", borderColor: VOICE_BUTTON_COLOR, background: VOICE_BUTTON_COLOR, fontSize: "1rem", opacity: status === "connecting" || status === "speaking" || status === "processing" ? .65 : 1 }}>{status === "connecting" ? "Förbereder…" : status === "speaking" ? "AI:n pratar…" : status === "recording" ? "Jag har pratat klart" : status === "processing" ? "Bearbetar…" : status === "paused" ? (error ? "Försök igen" : "Fortsätt samtalet") : status === "complete" ? "Granska mitt CV" : "Starta samtalet"}</button>
-      {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} style={{ justifySelf: "center", padding: ".25rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Hoppa över området</button>}
+  return <main className={`mobile-shell ${styles.page}`}>
+    <button type="button" onClick={goBack} aria-label="Tillbaka till CV-val" title="Tillbaka till CV-val" className={styles.back}>←</button>
+    <section className={`card ${styles.card}`}>
+      <p className={styles.eyebrow}>Röstsamtal</p>
+      <h1 className={styles.title}>Prata fram ditt CV</h1>
+      <p className={styles.intro}>AI:n frågar, du svarar. Samtalet går vidare när du har pratat klart.</p>
+      <div className={styles.microphone} data-recording={status === "recording"} aria-hidden="true"><UiIcon name="microphone" width="34" height="34" /></div>
+      {question && <p className={styles.question}>{question}</p>}
+      {lastTranscript && <details className={styles.transcript}><summary>Det här hörde vi senast</summary><p>{lastTranscript}</p></details>}
+      {status !== "complete" && <label className={styles.option}><input type="checkbox" checked={longerPauses} onChange={(event) => { setLongerPauses(event.target.checked); silenceDelay.current = event.target.checked ? 2200 : 1100; }} /> Ge mig mer betänketid mellan meningarna</label>}
+      <p aria-live="polite" className={styles.status}>{status === "connecting" ? "AI:n förbereder första frågan..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "AI:n lyssnar på ditt svar..." : status === "processing" ? "AI:n bearbetar ditt svar..." : status === "paused" ? "Samtalet är pausat. Dina tidigare svar finns kvar." : status === "complete" ? "Samtalet är klart." : "Tryck på Starta så börjar AI:n."}</p>
+      {error && <p className={styles.error}>{error}</p>}
+      {status === "speaking" && <button type="button" onClick={() => { responseAudio.current?.pause(); finishResponseAudio.current?.(); }} className={styles.control}>Hoppa över uppläsningen</button>}
+      <button type="button" onClick={status === "idle" ? () => void startCall() : status === "recording" ? stopRecording : status === "paused" ? () => void resumeCall() : status === "complete" ? () => { stopCall(); const params = new URLSearchParams(window.location.search); const job = params.get("job"); const title = params.get("title"); router.push(`/youth/cv/create?voice=finalize${job ? `&job=${encodeURIComponent(job)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`); } : undefined} disabled={status === "connecting" || status === "speaking" || status === "processing"} className={`cta-btn ${styles.primary}`}>{status === "connecting" ? "Förbereder…" : status === "speaking" ? "AI:n pratar…" : status === "recording" ? "Jag har pratat klart" : status === "processing" ? "Bearbetar…" : status === "paused" ? (error ? "Försök igen" : "Fortsätt samtalet") : status === "complete" ? "Granska mitt CV" : "Starta samtalet"}</button>
+      {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} className={styles.skip}>Hoppa över området</button>}
       {status === "paused" && (interviewState.current.conversation?.length ?? 0) > 0 && <button type="button" onClick={() => void finishInterview()} className="cta-btn">Gå vidare med mina sparade svar</button>}
-      {status !== "idle" && status !== "complete" && <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>{(status === "recording" || status === "speaking") && <button type="button" onClick={pauseCall} style={{ padding: ".35rem", border: 0, color: "var(--text-secondary)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Pausa</button>}<button type="button" onClick={abortCall} style={{ padding: ".35rem", border: 0, color: "var(--color-danger)", background: "transparent", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>Avbryt samtalet</button></div>}
-      <p style={{ margin: 0, color: "var(--text-tertiary)", fontSize: ".72rem", lineHeight: 1.45 }}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av MatchnWork.</p>
+      {status !== "idle" && status !== "complete" && <div className={styles.actions}>{(status === "recording" || status === "speaking") && <button type="button" onClick={pauseCall} className={styles.control}>Pausa</button>}<button type="button" onClick={abortCall} className={styles.danger}>Avbryt samtalet</button></div>}
+      <p className={styles.privacy}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av MatchnWork.</p>
     </section>
   </main>;
 }

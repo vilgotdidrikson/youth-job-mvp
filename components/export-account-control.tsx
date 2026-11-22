@@ -55,7 +55,7 @@ function Control({ userId }: { userId: string }) {
         finally { clearTimeout(deadline); if (pending.current === controller) { pending.current = null; if (mounted.current) setBusy(false); } }
       }}>
         <h2 id={title}>Hämta ett ofullständigt exportprov</h2>
-        <p>Detta dev-prov innehåller bara utvalda strukturerade uppgifter. Det är inte ett fullständigt registerutdrag.</p>
+        <p>Det här testpaketet innehåller utvalda uppgifter. <a href="/account/privacy-requests">Begär tillgång till fler uppgifter</a> om du till exempel behöver filer eller underlag som måste granskas manuellt.</p>
         <fieldset className={styles.fields} disabled={busy}><label>Lösenord<input type="password" name="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required maxLength={1024} disabled={busy}/></label><label>Tvåfaktorskod, om du har autentiseringsapp<input name="totpCode" value={totpCode} onChange={event => setTotpCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6}/></label></fieldset>
         <p role="status" aria-live="polite">{busy ? "Kontrollerar paketet…" : message}</p>
         <div className={styles.actions}><button className="cta-btn" disabled={busy || checkExisting} type="submit">{busy ? "Arbetar…" : "Skapa och hämta"}</button>

@@ -19,7 +19,9 @@ function watch(read, overrides = {}) {
   states = []; failures = []; reads = 0; enqueues = 0;
   return observeAssessment({ read: async signal => { reads++; return read(signal); }, enqueue: async () => { enqueues++; }, update: value => states.push(value), fail: value => failures.push(value), visible: () => true, pollMs: 5, waitMs: 500, requestMs: 100, ...overrides });
 }
-let observer = watch(() => ({ status: 'completed', assessment: result, updated_at: '2026-10-15T14:00:00Z' }));
+let observer = watch(() => ({ status: 'unavailable' }));
+await settle(); assert.equal(states[0].status, 'unavailable'); assert.equal(enqueues, 0); assert.equal(failures.length, 0); observer.stop();
+observer = watch(() => ({ status: 'completed', assessment: result, updated_at: '2026-10-15T14:00:00Z' }));
 await settle(); assert.equal(states[0].assessment, result); assert.equal(enqueues, 0); observer.stop();
 observer = watch(() => reads === 1 ? { status: 'unrequested' } : { status: 'completed', assessment: result });
 await sleep(20); assert.equal(enqueues, 1); assert.equal(states.at(-1).assessment, result); observer.stop();

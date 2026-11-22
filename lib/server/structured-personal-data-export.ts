@@ -5,13 +5,35 @@ import type { preparePersonalDataReview } from "./personal-data-review";
 
 type Bundle = Awaited<ReturnType<typeof preparePersonalDataReview>>;
 type Scalar = string | boolean | number | null;
+const ownChoice = (answer: unknown): answer is string =>
+  typeof answer === "string" && answer.length <= 20 && answer===answer.trim() && /^(ja|nej|yes|no)$/i.test(answer);
+const questionId = (key: string) => /^q[1-9][0-9]?$/.test(key);
+function ownApplicationChoices(answers: unknown, questions: unknown) {
+  if (!answers || typeof answers !== "object" || Array.isArray(answers) || !Array.isArray(questions)) return {};
+  const presentIds = new Set(questions.flatMap(question =>
+    question && typeof question === "object" && typeof question.id === "string" && questionId(question.id) ? [question.id] : []));
+  return Object.fromEntries(Object.entries(answers).flatMap(([key, answer]) =>
+    presentIds.has(key) && ownChoice(answer) ? [[key, answer]] : []));
+}
 type Validator = (value: unknown) => value is Scalar;
 const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
+const nullableUuid: Validator = (value): value is string | null => value === null || uuid(value);
 const timestamp: Validator = (v): v is string | null => v === null || typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 const boolean: Validator = (v): v is boolean | null => v === null || typeof v === "boolean";
 const version: Validator = (v): v is number | null => v === null || typeof v === "number" && Number.isSafeInteger(v) && v >= 0 && v <= 2147483647;
 const positiveVersion: Validator = (v): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0 && v <= 2147483647;
 const requiredTimestamp: Validator = (v): v is string => typeof v === "string" && timestamp(v);
+const videoMime: Validator = (v): v is string | null => v === null || v === "video/mp4" || v === "video/webm" || v === "video/quicktime";
+const videoSize: Validator = (v): v is number | null => v === null || typeof v === "number" && Number.isSafeInteger(v) && v > 0 && v <= 31_457_280;
+const videoDuration: Validator = (v): v is number | null => v === null || typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 60;
+const profileText: Validator = (value): value is string | null =>
+  value === null || typeof value === "string" && value.length <= 1000 && !/[\u0000-\u001f\u007f]/u.test(value);
+const birthDate: Validator = (value): value is string | null => {
+  if (value === null) return true;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
 const requiredBoolean: Validator = (v): v is boolean => typeof v === "boolean";
 const oneOf = (...values: readonly string[]): Validator => (v): v is string => typeof v === "string" && values.includes(v);
 const role: Validator = (v): v is string => v === "youth" || v === "company" || v === "private";
@@ -22,7 +44,7 @@ const POLICIES: Record<string, Policy> = {
   "auth.users": { category: "auth-identity", owner: "id", key: "id", fields: { id: uuid, indicator_preferences_configured: requiredBoolean, indicator_preferences_version: (v): v is number | null => v === null || v === 1, indicator_messages: boolean, indicator_questions: boolean, indicator_notifications: boolean } },
   "public.youth_cv_drafts": { category: "private-cv-work", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, revision: uuid, updated_at: requiredTimestamp } },
   "public.profiles": { category: "account", owner: "id", key: "id", fields: { id: uuid, role } },
-  "public.youth_profiles": { category: "account", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, onboarding_completed: boolean, cv_generated: boolean, cv_uploaded: boolean, short_onboarding_completed: boolean, recruitment_profile_version: version, updated_at: timestamp } },
+  "public.youth_profiles": { category: "account", owner: "user_id", key: "user_id", youthOnly: true, fields: { user_id: uuid, full_name: profileText, date_of_birth: birthDate, city: profileText, address: profileText, postal_code: profileText, onboarding_completed: boolean, cv_generated: boolean, cv_uploaded: boolean, short_onboarding_completed: boolean, recruitment_profile_version: version, updated_at: timestamp } },
   "public.youth_application_drafts": { category: "own-discovery", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, created_at: timestamp, updated_at: timestamp } },
   "public.youth_saved_jobs": { category: "own-discovery", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, created_at: timestamp } },
   "public.youth_job_impressions": { category: "own-discovery", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, first_seen_at: timestamp } },
@@ -34,7 +56,7 @@ const POLICIES: Record<string, Policy> = {
   "public.company_profiles": { category: "account", owner: "user_id", key: "user_id", roles: ["company"], fields: { user_id: uuid, verification_status: oneOf("pending", "verified", "rejected"), verification_submitted_at: timestamp, verified_at: timestamp, updated_at: requiredTimestamp } },
   "public.private_profiles": { category: "account", owner: "user_id", key: "user_id", roles: ["private"], fields: { user_id: uuid, updated_at: requiredTimestamp } },
   "public.company_billing_details": { category: "billing", owner: "user_id", key: "user_id", roles: ["company"], fields: { user_id: uuid, country_code: oneOf("SE"), version: positiveVersion, updated_at: requiredTimestamp } },
-  // Youth-owned lifecycle and history only. Answers, matching_input, result,
+  // Youth-owned lifecycle and history. Free-text answers, matching_input, result,
   // criteria snapshots and the employer's identity still require review.
   "public.application_completions": { category: "applications", owner: "youth_user_id", key: "job_id", youthOnly: true, fields: { youth_user_id: uuid, job_id: uuid, profile_version: positiveVersion, status: oneOf("needs_completion", "submitted", "unavailable", "withdrawn"), created_at: requiredTimestamp, submitted_at: timestamp, supplemented_at: timestamp, question_batch_version: version, withdrawn_at: timestamp } },
   "public.application_followups": { category: "applications", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, job_id: uuid, job_profile_version: positiveVersion, status: oneOf("pending", "answered", "skipped"), question_source: oneOf("automatic", "company"), created_at: requiredTimestamp, answered_at: timestamp } },
@@ -47,7 +69,7 @@ const POLICIES: Record<string, Policy> = {
   "public.company_recruitment_controls": { category: "safety", owner: "company_user_id", key: "company_user_id", roles: ["company", "private"], fields: { company_user_id: uuid, restriction: oneOf("none", "limited", "suspended"), changed_at: requiredTimestamp } },
   "public.recruitment_outcomes": { category: "employment", owner: "company_user_id", key: "job_id", roles: ["company", "private"], fields: { company_user_id: uuid, job_id: uuid, outcome: oneOf("hired", "no_hire", "continuing"), recorded_at: requiredTimestamp } },
   "public.ai_onboarding_sessions": { category: "private-cv-work", owner: "youth_user_id", key: "id", youthOnly: true, fields: { id: uuid, youth_user_id: uuid, status: oneOf("in_progress", "completed"), created_at: requiredTimestamp, completed_at: timestamp } },
-  "public.youth_videos": { category: "videos", owner: "owner_id", key: "id", fields: { id: uuid, owner_id: uuid, created_at: requiredTimestamp, first_sent_at: timestamp, expires_at: requiredTimestamp, revoked_at: timestamp, cleanup_started_at: timestamp, deleted_at: timestamp } },
+  "public.youth_videos": { category: "videos", owner: "owner_id", key: "id", fields: { id: uuid, owner_id: uuid, application_job_id: nullableUuid, mime_type: videoMime, size_bytes: videoSize, duration_seconds: videoDuration, created_at: requiredTimestamp, first_sent_at: timestamp, expires_at: requiredTimestamp, revoked_at: timestamp, cleanup_started_at: timestamp, deleted_at: timestamp } },
   "public.notifications": { category: "notifications", owner: "user_id", key: "id", fields: { id: uuid, user_id: uuid, created_at: requiredTimestamp, read_at: timestamp } },
 };
 
@@ -109,11 +131,22 @@ export function buildStructuredPersonalDataExport(bundle: Bundle, metadata: Omit
           if (typeof key !== "string" || seenRows.has(key)) fail();
           seenRows.add(key);
           records.push({ subjectId, data });
+          if (source.relation === "public.application_completions") {
+            const answers = ownApplicationChoices(row.answers, row.questions);
+            if (Object.keys(answers).length) records.push({ subjectId, data: {
+              source: "own-application-choices", job_id: data.job_id, answers,
+            } });
+          }
+          if (source.relation === "public.application_followups" && data.status === "answered" && ownChoice(row.answer)) {
+            records.push({ subjectId, data: {
+              source: "own-followup-choice", job_id: data.job_id, id: data.id, answer: row.answer,
+            } });
+          }
         }
       }
       categories.set(category.id, records.length ? {
         id: category.id, subjectId, status: "partially_included", records,
-        summary: [{ label: "Urval", value: "Automatiskt validerade strukturerade uppgifter. Fritext, filer och övrigt underlag återstår." }],
+        summary: [{ label: "Urval", value: "Automatiskt validerade strukturerade uppgifter. Filer, fritext som kräver granskning och övrigt underlag återstår." }],
       } : { id: category.id, subjectId, status: "requires_review" });
     }
     if (categories.size !== EXPORT_CATEGORY_IDS.length) fail();

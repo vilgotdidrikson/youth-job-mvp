@@ -1,0 +1,1239 @@
+.documentPage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  padding: 0 1.25rem;
+}
+
+.documentHeader {
+  padding-top: 3rem;
+  padding-bottom: 1.5rem;
+}
+
+.photoIntro {
+  display: inline-block;
+  background: var(--color-canvas);
+  border-radius: var(--radius-md);
+  border-top-left-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  max-width: 88%;
+}
+
+.photoIntroText {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.photoIntroHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: 0.75rem;
+  line-height: 1.55;
+}
+
+.documentPhotoGroup {
+  display: grid;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+
+.photoSquare {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem;
+  border: 1.5px dashed var(--color-dashed);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+
+.photoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoPlaceholderIcon {
+  font-size: var(--text-2xl);
+}
+
+.photoPlaceholderText {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.photoButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .65rem;
+}
+
+.photoUpload {
+  display: grid;
+  place-items: center;
+  padding: .8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-brand);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.photoUploadActive {
+  cursor: wait;
+}
+
+.photoCapture {
+  display: grid;
+  place-items: center;
+  padding: .8rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.photoCaptureActive {
+  cursor: wait;
+}
+
+.visuallyHidden {
+  display: none;
+}
+
+.documentPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.documentType {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  padding: 0 0.75rem;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  font-family: inherit;
+}
+
+.documentUpload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.documentUploadActive {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.documentIcon {
+  font-size: var(--text-xl);
+}
+
+.documentUploadText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.documentUploadHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.documentList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.documentRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-canvas);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+
+.documentRowIcon {
+  font-size: var(--text-md);
+}
+
+.documentRowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.documentName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documentKind {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.documentRemove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.documentError {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  margin-bottom: 0.75rem;
+}
+
+.documentActions {
+  padding-bottom: 3rem;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.documentContinue {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-brand);
+  color: var(--color-surface);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 1;
+}
+
+.documentContinueActive {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.documentSkip {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: var(--text-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.onboardingPage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--color-canvas);
+  padding: 0 1.25rem;
+}
+
+.promptSection {
+  margin-bottom: 2rem;
+}
+
+.promptBubble {
+  display: inline-block;
+  background: var(--color-surface-rose);
+  border-radius: var(--radius-md);
+  border-top-left-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  max-width: 88%;
+}
+
+.promptBubbleActive {
+  display: block;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+.promptHeading {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+}
+
+.promptText {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.stepContent {
+  flex: 1;
+}
+
+.nameFields {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.nameGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.givenNameInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.givenNameInputActive {
+  border: 1.5px solid var(--color-danger);
+}
+
+.familyNameInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.familyNameInputActive {
+  border: 1.5px solid var(--color-danger);
+}
+
+.nameError {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.birthDateGrid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr 1fr;
+  gap: 0.55rem;
+}
+
+.birthDateSelect {
+  height: 3.2rem;
+  padding: 0 .55rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+}
+
+.addressList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.addressCard {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.addressTitle {
+  margin: 0 0 -0.2rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.addressInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.additionalAddress {
+  position: relative;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.addressNumber {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.removeEntry {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+
+.addAddress {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-brand);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.photoGroup {
+  display: grid;
+  gap: .75rem;
+}
+
+.photoCaptureLabel {
+  display: grid;
+  place-items: center;
+  padding: .8rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.photoCaptureLabelActive {
+  cursor: wait;
+}
+
+.photoHelp {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.choiceList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.choiceButton {
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  font-weight: var(--weight-regular);
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.choiceButtonActive {
+  border: none;
+  background: var(--color-brand);
+  color: var(--color-surface);
+  font-weight: var(--weight-semibold);
+}
+
+.entryList {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.entryCard {
+  position: relative;
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.workSummary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.entryTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+
+.entrySubtitle {
+  margin: 0.2rem 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.editEntry {
+  border: 0;
+  background: none;
+  color: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.entryDates {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.entryDescription {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.entryContext {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.workField {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.workLocation {
+  width: 100%;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.workLocationActive {
+  color: var(--color-text);
+}
+
+.workEmployment {
+  width: 100%;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.workEmploymentActive {
+  color: var(--color-text);
+}
+
+.currentWork {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.workDateGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.workDateGridActive {
+  grid-template-columns: 1fr;
+}
+
+.dateCaption {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.dateFields {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.monthYearSelect {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+}
+
+.workDescription {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.saveWork {
+  justify-self: start;
+  padding: 0.55rem 0.8rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.addWork {
+  justify-self: start;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-brand);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.stepDescription {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.entrySummary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.removeMerit {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+
+.meritField {
+  display: grid;
+  gap: .3rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.meritInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.educationDateLabel {
+  display: grid;
+  gap: .3rem;
+}
+
+.educationDateTitle {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.educationDates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.educationDateFields {
+  display: grid;
+  grid-template-columns: 1.2fr .9fr;
+  gap: .4rem;
+  margin-top: .3rem;
+}
+
+.meritDateSelect {
+  height: 3rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.educationDescription {
+  width: 100%;
+  box-sizing: border-box;
+  padding: .875rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font: inherit;
+  resize: vertical;
+}
+
+.saveEducation {
+  width: 100%;
+  padding: .85rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.addMerit {
+  justify-self: start;
+  padding: .65rem .9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-brand);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.credentialLink {
+  margin: 0;
+  color: var(--color-brand);
+  font-size: var(--text-xs);
+}
+
+.credentialFile {
+  margin: 0;
+  color: var(--color-brand);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.certificateCategory {
+  width: 100%;
+  height: 3rem;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.certificateCategoryActive {
+  color: var(--color-text);
+}
+
+.certificateDates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+
+.certificateDateFields {
+  display: grid;
+  grid-template-columns: 1.2fr .9fr;
+  gap: .4rem;
+}
+
+.certificateUpload {
+  display: grid;
+  gap: .55rem;
+}
+
+.certificateUploadTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.certificateUrl {
+  width: 100%;
+  height: 3rem;
+  color: var(--color-text-muted);
+  box-sizing: border-box;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.certificateDescription {
+  width: 100%;
+  box-sizing: border-box;
+  padding: .7rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  resize: vertical;
+}
+
+.saveCertificate {
+  justify-self: start;
+  padding: .55rem .8rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.selectionGroup {
+  display: grid;
+  gap: .8rem;
+}
+
+.customChoiceRow {
+  display: flex;
+  width: 100%;
+  gap: .5rem;
+}
+
+.customChoiceRowActive {
+  width: min(100%, 24rem);
+  order: 3;
+}
+
+.customChoiceInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.customChoiceAdd {
+  min-width: 3rem;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.customChoiceHelp {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.customChoiceHelpActive {
+  order: 2;
+}
+
+.selectionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.selectionChipsActive {
+  order: 1;
+}
+
+.selectionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .5rem .8rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.selectionChipActive {
+  border: none;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.otherEntry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  padding: .85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.otherTitle {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.otherDescription {
+  margin: .2rem 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.removeOther {
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  cursor: pointer;
+}
+
+.otherOptions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .5rem;
+}
+
+.otherOption {
+  min-height: 3.1rem;
+  padding: .55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.otherOptionActive {
+  border: none;
+  background: var(--color-brand);
+  color: var(--color-surface);
+}
+
+.otherInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font: inherit;
+}
+
+.otherText {
+  width: 100%;
+  box-sizing: border-box;
+  padding: .875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font: inherit;
+  resize: vertical;
+}
+
+.saveOther {
+  justify-self: start;
+  padding: .65rem .9rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-surface);
+  background: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.softwareFields {
+  display: grid;
+  gap: 1rem;
+}
+
+.softwareLabel {
+  display: grid;
+  gap: .4rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.softwareText {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.freeText {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.questionInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.stepError {
+  margin-top: 0.75rem;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.stepActions {
+  padding-bottom: 3rem;
+  padding-top: 2rem;
+}
+
+.stepContinue {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 1;
+}
+
+.stepContinueActive {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.stepSkip {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: var(--text-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.softwareIcon[data-skill="excel"] { background: var(--color-software-excel); }
+.softwareIcon[data-skill="word"] { background: var(--color-software-word); }
+.softwareIcon[data-skill="powerpoint"] { background: var(--color-software-powerpoint); }
+.softwareIcon[data-skill="react"] { background: var(--color-software-react); }
+.softwareIcon[data-skill="canva"] { background: var(--color-software-canva); }
+.softwareIcon[data-skill="figma"] { background: var(--color-software-figma); }
+.softwareIcon[data-skill="photoshop"] { background: var(--color-software-photoshop); }
+.softwareIcon[data-skill="teams"] { background: var(--color-software-teams); }
+.softwareIcon[data-skill="slack"] { background: var(--color-software-slack); }
+.softwareIcon[data-skill="instagram"] { background: var(--color-software-instagram); }
+.softwareIcon[data-skill="tiktok"] { background: var(--color-software-tiktok); }
+.softwareIcon[data-skill="google-drive"] { background: var(--color-software-google-drive); }
+
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+label:has(.fileInput:focus-visible) {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 480px) {
+  .workDateGrid, .workDateGridActive, .dateFields, .educationDateFields, .certificateDateFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+:global(.mnw-product[data-onboarding="true"]) .promptBubble {
+  max-width: 100%;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: 0 12px 35px color-mix(in srgb, var(--color-text) 3.5%, transparent);
+}
+
+:global(.mnw-product[data-onboarding="true"]) .promptText {
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  :global(.mnw-product[data-onboarding="true"]) .promptBubble { padding: 22px; }
+}

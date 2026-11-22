@@ -187,8 +187,8 @@ function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
           {error && <p className="auth-message auth-error" role="alert">{error}</p>}
           {message && <p className="auth-message auth-success" role="status">{message}</p>}
           {!isSignup && <p className="auth-message"><Link href="/resend-confirmation" className="auth-switch">Skicka ny bekräftelselänk</Link></p>}
+          {isSignup && <p className="auth-privacy-note">{role === "company" ? <Link href="/privacy#company-data">Så används företagets kontouppgifter</Link> : <Link href="/privacy#profile-data">Så används din profil och dina ansökningar</Link>}.</p>}
           <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>
-          {isSignup && <p className="auth-privacy-note">Läs hur vi hanterar dina uppgifter i <Link href="/privacy">Integritet och AI</Link>.</p>}
           <button type="button" className="auth-switch" disabled={loading} onClick={() => { if (submitting.current) return; setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
           </form>
         </div>

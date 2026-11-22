@@ -20,6 +20,7 @@ const client=service=>({
  rpc:async name=>{
   if(name==='get_candidate_assessment_input')return{data:{source_updated_at:'2026-10-28T00:00:00Z'},error:null};
   if(state.throwRead)throw Error('QA transport');
+  if(name==='application_ai_allowed'){assert.ok(service);return{data:state.consent??true,error:state.consentError??null};}
   if(name==='get_application_disclosure'){state.packetReads++;return{data:state.denied?null:packet(),error:state.denied?{code:'42501'}:null};}
   assert.equal(name,'get_application_matching_input');assert.ok(service);
   state.inputReads++;
@@ -45,6 +46,10 @@ const run=async()=>{const response=await POST(new Request('https://qa.example.in
 const changed=async()=>{const result=await run();assert.equal(result.status,409);assert.equal(result.body.assessment,undefined,'Conflict must contain no old assessment');};
 let passed=0;
 try {
+ reset();state.consent=false;await changed();assert.equal(state.providerCalls,0);assert.equal(state.pdfCalls,0);assert.equal(state.writes.length,0);passed++;
+ reset();state.consentError={code:'QA'};await changed();assert.equal(state.providerCalls,0);passed++;
+ reset();state.onPdf=()=>{state.consent=false;};await changed();assert.equal(state.providerCalls,0);assert.equal(state.writes.length,0);passed++;
+ reset();state.onProvider=()=>{state.consent=false;};await changed();assert.equal(state.providerCalls,1);assert.equal(state.writes.length,0);passed++;
  reset();let result=await run();assert.equal(result.status,200);assert.equal(state.providerCalls,1);assert.equal(state.writes.length,1);assert.equal(result.body.assessment.disclosureRevision,1);const validCache={result:result.body.assessment,created_at:'2026-10-28T00:00:00Z'};passed++;
  reset();state.initialInputRevision=2;await changed();assert.equal(state.pdfCalls,0);assert.equal(state.providerCalls,0);assert.equal(state.writes.length,0);passed++;
  reset();state.initialInputRevision=undefined;await changed();assert.equal(state.providerCalls,0);passed++;

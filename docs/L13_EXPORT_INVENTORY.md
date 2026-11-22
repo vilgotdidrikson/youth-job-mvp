@@ -69,3 +69,15 @@ Efter migration `privacy_case_internal_reviews` var den enda nya schemaavvikelse
 [PR #223](https://github.com/vilgotdidrikson/youth-job-mvp/pull/223): ny katalog före ändringen matchade 92 relationer/fyra buckets. Efter `20261117182648_privacy_case_email_intake.sql` var enda avvikelserna `private.privacy_cases.intake_source` (text), `private.privacy_cases.contact_email` (text) och `private.privacy_case_events.external_sent_at` (timestamp with time zone). Dessa tre fält är nu granskade tillägg i samma strikta kolumnfil; tidigare kataloger är oförändrade. Ny faktisk slutkatalog och 33 driftkontroller passerar.
 
 Gruppen safety omfattar mejlkälla, kontaktadress och faktiskt sändningsdatum, separat från registreringstid. Mejlintag har alltid null requester_id även om adressen råkar motsvara ett konto. Adressen bevisar ingen identitet; individuell sökning och rättighetsbedömning krävs. Ärendekällorna förblir not_collected i den automatiska exportinsamlingen. Inga nya tabeller, buckets, klientgrants, automatisk kontokoppling eller allmän råexport införs.
+
+## Väntande ändringar i leveransen L13/L16/F20
+
+När migrationerna är införda i DevStaging behöver en färsk kataloggranskning klassificera följande källor innan referenskatalogen uppdateras.
+
+- `private.application_ai_preferences` hör till det aktuella ungdomskontot. Åtkomst ska bedömas för kontoägaren utan uppgifter om andra personer.
+- `private.privacy_case_attachments` är länkat till ett skyddat ärende. PDF-innehåll bedöms manuellt och hämtas aldrig i den automatiska exporten.
+- `private.privacy_case_attachment_access` innehåller åtgärdstyp, tid och handläggar-ID när kontot finns kvar. Loggen bedöms manuellt med hänsyn till den som handlagt ärendet.
+- `private.privacy_case_deliveries` kopplar samma ärende, granskad bilaga och autentiserat mottagarkonto till en utgångstid. Jobbet gallrar den tillfälliga filkopian, och därmed även leveransraden. Åtkomst är redan spärrad vid utgångstid även om jobbet fördröjs.
+- Intern incident är en separat källa i samma ärendetabell. En incident saknar koppling till en enskild sökandes konto och lämnas inte ut genom kontoportalen.
+
+Ingen referenskatalog uppdaterades från de lokala testfixturerna.

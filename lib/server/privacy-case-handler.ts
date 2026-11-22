@@ -1,14 +1,15 @@
+import { isCasePdfBase64, MAX_CASE_PDF_BASE64, parseCaseAttachmentReceipt, type CaseAttachmentInput } from "../privacy-case-attachments";
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { reauthenticateAccount, AccountReauthenticationError } from "./account-reauthentication";
 import { verifyPersonalDataSession, PersonalDataSessionError } from "./personal-data-session";
-import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, PRIVACY_CASE_KINDS, CASE_QUEUE_FILTERS,caseContactEmail,casePastTime,matchesEmailCase,type PrivacyCaseKind } from "../privacy-cases";
+import { caseText, isUuid, parseCaseCursor, parsePrivacyCase, parsePrivacyCasePage, parsePrivacyCaseHistory, privacyCaseRetentionEnabled, PRIVACY_CASE_KINDS, CASE_QUEUE_FILTERS,caseContactEmail,casePastTime,matchesEmailCase,matchesIncidentCase,type PrivacyCaseKind } from "../privacy-cases";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Vary": "Authorization, X-Account-Id", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
 class CaseError extends Error { constructor(readonly status: number) { super("Ärendet kunde inte behandlas."); } }
-async function readBody(request: Request, signal: AbortSignal): Promise<Record<string, unknown>> {
+async function readBody(request: Request, signal: AbortSignal, limit: number): Promise<Record<string, unknown>> {
   const size = request.headers.get("content-length");
-  if (size !== null && (!/^\d+$/.test(size) || Number(size) > 24576)) throw new CaseError(413);
+  if (size !== null && (!/^\d+$/.test(size) || Number(size) > limit)) throw new CaseError(413);
   if (!request.body) throw new CaseError(400);
   const reader = request.body.getReader(); let complete = false, length = 0;
   const cancel = () => { void reader.cancel().catch(() => {}); };
@@ -16,7 +17,7 @@ async function readBody(request: Request, signal: AbortSignal): Promise<Record<s
   if(signal.aborted)cancel();
   const chunks: Uint8Array[] = [];
   try {
-    while (true) { const chunk = await reader.read(); signal.throwIfAborted(); if (chunk.done) { complete = true; break; } length += chunk.value.length; if (length > 24576) throw new CaseError(413); chunks.push(chunk.value); }
+    while (true) { const chunk = await reader.read(); signal.throwIfAborted(); if (chunk.done) { complete = true; break; } length += chunk.value.length; if (length > limit) throw new CaseError(413); chunks.push(chunk.value); }
     const bytes = new Uint8Array(length); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
     const result: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
     if (!result || typeof result !== "object" || Array.isArray(result)) throw new CaseError(400);
@@ -33,7 +34,7 @@ function fields(input: Record<string, unknown>, expected: string[]) {
 /** Each request binds a live identity/session. Admin reads AND writes additionally
  * require a current handler grant and fresh password/TOTP. The verifier is signed
  * out before service-only data access; it never upgrades shared browser storage. */
-export async function handlePrivacyCases(request: Request, admin = false): Promise<Response> {
+export async function handlePrivacyCases(request: Request, admin = false, attachments = false, delivery = false): Promise<Response> {
   const token = /^Bearer ([^\s]+)$/i.exec(request.headers.get("authorization") ?? "")?.[1], owner = request.headers.get("x-account-id");
   let writePending=false;
   const fail = (status: number) => Response.json({ error: status === 503 ? "Ärendetjänsten är inte tillgänglig. Använd kontaktvägen på hjälpsidan." : status === 409 ? "Ärendet har ändrats. Läs aktuell status igen." : "Begäran kunde inte slutföras." }, { status, headers:{...headers,"X-Privacy-Case-Write":writePending?"uncertain":"rejected"} });
@@ -46,7 +47,7 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
   let cancel: (() => void) | undefined;
   try {
     return await Promise.race([new Promise<Response>((_, reject) => { cancel = () => reject(new CaseError(408)); signal.addEventListener("abort", cancel, { once: true }); if (signal.aborted) cancel(); }), (async () => {
-      const input = await readBody(request, signal);
+      const input = await readBody(request, signal, attachments ? MAX_CASE_PDF_BASE64 + 8192 : 24576);
       const auth = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false };
       const transport: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store", signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal });
       const user = createClient(url, key, { auth, global: { fetch: transport, headers: { Authorization: `Bearer ${token}` } } });
@@ -63,7 +64,44 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         if (!identity.factors?.some(f => f.factor_type === "totp" && f.status === "verified")) throw new CaseError(403);
       }
       let result: unknown;
-      if (action === "list") {
+      if (delivery) {
+        fields(input, ["action", "id", "password", "totpCode"]);
+        if (admin || action !== "delivery" || !isUuid(input.id) ||
+          typeof input.password !== "string" || !input.password || input.password.length>1024 ||
+          typeof input.totpCode !== "string" || (input.totpCode!=="" && !/^\d{6}$/.test(input.totpCode))) throw new CaseError(400);
+        const verification = createClient(url, key, { auth, global: { fetch: (input, init) => String(input).includes("/auth/v1/logout") ? fetch(input, { ...init, cache: "no-store", signal: AbortSignal.timeout(5000) }) : transport(input, init) } });
+        const quota = await user.rpc("consume_api_quota", { p_endpoint: "privacy-delivery-verification", p_limit: 10 }).abortSignal(signal);
+        rpcError(quota.error);
+        if (quota.data !== true) throw new CaseError(429);
+        await reauthenticateAccount(user, verification, owner, input.password, input.totpCode || undefined, signal);
+        const response = await service.rpc("read_reviewed_privacy_case_delivery", {
+          p_subject: owner, p_session: session, p_case: input.id,
+        }).abortSignal(signal);
+        rpcError(response.error);
+        if (response.data?.caseId !== input.id.toLowerCase() || !isCasePdfBase64(response.data.content)) throw new CaseError(503);
+        result = { caseId: response.data.caseId, content: response.data.content };
+      } else if (attachments) {
+        if (!admin || !isUuid(input.id) || !isUuid(input.revision) ||
+          (action !== "list" && action !== "upload" && action !== "download" && action !== "publish" && action !== "revoke")) throw new CaseError(400);
+        fields(input, ["action", "id", "revision", "password", "totpCode",
+          ...(action === "list" ? [] : ["attachmentId"]), ...(action === "upload" ? ["content"] : []), ...(action === "publish" ? ["confirmed"] : [])]);
+        if (action !== "list" && !isUuid(input.attachmentId) || action === "upload" && !isCasePdfBase64(input.content)) throw new CaseError(400);
+        if (action === "publish" && input.confirmed !== true) throw new CaseError(400);
+        writePending = action === "upload" || action === "publish" || action === "revoke";
+        const response = await (action === "publish" || action === "revoke" ? service.rpc(action === "publish" ? "publish_reviewed_privacy_case_delivery" : "revoke_reviewed_privacy_case_delivery", {
+          p_actor: owner, p_session: session, p_case: input.id, p_revision: input.revision, p_attachment: input.attachmentId,
+        }) : service.rpc("manage_privacy_case_attachment", {
+          p_actor: owner, p_session: session, p_case: input.id, p_revision: input.revision, p_action: action,
+          p_attachment: input.attachmentId ?? null, p_content: input.content ?? null,
+        })).abortSignal(signal);
+        if (response.error) writePending = false;
+        rpcError(response.error);
+        try {
+          result = { caseId: input.id.toLowerCase(), revision: input.revision.toLowerCase(),
+            ...(typeof input.attachmentId === "string" ? { id: input.attachmentId.toLowerCase() } : {}),
+            ...parseCaseAttachmentReceipt(response.data, input as CaseAttachmentInput) };
+        } catch { throw new CaseError(503); }
+      } else if (action === "list") {
         fields(input, admin ? ["action", "cursor", "password", "totpCode",...(input.filter===undefined?[]:["filter"])] : ["action", "cursor"]);
         const cursor = parseCaseCursor(input.cursor);
         if(admin&&input.filter!==undefined&&(typeof input.filter!=="string"||!Object.hasOwn(CASE_QUEUE_FILTERS,input.filter)))throw new CaseError(400);
@@ -75,6 +113,19 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const response=await service.rpc("read_privacy_case",{p_subject:admin?null:owner,p_admin:admin?owner:null,p_session:session,p_id:input.id}).abortSignal(signal);rpcError(response.error);
         const item=parsePrivacyCase(response.data,admin?undefined:owner);result=item;
         if(item.id!==input.id.toLowerCase())throw new CaseError(503);
+      } else if (admin && action === "incident_create") {
+        fields(input, ["action", "id", "body", "awareAt", "password", "totpCode"]);
+        if (!isUuid(input.id)) throw new CaseError(400);
+        const body = caseText(input.body), awareAt = casePastTime(input.awareAt);
+        writePending = true;
+        const response = await service.rpc("create_incident_privacy_case", {
+          p_actor: owner, p_session: session, p_id: input.id, p_body: body, p_aware_at: awareAt,
+        }).abortSignal(signal);
+        if (response.error) writePending = false;
+        rpcError(response.error);
+        const incident = parsePrivacyCase(response.data);
+        if (!matchesIncidentCase(incident, { action, id: input.id, body, awareAt })) throw new CaseError(503);
+        result = incident;
       } else if(admin&&action==="email_create") {
         fields(input,["action","id","kind","body","contactEmail","receivedAt","password","totpCode"]);
         if(!isUuid(input.id)||typeof input.kind!=="string"||!Object.hasOwn(PRIVACY_CASE_KINDS,input.kind))throw new CaseError(400);
@@ -99,6 +150,19 @@ export async function handlePrivacyCases(request: Request, admin = false): Promi
         const message=caseText(input.message);writePending=true;
         const response = await service.rpc("reply_privacy_case", { p_subject: owner, p_id: input.id, p_revision: input.revision, p_event: input.eventId, p_message: message }).abortSignal(signal); if(response.error)writePending=false;rpcError(response.error);
         result = parsePrivacyCase(response.data, owner);
+      } else if (admin && action === "purge") {
+        if (!privacyCaseRetentionEnabled()) throw new CaseError(404);
+        fields(input, ["action", "id", "revision", "confirmed", "password", "totpCode"]);
+        if (input.confirmed !== true || !isUuid(input.id) || !isUuid(input.revision)) throw new CaseError(400);
+        writePending = true;
+        const response = await service.rpc("purge_reviewed_privacy_case", {
+          p_admin: owner, p_session: session, p_case: input.id, p_revision: input.revision,
+        }).abortSignal(signal);
+        if (response.error || response.data === false) writePending = false;
+        rpcError(response.error);
+        if (response.data === false) throw new CaseError(409);
+        if (response.data !== true) throw new CaseError(503);
+        result = { purged: true, id: input.id.toLowerCase(), revision: input.revision.toLowerCase() };
       } else if(admin&&["review","schedule_review"].includes(String(action))) {
         fields(input,["action","id","revision","eventId","message","reviewAfter","password","totpCode"]);
         if(!isUuid(input.id)||!isUuid(input.revision)||!isUuid(input.eventId)||input.message!=="")throw new CaseError(400);

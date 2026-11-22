@@ -41,6 +41,20 @@
   --color-logo-mark: #000000;
   --radius-logo-mark: .25em;
 
+  /* Recognizable software marks in the CV skills picker. */
+  --color-software-excel: #217346;
+  --color-software-word: #2B579A;
+  --color-software-powerpoint: #B7472A;
+  --color-software-react: #087EA4;
+  --color-software-canva: #00A9B5;
+  --color-software-figma: #A259FF;
+  --color-software-photoshop: #1473E6;
+  --color-software-teams: #6264A7;
+  --color-software-slack: #4A154B;
+  --color-software-instagram: #D62976;
+  --color-software-tiktok: #111111;
+  --color-software-google-drive: #4285F4;
+
   --color-success: #21855d;
   --color-success-soft: #eef9f3;
   --color-success-border: #b9e5d7;

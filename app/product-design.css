@@ -47,8 +47,8 @@
 .mnw-product[data-onboarding="true"] { background:radial-gradient(ellipse at 80% 0%,var(--color-rose),transparent 45%),var(--color-canvas); }
 .mnw-product[data-onboarding="true"] :is(.mobile-shell,.youth-onboarding) { max-width:680px !important; margin-inline:auto; padding:48px 28px 80px !important; color:var(--color-text); background:transparent !important; }
 .mnw-product[data-onboarding="true"] .youth-onboarding > * { max-width:100%; }
-.mnw-product[data-onboarding="true"] :is(.onboarding-question-title,h1) { font-size:clamp(1.9rem,4vw,2.6rem) !important; line-height:1.2 !important; }
-.mnw-product[data-onboarding="true"] :is(.onboarding-question-bubble,.profile-question-card) { padding:28px !important; border:1px solid var(--color-border) !important; border-radius:24px !important; color:var(--color-text) !important; background:var(--color-surface) !important; box-shadow:0 12px 35px color-mix(in srgb, var(--color-text) 3.5%, transparent); }
+.mnw-product[data-onboarding="true"] h1 { font-size:clamp(1.9rem,4vw,2.6rem) !important; line-height:1.2 !important; }
+.mnw-product[data-onboarding="true"] .profile-question-card { padding:28px !important; border:1px solid var(--color-border) !important; border-radius:24px !important; color:var(--color-text) !important; background:var(--color-surface) !important; box-shadow:0 12px 35px color-mix(in srgb, var(--color-text) 3.5%, transparent); }
 .mnw-product[data-onboarding="true"] input,.mnw-product[data-onboarding="true"] textarea { font-size:16px; border-color:var(--color-border) !important; background:var(--color-surface) !important; box-shadow:none !important; }
 /* Authentication, recovery and utility pages share the same entry experience. */
 .mnw-product .auth-page { background:radial-gradient(ellipse at 90% 10%,var(--color-rose),transparent 45%),var(--color-canvas); }
@@ -72,7 +72,6 @@
 .mnw-product :is(.application-completion-note) { padding:14px 18px; border-radius:14px; background:var(--color-rose); color:var(--color-text-muted); }
 .mnw-product .application-question label { color:var(--color-text); font-weight:500; }
 .mnw-product[data-page="profile"] .mobile-shell:not(.mnw-profile) { max-width:850px; }
-.mnw-product .voice-cv-page { max-width:740px !important; }
 @media(max-width:900px) and (min-width:721px) { .mnw-product .mobile-shell:not(.cv-hub):not(.mnw-profile) { padding-inline:var(--page-gutter-tablet) !important; } }
 @media(max-width:720px) {
  .mnw-product .mobile-shell:not(.cv-hub):not(.mnw-profile) { max-width:var(--page-width-mobile); padding:var(--page-top-mobile) var(--page-gutter-mobile) calc(110px + env(safe-area-inset-bottom)) !important; }
@@ -83,7 +82,7 @@
  .mnw-product .cv-hub h1 { font-size:1.85rem; }
  .mnw-product .cv-hub-preview { padding:20px; border-radius:18px; }
  .mnw-product[data-onboarding="true"] :is(.mobile-shell,.youth-onboarding) { max-width:480px !important; padding:30px 20px 60px !important; }
- .mnw-product[data-onboarding="true"] :is(.onboarding-question-bubble,.profile-question-card) { padding:22px !important; }
+ .mnw-product[data-onboarding="true"] .profile-question-card { padding:22px !important; }
  .mnw-product :is(.job-builder-section,.company-candidate-profile,.job-list-card,.application-completion-card) { padding:20px; border-radius:20px; }
  .mnw-product .application-completions-page > header h1 { font-size:1.9rem; }
 }
@@ -116,14 +115,6 @@
 .mnw-product .cv-builder-conversation form { display:flex;gap:10px;align-items:stretch;margin-top:8px; }
 .mnw-product .cv-builder-conversation input { min-width:0;flex:1;min-height:49px;padding:12px;font-size:16px; }
 .mnw-product .cv-builder-conversation button { font-size:.82rem;padding:10px 15px; }
-.mnw-product[data-page="voice-cv"] .voice-cv-page { max-width:780px!important;display:block; }
-.mnw-product .voice-cv-page > .card { padding:35px!important;border-radius:25px!important;box-shadow:0 15px 40px color-mix(in srgb, var(--color-text) 1.960784%, transparent); }
-.mnw-product .voice-cv-page > .card h1 { font-size:2.2rem!important;margin-top:0!important; }
-.mnw-product .voice-cv-page > .card > p { line-height:1.85!important; }
-.mnw-product .voice-cv-back { background:var(--color-surface);border-color:var(--color-border);box-shadow:none;color:var(--color-text);position:static;margin:0 0 22px; }
-.mnw-product .voice-cv-page details { padding:17px;border:1px solid var(--color-border);border-radius:15px;background:var(--color-canvas);line-height:1.8; }
-.mnw-product .voice-cv-page label { display:flex;gap:9px;justify-content:center;align-items:center;line-height:1.7; }
-.mnw-product .voice-cv-page input[type="checkbox"] { accent-color:var(--color-brand); }
 .mnw-product .company-match-profile { border:1px solid var(--color-border);border-radius:22px;background:var(--color-surface);padding:27px; }
 .mnw-product .company-match-profile.is-embedded { border:0;border-radius:22px; }
 .mnw-product .company-match-header h2 { font-size:1.4rem;font-weight:500; }
@@ -163,8 +154,6 @@
  .mnw-product[data-page="cv-builder"] .glass-card { padding:21px; }
  .mnw-product .cv-builder-conversation { padding:13px; }
  .mnw-product .cv-builder-conversation form { flex-wrap:wrap; }
- .mnw-product .voice-cv-page > .card { padding:25px 20px!important; }
- .mnw-product .voice-cv-page > .card h1 { font-size:1.85rem!important; }
  .mnw-product .company-match-profile { padding:21px; }
  .mnw-product .company-match-fields { padding:17px; }
  .mnw-product .job-match-editor { padding:22px; }
@@ -275,12 +264,8 @@
 
 /* Long CV forms share the same actions and keyboard-accessible uploads. */
 .mnw-product[data-onboarding="true"] .youth-onboarding :is(input,select,textarea) {min-width:0;max-width:100%;}
-.mnw-onboarding-file-input {position:absolute;width:1px;height:1px;padding:0!important;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
-.youth-onboarding label:has(.mnw-onboarding-file-input:focus-visible) {outline:3px solid var(--color-brand);outline-offset:4px;border-radius:13px;}
 .mnw-product[data-onboarding="true"] .youth-onboarding :is(button,label:has(input[type="file"])) {min-height:44px;}
-.mnw-product[data-onboarding="true"] .onboarding-question-bubble {max-width:100%!important;}
 .mnw-product .company-match-fields > * {min-width:0;}
-@media(max-width:480px) {.mnw-onboarding-date-fields {grid-template-columns:minmax(0,1fr)!important;}}
 
 /* One form surface, with readable section headings and associated labels. */
 .mnw-product .job-builder-onboarding .job-builder-form {padding:0;border:0;background:transparent;box-shadow:none;}

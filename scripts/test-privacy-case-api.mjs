@@ -1,24 +1,29 @@
+import { randomUUID, randomInt } from 'node:crypto';
 import assert from 'node:assert/strict';import {readFileSync}from'node:fs';import{createRequire,Module}from'node:module';import path from'node:path';import ts from'typescript';
 const require=createRequire(import.meta.url),load=Module._load;
 for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(m,f)=>m._compile(ts.transpileModule(readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,f);
 const owner='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',id='77777777-7777-4777-8777-777777777777',revision='88888888-8888-4888-8888-888888888888';
 const sample=()=>({id,requester_id:owner,kind:'access',body:'QA begäran',status:'new',revision,created_at:'2026-11-12T09:00:00Z',updated_at:'2026-11-12T09:00:00Z',reply_due_at:'2026-12-12T09:00:00Z',closed_at:null,assigned:false,is_mine:false,events:[],events_truncated:false});
-let calls=[],access=true,quota=true,session=true,factor=true,reauth=true,rpcFailure=null,corrupt=false,revokeAfter=false,corruptWrite=false;
+let calls=[],access=true,quota=true,session=true,factor=true,reauth=true,rpcFailure=null,corrupt=false,revokeAfter=false,corruptWrite=false,purgeResult=true;
 class PersonalDataSessionError extends Error{constructor(code){super('Session');this.code=code;}}
 class AccountReauthenticationError extends Error{constructor(status){super('Auth');this.status=status;}}
-const client={rpc(name,args){calls.push({name,args});let data=name==='privacy_case_access'?(revokeAfter&&calls.filter(c=>c.name===name).length>1?false:access):name==='consume_api_quota'?quota:name==='create_email_privacy_case'?{...sample(),requester_id:null,intake_source:'email',contact_email:args.p_contact_email,created_at:args.p_received_at,kind:args.p_kind,body:args.p_body}:name==='read_privacy_case_history'?{id,revision,events:[{id:other,action:'reply',created_at:'2026-11-11T09:00:00Z',public_message:'QA äldre',private_actor:'MUST_DROP'}],next:null}:['list_privacy_cases','list_privacy_case_queue'].includes(name)?{available:true,cases:[{...sample(),...(corrupt?{requester_id:other}:{}),unexpected_private_note:'DO_NOT_EXPORT'}],next:null}:corruptWrite?null:sample();return{abortSignal(){return Promise.resolve({data,error:rpcFailure});}};}};
+const client={rpc(name,args){calls.push({name,args});let data=name==='privacy_case_access'?(revokeAfter&&calls.filter(c=>c.name===name).length>1?false:access):name==='consume_api_quota'?quota:name==='purge_reviewed_privacy_case'?purgeResult:name==='publish_reviewed_privacy_case_delivery'?{caseId:args.p_case,revision:args.p_revision,id:args.p_attachment}:name==='read_reviewed_privacy_case_delivery'?{caseId:args.p_case,content:'JVBERi0xLjc='}:name==='manage_privacy_case_attachment'?{caseId:args.p_case,revision:args.p_revision,id:args.p_attachment,files:[],content:'JVBERi0xLjc='}:name==='create_incident_privacy_case'?{...sample(),id:args.p_id,requester_id:null,intake_source:'incident',created_at:args.p_aware_at,kind:'other',body:args.p_body}:name==='create_email_privacy_case'?{...sample(),requester_id:null,intake_source:'email',contact_email:args.p_contact_email,created_at:args.p_received_at,kind:args.p_kind,body:args.p_body}:name==='read_privacy_case_history'?{id,revision,events:[{id:other,action:'reply',created_at:'2026-11-11T09:00:00Z',public_message:'QA äldre',private_actor:'MUST_DROP'}],next:null}:['list_privacy_cases','list_privacy_case_queue'].includes(name)?{available:true,cases:[{...sample(),...(corrupt?{requester_id:other}:{}),unexpected_private_note:'DO_NOT_EXPORT'}],next:null}:corruptWrite?null:sample();return{abortSignal(){return Promise.resolve({data,error:rpcFailure});}};}};
 Module._load=function(n,parent,...args){if(n==='server-only')return{};if(n==='@supabase/supabase-js')return{createClient:()=>client};if(n.endsWith('/account-reauthentication')||n==='./account-reauthentication')return{AccountReauthenticationError,reauthenticateAccount:async()=>{calls.push({name:'reauth'});if(!reauth)throw new AccountReauthenticationError(403);return{id:owner,factors:factor?[{id:revision,factor_type:'totp',status:'verified'}]:[]};}};if(n.endsWith('/personal-data-session')||n==='./personal-data-session')return{PersonalDataSessionError,verifyPersonalDataSession:async()=>{calls.push({name:'session'});if(!session)throw new PersonalDataSessionError('invalid_session');return revision;}};if(n.startsWith('@/'))return load.call(this,path.resolve(n.slice(2)),parent,...args);return load.call(this,n,parent,...args);};
-process.env.NEXT_PUBLIC_SUPABASE_URL='https://qa.supabase.co';process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY='PUBLIC_QA';process.env.SUPABASE_SERVICE_ROLE_KEY='SERVER_QA';
+// The SDK is mocked in this suite, so auth inputs are ephemeral and never used against a live service.
+process.env.NEXT_PUBLIC_SUPABASE_URL='https://qa.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY=randomUUID();
+process.env.SUPABASE_SERVICE_ROLE_KEY=randomUUID();
+const authorization=`Bearer ${randomUUID()}`;
 const {handlePrivacyCases}=require('../lib/server/privacy-case-handler.ts');
 let count=0;const ok=(v,m)=>{assert.ok(v,m);console.log('PASS '+m);count++;};
 function reset(){calls=[];access=quota=session=factor=reauth=true;rpcFailure=null;corrupt=revokeAfter=corruptWrite=false;}
-const request=(input,opts={})=>new Request('https://qa.test/api/cases'+(opts.query||''),{method:'POST',headers:{authorization:'Bearer QA_TOKEN','x-account-id':owner,'content-type':'application/json',...opts.headers},body:JSON.stringify(input),...opts.extra});
-const list={action:'list',cursor:null},credentials={password:'QA_PASSWORD',totpCode:'123456'},create={action:'create',id,kind:'access',body:'QA begäran'};
+const request=(input,opts={})=>new Request('https://qa.test/api/cases'+(opts.query||''),{method:'POST',headers:{authorization,'x-account-id':owner,'content-type':'application/json',...opts.headers},body:JSON.stringify(input),...opts.extra});
+const list={action:'list',cursor:null},credentials={password:randomUUID(),totpCode:String(randomInt(100000,1000000))},create={action:'create',id,kind:'access',body:'QA begäran'};
 try{
  reset();let r=await handlePrivacyCases(request(list));ok(r.status===200,'own list route succeeds with verified live scope');let data=await r.json();ok(!JSON.stringify(data).includes('DO_NOT_EXPORT'),'response uses closed projection and drops extra data');ok(calls.find(c=>c.name==='list_privacy_cases').args.p_subject===owner,'owner comes from verified request header and never body');ok(r.headers.get('cache-control').includes('no-store'),'private responses cannot be cached');
  reset();r=await handlePrivacyCases(request(list,{headers:{'x-account-id':'wrong'}}));ok(r.status===401&&calls.length===0,'invalid identity stops before Auth/SQL');
  reset();r=await handlePrivacyCases(request(list,{headers:{origin:'https://foreign.test'}}));ok(r.status===403&&calls.length===0,'foreign origin denied before any data work');
- reset();r=await handlePrivacyCases(request(list,{query:'?password=secret'}));ok(r.status===403&&calls.length===0,'query parameters cannot carry credentials');
+ reset();r=await handlePrivacyCases(request(list,{query:'?password'}));ok(r.status===403&&calls.length===0,'query parameters cannot carry credentials');
  reset();r=await handlePrivacyCases(request(list,{headers:{'content-type':'text/plain'}}));ok(r.status===415&&calls.length===0,'wrong content type denied');
  reset();r=await handlePrivacyCases(request(list,{headers:{'content-length':'99999'}}));ok(r.status===413&&calls.length===0,'oversized request denied before Auth');
  reset();r=await handlePrivacyCases(request({...create,requester_id:other}));ok(r.status===400&&!calls.some(c=>c.name==='create_privacy_case'),'forged requester body rejected');
@@ -36,7 +41,7 @@ try{
  reset();access=false;r=await handlePrivacyCases(request({...history,...credentials}),true);ok(r.status===403&&!calls.some(c=>c.name==='read_privacy_case_history'),'ungranted admin cannot page history');
  reset();r=await handlePrivacyCases(request({...history,cursor:null}));ok(r.status===400&&!calls.some(c=>c.name==='read_privacy_case_history'),'history rejects a missing anchor');
  reset();rpcFailure={code:'PT409'};r=await handlePrivacyCases(request(history));ok(r.status===409,'history revision conflict asks for fresh status');
- reset();let cancelled=false;const stop=new AbortController();const stream=new ReadableStream({cancel(){cancelled=true;}});const hanging=new Request('https://qa.test/api/cases',{method:'POST',headers:{authorization:'Bearer QA_TOKEN','x-account-id':owner,'content-type':'application/json'},body:stream,duplex:'half',signal:stop.signal});const pending=handlePrivacyCases(hanging);stop.abort();r=await pending;await Promise.resolve();ok(r.status===408&&cancelled&&!calls.length,'aborted hanging body cancels its reader and starts no data operation');
+ reset();let cancelled=false;const stop=new AbortController();const stream=new ReadableStream({cancel(){cancelled=true;}});const hanging=new Request('https://qa.test/api/cases',{method:'POST',headers:{authorization,'x-account-id':owner,'content-type':'application/json'},body:stream,duplex:'half',signal:stop.signal});const pending=handlePrivacyCases(hanging);stop.abort();r=await pending;await Promise.resolve();ok(r.status===408&&cancelled&&!calls.length,'aborted hanging body cancels its reader and starts no data operation');
  reset();r=await handlePrivacyCases(request({...create,body:'\u0001 invalid'}));ok(r.status===400&&r.headers.get('X-Privacy-Case-Write')==='rejected'&&!calls.some(c=>c.name==='create_privacy_case'),'pre-write validation rejection is safe to correct');
  reset();corruptWrite=true;r=await handlePrivacyCases(request(create));ok(r.status===400&&r.headers.get('X-Privacy-Case-Write')==='uncertain'&&calls.some(c=>c.name==='create_privacy_case'),'bad response after a dispatched create cannot unlock a different write');
  reset();rpcFailure={code:'22023'};r=await handlePrivacyCases(request(create));ok(r.status===400&&r.headers.get('X-Privacy-Case-Write')==='rejected','explicit database rejection permits correction without claiming a save');
@@ -49,6 +54,22 @@ try{
  reset();access=false;r=await handlePrivacyCases(request({action:'find',id,...credentials}),true);ok(r.status===403&&!calls.some(c=>c.name==='read_privacy_case'),'ungranted admin cannot look up by ID');
  reset();r=await handlePrivacyCases(request({action:'find',id:'bad'}));ok(r.status===400&&!calls.some(c=>c.name==='read_privacy_case'),'malformed exact lookup rejected');
  reset();rpcFailure={code:'PT404'};r=await handlePrivacyCases(request({action:'find',id}));ok(r.status===404,'missing or foreign exact lookup remains unavailable');
+ const purge={...credentials,action:'purge',id,revision,confirmed:true};
+ const originalUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+ process.env.NEXT_PUBLIC_SUPABASE_URL='https://vwcfjvwfeatvuisojwrh.supabase.co';
+ delete process.env.NEXT_PUBLIC_PRIVACY_CASE_RETENTION_ENABLED;
+ reset();r=await handlePrivacyCases(request(purge),true);ok(r.status===404&&!calls.some(c=>c.name==='purge_reviewed_privacy_case'),'retention stays disabled without explicit dev flag');
+ process.env.NEXT_PUBLIC_PRIVACY_CASE_RETENTION_ENABLED='true';
+ reset();r=await handlePrivacyCases(request(purge));ok(r.status===400&&!calls.some(c=>c.name==='purge_reviewed_privacy_case'),'account route cannot dispatch retention');
+ reset();access=false;r=await handlePrivacyCases(request(purge),true);ok(r.status===403&&!calls.some(c=>c.name==='purge_reviewed_privacy_case'),'retention requires the existing handler grant');
+ reset();r=await handlePrivacyCases(request({...purge,confirmed:false}),true);ok(r.status===400&&!calls.some(c=>c.name==='purge_reviewed_privacy_case'),'retention requires explicit confirmation');
+ reset();r=await handlePrivacyCases(request(purge),true);assert.deepEqual(await r.json(),{purged:true,id,revision});ok(r.status===200&&calls.findIndex(c=>c.name==='reauth')<calls.findIndex(c=>c.name==='purge_reviewed_privacy_case'),'retention dispatch follows fresh MFA and returns exact receipt');
+ assert.deepEqual(calls.find(c=>c.name==='purge_reviewed_privacy_case').args,{p_admin:owner,p_session:revision,p_case:id,p_revision:revision});
+ reset();purgeResult=false;r=await handlePrivacyCases(request(purge),true);ok(r.status===409&&r.headers.get('X-Privacy-Case-Write')==='rejected','ineligible or changed case returns a definite no-op');
+ reset();purgeResult=null;r=await handlePrivacyCases(request(purge),true);ok(r.status===503&&r.headers.get('X-Privacy-Case-Write')==='uncertain','invalid receipt cannot claim the case was purged');
+ purgeResult=true;process.env.NEXT_PUBLIC_SUPABASE_URL=originalUrl;
+ reset();r=await handlePrivacyCases(request(purge),true);ok(r.status===404&&!calls.some(c=>c.name==='purge_reviewed_privacy_case'),'retention stays disabled on other database projects');
+ delete process.env.NEXT_PUBLIC_PRIVACY_CASE_RETENTION_ENABLED;
  const review={...credentials,action:'review',id,revision,eventId:other,message:'',reviewAfter:new Date(Date.now()+86400000).toISOString()};
  reset();r=await handlePrivacyCases(request(review),true);ok(r.status===200&&calls.find(c=>c.name==='record_privacy_case_review').args.p_session===revision,'review write carries verified original session and actor');ok(calls.findIndex(c=>c.name==='reauth')<calls.findIndex(c=>c.name==='record_privacy_case_review'),'review write happens only after fresh password/TOTP');
  reset();r=await handlePrivacyCases(request({...review,message:'Private note'}),true);ok(r.status===400&&!calls.some(c=>c.name==='record_privacy_case_review'),'internal review cannot smuggle text into public message');
@@ -64,5 +85,25 @@ try{
  reset();r=await handlePrivacyCases(request({...mail,receivedAt:new Date(Date.now()+86400000).toISOString()}),true);ok(r.status===400&&!calls.some(c=>c.name==='create_email_privacy_case'),'future receipt rejected before write');
  const mailReply={...credentials,action:'reply',id,revision,eventId:other,message:'QA already emailed',externalReplyConfirmed:true,externalSentAt:new Date(Date.now()-3600000).toISOString()};reset();r=await handlePrivacyCases(request(mailReply),true);ok(r.status===200&&calls.find(c=>c.name==='update_privacy_case').args.p_external_reply_confirmed===true&&calls.find(c=>c.name==='update_privacy_case').args.p_external_sent_at===mailReply.externalSentAt,'external response carries explicit proof and actual send time');
  reset();r=await handlePrivacyCases(request({...mailReply,externalReplyConfirmed:false}),true);ok(r.status===400&&!calls.some(c=>c.name==='update_privacy_case'),'false external proof never dispatches');
+ const incidentArgs={action:'incident_create',id,awareAt:'2026-11-12T09:00:00Z',body:'QA incident'};
+ reset();r=await handlePrivacyCases(request(incidentArgs));
+ ok(r.status===400&&!calls.some(c=>c.name==='create_incident_privacy_case'),'requester cannot open a private incident');
+ reset();r=await handlePrivacyCases(request({...incidentArgs,...credentials}),true);
+ ok(r.status===200&&(await r.json()).intake_source==='incident'&&calls.findIndex(c=>c.name==='reauth')<calls.findIndex(c=>c.name==='create_incident_privacy_case'),'authorized incident intake runs only after fresh verification');
+ const delivery={action:'delivery',id,password:randomUUID(),totpCode:''};
+ reset();r=await handlePrivacyCases(request(delivery),false,false,true);ok(r.status===200&&(await r.json()).content==='JVBERi0xLjc='&&calls.findIndex(c=>c.name==='reauth')<calls.findIndex(c=>c.name==='read_reviewed_privacy_case_delivery'),'requester freshly verifies identity before reviewed release');
+ reset();reauth=false;r=await handlePrivacyCases(request(delivery),false,false,true);ok(r.status===403&&!calls.some(c=>c.name==='read_reviewed_privacy_case_delivery'),'failed reauthentication does not read a released file');
+ const share={...credentials,action:'publish',id,revision,attachmentId:other,confirmed:true};
+ reset();r=await handlePrivacyCases(request({...share,confirmed:false}),true,true);ok(r.status===400&&!calls.some(c=>c.name==='publish_reviewed_privacy_case_delivery'),'sharing requires explicit confirmation');
+ reset();r=await handlePrivacyCases(request(share),true,true);ok(r.status===200&&(await r.json()).uploaded===true,'reviewed share returns bound receipt');
+ const fileDownload={action:'download',id,revision,attachmentId:other,...credentials};
+ reset();r=await handlePrivacyCases(request(fileDownload),true,true);
+ ok(r.status===200&&(await r.json()).content==='JVBERi0xLjc='&&r.headers.get('Cache-Control').includes('no-store'),'exact attachment responds only after fresh handler verification');
+ reset();revokeAfter=true;r=await handlePrivacyCases(request(fileDownload),true,true);
+ ok(r.status===403&&!(await r.text()).includes('JVBERi0xLjc='),'permission loss before delivery discards attachment bytes');
+ reset();factor=false;r=await handlePrivacyCases(request(fileDownload),true,true);
+ ok(r.status===403&&!calls.some(c=>c.name==='manage_privacy_case_attachment'),'unverified MFA never reads an attachment');
+ reset();r=await handlePrivacyCases(request({...fileDownload,action:'upload',content:'notpdf'}),true,true);
+ ok(r.status===400&&!calls.some(c=>c.name==='manage_privacy_case_attachment'),'malformed upload rejected before database write');
  console.log('PASS '+count+' route checks; actual handler/contracts, simulated Auth/session/RPC boundaries. No hosted/MFA acceptance claim.');
 }finally{Module._load=load;}

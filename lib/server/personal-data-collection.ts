@@ -39,7 +39,7 @@ const SOURCES: readonly SourceSpec[] = [
   {"table": "recruitment_rewards", "owner": "company_user_id", "cursor": "match_id", "columns": "match_id,company_user_id,status,discount_percent,expires_at,redeemed_at"},
   {"table": "premium_orders", "owner": "company_user_id", "cursor": "id", "columns": "id,company_user_id,product_id,job_id,status,source,created_at,activated_at,cancelled_at,cancellation_reason"},
   {"table": "premium_entitlements", "owner": "company_user_id", "cursor": "id", "columns": "id,order_id,company_user_id,product_id,job_id,state,starts_at,ends_at,activated_at,ended_at,end_reason,created_by_source,created_at,updated_at"},
-  {"table": "youth_videos", "owner": "owner_id", "cursor": "id", "columns": "id,owner_id,conversation_id,storage_path,mime_type,size_bytes,duration_seconds,revoked_at,created_at,first_sent_at,expires_at,cleanup_started_at,deleted_at"},
+  {"table": "youth_videos", "owner": "owner_id", "cursor": "id", "columns": "id,owner_id,conversation_id,storage_path,mime_type,size_bytes,duration_seconds,revoked_at,created_at,first_sent_at,expires_at,cleanup_started_at,deleted_at,application_job_id"},
   {"table": "moderation_reports", "owner": "reporter_user_id", "cursor": "id", "columns": "id,reporter_user_id,target_type,target_id,reason,details,status,created_at,reviewed_at"},
   {"table": "user_blocks", "owner": "blocker_user_id", "cursor": "blocked_user_id", "columns": "blocker_user_id,blocked_user_id,created_at"},
   {"table": "job_match_profiles", "owner": "job_id", "cursor": "job_id", "columns": "job_id,status,role_summary,must_haves,trainable_requirements,top_traits,weighted_criteria,candidate_questions,inherited_company_version,profile_version,ai_generated,created_at,updated_at", "parent": "jobs"},

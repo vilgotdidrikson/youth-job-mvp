@@ -1,4 +1,5 @@
 "use client";
+import { ApplicationAiPreference } from "@/components/application-ai-preference";
 import { useApplicationRetention } from "@/hooks/use-data-retention";
 import { ApplicationRetentionNotice, RetiredApplicationCard } from "@/components/data-retention-notice";
 import type { ApplicationRetention } from "@/lib/data-retention";
@@ -190,6 +191,10 @@ function ApplicationsPageContent() {
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
       <div className="applications-tab-panel" {...tabPanelProps("applications", tab)}>
+      {!loading && tab !== "questions" && (
+        extraActivity.some(stage => pendingInterestView(stage, cvLoading ? null : cvCompleted).action === "send")
+        || ordered.some(item => item.status === "needs_completion" && !retentionByJob.get(item.job_id)?.expired)
+      ) && <ApplicationAiPreference key={userId} compact />}
       {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} onWithdrawn={withdrawn} />)}
       {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} retention={retentionByJob.get(item.job_id)} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;

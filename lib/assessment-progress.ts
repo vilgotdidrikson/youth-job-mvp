@@ -61,7 +61,7 @@ export function observeAssessment(options: {
       } else {
         clearTimeout(timer);
         clearTimeout(deadline); deadline = undefined;
-        if (state.status === "failed" || state.status === "cancelled" || !state.assessment) {
+        if (state.status === "failed" || state.status === "cancelled" || (state.status !== "unavailable" && !state.assessment)) {
           options.fail("Den automatiska bedömningen kunde inte slutföras. Försök igen för att uppdatera den direkt.");
         }
       }

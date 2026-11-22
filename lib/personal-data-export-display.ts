@@ -3,17 +3,21 @@ import type { ExportCategory } from "./personal-data-export";
 type Data = NonNullable<ExportCategory["records"]>[number]["data"];
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 const sources: Record<string, string> = {
+  "own-application-choices": "Dina ja- och nejsvar i ansökan", "own-followup-choice": "Ditt ja- eller nejsvar på en kompletteringsfråga",
   "auth.users": "Kontots val för markeringar i appen",
   "public.youth_cv_drafts": "Privat CV-utkasts version",
   "public.ai_onboarding_sessions": "CV-utkastets status", "public.youth_videos": "Videons livscykel", "public.notifications": "Notisens lässtatus",
-  "public.profiles": "Kontotyp", "public.youth_profiles": "Profilens status", "public.company_profiles": "Företagsprofilens status", "public.private_profiles": "Uppdragsgivarens profil", "public.company_billing_details": "Fakturaunderlagets version",
+  "public.profiles": "Kontotyp", "public.youth_profiles": "Dina profiluppgifter", "public.company_profiles": "Företagsprofilens status", "public.private_profiles": "Uppdragsgivarens profil", "public.company_billing_details": "Fakturaunderlagets version",
   "public.youth_application_drafts": "Ansökningsutkast", "public.youth_saved_jobs": "Sparat jobb", "public.youth_job_impressions": "Visat jobb", "public.youth_job_dismissals": "Bortvalt jobb", "public.swipe_actions": "Jobbval", "public.application_workplace_preferences": "Vald arbetsplats",
   "public.application_completions": "Ansökningsstatus", "public.application_followups": "Kompletteringsfrågans status", "private.application_disclosures": "Delat underlags version", "public.candidate_assessments": "Bedömningens version",
   "public.jobs": "Annonsens status", "public.company_match_profiles": "Företagsprofilens version", "public.company_recruitment_controls": "Rekryteringsbehörighet", "public.recruitment_outcomes": "Rekryteringens utfall",
 };
 const fields: Record<string, string> = {
+  answers: "Dina svar per fråga", answer: "Ditt svar",
   indicator_preferences_configured: "Egna val sparade", indicator_preferences_version: "Inställningarnas version", indicator_messages: "Markera nya meddelanden", indicator_questions: "Markera frivilliga frågor", indicator_notifications: "Markera olästa notiser",
   id: "Postens ID", owner_id: "Ägarens konto-ID", completed_at: "Slutförd", read_at: "Läst", first_sent_at: "Först skickad", expires_at: "Utgångstid", revoked_at: "Återkallad", cleanup_started_at: "Städning påbörjad", deleted_at: "Radering registrerad", user_id: "Konto-ID", youth_user_id: "Konto-ID", company_user_id: "Konto-ID", job_id: "Annonsens ID", workplace_id: "Arbetsplatsens ID", role: "Kontotyp",
+  application_job_id: "Ansökans annons-ID", mime_type: "Filtyp", size_bytes: "Filstorlek i byte", duration_seconds: "Längd i sekunder",
+  full_name: "Namn", date_of_birth: "Födelsedatum", city: "Ort", address: "Adress", postal_code: "Postnummer",
   onboarding_completed: "Profilintroduktion klar", cv_generated: "CV genererat", cv_uploaded: "CV uppladdat", short_onboarding_completed: "Kort introduktion klar", recruitment_profile_version: "Jobbprofilens version",
   created_at: "Skapad", updated_at: "Uppdaterad", first_seen_at: "Först visad", dismissed_at: "Bortvald", decision: "Ditt val", status: "Status", publication_status: "Publiceringsstatus", job_kind: "Typ av jobb", is_active: "Aktiv", job_category_manual: "Jobbtyp vald manuellt", first_published_at: "Först publicerad",
   verification_status: "Verifieringsstatus", verification_submitted_at: "Skickad för verifiering", verified_at: "Verifierad", country_code: "Land", version: "Version", profile_version: "Kravprofilens version", job_profile_version: "Kravprofilens version", question_batch_version: "Frågeomgångens version", revision: "Underlagets revision",

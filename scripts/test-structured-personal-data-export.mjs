@@ -16,7 +16,7 @@ function fixture(){
  const rows={
   'public.youth_cv_drafts':[{user_id:subject,revision:other,updated_at:time,content:{draft:'QA_PRIVATE'}}],
   'public.profiles':[{id:subject,role:'youth'}],
-  'public.youth_profiles':[{user_id:subject,onboarding_completed:true,cv_generated:false,cv_uploaded:null,short_onboarding_completed:true,recruitment_profile_version:3,updated_at:time,cv_text:'QA_PRIVATE',documents:[{url:'QA_PRIVATE'}],recruitment_profile:{text:'QA_PRIVATE'}}],
+  'public.youth_profiles':[{user_id:subject,full_name:"Fiktiv Sökande",date_of_birth:"2008-02-29",city:"Testort",address:null,postal_code:"123 45",onboarding_completed:true,cv_generated:false,cv_uploaded:null,short_onboarding_completed:true,recruitment_profile_version:3,updated_at:time,cv_text:'QA_PRIVATE',documents:[{url:'QA_PRIVATE'}],recruitment_profile:{text:'QA_PRIVATE'}}],
   'public.youth_application_drafts':[{id:other,youth_user_id:subject,job_id:other,created_at:time,updated_at:time}],
   'public.youth_saved_jobs':[{id:other,youth_user_id:subject,job_id:other,created_at:time}],
   'public.youth_job_impressions':[{youth_user_id:subject,job_id:other,first_seen_at:time}],
@@ -73,6 +73,29 @@ try{
  test('duplicate activity identities abort instead of hiding pagination errors',()=>rejects(f=>{const s=f.source('public.youth_saved_jobs');s.rows.push(s.rows[0]);}));
  test('unknown columns never become automatically exportable',()=>{const f=fixture();f.source('public.profiles').rows[0].futureColumn={secret:'QA_PRIVATE'};const out=build(f.b,f.m);for(const bytes of Object.values(unzipSync(out.bytes)))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));});
  test('getters cannot run even on excluded raw columns',()=>{let calls=0;rejects(f=>Object.defineProperty(f.source('public.profiles').rows[0],'extra',{enumerable:true,get(){calls++;return 'QA_PRIVATE';}}));assert.equal(calls,0);});
+ test('own profile fields are included and an invalid birth date is rejected',()=>{
+  const f=fixture();
+  const out=build(f.b,f.m);
+  const account=JSON.parse(strFromU8(unzipSync(out.bytes)['uppgifter/account.json']));
+  assert.equal(account.status,'partially_included');
+  const own=account.records.find(row=>row.source==='public.youth_profiles');
+  assert.deepEqual([own.full_name,own.date_of_birth,own.city,own.address,own.postal_code],
+   ['Fiktiv Sökande','2008-02-29','Testort',null,'123 45']);
+  assert.equal(own.cv_text,undefined);
+  const profile=f.source('public.youth_profiles').rows[0];
+  profile.date_of_birth='2008-02-30';
+  assert.throws(()=>build(f.b,f.m),StructuredExportError);
+ });
+ test('only own closed choices are copied from answers, not question text or other responses',()=>{
+  const f=fixture(), completion=f.source('public.application_completions'), followup=f.source('public.application_followups');
+  Object.assign(completion,{status:'collected',rows:[{...historyRows('youth')['public.application_completions'][0],questions:[{id:'q1',question:'QA_PRIVATE'},{id:'q2',question:'QA_PRIVATE'}],answers:{q1:'Ja',q2:'Nej, ring QA_PRIVATE',q3:'No'}}]});
+  Object.assign(followup,{status:'collected',rows:[{...historyRows('youth')['public.application_followups'][0],status:'answered',answer:'Nej'}]});
+  const files=unzipSync(build(f.b,f.m).bytes);
+  const {records}=JSON.parse(strFromU8(files['uppgifter/applications.json']));
+  assert.deepEqual(records.find(row=>row.source==='own-application-choices').answers,{q1:'Ja'});
+  assert.equal(records.find(row=>row.source==='own-followup-choice').answer,'Nej');
+  assert.ok(!strFromU8(files['uppgifter/applications.json']).includes('QA_PRIVATE'));
+ });
  test('nulls and offset timestamps remain valid structured scalars',()=>{const f=fixture();f.source('public.youth_saved_jobs').rows[0].created_at='2026-10-30T12:00:00.123456+02:00';f.source('public.youth_profiles').rows[0].updated_at=null;assert.equal(build(f.b,f.m).manifest.coverage,'needs_completion');});
  test('projection does not mutate source bundle',()=>{const f=fixture(),before=JSON.stringify(f.b);build(f.b,f.m);assert.equal(JSON.stringify(f.b),before);});
 
@@ -102,7 +125,18 @@ try{
  ])for(const value of values)test('preserve allowed state '+relation+'/'+value,()=>{const f=historyFixture(role);const row=f.source(relation).rows[0];row[field]=value;if(relation==='public.application_completions')row.withdrawn_at=value==='withdrawn'?time:null;const out=build(f.b,f.m),cat=f.b.collection.categories.find(c=>c.sources.some(s=>s.relation===relation)).id;assert.equal(read(out,cat).records.find(r=>r.source===relation)[field],value);clean(out);});
 
  for(const status of ['in_progress','completed'])test('CV lifecycle '+status,()=>{const f=historyFixture('youth');f.source('public.ai_onboarding_sessions').rows[0].status=status;clean(build(f.b,f.m));});
- for(const [relation,field,value]of [['public.ai_onboarding_sessions','status','QA_PRIVATE'],['public.youth_videos','expires_at',null],['public.notifications','read_at','QA_PRIVATE']])test('invalid lifecycle scalar '+relation,()=>{const f=historyFixture('youth');f.source(relation).rows[0][field]=value;assert.throws(()=>build(f.b,f.m),StructuredExportError);});
+ test('owned active video includes media metadata without storage or conversation identifiers',()=>{
+  const f=historyFixture('youth');
+  Object.assign(f.source('public.youth_videos').rows[0],{mime_type:'video/webm',size_bytes:15488,duration_seconds:11.25,deleted_at:null});
+  const zip=unzipSync(build(f.b,f.m).bytes);
+  const row=JSON.parse(strFromU8(zip['uppgifter/videos.json'])).records[0];
+  assert.equal(row.mime_type,'video/webm');
+  assert.equal(row.size_bytes,15488);
+  assert.equal(row.duration_seconds,11.25);
+  assert.equal('storage_path' in row,false);
+  assert.equal('conversation_id' in row,false);
+ });
+ for(const [relation,field,value]of [['public.ai_onboarding_sessions','status','QA_PRIVATE'],['public.youth_videos','expires_at',null],['public.youth_videos','mime_type','text/html'],['public.youth_videos','size_bytes',-1],['public.youth_videos','duration_seconds',61],['public.youth_videos','application_job_id','QA_PRIVATE'],['public.notifications','read_at','QA_PRIVATE']])test('invalid lifecycle scalar '+relation,()=>{const f=historyFixture('youth');f.source(relation).rows[0][field]=value;assert.throws(()=>build(f.b,f.m),StructuredExportError);});
  const indicatorRow=()=>({id:subject,indicator_preferences_configured:true,indicator_preferences_version:1,indicator_messages:false,indicator_questions:true,indicator_notifications:false,raw_user_meta_data:{token:'QA_PRIVATE'},email:'QA_PRIVATE',factors:[{secret:'QA_PRIVATE'}]});
  for(const accountRole of ['youth','company','private'])test('own indicator export is narrow and readable for '+accountRole,()=>{const f=fixture();f.source('public.profiles').rows[0].role=accountRole;if(accountRole!=='youth')for(const c of f.b.collection.categories)for(const src of c.sources)if(src.status==='collected'&&src.relation!=='public.profiles')src.rows=[];Object.assign(f.source('auth.users'),{status:'collected',rows:[indicatorRow()]});const out=build(f.b,f.m),entries=unzipSync(out.bytes),data=JSON.parse(strFromU8(entries['uppgifter/auth-identity.json']));assert.deepEqual(data.records,[{source:'auth.users',id:subject,indicator_preferences_configured:true,indicator_preferences_version:1,indicator_messages:false,indicator_questions:true,indicator_notifications:false}]);for(const bytes of Object.values(entries))assert.ok(!strFromU8(bytes).includes('QA_PRIVATE'));assert.match(strFromU8(entries['LAS-MIG.html']),/Markera nya meddelanden/);assert.equal(out.manifest.coverage,'needs_completion');});
  test('absent indicator choices remain absent rather than saved defaults',()=>{const f=fixture();Object.assign(f.source('auth.users'),{status:'collected',rows:[{id:subject,indicator_preferences_configured:false,indicator_preferences_version:null,indicator_messages:null,indicator_questions:null,indicator_notifications:null}]});const out=build(f.b,f.m),entries=unzipSync(out.bytes),data=JSON.parse(strFromU8(entries['uppgifter/auth-identity.json']));assert.equal(data.records[0].indicator_messages,null);assert.equal(data.records[0].indicator_preferences_configured,false);});

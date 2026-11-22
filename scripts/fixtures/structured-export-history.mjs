@@ -6,7 +6,7 @@ export function historyRows(role='youth') {
  const own=HISTORY_SUBJECT,id=HISTORY_OTHER,t=HISTORY_TIME;
  const common={
   "public.notifications":[{id,user_id:own,created_at:t,read_at:null,title:"QA_PRIVATE",body:"QA_PRIVATE",href:"QA_PRIVATE",type:"QA_PRIVATE",match_id:id}],
-  "public.youth_videos":[{id,owner_id:own,created_at:t,first_sent_at:null,expires_at:t,revoked_at:t,cleanup_started_at:t,deleted_at:t,storage_path:"QA_PRIVATE",conversation_id:id,mime_type:"QA_PRIVATE"}],
+  "public.youth_videos":[{id,owner_id:own,application_job_id:id,created_at:t,first_sent_at:null,expires_at:t,revoked_at:t,cleanup_started_at:t,deleted_at:t,storage_path:"QA_PRIVATE",conversation_id:id,mime_type:null,size_bytes:null,duration_seconds:null}],
  };
  const company={
   'public.company_profiles':[{user_id:own,verification_status:'verified',verification_submitted_at:t,verified_at:t,updated_at:t,administrator:'QA_PRIVATE',verification_rejection_reason:'QA_PRIVATE',verified_by_user_id:id}],
@@ -30,7 +30,7 @@ export function historyRows(role='youth') {
 // Independent acceptance contract: exact keys expected in downloadable records.
 export const historyFields={
  "public.notifications":["id","user_id","created_at","read_at"],
- "public.youth_videos":["id","owner_id","created_at","first_sent_at","expires_at","revoked_at","cleanup_started_at","deleted_at"],
+ "public.youth_videos":["id","owner_id","application_job_id","mime_type","size_bytes","duration_seconds","created_at","first_sent_at","expires_at","revoked_at","cleanup_started_at","deleted_at"],
  "public.ai_onboarding_sessions":["id","youth_user_id","status","created_at","completed_at"],
  'public.company_profiles':['user_id','verification_status','verification_submitted_at','verified_at','updated_at'],
  'public.private_profiles':['user_id','updated_at'],

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { ApplicationAiPreference } from "@/components/application-ai-preference";
 import { ApplicationDisclosureView } from "@/components/application-disclosure-view";
 import { DisclosureLoadState } from "@/components/disclosure-load-state";
 import type { DisclosurePreview } from "@/lib/application-disclosure";
@@ -118,6 +119,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
     {saveError && <div className={`${styles.error} ${surfaces.root}`}><p role="alert">{saveError}</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load(selection.current)}>Hämta aktuellt underlag</button></div>}
     <JobRequirementsInsight jobId={jobId} />
     <ApplicationDisclosureView packet={preview.packet} youthPreview />
+    {!sent && <ApplicationAiPreference compact />}
     <div className={surfaces.root}>
       {preview.is_saved ? <section className={surfaces.panel}><h2>Sparad delning</h2><p>Detta är samma underlag som företaget får för den här ansökan. Profiländringar delas först när du väljer att uppdatera underlaget.</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load([])}>Uppdatera från min profil och välj uppgifter</button></section>
         : <fieldset className={styles.options} disabled={saving} aria-busy={state.status === "loading"}><legend>Extra uppgifter att dela</legend>{preview.options.length ? preview.options.map(option => <label key={option.key} className={styles.option}>
@@ -126,7 +128,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
         </label>) : <p>Inga ytterligare profiluppgifter finns att välja.</p>}</fieldset>}
       <details className={styles.sources}><summary>Vilka källuppgifter används i matchningen?</summary><p>Matchningen använder ditt granskade CV, sparade profilfakta och delade ansökningssvar. Om du har angett postnummer används också ett ungefärligt avstånd mellan din postort och arbetsorten, aldrig din adress. Rensning sker före AI-anrop. Företaget får inte hela jobbprofilen: belägg får bara visas från det delade underlaget ovan. Detta visar källuppgifter, inget individuellt AI-betyg.</p><pre>{applicationSourceInput(preview.matching_input)}</pre></details>
     </div>
-    {!sent && <p className={styles.note}>AI hjälper företaget att läsa ansökningsunderlaget. Företaget fattar rekryteringsbeslutet. <Link href="/privacy#profile-data">Så används dina uppgifter</Link>.</p>}
+    {!sent && <p className={styles.note}>Om du väljer AI-bedömning kan ett AI-underlag hjälpa företaget att läsa ansökan. Företaget fattar rekryteringsbeslutet. <Link href="/privacy#profile-data">Så används dina uppgifter</Link>.</p>}
     <p className={styles.note}>Uppladdade CV delas som originalfiler. Öppna filen ovan och kontrollera kontaktuppgifter eller bostadsadress innan du skickar. En borttagen gammal CV-fil kan bli otillgänglig; en ny fil delas först när du uppdaterar underlaget.</p>
     <footer className={styles.actions}><button type="button" className="cta-btn" disabled={saving || state.status !== "ready"} aria-busy={saving} onClick={() => void save()}>{saving ? "Sparar…" : sent ? (preview.is_saved ? "Till mina ansökningar" : "Spara uppdaterad delning") : "Dela underlaget och skicka ansökan"}</button></footer>
   </main>;
