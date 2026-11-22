@@ -191,6 +191,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const keyboardPopup = useRef<string | null>(null);
   const lastViewportClusterKeyRef = useRef("");
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState("");
@@ -317,14 +318,16 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
         <span class="job-map-pin-chip" aria-hidden="true">${escapeHtml(chipLabel)}</span>
       `;
 
-      const toggle = (event: Event) => {
+      const pin = markerElement.querySelector(".job-map-pin");
+      pin?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        setActiveClusterId((current) => current === clusterId ? null : clusterId);
-        onJobSelect?.(activeClusterId === clusterId ? null : leadJob.id);
-      };
-      markerElement.querySelector(".job-map-pin")?.addEventListener("click", toggle);
-      markerElement.querySelector(".job-map-pin")?.addEventListener("pointerenter", () => {
+        const isOpen = pin.getAttribute("aria-expanded") === "true";
+        keyboardPopup.current = (event as MouseEvent).detail === 0 && !isOpen ? clusterId : null;
+        setActiveClusterId(isOpen ? null : clusterId);
+        onJobSelect?.(isOpen ? null : leadJob.id);
+      });
+      pin?.addEventListener("pointerenter", () => {
         setActiveClusterId(clusterId);
         onJobSelect?.(leadJob.id);
       });
@@ -336,7 +339,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
         .setLngLat([coordinates.longitude, coordinates.latitude])
         .addTo(map);
     });
-  }, [jobClusters, mapReady, onJobSelect, selectedJobId, activeClusterId]);
+  }, [jobClusters, mapReady, onJobSelect]);
 
   // Lift the open pin above its neighbours and keep aria-expanded truthful.
   useEffect(() => {
@@ -367,17 +370,36 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
     content.style.setProperty("--job-map-card-width", cardWidth);
     content.innerHTML = `<section class="job-map-cluster-cards"><button type="button" class="job-map-close" aria-label="Stäng jobbannonserna">×</button>${cardStart > 0 ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-previous" aria-label="Visa tidigare annonser">‹</button>' : ""}<div class="job-map-card-list">${visibleJobs.map(({ job, coordinates: jobCoordinates }) => `<article class="job-map-card"><header class="job-map-card-head">${pinTileMarkup(job)}<p class="job-map-company">${escapeHtml(job.company_name || "Företag")}</p></header><h2>${escapeHtml(job.title)}</h2><div class="job-map-meta"><span>${escapeHtml([job.address, job.city].filter(Boolean).join(", "))}</span><span>${escapeHtml(job.salary_per_hour || "Lön enligt överenskommelse")}</span>${distanceBetween(userCoordinates, jobCoordinates) ? `<span>${distanceBetween(userCoordinates, jobCoordinates)}</span>` : ""}</div><button type="button" class="job-map-cta" data-job-id="${escapeHtml(job.id)}">Visa jobbet <span aria-hidden="true">→</span></button></article>`).join("")}</div>${cardStart < maxCardStart ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-next" aria-label="Visa fler annonser">›</button>' : ""}</section>`;
 
-    const close = () => { setActiveClusterId((current) => current === clusterId ? null : current); onJobSelect?.(null); };
+    const close = () => {
+      const restoreFocus = content.contains(document.activeElement);
+      keyboardPopup.current = null;
+      setActiveClusterId((current) => current === clusterId ? null : current);
+      onJobSelect?.(null);
+      if (restoreFocus) requestAnimationFrame(() => {
+        markersRef.current.find(marker => marker.getElement().dataset.clusterId === clusterId)
+          ?.getElement().querySelector<HTMLButtonElement>(".job-map-pin")?.focus();
+      });
+    };
+    content.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+    });
     content.querySelector(".job-map-close")?.addEventListener("click", close);
     content.querySelector(".job-map-cluster-previous")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.max(0, cardStart - 1) })));
     content.querySelector(".job-map-cluster-next")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.min(maxCardStart, cardStart + 1) })));
     content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => router.push(`/jobb/${encodeURIComponent(button.dataset.jobId || "")}`)));
 
-    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -52] })
+    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, focusAfterOpen: false, maxWidth: "none", offset: [0, -52] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .setDOMContent(content)
       .addTo(map);
     popupRef.current = popup;
+    if (keyboardPopup.current === clusterId) {
+      keyboardPopup.current = null;
+      content.querySelector<HTMLButtonElement>(".job-map-close")?.focus();
+    }
     return () => {
       popup.remove();
     };
@@ -393,7 +415,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
     // Fit only when the actual job set changes, never when a pin/card is clicked.
     if (jobClusters.length === 1) {
       const location = jobClusters[0].coordinates;
-      map.easeTo({ center: [location.longitude, location.latitude], zoom: 11, duration: 350 });
+      map.easeTo({ center: [location.longitude, location.latitude], zoom: 11, duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 350 });
     } else {
       const bounds = new mapboxgl.LngLatBounds();
       jobClusters.forEach(({ coordinates }) => bounds.extend([coordinates.longitude, coordinates.latitude]));

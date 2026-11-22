@@ -71,6 +71,7 @@ ui=stateHarness();const builder=compile('components/profile-builder.tsx',{
   '@/hooks/use-cv-completion':{useCvCompletion:()=>({cvCompleted:true,cvLoading:false})},
   './auth-gate-message':{AuthGateMessage:dummy},'@/lib/recruitment-profile':{completedProfileSections:()=>[]},
   '@/lib/profile-journey':journey,'./profile-journey':{ProfileJourneyHeader:dummy,ProfileStepComplete:dummy},
+  "./profile-chat":{ProfileChat:dummy},
   './ui-icon':{UiIcon:dummy},'./recruitment-profile.module.css':{default:{}},
 });
 tree=ui.render(builder.ProfileBuilder);

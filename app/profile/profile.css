@@ -1,25 +1,25 @@
 .mnw-profile { max-width:var(--page-width) !important; padding:var(--page-top) var(--page-gutter) 70px !important; color:var(--color-text); }
-.mnw-profile .network-profile-header { overflow:hidden; margin:0 0 24px; border:1px solid var(--color-border); border-radius:24px; background:white; box-shadow:0 8px 28px rgb(76 48 59 / .035); }
+.mnw-profile .network-profile-header { overflow:hidden; margin:0 0 24px; border:1px solid var(--color-border); border-radius:24px; background:var(--color-white); box-shadow:0 8px 28px rgba(var(--color-text-rgb), .035); }
 .mnw-profile .network-profile-cover { height:130px; background:radial-gradient(ellipse at 88% 10%,var(--color-brand-soft) 0,transparent 48%),linear-gradient(120deg,var(--color-rose),var(--color-surface-rose)); }
 .mnw-profile .network-profile-header-content { position:relative; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:22px; padding:0 28px 26px; }
-.mnw-profile .network-profile-avatar { position:relative; width:88px; height:88px; margin-top:-32px; border:5px solid white; border-radius:27px; color:white; background:var(--color-text); font-size:1.8rem; }
+.mnw-profile .network-profile-avatar { position:relative; width:88px; height:88px; margin-top:-32px; border:5px solid var(--color-white); border-radius:27px; color:var(--color-white); background:var(--color-text); font-size:1.8rem; }
 .mnw-profile .network-profile-identity { padding-top:18px; }
 .mnw-profile .network-profile-identity h1 { margin:0 0 7px; font-size:1.7rem; font-weight:500; letter-spacing:-.04em; overflow-wrap:anywhere; }
 .mnw-profile .network-profile-identity p { margin:0 0 7px; color:var(--color-text-muted); font-size:.82rem; }
 .mnw-profile .network-profile-identity > span { color:var(--color-text-muted); font-size:.75rem; }
 .mnw-profile .network-profile-actions { padding-top:20px; }
-.mnw-profile .network-profile-actions button { min-height:44px; padding:10px 16px; border:1px solid var(--color-border); border-radius:13px; color:var(--color-text); background:white; font:inherit; font-size:.78rem; cursor:pointer; }
+.mnw-profile .network-profile-actions button { min-height:44px; padding:10px 16px; border:1px solid var(--color-border); border-radius:13px; color:var(--color-text); background:var(--color-white); font:inherit; font-size:.78rem; cursor:pointer; }
 .mnw-profile .network-profile-open { grid-column:2 / -1; display:flex; flex-wrap:wrap; gap:12px; padding:12px 14px; margin:0; border:0; border-radius:12px; color:var(--color-text-muted); background:var(--color-canvas); font-size:.74rem; }
 .mnw-profile .network-profile-open strong { color:var(--color-text); font-size:.74rem; font-weight:500; }
 .mnw-profile .network-profile-open span { color:var(--color-text-muted); font-size:.74rem; }
 .mnw-status-ready,.mnw-status-pending { padding:6px 10px; border-radius:9px; color:var(--color-success-strong); background:var(--color-success-soft); font-size:.72rem; }
 .mnw-status-pending { color:var(--accent); background:var(--color-rose); }
-.mnw-profile .cta-btn { display:flex; align-items:center; justify-content:center; gap:12px; min-height:48px; padding:12px 18px; border:0; border-radius:14px; color:white; background:var(--accent); font:inherit; font-size:.82rem; font-weight:500; text-decoration:none; cursor:pointer; }
-.mnw-profile .secondary-btn { min-height:44px; padding:10px 16px; border:1px solid var(--color-border); border-radius:13px; color:var(--color-text); background:white; font:inherit; font-size:.78rem; font-weight:500; cursor:pointer; text-decoration:none; }
+.mnw-profile .cta-btn { display:flex; align-items:center; justify-content:center; gap:12px; min-height:48px; padding:12px 18px; border:0; border-radius:14px; color:var(--color-white); background:var(--accent); font:inherit; font-size:.82rem; font-weight:500; text-decoration:none; cursor:pointer; }
+.mnw-profile .secondary-btn { min-height:44px; padding:10px 16px; border:1px solid var(--color-border); border-radius:13px; color:var(--color-text); background:var(--color-white); font:inherit; font-size:.78rem; font-weight:500; cursor:pointer; text-decoration:none; }
 .mnw-profile button:disabled { opacity:.55; cursor:wait; }
 .mnw-profile-note { background:var(--color-rose); border-color:var(--color-rose); }
 .mnw-profile-note > svg { margin-bottom:20px; color:var(--accent); }
-.mnw-profile .minimal-profile-section { display:block; padding:26px; margin-top:18px; border:1px solid var(--color-border); border-radius:22px; background:white; }
+.mnw-profile .minimal-profile-section { display:block; padding:26px; margin-top:18px; border:1px solid var(--color-border); border-radius:22px; background:var(--color-white); }
 .mnw-profile .minimal-profile-section-intro { margin-bottom:20px; }
 .mnw-profile .minimal-profile-section-intro p { color:var(--accent); font-size:.7rem; font-weight:500; }
 .mnw-profile .minimal-profile-section-intro h2 { font-size:1.05rem; font-weight:550; color:var(--color-text); }
@@ -47,10 +47,10 @@
  .mnw-profile .network-entry { display:block; } .mnw-profile .network-entry-mark { display:none; }
 }
 .mnw-product[data-page="profile"] .mobile-shell.mnw-company-profile { display:block;max-width:1040px!important; }
-.company-profile-header { border:1px solid var(--color-border);border-radius:24px;background:white;overflow:hidden; }
+.company-profile-header { border:1px solid var(--color-border);border-radius:24px;background:var(--color-white);overflow:hidden; }
 .company-profile-cover { height:130px;background:radial-gradient(ellipse at 75% 50%,var(--color-brand-soft),transparent 60%),linear-gradient(120deg,var(--color-rose),var(--color-surface-rose)); }
 .company-profile-identity { display:flex;gap:20px;align-items:center;padding:0 28px 28px; }
-.company-profile-avatar { width:85px;height:85px;border-radius:24px;border:5px solid white;background:var(--color-rose);color:var(--color-brand);display:grid;place-items:center;flex-shrink:0;margin-top:-30px; }
+.company-profile-avatar { width:85px;height:85px;border-radius:24px;border:5px solid var(--color-white);background:var(--color-rose);color:var(--color-brand);display:grid;place-items:center;flex-shrink:0;margin-top:-30px; }
 .company-profile-identity > div { padding-top:20px;min-width:0; }
 .company-profile-identity p { color:var(--color-brand);font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;margin:0 0 7px; }
 .company-profile-identity h1 { font-size:1.85rem;margin:0 0 7px;overflow-wrap:anywhere; }

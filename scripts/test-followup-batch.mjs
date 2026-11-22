@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -8,8 +9,8 @@ const dir=mkdtempSync(join(tmpdir(),'mnw-question-batch-'));
 const previousKey=process.env.OPENAI_API_KEY;
 const previousServiceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
 try {
-  process.env.OPENAI_API_KEY='synthetic-test-key';
-  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-server-key';
+  process.env.OPENAI_API_KEY=randomUUID();
+  process.env.SUPABASE_SERVICE_ROLE_KEY=randomUUID();
   const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   writeFileSync(join(dir,'job-categories.mjs'),compile('lib/job-categories.ts'));
   writeFileSync(join(dir,'recruitment-profile.mjs'),compile('lib/recruitment-profile.ts').replace('./job-categories','./job-categories.mjs'));
@@ -22,6 +23,7 @@ try {
     export class OpenAI{constructor(){this.chat={completions:{create:async(args)=>{calls.push(['ai',args]);if(fail)throw Error('offline');return {choices:[{message:{content:JSON.stringify({criteria:[],answers:[{id:'q1',evidence:source}]})}}]};}}};}}
     export let criteriaReads=0;
     export const createClient=()=>{criteriaReads++;return {from:()=>({select:()=>({eq(){return this;},maybeSingle:async()=>({data:{weighted_criteria:[{label:'SERVER_ONLY'}]}})})})};};
+    export const applicationAiAllowed=async()=>true;
     export const matchingJobContext=()=>'';
     export const matchingCriteria=(raw)=>{if(raw[0]?.label!=='SERVER_ONLY')throw Error('Must use server-side criteria');return [{id:'c0',label:'Kassa'}];};
     export const criteriaRequiringAi=(criteria)=>criteria;
@@ -35,7 +37,7 @@ try {
     export const matchingDistanceLine=()=>null;
     export const OPENAI_API_BASE_URL='https://api.openai.com/v1';
     export const openaiTextOptions=()=>({model:'test',store:false});`);
-  const imports=`import {createClient,OpenAI,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,matchingDistanceLine,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
+  const imports=`import {createClient,OpenAI,applicationAiAllowed,requestMatchingEvidence,matchingJobContext,matchingCriteria,criteriaRequiringAi,candidateSourceDetails,candidateSource,assessCandidate,candidateAssessmentHash,queueApplicationFollowups,pdfCvSource,matchingDistanceLine,OPENAI_API_BASE_URL,openaiTextOptions} from './mocks.mjs';\nimport {verifiedApplicationAnswers} from './evidence.mjs';\n`;
   writeFileSync(join(dir,'analyze.mjs'),imports+compile('lib/analyze-application-followups.ts').replace(/^import .*;\n/gm,''));
   const {analyzeApplicationFollowups}=await import(pathToFileURL(join(dir,'analyze.mjs')));
   const mocks=await import(pathToFileURL(join(dir,'mocks.mjs')));

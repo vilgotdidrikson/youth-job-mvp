@@ -3,7 +3,7 @@
   --pb-canvas: var(--color-canvas); --pb-surface: var(--color-surface); --pb-rose: var(--color-rose); --pb-rose-track: var(--color-rose-track); --pb-border: var(--color-border);
   --pb-divider: var(--color-divider); --pb-dashed: var(--color-dashed); --pb-ring: var(--color-ring); --pb-ink: var(--color-text); --pb-muted: var(--color-text-muted);
   --pb-brand: var(--color-brand); --pb-brand-on-rose: var(--color-brand-on-rose); --pb-success: var(--color-success); --pb-success-soft: var(--color-success-soft);
-  --pb-shadow-segment: 0 2px 8px rgb(76 48 59 / .12);
+  --pb-shadow-segment: 0 2px 8px rgba(var(--color-text-rgb), .12);
   color: var(--pb-ink);
 }
 
@@ -116,7 +116,7 @@ div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; l
 
 /* StickyActions: fixed bar on mobile in the journey, a row at the end of the form otherwise. */
 .actions { display: flex; align-items: center; gap: 12px; }
-.actions.fixed { position: fixed; z-index: 80; inset-inline: 0; bottom: 0; padding: 14px 20px calc(14px + max(16px, env(safe-area-inset-bottom))); border-top: 1px solid var(--pb-border); background: rgb(255 250 251 / .96); }
+.actions.fixed { position: fixed; z-index: 80; inset-inline: 0; bottom: 0; padding: 14px 20px calc(14px + max(16px, env(safe-area-inset-bottom))); border-top: 1px solid var(--pb-border); background: rgba(var(--color-canvas-tint-rgb), .96); }
 .actions .secondary { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border: 0; background: none; color: var(--pb-muted); font: inherit; font-size: 15px; font-weight: 500; text-decoration: none; cursor: pointer; }
 .actions .primary { flex: 1; display: grid; place-items: center; min-height: 52px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--pb-brand); color: var(--color-white); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 .actions .primary:disabled, .actions .secondary:disabled { opacity: .6; cursor: progress; }

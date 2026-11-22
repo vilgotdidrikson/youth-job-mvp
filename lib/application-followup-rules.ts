@@ -1,10 +1,10 @@
 import type { CandidateAssessment } from "./candidate-assessment";
-import { applicationStartDateEvidence, isDrivingLicenceBCriterion, isStartDateCriterion } from "./fixed-match-rules";
+import { applicationStartDateEvidence, knownQualificationKey, isStartDateCriterion } from "./fixed-match-rules";
 
 const sensitive = /ålder|födelse|kön|etni|relig|häls|diagnos|funktions|medborg|nationalitet|gravid|sexuell|personnummer|politisk|facklig|familj|civilstånd/i;
 function normalizeLabel(label: string) {
   const normalized = label.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
-  return isDrivingLicenceBCriterion(normalized) ? "b-körkort" : normalized;
+  return knownQualificationKey(normalized) ?? normalized;
 }
 
 /** Unknown is missing evidence, never a negative decision. Traits are not inferred. */

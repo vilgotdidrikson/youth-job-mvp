@@ -1,5 +1,16 @@
+const storedAnswerPrefix = /^Sparad egen uppgift från tidigare komplettering:\s*/i;
+const knownQualifications = {
+  driving: /^(?:(?:krav på|har|giltigt) )?(?:b[- ]körkort|körkort (?:klass |behörighet )?b)$/,
+  forklift: /^(?:(?:krav på|har|giltigt) )?truckkort$/,
+} as const;
+
+export function knownQualificationKey(label: string): string | null {
+  const text = label.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("sv-SE");
+  return Object.entries(knownQualifications).find(([, expression]) => expression.test(text))?.[0] ?? null;
+}
+
 export function isDrivingLicenceBCriterion(label: string) {
-  return /^(?:har |krav på )?(?:b[- ]körkort|körkort b)$/.test(label);
+  return knownQualificationKey(label) === "driving";
 }
 
 export function isStartDateCriterion(label: string) {
@@ -38,7 +49,7 @@ export function fixedCriterionEvidence(label: string, source: string, today = ne
     const status=levels.map(level=>requiredFluent ? ["Flytande","Modersmål"].includes(level) ? "fulfilled" : ["Grundläggande","God","Mycket god"].includes(level) ? "unfulfilled" : "unknown" : ["God","Mycket god","Flytande","Modersmål"].includes(level) ? "fulfilled" : level === "Grundläggande" ? "unfulfilled" : "unknown");
     return new Set(status).size === 1 && status[0] !== "unknown" ? {status:status[0] as "fulfilled"|"unfulfilled",evidence:lines[0]} : {status:"unknown",evidence:""};
   }
-  const licence = isDrivingLicenceBCriterion(normalized);
+  const licence = knownQualificationKey(normalized);
   const schedule = /^(?:kan |måste kunna )?(?:arbeta|jobba) (helger|kvällar)$/.exec(normalized);
   if (!licence && !schedule) return null;
   const sentences = source.split(/\n|[.!?](?:\s|$)/).map((item) => item.trim());
@@ -46,14 +57,18 @@ export function fixedCriterionEvidence(label: string, source: string, today = ne
   for (const sentence of sentences) {
     // Only reuse saved answers for durable qualifications here. Old availability
     // from another job must not stand in for the current application's schedule.
-    const qualification = licence ? sentence.replace(/^Sparad egen uppgift från tidigare komplettering:\s*/i, "") : sentence;
+    const qualification = licence ? sentence.replace(storedAnswerPrefix, "") : sentence;
     // Conditional wishes/plans cannot establish a qualification or availability.
     if (/\b(om|kanske|vill|planerar|tidigare|utgånget)\b/i.test(qualification)) continue;
     const text = qualification.replace(/^(?:cv_text|Ansökningssvar|Kompletteringssvar|Uppgift från profil\/CV):\s*/i, "").trim();
     if (licence) {
-      if (/^(?:jag )?(?:har|saknar) (?:inte |inget )?b[- ]körkort$/i.test(text)) {
-        matches.push({ status: /(?:saknar|inte|inget)/i.test(text) ? "unfulfilled" : "fulfilled", evidence: sentence });
-      } else if (/^certificates:\s*b[- ]körkort$/i.test(text)) matches.push({ status: "fulfilled", evidence: sentence });
+      const explicit = /^(?:jag )?(har|saknar) (inte |inget )?(?:ett )?(.+)$/i.exec(text);
+      const certificate = /^(?:certificates|Självuppgiven behörighet):\s*(.+)$/i.exec(text);
+      const subject = explicit?.[3] ?? certificate?.[1];
+      if (subject && (knownQualificationKey(subject) === licence ||
+          (licence === "forklift" && /^truckkort [a-d][1-9][0-9]*$/i.test(subject)))) {
+        matches.push({ status: explicit?.[1].toLowerCase() === "saknar" || explicit?.[2] ? "unfulfilled" : "fulfilled", evidence: sentence });
+      }
     } else if (schedule) {
       const expression = new RegExp(`^(?:jag )?kan (inte )?(?:arbeta|jobba) ${schedule[1]}$`, "i");
       const match = expression.exec(text);

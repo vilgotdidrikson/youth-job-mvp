@@ -20,7 +20,11 @@ assert.equal(assessCandidate(criteria,raw,internal).criteria[0].status,'fulfille
 assert.equal(assessDisclosedCandidate(criteria,raw,internal,disclosedMatchingSource(base).text).criteria[0].status,'unknown','Private unselected fact cannot become a company-visible quote or score');
 const shared={...base,profile_items:[{key:'licences:0',label:'Behörighet – självuppgiven',text:'Truckkort',value:'Truckkort'}]};
 assert.equal(assessDisclosedCandidate(criteria,raw,internal,disclosedMatchingSource(shared).text).criteria[0].status,'fulfilled');
-assert.equal(assessDisclosedCandidate(criteria,raw,'Other actual provider source',disclosedMatchingSource(shared).text).criteria[0].status,'unknown','Quote must also have been present in actual provider input');
+const providerCriteria=matchingCriteria([{label:'Kassavana',required:true}]);
+const registerUse='Jag har tidigare arbetat i kassan.';
+const providerResults=[{id:'c0',status:'fulfilled',evidence:registerUse}];
+assert.equal(assessDisclosedCandidate(providerCriteria,providerResults,registerUse,registerUse).criteria[0].status,'fulfilled');
+assert.equal(assessDisclosedCandidate(providerCriteria,providerResults,'Other actual provider source',registerUse).criteria[0].status,'unknown','A provider quote must also appear in its actual input');
 assert.equal(disclosedCvText(base),base.cv.text);
 assert.equal(disclosedCvText({...base,cv:{text:'',structured:{},documents:[{type:'cv',url:'qa/file.pdf',name:'Original.pdf'}]}}),'','PDF-only preview cannot crash from empty structured CV');
 const cv=createEmptyStructuredCv();cv.profile.summary='Arbetsuppgifter '.repeat(600)+'SLUTMARKERING';

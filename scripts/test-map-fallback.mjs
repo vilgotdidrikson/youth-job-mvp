@@ -23,20 +23,47 @@ function mapCase({token='qa-token',unsupported=false,throwSupport=false,throwCon
  const hooks=harness(),reports=[],instances=[],timers=new Map();let timerId=0,removed=0,resizes=0;
  const canvasEvents={};const canvas={addEventListener:(k,fn)=>canvasEvents[k]=fn,removeEventListener:k=>delete canvasEvents[k]};
  const container={replaceChildren(){}};
- class MapMock{constructor(){if(throwConstructor)throw Error('init');this.events={};instances.push(this);}addControl(){if(throwControl)throw Error('control');}getCanvas(){return canvas;}once(k,fn){this.events[k]=fn;}on(k,fn){this.events[k]=fn;}getStyle(){return{layers:[]};}remove(){removed++;}resize(){resizes++;}}
- const mapbox={supported:()=>{if(throwSupport)throw Error('support');return!unsupported;},Map:MapMock,NavigationControl:class{}};
- const mod={exports:{}};new Function('module','exports','require','process','window',compile('components/job-map.tsx'))(mod,mod.exports,name=>{
+ class MapMock{constructor(){if(throwConstructor)throw Error('init');this.events={};instances.push(this);}addControl(){if(throwControl)throw Error('control');}getCanvas(){return canvas;}once(k,fn){this.events[k]=fn;}on(k,fn){this.events[k]=fn;}getStyle(){return{layers:[]};}remove(){removed++;}resize(){resizes++;}easeTo(options){flyTo.push(options);}getZoom(){return 12;}}
+ const frames=[],markers=[],popups=[],flyTo=[];
+ const documentMock={activeElement:null,createElement:()=>new ElementMock()};
+ class ElementMock {
+  dataset={}; events={}; children=new Map(); attributes={}; classList={toggle(){}}; style={setProperty(){}};
+  querySelector(selector){if(!this.children.has(selector))this.children.set(selector,new ElementMock());return this.children.get(selector);}
+  querySelectorAll(){return [];}
+  setAttribute(k,v){this.attributes[k]=v;}
+  getAttribute(k){return this.attributes[k];}
+  addEventListener(k,fn){this.events[k]=fn;}
+  contains(element){return [...this.children.values()].includes(element);}
+  focus(){documentMock.activeElement=this;}
+ }
+ class MarkerMock {
+  constructor({element}){this.element=element;}
+  setLngLat(){return this;}
+  addTo(){markers.push(this);return this;}
+  getElement(){return this.element;}
+  remove(){markers.splice(markers.indexOf(this),1);}
+ }
+ class PopupMock {
+  constructor(options){this.options=options;}
+  setLngLat(){return this;}
+  setDOMContent(content){this.content=content;return this;}
+  addTo(){popups.push(this);return this;}
+  remove(){this.removed=true;}
+ }
+ const mapbox={Marker:MarkerMock,Popup:PopupMock,supported:()=>{if(throwSupport)throw Error('support');return!unsupported;},Map:MapMock,NavigationControl:class{}};
+ const router={push(){}};
+ const mod={exports:{}};new Function('module','exports','require','process','window','document','requestAnimationFrame',compile('components/job-map.tsx'))(mod,mod.exports,name=>{
   if(name==='react')return hooks.react;
   if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'fragment'};
   if(name==='mapbox-gl')return{default:mapbox};
   if(name==='mapbox-gl/dist/mapbox-gl.css')return{};
-  if(name==='next/navigation')return{useRouter:()=>({push(){}})};
+  if(name==='next/navigation')return{useRouter:()=>router};
   if(name.startsWith('@/lib/'))return require('../lib/'+name.split('/').at(-1)+'.ts');
   throw Error(name);
- },{env:{NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:token}},{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),matchMedia:()=>({matches:true})});
+ },{env:{NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:token}},{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),matchMedia:()=>({matches:true})},documentMock,fn=>frames.push(fn));
  let props={jobs,userCoordinates:null,active,onUnavailable:message=>reports.push(message)};
  const render=()=>{const tree=hooks.render(()=>mod.exports.JobMap(props));for(const n of nodes(tree))if(n.props?.ref)n.props.ref.current=container;hooks.effects();return tree;};
- return{render,hooks,reports,instances,canvasEvents,timers,setProps:next=>props={...props,...next},get removed(){return removed;},get resizes(){return resizes;}};
+ return{render,hooks,reports,instances,canvasEvents,timers,markers,popups,frames,documentMock,flyTo,setProps:next=>props={...props,...next},get removed(){return removed;},get resizes(){return resizes;}};
 }
 for(const config of [{token:''},{unsupported:true},{throwSupport:true},{throwConstructor:true},{throwControl:true}]){
  const test=mapCase(config);test.render();await flush();test.render();assert(test.reports.at(-1),'Startup failures reach parent');test.hooks.unmount();if(config.throwControl)assert.equal(test.removed,1,'Partial map removed');
@@ -50,6 +77,35 @@ ready.instances[0].events.error({error:Error('one temporary tile failure')});rea
 let prevented=false;ready.canvasEvents.webglcontextlost({preventDefault(){prevented=true;}});ready.render();assert(prevented);assert.match(ready.reports.at(-1),/grafikstödet/);ready.hooks.unmount();assert(!ready.canvasEvents.webglcontextlost);
 const unlocated=mapCase({jobs:[{id:'unknown',city:'QA unknown',longitude:NaN,latitude:999}]});unlocated.render();assert.match(unlocated.reports.at(-1),/saknar en plats/);unlocated.hooks.unmount();
 console.log('PASS actual JobMap: missing token, unsupported/thrown WebGL check, constructor/control failure, timeout, forbidden/startup error, healthy style, resize, context loss, cleanup and invalid/unknown coordinates.');
+const interactive=mapCase({jobs:[{id:'map-qa',title:'Fiktivt lagerjobb',city:'Stockholm',latitude:59.32,longitude:18.06}]});
+interactive.render();
+interactive.instances[0].events['style.load']();
+interactive.instances[0].events.load();
+interactive.render();
+const getPin=()=>interactive.markers[0].getElement().querySelector('.job-map-pin');
+let pin=getPin();
+const event={detail:0,preventDefault(){},stopPropagation(){}};
+pin.focus();
+pin.events.click(event);
+interactive.render();
+const popup=interactive.popups.at(-1);
+assert.equal(popup.options.focusAfterOpen,false,'Mapbox should leave hover focus alone');
+assert.equal(interactive.documentMock.activeElement,popup.content.querySelector('.job-map-close'),'Keyboard goes to the dismiss control');
+assert.equal(getPin().attributes['aria-expanded'],'true');
+popup.content.events.keydown({...event,key:'Escape'});
+interactive.render();
+interactive.frames.forEach(fn=>fn());
+assert.equal(getPin().attributes['aria-expanded'],'false');
+assert.equal(interactive.documentMock.activeElement,getPin(),'Escape returns focus to the current marker');
+assert.ok(popup.removed);
+assert.equal(interactive.flyTo[0]?.duration,0,'Initial viewport respects reduced motion');
+pin=getPin();
+pin.focus();
+pin.events.pointerenter();
+interactive.render();
+assert.notEqual(interactive.documentMock.activeElement,interactive.popups.at(-1).content.querySelector('.job-map-close'),'Hover leaves focus outside the popup');
+interactive.hooks.unmount();
+console.log('PASS actual JobMap with DOM doubles: keyboard popup, Escape, origin focus, passive hover and reduced motion.');
 // Actual parent view handles fallback and retry without changing results/filters.
 const hooks=harness();const params=new URLSearchParams('workTime=weekend&onlyKnown=yes');const auth={user:{id:'qa'},profile:{role:'youth'},status:'ready'};
 const jobs=[{id:'one',title:'QA Café',city:'Stockholm',company_user_id:'qa',employment_type:'Deltid',created_at:'2026-01-01',practical_details:{times:['weekend']}},{id:'two',title:'QA Lager',city:'Stockholm',company_user_id:'qa2',employment_type:'Deltid',created_at:'2026-01-02',practical_details:{times:['evening']}}];

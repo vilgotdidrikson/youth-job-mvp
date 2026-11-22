@@ -118,6 +118,8 @@ const invoiceSlots = [];
 let invoiceCursor = 0, lastInvoiceAttempt, invoiceRequest, invoiceReads = 0;
 let rejectInvoiceRead = true;
 const invoicePanel = compile('components/hire-test-invoices.tsx',{
+  "@/lib/supabase":{getSupabaseClient(){throw Error("No checkout during invoice list rendering");}},
+    "@/lib/stripe-test-checkout":compile("lib/stripe-test-checkout.ts",{"./invoice-pilot":compile("lib/invoice-pilot.ts")}),
   react:{
     useState(initial) {
       const i=invoiceCursor++;

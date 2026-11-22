@@ -88,8 +88,14 @@ begin
   perform pg_temp.invoice_actor(a);
   begin perform public.list_hire_test_invoices(true); raise exception 'Admin at AAL1'; exception when insufficient_privilege then null; end;
   perform pg_temp.invoice_actor(a,'aal2');
-  if jsonb_array_length(public.list_hire_test_invoices(true))<>2 then raise exception 'Admin cannot see issued synthetic invoices'; end if;
-  if public.list_hire_test_invoices(true)->0->>'invoice_email' is not null then raise exception 'Admin list exposes invoice email'; end if;
+  if (select count(*) from jsonb_array_elements(public.list_hire_test_invoices(true)) as item
+      where item->>'id' in (invoices->0->>'id',invoices->1->>'id'))<>2 then
+    raise exception 'Admin cannot see issued synthetic invoices';
+  end if;
+  if exists(select 1 from jsonb_array_elements(public.list_hire_test_invoices(true)) as item
+      where item->>'id' in (invoices->0->>'id',invoices->1->>'id') and item->>'invoice_email' is not null) then
+    raise exception 'Admin list exposes invoice email';
+  end if;
   begin perform public.record_hire_test_payment(paid_invoice,100000,'TEST-001'); raise exception 'Wrong amount settled'; exception when invalid_parameter_value then null; end;
   begin perform public.record_hire_test_payment(paid_invoice,50000,'REAL-001'); raise exception 'Non-test reference settled'; exception when invalid_parameter_value then null; end;
   perform public.record_hire_test_payment(paid_invoice,50000,'TEST-001');

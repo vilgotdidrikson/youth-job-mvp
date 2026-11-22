@@ -14,6 +14,19 @@
 
   --color-text: #4c303b;
   --color-text-rgb: 76, 48, 59;
+  --color-black-rgb: 0, 0, 0;
+  --color-white-rgb: 255, 255, 255;
+  --color-canvas-tint-rgb: 255, 250, 251;
+  --color-card-overlay-start-rgb: 40, 20, 30;
+  --color-card-overlay-middle-rgb: 45, 23, 34;
+  --color-card-overlay-end-rgb: 48, 25, 34;
+  --color-card-overlay-solid: #301922;
+  --color-job-detail-illustration-rose: #dc8da7;
+  --color-job-detail-illustration-base: #e7a0b6;
+  --color-discovery-illustration-rose: #e8a0b7;
+  --color-discovery-illustration-base: #ebadbf;
+  --color-job-detail-illustration-light: #f2ccd8;
+  --color-discovery-illustration-light: #f5d5df;
   /* Darkened from #896a76 so muted body text meets WCAG AA on canvas and rose (DA-06). */
   --color-text-muted: #7f616d;
   --color-text-muted-strong: #765563;

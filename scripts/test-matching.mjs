@@ -92,6 +92,11 @@ try {
  assert.equal(nextAssessment.criteria[0].status,'fulfilled');
  assert.deepEqual(missingApplicationCriteria(nextAssessment,[],savedSource),['Kassavana']);
  assert.equal(assessCandidate(nextJob,[],savedSource+'\nJag saknar B-körkort').criteria[0].status,'unknown');
+ const savedTruck = 'Sparad egen uppgift från tidigare komplettering: Jag har ett truckkort';
+ assert.equal(fixedCriterionEvidence('Krav på truckkort',savedTruck).status,'fulfilled');
+ assert.equal(fixedCriterionEvidence('Körkort behörighet B','Sparad egen uppgift från tidigare komplettering: Jag har körkort klass B').status,'fulfilled');
+ assert.equal(fixedCriterionEvidence('Truckkort',savedTruck+'\nKompletteringssvar: Jag saknar truckkort').status,'unknown');
+ assert.deepEqual(missingApplicationCriteria(assessCandidate(matchingCriteria([{label:'Krav på truckkort',required:true}]),[],savedTruck),[],savedTruck),[]);
  assert.equal(fixedCriterionEvidence('Kan arbeta helger','Sparad egen uppgift från tidigare komplettering: Jag kan arbeta helger').status,'unknown');
  const {queueApplicationFollowups}=await load('queue-application-followups');
  let history={data:[{criterion_label:'Kassavana'}]}, queuedLabels;

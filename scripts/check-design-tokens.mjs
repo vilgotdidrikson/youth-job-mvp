@@ -3,15 +3,23 @@
 // and are not counted; neither are @font-face descriptors. Run with --update to lower the baseline after a migration.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import postcss from 'postcss';
 
 const BASELINE = 'scripts/design-token-baseline.json';
 const files = [];
 const walk = dir => { for (const name of readdirSync(dir)) { const path = join(dir, name); if (statSync(path).isDirectory()) walk(path); else if (path.endsWith('.css') && !path.endsWith('styles/theme.css')) files.push(path); } };
 ['app', 'components'].forEach(walk);
 
+const uncentralized = [];
 const hexPerFile = {}, sizes = new Set(), radii = new Set(), weights = new Set();
 for (const file of files.sort()) {
   const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/@font-face\s*{[^}]*}/g, '');
+  if (file !== 'app/kartan/map-design.css') postcss.parse(css, { from: file }).walkDecls(decl => {
+    if (/^(?:\.map-|\.job-map-)/.test(decl.parent.selector ?? '') || decl.value.includes('url(')) return;
+    if (/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(\s*[+-]?(?:\d|\.\d)|(?<![\w-])(?:white|black)(?![\w-])/i.test(decl.value)) {
+      uncentralized.push(`${file}:${decl.source.start.line} ${decl.prop}`);
+    }
+  });
   const literal = value => !/^var\(--[\w-]+\)$/.test(value.trim());
   const hex = css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
   if (hex.length) hexPerFile[file] = hex.length;
@@ -21,6 +29,10 @@ for (const file of files.sort()) {
 }
 const current = { hex: Object.values(hexPerFile).reduce((a, b) => a + b, 0), fontSizes: sizes.size, radii: radii.size, fontWeights: weights.size };
 
+if (uncentralized.length) {
+  console.error('Color declarations must use theme tokens outside the map:', uncentralized.join('\n'));
+  process.exit(1);
+}
 if (process.argv.includes('--update')) {
   writeFileSync(BASELINE, JSON.stringify({ ...current, hexPerFile }, null, 2) + '\n');
   console.log('Baseline updated:', current);
