@@ -30,12 +30,13 @@
     {
       "id": "hire-test-invoices",
       "relations": [
-        "private.hire_test_invoices"
+        "private.hire_test_invoices",
+        "private.hire_test_stripe_checkout"
       ],
       "classification": "review",
-      "subjectScope": "company_user_id = eget uttryckligen aktiverat fiktivt företagskonto. Adminavstämning kräver verifierad andra faktor.",
-      "data": "Fiktiv fakturaadress och företagsnamn, internt rekryterings-ID, godkända testvillkor, belopp, datum, rättelse och simulerad betalningsreferens.",
-      "review": "Enbart testdata. Ägarens fakturavy visar inga kandidat- eller kontonycklar. Ingen skarp export, skarp betalning eller lagring av bankuppgifter. Raden raderas med testanställningen eller testföretaget."
+      "subjectScope": "company_user_id = eget uttryckligen aktiverat fiktivt företagskonto. Checkout-försöket hör till samma företag via fakturans ID.",
+      "data": "Fiktiv fakturaadress och företagsnamn, internt rekryterings-ID, godkända testvillkor, belopp, datum, rättelse, simulerad betalningsreferens och Stripes testsessions-ID med försöks-ID och tidpunkt.",
+      "review": "Enbart testdata. Ägarens fakturavy visar inga kandidat- eller kontonycklar. Ingen skarp export, skarp betalning eller lagring av bankuppgifter. Checkout-länken och Stripes händelsedata lagras inte. Checkout-raden raderas med testfakturan."
     },
     {
       "id": "hire-test-invoice-mail",

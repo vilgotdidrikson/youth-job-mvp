@@ -1,0 +1,35 @@
+{
+  "mode": "additions-only",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-21",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "invoice_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "reserved_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "session_id",
+          "type": "text"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "hire_test_stripe_checkout",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (invoice_id) REFERENCES private.hire_test_invoices(id) ON DELETE CASCADE"
+      ]
+    }
+  ],
+  "buckets": []
+}
