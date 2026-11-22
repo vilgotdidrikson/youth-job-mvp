@@ -3,10 +3,9 @@
 import { BrandLogo } from "@/components/brand-logo";
 
 import Link from "next/link";
-import { jobPublicationAction } from "@/lib/job-publication";
 import { organizationNumberForSave, parseOrganizationNumber } from "@/lib/company-verification";
 import type { CompanyProfile } from "@/lib/types";
-import { COMPANY_ROUTES, createdCompanyJobHref } from "@/lib/company-navigation";
+import { COMPANY_ROUTES } from "@/lib/company-navigation";
 import { CompanyMatchProfileForm } from "@/components/company-match-profile-form";
 import { UiIcon } from "@/components/ui-icon";
 import "./company-onboarding-design.css";
@@ -15,34 +14,10 @@ import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { getSupabaseClient } from "@/lib/supabase";
-import { createJob } from "@/lib/jobs";
-import { uploadJobImage } from "@/lib/storage";
-import { ADDRESS_SUGGESTIONS, CITY_SUGGESTIONS, JOB_TITLE_SUGGESTIONS } from "@/lib/form-suggestions";
 
-const JOB_CATEGORIES = [
-  "Café/restaurang",
-  "Butik",
-  "Barnomsorg",
-  "Idrott",
-  "Event",
-  "Lager",
-  "Leverans",
-  "Kundtjänst",
-  "Administration",
-  "Handledare",
-  "Sociala medier",
-  "Övrigt",
-];
-
-const TIME_OPTIONS = ["Deltid", "Heltid", "Sommarjobb", "Helgjobb", "Extra vid behov"];
-const HIRING_PRIORITIES = ["Erfarenhet", "Personlighet", "Tekniska kunskaper", "Kulturpassning", "Ledarskap"];
 const INDUSTRY_TIPS = ["IT", "Bygg", "Restaurang", "Vård", "E-handel", "Butik", "Transport", "Ekonomi"];
 
-type Step = "profil" | "val" | "annons" | "matchprofil";
-
-function toggleItem(arr: string[], item: string): string[] {
-  return arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item];
-}
+type Step = "profil" | "val" | "matchprofil";
 
 export default function CompanyOnboardingPage() {
   const router = useRouter();
@@ -53,40 +28,13 @@ export default function CompanyOnboardingPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<CompanyProfile["verification_status"]>();
-  const publication = jobPublicationAction(verificationStatus);
 
   // Company profile form
   const [companyName, setCompanyName] = useState("");
   const [administrator, setAdministrator] = useState("");
   const [organizationNumber, setOrganizationNumber] = useState("");
   const [storedOrganizationNumber, setStoredOrganizationNumber] = useState("");
-  const [city, setCity] = useState("");
-  const [address, setAddress] = useState("");
-  const [description, setDescription] = useState("");
   const [industry, setIndustry] = useState("");
-  const [hiringPriorities, setHiringPriorities] = useState<string[]>([]);
-  const [customPriority, setCustomPriority] = useState("");
-  const [logoName, setLogoName] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [websiteUrl, setWebsiteUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [instagramUrl, setInstagramUrl] = useState("");
-  const [facebookUrl, setFacebookUrl] = useState("");
-  const [tiktokUrl, setTiktokUrl] = useState("");
-  const [xUrl, setXUrl] = useState("");
-
-  // Job form
-  const [jobTitle, setJobTitle] = useState("");
-  const [jobCity, setJobCity] = useState("");
-  const [jobAddress, setJobAddress] = useState("");
-  const [jobPostalCode, setJobPostalCode] = useState("");
-  const [jobCategory, setJobCategory] = useState("");
-  const [jobTimePrefs, setJobTimePrefs] = useState<string[]>([]);
-  const [jobMinAge, setJobMinAge] = useState("");
-  const [jobMaxAge, setJobMaxAge] = useState("");
-  const [jobPay, setJobPay] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
 
   useEffect(() => {
     if (!loading && profile && profile.role !== "company") {
@@ -152,38 +100,6 @@ export default function CompanyOnboardingPage() {
     }
   };
 
-  const handleCreateJob = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!jobCategory) { setError("Välj typ av jobb."); return; }
-    if (!jobTimePrefs.length) { setError("Välj minst en arbetstid."); return; }
-    if (!jobAddress.trim()) { setError("Ange arbetsplatsens gatuadress."); return; }
-    if (!jobPostalCode.trim()) { setError("Ange arbetsplatsens postnummer."); return; }
-    setBusy(true);
-    setError("");
-    try {
-      const job = await createJob({
-        title: jobTitle,
-        city: jobCity || city,
-        address: jobAddress,
-        postal_code: jobPostalCode,
-        category: jobCategory,
-        employment_type: jobTimePrefs.join(","),
-        description: jobDescription,
-        salary_per_hour: jobPay,
-        requirements: "",
-        benefits: "",
-        company_name: companyName,
-        image_url: "",
-        min_age: jobMinAge ? parseInt(jobMinAge, 10) : null,
-        max_age: jobMaxAge ? parseInt(jobMaxAge, 10) : null,
-      });
-      router.replace(createdCompanyJobHref(job.id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Kunde inte skapa annonsen.");
-      setBusy(false);
-    }
-  };
-
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
   const chipBtn = (label: string, selected: boolean, onClick: () => void) => (
@@ -198,15 +114,6 @@ export default function CompanyOnboardingPage() {
     </button>
   );
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: "0.78rem",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-    color: "#737373",
-    display: "block",
-    marginBottom: "0.35rem",
-  };
   const profileQuestions = [
     "Vad heter ditt företag?",
     "Vilken bransch verkar ni inom?",
@@ -216,9 +123,6 @@ export default function CompanyOnboardingPage() {
 
   return (
     <main className={`mobile-shell company-onboarding ${step === "profil" ? "company-profile-onboarding" : ""}`}>
-      <datalist id="job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
-      <datalist id="city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
-      <datalist id="address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <header className="company-onboarding-brand"><Link href="/"><BrandLogo/></Link><span>För företag</span></header>
       {step === "profil" && <aside className="company-onboarding-intro"><span className="company-onboarding-mark"><UiIcon name="briefcase" width="29" height="29" /></span><p>Er nästa kollega börjar här</p><h2>Berätta lite om ert företag.</h2><span>Fyra korta frågor gör ert konto redo. Sedan kan ni skapa en annons i lugn och ro.</span></aside>}
       {/* ── STEP 1: Company profile ── */}
@@ -291,23 +195,11 @@ export default function CompanyOnboardingPage() {
               required
               autoFocus
             /></>}
-            {profileQuestion === 4 && <div><label style={labelStyle}>Stad</label><input className="input-field" placeholder="Stad" list="city-suggestions" value={city} onChange={(e) => setCity(e.target.value)} autoFocus /><label style={{ ...labelStyle, marginTop: "1rem" }}>Adress</label><input className="input-field" placeholder="T.ex. Storgatan 12" list="address-suggestions" value={address} onChange={(e) => setAddress(e.target.value)} /></div>}
-            {profileQuestion === 5 && <div><div style={{ display: "flex", gap: "0.5rem" }}><input className="input-field" placeholder="Skriv en egen prioritering" value={customPriority} onChange={(e) => setCustomPriority(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } } }} autoFocus /><button type="button" className="secondary-btn" style={{ padding: "0 .9rem" }} onClick={() => { const value = customPriority.trim(); if (value) { setHiringPriorities((items) => items.includes(value) ? items : [...items, value]); setCustomPriority(""); } }}>Lägg till</button></div><div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.85rem" }}>{[...new Set([...HIRING_PRIORITIES, ...hiringPriorities])].map((priority) => chipBtn(priority, hiringPriorities.includes(priority), () => setHiringPriorities((items) => toggleItem(items, priority))))}</div></div>}
-            {profileQuestion === 6 && <><label style={labelStyle}>Beskrivning</label><textarea
-              rows={3}
-              className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
-              style={{ marginBottom: "0.25rem" }}
-              placeholder="Beskriv er verksamhet kort..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              autoFocus
-            /></>}
-            {profileQuestion === 7 && <div><p style={{ margin: "0 0 1rem", color: "#63777b", fontSize: "0.9rem", lineHeight: 1.5 }}>En komplett profil hjälper kandidater att lära känna ert företag.</p><label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6rem", padding: "1.5rem", border: "1.5px dashed #d7dfd6", borderRadius: 12, cursor: uploadingLogo ? "wait" : "pointer", color: "#63777b", background: "rgba(255,255,255,.55)" }}><input type="file" accept="image/png,image/jpeg" style={{ display: "none" }} disabled={uploadingLogo} onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; setLogoName(file.name); setUploadingLogo(true); setError(""); void uploadJobImage(file).then(setLogoUrl).catch((uploadError) => setError(uploadError instanceof Error ? uploadError.message : "Kunde inte ladda upp logotypen.")).finally(() => setUploadingLogo(false)); }} />{logoUrl ? <img src={logoUrl} alt="Företagslogotyp" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 10 }} /> : <span style={{ fontSize: "1.7rem" }}>↑</span>}<strong>{uploadingLogo ? "Laddar upp..." : logoName || "Lägg till logotyp"}</strong><span style={{ fontSize: "0.78rem" }}>PNG eller JPG · valfritt</span></label><div style={{ display: "grid", gap: "0.7rem", marginTop: "1rem" }}><input className="input-field" type="url" placeholder="Webbplats" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} /><input className="input-field" type="url" placeholder="LinkedIn" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Instagram" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} /><input className="input-field" type="url" placeholder="Facebook" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} /><input className="input-field" type="url" placeholder="TikTok" value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} /><input className="input-field" type="url" placeholder="X" value={xUrl} onChange={(e) => setXUrl(e.target.value)} /></div></div>}
           </div>
 
           <div className="profile-actions">
             {profileQuestion > 0 && <button type="button" className="secondary-btn" onClick={() => setProfileQuestion((current) => current - 1)}>← Tillbaka</button>}
-            <button type="submit" className="cta-btn" disabled={busy || uploadingLogo}>{busy ? "Sparar..." : profileQuestion === 3 ? "Spara och fortsätt →" : "Nästa →"}</button>
+            <button type="submit" className="cta-btn" disabled={busy}>{busy ? "Sparar..." : profileQuestion === 3 ? "Spara och fortsätt →" : "Nästa →"}</button>
           </div>
         </form>
       )}
@@ -326,161 +218,6 @@ export default function CompanyOnboardingPage() {
       )}
 
       {step === "matchprofil" && user && <section><h1>Er matchprofil</h1><p>Valfritt. Välj förslag eller skriv egna uppgifter. Jobbkrav bestämmer ni sedan per annons.</p><CompanyMatchProfileForm userId={user.id}/><button type="button" className="secondary-btn" onClick={() => setStep("val")}>Till nästa steg</button></section>}
-      {/* ── STEP 3: Job form ── */}
-      {step === "annons" && (
-        <form onSubmit={(e) => void handleCreateJob(e)}>
-          <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-              MatchnWork
-            </p>
-            <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111", margin: "0.2rem 0 0.4rem" }}>
-              Skapa jobbannons
-            </h1>
-            <p style={{ fontSize: "0.85rem", color: "#737373", margin: 0 }}>
-              Fyll i kriterierna – de används för att matcha rätt ungdomar till ditt jobb.
-            </p>
-          </div>
-
-          {error && (
-            <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "1rem" }}>
-              {error}
-            </div>
-          )}
-
-          <div className="card" style={{ padding: "1.25rem" }}>
-            <label style={labelStyle}>Annonstitel *</label>
-            <input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
-              placeholder="T.ex. Butikssäljare, Sommarjobbare på café"
-              list="job-title-suggestions"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              required
-              autoFocus
-            />
-
-            <label style={labelStyle}>Stad *</label>
-            <input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
-              placeholder="T.ex. Stockholm"
-              list="city-suggestions"
-              value={jobCity}
-              onChange={(e) => setJobCity(e.target.value)}
-              required
-            />
-
-            <label style={labelStyle}>Gatuadress *</label>
-            <input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
-              placeholder="T.ex. Storgatan 12"
-              list="address-suggestions"
-              autoComplete="street-address"
-              value={jobAddress}
-              onChange={(e) => setJobAddress(e.target.value)}
-              required
-            />
-
-            <label style={labelStyle}>Postnummer *</label>
-            <input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
-              placeholder="123 45"
-              autoComplete="postal-code"
-              inputMode="numeric"
-              value={jobPostalCode}
-              onChange={(e) => setJobPostalCode(e.target.value)}
-              required
-            />
-
-            <label style={{ ...labelStyle, marginBottom: "0.5rem" }}>Typ av jobb *</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.85rem" }}>
-              {JOB_CATEGORIES.map((cat) =>
-                chipBtn(cat, jobCategory === cat, () => setJobCategory((c) => (c === cat ? "" : cat)))
-              )}
-            </div>
-
-            <label style={{ ...labelStyle, marginBottom: "0.5rem" }}>
-              Arbetstider *{" "}
-              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(välj en eller flera)</span>
-            </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.85rem" }}>
-              {TIME_OPTIONS.map((opt) =>
-                chipBtn(opt, jobTimePrefs.includes(opt), () =>
-                  setJobTimePrefs((prev) => toggleItem(prev, opt))
-                )
-              )}
-            </div>
-
-<label>Egen arbetskategori<input className="input-field" value={jobCategory} maxLength={80} onChange={event=>setJobCategory(event.target.value)}/></label><label>Arbetstider – välj ovan eller skriv egna<input className="input-field" value={jobTimePrefs.join(", ")} maxLength={200} onChange={event=>setJobTimePrefs(event.target.value.split(",").map(value=>value.trim()).filter(Boolean))}/></label>            <label style={labelStyle}>Ålderskrav (valfritt)</label>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.85rem" }}>
-              <input
-                type="number"
-                min={13}
-                max={30}
-                className="h-11 rounded-xl border border-[#e8e8e8] px-3 text-sm"
-                style={{ flex: 1 }}
-                placeholder="Min ålder"
-                value={jobMinAge}
-                onChange={(e) => setJobMinAge(e.target.value)}
-              />
-              <span style={{ color: "#a3a3a3", fontWeight: 600 }}>–</span>
-              <input
-                type="number"
-                min={13}
-                max={30}
-                className="h-11 rounded-xl border border-[#e8e8e8] px-3 text-sm"
-                style={{ flex: 1 }}
-                placeholder="Max ålder"
-                value={jobMaxAge}
-                onChange={(e) => setJobMaxAge(e.target.value)}
-              />
-            </div>
-
-            <label style={labelStyle}>Timlön (valfritt)</label>
-            <input
-              className="h-11 w-full rounded-xl border border-[#e8e8e8] px-3 text-sm"
-              style={{ marginBottom: "0.85rem" }}
-              placeholder="T.ex. 130 kr/h"
-              value={jobPay}
-              onChange={(e) => setJobPay(e.target.value)}
-            />
-
-            <label style={labelStyle}>Beskrivning *</label>
-            <textarea
-              rows={4}
-              className="w-full rounded-xl border border-[#e8e8e8] px-3 py-3 text-sm"
-              style={{ marginBottom: "0.25rem" }}
-              placeholder="Beskriv jobbet, arbetsuppgifter och vad ni erbjuder..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <p role="status" style={{lineHeight:1.6}}>{publication.description}</p>
-          <div style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
-            <button
-              type="button"
-              className="secondary-btn"
-              style={{ padding: "0.875rem", fontSize: "0.9rem", flexShrink: 0 }}
-              onClick={() => { setError(""); setStep("val"); }}
-            >
-              ← Tillbaka
-            </button>
-            <button
-              type="submit"
-              className="cta-btn"
-              style={{ flex: 1, padding: "0.9rem", fontSize: "0.95rem" }}
-              disabled={busy}
-            >
-              {busy ? publication.busyLabel : publication.label}
-            </button>
-          </div>
-        </form>
-      )}
     </main>
   );
 }

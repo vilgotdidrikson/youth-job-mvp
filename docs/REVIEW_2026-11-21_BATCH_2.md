@@ -17,3 +17,12 @@ Produktionsbygge med TypeScript, riktad ESLint, regressionssviter och lokala HTT
 En fiktiv företagsfaktura gav HTTP 409 eftersom Stripe använde `/g/pay/` i Checkout-länken. [PR #249](https://github.com/vilgotdidrikson/youth-job-mvp/pull/249) (`6779ccf` på dev) validerar Stripes HTTPS-domän och att länken hör till samma testsession. Regressionstestet täcker länken från sandboxen, det tidigare `/c/pay/`-formatet och avvisning av fel sessions-ID.
 
 Ett Stripe-testköp på 500 SEK genomfördes i webbläsaren med fiktiva uppgifter. Efter återgång visade fakturan **Betalning avstämd** utan manuell avstämning. DevStaging bekräftade belopp, betald status och att avstämningsreferensen motsvarade samma Stripe-testsession. Inga riktiga pengar drogs.
+
+### Uppföljning 2026-11-22
+
+| Punkt | Byggt och kontrollerat | Kvar för att lämna hela punkten för granskning |
+|---|---|---|
+| L13 | Rättat ett fel där tre fakturakategorier saknade visningsnamn och avbröt ZIP-exporten. Inventerat Stripes privata testdata under testfakturor. DevStaging bekräftade RLS, kolumner och ägarkedja via fakturan. ZIP-, HTTP- och inventeringsproven täcker ändringen. | Fullständig export med granskade fält och filer, rättelsekedja och inloggad acceptans. Testexporten är fortsatt märkt som ofullständig. |
+| L16 | Svar som kommer efter handläggarvyns tidsgräns kasseras även när webbläsarens timer är fördröjd. Komponentprov reproducerar ordningen med svaret först. | Privata bilagor, fristpåminnelser, gallring och incidentflöde samt acceptans med de fem personliga handläggarkontona. |
+| F20 | Integritetssidan förklarar ansökningsdelning och frivillig AI-hjälp samt länkar till tillgång och rättelse, med kontaktväg utan konto. Kontrollerat genom bygge och tillgänglighetssvit. | Slutliga integritets- och villkorstexter enligt L14/L15 samt sammanhängande inloggad webb- och mobilacceptans. |
+| DA-12 | Tagit bort oåtkomliga delar med inline-stilar från företagsintroduktionen. De fyra frågorna och vägen vidare till den ordinarie annonsbyggaren täcks av navigations- och verifieringssviterna. | Återstående stilar i ungdomsintroduktionen och visuell jämförelse i driftsatt dev. |
