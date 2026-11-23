@@ -68,3 +68,7 @@ Testa valt beteende med anonyma och inloggade roller, direktlänkar och ändrad 
 - D05: Huvudrubriken är ”Ungdomsjobb och enklare rekrytering”. Rubriken visas i den initiala HTML-koden. En ljus temayta bakom rubriken och navigationen gör textkontrasten oberoende av animationen i bakgrunden.
 - DA-18: Startsidan länkar till /jobb. Där visas de sex nyaste aktiva och publicerade anställningarna från verifierade företag, med titel och ort. Utloggade har en separat begränsad databasfunktion för urvalet. Fullständiga annonsrader och äldre direktlänkar kräver en inloggad session.
 - DevStaging-provet verifierade fält, maxantal, väntande och pausad annons, nekad anonym fullständighetsåtkomst och bibehållen åtkomst för en inloggad ungdom. Transaktionen med testdata och schema återställdes. Permanent installation och webbprov på driftsatt dev återstår.
+
+## Kompletterande lanseringskontroll
+
+Vilgot / Codex kontrollerar driftberedskap, faktiska kontouppgifter och underlag för slutbeslut i PR #253.
