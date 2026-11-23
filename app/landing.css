@@ -228,45 +228,24 @@
   text-transform: uppercase;
 }
 
-/* Sized so the longest headline ("En enklare väg till rätt") stays on one
-   line from tablet width up; the vh term keeps it in proportion on short,
-   zoomed-in viewports. */
 .landing-bold-hero h1 {
-  display: grid;
+  align-self: center;
+  max-width: 100%;
   margin: 0;
-  color: var(--landing-ink);
+  padding: clamp(1rem, 3vw, 2.5rem);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: clamp(2.75rem, min(6.5vw, 12vh), 6.5rem);
   font-weight: 500;
   letter-spacing: -.045em;
-  line-height: .92;
-}
-
-/* The typed headline and the invisible sizers share one cell. */
-.landing-bold-hero h1 > span {
-  grid-area: 1 / 1;
-}
-
-.landing-bold-title-sizer {
-  visibility: hidden;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
 }
 
 .landing-bold-hero h1 em {
-  color: var(--landing-salmon);
+  color: var(--color-brand-on-rose);
   font-style: normal;
-}
-
-.landing-hero-caret {
-  display: inline-block;
-  width: .07em;
-  height: .82em;
-  margin-left: .08em;
-  vertical-align: -.05em;
-  background: currentColor;
-  animation: landing-hero-caret-blink .8s step-end infinite;
-}
-
-@keyframes landing-hero-caret-blink {
-  50% { opacity: 0; }
 }
 
 /* In normal flow below the headline, so the two can never collide. */
@@ -1105,10 +1084,6 @@
   .landing-bold-hero h1 { font-size: clamp(2.1rem, 11vw, 2.8rem); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .landing-hero-caret { animation: none; }
-}
-
 /* Shared rose/plum navigation remains readable on the light canvas. */
 .landing-bold-nav,.landing-bold-footer { --landing-ink:var(--color-text); }
 .landing-page.landing-bold .landing-bold-nav :is(.landing-logo,.landing-bold-language),.landing-bold-nav .landing-logo { color:var(--color-text); }
@@ -1119,16 +1094,8 @@
 .landing-bold-nav :is(a,button):focus-visible,.landing-bold-footer a:focus-visible { outline:3px solid var(--color-brand-strong);outline-offset:4px; }
 .landing-bold-nav .landing-bold-language:hover { color:var(--color-brand-strong)!important; }
 
-/* On the landing page the nav sits on the hero's dark edges: white text there.
-   /features and /pricing keep the dark text from the rules above. */
-.landing-page.landing-bold .landing-bold-nav :is(.landing-logo, .landing-bold-language) { color: var(--color-white); }
-
-/* D05: the first line changes with the headline; only the last phrase is typed. */
-.landing-hero-stem { animation: landing-hero-stem-in .35s ease both; }
-
-@keyframes landing-hero-stem-in {
-  from { opacity: 0; }
-}
+.landing-page.landing-bold .landing-bold-nav { background: var(--color-surface); }
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo, .landing-bold-language) { color: var(--color-text); }
 
 .landing-bold-actions .landing-bold-secondary {
   border: 1.5px solid var(--color-brand-accent);
@@ -1137,7 +1104,3 @@
 
 /* DA-17: the page ends with the same actions as the first view. */
 .landing-bold-manifesto .landing-bold-actions { margin-top: 2.5rem; }
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-hero-stem { animation: none; }
-}
