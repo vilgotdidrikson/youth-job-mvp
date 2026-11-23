@@ -81,9 +81,25 @@ export function LandingActions({ primary, secondary }: { primary: string; second
   );
 }
 
-export function LandingHero({ id, primary, secondary }: { id: string; primary: string; secondary: string }) {
+/** A static line above the headline says what the service is and who it is for from the first frame. */
+export function LandingHero({
+  id,
+  eyebrow,
+  primary,
+  secondary,
+}: {
+  id: string;
+  eyebrow: readonly [string, string];
+  primary: string;
+  secondary: string;
+}) {
   return (
     <section className="landing-bold-hero" id={id}>
+      <p className="landing-bold-eyebrow">
+        {eyebrow[0]}
+        <span className="landing-bold-eyebrow-separator"> · </span>
+        {eyebrow[1]}
+      </p>
       <AnimatedHeroHeadline />
       <LandingActions primary={primary} secondary={secondary} />
     </section>

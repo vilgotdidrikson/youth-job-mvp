@@ -219,13 +219,16 @@
   text-align: center;
 }
 
+/* Dark ink like the headline, so it stays readable on the light centre of the background. */
 .landing-bold-eyebrow {
-  margin: 0 0 1.8rem;
-  color: var(--color-white);
-  font-size: .7rem;
+  margin: 0 auto 1.6rem;
+  color: var(--landing-ink);
+  font-size: .8rem;
   font-weight: 800;
   letter-spacing: .14em;
+  line-height: 1.6;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 /* Sized so the longest headline ("En enklare väg till rätt") stays on one
@@ -1022,6 +1025,18 @@
     min-height: calc(100svh - 9rem);
     justify-content: center;
     padding: 2rem 1.25rem 3rem;
+  }
+
+  .landing-bold-eyebrow {
+    margin-bottom: 1.25rem;
+    font-size: .74rem;
+  }
+
+  /* Break at the separator instead of leaving it at a line end; still read aloud. */
+  .landing-bold-eyebrow-separator {
+    display: block;
+    height: 0;
+    overflow: hidden;
   }
 
   .landing-bold-hero h1 {
