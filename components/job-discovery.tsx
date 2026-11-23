@@ -1,4 +1,5 @@
 "use client";
+import { CandidateRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 
 import { ApplicationAiPreference } from "@/components/application-ai-preference";
 import { BrandLogo } from "@/components/brand-logo";
@@ -48,6 +49,7 @@ export function JobDiscovery({ resultCount, undoTitle, undoing, undoDisabled, on
       {!showingSaved && <div className={styles.searchBox}><label htmlFor="discovery-search">Sök jobb</label><div><input id="discovery-search" type="search" maxLength={200} value={filters.query} placeholder="Jobb, företag eller sökord" onChange={event => onFilter("query", event.target.value)}/>{filters.query && <button type="button" onClick={() => onFilter("query", "")} aria-label="Rensa söktext">Rensa</button>}</div><p role="status">{loading ? "Hämtar jobb…" : `${resultCount ?? jobs.length} jobb${activeFilters ? " med dina sökval" : " att upptäcka"}`}</p></div>}
       {(undoTitle || undoing) && <div className={styles.undoNotice}><span role="status">{undoing ? "Ångrar bortvalet…" : `Du valde Inte nu för ${undoTitle}.`}</span><button type="button" className={styles.filterButton} disabled={undoing || undoDisabled} onClick={() => void onUndo?.()} aria-label={`Ångra bortval av ${undoTitle ?? "jobbet"}`}>Ångra</button></div>}
       {!loading && !error && current && cvCompleted && <p className={styles.applicationNote}>Intresserad skickar din ansökan. <Link href="/privacy#profile-data">Så används ditt CV och dina uppgifter</Link>.</p>}
+      {!loading && !error && current && <CandidateRecruitmentNotice key={current.id} jobId={current.id} />}
       {!loading && !error && current && cvCompleted && <ApplicationAiPreference checked={aiJobId === current.id} onChange={checked => setAiJobId(checked ? current.id : null)} />}
       {notice && <p className={styles.sentNotice} role="status"><UiIcon name="check" width="17"/>{notice}</p>}{error && <div role="alert" className={styles.error}>{error}</div>}{loading ? <div className={styles.skeleton} role="status"><UiIcon name="briefcase"/><p>Hämtar jobb…</p></div> : error && !jobs.length ? null : <JobSwipeDeck searchFilters={showingSaved ? undefined : filters} disabled={undoing} onSeen={onSeen} jobs={jobs} onDecision={(job, decision) => {
         setAiJobId(null);

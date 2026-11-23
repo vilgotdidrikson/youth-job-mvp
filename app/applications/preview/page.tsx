@@ -1,4 +1,5 @@
 "use client";
+import { CandidateRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 import { JobRequirementsInsight } from "@/components/job-requirements-insight";
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -120,6 +121,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
     {saveError && <div className={`${styles.error} ${surfaces.root}`}><p role="alert">{saveError}</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load(selection.current)}>Hämta aktuellt underlag</button></div>}
     <JobRequirementsInsight jobId={jobId} />
     <ApplicationDisclosureView packet={preview.packet} youthPreview />
+    {!sent && <CandidateRecruitmentNotice key={jobId} jobId={jobId} />}
     {!sent && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={saving} />}
     <div className={surfaces.root}>
       {preview.is_saved ? <section className={surfaces.panel}><h2>Sparad delning</h2><p>Detta är samma underlag som företaget får för den här ansökan. Profiländringar delas först när du väljer att uppdatera underlaget.</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load([])}>Uppdatera från min profil och välj uppgifter</button></section>
