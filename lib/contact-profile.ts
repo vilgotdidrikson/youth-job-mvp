@@ -10,6 +10,7 @@ export function contactProfilePayload(input:{name:string;dateOfBirth:string;addr
     if(Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==input.dateOfBirth||date>todayDate)throw new Error('Kontrollera födelsedatumet.');
     age=todayDate.getUTCFullYear()-date.getUTCFullYear();
     if(todayDate.getUTCMonth()<date.getUTCMonth()||(todayDate.getUTCMonth()===date.getUTCMonth()&&todayDate.getUTCDate()<date.getUTCDate()))age--;
+    if(age<15)throw new Error('Du behöver ha fyllt 15 år för att använda MatchnWork.');
     if(age>120)throw new Error('Kontrollera födelsedatumet.');
   }
   return {full_name:fullName,date_of_birth:input.dateOfBirth||null,age,address:input.address.trim()||null,postal_code:input.postalCode.trim()||null,city:input.city.trim()||null};

@@ -245,7 +245,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 47 | [L07](#l07) | P1 | Verifiera hela rekryteringskedjan i driftsatt dev | För granskning | Vilgot / Codex |
 | 47.1 | [L17](#l17) | P1 | Samlad inloggad acceptans av levererade punkter | För granskning | Vilgot / Codex |
 | 48 | [D01](#d01) | P2 | Rätta knapparna i profilintroduktionen | Klar | Max / Claude |
-| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | Pågår | Max / Claude |
+| 49 | [D05](#d05) | P2 | Förklara produkten direkt på startsidan | För granskning | Max / Claude |
 | 50 | [D09](#d09) | P3 | Placera feedback vid rätt åtgärd | Klar | Max / Claude |
 | 51 | [F25](#f25) | P3 | Slå samman likvärdiga förmåner | Klar | Max / Claude |
 | 52 | [D03](#d03) | P3 | Ge kriteriernas textfält mer plats | Klar | Max / Claude |
@@ -256,7 +256,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | För granskning | Vilgot / Codex |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Klar | Max / Claude |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | För granskning | Vilgot / Codex |
-| 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
+| 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Pågår | Vilgot / Codex |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | För granskning | Max / Claude |
@@ -268,7 +268,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 69 | [DA-14](#da-14) | P3 | Rätta autentiseringssidornas kort, pil och textsymboler | Klar | William / Claude |
 | 70 | [DA-15](#da-15) | P3 | Korta och variera funktionssidan | Klar | William / Claude |
 | 71 | [DA-16](#da-16) | P3 | Större text och tryckytor på mobil | Klar | William / Claude |
-| 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | Ej påbörjad | — |
+| 72 | [DA-18](#da-18) | Beslut | Ska utloggade besökare kunna se publicerade jobb? | För granskning | Vilgot / Codex |
 | 73 | [DA-19](#da-19) | P3 | Större tryckytor som hittades i webbläsargranskningen | Klar | William / Claude |
 | 74 | [DA-20](#da-20) | P3 | Text under 12 px i inloggade företagsvyer och på kartan | Klar | William / Claude |
 | 75 | [DA-21](#da-21) | P3 | Enhetliga fältetiketter i annonsbyggarens första steg | Klar | William / Claude |
@@ -1093,7 +1093,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - [ ] Klar
 - Prioritet: P2
 - Global ordning: 49
-- Status: Pågår
+- Status: För granskning
 - Ansvarig: Max / Claude
 - Branch/PR: `claude/d05-landing-polish-20261019`; reserverad före kodarbete 2026-10-19 enligt användarens uttryckliga beställning om visuell finputs av startsidan. Fortsättning reserverad före kodarbete 2026-11-08 på branch `Max` (Max / Claude), utifrån dev `a8febe6`; ingen kod fanns på den tidigare branchen. Omfattning: startsidans första vy (statisk förklaring, fiktivt swipekort i telefonram, skrivmaskin bara på sista ordet), statistikens placering, WebGL-bakgrundens paus/reducerad rörelse och avslutande Kom igång/För företag. Endast `app/page.tsx`, `app/landing-hero.tsx`, landningens komponenter/CSS och `components/ui/velaris.tsx`; ingen databas, auth eller annan vy.
 - Åtgärd: Lägg en statisk kort förklaring av ungdomsjobb och matchning i första vyn. Minska tomrum där det döljer nyttan. Låt eventuell skrivmaskinsanimation vara ett komplement och respektera reducerad rörelse.
@@ -1104,7 +1104,9 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Ändrat på användarens begäran 2026-11-08: Den statiska förklaringen under rubriken och det fiktiva swipekortet i hjälten är borttagna igen, och bakgrundens ursprungliga färger och mörka kanter är kvar. Hjälten har därmed samma innehåll och layout som tidigare. Statistiken står åter direkt efter hjälten: utan förklaring i hjälten hamnade den mörka plattformspanelen direkt mot bakgrunden, vilket såg trasigt ut. Under hjälten är sidan därför som tidigare, med tillägget av avslutande knappar.
 - Implementerat: Skrivmaskinen skriver bara sista frasen; första raden står alltid kvar och tonas in vid byte. h1 har den fullständiga första rubriken som skärmläsartext; utan JavaScript och vid reducerad rörelse visas den stilla. Manifestet avslutas med samma knappar som hjälten (ny gemensam `LandingActions`, ”Gå till appen” för inloggade); knapparnas inline-färger ersatta med tokens. `components/ui/velaris.tsx`: pausar när hjälten inte syns (IntersectionObserver) och vid dold flik, en stillbild vid reducerad rörelse, pixeltäthet max 1,5 och 30 fps på pekskärm, ny valfri prop för kantmörkning (standard oförändrad). Bakgrundens färger, mörka kanter och navigationens vita text är oförändrade på användarens begäran 2026-11-08; en ljusare variant med text bredvid kortet prövades och valdes bort. Ingen databas, auth eller annan vy ändrad; övriga demosidor för Velaris behåller standardvärdena.
 - Verifierat (version utan förklaring och kort): TypeScript, riktad ESLint, `check:design-tokens` (oförändrad baslinje: 538/140/56/10) och produktionsbygge; skärmbilder vid 375 och 1280 px mot lokalt produktionsbygge granskade. Tidigare Chromium-kontroller av WebGL-paus (0 bildrutor utanför hjälten och vid dold flik, stillbild vid reducerad rörelse), skrivmaskinen (första raden alltid hel, fast rubrikhöjd, skärmläsartext) och avslutande knappar gjordes på samma kod före borttagningen. Skärmbilder av hela sidan vid scroll (375 och 1280 px) jämförda med driftsatt dev: samma sektioner och bakgrunder; enda skillnaden är de avslutande knapparna. Kontrasten mot den rörliga mörkkantade bakgrunden klarar inte WCAG AA i alla lägen, varken före eller efter D05 (driftsatt dev före D05: rubriken 1,00 vid 1280 px, navigationen 2,65–4,26).
-- Återstår / blockerare: Kriteriet Klar när (besökaren förstår tjänsten utan att vänta på rubriken) uppfylls inte utan en statisk förklaring eller produktbild i första vyn; kräver nytt beslut om innehåll. Kontrasten mot bakgrunden kräver ett designbeslut. Inget av detta är committat eller infört i dev.
+- Återstår före Klar: Verifiera den införda startsidan vid 375 och 1280 px och kontrollera navigationen på /features och /pricing. Tidigare produktbeslut om rubrik och kontrast togs 2026-11-23.
+- Avstämning 2026-11-23: Granskningsförslag för befintlig rubrikplats och kontrast dokumenterat. Tidigare innehållsval och Max ägarskap gäller tills förslaget är förankrat. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- För granskning 2026-11-23: Godkänd statisk huvudrubrik för båda målgrupperna, med ogenomskinliga temaytor bakom rubrik och navigation. Skärmläsaren får samma rubrik som övriga besökare. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="d09"></a>
 ### D09 Placera feedback vid rätt åtgärd
@@ -1420,15 +1422,17 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P1
 - Global ordning: 60
 - Typ: Tidigare planerad lanseringsförberedelse
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/final-five-20261123`
 - Åtgärd: Koppla vald domän och företagsanpassat Vercel-upplägg när det är dags för skarp lansering. Kontrollera separata dev-/produktionsmiljöer, variabler, autentiseringens redirect-adresser, e-postlänkar, tillämpliga migrationer och privata lagringsbehörigheter. Ordna felövervakning, ansvar för support och en konkret återställningsväg. Visa enbart priser och tjänster som gäller vid lanseringen.
 - Klar när: Skarp miljö är korrekt konfigurerad, kärnflödet röktestas på rätt domän och teamet kan upptäcka och återställa ett misslyckat släpp.
 - Tillägg 2026-10-19: L14 är lanseringsberoende för rätt avtalspart, Vercel Pro/DPA och granskade leverantörs-/AI-inställningar. Uppgradering eller ett nytt konto innebär inte automatiskt GDPR-efterlevnad.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Skrivskyddat HTTP-prov och återställningsunderlag.
+- Verifierat: Sju HTTP-prov på de två befintliga miljöerna.
+- Återstår / blockerare: Skarpt lanseringsbeslut och leverantörs-/avtalsberoenden enligt L14/L15.
+- Avstämning 2026-11-23: Förberedelse påbörjad av Vilgot / Codex. Sju anonyma HTTP-prov passerade på befintliga domäner. Kärnflöde, migreringar, larmmottagare och återställning inför skarpa släpp återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Skrivskyddat lanseringsprov kontrollerar tio schemaförutsättningar. Före migrering 1/10 i båda miljöerna. Samtliga nio migrationer från 22–23 november kunde köras tillsammans i en återställd DevStaging-transaktion, 10/10. Rekrytering 12/12 med fiktiva konton. Driftansvarig, permanent införande och skarp acceptans återstår. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 ## Avgränsningar och beslut som återstår
 
@@ -1877,7 +1881,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
-
+- Avstämning 2026-11-23: Skrivskyddad verifiering av projektseparering och databasregioner. Profil-/onboardingflöden visar fasta feltexter. Faktiska avtal och kontoinställningar återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Vercel bekräftar verifierade domäner och separata projekt. Kontoanslutningen bekräftar team men visar inget abonnemangs- eller avtalsbevis. Slutlig leverantörskontroll kräver kontobunden dokumentation. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="l15"></a>
 ### L15 Avtal och rättsligt underlag för behandling på sidan
@@ -1920,6 +1925,8 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: Dokumentunderlag/DPIA-utkast finns enligt PR #195 och kortets dokumentläge. Versionshanterad avtalsaccept, företags-/åldersspärrar och övrig produktkod i detta kort återstår; inga avtal eller godkännanden aktiveras genom underlaget.
 - Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
 - Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
+- Avstämning 2026-11-23: 15-årsgränsen valideras i klienten och i en lokalt testad databasmigrering för nya och ändrade åldersuppgifter. Juridiska roll-/textbeslut samt schema och acceptans i DevStaging återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Företagsavtalets textversion 0.5, bilaga A 0.2 och DPIA 0.1 är fortsatt märkta som utkast. Ålderskontrollen passerade sex DevStaging-prov i återställd transaktion. Implementationen av avtalsflödet behöver fastställda texter, parter, ansvar och minderårigflöde. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="l16"></a>
 ### L16 Skyddade personuppgiftsärenden och incidenthantering
@@ -2191,16 +2198,18 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - [ ] Klar
 - Prioritet: Beslut
 - Global ordning: 72
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: För granskning
+- Ansvarig: Vilgot / Codex
+- Branch/PR: [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253)
 - Källa: [docs/DESIGN_AUDIT_2026-10-22_1.md](DESIGN_AUDIT_2026-10-22_1.md#da-18), som har fynd, filer och mått.
 - Åtgärd: Besluta om en skrivskyddad förhandsvisning av några publicerade annonser för utloggade (utan ansökan). Gäller bara publicerat annonsinnehåll, aldrig ungdomsdata.
 - Klar när: Ett dokumenterat produkt- och integritetsbeslut finns. Kod påbörjas först efter beslutet.
 - Samordning / beroenden: Beslutas tillsammans med F26/N19, som definierar vilken jobbinformation som är publik.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Skrivskyddat urval och inloggningskrav för full annons.
+- Verifierat: Urval, publiceringsstatus, fält, maxantal, paus och rollgränser i DevStaging.
+- Återstår före Klar: Inför migreringen och verifiera den deployade /jobb-vyn.
+- Avstämning 2026-11-23: Granskningsunderlaget innehåller två produktval och ett bekräftat utgångsläge: anonyma rollen i DevStaging kunde läsa 11 annonsrader. Val av pilotbeteende krävs före ändrad annonsåtkomst. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- För granskning 2026-11-23: Beslut: visa ett urval riktiga annonser. /jobb visar högst sex aktiva publicerade anställningar från verifierade företag, med titel och ort. Full annons och ansökan kräver inloggning. Transaktionellt DevStaging-prov passerade. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="da-19"></a>
 ### DA-19 Större tryckytor som hittades i webbläsargranskningen

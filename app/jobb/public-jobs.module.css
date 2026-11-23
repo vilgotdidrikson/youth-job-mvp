@@ -1,0 +1,8 @@
+.page { min-height: 100svh; background: var(--color-canvas); color: var(--color-text); }
+.content { width: min(100% - 2rem, 65rem); margin: 3rem auto 4rem; }
+.content h1 { font-size: var(--text-2xl); margin: 0 0 1.5rem; }
+.jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; list-style: none; padding: 0; }
+.jobs li { padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow-wrap: anywhere; }
+.jobs h2 { font-size: var(--text-lg); margin: 0; }
+.jobs p { margin: .35rem 0 0; color: var(--color-text-muted-strong); }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
