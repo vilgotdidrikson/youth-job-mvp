@@ -72,6 +72,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
     setSaveError("");
     void reader.current?.load(selection.current);
   };
+  const [aiConsent, setAiConsent] = useState(false);
   const save = async () => {
     if (!mounted.current || saveInFlight.current || state.status !== "ready" || state.value.withdrawn || ready.current !== state.value) return;
     const { preview, sent } = state.value;
@@ -86,7 +87,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
       }
       // Do not start a new submission after navigating away or switching account.
       if (!mounted.current) return;
-      if (!sent) await prepareApplication(jobId);
+      if (!sent) await prepareApplication(jobId, aiConsent);
       if (!mounted.current) return;
       window.dispatchEvent(new Event("mnw-navigation-refresh"));
       router.push(`/applications?job=${encodeURIComponent(jobId)}`);
@@ -119,7 +120,7 @@ function DisclosurePreviewContent({ jobId, youthId }: { jobId: string; youthId: 
     {saveError && <div className={`${styles.error} ${surfaces.root}`}><p role="alert">{saveError}</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load(selection.current)}>Hämta aktuellt underlag</button></div>}
     <JobRequirementsInsight jobId={jobId} />
     <ApplicationDisclosureView packet={preview.packet} youthPreview />
-    {!sent && <ApplicationAiPreference compact />}
+    {!sent && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={saving} />}
     <div className={surfaces.root}>
       {preview.is_saved ? <section className={surfaces.panel}><h2>Sparad delning</h2><p>Detta är samma underlag som företaget får för den här ansökan. Profiländringar delas först när du väljer att uppdatera underlaget.</p><button type="button" className={surfaces.cvButton} disabled={saving} onClick={() => load([])}>Uppdatera från min profil och välj uppgifter</button></section>
         : <fieldset className={styles.options} disabled={saving} aria-busy={state.status === "loading"}><legend>Extra uppgifter att dela</legend>{preview.options.length ? preview.options.map(option => <label key={option.key} className={styles.option}>

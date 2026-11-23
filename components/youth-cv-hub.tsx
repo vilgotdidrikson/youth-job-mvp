@@ -1,4 +1,6 @@
 "use client";
+
+import { readPrivateCvWork, writePrivateCvWork } from "@/lib/private-cv-work-storage";
 import {AccountCvDraftPanel} from "./account-cv-draft-panel";
 import {type AccountCvDraft,type CvFormDraft} from "@/lib/account-cv-draft";
 import { applicationCountLabel } from "@/lib/product-copy";
@@ -161,7 +163,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
         setSupportsCvExtras(Object.prototype.hasOwnProperty.call(youth ?? {}, "certificates") && Object.prototype.hasOwnProperty.call(youth ?? {}, "extracurriculars"));
         const docs = Array.isArray(youth?.documents) ? youth.documents : [];
         originalUploaded.current=docs.find((doc)=>doc.type==="cv")??null;setUploaded(originalUploaded.current);
-        const saved = localStorage.getItem(key);
+        const saved = readPrivateCvWork<{ method?: unknown; step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] }>(localStorage, key);
         if (query.get("edit") === "1" && (youth?.cv_structured || youth?.cv_text)) {
           const existingDraft = draftFromProfile(youth);
           const existingStructured = youth.cv_structured ?? buildSource(existingDraft, youth.full_name ?? "", youth.city ?? "");
@@ -177,7 +179,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
             setStep("merits");
           }
         } else if (saved) {
-          const parsed = JSON.parse(saved) as { method?: unknown; step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] };
+          const parsed = saved;
           setMethod(cvCreationMethod(parsed.method));
           if (parsed.draft) setDraft({ ...EMPTY, ...parsed.draft });
           if (parsed.step && !["start", "pdf", "preview", "review"].includes(parsed.step)) setStep(parsed.step);
@@ -193,7 +195,7 @@ function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean 
   }, [key, query, user?.id]);
   useEffect(() => {
     if (ready && user && !["start", "pdf", "preview"].includes(step)) {
-      try { localStorage.setItem(key, JSON.stringify({ method, step, draft, returnToReview, editedSections })); setDraftStorageUnavailable(false); }
+      try { writePrivateCvWork(localStorage, key, { method, step, draft, returnToReview, editedSections }); setDraftStorageUnavailable(false); }
       catch { setDraftStorageUnavailable(true); }
     }
   }, [draft, editedSections, key, method, ready, returnToReview, step, user]);

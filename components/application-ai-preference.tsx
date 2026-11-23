@@ -5,48 +5,49 @@ import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import styles from "./application-ai-preference.module.css";
 
-export function ApplicationAiPreference({ compact = false }: { compact?: boolean }) {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+export function ApplicationAiPreference({ checked, onChange, disabled }: { checked: boolean; onChange: (value: boolean) => void; disabled?: boolean }) {
+  return <div className={styles.preference}>
+    <label className={styles.choice}>
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={event => onChange(event.target.checked)} />
+      <span>Jag godkänner att AI analyserar det CV, de profiluppgifter och de svar jag delar i den här ansökan.</span>
+    </label>
+    <p>Du kan söka även om rutan är tom. Arbetsgivaren granskar alltid ansökan själv. <Link href="/privacy#followups">Så används uppgifterna</Link>.</p>
+  </div>;
+}
 
+export function ApplicationAiWithdrawal({ jobId }: { jobId: string }) {
+  const [enabled, setEnabled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
   useEffect(() => {
     const controller = new AbortController();
-    async function load() {
+    void (async () => {
       try {
-        const { data, error } = await getSupabaseClient().rpc("my_application_ai_preference").abortSignal(controller.signal);
+        const { data, error } = await getSupabaseClient().rpc("my_application_ai_status", { p_job_id: jobId }).abortSignal(controller.signal);
+        if (controller.signal.aborted) return;
         if (error || typeof data !== "boolean") throw new Error();
-        if (!controller.signal.aborted) setEnabled(data);
+        setEnabled(data);
       } catch {
-        if (!controller.signal.aborted) setMessage("AI-inställningen kunde inte hämtas. Du kan fortfarande söka jobb.");
+        if (!controller.signal.aborted) setMessage("AI-valet kunde inte läsas. Ladda om för att försöka igen.");
       }
-    }
-    void load();
+    })();
     return () => controller.abort();
-  }, []);
+  }, [jobId]);
 
-  async function save(next: boolean) {
-    setSaving(true);
+  async function withdraw() {
+    setBusy(true);
     setMessage("");
     try {
-      const { data, error } = await getSupabaseClient().rpc("my_application_ai_preference", { p_enabled: next });
-      if (error || data !== next) throw new Error();
-      setEnabled(data);
+      const { data, error } = await getSupabaseClient().rpc("withdraw_my_application_ai", { p_job_id: jobId });
+      if (error || data !== false) throw new Error();
+      setEnabled(false);
+      setMessage("AI-valet är återkallat. Din ansökan finns kvar.");
     } catch {
       setMessage("Ändringen kunde inte bekräftas. Försök igen.");
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
-  return <div className={styles.preference}>
-    {enabled !== null && <label className={styles.choice}>
-      <input type="checkbox" checked={enabled} disabled={saving} onChange={event => void save(event.target.checked)} />
-      <span>Jag vill att AI analyserar mina kommande ansökningar, med uppgifter från mitt CV och min jobbprofil, och ger arbetsgivaren ett bedömningsunderlag.</span>
-    </label>}
-    <p>Du kan söka även om rutan är tom. {compact && <>Du kan ändra valet i <Link href="/profile?tab=settings">Inställningar</Link>. </>} <Link href="/privacy#followups">Så används uppgifterna</Link>.</p>
-    {saving && compact && <p role="status">Sparar AI-valet. Det gäller när det har sparats.</p>}
-    {saving && !compact && <p role="status">Sparar AI-valet.</p>}
-    {message && <p role="status">{message}</p>}
-  </div>;
+  return <>{enabled && <button type="button" className="secondary-btn" disabled={busy} onClick={() => void withdraw()}>Återkalla AI-valet</button>}{message && <p role="status">{message}</p>}</>;
 }

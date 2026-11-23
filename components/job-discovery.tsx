@@ -28,13 +28,14 @@ interface Props {
   filters: DiscoveryFilterValues; options: DiscoveryFilterOptions;
   onFiltersChange: (values: DiscoveryFilterValues) => void;
   onFilter: (key: keyof DiscoveryFilterValues, value: string) => void;
-  onDecision: (job: JobPost, decision: SwipeDecision) => Promise<void>;
+  onDecision: (job: JobPost, decision: SwipeDecision, aiConsent?: boolean) => Promise<void>;
   onSave: (job: JobPost, saved: boolean) => Promise<void>;
 }
 
 export function JobDiscovery({ resultCount, undoTitle, undoing, undoDisabled, onUndo, hasMore, onLoadMore, onSeen, jobs, savedJobs, savedIds, showingSaved, cvCompleted, loading, error, notice, filters, options, onFilter, onFiltersChange, onDecision, onSave }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const current = jobs[0];
+  const [aiJobId, setAiJobId] = useState<string | null>(null);
   const reset = () => onFiltersChange(readSearchFilters(new URLSearchParams()));
   const activeFilters = Object.values(filters).some(Boolean);
   const filterLabel = (key: string, value: string) => key === "category" ? categoryLabel(value) : key === "workTime" ? WORK_TIMES[value as keyof typeof WORK_TIMES] : key === "nearbyCity" ? `Inom ca ${filters.radiusKm} km från ${value} centrum` : key === "salaryUnit" ? `${SALARY_SEARCH_UNITS[value as keyof typeof SALARY_SEARCH_UNITS]}${filters.salaryMin ? ` från ${filters.salaryMin} kr` : ""}` : key === "onlyKnown" ? "Bara angivna uppgifter" : value;
@@ -47,8 +48,11 @@ export function JobDiscovery({ resultCount, undoTitle, undoing, undoDisabled, on
       {!showingSaved && <div className={styles.searchBox}><label htmlFor="discovery-search">Sök jobb</label><div><input id="discovery-search" type="search" maxLength={200} value={filters.query} placeholder="Jobb, företag eller sökord" onChange={event => onFilter("query", event.target.value)}/>{filters.query && <button type="button" onClick={() => onFilter("query", "")} aria-label="Rensa söktext">Rensa</button>}</div><p role="status">{loading ? "Hämtar jobb…" : `${resultCount ?? jobs.length} jobb${activeFilters ? " med dina sökval" : " att upptäcka"}`}</p></div>}
       {(undoTitle || undoing) && <div className={styles.undoNotice}><span role="status">{undoing ? "Ångrar bortvalet…" : `Du valde Inte nu för ${undoTitle}.`}</span><button type="button" className={styles.filterButton} disabled={undoing || undoDisabled} onClick={() => void onUndo?.()} aria-label={`Ångra bortval av ${undoTitle ?? "jobbet"}`}>Ångra</button></div>}
       {!loading && !error && current && cvCompleted && <p className={styles.applicationNote}>Intresserad skickar din ansökan. <Link href="/privacy#profile-data">Så används ditt CV och dina uppgifter</Link>.</p>}
-      {!loading && !error && current && cvCompleted && <ApplicationAiPreference compact />}
-      {notice && <p className={styles.sentNotice} role="status"><UiIcon name="check" width="17"/>{notice}</p>}{error && <div role="alert" className={styles.error}>{error}</div>}{loading ? <div className={styles.skeleton} role="status"><UiIcon name="briefcase"/><p>Hämtar jobb…</p></div> : error && !jobs.length ? null : <JobSwipeDeck searchFilters={showingSaved ? undefined : filters} disabled={undoing} onSeen={onSeen} jobs={jobs} onDecision={onDecision} onSave={onSave} savedIds={savedIds} onClearFilters={activeFilters && !showingSaved ? reset : undefined} emptyTitle={hasMore ? "Fler jobb finns att upptäcka" : showingSaved ? "Inga sparade jobb ännu" : activeFilters ? "Inga jobb matchar dina filter" : "Du har upptäckt alla jobb här"} emptySubtitle={hasMore ? "Välj Visa fler jobb för att fortsätta." : showingSaved ? "Tryck på bokmärket på ett jobb som du vill återkomma till." : activeFilters ? "Prova att rensa ett filter för att se fler jobb." : "Nya möjligheter dyker upp löpande. Titta tillbaka snart."} interestedLabel="Intresserad" skipLabel="Inte nu" swipeHint="Swipa eller välj med knapparna"/>}
+      {!loading && !error && current && cvCompleted && <ApplicationAiPreference checked={aiJobId === current.id} onChange={checked => setAiJobId(checked ? current.id : null)} />}
+      {notice && <p className={styles.sentNotice} role="status"><UiIcon name="check" width="17"/>{notice}</p>}{error && <div role="alert" className={styles.error}>{error}</div>}{loading ? <div className={styles.skeleton} role="status"><UiIcon name="briefcase"/><p>Hämtar jobb…</p></div> : error && !jobs.length ? null : <JobSwipeDeck searchFilters={showingSaved ? undefined : filters} disabled={undoing} onSeen={onSeen} jobs={jobs} onDecision={(job, decision) => {
+        setAiJobId(null);
+        return onDecision(job, decision, aiJobId === job.id);
+      }} onSave={onSave} savedIds={savedIds} onClearFilters={activeFilters && !showingSaved ? reset : undefined} emptyTitle={hasMore ? "Fler jobb finns att upptäcka" : showingSaved ? "Inga sparade jobb ännu" : activeFilters ? "Inga jobb matchar dina filter" : "Du har upptäckt alla jobb här"} emptySubtitle={hasMore ? "Välj Visa fler jobb för att fortsätta." : showingSaved ? "Tryck på bokmärket på ett jobb som du vill återkomma till." : activeFilters ? "Prova att rensa ett filter för att se fler jobb." : "Nya möjligheter dyker upp löpande. Titta tillbaka snart."} interestedLabel="Intresserad" skipLabel="Inte nu" swipeHint="Swipa eller välj med knapparna"/>}
       {hasMore && !loading && <button type="button" className={styles.filterButton} onClick={onLoadMore}>Visa fler jobb</button>}
       {!showingSaved && <p className={styles.swipeHint}>Ovisade jobb visas först. Dina jobbönskemål och ort påverkar ordningen, med variation mellan företag. Vi sparar privat vilka kort du sett. Sparade jobb finns kvar separat.</p>}
     </section><aside className={styles.sidebar} aria-label="Jobbinformation och sparade jobb">

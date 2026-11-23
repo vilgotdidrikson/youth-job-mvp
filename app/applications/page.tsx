@@ -1,5 +1,5 @@
 "use client";
-import { ApplicationAiPreference } from "@/components/application-ai-preference";
+import { ApplicationAiPreference, ApplicationAiWithdrawal } from "@/components/application-ai-preference";
 import { useApplicationRetention } from "@/hooks/use-data-retention";
 import { ApplicationRetentionNotice, RetiredApplicationCard } from "@/components/data-retention-notice";
 import type { ApplicationRetention } from "@/lib/data-retention";
@@ -39,6 +39,7 @@ function analysisNotice(results: FollowupAnalysisResult[]): string {
 }
 
 function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved, hidden, initiallyOpen, stage, onWithdrawn }: { retention?: ApplicationRetention; onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage?:YouthActivity; initiallyOpen:boolean; hidden: boolean; item: ApplicationCompletion; followups: ApplicationFollowup[]; onFollowupsSaved: (application:ApplicationCompletion, items: ApplicationFollowup[]) => void; onSaved: (item: ApplicationCompletion) => void }) {
+  const [aiConsent, setAiConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -49,7 +50,7 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     if (busy) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await saveApplicationAnswers(item.job_id, item.answers, submit);
+      const result = submit && aiConsent ? await prepareApplication(item.job_id, true) : await saveApplicationAnswers(item.job_id, item.answers, submit);
       onSaved(result);
       setMessage(submit ? "Ansökan är skickad." : "Dina svar är sparade.");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte spara svaren."); }
@@ -68,13 +69,16 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {message && <p role="status">{message}</p>}
+    {pending && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={busy} />}
+    {item.status === "submitted" && !hidden && <ApplicationAiWithdrawal key={item.job_id} jobId={item.job_id} />}
     {pending && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void save(true)}>{busy ? "Skickar…" : "Skicka ansökan direkt"}</button></div>}
     {canWithdrawApplication(item.status, stage?.status) && <div className="application-completion-actions"><WithdrawApplicationButton jobId={item.job_id} title={item.job_title} submitted={item.status === "submitted" || Boolean(item.submitted_at)} disabled={busy} onBusyChange={setBusy} onWithdrawn={result => onWithdrawn(item.job_id, result)}/></div>}
   </article>;
 }
 
 /** Saved interest or a stage without an application row. Saved interest is never presented as sent. */
-function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage: YouthActivity; hidden: boolean; cvCompleted: boolean | null; onSend: (jobId: string) => Promise<void> }) {
+function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onWithdrawn: (jobId: string, result: WithdrawalResult) => void; stage: YouthActivity; hidden: boolean; cvCompleted: boolean | null; onSend: (jobId: string, aiConsent: boolean) => Promise<void> }) {
+  const [aiConsent, setAiConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const header = (label: string) => <header><div className="application-company-avatar">{stage.company.slice(0, 2).toUpperCase()}</div><div><p>{stage.company}</p><h2>{stage.title}</h2></div><span className="application-status">{label}</span></header>;
@@ -88,7 +92,7 @@ function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onW
   const send = async () => {
     if (busy) return;
     setBusy(true); setError("");
-    try { await onSend(stage.jobId); }
+    try { await onSend(stage.jobId, aiConsent); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Ansökan kunde inte skickas. Försök igen."); }
     finally { setBusy(false); }
   };
@@ -98,6 +102,7 @@ function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onW
     {view.showJobLink && <Link className="application-job-link" href={`/jobb/${stage.jobId}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>}
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {view.action === "complete_cv" && <div className="application-completion-actions"><Link className="cta-btn" href={`/youth/cv?job=${encodeURIComponent(stage.jobId)}&title=${encodeURIComponent(stage.title)}`}>Gör klart CV:t</Link></div>}
+    {view.action === "send" && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={busy} />}
     {view.action === "send" && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void send()}>{busy ? "Skickar…" : "Skicka ansökan"}</button></div>}
     <div className="application-completion-actions">{withdraw}</div>
   </article>;
@@ -170,8 +175,8 @@ function ApplicationsPageContent() {
       if (revision === savedRevision.current) { setItems(data); setActivity(stages); }
     }).catch(() => setError("Återkallelsen är sparad, men listan kunde inte hämtas igen. Ladda om sidan för aktuell historik."));
   };
-  const sendSavedInterest = async (jobId: string) => {
-    const sent = await prepareApplication(jobId);
+  const sendSavedInterest = async (jobId: string, aiConsent: boolean) => {
+    const sent = await prepareApplication(jobId, aiConsent);
     savedRevision.current++;
     const [data, stages] = await Promise.all([getApplicationCompletions(), getYouthActivity(userId!)]);
     setItems(data); setActivity(stages);
@@ -191,12 +196,8 @@ function ApplicationsPageContent() {
       {checking && <p role="status" className="applications-checking">Vi kontrollerar om dina ansökningar behöver fler uppgifter. Frågorna visas här när kontrollen är klar.</p>}
       {!checking && checkNotice && <p role="status" className="applications-checking">{checkNotice}</p>}
       <div className="applications-tab-panel" {...tabPanelProps("applications", tab)}>
-      {!loading && tab !== "questions" && (
-        extraActivity.some(stage => pendingInterestView(stage, cvLoading ? null : cvCompleted).action === "send")
-        || ordered.some(item => item.status === "needs_completion" && !retentionByJob.get(item.job_id)?.expired)
-      ) && <ApplicationAiPreference key={userId} compact />}
-      {!loading && extraActivity.map(stage => <ActivityCard key={stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} onWithdrawn={withdrawn} />)}
-      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={item.job_id} retention={retentionByJob.get(item.job_id)} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
+      {!loading && extraActivity.map(stage => <ActivityCard key={userId + ":" + stage.jobId} stage={stage} hidden={tab === "questions" || (tab === "unsent" && !isUnsent(stage))} cvCompleted={cvLoading ? null : cvCompleted} onSend={sendSavedInterest} onWithdrawn={withdrawn} />)}
+      {loading ? <p role="status" className="applications-empty">Hämtar dina ansökningar…</p> : ordered.map((item) => <ApplicationCard key={userId + ":" + item.job_id} retention={retentionByJob.get(item.job_id)} hidden={itemHidden(item)} initiallyOpen={item.job_id===selectedJob} stage={activity.find(stage=>stage.jobId===item.job_id)} item={item} followups={followups.filter((question) => question.job_id === item.job_id)} onWithdrawn={withdrawn} onFollowupsSaved={(application,saved) => { savedRevision.current++; setItems(current=>current.map(entry=>entry.job_id===application.job_id ? application : entry)); window.dispatchEvent(new Event("mnw-navigation-refresh")); setFollowups((current) => [...current.filter((question) => question.job_id !== item.job_id), ...saved]); setConfirmation("Kompletteringen är skickad. Din ansökan var redan skickad."); }} onSaved={(saved) => {
         savedRevision.current++;
         setItems((current) => current.map((entry) => entry.job_id === saved.job_id ? saved : entry));
         if (saved.status === "submitted") { setChecking(true); setCheckNotice(""); void requestApplicationFollowups(saved.job_id).then((result) => { setCheckNotice(analysisNotice([result])); return getApplicationFollowups(); }).then(setFollowups).catch(() => {}).finally(() => setChecking(false)); }
