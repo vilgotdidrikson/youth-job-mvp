@@ -1032,8 +1032,8 @@
     font-size: .74rem;
   }
 
-  /* Break at the separator instead of leaving it at a line end; still read aloud. */
-  .landing-bold-eyebrow-separator {
+  /* Break between the two halves of the line; the space is still read aloud. */
+  .landing-bold-eyebrow-break {
     display: block;
     height: 0;
     overflow: hidden;

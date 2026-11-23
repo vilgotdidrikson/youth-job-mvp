@@ -101,7 +101,7 @@ const platformItems: PlatformItem[] = [
 const HERO_ID = "landing-hero";
 
 const copy = {
-  eyebrow: ["Jobbappen för unga", "Swipea, matcha, chatta"] as const,
+  eyebrow: ["Jobbappen som matchar unga", "med arbetsgivare"] as const,
   primary: "Kom igång",
   secondary: "För företag",
   statsHeading: "Ett verkligt problem",

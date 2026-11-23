@@ -97,7 +97,7 @@ export function LandingHero({
     <section className="landing-bold-hero" id={id}>
       <p className="landing-bold-eyebrow">
         {eyebrow[0]}
-        <span className="landing-bold-eyebrow-separator"> · </span>
+        <span className="landing-bold-eyebrow-break"> </span>
         {eyebrow[1]}
       </p>
       <AnimatedHeroHeadline />
