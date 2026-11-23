@@ -3,8 +3,15 @@ begin read only;
 
 with checks(name, ready) as (
   values
-    ('F20 application AI preference', to_regprocedure('public.my_application_ai_preference(boolean)') is not null),
+    ('F20 per-application AI choice', to_regprocedure('public.submit_my_application_with_ai(uuid)') is not null
+      and to_regprocedure('public.withdraw_my_application_ai(uuid)') is not null),
+    ('F20 previous account opt-in disabled', not coalesce(has_function_privilege(
+      'authenticated',to_regprocedure('public.my_application_ai_preference(boolean)'),'EXECUTE'), false)),
+    ('L12 private work cleanup available', to_regprocedure('private.purge_inactive_cv_work(integer)') is not null),
+    ('L15 company agreement flow available', to_regprocedure('public.accept_my_company_agreement(text,text,text,boolean,boolean)') is not null
+      and to_regprocedure('public.get_pending_company_agreements()') is not null),
     ('F20 application AI gate', to_regprocedure('public.application_ai_allowed(uuid,uuid)') is not null),
+    ('L15 youth terms flow available', to_regprocedure('public.accept_my_youth_terms(text,boolean)') is not null),
     ('L13 reviewed export delivery', to_regclass('private.privacy_case_deliveries') is not null),
     ('L16 private case attachments', to_regclass('private.privacy_case_attachments') is not null),
     ('L16 incident intake', exists (
