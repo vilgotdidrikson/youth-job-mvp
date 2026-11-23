@@ -29,3 +29,16 @@
   margin: 0.75rem auto;
   width: min(44rem, calc(100% - 2rem));
 }
+
+.recruitmentNotice {
+  margin-block: 0.75rem;
+}
+
+.recruitmentNotice summary {
+  cursor: pointer;
+}
+
+.form textarea {
+  width: 100%;
+  min-height: 4.5rem;
+}

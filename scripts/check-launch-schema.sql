@@ -11,6 +11,8 @@ with checks(name, ready) as (
     ('L15 company agreement flow available', to_regprocedure('public.accept_my_company_agreement(text,text,text,boolean,boolean)') is not null
       and to_regprocedure('public.get_pending_company_agreements()') is not null),
     ('F20 application AI gate', to_regprocedure('public.application_ai_allowed(uuid,uuid)') is not null),
+    ('L15 recruitment notice available', to_regprocedure('public.get_job_recruitment_notice(uuid)') is not null),
+    ('L15 company agreement receipt archive available', to_regclass('private.closed_company_agreement_receipts') is not null),
     ('L15 youth terms flow available', to_regprocedure('public.accept_my_youth_terms(text,boolean)') is not null),
     ('L13 reviewed export delivery', to_regclass('private.privacy_case_deliveries') is not null),
     ('L16 private case attachments', to_regclass('private.privacy_case_attachments') is not null),

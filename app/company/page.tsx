@@ -1,4 +1,5 @@
 "use client";
+import { CompanyRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 
 import { authenticatedHeaders } from "@/lib/api-client";
 import { BENEFIT_TIPS, addBenefit, customBenefits, listedBenefit, removeBenefit, toggleBenefit } from "@/lib/job-benefits";
@@ -448,6 +449,7 @@ function CompanyPageContent() {
       <datalist id="company-job-title-suggestions">{JOB_TITLE_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-city-suggestions">{CITY_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
       <datalist id="company-address-suggestions">{ADDRESS_SUGGESTIONS.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>
+      {user && <CompanyRecruitmentNotice key={user.id} email={user.email} />}
       {user && <CompanyAgreement key={user.id} onAccepted={() => void loadData(user.id)} />}
       {verificationStatus !== "verified" && <CompanyVerificationStatus profile={companyProfile} compact action={{ href: "/profile?tab=details", label: "Kontrollera företagsuppgifter" }} />}
       {tab === "annonser" && <header className="company-workspace-heading"><p>Er rekrytering</p><h1>Era jobbannonser</h1><span>Skapa möjligheter och hitta nästa person till ert team.</span></header>}

@@ -1,4 +1,5 @@
 "use client";
+import { CandidateRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 import { ApplicationAiPreference, ApplicationAiWithdrawal } from "@/components/application-ai-preference";
 import { useApplicationRetention } from "@/hooks/use-data-retention";
 import { ApplicationRetentionNotice, RetiredApplicationCard } from "@/components/data-retention-notice";
@@ -69,6 +70,7 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {message && <p role="status">{message}</p>}
+    {pending && <CandidateRecruitmentNotice key={item.job_id} jobId={item.job_id} />}
     {pending && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={busy} />}
     {item.status === "submitted" && !hidden && <ApplicationAiWithdrawal key={item.job_id} jobId={item.job_id} />}
     {pending && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void save(true)}>{busy ? "Skickar…" : "Skicka ansökan direkt"}</button></div>}
@@ -102,6 +104,7 @@ function ActivityCard({ stage, hidden, cvCompleted, onSend, onWithdrawn }: { onW
     {view.showJobLink && <Link className="application-job-link" href={`/jobb/${stage.jobId}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>}
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {view.action === "complete_cv" && <div className="application-completion-actions"><Link className="cta-btn" href={`/youth/cv?job=${encodeURIComponent(stage.jobId)}&title=${encodeURIComponent(stage.title)}`}>Gör klart CV:t</Link></div>}
+    {view.action === "send" && <CandidateRecruitmentNotice key={stage.jobId} jobId={stage.jobId} />}
     {view.action === "send" && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={busy} />}
     {view.action === "send" && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void send()}>{busy ? "Skickar…" : "Skicka ansökan"}</button></div>}
     <div className="application-completion-actions">{withdraw}</div>

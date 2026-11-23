@@ -1,4 +1,5 @@
 "use client";
+import { CandidateRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 import { ApplicationAiPreference } from "@/components/application-ai-preference";
 import { jobReturnLink } from "@/lib/product-copy";
 import { benefitItems, mergeBenefits } from "@/lib/job-benefits";
@@ -124,6 +125,7 @@ export default function JobDetailPage() {
       {requirements.length > 0 && <section className={styles.textSection}><h2>Det här behöver du</h2><ul>{requirements.map((item,index) => <li key={index}><UiIcon name="check"/><span>{item}</span></li>)}</ul></section>}
       {benefits.length > 0 && <section className={styles.textSection}><h2>Det här får du</h2><ul>{benefits.map((item,index) => <li key={index}><UiIcon name="check"/><span>{item}</span></li>)}</ul></section>}
       {profile?.role === "youth" && (alreadyApplied || hasDraft || needsCompletion) && <WorkplacePreference key={job.id} job={job} youthId={user!.id}/>}
+      {profile?.role === "youth" && <CandidateRecruitmentNotice key={job.id} jobId={job.id} />}
       {profile?.role === "youth" && <p>Ansökan delar ditt CV och praktiska uppgifter. <Link href={`/applications/preview?job=${encodeURIComponent(job.id)}`}>Förhandsvisa och välj vad du delar</Link>. <Link href="/privacy#profile-data">Så används uppgifterna i matchningen</Link>.</p>}
       {profile?.role === "youth" && cvCompleted && acceptsApplications && !alreadyApplied && !withdrawn && !needsCompletion && <ApplicationAiPreference checked={aiKey === requestKey} disabled={busy} onChange={checked => setAiKey(checked ? requestKey : "")} />}
       {profile?.role === "youth" && <div className={styles.report}><ReportDialog targetType="job" targetId={job.id} label="Anmäl annons"/></div>}

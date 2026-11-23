@@ -94,6 +94,33 @@ begin
   perform public.accept_my_company_agreement('qa-v2','Testperson','Företrädare',true,true);
   if not public.is_verified_company(company) then raise exception 'Renewal did not restore eligibility'; end if;
   perform set_config('request.jwt.claim.sub',youth::text,true);
+  begin
+    perform public.prepare_my_application(vacancy);
+    raise exception 'Application was accepted without recruitment privacy information';
+  exception when insufficient_privilege then null; end;
+  perform set_config('request.jwt.claim.sub',company::text,true);
+  begin
+    perform public.save_my_company_recruitment_notice('privacy@example.invalid','javascript:alert(1)',null);
+    raise exception 'Unsafe link accepted';
+  exception when invalid_parameter_value then null; end;
+  begin
+    perform public.save_my_company_recruitment_notice('privacy@example.invalid',null,'{"purpose":"Only one field"}');
+    raise exception 'Incomplete template accepted';
+  exception when invalid_parameter_value then null; end;
+  perform public.save_my_company_recruitment_notice('privacy@example.invalid','https://example.invalid/recruitment',null);
+  perform set_config('request.jwt.claim.sub',other_company::text,true);
+  if public.get_my_company_recruitment_notice() is not null then raise exception 'Foreign company notice leaked through owner RPC'; end if;
+  perform set_config('request.jwt.claim.sub',youth::text,true);
+  if public.get_job_recruitment_notice(vacancy)->>'link' is distinct from 'https://example.invalid/recruitment' then
+    raise exception 'Applicant cannot see recruitment privacy information';
+  end if;
+  perform set_config('request.jwt.claim.sub',company::text,true);
+  perform public.save_my_company_recruitment_notice('privacy@example.invalid',null,
+    '{"purpose":"QA ändamål","basis":"QA grund","recipients":"QA mottagare","transfers":"QA överföring","retention":"QA lagring","rights":"QA rättigheter"}');
+  perform set_config('request.jwt.claim.sub',youth::text,true);
+  if public.get_job_recruitment_notice(vacancy) #>> '{details,rights}' is distinct from 'QA rättigheter' then
+    raise exception 'Applicant cannot see the filled-in template';
+  end if;
   if public.prepare_my_application(vacancy)->>'status' is distinct from 'submitted' then raise exception 'Normal submission failed'; end if;
   reset role;
   perform set_config('request.jwt.claim.sub',company::text,true);
@@ -131,4 +158,23 @@ begin
     raise exception 'Ended agreement still grants candidate access';
   exception when insufficient_privilege then null; end;
   reset role;
+  delete from auth.users where id=company;
+  if (select count(*) from private.closed_company_agreement_receipts where former_company_user_id=company)<>2
+    or exists(select 1 from private.company_recruitment_notices where company_user_id=company)
+    or exists(select 1 from private.company_agreement_acceptances where company_user_id=company) then
+    raise exception 'Account closure did not archive only the expected receipts';
+  end if;
+  if not exists(select 1 from private.closed_company_agreement_receipts r
+    join private.company_agreement_versions v using(version)
+    where r.former_company_user_id=company and r.version='qa-v1' and v.annex_text='Testbilaga ett') then
+    raise exception 'Original annex was lost on account closure';
+  end if;
+  begin
+    perform private.purge_closed_company_agreements(now());
+    raise exception 'Early purge was allowed';
+  exception when invalid_parameter_value then null; end;
+  if has_table_privilege('authenticated','private.closed_company_agreement_receipts','select')
+    or has_function_privilege('authenticated','private.purge_closed_company_agreements(timestamptz,integer)','execute') then
+    raise exception 'Archive or purge permissions too broad';
+  end if;
 end $$;
