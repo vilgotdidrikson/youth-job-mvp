@@ -62,3 +62,62 @@ DevStaging avser det driftsatta projektets databas. Ett lokalt prov kan köra ve
 | [N10](ATGARDSPLAN.md#n10) | Godkänt lokalt, kontoinställningar och kontobundna tillstånd. | Byten i båda rollernas inloggade konton. |
 | [DA-12](ATGARDSPLAN.md#da-12) | Godkänt lokalt, bygge och designtokenkontroll över berörda stilmallar. | Visuell jämförelse av migrerade vyer vid 375 och 1280 px. |
 | [F12](ATGARDSPLAN.md#f12) | Godkänt lokalt, synonymdubbletter, motstridiga fakta, sparade svar och frivillig komplettering. | Återanvänt svar i en senare annons genom inloggad webb med verklig modell. |
+
+## Inloggad webbgranskning 2026-11-23 (Max / Claude)
+
+Chromium (Playwright, headless, WebGL via SwiftShader) mot https://youth-job-mvp-dev.vercel.app, DevStaging, dev `d5a2797`. Fiktiva QA-konton med prefix `qa-l17-1795454322587-8956a4`: ett företag, tre ungdomar (en skapad via `/signup`) och en admin med tillfälligt adminmedlemskap. Företaget verifierades av QA-admin via `/admin/companies`. Två tydligt märkta QA-annonser (”… – EJ RIKTIGT JOBB”) publicerades i dev under testet. Efterkontroll: 0 QA-konton, 0 QA-annonser och 0 adminmedlemskap kvar. Ingen verklig AI-körning, e-post, betalning, kamera eller filuppladdning ingick. Testskripten låg i en lokal arbetsmapp och är inte incheckade.
+
+### Godkänt i inloggad webb
+
+| Kort | Provat och utfall |
+| --- | --- |
+| [N14](ATGARDSPLAN.md#n14) | Annons med två adresser (Uppsala, Stockholm) publicerades vid 375 px. Båda fick koordinater, annonsen visas som ”Uppsala / Stockholm” och textsökningen ger en post per annons. En kopia behåller båda adresserna. Kartan ritas med WebGL (16 nålar). QA-nålarna kunde inte identifieras var för sig eftersom nålarna saknar namn. |
+| [N15](ATGARDSPLAN.md#n15) | Kopieringsdialogen öppnades. Kopian öppnas som utkast och finns kvar efter omladdning i samma webbläsare. Publicering kräver kryssrutan, och ett blockerat försök visar varför. Lönetexten följer med. Kopian publicerades som en egen annons med en ny jobbtyp, och originalet var oförändrat. |
+| [N16](ATGARDSPLAN.md#n16) | Pausa visar Pausad och döljer annonsen för ungdomar. Återaktivera visar Publicerad. Stäng rekrytering via formuläret med ”Anställd genom MatchnWork” ger Stängd. Annonsen försvinner då för ungdomar, chatten finns kvar och Återaktivera erbjuds. |
+| [N17](ATGARDSPLAN.md#n17) | Caféarbete och Butiksarbete valdes i annonsbyggaren, och jobbtypen visas i annonslistan. Filtret Kategori = Caféarbete begränsar ungdomens urval. |
+| [F06](ATGARDSPLAN.md#f06) | Prissidans företagsflik, anställningsdialogen och fliken Fakturor stämmer överens: kostnadsfritt nu, 500 kr per bekräftad anställning vid lansering och 1 000 kr senare. Faktureringen sker efter kandidatens bekräftelse. |
+| [L04](ATGARDSPLAN.md#l04) | Företaget registrerade anställningen i chatten och fick ”Inväntar kandidatens granskning”, alltså ingen egen bekräftelse. Ungdomen granskade vid 375 px och valde ”Uppgifterna stämmer”. Båda rollerna visar sedan ”Anställning bekräftad”. Invändningsvägen provades inte i webben. |
+| [N02](ATGARDSPLAN.md#n02) | Ungdomen återkallade ansökan via dialogen, som förklarar match, chatt och redan läst underlag. Status ”Ansökan är återkallad.” visas. Ansökan försvinner ur arbetsgivarens lista och företaget får en notis. |
+| [N24](ATGARDSPLAN.md#n24) | Företaget skickade en fråga och fick status Inväntar svar. Ungdomen fick notisen ”Fråga från företaget”, svarade och kunde avstå. Företaget läser svaret under ”Uttryckligen delade svar”, och ingen chatt skapades. Samma fråga en gång till nekas med ”Frågan finns redan i ansökan.” |
+| [F10](ATGARDSPLAN.md#f10) (företagsdelen) | Steg 3 i en ny annons får orten Uppsala från företagsprofilen, med förklaringen. |
+| [F22](ATGARDSPLAN.md#f22) | Vid 375 px: omvänt åldersintervall och omvänd lön ger svensk feltext vid fältet och markerar fältet. Förhandsvisningen öppnas inte, och felet försvinner när värdet rättas. Ogiltigt organisationsnummer ger svensk feltext. Datumfältet visar fortfarande webbläsarens format, vilket är känt. |
+| [F15](ATGARDSPLAN.md#f15) | Ny ungdom via `/signup`: två onboardingsteg och sedan valet Bygg profil/Bygg senare. Bygg senare leder direkt till `/swipe` utan spärr, med 13 jobb och utan horisontell scroll vid 375 px. |
+| [F16](ATGARDSPLAN.md#f16) | ”CV:t är sparat.” står kvar och användaren stannar på sidan i minst 7 s. Efter Intresserad visas ”Ansökan till … är skickad.” och ansökan syns under Ansökningar. |
+| [F18](ATGARDSPLAN.md#f18) | Efter sparade kontaktuppgifter stannar användaren under Inställningar, med bekräftelse. Värdet finns kvar efter omladdning. |
+| [F19](ATGARDSPLAN.md#f19) | Dialogen säger att stängning behåller tidigare val. Avbryt och Escape behåller urvalet och återför fokus till Filtrera jobb, och ett avbrutet val visas inte nästa gång. Tillämpa ändrar urvalet (13 → 3) och visar aktivt filter. Rensa återställer urvalet. |
+| [F23](ATGARDSPLAN.md#f23) | Rollvalet i `/signup` är radioknappar. Kopierings- och filterdialogerna tar fokus vid öppning, och Escape återför fokus. I filterdialogen stannar 20 Tab och 20 Shift+Tab i dialogen, med ett undantag: efter sista knappen går fokus till webbläsaren och sedan tillbaka in, vilket är normalt för en inbyggd modal. Fokus är synligt. Ej provat med skärmläsare eller på fysisk mobil. |
+| [F24](ATGARDSPLAN.md#f24) | När WebGL nekas visas beskedet ”Din webbläsare saknar stöd för WebGL … Sökvalen är kvar. Fortsätt i listan nedan.”, knappen Försök visa kartan igen och en jobblista med 12 jobb. Ingen horisontell scroll vid 375 px. |
+| [N07](ATGARDSPLAN.md#n07) | Efter Inte nu visas Ångra, som tar tillbaka samma jobb. Provat med knappar, inte med swipegest på pekskärm. |
+| [N10](ATGARDSPLAN.md#n10) | Ungdomens adress sparas och finns kvar efter omladdning. Företagets markering för Nya meddelanden sparas på kontot och finns kvar efter omladdning. E-postbyte provades inte, eftersom det kräver e-post. |
+| [D02](ATGARDSPLAN.md#d02) | Vid 375×667 ligger skrivfältet inom vyn (nederkant 587 px), även efter skickat meddelande. Ingen horisontell scroll. Chatten fungerar åt båda hållen. Ej provat med skärmtangentbord. |
+| [N18](ATGARDSPLAN.md#n18) | Korten visar skäl (”Tillhör en typ av jobb du vill söka · Har en arbetsplats på en ort du angett”), och sedda kort flyttas ner vid nästa laddning. Ingen paginering eller betalda lyft provades. |
+| [DA-04](ATGARDSPLAN.md#da-04) | 30 vyer vid 375 och 1280 px, alla utan horisontell scroll: företagsvyn, kandidatvyn, företagsuppgifter med verifieringsruta, fakturor, notiser, chattar, `/private`, ungdomens profil, profilbygget, ansökningar och swipe, samt adminens företags- och rekryteringslistor. Färgerna följer temat, även i chatten. De 20 hex-träffarna utanför `theme.css` är kartan och selektorer i `product-design.css`. |
+| [DA-12](ATGARDSPLAN.md#da-12) | `app/company/page.tsx` och `/private` vid 375 och 1280 px har inga renderade inline-färger eller inline-avstånd i `main`, bara `color: transparent` från Next-bilder, och ingen horisontell scroll. |
+| [L07](ATGARDSPLAN.md#l07) | Kedjan i webben: företagsuppgifter → adminverifiering → två annonser → ansökningar → fråga och svar → accept → chatt → registrerad och bekräftad anställning → stängd annons. Annonsbild, video, verklig AI och faktura ingick inte. |
+
+### Underkänt med felbeskrivning
+
+| Kort | Fel |
+| --- | --- |
+| [N25](ATGARDSPLAN.md#n25) | Byte mellan annonser fungerar. Men i en annons kandidatvy byter varken klick eller Enter på en annan kandidat i listan visad kandidat. Den först valda står kvar, och URL:en skrivs utan `candidate`. En direktlänk med `&candidate=<id>` öppnar rätt kandidat. Återskapat tre gånger vid 1280 px. Frågor och beslut gäller därmed den kandidat som visas, inte den som klickades. |
+| [N06](ATGARDSPLAN.md#n06) | Textsökningen fungerar (QA-märket gav 2 träffar). Men filter och sökning finns inte i URL:en (`/swipe`) och försvinner både med webbläsarens Tillbaka från Ansökningar och vid omladdning. |
+| [N20](ATGARDSPLAN.md#n20) | Formulärvägen skickar inga AI-anrop och sparar profil och CV med godkännande. Men med svaret ”Svenska – Modersmål / Engelska – Goda kunskaper” får profilen båda språken medan CV-utkastet bara får Svenska. Återskapat med två ungdomar. Berör även N19:s grund-CV. |
+
+### Observationer (inget kriterium underkänt)
+
+- `/swipe` och Inställningar visar ”AI-inställningen kunde inte hämtas.” Det stämmer med F20-raden ovan, där samtyckesfunktionen saknades i DevStaging.
+- Stängningsdialogen säger ”Använd Registrera anställning i chatten …” även när anställningen redan är bekräftad (N16/L04, text).
+- Adminens rekryteringslista vid 1280 px: Spara granskning ser ostylad ut, Visa annons har större text och filterknapparna saknar markerat läge. Det gäller layout, inte färg (L03/F17).
+- Kandidatens praktiska uppgifter visar ”Inte angivet” för dagar och tider, trots att ”Helger och kvällar” angavs i fritext i profilformuläret.
+- Adminens företagslista innehåller äldre QA-företag från tidigare tester (till exempel ”QA Café 12 oktober — fiktivt testföretag” och flera ”Namnlöst företag”). Jag rörde dem inte.
+
+### Ej testat i den här körningen
+
+- Video och kamera: N11, N12, N13, N22, N23.
+- Verklig AI-modell: N21, F12, F26 och AI-chatten i N20.
+- E-post och domän: L02, L06.
+- Testfaktura och Stripe: L03, N26.
+- GDPR-kort utanför Max avgränsning: L12, L13, L16, F20, N19.
+- Fysisk mobil och Safari: L08.
+- Profilflödeskortet (2026-10-14).
+- D05 är inte infört i dev.
