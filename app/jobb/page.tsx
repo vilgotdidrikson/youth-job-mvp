@@ -29,7 +29,7 @@ export default async function PublicJobsPage() {
   return (
     <main className={styles.page}>
       <MarketingNav />
-      <section className={styles.content}>
+      <section className={styles.content} data-job-previews={jobs === null ? "unavailable" : "ready"}>
         <h1>Lediga ungdomsjobb</h1>
         {jobs === null ? <p role="status">Jobben kunde inte hämtas just nu. Försök igen om en stund.</p>
           : jobs.length === 0 ? <p>Det finns inga jobb att visa just nu.</p>

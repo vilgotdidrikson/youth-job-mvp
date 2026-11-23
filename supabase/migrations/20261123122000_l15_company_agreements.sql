@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION private.application_analysis_eligible(p_job uuid, p_y
  STABLE SECURITY DEFINER
  SET search_path TO ''
 AS $function$
-select public.application_ai_allowed(p_job,p_youth) and private.application_content_available(p_job,p_youth) and exists(select 1 from public.jobs j 
+select public.application_ai_allowed(p_job,p_youth) and private.application_content_available(p_job,p_youth) and exists(select 1 from public.jobs j
  join public.application_completions a on a.job_id=j.id and a.youth_user_id=p_youth and a.status='submitted'
  join public.swipe_actions s on s.job_id=j.id and s.youth_user_id=p_youth and s.decision='interested'
  join public.job_match_profiles m on m.job_id=j.id and m.status='approved'

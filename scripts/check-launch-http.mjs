@@ -12,7 +12,9 @@ export const launchTargets = {
   },
 };
 
-export async function checkLaunchHttp({ origin, routes, redirectOrigin }, { timeoutMs = 12_000 } = {}) {
+const reviewRoutes = [...launchTargets.dev.routes, "/features", "/pricing", "/jobb"];
+
+export async function checkLaunchHttp({ origin, routes, redirectOrigin, checkJobPreviews = false }, { timeoutMs = 12_000 } = {}) {
   const probes = routes.map(path => ({ path, from: origin }));
   if (redirectOrigin) probes.push({ path: "/", from: redirectOrigin });
 
@@ -35,8 +37,12 @@ export async function checkLaunchHttp({ origin, routes, redirectOrigin }, { time
         status = response.status;
       }
       const html = (response.headers.get("content-type") ?? "").toLowerCase().startsWith("text/html");
-      await response.body?.cancel();
-      const reason = status !== 200 ? "http" : !html ? "content-type" : null;
+      let reason = status !== 200 ? "http" : !html ? "content-type" : null;
+      if (reason === null && checkJobPreviews && path === "/jobb") {
+        if (!(await response.text()).includes('data-job-previews="ready"')) reason = "job-previews";
+      } else {
+        await response.body?.cancel();
+      }
       return { path, host: url.host, status, ok: reason === null, reason };
     } catch {
       return { path, host: url.host, status, ok: false, reason: "unreachable" };
@@ -56,15 +62,17 @@ export function deploymentOrigin(value) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [, , environment, flag, deployment, ...extra] = process.argv;
-  const target = Object.hasOwn(launchTargets, environment) ? launchTargets[environment] : null;
-  if (!target || extra.length || (flag !== undefined && (flag !== "--deployment" || !deployment))) {
+  const review = environment === "review";
+  const target = review ? launchTargets.dev : Object.hasOwn(launchTargets, environment) ? launchTargets[environment] : null;
+  if (!target || extra.length || (review && !deployment) || (flag !== undefined && (flag !== "--deployment" || !deployment))) {
     console.error("Usage: node scripts/check-launch-http.mjs dev|production [--deployment https://<deployment>.vercel.app]");
+    console.error("       node scripts/check-launch-http.mjs review --deployment https://<deployment>.vercel.app");
     process.exit(2);
   }
   let selected = target;
   if (deployment) {
     try {
-      selected = { origin: deploymentOrigin(deployment), routes: target.routes };
+      selected = { origin: deploymentOrigin(deployment), routes: review ? reviewRoutes : target.routes, checkJobPreviews: review };
     } catch {
       console.error("Provide the HTTPS URL of an individual Vercel deployment.");
       process.exit(2);

@@ -9,6 +9,9 @@ const server = createServer((request, response) => {
   if (request.url === "/login" && release === "candidate") {
     response.writeHead(503, { "content-type": "text/html" });
     response.end("Test payload that must not appear in probe results");
+  } else if (request.url === "/jobb") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html><section data-job-previews="${release === "candidate" ? "unavailable" : "ready"}"></section>`);
   } else if (request.url === "/redirect") {
     response.writeHead(302, { location: "/unexpected" });
     response.end();
@@ -26,16 +29,16 @@ try {
     server.listen(0, "127.0.0.1", resolve);
   });
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const probes = { origin, routes: ["/", "/login"] };
+  const probes = { origin, routes: ["/", "/login", "/jobb"], checkJobPreviews: true };
   assert.ok((await checkLaunchHttp(probes)).every(result => result.ok));
 
   release = "candidate";
   const duringFailure = await checkLaunchHttp(probes);
   const failures = duringFailure.filter(result => !result.ok);
   assert.deepEqual(failures.map(({ path, status, reason }) => ({ path, status, reason })),
-    [{ path: "/login", status: 503, reason: "http" }]);
+    [{ path: "/login", status: 503, reason: "http" }, { path: "/jobb", status: 200, reason: "job-previews" }]);
   assert.doesNotMatch(JSON.stringify(duringFailure), /Test payload/);
-  console.log("PASS: a failed login route is detected with technical metadata only.");
+  console.log("PASS: failed login and failed job data (HTTP 200) are detected with technical metadata only.");
 
   release = "previous";
   assert.ok((await checkLaunchHttp(probes)).every(result => result.ok));
