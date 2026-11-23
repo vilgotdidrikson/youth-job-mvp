@@ -19,6 +19,8 @@ const base={name:'  Alex   QA  ',dateOfBirth:'2008-10-15',address:' Testgatan ',
 const today=new Date('2026-10-14T12:00:00Z');
 assert.equal(contactProfilePayload(base,today).age,17);assert.equal(contactProfilePayload({...base,dateOfBirth:'2008-10-14'},today).age,18);
 assert.equal(contactProfilePayload({...base,dateOfBirth:''},today).age,null);
+assert.equal(contactProfilePayload({...base,dateOfBirth:'2011-10-14'},today).age,15);
+assert.throws(()=>contactProfilePayload({...base,dateOfBirth:'2011-10-15'},today),/15 år/);
 for(const dateOfBirth of ['2026-10-15','2008-02-30','not-a-date','2008-99-99'])assert.throws(()=>contactProfilePayload({...base,dateOfBirth},today));
 assert.throws(()=>contactProfilePayload({...base,name:'  '},today));
 assert.equal(contactProfilePayload(base,today).full_name,'Alex QA');
@@ -33,7 +35,7 @@ try{
  assert.equal(writes.length,1);
  assert.deepEqual(Object.keys(writes[0]).sort(),['address','age','city','date_of_birth','full_name','postal_code','user_id'].sort());
  for(const key of ['cv_text','cv_structured','languages','recruitment_profile','documents'])assert.deepEqual(row[key],original[key],`${key} must not be rewritten by account editing`);
- const saved=structuredClone(row);fail=true;await assert.rejects(saveYouthContactDetails({...base,city:'Other'}),/simulated failure/);assert.deepEqual(row,saved);
+ const saved=structuredClone(row);fail=true;await assert.rejects(saveYouthContactDetails({...base,city:'Other'}),/Kunde inte spara uppgifterna/);assert.deepEqual(row,saved);
 }finally{Module._load=load;}
 const cv=readFileSync('components/youth-cv-hub.tsx','utf8');
 assert.doesNotMatch(cv,/setTimeout\([^;]*router\.push/s,'CV completion may not navigate on a timer');

@@ -256,7 +256,7 @@ Vid avstämningen: **31 Klar, 35 För granskning, 13 Pågår, 7 Ej påbörjad oc
 | 57 | [F19](#f19) | P3 | Gör filterdialogens beteende tydligt | För granskning | Vilgot / Codex |
 | 58 | [D08](#d08) | P3 | Gör tomvyer och sidbredder konsekventa | Klar | Max / Claude |
 | 59 | [N10](#n10) | P3 | Ge grundläggande kontoval | För granskning | Vilgot / Codex |
-| 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Ej påbörjad | — |
+| 60 | [L10](#l10) | P1 | Lanseringsmiljö, domän och drift | Pågår | Vilgot / Codex |
 | 61 | [DA-01](#da-01) | P1 | Landningssidans illustrationer är tomma under 1024px | Klar | Max / Claude |
 | 62 | [DA-02](#da-02) | P1 | Favicon, appikoner, delningsbild och sidtitlar | Klar | Max / Claude |
 | 63 | [DA-04](#da-04) | P2 | Samla färgtokens och ta bort hårdkodade och drivande färger | För granskning | Max / Claude |
@@ -1105,6 +1105,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Implementerat: Skrivmaskinen skriver bara sista frasen; första raden står alltid kvar och tonas in vid byte. h1 har den fullständiga första rubriken som skärmläsartext; utan JavaScript och vid reducerad rörelse visas den stilla. Manifestet avslutas med samma knappar som hjälten (ny gemensam `LandingActions`, ”Gå till appen” för inloggade); knapparnas inline-färger ersatta med tokens. `components/ui/velaris.tsx`: pausar när hjälten inte syns (IntersectionObserver) och vid dold flik, en stillbild vid reducerad rörelse, pixeltäthet max 1,5 och 30 fps på pekskärm, ny valfri prop för kantmörkning (standard oförändrad). Bakgrundens färger, mörka kanter och navigationens vita text är oförändrade på användarens begäran 2026-11-08; en ljusare variant med text bredvid kortet prövades och valdes bort. Ingen databas, auth eller annan vy ändrad; övriga demosidor för Velaris behåller standardvärdena.
 - Verifierat (version utan förklaring och kort): TypeScript, riktad ESLint, `check:design-tokens` (oförändrad baslinje: 538/140/56/10) och produktionsbygge; skärmbilder vid 375 och 1280 px mot lokalt produktionsbygge granskade. Tidigare Chromium-kontroller av WebGL-paus (0 bildrutor utanför hjälten och vid dold flik, stillbild vid reducerad rörelse), skrivmaskinen (första raden alltid hel, fast rubrikhöjd, skärmläsartext) och avslutande knappar gjordes på samma kod före borttagningen. Skärmbilder av hela sidan vid scroll (375 och 1280 px) jämförda med driftsatt dev: samma sektioner och bakgrunder; enda skillnaden är de avslutande knapparna. Kontrasten mot den rörliga mörkkantade bakgrunden klarar inte WCAG AA i alla lägen, varken före eller efter D05 (driftsatt dev före D05: rubriken 1,00 vid 1280 px, navigationen 2,65–4,26).
 - Återstår / blockerare: Kriteriet Klar när (besökaren förstår tjänsten utan att vänta på rubriken) uppfylls inte utan en statisk förklaring eller produktbild i första vyn; kräver nytt beslut om innehåll. Kontrasten mot bakgrunden kräver ett designbeslut. Inget av detta är committat eller infört i dev.
+- Avstämning 2026-11-23: Granskningsförslag för befintlig rubrikplats och kontrast dokumenterat. Tidigare innehållsval och Max ägarskap gäller tills förslaget är förankrat. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
 
 <a id="d09"></a>
 ### D09 Placera feedback vid rätt åtgärd
@@ -1420,15 +1421,16 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Prioritet: P1
 - Global ordning: 60
 - Typ: Tidigare planerad lanseringsförberedelse
-- Status: Ej påbörjad
-- Ansvarig: —
-- Branch/PR: —
+- Status: Pågår
+- Ansvarig: Vilgot / Codex
+- Branch/PR: `codex/final-five-20261123`
 - Åtgärd: Koppla vald domän och företagsanpassat Vercel-upplägg när det är dags för skarp lansering. Kontrollera separata dev-/produktionsmiljöer, variabler, autentiseringens redirect-adresser, e-postlänkar, tillämpliga migrationer och privata lagringsbehörigheter. Ordna felövervakning, ansvar för support och en konkret återställningsväg. Visa enbart priser och tjänster som gäller vid lanseringen.
 - Klar när: Skarp miljö är korrekt konfigurerad, kärnflödet röktestas på rätt domän och teamet kan upptäcka och återställa ett misslyckat släpp.
 - Tillägg 2026-10-19: L14 är lanseringsberoende för rätt avtalspart, Vercel Pro/DPA och granskade leverantörs-/AI-inställningar. Uppgradering eller ett nytt konto innebär inte automatiskt GDPR-efterlevnad.
-- Implementerat: —
-- Verifierat: —
-- Återstår / blockerare: —
+- Implementerat: Skrivskyddat HTTP-prov och återställningsunderlag.
+- Verifierat: Sju HTTP-prov på de två befintliga miljöerna.
+- Återstår / blockerare: Skarpt lanseringsbeslut och leverantörs-/avtalsberoenden enligt L14/L15.
+- Avstämning 2026-11-23: Förberedelse påbörjad av Vilgot / Codex. Sju anonyma HTTP-prov passerade på befintliga domäner. Kärnflöde, migreringar, larmmottagare och återställning inför skarpa släpp återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
 
 ## Avgränsningar och beslut som återstår
 
@@ -1877,7 +1879,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: [PR #144](https://github.com/vilgotdidrikson/youth-job-mvp/pull/144), sex serverhandlers med fast metadata-/incidentgräns i stället för råa felobjekt, namn och leverantörsbodyer. Ansöknings-API:t ger fast svensk feltext och fångar kastande transport. Röstsessionens misslyckade body läses inte. Inga konto-/avtals-/databas-/RLS-inställningar ändrade. Se docs/L14_SERVER_FAILURES.md.
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
-
+- Avstämning 2026-11-23: Skrivskyddad verifiering av projektseparering och databasregioner. Profil-/onboardingflöden visar fasta feltexter. Faktiska avtal och kontoinställningar återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
 
 <a id="l15"></a>
 ### L15 Avtal och rättsligt underlag för behandling på sidan
@@ -1920,6 +1922,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Implementerat: Dokumentunderlag/DPIA-utkast finns enligt PR #195 och kortets dokumentläge. Versionshanterad avtalsaccept, företags-/åldersspärrar och övrig produktkod i detta kort återstår; inga avtal eller godkännanden aktiveras genom underlaget.
 - Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
 - Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
+- Avstämning 2026-11-23: 15-årsgränsen valideras i klienten och i en lokalt testad databasmigrering för nya och ändrade åldersuppgifter. Juridiska roll-/textbeslut samt schema och acceptans i DevStaging återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
 
 <a id="l16"></a>
 ### L16 Skyddade personuppgiftsärenden och incidenthantering
@@ -2201,6 +2204,7 @@ Fynd som enligt audit-dokumentet hör till befintliga kort har inga egna kort ut
 - Implementerat: —
 - Verifierat: —
 - Återstår / blockerare: —
+- Avstämning 2026-11-23: Granskningsunderlaget innehåller två produktval och ett bekräftat utgångsläge: anonyma rollen i DevStaging kunde läsa 11 annonsrader. Val av pilotbeteende krävs före ändrad annonsåtkomst. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
 
 <a id="da-19"></a>
 ### DA-19 Större tryckytor som hittades i webbläsargranskningen
