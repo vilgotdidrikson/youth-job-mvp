@@ -1,30 +1,79 @@
-// Read-only. The two environments deliberately have different public routes.
-const target = process.argv[2];
-const environments = {
-  dev: { origin: "https://youth-job-mvp-dev.vercel.app", routes: ["/", "/login", "/help", "/privacy", "/reset-password"] },
-  production: { origin: "https://matchnwork.se", routes: ["/"] },
+import { pathToFileURL } from "node:url";
+
+export const launchTargets = {
+  dev: {
+    origin: "https://youth-job-mvp-dev.vercel.app",
+    routes: ["/", "/login", "/help", "/privacy", "/reset-password"],
+  },
+  production: {
+    origin: "https://matchnwork.se",
+    routes: ["/"],
+    redirectOrigin: "https://www.matchnwork.se",
+  },
 };
-if (target !== "dev" && target !== "production") {
-  console.error("Usage: node scripts/check-launch-http.mjs dev|production");
-  process.exit(2);
-}
-const { origin, routes } = environments[target];
-const checks = routes.map(path => ({ url: new URL(path, origin), path }));
-if (target === "production") {
-  checks.push({ url: new URL("https://www.matchnwork.se/"), path: "/" });
+
+export async function checkLaunchHttp({ origin, routes, redirectOrigin }, { timeoutMs = 12_000 } = {}) {
+  const probes = routes.map(path => ({ path, from: origin }));
+  if (redirectOrigin) probes.push({ path: "/", from: redirectOrigin });
+
+  return Promise.all(probes.map(async ({ from, path }) => {
+    const url = new URL(path, from);
+    const canonical = new URL(path, origin);
+    const signal = AbortSignal.timeout(timeoutMs);
+    let status = null;
+    try {
+      let response = await fetch(url, { signal, redirect: "manual" });
+      status = response.status;
+      if (from !== origin) {
+        const location = response.headers.get("location");
+        await response.body?.cancel();
+        if (![301, 302, 303, 307, 308].includes(status) || !location
+          || new URL(location, url).href !== canonical.href) {
+          return { path, host: url.host, status, ok: false, reason: "redirect" };
+        }
+        response = await fetch(canonical, { signal, redirect: "manual" });
+        status = response.status;
+      }
+      const html = (response.headers.get("content-type") ?? "").toLowerCase().startsWith("text/html");
+      await response.body?.cancel();
+      const reason = status !== 200 ? "http" : !html ? "content-type" : null;
+      return { path, host: url.host, status, ok: reason === null, reason };
+    } catch {
+      return { path, host: url.host, status, ok: false, reason: "unreachable" };
+    }
+  }));
 }
 
-await Promise.all(checks.map(async ({ url, path }) => {
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    const final = new URL(response.url);
-    const contentType = response.headers.get("content-type") ?? "";
-    await response.body?.cancel();
-    const pass = response.status === 200 && final.origin === origin && final.pathname === path && contentType.startsWith("text/html");
-    if (!pass) process.exitCode = 1;
-    console.log(`${pass ? "PASS" : "FAIL"} ${url.hostname}${url.pathname} HTTP ${response.status}, final ${final.origin}${final.pathname}`);
-  } catch {
-    process.exitCode = 1;
-    console.error(`FAIL ${url.hostname}${url.pathname} could not be reached`);
+export function deploymentOrigin(value) {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.port || !/^[a-z0-9-]+-[a-z0-9-]+\.vercel\.app$/.test(url.hostname)
+    || url.href !== url.origin + "/"
+    || Object.values(launchTargets).some(target => target.origin === url.origin)) {
+    throw new Error("Provide the HTTPS URL of an individual Vercel deployment.");
   }
-}));
+  return url.origin;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const [, , environment, flag, deployment, ...extra] = process.argv;
+  const target = Object.hasOwn(launchTargets, environment) ? launchTargets[environment] : null;
+  if (!target || extra.length || (flag !== undefined && (flag !== "--deployment" || !deployment))) {
+    console.error("Usage: node scripts/check-launch-http.mjs dev|production [--deployment https://<deployment>.vercel.app]");
+    process.exit(2);
+  }
+  let selected = target;
+  if (deployment) {
+    try {
+      selected = { origin: deploymentOrigin(deployment), routes: target.routes };
+    } catch {
+      console.error("Provide the HTTPS URL of an individual Vercel deployment.");
+      process.exit(2);
+    }
+  }
+  const results = await checkLaunchHttp(selected);
+  for (const { path, host, status, ok, reason } of results) {
+    const code = status === null ? "unreachable" : `HTTP ${status}`;
+    console.log(`${ok ? "PASS" : "FAIL"} ${host}${path} ${code}${reason ? ` (${reason})` : ""}`);
+  }
+  if (results.some(result => !result.ok)) process.exitCode = 1;
+}
