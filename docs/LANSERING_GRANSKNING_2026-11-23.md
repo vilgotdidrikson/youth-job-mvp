@@ -35,7 +35,7 @@ Kör `node scripts/check-launch-http.mjs dev` för startsida, login, hjälp, int
 Inför släpp:
 
 1. Identifiera målprojekt, domän och tidigare fungerande deployment i Vercel. Kontrollera separat Supabase-projektreferens, exakta Auth-redirects och mejllänkar samt miljöbindning för AI, SMTP, karta, testbetalningar och privata dokument. Hantera hemligheter i respektive plattform.
-2. Kontrollera tillämpliga migreringar i staging innan produktionssläpp. Kontroll den 23 november i DevStaging visade att `public.application_ai_allowed(uuid,uuid)` och L13:s leveranstabell saknades. Den nya åldersmigrationen är testad lokalt och behöver sitt eget DevStaging-prov innan skarpt släpp.
+2. Kontrollera tillämpliga migreringar i staging innan produktionssläpp. Kontroll den 23 november i DevStaging visade att `public.application_ai_allowed(uuid,uuid)` och L13:s leveranstabell saknades. Den nya åldersmigrationen passerade även sex kontroller i DevStaging i en återställd transaktion med ett fiktivt ungdomskonto. Efteråt fanns inga testkonton kvar och migrationen var inte permanent installerad.
 3. Utse släppansvarig, larmmottagare och supportkontakt. Efter godkänt L14/L15 och släppbeslut, kör rollprov med testkonton och kontrollera aktuella priser, betalningsläge och stödväg. Undvik riktiga ärenden i röktestet.
 4. Vid regressionsfel, håll nya släpp och återställ webbdeployen till tidigare verifierad version i rätt Vercel-projekt. Kör HTTP-provet igen och kontrollera kärnflödet. Kontrollera separat databasens schema och kompatibilitet innan planerad återställning av data. En webbrollback rullar inte tillbaka databasen. Dokumentera vilken version som återställdes, utfallet och ägaren för uppföljning.
 
@@ -53,3 +53,8 @@ I DevStaging kunde databasrollen för utloggade läsa 11 rader från jobbtabelle
 | Ett urval riktiga publicerade jobb utloggat | En utsedd mängd aktiva annonser med uttryckligt tillåtna annonsfält. Pausade, stängda och ej godkända annonser försvinner. Ansökan, sparande och allt kandidatunderlag kräver inloggning. |
 
 Testa valt beteende med anonyma och inloggade roller, direktlänkar och ändrad annonsstatus. Ingen ny publik annonsvy eller ändrad behörighet ingår i detta förslag.
+
+## Kompletterande verifiering i DevStaging
+
+- Åldersprovet verifierade att ett fiktivt ungdomskonto kan skapas före profilkomplettering, att fyllt 15 godtas, att 14 år och framtida födelsedatum avvisas och att ett motstridigt numeriskt värde inte förbigår födelsedatumet. Skrivproven kördes med rollen `authenticated` bunden till testkontot. Transaktionen återställdes. Efterkontrollen gav noll testkonton och bekräftade att åldersmigrationen fortfarande väntar på permanent installation.
+- Vercel bekräftade 23 november att `matchnwork.se` kör `master` på `58f6192` och att `youth-job-mvp-dev.vercel.app` kör `dev` på `d5a2797`. Båda deploymentarna är READY och använder skilda Vercel-projekt. Detta verifierar domänkopplingen och ger referenser för återställning av webbdeployen.
