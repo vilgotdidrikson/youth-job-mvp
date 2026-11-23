@@ -99,7 +99,7 @@ const page = readFileSync('app/applications/page.tsx', 'utf8');
 assert.match(page, /Alla <span>\{counts\.all\}<\/span>/);
 assert.match(page, /Inte skickade <span>\{counts\.unsent\}<\/span>/);
 assert.match(page, /pendingInterestView\(stage, cvCompleted\)/);
-assert.match(page, /prepareApplication\(jobId\)/);
+assert.match(page, /prepareApplication\(jobId, aiConsent\)/);
 assert.doesNotMatch(page, /Alla <span>\{items\.length\}/);
 const jobPage = readFileSync('app/jobb/[jobId]/page.tsx', 'utf8');
 assert.match(jobPage, /const savedInterest = hasDraft && !alreadyApplied && !needsCompletion && acceptsApplications/);

@@ -154,8 +154,8 @@ async function ensureMatch(jobId: string, youthUserId: string, companyUserId: st
   return { ...match, conversation_id: result.conversation_id ?? null };
 }
 
-export async function swipeJob(jobId: string, direction: SwipeDecision): Promise<MatchRecord | null> {
-  if (direction === "interested") { await prepareApplication(jobId); return null; }
+export async function swipeJob(jobId: string, direction: SwipeDecision, aiConsent = false): Promise<MatchRecord | null> {
+  if (direction === "interested") { await prepareApplication(jobId, aiConsent); return null; }
   const { user } = await getAuthenticatedUser("youth");
   const { data: youthProfile, error: profileError } = await getSupabaseClient()
     .from("youth_profiles")

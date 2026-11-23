@@ -100,7 +100,7 @@ function SwipePageContent() {
   const page = discoveryPage(orderedJobs, decidedIds, pageEnd, showingSaved);
   const filteredJobs = page.jobs, hasMore = page.hasMore;
 
-  const handleDecision = async (job: JobPost, decision: SwipeDecision) => {
+  const handleDecision = async (job: JobPost, decision: SwipeDecision, aiConsent = false) => {
     if (pending.current.has(job.id) || undoLock.current) return;
     const confirmUndoChoice = beginUndoChoice();
     const generation = feedGeneration.current;
@@ -121,7 +121,7 @@ function SwipePageContent() {
           await saveApplicationDraft(job.id); setDraftCount(count => count + 1);
           setNotice("Intresset är sparat. Skapa ditt CV under Profil för att skicka ansökan.");
         } else {
-          await swipeJob(job.id, decision);
+          await swipeJob(job.id, decision, aiConsent);
           if (decision === "interested") setNotice(`Ansökan till ${job.company_name || "företaget"} är skickad.`);
         }
         window.dispatchEvent(new Event("mnw-navigation-refresh"));
