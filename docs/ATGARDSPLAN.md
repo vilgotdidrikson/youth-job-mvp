@@ -1432,6 +1432,7 @@ Reserverat 2026-10-22: DA-02 enligt `docs/DESIGN_AUDIT_2026-10-22_1.md` (standar
 - Verifierat: Sju HTTP-prov på de två befintliga miljöerna.
 - Återstår / blockerare: Skarpt lanseringsbeslut och leverantörs-/avtalsberoenden enligt L14/L15.
 - Avstämning 2026-11-23: Förberedelse påbörjad av Vilgot / Codex. Sju anonyma HTTP-prov passerade på befintliga domäner. Kärnflöde, migreringar, larmmottagare och återställning inför skarpa släpp återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Skrivskyddat lanseringsprov kontrollerar tio schemaförutsättningar. Före migrering 1/10 i båda miljöerna. Samtliga nio migrationer från 22–23 november kunde köras tillsammans i en återställd DevStaging-transaktion, 10/10. Rekrytering 12/12 med fiktiva konton. Driftansvarig, permanent införande och skarp acceptans återstår. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 ## Avgränsningar och beslut som återstår
 
@@ -1881,6 +1882,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Verifierat: Endast planering och tidigare genomläsning av offentliga leverantörsvillkor; inga signerade avtal, abonnemang eller privata kontoinställningar verifierade genom denna dokumentationsleverans.
 - Återstår / blockerare: Rätt avtalspart/UF-ansvar, faktisk konto-/DPA-kontroll, planerade organisationsflyttar, inställningar och kod-/dataflödesgranskning.
 - Avstämning 2026-11-23: Skrivskyddad verifiering av projektseparering och databasregioner. Profil-/onboardingflöden visar fasta feltexter. Faktiska avtal och kontoinställningar återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Vercel bekräftar verifierade domäner och separata projekt. Kontoanslutningen bekräftar team men visar inget abonnemangs- eller avtalsbevis. Slutlig leverantörskontroll kräver kontobunden dokumentation. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="l15"></a>
 ### L15 Avtal och rättsligt underlag för behandling på sidan
@@ -1924,6 +1926,7 @@ Dokumentationsleverans: `codex/l13-l14-gdpr-plan-20261019`. L13/L14 är nya krav
 - Verifierat: Dokumentkrav avstämda mot befintlig plan och samtalets beslut; inga nya funktions-/användartester.
 - Återstår / blockerare: Juridiska besked, sluttexter, implementation och verklig dev-verifiering.
 - Avstämning 2026-11-23: 15-årsgränsen valideras i klienten och i en lokalt testad databasmigrering för nya och ändrade åldersuppgifter. Juridiska roll-/textbeslut samt schema och acceptans i DevStaging återstår. Se [granskningsunderlaget](LANSERING_GRANSKNING_2026-11-23.md).
+- Kompletterande kontroll 2026-11-23: Företagsavtalets textversion 0.5, bilaga A 0.2 och DPIA 0.1 är fortsatt märkta som utkast. Ålderskontrollen passerade sex DevStaging-prov i återställd transaktion. Implementationen av avtalsflödet behöver fastställda texter, parter, ansvar och minderårigflöde. Se [PR #253](https://github.com/vilgotdidrikson/youth-job-mvp/pull/253).
 
 <a id="l16"></a>
 ### L16 Skyddade personuppgiftsärenden och incidenthantering

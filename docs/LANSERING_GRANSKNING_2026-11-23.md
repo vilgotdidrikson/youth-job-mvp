@@ -72,3 +72,32 @@ Testa valt beteende med anonyma och inloggade roller, direktlänkar och ändrad 
 ## Kompletterande lanseringskontroll
 
 Vilgot / Codex kontrollerar driftberedskap, faktiska kontouppgifter och underlag för slutbeslut i PR #253.
+
+### L10 Schemaprov och återställningspunkt
+
+Kör `scripts/check-launch-schema.sql` på målprojektet inför pilot. Frågan körs skrivskyddat, läser enbart schemametadata och bucketinställningar, och visar godkända och saknade kontroller. `ready: true` gäller schemaförutsättningar enligt listan. Inloggad webb, e-post och externa integrationer provas separat.
+
+| Miljö | Utfall 23 november |
+| --- | --- |
+| DevStaging före migration | 1/10. Den privata CV-bucketen passerade. |
+| Produktion före migration | 1/10. Den privata CV-bucketen passerade. |
+| DevStaging med hela paketet från 22–23 november i en återställd transaktion | 10/10. Paketet kunde köras tillsammans i datumordning. |
+| Rekryteringskedjan i DevStaging med fiktiva konton | 12/12. Företagsverifiering, CV-delning, frågor, matchning, chatt, negativa åtkomstprov och annonsstatus passerade. |
+
+Kontrollera att målmiljön har rätt Git-gren och Supabase-projekt. Inför färdiggranskade migrationer i ordning i DevStaging, kontrollera schemautfallet igen och kör sedan inloggat röktest, inklusive leverans och återställning av e-post med testinkorg. Dokumentera resultat per miljö före skarpt införande. Tidigare verifierade webbversioner är `58f6192` för `master` och `d5a2797` för `dev`. Släppansvarig och mottagare av driftlarm återstår att utse.
+
+### L14 Kontobevis
+
+Vercel bekräftade att de tre domänerna är verifierade och tillhör rätt separata projekt. `www.matchnwork.se` omdirigerar till huvuddomänen. Kontoanslutningen visade teamet men gav inget underlag om dess abonnemang eller avtal. De resultat som finns sparas som tekniska kontroller. Den som äger leverantörskontona behöver komplettera den befintliga leverantörstabellen med kundpart, tillämpligt avtal, datum/version och referens till kontobevis, samt de faktiskt valda inställningarna för OpenAI och övriga integrationer.
+
+### L15 Underlag som behöver fastställas
+
+Nuvarande företagsavtal (textversion 0.5), bilaga A (0.2) och konsekvensbedömning (0.1) har kontrollerats mot dokumenten. De är märkta som granskningsutkast. Avtalet beskriver det tidigare beslutade digitala godkännandet, men slutlig part och ansvarsfördelning, grunderna per behandling och minderårigas flöde är öppna i underlaget.
+
+Dokumentera följande beslut med godkänd version och ansvarig före aktivering:
+
+1. Avtalsparter, ansvar för varje behandlingssteg, slutlig bilaga och hur företrädarens behörighet kontrolleras.
+2. Flödet för 15–17-åringar och äldre konton med saknat födelsedatum, inklusive vilka texter och godkännanden som visas i vilket steg.
+3. Fastställda villkor och integritetstexter samt signerat beslut för konsekvensbedömningen och bedömningen av tjänstens AI-användning.
+
+Efter fastställelse kan avtalsflödet knyta företag, företrädare och tidpunkt till exakt den godkända textversionen, och publicering och kandidatåtkomst kan testas med fullständig avtals- och behörighetskontroll.
