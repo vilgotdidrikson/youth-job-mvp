@@ -58,3 +58,7 @@ Testa valt beteende med anonyma och inloggade roller, direktlänkar och ändrad 
 
 - Åldersprovet verifierade att ett fiktivt ungdomskonto kan skapas före profilkomplettering, att fyllt 15 godtas, att 14 år och framtida födelsedatum avvisas och att ett motstridigt numeriskt värde inte förbigår födelsedatumet. Skrivproven kördes med rollen `authenticated` bunden till testkontot. Transaktionen återställdes. Efterkontrollen gav noll testkonton och bekräftade att åldersmigrationen fortfarande väntar på permanent installation.
 - Vercel bekräftade 23 november att `matchnwork.se` kör `master` på `58f6192` och att `youth-job-mvp-dev.vercel.app` kör `dev` på `d5a2797`. Båda deploymentarna är READY och använder skilda Vercel-projekt. Detta verifierar domänkopplingen och ger referenser för återställning av webbdeployen.
+
+## Godkända produktval
+
+2026-11-23: Vilgot godkände huvudrubrik och kontrast (D05) samt ett urval riktiga publicerade jobb för utloggade (DA-18). Vilgot / Codex genomför ändringarna i PR #253 på `codex/final-five-20261123`. Max kvarstår som ägare för D05.
