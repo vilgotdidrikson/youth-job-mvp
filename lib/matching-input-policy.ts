@@ -13,9 +13,14 @@ function detectionText(text: string): string {
   return text.replace(/\p{Cf}/gu, "").normalize("NFKC");
 }
 const street = /(?<![\p{L}\p{M}\p{N}_])[\p{L}]+(?:gatan|vägen|gränd|allén|torget|street|road)\s+\d+[\p{L}]?(?![\p{L}\p{M}\p{N}_])/iu;
+// Context matters: handling medicine at work is a different statement from taking it.
+const personalDetails = /(?<![\p{L}\p{N}])(?:(?:jag är född|född den|i (?:was born|am \d{1,3} years? old)|date of birth)|(?:jag är|ålder)\s*\d{1,3}\s*år\b|(?:jag är|i am|i['’]m)\s+(?:gay|queer|trans|lesbisk|lesbian|hörselskadad|hard of hearing|deaf)\b|(?:jag tar|jag använder|i take|i use)\s+(?:metformin|insulin|antidepressiv[\p{L}]*|medicin[\p{L}]*|medication|prescription medication)\b|(?:fastar under|i fast during)\s+ramadan\b|(?:medlem i|member of)\s+(?:handels|unionen|kommunal|if metall|saco|tco|a trade union)\b)/iu;
+const obfuscatedEmail = /(?<![\p{L}\p{N}_.+-])[\p{L}\p{N}_.+-]{1,64}\s*(?:@|\[at\]|\(at\))\s*[\p{L}\p{N}.-]{1,253}\s*(?:\[dot\]|\(dot\)|\[punkt\]|\(punkt\))\s*[\p{L}]{2,63}/iu;
+const spacedIdentityNumber = /\b(?:19|20)\d{2}\s+\d{2}\s+\d{2}\s*[-+]\s*\d{4}\b/u;
 function excludedText(text: string, excludeContacts: boolean): boolean {
   const detected = detectionText(text);
-  return sensitive.test(detected) || identityLine.test(detected) || street.test(detected) || (excludeContacts && containsContact.test(detected))
+  return sensitive.test(detected) || identityLine.test(detected) || street.test(detected)
+    || personalDetails.test(detected) || obfuscatedEmail.test(detected) || spacedIdentityNumber.test(detected) || (excludeContacts && containsContact.test(detected))
     || /(?<![\p{L}\p{M}\p{N}_])(?:jag heter|mitt namn är|my name is|i am named)(?![\p{L}\p{M}\p{N}_])/iu.test(detected);
 }
 export function isExcludedMatchingText(text: string): boolean { return excludedText(text, true); }

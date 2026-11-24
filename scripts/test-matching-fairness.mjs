@@ -61,6 +61,32 @@ for (const contact of ['åsa@exempel.se', 'a\u200bsa@example.invalid', 'ａｓ�
  assert.equal(result.status, 'review_required');assert.ok(!result.text.includes(contact));assert.ok(result.text.includes(useful));
  assert.equal(isExcludedMatchingText(`Kontakta ${contact}`),true);
 }
+const personalVariants = [
+ 'Jag är född 24 oktober 2008.',
+ 'I was born on 4 June 2008.',
+ 'Jag är 17 år gammal.',
+ 'I am 17 years old.',
+ 'Jag bor på Östra Testgatan 37 B.',
+ 'Jag tar metformin varje dag.',
+ 'I use insulin every morning.',
+ 'I am hard of hearing.',
+ 'Jag fastar under ramadan.',
+ 'Jag är medlem i Handels.',
+ 'Jag är gay.',
+ 'Jag är trans.',
+ 'Mitt nummer är 1990 01 01 - 1234.',
+ 'Skriv till qa-fake (at) example (dot) invalid.',
+];
+for (const sentence of personalVariants) {
+ for (const variant of variants(sentence)) {
+  const result = minimizeMatchingText(variant + "\n" + useful);
+  assert.equal(result.text, useful, variant);
+  assert.equal(result.status, "review_required");
+ }
+}
+for (const fact of ['Jag inventerade insulin på apoteket.', 'Jag arbetade på Handels förra sommaren.', 'Jag bokade leveranser under ramadan.', useful]) {
+ assert.equal(minimizeMatchingText(fact).text, fact);
+}
 const unchangedPassage = '  Jag arbetade på café och sorterade böcker.  \n  \nJag inventerade.';
 assert.equal(minimizeMatchingText('Jag har ADHD.\n' + unchangedPassage).text, unchangedPassage, 'Keep adjacent safe clauses, conjunctions and whitespace intact after removing another clause');
 for (const separator of ['\r', '\r\n', '\u2028', '\u2029']) assert.equal(minimizeMatchingText(`Jag har ångest.${separator}${useful}`).text, useful);
@@ -86,6 +112,10 @@ try {
   assert.deepEqual(payload.questions,[{id:'q1',question:'Vilket kassasystem har du använt?'}]);
   assert.equal(payload.source,useful);assert.ok(payload.job.includes('Inventering i café.'));
   assert.ok(!JSON.stringify(payload).includes(variant));assert.ok(!JSON.stringify(payload).includes('PRIVATE'));
+ }
+ for (const sentence of personalVariants) {
+  await requestMatchingEvidence('synthetic-key', sentence + "\n" + useful, base);
+  assert.equal(JSON.parse(payloads.at(-1).messages[1].content).source, useful);
  }
  offline=true;await assert.rejects(requestMatchingEvidence('synthetic-key','Jag kan JavaScript.',matchingCriteria([{label:'JavaScript',required:true}])));
  const before=payloads.length;await assert.rejects(requestMatchingEvidence('synthetic-key','x'.repeat(120001),base));assert.equal(payloads.length,before,'Oversized text fails before provider call');
