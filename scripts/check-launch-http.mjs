@@ -61,11 +61,17 @@ export function deploymentOrigin(value) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const [, , environment, flag, deployment, ...extra] = process.argv;
+  const [, , environment, ...args] = process.argv;
+  const notify = args.includes("--notify");
+  const testAlert = args.length === 1 && args[0] === "--test-alert";
+  const [flag, deployment, ...extra] = args.filter(arg => arg !== "--notify");
   const review = environment === "review";
   const target = review ? launchTargets.dev : Object.hasOwn(launchTargets, environment) ? launchTargets[environment] : null;
-  if (!target || extra.length || (review && !deployment) || (flag !== undefined && (flag !== "--deployment" || !deployment))) {
-    console.error("Usage: node scripts/check-launch-http.mjs dev|production [--deployment https://<deployment>.vercel.app]");
+  if (!target || extra.length || (review && !deployment) || (testAlert && environment !== "dev")
+    || (!testAlert && flag !== undefined && (flag !== "--deployment" || !deployment))
+    || args.filter(arg => arg === "--notify").length > 1) {
+    console.error("Usage: node scripts/check-launch-http.mjs dev|production [--deployment https://<deployment>.vercel.app] [--notify]");
+    console.error("       node scripts/check-launch-http.mjs dev --test-alert");
     console.error("       node scripts/check-launch-http.mjs review --deployment https://<deployment>.vercel.app");
     process.exit(2);
   }
@@ -78,10 +84,21 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       process.exit(2);
     }
   }
-  const results = await checkLaunchHttp(selected);
+  const results = testAlert ? [] : await checkLaunchHttp(selected);
   for (const { path, host, status, ok, reason } of results) {
     const code = status === null ? "unreachable" : `HTTP ${status}`;
     console.log(`${ok ? "PASS" : "FAIL"} ${host}${path} ${code}${reason ? ` (${reason})` : ""}`);
   }
-  if (results.some(result => !result.ok)) process.exitCode = 1;
+  const failures = results.filter(result => !result.ok);
+  if (failures.length) process.exitCode = 1;
+  if (testAlert || (notify && failures.length)) {
+    try {
+      const { sendLaunchAlert } = await import("./launch-alert.mjs");
+      await sendLaunchAlert(environment, failures, { test: testAlert });
+      console.log("SMTP accepted the alert.");
+    } catch {
+      console.error("Alert mail delivery failed.");
+      process.exitCode = 1;
+    }
+  }
 }

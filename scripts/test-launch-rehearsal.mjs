@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { launchAlertMessage, sendLaunchAlert } from "./launch-alert.mjs";
 import { checkLaunchHttp, deploymentOrigin } from "./check-launch-http.mjs";
 
 let release = "previous";
@@ -38,6 +39,13 @@ try {
   assert.deepEqual(failures.map(({ path, status, reason }) => ({ path, status, reason })),
     [{ path: "/login", status: 503, reason: "http" }, { path: "/jobb", status: 200, reason: "job-previews" }]);
   assert.doesNotMatch(JSON.stringify(duringFailure), /Test payload/);
+  const alert = launchAlertMessage("dev", failures, "ops@example.invalid");
+  assert.match(alert.text, /127\.0\.0\.1:\d+\/login · HTTP 503 · http/);
+  assert.doesNotMatch(alert.text, /Test payload/);
+  assert.match(launchAlertMessage("dev", [], "ops@example.invalid", true).text, /planerat test/);
+  await sendLaunchAlert("dev", [], { env: {} });
+  await assert.rejects(sendLaunchAlert("dev", failures, { env: {} }), /Missing alert mail configuration/);
+  await assert.rejects(sendLaunchAlert("dev", [], { test: true, env: {} }), /Missing alert mail configuration/);
   console.log("PASS: failed login and failed job data (HTTP 200) are detected with technical metadata only.");
 
   release = "previous";

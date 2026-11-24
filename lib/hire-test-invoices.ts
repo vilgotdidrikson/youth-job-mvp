@@ -25,12 +25,12 @@ export type HireBankInvoice = HireTestInvoice & {
   mail_state: "pending" | "sending" | "sent" | "review";
 };
 
-export type HireBankInvoiceOffer = { version: string; acceptance: string; terms: string; seller: string };
+export type HireBankInvoiceOffer = { version: string; acceptance: string; terms: string; seller: string; amount_ore: 50000 | 80000 };
 
 export async function getHireBankInvoiceOffer(signal?: AbortSignal): Promise<HireBankInvoiceOffer | null> {
   const request = getSupabaseClient().rpc("get_hire_bank_invoice_offer");
   const { data, error } = await (signal ? request.abortSignal(signal) : request);
-  if (error || (data !== null && (typeof data?.version !== "string" || typeof data.acceptance !== "string" || typeof data.terms !== "string" || typeof data.seller !== "string"))) {
+  if (error || (data !== null && (typeof data?.version !== "string" || typeof data.acceptance !== "string" || typeof data.terms !== "string" || typeof data.seller !== "string" || (data.amount_ore !== 50000 && data.amount_ore !== 80000)))) {
     throw new Error("Pris och betalningsvillkor kunde inte hämtas.");
   }
   return data;

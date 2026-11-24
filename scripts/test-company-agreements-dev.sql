@@ -9,6 +9,7 @@ declare
   second_vacancy uuid := gen_random_uuid();
   document jsonb;
   receipt jsonb;
+  purged integer;
 begin
   insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values
     (company,'qa-agreement-'||company||'@example.invalid',null,'{"role":"company"}'),
@@ -173,6 +174,14 @@ begin
     perform private.purge_closed_company_agreements(now());
     raise exception 'Early purge was allowed';
   exception when invalid_parameter_value then null; end;
+  update private.closed_company_agreement_receipts set ended_at=statement_timestamp()-interval '3 years 1 second'
+  where former_company_user_id=company and version='qa-v1';
+  purged := private.purge_closed_company_agreements(statement_timestamp()-interval '3 years',500);
+  if purged<>1
+    or exists(select 1 from private.closed_company_agreement_receipts where former_company_user_id=company and version='qa-v1')
+    or not exists(select 1 from private.closed_company_agreement_receipts where former_company_user_id=company and version='qa-v2') then
+    raise exception 'Purge must remove only expired receipts';
+  end if;
   if has_table_privilege('authenticated','private.closed_company_agreement_receipts','select')
     or has_function_privilege('authenticated','private.purge_closed_company_agreements(timestamptz,integer)','execute') then
     raise exception 'Archive or purge permissions too broad';

@@ -102,6 +102,7 @@ const platformItems: PlatformItem[] = [
 const HERO_ID = "landing-hero";
 
 const copy = {
+  eyebrow: ["Jobbappen som matchar unga", "med arbetsgivare"] as const,
   primary: "Kom igång",
   secondary: "För företag",
   statsHeading: "Ett verkligt problem",
@@ -131,7 +132,7 @@ export default function Home() {
 
       <MarketingNav />
 
-      <LandingHero id={HERO_ID} primary={copy.primary} secondary={copy.secondary} />
+      <LandingHero id={HERO_ID} eyebrow={copy.eyebrow} primary={copy.primary} secondary={copy.secondary} />
 
       <div className="landing-bold-body">
         <div className="landing-bold-actions"><Link href="/jobb" className="landing-bold-secondary">Se ett urval av lediga jobb</Link></div>

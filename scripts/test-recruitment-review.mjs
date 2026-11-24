@@ -48,13 +48,18 @@ assert.deepEqual(events,['mnw-navigation-refresh','mnw-recruitment-refresh']);
 
 const nodes = root => !root || typeof root !== 'object' ? [] : [root,...(Array.isArray(root)?root:[root.props?.children]).flat(Infinity).flatMap(child=>child===root?[]:nodes(child))];
 const text = node => node==null||typeof node==='boolean' ? '' : typeof node!=='object'?String(node):Array.isArray(node)?node.map(text).join(''):text(node.props?.children);
+const invoiceApi = compile("lib/hire-test-invoices.ts", {
+  "@/lib/current-offer": offer,
+  "@/lib/supabase": {},
+  "@/lib/supabase-errors": {},
+});
 function harness({company=false,record=employment,invoiceOffer,write=async()=>{},reload=async()=>{},retry}={}) {
   const slots=[];let cursor=0,props;const calls=[],closed=[];
   const react={useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],value=>slots[i]=value];},useRef(initial){const i=cursor++;return slots[i]??={current:initial};},useId:()=>'hint'};
   const panel=compile('components/recruitment-panel.tsx',{
     react,
     "next/link":{default:"a"},
-    "@/lib/hire-test-invoices":{},
+    "@/lib/hire-test-invoices":invoiceApi,
     "@/lib/invoice-pilot":{isInvoicePilotDev:()=>true},
     '@/components/modal-dialog':{ModalDialog:()=>null},
     '@/lib/recruitment':{RecruitmentConflictError:api.RecruitmentConflictError,recruitmentAction:async(...args)=>{calls.push(args);await write(...args);}},
@@ -92,7 +97,7 @@ for(const file of ['components/recruitment-panel.tsx','components/close-recruitm
 assert.match(readFileSync('components/close-recruitment-dialog.tsx','utf8'),/REGISTER_EMPLOYMENT/);
 ui=harness({record:{...employment,response:'approved'}});assert.ok(ui.button('Spara synlighet och CV'));assert.ok(ui.button('Begär rättelse av anställningen'));
 await ui.submit();assert.equal(ui.calls[0][2].show_on_profile,false);assert.equal(ui.calls[0][2].include_in_cv,false);
-assert.match(offer.CURRENT_COMPANY_OFFER.future, /500 kr per bekräftad anställning.*planerat pris.*1 000 kr/i);
+assert.match(offer.CURRENT_COMPANY_OFFER.future, /500 kr per bekräftad anställning under de första tre månaderna.*800 kr/i);
 assert.match(offer.CURRENT_COMPANY_OFFER.future, /Arbetsgivaren faktureras först när kandidaten har bekräftat/);
 ui=harness({company:true,record:null,invoiceOffer:offer.HIRE_TEST_TERMS});
 assert.match(text(ui.render()), /testfaktura på 500 kr/);
@@ -106,12 +111,16 @@ startInput.props.onChange({target:{value:'2026-12-01'}});
 await ui.submit();assert.equal(ui.calls.length,0);
 ui.button('Hämta pris och villkor igen').props.onClick();
 assert.equal(retries,1);
-ui.updateOffer({seller:'Fiktiv säljare',terms:'Granskade fiktiva villkor',acceptance:'approved-version',version:'v1'});
-assert.match(text(ui.render()), /fakturerar ert företag 500 kr när kandidaten bekräftar/);
+ui.updateOffer({seller:'Fiktiv säljare',terms:'Granskade fiktiva villkor',acceptance:'approved-version',version:'v1',amount_ore:50000});
+assert.match(text(ui.render()), /fakturerar ert företag 500,00\s+kr när kandidaten bekräftar/);
 assert.equal(nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='date').props.value,'2026-12-01');
 await ui.submit();assert.equal(ui.calls.length,0);
 nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='checkbox').props.onChange({target:{checked:true}});
-await ui.submit();assert.equal(ui.calls[0][2].bank_invoice_terms,'approved-version');
+ui.updateOffer({seller:'Fiktiv säljare',terms:'Granskade fiktiva villkor',acceptance:'new-price',version:'v1',amount_ore:80000});
+assert.match(text(ui.render()), /fakturerar ert företag 800,00\s+kr när kandidaten bekräftar/);
+await ui.submit();assert.equal(ui.calls.length,0,'The new price needs its own acceptance');
+nodes(ui.render()).find(n=>n.type==='input'&&n.props.type==='checkbox').props.onChange({target:{checked:true}});
+await ui.submit();assert.equal(ui.calls[0][2].bank_invoice_terms,'new-price');
 assert.notEqual(ui.wrapper({matchId:'a'}).key,ui.wrapper({matchId:'b'}).key,'Changing conversations resets open dialogs and records');
 
 const invoiceSlots = [];
