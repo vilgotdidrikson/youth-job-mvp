@@ -109,7 +109,7 @@ async function app(actor, path, body) {
   const text = await response.text();
   let parsed = text;
   try { parsed = text ? JSON.parse(text) : null; } catch { /* keep text */ }
-  return { status: response.status, body: parsed };
+  return { status: response.status, body: parsed, type: response.headers.get("content-type") };
 }
 
 function check(name, passed, actual) {
@@ -178,7 +178,7 @@ check("Anonymous visitor cannot use the company candidate RPC", denied(anonymous
 
 // The Next.js CV proxy uses the service role only after authenticating the
 // caller and checking company verification, listing ownership and an explicit
-// interested swipe. A signed URL must never cross those boundaries.
+// interested swipe. Protected bytes must never cross those boundaries.
 const ownCandidateCv = await app("companyA", "/api/company/candidate-cv", {
   jobId: ids.activeJob,
   youthUserId: ids.youthA,
@@ -186,7 +186,7 @@ const ownCandidateCv = await app("companyA", "/api/company/candidate-cv", {
 check(
   "Company A can open an interested candidate CV for its own job",
   ownCandidateCv.status === 200 && (
-    (ownCandidateCv.body?.kind === "pdf" && typeof ownCandidateCv.body?.url === "string" && typeof ownCandidateCv.body?.expiresAt === "string")
+    ownCandidateCv.type === "application/pdf"
     || (ownCandidateCv.body?.kind === "text" && typeof ownCandidateCv.body?.text === "string" && ownCandidateCv.body.text.length > 0)
   ),
   `HTTP ${ownCandidateCv.status}`,

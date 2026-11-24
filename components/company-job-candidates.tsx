@@ -7,7 +7,7 @@ import { useCompanyCandidates } from "@/hooks/use-company-candidates";
 import { COMPANY_ROUTES, companyJobCandidatesHref } from "@/lib/company-navigation";
 import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
 import { createLatestRead, type ReadState } from "@/lib/latest-read";
-import { authenticatedHeaders } from "@/lib/api-client";
+import { readCandidateCv, type CandidateCv } from "@/lib/candidate-cv-client";
 import { reviewCandidate } from "@/lib/matching";
 import { jobPublicationLabel } from "@/lib/job-publication";
 import { TabList } from "@/components/tab-list";
@@ -25,7 +25,6 @@ import type { JobPost, CandidateFeedItem, SwipeDecision } from "@/lib/types";
 import styles from "./company-job-candidates.module.css";
 
 type Props = { userId: string; jobs: JobPost[]; verified: boolean; jobId: string | null; candidateId: string | null };
-type CandidateCv = { kind: "pdf"; url: string; expiresAt: string; candidateKey: string } | { kind: "text"; text: string; candidateKey: string };
 export function CompanyJobCandidates({ userId, jobs, verified, jobId, candidateId }: Props) {
   const ownedJobs = jobs.filter(job => job.company_user_id === userId);
   const job = ownedJobs.find(row => row.id === jobId);
@@ -67,13 +66,7 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
     const current = createLatestRead<CandidateCv, CandidateFeedItem>({
       read: async (candidate, signal) => {
         if (`${candidate.job.id}:${candidate.youthUserId}` !== selectedKey) throw new Error("Ansökan har ändrats.");
-        const response = await fetch("/api/company/candidate-cv", { method: "POST", signal,
-          headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) }, body: JSON.stringify({ jobId: job.id, youthUserId: candidate.youthUserId }) });
-        const result = await response.json();
-        if (!response.ok) throw new Error("CV kunde inte hämtas.");
-        if (result.kind === "pdf" && typeof result.url === "string" && typeof result.expiresAt === "string") return { kind: "pdf", url: result.url, expiresAt: result.expiresAt, candidateKey: selectedKey };
-        if (result.kind === "text" && typeof result.text === "string") return { kind: "text", text: result.text, candidateKey: selectedKey };
-        throw new Error("Ogiltigt CV-svar.");
+        return readCandidateCv(job.id, candidate.youthUserId, signal);
       }, update: next => setCvState({ key: selectedKey, source: state, state: next }), errorMessage: "CV:t kunde inte öppnas. Försök igen.",
     });
     cvReader.current = current;
@@ -157,6 +150,21 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
             </div>
           )}
 </>}
-      {candidateCv && selectedCandidate && candidateCv.candidateKey === `${selectedCandidate.job.id}:${selectedCandidate.youthUserId}` && <ModalDialog label="Kandidatens CV" onClose={() => closeCv()} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => closeCv()} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <iframe title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} src={candidateCv.url} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
+      {candidateCv && selectedCandidate && <ModalDialog label="Kandidatens CV" onClose={() => closeCv()} className="mnw-candidate-cv-modal"><div className="candidate-cv-dialog"><header><div><p>Fullständigt CV</p><h2>{selectedCandidate.profile?.full_name || "Anonym kandidat"}</h2><CandidateVerifiedJobBadge key={`${selectedCandidate.job.id}:${selectedCandidate.youthUserId}`} youthUserId={selectedCandidate.youthUserId} jobId={selectedCandidate.job.id}/><span>{[selectedCandidate.profile?.age ? `${selectedCandidate.profile.age} år` : "", selectedCandidate.profile?.city].filter(Boolean).join(" · ") || "Plats ej angiven"}</span></div><button type="button" onClick={() => closeCv()} aria-label="Stäng CV">×</button></header>{candidateCv.kind === "pdf" ? <CandidatePdf file={candidateCv.file} title={`CV för ${selectedCandidate.profile?.full_name || "kandidat"}`} /> : <article><p>{candidateCv.text}</p></article>}</div></ModalDialog>}
 </section>;
+}
+
+function CandidatePdf({ file, title }: { file: Blob; title: string }) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    const target = frame.current;
+    if (!target) return;
+    const url = URL.createObjectURL(file);
+    target.src = url;
+    return () => {
+      target.removeAttribute("src");
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+  return <iframe ref={frame} title={title} />;
 }

@@ -3,7 +3,7 @@ import { disclosedCvText } from "@/lib/application-disclosure";
 import { DAYS, PERIODS } from "@/lib/recruitment-profile";
 import type { ApplicationDisclosure } from "@/lib/application-disclosure";
 import { getSupabaseClient } from "@/lib/supabase";
-import { authenticatedHeaders } from "@/lib/api-client";
+import { readCandidateCv } from "@/lib/candidate-cv-client";
 import { useEffect, useId, useRef, useState } from "react";
 import { openCvDocument } from "@/lib/open-cv-document";
 import styles from "./application-disclosure-view.module.css";
@@ -37,14 +37,12 @@ export function ApplicationDisclosureView({ packet, youthPreview = false }: {pac
             if (error || !data?.signedUrl) throw new Error("Den delade CV-filen kunde inte öppnas. Den kan ha tagits bort.");
             return data.signedUrl;
           }
-          const headers = await authenticatedHeaders();
-          const response = await fetch("/api/company/candidate-cv", {
-            method: "POST", signal, headers: { "Content-Type": "application/json", ...headers },
-            body: JSON.stringify({ jobId: packet.job_id, youthUserId: packet.youth_user_id }),
-          });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.error || "CV:t kunde inte hämtas.");
-          return result.url;
+          const cv = await readCandidateCv(packet.job_id, packet.youth_user_id, signal);
+          if (cv.kind !== "pdf") throw new Error("CV-filen saknas.");
+          signal.throwIfAborted();
+          const url = URL.createObjectURL(cv.file);
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+          return url;
         },
       });
     } catch (reason) {
