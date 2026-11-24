@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MarketingNav } from "@/components/marketing-nav";
 import { MarketingFooter } from "@/components/marketing-footer";
 import Velaris from "@/components/ui/velaris";
@@ -134,6 +135,7 @@ export default function Home() {
       <LandingHero id={HERO_ID} eyebrow={copy.eyebrow} primary={copy.primary} secondary={copy.secondary} />
 
       <div className="landing-bold-body">
+        <div className="landing-bold-actions"><Link href="/jobb" className="landing-bold-secondary">Se ett urval av lediga jobb</Link></div>
         <section className="landing-bold-stats">
           <div className="landing-bold-stats-heading">
             <h2>

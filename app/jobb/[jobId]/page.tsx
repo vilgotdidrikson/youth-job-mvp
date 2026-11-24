@@ -32,21 +32,32 @@ function ageRequirement(job: JobPost) {
 export default function JobDetailPage() {
   const cvDialog = useRef<HTMLDialogElement>(null);
   const params = useParams<{ jobId: string }>();
-  const { user, profile } = useSession();
+  const { user, profile, loading: sessionLoading } = useSession();
   const back = jobReturnLink(profile?.role);
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
   const [job, setJob] = useState<JobPost | null>(null);
-  const [loading, setLoading] = useState(true), [error, setError] = useState("");
+  const [detailKey, setDetailKey] = useState("");
+  const [error, setError] = useState("");
+  const requestKey = user ? `${user.id}:${params.jobId}` : "";
   const [hasDraft, setHasDraft] = useState(false);
   const [withdrawn, setWithdrawn] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false), [needsCompletion, setNeedsCompletion] = useState(false);
   const [saved, setSaved] = useState(false), [showCvPrompt, setShowCvPrompt] = useState(false), [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false), [loadedJobId, setLoadedJobId] = useState("");
   useEffect(() => {
+    if (sessionLoading || !user) return;
     let active = true;
-    void getJobById(params.jobId).then(result => { if (active) setJob(result); }).catch(reason => { if (active) setError(reason instanceof Error ? reason.message : "Kunde inte hämta annonsen."); }).finally(() => { if (active) setLoading(false); });
+    void getJobById(params.jobId).then(result => {
+      if (!active) return;
+      setJob(result);
+      setError("");
+    }).catch(reason => {
+      if (!active) return;
+      setJob(null);
+      setError(reason instanceof Error ? reason.message : "Kunde inte hämta annonsen.");
+    }).finally(() => { if (active) setDetailKey(requestKey); });
     return () => { active = false; };
-  }, [params.jobId]);
+  }, [params.jobId, requestKey, sessionLoading, user]);
   useEffect(() => {
     if (!user || profile?.role !== "youth") return;
     let active = true;
@@ -71,7 +82,9 @@ export default function JobDetailPage() {
     if (showCvPrompt && !dialog.open) dialog.showModal();
     else if (!showCvPrompt && dialog.open) dialog.close();
   }, [showCvPrompt]);
-  if (loading || (!error && job && job.id !== params.jobId)) return <main className={styles.page}><div className={styles.loading} role="status">Hämtar annonsen…</div></main>;
+  if (sessionLoading) return <main className={styles.page}><p role="status">Läser in ditt konto…</p></main>;
+  if (!user) return <main className={styles.page}><section className={styles.panel}><h1>Logga in för att visa jobbet</h1><Link href="/login">Logga in</Link><p><Link href="/jobb">Se ett urval av lediga jobb</Link></p></section></main>;
+  if (detailKey !== requestKey) return <main className={styles.page}><div className={styles.loading} role="status">Hämtar annonsen…</div></main>;
   if (error || !job) return <main className={styles.page}><section className={styles.panel}><h1>Jobbet kunde inte visas</h1><p>{error || "Annonsen hittades inte."}</p><Link href={back.href} className={styles.back}>{back.label}</Link></section></main>;
   const acceptsApplications = job.status === "active" && job.is_active !== false;
   const requirements = [ageRequirement(job), ...listItems(job.requirements)].filter((item): item is string => Boolean(item));
