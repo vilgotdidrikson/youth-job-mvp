@@ -10,7 +10,7 @@ const body={jobId:state.jobId,youthUserId:state.youthId};
 async function api(path,name,body) {
  const actor=actors.find(a=>a.name===name);
  const r=await fetch(app+path,{method:'POST',headers:{'Content-Type':'application/json',...(actor?{Authorization:'Bearer '+actor.token}:{})},body:JSON.stringify(body)});
- const data=await r.json();return {status:r.status,data};
+ const type=r.headers.get('content-type');const data=type==='application/pdf'?await r.text():await r.json();return {status:r.status,type,data};
 }
 for(const name of process.env.MATCHING_QA_QUICK ? [] : ['companyB','youthB',null]){
  for(const path of ['/api/company/candidate-assessment','/api/company/candidate-cv']){
@@ -18,8 +18,7 @@ for(const name of process.env.MATCHING_QA_QUICK ? [] : ['companyB','youthB',null
  }
 }
 if(!process.env.MATCHING_QA_QUICK) console.log('PASS: deployed company/youth/anonymous API denials');
-const cv=await api('/api/company/candidate-cv','companyA',body);assert.equal(cv.status,200,JSON.stringify(cv.data));assert.equal(cv.data.kind,'pdf');
-const pdf=await fetch(cv.data.url);assert.equal(pdf.status,200);assert.ok((await pdf.text()).startsWith('%PDF-'));console.log('PASS: deployed authorized CV and signed PDF download');
+const cv=await api('/api/company/candidate-cv','companyA',body);assert.equal(cv.status,200,JSON.stringify(cv.data));assert.equal(cv.type,'application/pdf');assert.ok(cv.data.startsWith('%PDF-'));console.log('PASS: deployed authorized CV and protected PDF bytes');
 const result=await api('/api/company/candidate-assessment','companyA',body);assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.pdfStatus,'read',JSON.stringify(result.data));assert.ok(result.data.assessment.criteria.some(c=>c.status==='fulfilled'));console.log('PASS: deployed PDF extraction and candidate assessment; temporary='+Boolean(result.data.temporary));
 if(process.env.MATCHING_QA_REQUIRE_AI){
  assert.equal(Boolean(result.data.temporary),false,'Configured provider must complete successfully');

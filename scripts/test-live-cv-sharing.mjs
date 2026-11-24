@@ -64,14 +64,8 @@ async function exactSharedPdf(company, job, youth, expected) {
   const response = await cvRequest(company, job, youth);
   assert.equal(response.status, 200);
   assert.match(response.headers.get('cache-control'), /no-store/);
-  const data = await response.json();
-  assert.equal(data.kind, 'pdf');
-  const signed = new URL(data.url);
-  assert.equal(signed.origin, base);
-  assert.ok(new Date(data.expiresAt).getTime() <= Date.now() + 301000);
-  const file = await bounded(data.url);
-  assert.equal(file.status, 200);
-  assert.equal(hash(new Uint8Array(await file.arrayBuffer())), hash(expected));
+  assert.equal(response.headers.get('content-type'), 'application/pdf');
+  assert.equal(hash(new Uint8Array(await response.arrayBuffer())), hash(expected));
 }
 async function deniedStorage(account, object, label) {
   const result = await account.c.storage.from('youth-documents').createSignedUrl(object, 60);
@@ -107,12 +101,11 @@ async function browserProof(company, youth, firstJob, secondJob, expected, revis
     await page.getByText(`Delad version ${revision}`, { exact: false }).waitFor();
     check(!(await page.locator('body').innerText()).includes('PRIVATE_UNSELECTED'), `private optional data absent from company UI ${width}`);
     check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `company packet has no horizontal overflow ${width}`);
-    const requested = context.waitForEvent('request', { predicate: r => r.method() === 'GET'
-      && r.url().startsWith(`${base}/storage/v1/object/sign/youth-documents/`) });
+    const requested = page.waitForResponse(r => r.request().method() === 'POST'
+      && r.url() === `${app}/api/company/candidate-cv`);
     await page.getByRole('button', { name: 'Öppna delat original-CV', exact: true }).click();
-    const request = await requested;
-    const response = await bounded(request.url());
-    check(response.ok && hash(new Uint8Array(await response.arrayBuffer())) === hash(expected), `deployed shared packet opens exact PDF ${width}`);
+    const response = await requested;
+    check(response.ok() && hash(new Uint8Array(await response.body())) === hash(expected), `deployed shared packet opens exact PDF ${width}`);
     for (const popup of context.pages().filter(p => p !== page)) await popup.close();
     await page.screenshot({ path: `/tmp/mnw-sharing-${width}.png`, fullPage: true });
     await page.goto(href(secondJob));

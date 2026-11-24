@@ -37,9 +37,9 @@ try{
  // Normal CV sharing is tested through the actual private Storage API.
  const pdf=Buffer.from('%PDF-1.4\n% QA L05 fictional private CV fixture\n%%EOF\n');
  let res=await request(`${base}/storage/v1/object/youth-documents/${cfg.cvPath}`,'youth','POST',pdf,{'Content-Type':'application/pdf','x-upsert':'false'});check(res.ok,`owner uploads private CV (${res.status})`);cvUploaded=true;
- const signed=await request(`${base}/storage/v1/object/sign/youth-documents/${cfg.cvPath}`,'company','POST',{expiresIn:30});check(signed.ok&&typeof signed.data?.signedURL==='string','right company signs explicitly shared original CV');
- const signedPath=signed.data.signedURL;const signedUrl=signedPath.startsWith('http')?signedPath:signedPath.startsWith('/storage/v1/')?base+signedPath:`${base}/storage/v1${signedPath.startsWith('/')?'':'/'}${signedPath}`;
- const downloaded=await fetch(signedUrl,{signal:AbortSignal.timeout(15000)});check(downloaded.ok&&(await downloaded.text()).includes('QA L05'),'signed CV URL returns the real private file');
+ const downloaded=await request(`${app}/api/company/candidate-cv`,'company','POST',{jobId:cfg.job,youthUserId:actors.youth.id});
+ check(downloaded.ok&&downloaded.type==='application/pdf'&&downloaded.data.includes('QA L05'),'right company reads explicitly shared CV through the proxy');
+ check(denied(await request(`${base}/storage/v1/object/sign/youth-documents/${cfg.cvPath}`,'company','POST',{expiresIn:30})),'company cannot sign a directly reusable link');
  for(const actor of ['outsider','wrongCompany',null])check(denied(await request(`${base}/storage/v1/object/sign/youth-documents/${cfg.cvPath}`,actor,'POST',{expiresIn:30})),`${actor??'anonymous'} cannot sign the private CV`);
  check((await rpc('company','get_application_disclosure',{p_job_id:cfg.job,p_youth_user_id:actors.youth.id})).ok,'right company reads the shared application');
  for(const actor of ['outsider','wrongCompany',null])check(denied(await rpc(actor,'get_application_disclosure',{p_job_id:cfg.job,p_youth_user_id:actors.youth.id})),`${actor??'anonymous'} denied application RPC`);
