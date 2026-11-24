@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UiIcon } from "@/components/ui-icon";
 import {
@@ -10,13 +10,40 @@ import {
   pricingPlans,
   type PricingAudience,
 } from "@/lib/pricing-data";
-import { CURRENT_COMPANY_OFFER } from "@/lib/current-offer";
+import { CURRENT_COMPANY_OFFER, HIRE_REGULAR_PRICE } from "@/lib/current-offer";
+import { invoiceAmount } from "@/lib/hire-test-invoices";
+import { getSupabaseClient } from "@/lib/supabase";
+
+type Tariff = { amount_ore: 50000 | 80000; regular_on: string };
+
+const tariffDate = new Intl.DateTimeFormat("sv-SE", { dateStyle: "long", timeZone: "UTC" });
 
 export function PricingPlans() {
   const [audience, setAudience] = useState<PricingAudience>("youth");
+  const [tariff, setTariff] = useState<Tariff | null | "loading" | "error">("loading");
   const plans = pricingPlans[audience];
 
+  useEffect(() => {
+    if (audience !== "company") return;
+    const controller = new AbortController();
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]);
+    async function loadTariff() {
+      try {
+        const { data, error } = await getSupabaseClient().rpc("get_public_hire_tariff").abortSignal(signal);
+        if (error || (data !== null && ((data.amount_ore !== 50000 && data.amount_ore !== 80000)
+          || typeof data.regular_on !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(data.regular_on)
+          || !Number.isFinite(Date.parse(data.regular_on))))) throw new Error("Invalid tariff");
+        if (!controller.signal.aborted) setTariff(data);
+      } catch {
+        if (!controller.signal.aborted) setTariff("error");
+      }
+    }
+    void loadTariff();
+    return () => controller.abort();
+  }, [audience]);
+
   const selectAudience = (nextAudience: PricingAudience) => {
+    if (nextAudience !== audience) setTariff("loading");
     setAudience(nextAudience);
   };
 
@@ -66,10 +93,18 @@ export function PricingPlans() {
       </section>
 
       {audience === "company" && <section className="pricing-enterprise" aria-label="Priser och anställning">
-        <h2>{CURRENT_COMPANY_OFFER.title}</h2>
-        <p>{CURRENT_COMPANY_OFFER.description}</p>
-        <p>{CURRENT_COMPANY_OFFER.registration}</p>
-        <p>{CURRENT_COMPANY_OFFER.future}</p>
+        {tariff === "loading" && <p role="status">Hämtar pris för rekrytering…</p>}
+        {tariff === "error" && <p role="status">Priset för rekrytering kunde inte hämtas. Ni ser aktuellt pris innan ni registrerar en anställning.</p>}
+        {tariff === null && <>
+          <h2>{CURRENT_COMPANY_OFFER.title}</h2>
+          <p>{CURRENT_COMPANY_OFFER.description}</p>
+          <p>{CURRENT_COMPANY_OFFER.future}</p>
+        </>}
+        {tariff && typeof tariff === "object" && <>
+          <h2>{invoiceAmount(tariff.amount_ore)} per bekräftad anställning</h2>
+          {tariff.amount_ore === 50000 && <p>Lanseringspriset gäller fram till {tariffDate.format(new Date(tariff.regular_on))}. Från det datumet är priset {HIRE_REGULAR_PRICE}.</p>}
+          <p>Priset låses när ni registrerar anställningen. Vi fakturerar när kandidaten har bekräftat den.</p>
+        </>}
       </section>}
 
       {audience === "company" && (

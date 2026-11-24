@@ -6,7 +6,7 @@ import { getRecruitmentRecords, recruitmentAction, RecruitmentConflictError } fr
 import { EMPLOYMENT_STEPS, REGISTER_EMPLOYMENT, employmentPresentation, employmentSnapshot, experiencePeriod, type RecruitmentRecord } from "@/lib/recruitment-types";
 import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 import { CURRENT_COMPANY_OFFER, HIRE_LAUNCH_PRICE, HIRE_TEST_TERMS } from "@/lib/current-offer";
-import { getHireBankInvoiceOffer, getHireTestOffer, getRecruitmentInvoiceStatus, type HireBankInvoiceOffer, type RecruitmentInvoiceStatus } from "@/lib/hire-test-invoices";
+import { invoiceAmount, getHireBankInvoiceOffer, getHireTestOffer, getRecruitmentInvoiceStatus, type HireBankInvoiceOffer, type RecruitmentInvoiceStatus } from "@/lib/hire-test-invoices";
 import { isInvoicePilotDev } from "@/lib/invoice-pilot";
 import styles from "./recruitment.module.css";
 
@@ -22,12 +22,14 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null, 
   const [expected] = useState(() => employmentSnapshot(item.employment));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [reload, setReload] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [acceptedOffer, setAcceptedOffer] = useState<string | null>(null);
   const lock = useRef(false);
   const hintId = useId();
   const approved = expected?.response === "approved";
   const testInvoice = invoiceOffer === HIRE_TEST_TERMS;
   const bankInvoice = invoiceOffer && typeof invoiceOffer === "object" ? invoiceOffer : null;
+  const offerId = testInvoice ? HIRE_TEST_TERMS : bankInvoice?.acceptance ?? null;
+  const termsAccepted = offerId !== null && acceptedOffer === offerId;
   const invoiceUnavailable = invoiceOffer === "loading" || invoiceOffer === "error" || ((testInvoice || bankInvoice !== null) && !termsAccepted);
   const reloadLatest = async () => {
     if (lock.current) return;
@@ -62,12 +64,12 @@ function EmploymentForm({ item, company, onClose, onSaved, invoiceOffer = null, 
       {invoiceOffer === null && !expected && <p className={styles.offer}>{CURRENT_COMPANY_OFFER.registration}{isInvoicePilotDev() && " För att prova fakturering, använd företagskontot från Testa fakturaflödet i admin."}</p>}
       {testInvoice && <div className={styles.offer}>
         <p>En testfaktura på {HIRE_LAUNCH_PRICE} skapas när kandidaten bekräftar anställningen. Testfakturan finns i <Link href="/profile?tab=invoices">företagets fakturavy</Link> och ska aldrig betalas.</p>
-        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
+        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setAcceptedOffer(event.target.checked ? offerId : null)} />Jag godkänner att en testfaktura skapas vid bekräftad anställning.</label>
       </div>}
       {bankInvoice && <div className={styles.offer}>
-        <p>{bankInvoice.seller} fakturerar ert företag {HIRE_LAUNCH_PRICE} när kandidaten bekräftar anställningen. Fakturan mejlas till er sparade fakturaadress med 30 dagars betalningsfrist.</p>
+        <p>{bankInvoice.seller} fakturerar ert företag {invoiceAmount(bankInvoice.amount_ore)} när kandidaten bekräftar anställningen. Fakturan mejlas till er sparade fakturaadress med 30 dagars betalningsfrist.</p>
         <p className={styles.terms}>{bankInvoice.terms}</p>
-        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} />Jag får företräda företaget och godkänner avgiften och betalningsvillkoren.</label>
+        <label className={styles.checkbox}><input type="checkbox" checked={termsAccepted} onChange={event => setAcceptedOffer(event.target.checked ? offerId : null)} />Jag får företräda företaget och godkänner avgiften och betalningsvillkoren.</label>
       </div>}
       <label>Befattning<input required maxLength={120} aria-describedby={`${hintId}-role`} disabled={reload} value={role} onChange={event => setRole(event.target.value)}/></label><p id={`${hintId}-role`} className={styles.hint}>Det kandidaten anställs som. Kandidaten väljer själv om den visas på profilen och i CV:t.</p>
       <label>Startdatum<input required type="date" min="2000-01-01" aria-describedby={`${hintId}-start`} disabled={reload} value={start} onChange={event => setStart(event.target.value)}/></label><p id={`${hintId}-start`} className={styles.hint}>Första arbetsdagen. Ett kommande datum går bra.</p></> : <>

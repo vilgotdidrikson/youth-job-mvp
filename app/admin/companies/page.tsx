@@ -18,21 +18,35 @@ interface VerificationRequest {
   updated_at: string;
 }
 
+type AgreementQueue = {
+  version: string | null;
+  receipts: { companyId: string; representative: string; role: string; acceptedAt: string }[];
+};
+
 export default function CompanyVerificationAdminPage() {
   const { user, status, error: sessionError, adminReady, isAdmin } = useAdminAccess();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [agreementLoadFailed, setAgreementLoadFailed] = useState(false);
+  const [agreements, setAgreements] = useState<AgreementQueue | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
-    const { data, error: loadError } = await getSupabaseClient().rpc("get_pending_company_verifications");
+    const client = getSupabaseClient();
+    const [{ data, error: loadError }, { data: agreementData, error: agreementError }] = await Promise.all([
+      client.rpc("get_pending_company_verifications"),
+      client.rpc("get_pending_company_agreements"),
+    ]);
+    const missingAgreementInfo = Boolean(agreementError && agreementError.code !== "PGRST202");
+    setAgreementLoadFailed(missingAgreementInfo);
+    setAgreements(missingAgreementInfo ? null : agreementData as AgreementQueue | null);
     if (loadError) {
       setError(loadError.code === "42501" ? "Du har inte administratörsåtkomst." : "Kunde inte hämta verifieringsärenden.");
       setRequests([]);
     } else {
-      setError("");
+      setError(missingAgreementInfo ? "Avtalsuppgifterna kunde inte hämtas. Ladda om innan du godkänner." : "");
       setRequests((data ?? []) as VerificationRequest[]);
     }
     setLoading(false);
@@ -70,7 +84,9 @@ export default function CompanyVerificationAdminPage() {
     <AdminShell title="Företagsverifiering" eyebrow="Granskning" email={user?.email}>
       <div className="admin-list-intro"><p>Kontrollera uppgifterna innan företaget får publicera annonser.</p><span>{requests.length} ärenden</span></div>
       {error && <p className="admin-alert admin-alert-error" role="alert">{error}</p>}
-      {loading ? <section className="admin-empty"><span>○</span><strong>Hämtar verifieringsärenden...</strong></section> : !error && requests.length === 0 ? <section className="admin-empty"><span>✓</span><strong>Allt är klart</strong><p>Det finns inga företag som väntar på granskning.</p></section> : <div className="admin-verification-list">{requests.map((request) => (
+      {loading ? <section className="admin-empty"><span>○</span><strong>Hämtar verifieringsärenden...</strong></section> : !error && requests.length === 0 ? <section className="admin-empty"><span>✓</span><strong>Allt är klart</strong><p>Det finns inga företag som väntar på granskning.</p></section> : <div className="admin-verification-list">{requests.map((request) => {
+        const receipt = agreements?.receipts.find(item => item.companyId === request.user_id);
+        return (
         <article key={request.user_id} className="admin-verification-card">
           <div className="admin-verification-heading">
             <div><span className="admin-company-avatar">{(request.company_name || "F").slice(0, 1).toUpperCase()}</span><div><h2>{request.company_name || "Namnlöst företag"}</h2><p>{request.organization_number || "Organisationsnummer saknas"}</p></div></div>
@@ -81,14 +97,16 @@ export default function CompanyVerificationAdminPage() {
             <div><dt>Ort</dt><dd>{request.city || "Ej angiven"}</dd></div>
             <div><dt>Inskickad</dt><dd>{request.verification_submitted_at ? new Date(request.verification_submitted_at).toLocaleDateString("sv-SE") : "Datum saknas"}</dd></div>
           </dl>
+          {agreements?.version && <p>{receipt ? `Avtal ${agreements.version} godkänt ${new Date(receipt.acceptedAt).toLocaleDateString("sv-SE")} av ${receipt.representative} (${receipt.role}). Kontrollera personens behörighet innan beslut.` : "Företaget behöver godkänna det gällande avtalet."}</p>}
           {request.organization_number && !parseOrganizationNumber(request.organization_number).ok && <p className="admin-alert">Organisationsnumrets kontrollsiffra eller format stämmer inte. Kontrollera numret i Bolagsverkets eller Skatteverkets register innan du godkänner.</p>}
           {!request.organization_number && <p className="admin-alert">Företaget behöver komplettera sitt organisationsnummer innan det kan godkännas. Använd ”Begär komplettering” för att skicka en förklaring.</p>}
           <div className="admin-review-actions">
-            <button type="button" className="cta-btn" disabled={actionId === request.user_id || !request.organization_number} onClick={() => void review(request, "verified")}>Godkänn företag</button>
+            <button type="button" className="cta-btn" disabled={actionId === request.user_id || !request.organization_number || agreementLoadFailed || Boolean(agreements?.version && !receipt)} onClick={() => void review(request, "verified")}>Godkänn företag</button>
             <button type="button" className="secondary-btn" disabled={actionId === request.user_id} onClick={() => void review(request, "rejected")}>Begär komplettering</button>
           </div>
         </article>
-      ))}</div>}
+        );
+      })}</div>}
     </AdminShell>
   );
 }

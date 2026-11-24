@@ -1,5 +1,7 @@
 "use client";
 
+import { readPrivateCvWork, writePrivateCvWork } from "@/lib/private-cv-work-storage";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CvFactReview } from "./cv-fact-review";
@@ -19,8 +21,9 @@ const draftKey = (owner: string) => `mnw-profile-chat:${owner}`;
 
 function loadDraft(owner: string, initialMode: Mode): StoredDraft {
   try {
-    const stored = JSON.parse(window.localStorage.getItem(draftKey(owner)) ?? "{}");
-    return { answers: readProfileChatDraft(stored.answers), mode: initialMode, step: profileChatKeys.includes(stored.step) ? stored.step : undefined, cvApplied: readProfileChatDraft(stored.cvApplied), cvEdit: stored.cvEdit };
+    const stored = readPrivateCvWork<Partial<StoredDraft>>(window.localStorage, draftKey(owner));
+    if (!stored) return { answers: {}, mode: initialMode };
+    return { answers: readProfileChatDraft(stored.answers), mode: initialMode, step: stored.step && profileChatKeys.includes(stored.step) ? stored.step : undefined, cvApplied: readProfileChatDraft(stored.cvApplied), cvEdit: stored.cvEdit };
   } catch {
     return { answers: {}, mode: initialMode };
   }
@@ -79,7 +82,7 @@ export function ProfileChat({ owner, initialMode, profile: initialProfile, versi
 
   function keep(next: StoredDraft) {
     setStored(next);
-    try { window.localStorage.setItem(draftKey(owner), JSON.stringify(next)); }
+    try { writePrivateCvWork(window.localStorage, draftKey(owner), next); }
     catch { setFailure("Utkastet kunde inte sparas på enheten. Ha sidan öppen om du vill fortsätta arbeta med din text."); }
   }
   function change(key: ProfileChatField, value: string) {

@@ -71,8 +71,7 @@ export async function getOrCreateOnboardingSession(): Promise<OnboardingSession>
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to fetch onboarding session.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   if (data && !data.completed_at && data.status !== "completed") {
@@ -89,8 +88,7 @@ export async function getOrCreateOnboardingSession(): Promise<OnboardingSession>
     .single();
 
   if (createError) {
-    console.error("Failed to create onboarding session.", createError);
-    throw new Error(createError.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 
   return created as OnboardingSession;
@@ -105,8 +103,7 @@ export async function getOnboardingMessages(sessionId: string): Promise<Onboardi
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Failed to fetch onboarding messages.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
@@ -131,8 +128,7 @@ export async function addOnboardingMessage(
   });
 
   if (error) {
-    console.error("Failed to add onboarding message.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 }
 
@@ -147,8 +143,7 @@ export async function completeOnboardingSession(sessionId: string): Promise<void
     .eq("id", sessionId);
 
   if (error) {
-    console.error("Failed to complete onboarding session.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 }
 
@@ -162,8 +157,7 @@ export async function getYouthProfile(userId?: string): Promise<YouthProfile | n
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to fetch youth profile.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   return (data ?? null) as YouthProfile | null;
@@ -198,8 +192,7 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
   const { data, error } = await query;
 
   if (error) {
-    console.error("Failed to save youth profile.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 
   return data as YouthProfile;
@@ -227,7 +220,7 @@ export async function saveReviewedCvToProfile(text: string, cv: StructuredCvData
   const { data, error } = await client.from("youth_profiles").update({ ...payload, documents,
     ...("recruitment_profile" in existing ? { recruitment_profile: syncRecruitmentCvLanguages(existing.recruitment_profile, existing.cv_structured, cv) } : {}),
   }).eq("user_id", user.id).select("*").single();
-  if (error || !data) throw new Error(error?.message ?? "Kunde inte spara CV och profilfakta.");
+  if (error || !data) throw new Error("Kunde inte spara CV och profilfakta.");
   return data as YouthProfile;
 }
 
@@ -270,27 +263,16 @@ export async function saveYouthAccountDetails(input: {
   postal_code: string;
   additional_addresses: Array<{ city: string; address: string; postal_code: string }>;
 }): Promise<YouthProfile> {
-  // Validated here as well as in the form: the profile is written straight to
-  // Supabase, so this is the last gate before a nameless row is persisted.
-  const fullName = normalizeFullName(input.full_name);
-  if (!fullName) throw new Error(MISSING_FULL_NAME_MESSAGE);
-
-  const birthDate = new Date(`${input.date_of_birth}T00:00:00`);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const birthdayHasPassed =
-    today.getMonth() > birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
-  if (!birthdayHasPassed) age -= 1;
-
+  if (!input.date_of_birth) throw new Error("Ange ditt födelsedatum.");
   return persistYouthProfile({
-    full_name: fullName,
-    date_of_birth: input.date_of_birth,
-    address: input.address.trim(),
-    city: input.city.trim(),
-    postal_code: input.postal_code.trim(),
+    ...contactProfilePayload({
+      name: input.full_name,
+      dateOfBirth: input.date_of_birth,
+      address: input.address,
+      city: input.city,
+      postalCode: input.postal_code,
+    }),
     additional_addresses: input.additional_addresses,
-    age: Number.isFinite(age) && age >= 0 ? age : null,
     onboarding_completed: false,
   });
 }

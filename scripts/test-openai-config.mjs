@@ -32,7 +32,13 @@ try {
   assert.equal(currentRealtimeModel(undefined,true),'gpt-realtime-2.1-mini');
   assert.equal(currentRealtimeModel('gpt-4o-mini-tts-2025-12-15',true),'gpt-realtime-2.1-mini');
   assert.equal(openaiTextOptions(3000,'job').model,'gpt-6-luna','Task overrides remain separate');
-  for(const file of ['lib/application-analysis-worker.ts','lib/analyze-application-followups.ts','app/api/company/candidate-assessment/route.ts','app/api/company/job/generate/route.ts','app/api/youth/applications/analyze/route.ts']) {
+  for(const file of ['lib/application-analysis-worker.ts','lib/analyze-application-followups.ts','app/api/company/candidate-assessment/route.ts']) {
+    const source=readFileSync(file,'utf8');
+    assert.match(source, /import \{ requestMatchingEvidence \} from "[^"]*matching-provider"/, `${file}: matching must use the shared provider`);
+    assert.ok(source.includes('requestMatchingEvidence('),`${file}: shared provider must be called`);
+    assert.ok(!/new OpenAI\(|groq/i.test(source),`${file}: direct or retired provider remains`);
+  }
+  for(const file of ['lib/matching-provider.ts','app/api/company/job/generate/route.ts','app/api/youth/applications/analyze/route.ts']) {
     const source=readFileSync(file,'utf8');
     assert.ok(source.includes('baseURL: OPENAI_API_BASE_URL'),`${file}: official endpoint required`);
     assert.ok(source.includes('openaiTextOptions('),`${file}: shared model/storage configuration required`);

@@ -1,4 +1,5 @@
 "use client";
+import { CandidateRecruitmentNotice } from "@/components/recruitment-privacy-notice";
 import { ApplicationAiPreference } from "@/components/application-ai-preference";
 import { jobReturnLink } from "@/lib/product-copy";
 import { benefitItems, mergeBenefits } from "@/lib/job-benefits";
@@ -38,6 +39,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<JobPost | null>(null);
   const [detailKey, setDetailKey] = useState("");
   const [error, setError] = useState("");
+  const [aiKey, setAiKey] = useState("");
   const requestKey = user ? `${user.id}:${params.jobId}` : "";
   const [hasDraft, setHasDraft] = useState(false);
   const [withdrawn, setWithdrawn] = useState(false);
@@ -102,7 +104,7 @@ export default function JobDetailPage() {
     setBusy(true); setActionError("");
     try {
       if (!acceptsApplications) throw new Error("Den här annonsen tar inte emot nya ansökningar.");
-      if (cvCompleted) { const application = await prepareApplication(job.id); setAlreadyApplied(application.status === "submitted"); setNeedsCompletion(application.status === "needs_completion"); }
+      if (cvCompleted) { const application = await prepareApplication(job.id, aiKey === requestKey); setAlreadyApplied(application.status === "submitted"); setNeedsCompletion(application.status === "needs_completion"); }
       else { await saveApplicationDraft(job.id); setHasDraft(true); setShowCvPrompt(true); }
     } catch (reason) {
       const latestJob = await getJobById(job.id).catch(() => null); if (latestJob) setJob(latestJob);
@@ -123,8 +125,9 @@ export default function JobDetailPage() {
       {requirements.length > 0 && <section className={styles.textSection}><h2>Det här behöver du</h2><ul>{requirements.map((item,index) => <li key={index}><UiIcon name="check"/><span>{item}</span></li>)}</ul></section>}
       {benefits.length > 0 && <section className={styles.textSection}><h2>Det här får du</h2><ul>{benefits.map((item,index) => <li key={index}><UiIcon name="check"/><span>{item}</span></li>)}</ul></section>}
       {profile?.role === "youth" && (alreadyApplied || hasDraft || needsCompletion) && <WorkplacePreference key={job.id} job={job} youthId={user!.id}/>}
+      {profile?.role === "youth" && <CandidateRecruitmentNotice key={job.id} jobId={job.id} />}
       {profile?.role === "youth" && <p>Ansökan delar ditt CV och praktiska uppgifter. <Link href={`/applications/preview?job=${encodeURIComponent(job.id)}`}>Förhandsvisa och välj vad du delar</Link>. <Link href="/privacy#profile-data">Så används uppgifterna i matchningen</Link>.</p>}
-      {profile?.role === "youth" && cvCompleted && acceptsApplications && !alreadyApplied && !withdrawn && !needsCompletion && <ApplicationAiPreference key={user!.id} compact />}
+      {profile?.role === "youth" && cvCompleted && acceptsApplications && !alreadyApplied && !withdrawn && !needsCompletion && <ApplicationAiPreference checked={aiKey === requestKey} disabled={busy} onChange={checked => setAiKey(checked ? requestKey : "")} />}
       {profile?.role === "youth" && <div className={styles.report}><ReportDialog targetType="job" targetId={job.id} label="Anmäl annons"/></div>}
     </article><aside className={styles.aside}><section className={styles.panel}><h2 className={styles.eyebrow}>Snabb överblick</h2><dl className={styles.facts}><div><dt>Lön</dt><dd>{job.salary_per_hour || "Enligt överenskommelse"}</dd></div><div><dt>Arbetstid</dt><dd>{job.employment_type || "Enligt överenskommelse"}</dd></div>{practicalFacts(job.practical_details ?? {}, localIsoDate()).map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}<div><dt>Plats</dt><dd>{address || "Meddelas av arbetsgivaren"}</dd></div>{job.category && <div><dt>Kategori</dt><dd>{job.category}</dd></div>}</dl>{profile?.role === "youth" && <div className={styles.desktopAction}>{action}<p className={styles.actionNote}>{actionNote}</p><button type="button" className={styles.secondary} disabled={busy || loadedJobId !== params.jobId} onClick={() => void toggleSaved()}><UiIcon name="bookmark"/>{saved ? "Jobbet är sparat" : "Spara jobbet"}</button></div>}</section></aside></div>
     {actionError && <p role="alert" className={styles.error}>{actionError}</p>}

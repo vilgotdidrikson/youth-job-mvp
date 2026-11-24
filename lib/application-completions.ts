@@ -26,8 +26,8 @@ export async function submitApplicationAction(action: "prepare" | "answers" | "d
   if (!response.ok) throw new Error(result.error || "Kunde inte spara ansökan. Försök igen.");
   return result.application;
 }
-export async function prepareApplication(jobId: string): Promise<ApplicationCompletion> {
-  const application = await submitApplicationAction("prepare", { jobId }) as ApplicationCompletion;
+export async function prepareApplication(jobId: string, aiConsent = false): Promise<ApplicationCompletion> {
+  const application = await submitApplicationAction("prepare", { jobId, ...(aiConsent ? { aiConsent } : {}) }) as ApplicationCompletion;
   // Only older, explicitly unfinished applications need the legacy submit step.
   // Neither PDF parsing nor AI belongs in the swipe request's critical path.
   const sent = application.status === "needs_completion"

@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
   if (!["prepare", "answers", "drafts", "withdraw"].includes(body?.action) || (body.action !== "drafts" && (typeof body.jobId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.jobId)))) return NextResponse.json({ error: "Ogiltig ansökan." }, { status: 400 });
   if (body.action === "withdraw" && typeof body.expectedSubmitted !== "boolean") return NextResponse.json({ error: "Ansökningsstatus måste anges." }, { status: 400 });
   if (body.action === "answers" && (typeof body.submit !== "boolean" || !body.answers || typeof body.answers !== "object" || Array.isArray(body.answers))) return NextResponse.json({ error: "Ogiltiga ansökningssvar." }, { status: 400 });
+  if (body.aiConsent !== undefined && (body.action !== "prepare" || typeof body.aiConsent !== "boolean")) return NextResponse.json({ error: "Ogiltigt AI-val." }, { status: 400 });
   const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     accessToken: async () => auth.token, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     rpcResult = body.action === "withdraw" ? await client.rpc("withdraw_my_application", { p_job_id: body.jobId, p_expected_submitted: body.expectedSubmitted }) : body.action === "drafts" ? await client.rpc("submit_my_application_drafts") : body.action === "answers"
       ? await client.rpc("save_my_application_answers", { p_job_id: body.jobId, p_answers: body.answers, p_submit: body.submit })
-      : await client.rpc("prepare_my_application", { p_job_id: body.jobId });
+      : await client.rpc(body.aiConsent === true ? "submit_my_application_with_ai" : "prepare_my_application", { p_job_id: body.jobId });
   } catch (error) {
     const incidentId = reportServerFailure("application_submission_failed", error);
     return NextResponse.json({ error: "Ansökan kunde inte uppdateras just nu. Hämta aktuell status innan du försöker igen.", incidentId }, { status: 503 });
