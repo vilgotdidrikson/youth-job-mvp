@@ -34,9 +34,9 @@ const dependencies = {
 };
 function compile(path) {
   const { outputText } = ts.transpileModule(readFileSync(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } });
-  const module = { exports: {} };
-  new Function("require", "module", "exports", outputText)(name => dependencies[name] ?? require(name), module, module.exports);
-  return module.exports;
+  const compiled = { exports: {} };
+  new Function("require", "module", "exports", outputText)(name => dependencies[name] ?? require(name), compiled, compiled.exports);
+  return compiled.exports;
 }
 try {
   dependencies["@/lib/cv-document-path"] = compile("lib/cv-document-path.ts");
