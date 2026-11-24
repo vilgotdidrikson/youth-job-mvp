@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 const tmp=mkdtempSync(resolve('.matching-tests-'));
 try {
- for(const name of ['matching-input-policy','trait-evidence','matching-provider','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules','queue-application-followups']) {
+ for(const name of ['matching-input-policy','trait-evidence','matching-provider','openai-config','job-categories','recruitment-profile','application-evidence','fixed-match-rules','candidate-assessment','cv-document-path','pdf-cv-source','job-match-criteria','application-followup-rules','queue-application-followups']) {
   let code=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
   code=code.replace(/from "\.\/([^"]+)"/g,'from "./$1.mjs"');
   writeFileSync(`${tmp}/${name}.mjs`,code);
@@ -115,16 +115,44 @@ try {
  assert.equal(uploadedCvPath([{type:'other',url:'test-user/not-cv.pdf'},{type:'cv',url:'test-user/cv.pdf'}],uid),'test-user/cv.pdf');
  // A real PDF text stream exercises PDF.js and the worker in Node, without OCR.
  const text='Jag har B-korkort. Jag kan arbeta helger.';
- const stream=`BT /F1 12 Tf 50 750 Td (${text}) Tj ET`;
+ const pdfBytes = (lines) => {
+ const encoded=lines.map(line=>`(${line.replace(/[()\\]/g,'\\$&')}) Tj`).join(' 0 -18 Td ');
+ const stream=`BT /F1 12 Tf 50 750 Td ${encoded} ET`;
  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`];
  let pdf='%PDF-1.4\n',offsets=[0];objects.forEach((obj,i)=>{offsets.push(Buffer.byteLength(pdf));pdf+=`${i+1} 0 obj\n${obj}\nendobj\n`;});const xref=Buffer.byteLength(pdf);pdf+='xref\n0 6\n0000000000 65535 f \n'+offsets.slice(1).map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
- const bytes=new Uint8Array(Buffer.from(pdf));writeFileSync(resolve(tmp,'mnw-qa-cv.pdf'),bytes);
+ return new Uint8Array(Buffer.from(pdf));
+ };
+ const bytes=pdfBytes([text]);
  assert.ok((await extractPdfText(bytes.slice())).includes(text));
  await assert.rejects(extractPdfText(new Uint8Array(Buffer.from('not a PDF'))));
+ const providerInputs=[];
+ const networkFetch=globalThis.fetch;
+ globalThis.fetch=async (_url, opts)=>{
+   providerInputs.push(JSON.parse(opts.body));
+   return Response.json({choices:[{message:{content:'{"criteria":[],"answers":[]}'}}]});
+ };
+ try {
+  const {requestMatchingEvidence}=await load('matching-provider');
+  const work='Jag kontrollerade leveranser mot fakturor.';
+  const layouts=[
+   ['I was born on 4 June 2008.',work,'I use insulin every morning.'],
+   [work,'Email qa-case (at) example (dot) invalid.','I am hard of hearing.'],
+   ['Personnummer: 1990 01 01 - 1234.','I am 17 years old.',work],
+  ];
+  for(const lines of layouts){
+   const extracted=await extractPdfText(pdfBytes(lines));
+   for(const line of lines) assert.ok(extracted.includes(line));
+   await requestMatchingEvidence('synthetic-no-network',extracted,[{id:'c0',label:'Avstamning av varuleveranser',category:'must_have',weight:1}]);
+   const payload=providerInputs.at(-1);
+   assert.equal(payload.store,false);
+   assert.equal(JSON.parse(payload.messages[1].content).source.trim(),work);
+  }
+  assert.equal(providerInputs.length,layouts.length);
+ }finally{globalThis.fetch=networkFetch;}
  const mock={storage:{from:()=>({download:async()=>({data:new Blob([bytes]),error:null})})}};
  assert.equal((await pdfCvSource(mock,[{type:'cv',url:uid+'/cv.pdf'}],uid)).status,'read');
  assert.equal((await pdfCvSource({storage:{from:()=>({download:async()=>({error:true})})}},[{type:'cv',url:uid+'/cv.pdf'}],uid)).status,'unreadable');
  assert.ok(candidateSource({pdf_cv_text:text,full_name:'SECRET NAME',date_of_birth:'2001-01-01',answers:{q1:'Jag kan arbeta kvällar'}}).includes(text));
  assert.ok(!candidateSource({full_name:'SECRET NAME'}).includes('SECRET NAME'));
- console.log('PASS: weighted scoring, unknowns, traits, explicit contradictions, trainable requirements, literal evidence, path isolation, real PDF extraction and unreadable fallback.');
+ console.log('PASS: weighted scoring, unknowns, traits, explicit contradictions, trainable requirements, literal evidence, path isolation, real PDF extraction, three synthetic PDF-to-SDK payload checks with intercepted transport, and unreadable fallback.');
 } finally {rmSync(tmp,{recursive:true,force:true});}
