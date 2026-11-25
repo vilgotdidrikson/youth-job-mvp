@@ -1,12 +1,60 @@
 # Production backup and first restore
 
-The Production backup workflow runs from `master`. It creates three SQL
-dumps (roles, schema and data) and copies the objects from every production
-Supabase Storage bucket. It verifies the uploaded archive and its checksum
-before adding `COMPLETE`. Production only receives read operations. Incomplete
-uploads are ignored by the freshness check.
+Both backup modes create three SQL dumps (roles, schema and data) and
+copy the objects from every production Supabase Storage bucket. They
+verify each archive's checksum before adding `COMPLETE`. Production
+only receives read operations.
 
-## Set up the backup environment
+## Take a manual backup on an existing computer
+
+The first backup can run on an access-controlled Linux computer or Windows
+with WSL. This mode requires Supabase CLI 3, Docker for the CLI, rclone,
+Python 3 and OpenSSL with CMS support. Use an encrypted work disk for the temporary SQL and
+object files. On WSL, that includes the disk storing the Linux distribution.
+Keep the finished copy on separate storage if available so a single disk
+failure does not take out every copy.
+
+Export the production database URL and production Storage variables from
+the tables below in a private terminal session. Supply the values without
+saving credentials in shell history or a file in the repository. Point
+`MNW_BACKUP_LOCAL_DIR` at an existing private backup directory and set
+`MNW_BACKUP_ENCRYPTION_CERT` to the path of a trusted PEM certificate
+containing an RSA public key. Keep its password-protected private key
+separately from the backup drive. The backup computer needs only the
+certificate. If a backup key does not exist, generate one on the private
+recovery machine and copy only `backup-public.pem` to the backup computer.
+
+```sh
+umask 077
+openssl req -x509 -newkey rsa:3072 -sha256 -days 365 -subj '/CN=MatchnWork backup' \
+  -keyout backup-private.pem -out backup-public.pem
+```
+
+OpenSSL prompts for a password to protect the private key. Record a
+reminder to replace the certificate before it expires and retain old keys
+needed for any retained backups.
+
+```sh
+bash scripts/backup-production.sh local
+```
+
+The completed directory contains `snapshot.tar.gz.cms`, `SHA256SUMS` and
+`COMPLETE`. The local mode uses no S3 destination and no GitHub runner.
+To start a restore, work inside the completed directory and decrypt to an
+encrypted, private work directory.
+
+```sh
+sha256sum --check SHA256SUMS
+openssl cms -decrypt -binary -inform DER -in snapshot.tar.gz.cms \
+  -recip backup-public.pem -inkey /path/to/backup-private.pem \
+  -out /path/to/private/restore/snapshot.tar.gz
+```
+
+Continue with the isolated database and Storage recovery checks below.
+
+## Set up the optional nightly workflow
+
+The Production backup workflow runs from `master` and is opt-in.
 
 1. Prepare a private S3-compatible bucket in the EU with encryption at rest
    and public access disabled. Scope the backup key to this bucket. For
@@ -54,8 +102,9 @@ connection details.
 2. Rehearse recovery with a separate private Supabase project or a local
    Supabase instance on an access-controlled EU host. Keep email, webhooks
    and jobs disabled while production data is present. Download the archive
-   and checksum securely. Run `sha256sum --check SHA256SUMS` before extracting
-   to a private directory. Follow the
+   and checksum securely. Verify the checksum before extracting
+   to a private directory. For a manual backup, verify and decrypt it using
+   the commands above. Follow the
    [Supabase CLI restore procedure](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
    for the database roles, schemas and data.
 3. Verify Storage recovery separately. Recreate each bucket and its settings
@@ -77,3 +126,52 @@ pre-migration backup, pause writes while the copy runs if the waitlist or
 Storage is receiving updates. The archive checksum detects corruption in
 the uploaded copy. The restore rehearsal verifies that the contents can
 be used for recovery.
+
+
+## Rehearse the production migration (L10)
+
+On 2026-11-25, DevStaging passed all 16 checks in
+`scripts/check-launch-schema.sql`. Production passed two. Production had
+28 public tables and neither `pg_cron` nor `pg_net`; DevStaging had
+43 public and 27 private tables and both extensions. Check which workers
+and schedules the release actually requires before enabling jobs or
+adding secrets to the release environment.
+
+The three production history entries below match the SQL from `master`
+after normalizing whitespace and statement delimiters. The files are
+absent from `dev` and their names use different timestamps.
+
+| Production history version | File prefix on `master` | Migration |
+| --- | --- | --- |
+| `20261102093036` | `20261102092942` | `prelaunch_waitlist` |
+| `20261116103603` | `20261116103319` | `fix_prelaunch_shared_network_limits` |
+| `20261117074445` | `20261117074240` | `restore_prelaunch_signup_ip_limit` |
+
+1. Restore the backup to an isolated target, including bucket objects.
+   Capture a baseline of the restored schema, migration ledger, record
+   counts, public/private bucket settings and waitlist behavior. Check
+   for test isolation before running any app code on this target.
+2. Use the recorded versions above when bringing the three matching
+   files into the release migration history. Keep the already-applied
+   production entries and avoid replaying those statements. Compare
+   the rest of the candidate SQL to the restored schema and the verified
+   DevStaging schema before deciding what to apply. Production's sparse
+   ledger does not account for all the schema already there. DevStaging also
+   has timestamp mismatches and omissions, so neither ledger alone can
+   define the production migration list.
+3. Apply the reviewed migration sequence to the restored target. Run
+   `scripts/check-launch-schema.sql` and the waitlist, auth, access-control
+   and private Storage checks. Check the waitlist row count and existing
+   unsubscribe behavior before and after. Record the tested commands,
+   schema outcomes, and any environment prerequisites. If the first
+   attempt fails, restore the same baseline before retrying the sequence.
+4. Test the release code against that isolated target. A simulated
+   `master`/`dev` merge has conflicts in `AGENTS.md`, the job generation and
+   voice endpoints, root layout and page, job map, and mobile navigation.
+   Integrate the full app deliberately. Preserve the waitlist's privileged
+   authorization and existing unsubscribe routes through cutover. Keep
+   app deployment and database recovery steps distinct.
+
+Use the rehearsed sequence on production only after the restore and release
+checks pass. Keep an immediate pre-migration copy through deployment
+verification.

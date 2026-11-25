@@ -5,30 +5,37 @@ umask 077
 mode=${1:-backup}
 project=iarnopkuoqumictgnqin
 
-: "${MNW_BACKUP_S3_ENDPOINT:?Missing backup endpoint}"
-: "${MNW_BACKUP_S3_REGION:?Missing backup region}"
-: "${MNW_BACKUP_S3_BUCKET:?Missing backup bucket}"
-: "${MNW_BACKUP_S3_ACCESS_KEY_ID:?Missing backup access key}"
-: "${MNW_BACKUP_S3_SECRET_ACCESS_KEY:?Missing backup secret key}"
-
-case "$MNW_BACKUP_S3_ENDPOINT" in
-  https://*) ;;
-  *) echo 'The backup endpoint must use HTTPS.' >&2; exit 1 ;;
+case "$mode" in
+  backup|check|local) ;;
+  *) echo 'Expected mode backup, check or local.' >&2; exit 1 ;;
 esac
 
-if [[ ! "$MNW_BACKUP_S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]]; then
-  echo 'Invalid backup bucket name.' >&2
-  exit 1
-fi
+if [[ "$mode" != local ]]; then
+  : "${MNW_BACKUP_S3_ENDPOINT:?Missing backup endpoint}"
+  : "${MNW_BACKUP_S3_REGION:?Missing backup region}"
+  : "${MNW_BACKUP_S3_BUCKET:?Missing backup bucket}"
+  : "${MNW_BACKUP_S3_ACCESS_KEY_ID:?Missing backup access key}"
+  : "${MNW_BACKUP_S3_SECRET_ACCESS_KEY:?Missing backup secret key}"
 
-export RCLONE_CONFIG_MNW_BACKUP_TYPE=s3
-export RCLONE_CONFIG_MNW_BACKUP_PROVIDER=Other
-export RCLONE_CONFIG_MNW_BACKUP_ENDPOINT="$MNW_BACKUP_S3_ENDPOINT"
-export RCLONE_CONFIG_MNW_BACKUP_REGION="$MNW_BACKUP_S3_REGION"
-export RCLONE_CONFIG_MNW_BACKUP_ACCESS_KEY_ID="$MNW_BACKUP_S3_ACCESS_KEY_ID"
-export RCLONE_CONFIG_MNW_BACKUP_SECRET_ACCESS_KEY="$MNW_BACKUP_S3_SECRET_ACCESS_KEY"
-export RCLONE_CONFIG_MNW_BACKUP_NO_CHECK_BUCKET=true
-destination="mnw_backup:${MNW_BACKUP_S3_BUCKET}/matchnwork-production"
+  case "$MNW_BACKUP_S3_ENDPOINT" in
+    https://*) ;;
+    *) echo 'The backup endpoint must use HTTPS.' >&2; exit 1 ;;
+  esac
+
+  if [[ ! "$MNW_BACKUP_S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]]; then
+    echo 'Invalid backup bucket name.' >&2
+    exit 1
+  fi
+
+  export RCLONE_CONFIG_MNW_BACKUP_TYPE=s3
+  export RCLONE_CONFIG_MNW_BACKUP_PROVIDER=Other
+  export RCLONE_CONFIG_MNW_BACKUP_ENDPOINT="$MNW_BACKUP_S3_ENDPOINT"
+  export RCLONE_CONFIG_MNW_BACKUP_REGION="$MNW_BACKUP_S3_REGION"
+  export RCLONE_CONFIG_MNW_BACKUP_ACCESS_KEY_ID="$MNW_BACKUP_S3_ACCESS_KEY_ID"
+  export RCLONE_CONFIG_MNW_BACKUP_SECRET_ACCESS_KEY="$MNW_BACKUP_S3_SECRET_ACCESS_KEY"
+  export RCLONE_CONFIG_MNW_BACKUP_NO_CHECK_BUCKET=true
+  destination="mnw_backup:${MNW_BACKUP_S3_BUCKET}/matchnwork-production"
+fi
 
 if [[ "$mode" == check ]]; then
   if ! listing=$(rclone lsf --recursive --files-only --include '*/COMPLETE' "$destination" 2>/dev/null); then
@@ -48,9 +55,17 @@ if [[ "$mode" == check ]]; then
   exit 1
 fi
 
-if [[ "$mode" != backup ]]; then
-  echo 'Expected mode backup or check.' >&2
-  exit 1
+if [[ "$mode" == local ]]; then
+  : "${MNW_BACKUP_LOCAL_DIR:?Missing local backup directory}"
+  : "${MNW_BACKUP_ENCRYPTION_CERT:?Missing backup encryption certificate}"
+  if [[ ! -d "$MNW_BACKUP_LOCAL_DIR" || ! -w "$MNW_BACKUP_LOCAL_DIR" ]]; then
+    echo 'The local backup directory must exist and be writable.' >&2
+    exit 1
+  fi
+  if ! openssl x509 -in "$MNW_BACKUP_ENCRYPTION_CERT" -checkend 0 -noout >/dev/null 2>&1; then
+    echo 'A valid backup encryption certificate is required.' >&2
+    exit 1
+  fi
 fi
 
 : "${MNW_BACKUP_DATABASE_URL:?Missing production database URL}"
@@ -59,7 +74,7 @@ fi
 : "${MNW_SUPABASE_S3_SECRET_ACCESS_KEY:?Missing production Storage secret key}"
 
 # Refuse connections to a different project or to Supavisor's transaction mode.
-python3 - "$project" <<'PY'
+python3 - "$project" "$mode" <<'PY'
 import os
 import sys
 from urllib.parse import parse_qs, urlsplit
@@ -81,7 +96,6 @@ if not (
     sys.exit("Expected the production Postgres connection on port 5432 with TLS.")
 
 source = urlsplit(os.environ["MNW_SUPABASE_S3_ENDPOINT"])
-target = urlsplit(os.environ["MNW_BACKUP_S3_ENDPOINT"])
 if (
     source.scheme != "https"
     or source.netloc not in {f"{project}.supabase.co", f"{project}.storage.supabase.co"}
@@ -90,8 +104,10 @@ if (
     or source.fragment
 ):
     sys.exit("Expected the Supabase production Storage S3 endpoint.")
-if not target.hostname or target.hostname.endswith(".supabase.co") or target.username or target.query or target.fragment:
-    sys.exit("Expected a separate S3 backup provider.")
+if sys.argv[2] == "backup":
+    target = urlsplit(os.environ["MNW_BACKUP_S3_ENDPOINT"])
+    if not target.hostname or target.hostname.endswith(".supabase.co") or target.username or target.query or target.fragment:
+        sys.exit("Expected a separate S3 backup provider.")
 PY
 
 export RCLONE_CONFIG_MNW_SOURCE_TYPE=s3
@@ -102,14 +118,15 @@ export RCLONE_CONFIG_MNW_SOURCE_ACCESS_KEY_ID="$MNW_SUPABASE_S3_ACCESS_KEY_ID"
 export RCLONE_CONFIG_MNW_SOURCE_SECRET_ACCESS_KEY="$MNW_SUPABASE_S3_SECRET_ACCESS_KEY"
 
 work=$(mktemp -d)
-trap 'rm -rf -- "$work"' EXIT
+pending=
+trap 'rm -rf -- "$work"; if [[ -n "$pending" ]]; then rm -rf -- "$pending"; fi' EXIT
 mkdir -p "$work/snapshot/database" "$work/snapshot/storage"
 
 # Supabase and rclone diagnostics can include sensitive connection or object details.
 backup_step() {
   local description=$1
   shift
-  if ! "$@" 2>"$work/diagnostics"; then
+  if ! "$@" 2>/dev/null; then
     printf 'Backup failed during %s.\n' "$description" >&2
     exit 1
   fi
@@ -150,6 +167,24 @@ done < "$work/buckets"
 echo 'Storage objects copied and checked.'
 
 run="$(date -u +%Y%m%dT%H%M%SZ)-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}-${work##*.}"
+if [[ "$mode" == local ]]; then
+  pending=$(mktemp -d -- "$MNW_BACKUP_LOCAL_DIR/.snapshot.XXXXXXXX")
+  backup_step 'packing database and Storage' tar -C "$work/snapshot" -czf - . |
+    backup_step 'encrypting the archive' openssl cms -encrypt -binary -stream -aes-256-gcm -outform DER \
+      -recip "$MNW_BACKUP_ENCRYPTION_CERT" -keyopt rsa_padding_mode:oaep -keyopt rsa_oaep_md:sha256 \
+      -out "$pending/snapshot.tar.gz.cms"
+  (
+    cd "$pending"
+    sha256sum snapshot.tar.gz.cms > SHA256SUMS
+    sha256sum --check SHA256SUMS
+    date -u +%FT%TZ > COMPLETE
+  )
+  mv -T -- "$pending" "$MNW_BACKUP_LOCAL_DIR/$run"
+  pending=
+  printf 'Encrypted production backup saved (%s).\n' "$run"
+  exit 0
+fi
+
 archive="$destination/$run"
 backup_step 'creating the archive' tar -C "$work/snapshot" -czf "$work/snapshot.tar.gz" .
 (cd "$work" && sha256sum snapshot.tar.gz > SHA256SUMS)
