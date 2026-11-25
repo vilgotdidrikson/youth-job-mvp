@@ -1,0 +1,49 @@
+name: Production backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 1 * * *'
+    - cron: '37 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: matchnwork-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: >-
+      github.ref == 'refs/heads/master' &&
+      (github.event_name == 'workflow_dispatch' || vars.MNW_BACKUP_ENABLED == 'true')
+    runs-on: [self-hosted, linux, matchnwork-backup-eu]
+    timeout-minutes: 45
+    environment: production-backup
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Back up production
+        if: github.event.schedule != '37 6 * * *'
+        env:
+          MNW_BACKUP_DATABASE_URL: ${{ secrets.MNW_BACKUP_DATABASE_URL }}
+          MNW_SUPABASE_S3_ENDPOINT: ${{ vars.MNW_SUPABASE_S3_ENDPOINT }}
+          MNW_SUPABASE_S3_ACCESS_KEY_ID: ${{ secrets.MNW_SUPABASE_S3_ACCESS_KEY_ID }}
+          MNW_SUPABASE_S3_SECRET_ACCESS_KEY: ${{ secrets.MNW_SUPABASE_S3_SECRET_ACCESS_KEY }}
+          MNW_BACKUP_S3_ENDPOINT: ${{ vars.MNW_BACKUP_S3_ENDPOINT }}
+          MNW_BACKUP_S3_REGION: ${{ vars.MNW_BACKUP_S3_REGION }}
+          MNW_BACKUP_S3_BUCKET: ${{ vars.MNW_BACKUP_S3_BUCKET }}
+          MNW_BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.MNW_BACKUP_S3_ACCESS_KEY_ID }}
+          MNW_BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.MNW_BACKUP_S3_SECRET_ACCESS_KEY }}
+        run: bash scripts/backup-production.sh backup
+      - name: Check backup freshness
+        if: github.event.schedule == '37 6 * * *'
+        env:
+          MNW_BACKUP_S3_ENDPOINT: ${{ vars.MNW_BACKUP_S3_ENDPOINT }}
+          MNW_BACKUP_S3_REGION: ${{ vars.MNW_BACKUP_S3_REGION }}
+          MNW_BACKUP_S3_BUCKET: ${{ vars.MNW_BACKUP_S3_BUCKET }}
+          MNW_BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.MNW_BACKUP_S3_ACCESS_KEY_ID }}
+          MNW_BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.MNW_BACKUP_S3_SECRET_ACCESS_KEY }}
+        run: bash scripts/backup-production.sh check
