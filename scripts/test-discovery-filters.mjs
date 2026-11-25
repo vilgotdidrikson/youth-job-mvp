@@ -40,7 +40,11 @@ Module._load=function(name,parent,...rest){
  if((name.startsWith('@/components/')&&name!=='@/components/job-discovery')||['./notification-link','./job-swipe-deck','./ui-icon'].includes(name))return new Proxy({},{get:()=>Dummy});
  return originalLoad.call(this,name.startsWith('@/')?path.resolve(name.slice(2)):name,parent,...rest);
 };
-const body={};globalThis.HTMLElement=class{};globalThis.document={activeElement:body,body};globalThis.window={addEventListener(){},removeEventListener(){},dispatchEvent(){}};
+const body={};globalThis.HTMLElement=class{};globalThis.document={activeElement:body,body};globalThis.window={
+ location:new URL('https://qa.invalid/swipe'),
+ history:{replaceState(_state,_unused,url){globalThis.window.location=new URL(url);}},
+ addEventListener(){},removeEventListener(){},dispatchEvent(){},
+};
 try{
  const search=require('../lib/job-search.ts'),domain=require('../lib/job-discovery.ts');
  const base={id:'qa',company_user_id:'qa-company',title:'QA jobb',description:'QA',category:'cafe',requirements:'',city:'Stockholm',employment_type:'Deltid',salary_per_hour:'140–180 kr/tim',created_at:'2026-11-01'};

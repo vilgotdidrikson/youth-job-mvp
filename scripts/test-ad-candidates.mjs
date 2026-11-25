@@ -13,6 +13,8 @@ const pending=[];const deferred=()=>{let resolve,reject;const promise=new Promis
 const settle=()=>new Promise(r=>setImmediate(r));
 let current,refresh,hookOverride=null,role='company',owner='company-a',jobOwner=owner;
 const calls=[],requests=[];let client;
+const originalWindow=globalThis.window;
+globalThis.window={history:{replaceState:(_state,_unused,href)=>calls.push([href])}};
 class View{
  constructor(fn,props){this.fn=fn;this.props=props;this.slots=[];this.effects=[];this.index=0;}
  // eslint-disable-next-line @typescript-eslint/no-this-alias -- The test dispatcher selects the mounted hook instance.
@@ -62,6 +64,18 @@ try{
  // Actual detail callbacks retain job identity in navigation, CV transport and decisions.
  hookOverride={state:{status:'ready',value:{candidates:[candidate()],conversations:[]}},reload:async()=>{}};
  const wrapped=CompanyJobCandidates({...props,jobId:'job-b',candidateId:'same-youth'});const detail=new View(wrapped.type,wrapped.props);let tree=detail.render();detail.flush();
+ const second={...candidate('job-b','another-youth'),profile:{full_name:'Andra testkandidaten'}};
+ hookOverride.state.value.candidates.push(second);
+ tree=detail.render();
+ const row=nodes(tree).filter(n=>n.type==='button'&&n.props.className?.startsWith('company-applicant-row')).at(-1);
+ row.props.onClick();
+ assert.deepEqual(calls.at(-1),['/company?view=kandidater&job=job-b&candidate=another-youth']);
+ detail.props={...detail.props,candidateId:new URL(calls.at(-1)[0],'https://example.invalid').searchParams.get('candidate')};
+ tree=detail.render();
+ const activeRow=nodes(tree).find(n=>n.type==='button'&&n.props['aria-pressed']&&n.props.className?.startsWith('company-applicant-row'));
+ assert.match(JSON.stringify(activeRow),/Andra testkandidaten/);
+ detail.props={...detail.props,candidateId:'same-youth'};
+ tree=detail.render();detail.flush();
  const cvRequests=[];globalThis.fetch=async(url,options)=>{const p=deferred();cvRequests.push({url,options,...p});return p.promise};
  let button=nodes(tree).find(n=>n.type==='button'&&n.props.children==='Öppna CV');button.props.onClick();await settle();assert.deepEqual(JSON.parse(cvRequests[0].options.body),{jobId:'job-b',youthUserId:'same-youth'});
  const accept=nodes(tree).find(n=>n.type==='button'&&n.props.children==='Acceptera');await Promise.all([accept.props.onClick(),accept.props.onClick()]);await settle();assert.equal(calls.filter(args=>args[0]==='job-b'&&args[1]==='same-youth'&&args[2]==='interested').length,1,'double decision only writes once with this ad');
@@ -75,4 +89,4 @@ try{
  const count=requests.length;owner=null;await assert.rejects(getCandidatesForJob('job-b'));owner='company-a';role='youth';await assert.rejects(getCandidatesForJob('job-b'));role='company';await assert.rejects(getCandidatesForJob('job-b',{ownerId:'different'}));assert.equal(requests.length,count);
  jobOwner='company-b';await assert.rejects(getCandidatesForJob('job-b'),/own jobs/);
  console.log('PASS ad-first picker, scoped hook, A/B/user-switch late responses, timeout/retry/revoked access, actual CV callback and SDK job/owner/submitted filters. HTTP transport is simulated; no live RLS/browser claim.');
-}finally{Module._load=original}
+}finally{Module._load=original;globalThis.window=originalWindow}

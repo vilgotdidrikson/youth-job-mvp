@@ -2,16 +2,31 @@
 begin;
 do $$
 declare
- youth uuid := '40416000-07aa-4416-9098-fb4be9928558';
- company uuid := '120c7407-1e8a-488c-9047-f52d79325011';
- outsider uuid := '875c6885-ffbb-4a74-99a8-aac3cd194e84';
- job uuid := '765be68c-7d32-4bc5-859d-6a077ff81a8b';
+ youth uuid := gen_random_uuid();
+ company uuid := gen_random_uuid();
+ outsider uuid := gen_random_uuid();
+ admin uuid := gen_random_uuid();
+ job uuid := gen_random_uuid();
  first_id uuid:=gen_random_uuid(); second_id uuid:=gen_random_uuid();
- places jsonb; affected int; snapshot jsonb;
+ places jsonb; affected int; snapshot jsonb; preview jsonb;
 begin
- if not exists(select 1 from public.youth_profiles where user_id=youth and full_name='Alex Testsson') or
- not exists(select 1 from public.jobs where id=job and company_user_id=company and title like 'QA TEST%') then
- raise exception 'Refusing non-fictional fixtures'; end if;
+ insert into auth.users(id,email,raw_user_meta_data) values
+   (youth,'qa-n14-'||youth||'@example.invalid','{"role":"youth"}'),
+   (company,'qa-n14-'||company||'@example.invalid','{"role":"company"}'),
+   (outsider,'qa-n14-'||outsider||'@example.invalid','{"role":"youth"}'),
+   (admin,'qa-n14-'||admin||'@example.invalid','{"role":"private"}');
+ insert into public.admin_users(user_id) values(admin);
+ update public.youth_profiles set cv_generated=true,cv_text='Fiktivt QA-CV' where user_id=youth;
+ perform set_config('request.jwt.claim.sub',company::text,true);
+ update public.company_profiles set company_name='QA Testföretag',organization_number='556016-0680' where user_id=company;
+ insert into public.jobs(id,company_user_id,company_name,title,description,address)
+   values(job,company,'QA Testföretag','QA ej riktigt jobb','Fiktiva uppgifter','QA Testvägen 1');
+ insert into public.job_match_profiles(job_id,status,role_summary,weighted_criteria,candidate_questions)
+   values(job,'approved','QA roll','[]','[]');
+ set local role authenticated;
+ perform set_config('request.jwt.claim.sub',admin::text,true);
+ perform public.review_company_verification(company,'verified',null);
+ reset role;
  places:=jsonb_build_array(jsonb_build_object('id',first_id,'name','QA City','address','QA Gatan 1','postal_code','11111','city','Stockholm','longitude',18.06,'latitude',59.33),jsonb_build_object('id',second_id,'name','QA Väst','address','QA Gatan 2','postal_code','22222','city','Göteborg','longitude',11.97,'latitude',57.7));
  update public.jobs set status='active',is_active=true,publication_status='published' where id=job;
  perform set_config('request.jwt.claim.sub',company::text,true);
@@ -35,7 +50,10 @@ begin
  perform set_config('request.jwt.claim.sub',youth::text,true);
  perform set_config('request.jwt.claims',jsonb_build_object('sub',youth,'role','authenticated')::text,true);
  set local role authenticated;
- insert into public.swipe_actions(youth_user_id,job_id,decision) values(youth,job,'interested') on conflict(youth_user_id,job_id) do update set decision='interested';
+ preview:=public.get_my_application_disclosure_preview(job,'{}');
+ perform public.save_my_application_disclosure(job,'{}',preview->>'source_token');
+ if public.prepare_my_application(job,false)->>'status' is distinct from 'submitted'
+   then raise exception 'FAIL application must be submitted'; end if;
  insert into public.application_workplace_preferences(job_id,youth_user_id,workplace_id,workplace_snapshot)
  values(job,youth,second_id,'{"forged":true}') on conflict(job_id,youth_user_id) do update set workplace_id=excluded.workplace_id;
  select workplace_snapshot into snapshot from public.application_workplace_preferences where job_id=job and youth_user_id=youth;
@@ -70,6 +88,6 @@ begin
  perform * from public.application_workplace_preferences;
  raise exception 'FAIL anonymous preference read'; exception when insufficient_privilege then null; end;
  reset role;
- raise notice 'PASS N14 RLS: owner jobs, input validation, snapshot, applicant write, company read only, outsider/anonymous denial, removed workplace history';
 end $$;
+select 'PASS N14 RLS: owner jobs, input validation, snapshot, applicant write, company read only, outsider/anonymous denial, removed workplace history' as result;
 rollback;

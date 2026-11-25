@@ -54,7 +54,7 @@ select pg_temp.check_test('legacy prepare cannot resend',public.prepare_my_appli
 select pg_temp.check_test('paused interest can be withdrawn',public.withdraw_my_application(pg_temp.f('paused'),false)->>'status'='withdrawn');
 select pg_temp.check_test('CV draft flush sends nothing',(select sent_count=0 from public.submit_my_application_drafts()));
 select pg_temp.check_test('new application submitted',public.prepare_my_application(pg_temp.f('sent'),false)->>'status'='submitted');
-select pg_temp.deny('stale unsent confirmation requires fresh review','select public.withdraw_my_application('||quote_literal(pg_temp.f('sent'))||',false)','40001');
+select pg_temp.deny('stale unsent confirmation requires fresh review','select public.withdraw_my_application('||quote_literal(pg_temp.f('sent'))||',false)','PT409');
 select pg_temp.check_test('stale confirmation leaves sent state intact',(select status='submitted' from public.application_completions where job_id=pg_temp.f('sent')));
 select pg_temp.check_test('sent application withdrawn',public.withdraw_my_application(pg_temp.f('sent'),true)->>'status'='withdrawn');
 select pg_temp.check_test('sent retry idempotent',public.withdraw_my_application(pg_temp.f('sent'),true)->>'status'='withdrawn');

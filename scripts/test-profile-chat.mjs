@@ -35,6 +35,11 @@ assert.equal(cv.education.length, 2);
 assert.match(renderStructuredCv(cv), /Planerade träningar/);
 assert.match(renderStructuredCv(cv), /Svenska.*Modersmål/);
 assert.deepEqual(cvFromProfileChat(draft, cv), cv);
+const multipleLanguages = { languages: "Svenska – Modersmål / Engelska – Goda kunskaper\nTyska – Läser enkla texter" };
+assert.deepEqual(profileFromChat(existing, multipleLanguages).qualifications.languages.map(x => x.language), ["Svenska", "Engelska", "Tyska"]);
+const languageCv = cvFromProfileChat(multipleLanguages);
+assert.deepEqual(languageCv.languages.map(x => [x.name, x.level]), [["Svenska", "Modersmål"], ["Engelska", "God"], ["Tyska", undefined]]);
+assert.match(renderStructuredCv(languageCv), /Tyska.*Läser enkla texter/);
 console.log("Profile chat: shared draft, known facts, validation and separate CV entries passed.");
 
 // Drive the real guide callbacks with a versioned profile and separate CV persistence.
@@ -110,6 +115,7 @@ try {
   button(render(), "Ändra svaren").onClick();
   field(render(), "motivation", "Vill hjälpa kunder");
   field(render(), "experience", "Original från utkast");
+  field(render(), "languages", multipleLanguages.languages);
   button(render(), "Granska utkastet").onClick();
   approveProfile(render());
   const save = button(render(), "Spara jobbprofil").onClick;
@@ -137,6 +143,7 @@ try {
   button(render(), "Spara CV").onClick();
   await settled();
   assert.equal(cvWrites.length, 1);
+  assert.deepEqual(cvWrites[0].structured.languages.map(x => x.name), ["Svenska", "Engelska", "Tyska"]);
   assert.equal(cvWrites[0].structured.otherExperience.length, 2, "hidden CV facts stay in the profile");
   assert.doesNotMatch(review(render()).text, /Original från utkast/);
   assert.equal(button(render(), "Spara jobbprofil").disabled, true, "a CV approval cannot approve the profile");

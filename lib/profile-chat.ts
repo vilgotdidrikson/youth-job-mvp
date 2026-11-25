@@ -57,12 +57,16 @@ function appendDistinct<T>(prior: T[], added: T[], key: (item: T) => string) {
   })];
 }
 
+function chatLanguageEntries(raw: string | undefined) {
+  return (raw ?? "").split(/\n|\s+\/\s+/).map(entry => entry.trim()).filter(Boolean).map(evidence => {
+    const [language, level = ""] = evidence.split(/\s+[–—-]\s+/, 2);
+    return { language, level, evidence };
+  });
+}
+
 export function profileFromChat(profile: RecruitmentProfile, draft: ProfileChatDraft) {
   const roles = appendDistinct(profile.preferences.roles, lines(draft.roles), String);
-  const languageEntries = lines(draft.languages).map(line => {
-    const [language, level] = line.split(/\s+[–—-]\s+/, 2);
-    return { language, level: level ?? "" };
-  });
+  const languageEntries = chatLanguageEntries(draft.languages).map(({ language, level }) => ({ language, level }));
   const example = { strength: draft.strength?.trim() ?? "", context: draft.context?.trim() ?? "", action: draft.action?.trim() ?? "" };
   return validateRecruitmentProfile({
     ...profile,
@@ -92,10 +96,12 @@ export function cvFromProfileChat(draft: ProfileChatDraft, existing?: Structured
     certificate_entries: lines(draft.licences).map(name => ({ name })),
     skills_text: lines(draft.tools).join("\n"),
   });
-  const languages = lines(draft.languages).flatMap(line => {
-    const [name, rawLevel] = line.split(/\s+[–—-]\s+/, 2);
-    const level = LANGUAGE_LEVELS.find(item => item.toLowerCase() === rawLevel?.toLowerCase()) as StructuredCvData["languages"][number]["level"];
-    return name && level ? [{ name, level, evidence: line, abilities: [] }] : [];
+  const languages = chatLanguageEntries(draft.languages).flatMap(({ language: name, level: rawLevel, evidence }) => {
+    if (!rawLevel) return [];
+    const normalized = rawLevel.toLocaleLowerCase("sv");
+    const canonicalLevel = LANGUAGE_LEVELS.find(item => item.toLocaleLowerCase("sv") === normalized) as StructuredCvData["languages"][number]["level"];
+    const level = canonicalLevel ?? (normalized === "goda kunskaper" ? "God" : normalized === "mycket goda kunskaper" ? "Mycket god" : undefined);
+    return [{ name, ...(level ? { level } : {}), evidence, abilities: level ? [] : [rawLevel] }];
   });
   return {
     ...cv,

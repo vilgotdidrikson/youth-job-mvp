@@ -36,8 +36,9 @@ assert.deepEqual(draftJobCategories({...restored,categoryIds:[]}),[]);
 
 function compile(file,imports={},extra='') {
  const compiledModule={exports:{}};
+ const cssModule={default:new Proxy({},{get:(_,key)=>key})};
  const code=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
- new Function('module','exports','require',code+extra)(compiledModule,compiledModule.exports,name=>imports[name]??require(name));return compiledModule.exports;
+ new Function('module','exports','require',code+extra)(compiledModule,compiledModule.exports,name=>imports[name]??(name.endsWith(".module.css")?cssModule:require(name)));return compiledModule.exports;
 }
 const route=compile('app/api/company/job/generate/route.ts',{'@/lib/job-categories':categories,'@/lib/job-ai-review':require('../lib/job-ai-review.ts'),'@/lib/server-failures': require('../lib/server-failures.ts'), '@/lib/api-auth':{},'@/lib/openai-config':{},'next/server':{}},'\nexports.fixture={fallback,normalizeResult};').fixture;
 assert.equal(route.fallback('Ekonom på café','Café',{}).category,'Ekonomiarbete');
