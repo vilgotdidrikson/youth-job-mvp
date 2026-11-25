@@ -27,6 +27,7 @@ interface JobMapProps {
   userCoordinates: Coordinates | null;
   selectedJobId?: string | null;
   onJobSelect?: (id: string | null) => void;
+  onOpenJob?: (id: string) => void;
   active?: boolean;
   onUnavailable?: (message: string | null) => void;
 }
@@ -185,7 +186,7 @@ function pinTileMarkup(job: JobPost): string {
   return `<span class="job-map-pin-tile"><span class="job-map-pin-initials">${escapeHtml(companyInitials(job.company_name))}</span>${source ? `<img src="${escapeHtml(source)}" alt="" loading="lazy" decoding="async" />` : ""}</span>`;
 }
 
-export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, active = true, onUnavailable }: JobMapProps) {
+export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, onOpenJob, active = true, onUnavailable }: JobMapProps) {
   const router = useRouter();
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -389,7 +390,12 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
     content.querySelector(".job-map-close")?.addEventListener("click", close);
     content.querySelector(".job-map-cluster-previous")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.max(0, cardStart - 1) })));
     content.querySelector(".job-map-cluster-next")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.min(maxCardStart, cardStart + 1) })));
-    content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => router.push(`/jobb/${encodeURIComponent(button.dataset.jobId || "")}`)));
+    content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => {
+      const id = button.dataset.jobId;
+      if (!id) return;
+      if (onOpenJob) onOpenJob(id);
+      else router.push(`/jobb/${encodeURIComponent(id)}`);
+    }));
 
     const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, focusAfterOpen: false, maxWidth: "none", offset: [0, -52] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
@@ -403,7 +409,7 @@ export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, acti
     return () => {
       popup.remove();
     };
-  }, [activeClusterId, clusterCardStarts, jobClusters, mapReady, router, userCoordinates, onJobSelect]);
+  }, [activeClusterId, clusterCardStarts, jobClusters, mapReady, router, userCoordinates, onJobSelect, onOpenJob]);
 
   useEffect(() => {
     const map = mapRef.current;

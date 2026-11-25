@@ -29,7 +29,7 @@ function mapCase({token='qa-token',unsupported=false,throwSupport=false,throwCon
  class ElementMock {
   dataset={}; events={}; children=new Map(); attributes={}; classList={toggle(){}}; style={setProperty(){}};
   querySelector(selector){if(!this.children.has(selector))this.children.set(selector,new ElementMock());return this.children.get(selector);}
-  querySelectorAll(){return [];}
+  querySelectorAll(selector){return selector === ".job-map-cta" ? [this.querySelector(selector)] : [];}
   setAttribute(k,v){this.attributes[k]=v;}
   getAttribute(k){return this.attributes[k];}
   addEventListener(k,fn){this.events[k]=fn;}
@@ -51,7 +51,8 @@ function mapCase({token='qa-token',unsupported=false,throwSupport=false,throwCon
   remove(){this.removed=true;}
  }
  const mapbox={Marker:MarkerMock,Popup:PopupMock,supported:()=>{if(throwSupport)throw Error('support');return!unsupported;},Map:MapMock,NavigationControl:class{}};
- const router={push(){}};
+ const navigations=[];
+ const router={push(path){navigations.push(path);}};
  const mod={exports:{}};new Function('module','exports','require','process','window','document','requestAnimationFrame',compile('components/job-map.tsx'))(mod,mod.exports,name=>{
   if(name==='react')return hooks.react;
   if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'fragment'};
@@ -63,7 +64,7 @@ function mapCase({token='qa-token',unsupported=false,throwSupport=false,throwCon
  },{env:{NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:token}},{setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),matchMedia:()=>({matches:true})},documentMock,fn=>frames.push(fn));
  let props={jobs,userCoordinates:null,active,onUnavailable:message=>reports.push(message)};
  const render=()=>{const tree=hooks.render(()=>mod.exports.JobMap(props));for(const n of nodes(tree))if(n.props?.ref)n.props.ref.current=container;hooks.effects();return tree;};
- return{render,hooks,reports,instances,canvasEvents,timers,markers,popups,frames,documentMock,flyTo,setProps:next=>props={...props,...next},get removed(){return removed;},get resizes(){return resizes;}};
+ return{render,hooks,reports,instances,canvasEvents,timers,markers,popups,frames,documentMock,flyTo,navigations,setProps:next=>props={...props,...next},get removed(){return removed;},get resizes(){return resizes;}};
 }
 for(const config of [{token:''},{unsupported:true},{throwSupport:true},{throwConstructor:true},{throwControl:true}]){
  const test=mapCase(config);test.render();await flush();test.render();assert(test.reports.at(-1),'Startup failures reach parent');test.hooks.unmount();if(config.throwControl)assert.equal(test.removed,1,'Partial map removed');
@@ -92,6 +93,10 @@ const popup=interactive.popups.at(-1);
 assert.equal(popup.options.focusAfterOpen,false,'Mapbox should leave hover focus alone');
 assert.equal(interactive.documentMock.activeElement,popup.content.querySelector('.job-map-close'),'Keyboard goes to the dismiss control');
 assert.equal(getPin().attributes['aria-expanded'],'true');
+const cta=popup.content.querySelector('.job-map-cta');
+cta.dataset.jobId='map-qa';
+cta.events.click();
+assert.deepEqual(interactive.navigations,['/jobb/map-qa'],'Product map opens the normal job page');
 popup.content.events.keydown({...event,key:'Escape'});
 interactive.render();
 interactive.frames.forEach(fn=>fn());
@@ -104,6 +109,14 @@ pin.focus();
 pin.events.pointerenter();
 interactive.render();
 assert.notEqual(interactive.documentMock.activeElement,interactive.popups.at(-1).content.querySelector('.job-map-close'),'Hover leaves focus outside the popup');
+const demoSelections=[];
+interactive.setProps({onOpenJob:id=>demoSelections.push(id)});
+interactive.render();
+const demoCta=interactive.popups.at(-1).content.querySelector('.job-map-cta');
+demoCta.dataset.jobId='map-qa';
+demoCta.events.click();
+assert.deepEqual(demoSelections,['map-qa'],'Demo map opens the fictional job in the demo');
+assert.deepEqual(interactive.navigations,['/jobb/map-qa'],'Demo does not navigate to a production job');
 interactive.hooks.unmount();
 console.log('PASS actual JobMap with DOM doubles: keyboard popup, Escape, origin focus, passive hover and reduced motion.');
 // Actual parent view handles fallback and retry without changing results/filters.

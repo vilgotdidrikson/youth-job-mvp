@@ -36,3 +36,13 @@ När användaren ber om arbete på en punkt, välj en hel huvudpunkt med status 
 ## Design vid löpande utveckling
 
 Nya och ändrade funktioner, knappar och komponenter ska från början följa designriktningen i `docs/DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction` och relevanta befintliga designuppgifter. Återanvänd gemensamma komponenter, färgtokens och typografisk skala. Förbättra layout, luft, hierarki och kontroller inom den berörda vyn när funktionalitet byggs; större omtag ligger kvar i ordinarie designplan. Detta är en visuell riktning, inget krav på fler guider eller hjälptexter. Bevara produktregler, tillgänglighet och andra uppgifters ägarskap.
+
+
+## Miljöer för dev och produktion
+
+Miljökopplingen finns i [PRELAUNCH.md](docs/PRELAUNCH.md). Välj alltid rätt
+Supabase-anslutning uttryckligen och verifiera projektet innan databas- eller
+Edge Function-ändringar. Väntelistan i produktion hör till Primary / MatchnWork.
+Använd separata data och inloggningsuppgifter för produktion och DevStaging.
+Arbeta som standard i dev. Produktionsändringar och utskick kräver behörighet
+enligt uppdraget.
