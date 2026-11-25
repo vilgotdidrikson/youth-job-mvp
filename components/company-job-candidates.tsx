@@ -2,7 +2,6 @@
 import { applicationCountLabel } from "@/lib/product-copy";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCompanyCandidates } from "@/hooks/use-company-candidates";
 import { COMPANY_ROUTES, companyJobCandidatesHref } from "@/lib/company-navigation";
 import { filterCandidates, selectCandidate } from "@/lib/candidate-selection";
@@ -39,7 +38,6 @@ export function CompanyJobCandidates({ userId, jobs, verified, jobId, candidateI
 }
 
 function JobApplications({ userId, job, candidateId }: { userId: string; job: JobPost; candidateId: string | null }) {
-  const router = useRouter();
   const { state, reload } = useCompanyCandidates(userId, job.id);
   const [filterChoice, setCandidateFilter] = useState<"pending" | "all">(candidateId ? "all" : "pending");
   const [candidateSearch, setCandidateSearch] = useState("");
@@ -76,8 +74,9 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
   const openingUploadedCv = cvState?.key === selectedKey && cvState.source === state && cvState.state.status === "loading";
   const uploadedCvError = cvState?.key === selectedKey && cvState.source === state && cvState.state.status === "error" ? cvState.state.message : "";
   const closeCv = () => { cvReader.current?.stop(); setCvState(undefined); setCvEpoch(value => value + 1); };
-  const clearCandidate = () => { router.replace(companyJobCandidatesHref(job.id), { scroll: false }); };
-  const chooseCandidate = (id: string) => { router.replace(companyJobCandidatesHref(job.id, id), { scroll: false }); };
+  const chooseCandidate = (id?: string) => {
+    window.history.replaceState(null, "", companyJobCandidatesHref(job.id, id));
+  };
   const handleApplicantDecision = async (candidate: CandidateFeedItem, decision: SwipeDecision) => {
     if (writeLock.current || candidate.job.id !== job.id || candidate.job.company_user_id !== userId) return;
     writeLock.current = true; setCandidateActionKey(`${job.id}:${candidate.youthUserId}`); setActionError("");
@@ -85,7 +84,7 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
       const result = await reviewCandidate(job.id, candidate.youthUserId, decision);
       if (!alive.current) return;
       if (decision === "interested" && result?.conversation_id) setMatchedConversationId(result.conversation_id);
-      clearCandidate(); await reload();
+      chooseCandidate(); await reload();
     } catch (error) { if (alive.current) setActionError(error instanceof Error ? error.message : "Beslutet kunde inte sparas."); }
     finally { writeLock.current = false; if (alive.current) setCandidateActionKey(null); }
   };
@@ -96,12 +95,12 @@ function JobApplications({ userId, job, candidateId }: { userId: string; job: Jo
     <RecruitmentSummary company jobId={job.id} />
     {actionError && <p role="alert">{actionError}</p>}
     {state.status === "loading" ? <p role="status">Hämtar ansökningar…</p> : state.status === "error" ? <section className={styles.empty}><p role="alert">{state.message}</p><button className="secondary-btn" type="button" onClick={() => void reload()}>Försök igen</button></section> : <>
-          <TabList id="company-applications" label="Visa ansökningar" className="company-application-tabs" items={[{ value: "pending", label: <>Att granska <span>{pendingCandidates.length}</span></> }, { value: "all", label: <>Alla ansökningar <span>{candidateFeed.length}</span></> }]} value={candidateFilter} onChange={(filter) => {setCandidateFilter(filter);clearCandidate();closeCv();}} />
+          <TabList id="company-applications" label="Visa ansökningar" className="company-application-tabs" items={[{ value: "pending", label: <>Att granska <span>{pendingCandidates.length}</span></> }, { value: "all", label: <>Alla ansökningar <span>{candidateFeed.length}</span></> }]} value={candidateFilter} onChange={(filter) => {setCandidateFilter(filter);chooseCandidate();closeCv();}} />
           {candidateFilter === "pending" && !pendingCandidates.length && candidateFeed.length > 0 ? <section className="card company-applicants-empty" {...tabPanelProps("company-applications", candidateFilter)}><UiIcon name="check" width="30" /><h2>Alla ansökningar är granskade</h2><p>Tidigare kandidater och deras kompletteringar finns kvar under Alla ansökningar.</p><button type="button" className="secondary-btn" onClick={() => setCandidateFilter("all")}>Visa alla ansökningar</button></section> : candidateFeed.length === 0 ? (
             <div className="card company-applicants-empty" {...tabPanelProps("company-applications", candidateFilter)}><h2>Inga ansökningar ännu</h2><p>När någon söker den här annonsen visas ansökan här.</p></div>
           ) : (
             <div className="company-applicants-layout" {...tabPanelProps("company-applications", candidateFilter)}>
-              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => {setCandidateSearch(event.target.value);clearCandidate();closeCv();}} placeholder="Sök på namn…" /></label><div className="company-applicant-list">
+              <div className="company-applicant-sidebar"><label className="company-candidate-search">Sök bland ansökningar<input className="input-field" type="search" value={candidateSearch} onChange={(event) => {setCandidateSearch(event.target.value);chooseCandidate();closeCv();}} placeholder="Sök på namn…" /></label><div className="company-applicant-list">
                 {filteredCandidates.map((candidate) => {
                   const profile = candidate.profile;
                   const isSelected = selectedCandidate?.youthUserId === candidate.youthUserId && selectedCandidate?.job.id === candidate.job.id;

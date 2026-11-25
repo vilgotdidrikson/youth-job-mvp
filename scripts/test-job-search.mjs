@@ -77,3 +77,39 @@ const reset=nodes.find(n=>n.type==='button'&&text(n)==='Rensa');reset.props.onCl
 assert(nodes.some(n=>n.props?.href===url),'Map link preserves search values');
 assert(nodes.some(n=>n.props?.role==='status'&&text(n).includes('45 jobb')),'Total count is not limited to first page');
 console.log('PASS actual filter UI: labelled search, total result count, map link and atomic clear-all handler. Transactional dialog cases are in test:discovery-filters.');
+
+// Trigger the real swipe-page callbacks against a simulated browser history.
+const swipeModule={exports:{}};
+const swipeSource=ts.transpileModule(readFileSync('app/swipe/page.tsx','utf8')
+ .replace('function SwipePageContent()', 'export function SwipePageContent()'),
+ {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+let address=new URL('https://example.invalid/swipe?job=job-qa&workTime=weekend');
+const mockWindow={
+ get location(){return address;},
+ history:{replaceState:(_state,_unused,next)=>{address=new URL(next,address);}},
+};
+new Function('module','exports','require','window',swipeSource)(swipeModule,swipeModule.exports,name=>{
+ if(name==='react')return {
+  useState:initial=>[typeof initial==='function'?initial():initial,()=>{}],
+  useRef:current=>({current}),useEffect:()=>{},useMemo:fn=>fn(),
+ };
+ if(name==='react/jsx-runtime')return runtime;
+ if(name==='next/navigation')return{useRouter:()=>({}),useSearchParams:()=>address.searchParams};
+ if(name==='@/hooks/use-require-auth')return{useRequireAuth:()=>({status:'ready',user:{id:'qa'},profile:{role:'youth'}})};
+ if(name==='@/hooks/use-discovery-undo')return{useDiscoveryUndo:()=>({})};
+ if(name==='@/hooks/use-cv-completion')return{useCvCompletion:()=>({})};
+ if(name==='@/components/job-discovery')return{JobDiscovery:'discovery'};
+ if(name==='@/lib/job-search'||name==='@/lib/job-discovery'||name==='@/lib/job-categories')return require('../lib/'+name.split('/').at(-1)+'.ts');
+ return {};
+},mockWindow);
+const discovery=()=>swipeModule.exports.SwipePageContent().props.children[0].props;
+discovery().onFilter('query','Café');
+assert.equal(address.searchParams.get('query'),'Café');
+assert.equal(address.searchParams.get('workTime'),'weekend');
+assert.equal(address.searchParams.get('job'),'job-qa');
+assert.equal(discovery().filters.query,'Café','new mount reads text search from the address');
+discovery().onFiltersChange({...discovery().filters,city:'Stockholm'});
+assert.equal(discovery().filters.city,'Stockholm','new mount reads the applied filter');
+discovery().onFiltersChange(readSearchFilters(new URLSearchParams()));
+assert.equal(address.search,'?job=job-qa','clearing filters preserves the job parameter');
+console.log('PASS actual swipe callbacks persist search and applied filters in the URL and restore them on mount.');

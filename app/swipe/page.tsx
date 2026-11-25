@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDiscovery, type DiscoveryFilterValues } from "@/components/job-discovery";
-import { readSearchFilters, updateSearchFilter } from "@/lib/job-search";
+import { readSearchFilters, SEARCH_FILTER_KEYS, updateSearchFilter } from "@/lib/job-search";
 import { discoveryPage, orderDiscoveryJobs } from "@/lib/job-discovery";
 import { dismissDiscoveryJob, recordJobImpression, undoDiscoveryDismissal } from "@/lib/discovery-history";
 import { useDiscoveryUndo } from "@/hooks/use-discovery-undo";
@@ -52,6 +52,10 @@ function SwipePageContent() {
   const showingSaved = searchParams.get("saved") === "1";
 
   useEffect(() => {
+    setFilters(readSearchFilters(searchParams));
+  }, [searchParams]);
+
+  useEffect(() => {
     if (loading || !user || profile?.role !== "youth") return;
     void getYouthFlowState(user.id).then((state) => {
       if (!state.shortOnboardingCompleted) router.replace("/youth/onboarding");
@@ -62,7 +66,6 @@ function SwipePageContent() {
     if (loading || cvLoading || !user || profile?.role !== "youth") return;
     const generation = ++feedGeneration.current;
     clearUndo(); setRestoredId(null);
-    setFilters(readSearchFilters(searchParams));
     let active = true;
     const load = async () => {
       try {
@@ -81,7 +84,7 @@ function SwipePageContent() {
     };
     void load();
     return () => { active = false; feedGeneration.current = generation + 1; };
-  }, [clearUndo, cvLoading, loading, profile?.role, searchParams, showingSaved, user]);
+  }, [clearUndo, cvLoading, loading, profile?.role, showingSaved, user]);
 
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => { if (pending.current.size || undoLock.current) { event.preventDefault(); event.returnValue = ""; } };
@@ -170,12 +173,22 @@ function SwipePageContent() {
     setSavedJobs(current => saved ? [job, ...current.filter(item => item.id !== job.id)] : current.filter(item => item.id !== job.id));
     if (showingSaved && !saved) setJobs(current => current.filter(item => item.id !== job.id));
   };
-  const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
+  const handleFiltersChange = (next: DiscoveryFilterValues) => {
+    const url = new URL(window.location.href);
+    for (const key of SEARCH_FILTER_KEYS) {
+      if (next[key]) url.searchParams.set(key, next[key]);
+      else url.searchParams.delete(key);
+    }
+    window.history.replaceState(null, "", url);
     setPageEnd(20);
-    setFilters(current => updateSearchFilter(current, key, value));
+    setFilters(next);
+  };
+  const handleFilter = (key: keyof DiscoveryFilterValues, value: string) => {
+    const current = readSearchFilters(new URLSearchParams(window.location.search));
+    handleFiltersChange(updateSearchFilter(current, key, value));
   };
   return <>
-    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery key={user?.id} undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={filters} resultCount={page.count} options={filterOptions} onFilter={handleFilter} onFiltersChange={next => { setPageEnd(20); setFilters(next); }} onDecision={handleDecision} onSave={handleSave}/>}
+    {profile?.role !== "youth" ? <main className="mobile-shell"><p>Bara för ungdomskonton</p></main> : <JobDiscovery key={user?.id} undoTitle={lastSkip?.job.title} undoing={undoing} undoDisabled={pendingCount > 0} onUndo={handleUndo} hasMore={hasMore} onLoadMore={() => setPageEnd(end => end + 20)} onSeen={showingSaved ? undefined : recordJobImpression} jobs={filteredJobs} savedJobs={savedJobs} savedIds={new Set(savedJobs.map(job => job.id))} showingSaved={showingSaved} cvCompleted={cvCompleted} draftCount={draftCount} loading={!jobsLoaded} error={error} notice={notice} filters={filters} resultCount={page.count} options={filterOptions} onFilter={handleFilter} onFiltersChange={handleFiltersChange} onDecision={handleDecision} onSave={handleSave}/>}
     <p className="sr-only" role="status">{pendingCount ? `${pendingCount} val sparas i bakgrunden. Stanna kvar tills de är sparade.` : "Alla val är sparade."}</p>
   </>;
 }

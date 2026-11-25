@@ -121,3 +121,26 @@ Chromium (Playwright, headless, WebGL via SwiftShader) mot https://youth-job-mvp
 - Fysisk mobil och Safari: L08.
 - Profilflödeskortet (2026-10-14).
 - D05 är inte infört i dev.
+
+## Uppföljning 2026-11-25
+
+| Kort | Åtgärd och prov |
+| --- | --- |
+| N25 | Kandidatval skriver både annons och kandidat till URL:en via samma historikmekanism som företagsvyn använder. Komponentprovet klickar på kandidat två och verifierar URL, markerad rad och CV-/beslutsomfång. |
+| N06 | Textsökning och tillämpade filter skrivs till URL:en utan ny hämtning av jobbflödet. Kort, karta och sparat behåller sökvalen. Komponentprov verifierar söktext, filter och återläsning från URL vid ny montering, rensning utan att ta bort jobblänk och fortsatt paginering efter tjugo val. |
+| N20 | Formulär och chatt återanvänder samma språkparser. Två språk på samma rad separeras och båda når CV-granskning och sparning. Testet täcker även separat godkännande och bevarad egen nivåtext. |
+| N02 | DevStaging använder PT409 vid konflikt efter statusändring. SQL-provet för återkallande kontrollerar rätt kod och att en gammal bekräftelse lämnar den skickade ansökan intakt. |
+| N14 | Arbetsplatsprovet skapar fiktiva testkonton i transaktionen och skickar ansökan via ordinarie delningsförhandsvisning. Verifierat i DevStaging, inklusive serverns ögonblicksbild och nekad åtkomst. |
+
+De riktade komponentproven, TypeScript, riktad ESLint och produktionsbygget
+passerade. DevStaging-proven kördes med rollback för rekryteringskedjan,
+frågor, återkallande, arbetsplatser, publika jobb, ansökningsrättelser, AI-val,
+avtal, videoåtkomst, ansökningsvideo, integritetsärenden samt pris och
+testfakturering. Lokala prov täckte även faktura-PDF och SMTP-transport,
+matchningsregressioner och klient-/UI-delar av personuppgiftsärenden.
+
+Kandidatbyte, filter vid omladdning/Tillbaka och flerspråkigt profilsparande
+behöver omprovas i inloggad webb. Fysisk mobil/Safari, kamera och verkliga
+utskick ingick inte. De publika och administrativa driftinställningarna i
+produktion berördes inte. Punktstatus ändras när respektive klart-kriterium
+har verifierats.
