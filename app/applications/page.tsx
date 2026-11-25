@@ -70,9 +70,9 @@ function ApplicationCard({ retention, item, onSaved, followups, onFollowupsSaved
     <Link className="application-job-link" href={`/jobb/${item.job_id}`}>Visa annons <UiIcon name="arrow" width="16" /></Link>
     {error && <p role="alert" className="application-completion-error">{error}</p>}
     {message && <p role="status">{message}</p>}
-    {pending && <CandidateRecruitmentNotice key={item.job_id} jobId={item.job_id} />}
+    {pending && <CandidateRecruitmentNotice key={`notice:${item.job_id}`} jobId={item.job_id} />}
     {pending && <ApplicationAiPreference checked={aiConsent} onChange={setAiConsent} disabled={busy} />}
-    {item.status === "submitted" && !hidden && <ApplicationAiWithdrawal key={item.job_id} jobId={item.job_id} />}
+    {item.status === "submitted" && !hidden && <ApplicationAiWithdrawal key={`ai-withdrawal:${item.job_id}`} jobId={item.job_id} />}
     {pending && <div className="application-completion-actions"><button type="button" className="cta-btn" disabled={busy} onClick={() => void save(true)}>{busy ? "Skickar…" : "Skicka ansökan direkt"}</button></div>}
     {canWithdrawApplication(item.status, stage?.status) && <div className="application-completion-actions"><WithdrawApplicationButton jobId={item.job_id} title={item.job_title} submitted={item.status === "submitted" || Boolean(item.submitted_at)} disabled={busy} onBusyChange={setBusy} onWithdrawn={result => onWithdrawn(item.job_id, result)}/></div>}
   </article>;

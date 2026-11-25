@@ -74,6 +74,10 @@ try{
  tree=detail.render();
  const activeRow=nodes(tree).find(n=>n.type==='button'&&n.props['aria-pressed']&&n.props.className?.startsWith('company-applicant-row'));
  assert.match(JSON.stringify(activeRow),/Andra testkandidaten/);
+ const profileCard=nodes(tree).find(n=>n.type==='article'&&n.props.className?.startsWith('company-candidate-profile'));
+ const siblingKeys=[profileCard.props.children].flat(Infinity).filter(n=>n&&typeof n==='object'&&n.key!=null).map(n=>n.key);
+ assert.equal(new Set(siblingKeys).size,siblingKeys.length,'candidate detail siblings need unique keys so the previous candidate unmounts');
+ assert.ok(siblingKeys.filter(key=>key.includes('another-youth')).length>=3,'video, disclosure and assessment follow the selected candidate');
  detail.props={...detail.props,candidateId:'same-youth'};
  tree=detail.render();detail.flush();
  const cvRequests=[];globalThis.fetch=async(url,options)=>{const p=deferred();cvRequests.push({url,options,...p});return p.promise};
