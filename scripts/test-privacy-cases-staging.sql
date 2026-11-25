@@ -1,0 +1,118 @@
+-- DevStaging only. Synthetic identities/factors/sessions and all writes roll back.
+-- This checks SQL authority/lifecycle, not a real password or authenticator challenge.
+begin;
+insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data,raw_app_meta_data,aud,role,created_at,updated_at) values
+ ('a7d94e14-6fd9-478d-9089-c7d3f9672201','qa-privacy-case-owner@example.invalid',now(),'{"role":"youth"}','{}','authenticated','authenticated',now(),now()),
+ ('a7d94e14-6fd9-478d-9089-c7d3f9672202','qa-privacy-case-other@example.invalid',now(),'{"role":"company"}','{}','authenticated','authenticated',now(),now()),
+ ('a7d94e14-6fd9-478d-9089-c7d3f9672203','qa-privacy-case-handler@example.invalid',now(),'{"role":"youth"}','{}','authenticated','authenticated',now(),now()),
+ ('a7d94e14-6fd9-478d-9089-c7d3f9672204','qa-privacy-case-admin-only@example.invalid',now(),'{"role":"youth"}','{}','authenticated','authenticated',now(),now());
+insert into public.admin_users(user_id)values('a7d94e14-6fd9-478d-9089-c7d3f9672203'),('a7d94e14-6fd9-478d-9089-c7d3f9672204');
+insert into private.privacy_case_handlers(user_id)values('a7d94e14-6fd9-478d-9089-c7d3f9672203');
+insert into auth.mfa_factors(id,user_id,factor_type,status,secret,created_at,updated_at)values
+ ('a7d94e14-6fd9-478d-9089-c7d3f9672210','a7d94e14-6fd9-478d-9089-c7d3f9672203','totp','verified','QA_SYNTHETIC_NOT_AN_AUTH_FACTOR',now(),now());
+insert into auth.sessions(id,user_id,created_at,updated_at,not_after)values('a7d94e14-6fd9-478d-9089-c7d3f9672211','a7d94e14-6fd9-478d-9089-c7d3f9672203',now(),now(),now()+interval '5 minutes');
+insert into auth.sessions(id,user_id,created_at,updated_at,not_after)values('a7d94e14-6fd9-478d-9089-c7d3f9672212','a7d94e14-6fd9-478d-9089-c7d3f9672201',now(),now(),now()+interval '5 minutes'),('a7d94e14-6fd9-478d-9089-c7d3f9672213','a7d94e14-6fd9-478d-9089-c7d3f9672202',now(),now(),now()+interval '5 minutes');
+set local role service_role;
+do $$ declare c jsonb; saved jsonb; first_revision uuid; due text; page jsonb; anchor jsonb; total integer; seen uuid[];begin
+ if not public.privacy_case_intake_available() then raise exception 'configured synthetic intake missing';end if;
+ c:=public.create_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201','a7d94e14-6fd9-478d-9089-c7d3f9672220','correction','QA rättelse – åäö');
+ if c->>'body'<>'QA rättelse – åäö' or c->>'is_mine'<>'false' then raise exception 'invalid projection';end if;
+ first_revision:=(c->>'revision')::uuid;due:=c->>'reply_due_at';
+ saved:=public.create_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201','a7d94e14-6fd9-478d-9089-c7d3f9672220','correction','QA rättelse – åäö');
+ if saved->>'revision'<>c->>'revision' then raise exception 'duplicate create';end if;
+ if jsonb_array_length(public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672202')->'cases')<>0 then raise exception 'foreign list leak';end if;
+ begin perform public.list_privacy_cases(null,'a7d94e14-6fd9-478d-9089-c7d3f9672204');raise exception 'ungranted admin read';exception when insufficient_privilege then null;end;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,first_revision,'a7d94e14-6fd9-478d-9089-c7d3f9672230','claim','');
+ begin perform public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,first_revision,gen_random_uuid(),'claim','');raise exception 'stale claim accepted';exception when sqlstate 'PT409' then null;end;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'waiting','QA komplettera');
+ saved:=c;
+ c:=public.reply_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',(c->>'id')::uuid,(c->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672231','QA eget svar');
+ if c->>'status'<>'in_progress' then raise exception 'reply status';end if;
+ if (public.reply_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',(c->>'id')::uuid,(saved->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672231','QA eget svar')->>'revision')<>(c->>'revision') then raise exception 'duplicate reply';end if;
+ begin perform public.reply_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672202',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'Foreign');raise exception 'foreign reply accepted';exception when sqlstate 'PT404' then null;end;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'close','QA avslut');
+ if not exists(select 1 from private.privacy_cases where id=(c->>'id')::uuid and retention_until=closed_at+interval '12 months') then raise exception 'retention marker';end if;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'reopen','');
+ if c->>'reply_due_at'<>due or c->>'closed_at' is not null then raise exception 'reopen changed deadline';end if;
+ if c->>'review_after' is null or public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672201')->'cases'->0->>'review_after' is not null then raise exception 'review date projection';end if;
+ insert into private.privacy_case_events(id,case_id,actor_id,action,public_message,created_at)
+ select gen_random_uuid(),(c->>'id')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672203','reply','QA older response '||i,'2026-10-01T10:00:00.123456Z'::timestamptz from generate_series(1,48)i;
+ c:=private.privacy_case_projection((c->>'id')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672203');
+ anchor:=c->'events'->0;select array_agg((e->>'id')::uuid) into seen from jsonb_array_elements(c->'events')e;
+ loop
+  page:=public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+  if page->>'id'<>c->>'id' or page->>'revision'<>c->>'revision' or page::text like '%actor_id%' then raise exception 'history projection';end if;
+  select seen||coalesce(array_agg((e->>'id')::uuid),'{}'::uuid[]) into seen from jsonb_array_elements(page->'events')e;
+  anchor:=page->'next';exit when anchor='null'::jsonb;
+ end loop;
+ select count(*) into total from private.privacy_case_events where case_id=(c->>'id')::uuid;
+ if cardinality(seen)<>total or (select count(distinct id) from unnest(seen)id)<>total then raise exception 'history pagination lost or repeated an event';end if;
+ anchor:=c->'events'->0;
+ page:=public.read_privacy_case_history(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+ if jsonb_array_length(page->'events')<>20 then raise exception 'handler history read';end if;
+ begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672202',null,'a7d94e14-6fd9-478d-9089-c7d3f9672213',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'foreign history accepted';exception when sqlstate 'PT404' then null;end;
+ begin perform public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,gen_random_uuid(),(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'stale history accepted';exception when sqlstate 'PT409' then null;end;
+ if c->>'first_reply_at' is null then raise exception 'full first response missing';end if;
+ if public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid)->>'first_reply_at' is not null then raise exception 'internal first response leaked';end if;
+ begin perform public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672202',null,'a7d94e14-6fd9-478d-9089-c7d3f9672213',(c->>'id')::uuid);raise exception 'foreign exact read';exception when sqlstate 'PT404' then null;end;
+ begin perform public.read_privacy_case(null,'a7d94e14-6fd9-478d-9089-c7d3f9672204','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid);raise exception 'ordinary admin exact read';exception when insufficient_privilege then null;end;
+ if public.read_privacy_case(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid)->>'id'<>c->>'id' then raise exception 'exact handler lookup';end if;
+ insert into private.privacy_cases(id,requester_id,kind,body,created_at) select gen_random_uuid(),'a7d94e14-6fd9-478d-9089-c7d3f9672201','other','QA filtered pagination',now()-(i||' days')::interval from generate_series(1,22)i;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','unassigned');
+ if jsonb_array_length(page->'cases')<>20 then raise exception 'filtered first page';end if;
+ anchor:=page->'next';page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','unassigned',(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+ if jsonb_array_length(page->'cases')<>2 or page->'next'<>'null'::jsonb then raise exception 'filtered last page';end if;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','mine');if jsonb_array_length(page->'cases')<>1 then raise exception 'mine filter';end if;
+ begin perform public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672213','all');raise exception 'foreign queue session';exception when insufficient_privilege then null;end;
+ saved:=c;
+ c:=public.record_privacy_case_review('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672232','schedule_review',transaction_timestamp()+interval '2 days');
+ if c->>'reply_due_at'<>saved->>'reply_due_at' or c->>'status'<>saved->>'status' or c->>'first_reply_at'<>saved->>'first_reply_at' then raise exception 'internal schedule changed public state';end if;
+ if (public.record_privacy_case_review('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(saved->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672232','schedule_review',transaction_timestamp()+interval '2 days')->>'revision')<>c->>'revision' then raise exception 'review idempotence';end if;
+ begin perform public.record_privacy_case_review('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(saved->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672232','schedule_review',transaction_timestamp()+interval '3 days');raise exception 'review payload changed';exception when sqlstate 'PT409' then null;end;
+ c:=public.record_privacy_case_review('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'review',transaction_timestamp()+interval '2 days');
+ insert into private.privacy_case_events(id,case_id,actor_id,action,review_after)select gen_random_uuid(),(c->>'id')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672203','review',transaction_timestamp()+interval '2 days' from generate_series(1,30);
+ page:=public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid);
+ if exists(select 1 from jsonb_array_elements(page->'events')e where e->>'action' in ('review','schedule_review') or e?'review_after') then raise exception 'internal review leaked into owner projection';end if;
+ anchor:=page->'events'->0;page:=public.read_privacy_case_history('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);
+ if exists(select 1 from jsonb_array_elements(page->'events')e where e->>'action' in ('review','schedule_review') or e?'review_after') then raise exception 'internal review leaked into owner older history';end if;
+ update private.privacy_cases set review_after=transaction_timestamp()-interval '1 minute',reply_due_at=transaction_timestamp()-interval '1 minute' where id=(c->>'id')::uuid;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','review_overdue');if jsonb_array_length(page->'cases')<>1 or page->>'as_of' is null then raise exception 'overdue review filter';end if;
+ c:=public.record_privacy_case_review('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'review',transaction_timestamp()+interval '2 days');
+ if jsonb_array_length(public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','review_overdue')->'cases')<>0 or jsonb_array_length(public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','reply_overdue')->'cases')<>1 then raise exception 'review hid external deadline';end if;
+ saved:=c;
+ c:=public.create_email_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','a7d94e14-6fd9-478d-9089-c7d3f9672240','access','QA manual email request','QA-PRIVACY-CASE-OWNER@example.invalid',transaction_timestamp()-interval '40 days');
+ if c->>'intake_source'<>'email' or c->>'requester_id' is not null or c->>'contact_email'<>'qa-privacy-case-owner@example.invalid' then raise exception 'manual source or identity';end if;
+ if (c->>'created_at')::timestamptz<>transaction_timestamp()-interval '40 days' or (c->>'reply_due_at')::timestamptz<>(c->>'created_at')::timestamptz+interval '1 month' then raise exception 'manual deadline reset';end if;
+ if (public.create_email_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,'access','QA manual email request','qa-privacy-case-owner@example.invalid',transaction_timestamp()-interval '40 days')->>'revision')<>c->>'revision' then raise exception 'manual idempotence';end if;
+ begin perform public.read_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672201',null,'a7d94e14-6fd9-478d-9089-c7d3f9672212',(c->>'id')::uuid);raise exception 'matching email granted account read';exception when sqlstate 'PT404' then null;end;
+ if private.privacy_case_projection((c->>'id')::uuid,null) is not null then raise exception 'manual owner projection';end if;
+ page:=public.list_privacy_case_queue('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211','email');if jsonb_array_length(page->'cases')<>1 then raise exception 'manual source queue';end if;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'claim','');
+ begin perform public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'reply','Not sent');raise exception 'manual reply without sent proof';exception when sqlstate '22023' then null;end;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,'a7d94e14-6fd9-478d-9089-c7d3f9672241','reply','QA already sent response',true,transaction_timestamp()-interval '38 days');
+ if (c->>'first_reply_at')::timestamptz<>transaction_timestamp()-interval '38 days' then raise exception 'manual first response uses wrong clock';end if;
+ c:=public.update_privacy_case('a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,gen_random_uuid(),'close','QA close sent response',true,transaction_timestamp()-interval '37 days');
+ if c->>'status'<>'closed' or not exists(select 1 from private.privacy_cases where id=(c->>'id')::uuid and retention_until=closed_at+interval '12 months') then raise exception 'manual close retention';end if;
+ c:=saved;
+ update private.privacy_case_handlers set enabled=false where user_id='a7d94e14-6fd9-478d-9089-c7d3f9672203';
+ begin perform public.list_privacy_cases(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'revoked handler read';exception when insufficient_privilege then null;end;
+ begin perform public.read_privacy_case_history(null,'a7d94e14-6fd9-478d-9089-c7d3f9672203','a7d94e14-6fd9-478d-9089-c7d3f9672211',(c->>'id')::uuid,(c->>'revision')::uuid,(anchor->>'created_at')::timestamptz,(anchor->>'id')::uuid);raise exception 'revoked handler history read';exception when insufficient_privilege then null;end;
+end$$;
+reset role;
+set local role authenticated;
+do $$begin
+ begin perform public.read_privacy_case_history(null,null,null,null,null,null,null);raise exception 'authenticated history RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.list_privacy_case_queue(null,null,'all');raise exception 'authenticated queue RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.read_privacy_case(null,null,null,null);raise exception 'authenticated lookup RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.list_privacy_cases('a7d94e14-6fd9-478d-9089-c7d3f9672201');raise exception 'authenticated RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform * from private.privacy_cases;raise exception 'authenticated table bypass';exception when insufficient_privilege then null;end;
+end$$;
+reset role;
+set local role anon;
+do $$begin
+ begin perform public.read_privacy_case_history(null,null,null,null,null,null,null);raise exception 'anonymous history RPC bypass';exception when insufficient_privilege then null;end;
+ begin perform public.privacy_case_access('a7d94e14-6fd9-478d-9089-c7d3f9672203');raise exception 'anonymous RPC bypass';exception when insufficient_privilege then null;end;
+end$$;
+reset role;
+select 'PASS DevStaging SQL: configured synthetic scope, own/idempotent create, foreign denial, explicit handler access, stale claim, public response, own/idempotent follow-up, close/reopen/deadline/retention, review dates, full-history first-response summary, internal review audit/idempotence/owner-history exclusion and separate overdue queues, manual email intake/original clocks/no implicit account link/external response proof and retention, exact own/handler lookup with foreign denial, session-bound filtered keyset queue, complete tied-microsecond history paging, stale/foreign/revoked history denial and authenticated/anon direct denial. Auth challenges and parallel transactions are NOT tested here. All fixtures roll back.' as result;
+rollback;

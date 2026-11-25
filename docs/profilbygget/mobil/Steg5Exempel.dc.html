@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Profilbygget – Egna exempel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b84164}a:hover{color:#9c304f}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1300px; box-sizing: border-box; overflow: hidden; background: #fffafb; color: #4c303b; font-family: Inter, Arial, sans-serif">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 14px; border-bottom: 1px solid #f0d9e0">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Steg4Kunskaper.dc.html" aria-label="Föregående steg: Kunskaper" style="display: grid; place-items: center; width: 44px; height: 44px; margin-left: -10px; border-radius: 50%; color: #4c303b; text-decoration: none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span style="font-size: 13px; font-weight: 500; color: #7f616d">Steg 5 av 5</span>
+      <span style="width: 44px"></span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px" aria-hidden="true">
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 18px; padding: 24px 20px 140px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.03em">Visa vad du har gjort</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #7f616d">Ett litet exempel kan säga mycket. Du behöver inte ha haft ett jobb.</p>
+    </div>
+
+    <div style="display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #fce9ef; font-size: 14px; line-height: 1.5">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b84164" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>
+      <span>Skolprojekt, föreningsliv och ansvar hemma räknas också.</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid #f0d9e0; border-radius: 20px; background: #ffffff">
+      <span style="display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #e8f5ee; color: #21855d"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>
+      <span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0">
+        <span style="font-size: 13px; font-weight: 600; color: #b84164">Ansvar</span>
+        <span style="font-size: 15px; font-weight: 600">Kiosk på skolans fotbollsturnering</span>
+      </span>
+      <button type="button" style="min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: #b84164; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Ändra</button>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 16px; padding: 20px; border: 1.5px solid #b84164; border-radius: 22px; background: #ffffff">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #b84164">Nytt exempel</span>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span id="visa" style="font-size: 15px; font-weight: 600">Vad vill du visa?</span>
+        <div role="radiogroup" aria-labelledby="visa" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{strengths}}" as="s" hint-placeholder-count="5">
+            <button type="button" role="radio" aria-checked="{{s.checked}}" onClick="{{s.pick}}" style="{{s.style}}">{{s.label}}</button>
+          </sc-for>
+          <button type="button" style="min-height: 44px; padding: 0 14px; border: 1.5px dashed #e3b9c7; border-radius: 999px; background: transparent; color: #b84164; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">+ Eget</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="sit" style="font-size: 15px; font-weight: 600">Vilken situation var det?</label>
+        <input id="sit" maxlength="200" placeholder="Till exempel läxhjälp för min lillebror" style="box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; border: 1px solid #f0d9e0; border-radius: 14px; background: #fffafb; color: #4c303b; font: inherit; font-size: 16px">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="gjorde" style="font-size: 15px; font-weight: 600">Vad gjorde du själv?</label>
+        <textarea id="gjorde" rows="4" maxlength="1000" placeholder="Till exempel: jag planerade veckans läxor och förklarade matten på ett nytt sätt när det inte gick" style="box-sizing: border-box; width: 100%; padding: 12px 14px; border: 1px solid #f0d9e0; border-radius: 14px; background: #fffafb; color: #4c303b; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical"></textarea>
+        <span style="font-size: 13px; color: #7f616d">Beskriv din egen insats, inte bara gruppens.</span>
+      </div>
+    </section>
+
+    <button type="button" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border: 1.5px dashed #e3b9c7; border-radius: 16px; background: transparent; color: #b84164; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">+ Ett exempel till <span style="font-weight: 500; color: #7f616d">(2 av 5)</span></button>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 14px 20px 30px; border-top: 1px solid #f0d9e0; background: rgba(255, 250, 251, 0.96)">
+    <a href="#" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; color: #7f616d; font-size: 15px; font-weight: 500; text-decoration: none">Hoppa över</a>
+    <a href="#" style="flex: 1; display: grid; place-items: center; min-height: 52px; border-radius: 16px; background: #b84164; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none">Spara och bli klar</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { strength: 'learning' };
+  }
+  renderVals() {
+    var self = this;
+    var list = [['service', 'Kundbemötande'], ['teamwork', 'Samarbete'], ['responsibility', 'Ansvar'], ['initiative', 'Initiativ'], ['learning', 'Lära nytt']];
+    var strengths = list.map(function (s) {
+      var on = self.state.strength === s[0];
+      return {
+        label: s[1], checked: on ? 'true' : 'false',
+        style: 'min-height: 44px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer; ' + (on ? 'border: 1.5px solid #b84164; background: #fce9ef; color: #9c304f; font-weight: 600;' : 'border: 1px solid #f0d9e0; background: #ffffff; color: #4c303b; font-weight: 500;'),
+        pick: function () { self.setState({ strength: s[0] }); }
+      };
+    });
+    return { strengths: strengths };
+  }
+}
+</script>
+</body>
+</html>

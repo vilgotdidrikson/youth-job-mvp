@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function ProfileHeader({ name, location, completion, onEdit }: { name: string; location: string; completion: number; onEdit: () => void }) {
+export function ProfileHeader({ name, location, completedSections, totalSections, onEdit, verification }: { name: string; location: string; completedSections: number; totalSections: number; onEdit: () => void; verification?: ReactNode }) {
   return (
     <header className="network-profile-header">
       <div className="network-profile-cover" />
@@ -8,11 +8,12 @@ export function ProfileHeader({ name, location, completion, onEdit }: { name: st
         <div className="network-profile-avatar" aria-hidden="true">{(name.trim().charAt(0) || "?").toUpperCase()}</div>
         <div className="network-profile-identity">
           <h1>{name.trim() || "Din profil"}</h1>
-          <p>Ung jobbsökande på Employo</p>
-          <span>{location || "Sverige"} · Öppen för nya möjligheter</span>
+          {verification}
+          <p>Din profil på MatchnWork</p>
+          <span>{location || "Sverige"} · Jobbsökande</span>
         </div>
-        <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button><button type="button" aria-label="Fler profilalternativ">•••</button></div>
-        <div className="network-profile-open"><strong>Profilens styrka: {completion}%</strong><span>Fyll i dina uppgifter för att bli lättare att hitta.</span></div>
+        <div className="network-profile-actions"><button type="button" onClick={onEdit}>Redigera profil</button></div>
+        <div className="network-profile-open"><strong>Delar med sparade uppgifter: {completedSections} av {totalSections}</strong><span>CV och fyra valfria profildelar. Sparade uppgifter betyder inte att alla fält är ifyllda.</span></div>
       </div>
     </header>
   );
@@ -27,5 +28,6 @@ export function ExperienceCard({ title, children }: { title: string; children: R
 }
 
 export function SkillList({ skills }: { skills: string[] }) {
-  return <div className="network-skill-list">{skills.length ? skills.map((skill) => <span key={skill}>{skill}</span>) : <span className="network-empty">Lägg till dina styrkor</span>}</div>;
+  const uniqueSkills = [...new Set(skills.map(skill => skill.trim()).filter(Boolean))];
+  return <div className="network-skill-list">{uniqueSkills.length ? uniqueSkills.map((skill) => <span key={skill}>{skill}</span>) : <span className="network-empty">Lägg till dina styrkor</span>}</div>;
 }

@@ -1,0 +1,15 @@
+.panel {
+  padding: 1rem;
+  margin-block: 1rem;
+  overflow-wrap: anywhere;
+}
+.panel select {
+  max-width: 100%;
+  min-height: 44px;
+  font-size: var(--text-md);
+}
+.action {
+  min-height: 44px;
+  padding: .65rem 1rem;
+  margin-top: .7rem;
+}

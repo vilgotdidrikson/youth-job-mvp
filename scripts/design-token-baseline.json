@@ -1,0 +1,10 @@
+{
+  "hex": 20,
+  "fontSizes": 139,
+  "radii": 56,
+  "fontWeights": 10,
+  "hexPerFile": {
+    "app/globals.css": 17,
+    "app/product-design.css": 3
+  }
+}

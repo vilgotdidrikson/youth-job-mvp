@@ -1,14 +1,48 @@
-# MatchnWork environment targeting
+# MatchnWork agentinstruktioner
 
-Verified on 2026-11-02 against both connected Supabase accounts, following the user's explicit environment mapping.
+## Gemensam arbetslista
 
-| Supabase connection | Environment | Supabase project | Project reference | Frontend branch |
-| --- | --- | --- | --- | --- |
-| Primary | Production | MatchnWork | iarnopkuoqumictgnqin | master (also called main by the user) |
-| Secondary | Development / staging | MatchnWork DevStaging | vwcfjvwfeatvuisojwrh | dev |
+Läs `docs/ATGARDSPLAN.md` innan arbete börjar. Den filen innehåller uppgifts-ID, prioritering, ansvar, status och kriterier för klart. Följ den globala ordningen, med hänsyn till beroenden och användarens uttryckliga avgränsningar. Påbörja inte nästa punkt automatiskt när användaren begränsat insatsen.
 
-- Always select the matching connection explicitly and verify the project reference before database or Edge Function changes. Do not select whichever connection is the default.
-- Production waitlist/signup work belongs to Primary / MatchnWork. Do not store production signups in DevStaging or substitute another database provider without the user's approval.
-- Keep production and development data and credentials separate.
-- Work in dev/staging by default. Changes to master/production require the user's authorization; the user explicitly authorized the production prelaunch signup page, fictional interactive demo, isolated waitlist storage, and protected contact export in this conversation. This does not authorize unrelated production changes or sending launch emails now.
+Reservera en punkt genom att publicera ansvarig och branch innan kodarbete börjar. Kontrollera aktuell dev och öppna PR:er för att undvika dubbelarbete. En lokal reservation är inte ett lås. Vid samtidig reservation eller överlappande filer ska ägarna samordna innan någon fortsätter. Ta inte över en annan persons punkt utan överenskommelse.
 
+Arbeta på egen branch utifrån aktuell dev. Använd uppgiftens ID i commit och PR. Bevara andras ändringar och undvik force-push på gemensamma branches. Uppdatera bara berörda uppgifter i checklistan, inte hela dokumentets status.
+
+
+## GDPR och beslut om personuppgifter
+
+När användaren fattar eller ändrar beslut om GDPR, personuppgifter, AI-data, gallring, rättigheter, adminåtkomst eller avtal som ska godkännas på sidan: läs först relevanta kort i docs/ATGARDSPLAN.md och samordna beslutet där. Uppdatera befintligt kort i första hand; skapa bara nytt när omfattningen saknas. Skilj uttryckliga beslut från förslag, juridiska besked som återstår och verifierad drift. Bevara andra ägare/statusar och ta inte över reservationer. F20, F26/N19, L12–L16 och säkerhets-/lanseringskorten är gemensamma hänvisningar; undvik parallella motstridiga GDPR-listor. Interna ägar- och utträdesavtal ingår bara om användaren uttryckligen beställer det.
+
+## Status och verifiering
+
+Använd Ej påbörjad, Pågår, För granskning, Klar eller Blockerad. Skilj alltid mellan skriven kod, lokala kontroller, införd ändring och verifierat användarflöde. Markera Klar och kryssa av först när ändringen är införd i dev och kriteriet Klar när är verifierat. Saknad miljö eller åtkomst dokumenteras som begränsning, inte som godkänt test.
+
+Efter arbetet ska checklistan innehålla vad som ändrats, vilka kontroller som faktiskt körts, PR/commit och det som återstår. Ge en kort överlämning till användaren. Rapportera först reproducerat problem och slutligt beteende, därefter verifiering och begränsningar.
+
+## Arkitektur och säkerhet
+
+MatchnWork ska senare kunna få en mobilapp med React Native och Expo. Håll typer, validering och affärslogik återanvändbara utanför Next.js-vyer. Återanvänd befintliga komponenter och datakällor.
+
+Bevara autentisering, ägarkontroller och RLS. Exponera aldrig service-role-nycklar i klienten. Ändra inte säkerhetsregler för att dölja ett hämtningsfel. Databasändringar ska vara spårbara och samordnade; gör inga orelaterade produktionsändringar.
+
+Vid ändrade tabeller, kolumner, ägarrelationer eller Storage-buckets: följ `docs/L13_EXPORT_INVENTORY.md` och kontrollera en ny metadatafil från DevStaging med `check:personal-data-inventory`. Granska avvikelser innan källregistret/schemabilden uppdateras; en lokal gammal schemabild är ingen live-verifiering.
+
+Använd tydligt fiktiva QA-konton i dev för användartester. Hantera inte riktiga rekryteringar eller betalningar som testdata. Dela aldrig lösenord, token eller API-nycklar i rapporter eller commits.
+
+## Omfattning för den aktuella insatsen
+
+När användaren ber om arbete på en punkt, välj en hel huvudpunkt med status Pågår eller Ej påbörjad enligt den globala prioriteringslistan. Reservera punkten före arbetet. Slutför byggarbetet mot hela punktens kriterier, kör tillgängliga kontroller och uppdatera arbetsplanen till För granskning innan leveransen publiceras till dev. Om ett specifikt acceptanstest återstår, dokumentera testfallet. Om byggarbetet fortfarande är blockerat, dokumentera den konkreta blockeraren och behåll punkten öppen.
+
+## Design vid löpande utveckling
+
+Nya och ändrade funktioner, knappar och komponenter ska från början följa designriktningen i `docs/DESIGN_AUDIT_2026-10-22_1.md#demo-design-direction` och relevanta befintliga designuppgifter. Återanvänd gemensamma komponenter, färgtokens och typografisk skala. Förbättra layout, luft, hierarki och kontroller inom den berörda vyn när funktionalitet byggs; större omtag ligger kvar i ordinarie designplan. Detta är en visuell riktning, inget krav på fler guider eller hjälptexter. Bevara produktregler, tillgänglighet och andra uppgifters ägarskap.
+
+
+## Miljöer för dev och produktion
+
+Miljökopplingen finns i [PRELAUNCH.md](docs/PRELAUNCH.md). Välj alltid rätt
+Supabase-anslutning uttryckligen och verifiera projektet innan databas- eller
+Edge Function-ändringar. Väntelistan i produktion hör till Primary / MatchnWork.
+Använd separata data och inloggningsuppgifter för produktion och DevStaging.
+Arbeta som standard i dev. Produktionsändringar och utskick kräver behörighet
+enligt uppdraget.

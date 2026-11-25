@@ -1,0 +1,178 @@
+-- Run against DEV only. All synthetic accounts, questions and notifications roll back.
+begin;
+insert into auth.users(id,email,raw_user_meta_data) values
+ ('a1000000-0000-4000-8000-000000000001','followup-youth-a@example.invalid','{"role":"youth"}'),
+ ('a1000000-0000-4000-8000-000000000002','followup-youth-b@example.invalid','{"role":"youth"}'),
+ ('a1000000-0000-4000-8000-000000000003','followup-company-a@example.invalid','{"role":"company"}'),
+ ('a1000000-0000-4000-8000-000000000004','followup-company-b@example.invalid','{"role":"company"}');
+insert into public.profiles(id,role) values
+ ('a1000000-0000-4000-8000-000000000001','youth'),('a1000000-0000-4000-8000-000000000002','youth'),
+ ('a1000000-0000-4000-8000-000000000003','company'),('a1000000-0000-4000-8000-000000000004','company') on conflict(id) do update set role=excluded.role;
+insert into public.youth_profiles(user_id,cv_text,cv_generated) values
+ ('a1000000-0000-4000-8000-000000000001','Jag har arbetat i butik.',true),('a1000000-0000-4000-8000-000000000002','Jag har arbetat i butik.',true)
+ on conflict(user_id) do update set cv_text=excluded.cv_text,cv_generated=true;
+insert into public.admin_users(user_id) values ('a1000000-0000-4000-8000-000000000001');
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+insert into public.company_profiles(user_id,company_name,verification_status) values
+ ('a1000000-0000-4000-8000-000000000003','Synthetic A','verified'),('a1000000-0000-4000-8000-000000000004','Synthetic B','verified')
+ on conflict(user_id) do update set verification_status='verified';
+insert into public.jobs(id,company_user_id,title,company_name) values
+ ('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000003','Synthetic followup job','Synthetic A');
+insert into public.job_match_profiles(job_id,status,role_summary,weighted_criteria) values
+ ('a2000000-0000-4000-8000-000000000001','approved','Butiksarbete','[{"label":"Kan arbeta helger","category":"must_have","required":true},{"label":"Erfarenhet av kassa","category":"merit"},{"label":"Social","category":"trait"}]');
+insert into public.swipe_actions(youth_user_id,job_id,decision) values
+ ('a1000000-0000-4000-8000-000000000001','a2000000-0000-4000-8000-000000000001','interested');
+insert into public.application_completions(youth_user_id,job_id,job_title,company_name,profile_version,status,submitted_at) values
+ ('a1000000-0000-4000-8000-000000000001','a2000000-0000-4000-8000-000000000001','Synthetic followup job','Synthetic A',1,'submitted',now());
+delete from public.admin_users where user_id='a1000000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+do $$ declare result jsonb; q uuid; stamp timestamptz; begin
+ stamp:=(public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'source_updated_at')::timestamptz;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger"]',repeat('a',64),stamp-interval '1 second');
+ if result->>'reason'<>'source_changed' or (select count(*) from public.application_followups)<>0 then raise exception 'Stale analysis queued a question: %',result; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if result->>'claimed'<>'true' then raise exception 'First analysis not claimed'; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('b',64));
+ if result->>'reason'<>'busy' then raise exception 'Concurrent analysis allowed'; end if;
+ perform public.release_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('b',64));
+ if (select followup_pending_hash from public.application_completions where job_id='a2000000-0000-4000-8000-000000000001')<>repeat('a',64) then raise exception 'Different request released lease'; end if;
+ perform public.release_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if (select followup_pending_hash from public.application_completions where job_id='a2000000-0000-4000-8000-000000000001') is not null then raise exception 'Lease not released'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger","Erfarenhet av kassa"]',repeat('a',64));
+ if (result->>'queued')::int<>2 then raise exception 'Expected two questions: %',result; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Kan arbeta helger"]',repeat('a',64));
+ if (result->>'queued')::int<>0 then raise exception 'Duplicate question'; end if;
+ result:=public.claim_application_followup_analysis('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',repeat('a',64));
+ if result->>'reason'<>'cached' then raise exception 'Cached analysis called again'; end if;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'["Social"]',repeat('a',64));
+  raise exception 'Trait accepted';
+ exception when invalid_parameter_value then null; end;
+ select id into q from public.application_followups where criterion_label='Kan arbeta helger';
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta varje lördag och söndag.'),'{}');
+ if (result->>'updated')::int<>1 then raise exception 'Answer not saved'; end if;
+ if (select status from public.application_completions where job_id='a2000000-0000-4000-8000-000000000001')<>'submitted' then raise exception 'Original application altered'; end if;
+ if jsonb_array_length(public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->'profile'->'followup_answers')<>1 then raise exception 'Own answer missing'; end if;
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta varje lördag och söndag.'),'{}');
+ if (result->>'updated')::int<>0 then raise exception 'Repeated answer should be idempotent'; end if;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000002',true);
+do $$ begin
+ if (select count(*) from public.application_followups)<>0 then raise exception 'Other youth read answers'; end if;
+ begin
+  perform public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001','{}','{}');
+  raise exception 'Other youth wrote answers';
+ exception when insufficient_privilege then null; end;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000004',true);
+do $$ begin
+ if (select count(*) from public.application_followups)<>0 then raise exception 'Other company read answers'; end if;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('a',64));
+  raise exception 'Other company queued questions';
+ exception when insufficient_privilege then null; end;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
+do $$ declare result jsonb; begin
+ if (select count(*) from public.application_followups)<>2 then raise exception 'Owner cannot read questions'; end if;
+ result:=public.get_candidate_assessment_input('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001');
+ if jsonb_array_length(result->'followup_answers')<>1 then raise exception 'Employer answer missing'; end if;
+ if result->'followup_answers'->0->>'answer'<>'Jag kan arbeta varje lördag och söndag.' then raise exception 'Answer changed'; end if;
+ begin
+  perform public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001','{}','{}');
+  raise exception 'Employer edited youth answer';
+ exception when insufficient_privilege then null; end;
+end $$;
+-- Final employer decisions stop additional questions, while existing answers remain readable.
+select * from public.review_candidate_and_match('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001','skip');
+do $$ declare result jsonb; begin
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('c',64));
+ if result->>'reason'<>'application_closed' then raise exception 'Rejected application queued questions: %',result; end if;
+end $$;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+do $$ begin
+ if public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'available'<>'false' then raise exception 'Rejected application available for analysis'; end if;
+ if (select count(*) from public.application_followups)<>2 then raise exception 'Historical questions lost after rejection'; end if;
+end $$;
+
+-- Reviewed applications stay readable; published answers can be corrected or added later.
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
+select * from public.review_candidate_and_match('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001','interested');
+do $$ begin
+ if (select count(*) from public.get_company_candidates('a2000000-0000-4000-8000-000000000001'))<>1 then raise exception 'Reviewed applicant disappeared'; end if;
+end $$;
+reset role;
+update public.matches set status='hired' where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
+do $$ declare result jsonb; begin
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('d',64));
+ if result->>'reason'<>'application_closed' then raise exception 'Hired application queued questions'; end if;
+end $$;
+reset role;
+update public.matches set status='matched' where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000001',true);
+do $$ declare q uuid; result jsonb; begin
+ select id into q from public.application_followups where criterion_label='Erfarenhet av kassa';
+ perform public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001','{}',array[q]);
+ if (select status from public.application_followups where id=q)<>'skipped' then raise exception 'Voluntary skip not saved'; end if;
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag har använt kassasystem i skolkiosken.'),'{}');
+ if (select status from public.application_followups where id=q)<>'answered' then raise exception 'Skipped answer not supplemented'; end if;
+ select id into q from public.application_followups where criterion_label='Kan arbeta helger';
+ result:=public.save_my_application_followup_answers('a2000000-0000-4000-8000-000000000001',jsonb_build_object(q::text,'Jag kan arbeta på lördagar.'),'{}');
+ if (result->>'updated')::int<>1 then raise exception 'Published answer could not be corrected'; end if;
+end $$;
+-- A changed approved profile allows one new batch, not a cascade after answers.
+reset role;
+update public.job_match_profiles set weighted_criteria=weighted_criteria || '[
+ {"label":"  erfarenhet  av kassa","category":"merit"},
+ {"label":"Truckkort","category":"must_have"},
+ {"label":"Erfarenhet av plock","category":"merit"},
+ {"label":"Kan börja omgående","category":"must_have"},
+ {"label":"Erfarenhet av lager","category":"merit"},
+ {"label":"Kunskap om orderhantering","category":"merit"},
+ {"label":"Kunskap om Excel","category":"trainable"},
+ {"label":"Hälsa","category":"must_have"}
+]'::jsonb where job_id='a2000000-0000-4000-8000-000000000001';
+set local role authenticated;
+do $$ declare result jsonb; version integer; begin
+ version:=(public.get_my_application_followup_input('a2000000-0000-4000-8000-000000000001')->>'profile_version')::integer;
+ if version is null then raise exception 'Own criterion context unavailable'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',1,'[]',repeat('e',64));
+ if result->>'reason'<>'criteria_changed' then raise exception 'Stale criterion version accepted'; end if;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Truckkort","Erfarenhet av plock","Kan börja omgående","Erfarenhet av lager"]',repeat('e',64));
+  raise exception 'More than three questions accepted';
+ exception when invalid_parameter_value then null; end;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Kunskap om Excel"]',repeat('e',64));
+  raise exception 'Trainable criterion accepted';
+ exception when invalid_parameter_value then null; end;
+ begin
+  perform public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Hälsa"]',repeat('e',64));
+  raise exception 'Sensitive criterion accepted';
+ exception when invalid_parameter_value then null; end;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["  erfarenhet  av kassa"]',repeat('e',64));
+ if (result->>'queued')::int<>0 then raise exception 'Normalized duplicate queued'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Truckkort","Erfarenhet av plock","Kan börja omgående"]',repeat('e',64));
+ if (result->>'queued')::int<>0 or result->>'reason'<>'batch_complete' then raise exception 'Completed version allowed another batch'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Erfarenhet av lager","Kunskap om orderhantering"]',repeat('f',64));
+ if (result->>'queued')::int<>0 or (select count(*) from public.application_followups)<>2 then raise exception 'Same-version cascade added questions'; end if;
+ result:=public.queue_application_followups('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001',version,'["Kunskap om orderhantering"]',repeat('f',64));
+ if (result->>'queued')::int<>0 then raise exception 'Lifetime cap allowed a seventh question'; end if;
+end $$;
+insert into public.user_blocks(blocker_user_id,blocked_user_id) values('a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000003');
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000003',true);
+do $$ begin
+ if (select count(*) from public.get_company_candidates('a2000000-0000-4000-8000-000000000001'))<>0 then raise exception 'Blocked candidate visible in all applications'; end if;
+ begin perform public.get_candidate_assessment_input('a2000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000001');raise exception 'Blocked assessment allowed';exception when insufficient_privilege then null;end;
+ if (select count(*) from public.application_followups)<>0 then raise exception 'Blocked follow-up answer visible'; end if;
+end $$;
+set local role anon;
+do $$ begin
+ begin perform * from public.application_followups; raise exception 'Anonymous read answers'; exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+select 'PASS: version and question caps, sensitive/trainable exclusion, rejected/hired application question guards, reviewed application access, late/edited answers and block isolation, source snapshot and concurrency guards, question deduplication, trait exclusion, sent application preservation, answer publishing and youth/company/anonymous isolation' as result;
+rollback;

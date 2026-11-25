@@ -1,0 +1,11 @@
+.options { align-items:stretch; }
+.options :global(.cv-hub-option) { border-radius:var(--radius-lg); background:var(--color-surface); min-height:11rem; }
+.options :global(.cv-hub-option strong) { font-size:var(--text-md); font-weight:var(--weight-semibold); }
+.options :global(.cv-hub-option small) { font-size:var(--text-sm); }
+.method { display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; padding:1rem; border:1px solid var(--color-border); border-radius:var(--radius-md); margin:1rem 0; }
+.method legend { padding:0 .3rem; font-size:var(--text-sm); color:var(--color-text-muted); }
+.method label { display:flex; align-items:center; gap:.6rem; min-height:44px; font-size:var(--text-md); cursor:pointer; }
+.method input { accent-color:var(--color-brand); width:1.2rem; height:1.2rem; margin:0; }
+.method input:focus-visible { outline:2px solid var(--color-brand); outline-offset:3px; }
+.note { color:var(--color-text-muted); font-size:var(--text-sm); line-height:1.6; }
+@media(max-width:720px) { .options :global(.cv-hub-option) { min-height:8rem; } .method { gap:.25rem 1rem; } }

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
+import { PageLoading } from "@/components/page-loading";
 
 // Kept only to support old links. Dashboard is no longer part of either role's flow.
 export default function DashboardRedirectPage() {
@@ -27,9 +28,5 @@ export default function DashboardRedirectPage() {
 
   if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
 
-  return (
-    <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p>
-    </main>
-  );
+  return <PageLoading label="Hämtar innehåll..." />;
 }

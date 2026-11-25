@@ -1,0 +1,445 @@
+# MatchnWork design and optimization audit — 2026-10-22
+
+**Base:** `dev` at `f7ecece` (2026-10-21). Deployed dev: https://youth-job-mvp-dev.vercel.app
+**Status:** Historical findings and proposals from 2026-10-22, with implementation updates below. Current ownership and delivery status are tracked in `docs/ATGARDSPLAN.md`. Follow `AGENTS.md` before coding: reserve the item, work on your own branch from current `dev`, and report real verification.
+
+**Logo update — 2026-10-25:** Vilgot supplied the new MatchnWork logo, now implemented across the site's existing brand surfaces in dev through [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merge `ccf94bf`. DA-07's shared logo and DA-02's favicon/app/share-image assets use this artwork. The previous inconsistent logos and starter favicon are historical findings, not outstanding implementation tasks. Visual acceptance and physical mobile installation remain separate checks; this update does not close unrelated audit items.
+
+<a id="demo-design-direction"></a>
+## Design direction from the employer demo — 2026-10-26
+
+**User direction:** Vilgot identified the new employer demo as the visual direction for MatchnWork: “stilren, clean men samtidigt informativ”. Treat the demo as the concrete reference for layout, typography, spacing, surfaces and restrained styling when implementing the existing design tasks.
+
+**Clarification from Vilgot — 2026-10-26:** The reference is the visual design itself: clean composition, balanced spacing, readable typography, grouped information, subtle borders/shadows and restrained pink accents. “Informative” means that existing information is well presented. It does not introduce a requirement for more guidance, explanatory panels or a guided step-by-step experience. Existing help, validation and empty-state tasks retain their original scope.
+
+**Reference:** [MatchnWork employer demo](https://matchnwork-foretagsdemo.peachygleam129.chatgpt.site), source version `c76b4bcef58250380555e41553a222c900de22c7`. The demo is a separate, fictional walkthrough. Its present owner-only access and the product's access controls are separate from this design decision.
+
+### Relationship to the existing plans
+
+This is a visual direction for the existing tasks, not a replacement roadmap or a new launch requirement. `docs/ATGARDSPLAN.md` remains authoritative for global order, dependencies, ownership, delivery status and product decisions. The audit retains its original findings and technical acceptance criteria; implementation updates describe which findings remain current. The demo guides presentation within that scope. If its simplified walkthrough conflicts with a product rule or accessibility requirement, follow the product plan and adapt the presentation.
+
+| Existing scope | How the direction applies | What stays in place |
+|---|---|---|
+| DA-04 → DA-05 → DA-06 | Use the existing palette and scales to create calm surfaces and readable hierarchy. | Current owners, token consolidation, contrast requirements and outstanding verification. No new palette or second design system. |
+| DA-12 | Use the company view, already first in this task, to demonstrate the direction while migrating styles. | One view per delivery, removal of matching overrides, coordination with active work; no wholesale redesign or navigation replacement. |
+| D08, D07 and F20 | Use consistent spacing, typography and visual grouping for existing content. | Existing widths, truthful copy, privacy/help access and task priorities. |
+| D05 / DA-03 / DA-10 / DA-17, DA-15 | Use the same restrained visual language and varied composition within the planned marketing work. | Existing performance, reduced-motion and content goals; no requirement to rebuild marketing as the demo workspace. |
+| F04, F05, F26/N19, N16, N23/N24 and L04 | Present navigation, candidate evidence, questions and recruitment states clearly. | Correct destinations; job-specific sharing and evidence; manual ad status without mandatory position counts/automatic promotion; voluntary video; questions before matching under N24; separate pending/confirmed recruitment states. The demo neither changes these rules nor marks planned features implemented. |
+| DA-16, F23 and L08 | Preserve clarity on small screens and with keyboard navigation. | Existing text, input and touch-target minimums, contrast, focus and separate physical-device checks. |
+
+Cross-references describe coordination, not a reservation or status change. Apply the visual checks below when a relevant view is already being changed; do not reopen completed functional tasks solely because the reference was added.
+
+**Further clarification from Vilgot — 2026-10-26:** Keep the demo and future affected product views simple: fewer competing text elements, fewer tiny secondary labels, and no repeated explanation panels or decorative statistics. Use a small, readable type scale and clear primary actions. Ready-made demo ads and recruitment examples should be immediately explorable; visitors may also edit and create their own. Preserve required status, evidence, error and consent information. The latest expanded demo is not a mandate to copy every control into the product.
+
+**Ad context:** [N25 in the action plan](ATGARDSPLAN.md#n25) records the requested ad-first candidate flow: select an owned ad, then show that ad's submitted applications and job-specific evidence. Coordinate with N03/F04, F05/F26/N19 and DA-12 without taking over their active work or changing their status. This is a planned product change; a simulated demo does not verify the real flow.
+
+### What the comparison establishes
+
+The audit's consistency and accessibility work supports this direction, but fixing tokens alone does not produce the demo's clarity. The visual goal also needs to govern page composition, information priority, spacing and the visual treatment of controls.
+
+| Area | Current frontend / audit evidence | Direction to carry from the demo | Existing work |
+|---|---|---|---|
+| Page structure | The company source already has workspace headings, tabs and a candidate list/detail view. It is therefore an existing foundation, not a missing feature. Global overrides still influence the presentation. | A stable workspace shell, a clear page title and one main work area. Related information is visually grouped. | DA-12, D08; coordinate company navigation with F04. |
+| Information hierarchy | `product-design.css` sets product h1 weight to 500 with `!important`; company CSS also uses relatively similar weights for headings, names and details. | Make the page title, candidate name, section heading, supporting fact and status clearly distinguishable. Establish this through the existing type scale and whitespace, not a new font size for each component. | DA-05, DA-12. |
+| Colour and surfaces | `theme.css` already contains the shared rose/plum palette, muted text changes and the type/radius/weight scale. Original DA-04–DA-06 findings must be read alongside their newer action-plan updates. | Predominantly neutral canvas and white work surfaces; use pink for the active location, primary action and selected content. Use subtle borders, restrained shadows and consistent corner radii to separate content without visual clutter. | DA-04–DA-06. |
+| Actions and forms | The real ad builder has three steps, optional salary/benefits/image fields, draft recovery and publication restrictions. | Use consistent button hierarchy, aligned fields, balanced spacing and a distinct visual treatment for review/confirmation. Retain existing help and error handling. Preserve all real fields and rules. The demo's shorter form and mandatory example salary are not new product requirements. | DA-12; preserve existing form, draft and publication work. |
+| Candidate information | The real source already exposes evidence, unknown information, CV, answers and assessment progress/error/retry states. | Group identity and practical facts first; place readable criteria with their evidence next; retain CV and decisions in predictable locations. Keep unknown information neutral and distinguish a fact from a conclusion. | DA-12, F05, F26/N19. |
+| Marketing | Browser inspection of current dev shows the landing hero with an animated headline and CTA, but no immediate static product explanation or product view. The features page still presents many similarly styled feature cards. | Demonstrate the product and its benefit early with clearly fictional examples. Vary the information structure and remove repetition. Marketing can retain its own composition while sharing the product's visual language. | D05 / DA-03, DA-15, DA-17. |
+| Mobile and accessibility | The product already defines a 12px visible-text minimum, 16px form inputs and 44px touch targets. The demo CSS includes 9–11px labels and several smaller controls. | Preserve the clean grouping and responsive flow, but meet the product's size, contrast, keyboard and focus requirements. Do not copy the demo CSS verbatim. | DA-06, DA-16, F23, L08. |
+
+### Application rules for the next design changes
+
+1. **Use the company workspace as the first reference implementation during DA-12.** Bring the ad list/builder, candidate review and recruitment status into the same visual language, one bounded view at a time. Keep existing work ownership and the global action-plan order; this comparison does not reserve another person's implementation.
+2. **Work through shared primitives.** Reuse `theme.css` and shared navigation, icons, dialogs and controls. Add only justified missing semantic components (for example a page header, work panel or status badge). Remove the matching legacy overrides in the same view migration.
+3. **Prioritise visual composition.** Establish a consistent hierarchy through typography, alignment, whitespace, surfaces and button styling. Present existing information clearly without adding demo-style guidance or extra explanatory content. Preserve necessary job information, evidence, warnings and recovery actions.
+4. **Adapt the walkthrough to the real product.** The demo's numbered four-step sidebar is a meeting narrative, not a decision to replace the app's navigation. The product must still support multiple jobs, returning employers, asynchronous answers and chats, and real verification/permission states. Use truthful counts and timestamps. Planned demo features remain planned until separately implemented and verified.
+5. **Apply the same principles to youth views with their own interaction patterns.** This direction does not replace the youth swipe flow or mobile navigation with a company-style desktop workspace.
+
+### Acceptance when a view is migrated
+
+- Review it next to the demo for hierarchy, grouping, restrained use of pink and the clarity of the main action. Exact pixel identity is not the goal.
+- Verify populated, empty, loading, failed/retry and completed states; also long names, long job titles and actual assessment evidence. A static happy-path screenshot is insufficient.
+- Check at 375px and 1280px, plus a constrained intermediate width. Maintain at least 12px visible text, 16px form inputs and 44px touch targets; measure actual contrast and test keyboard/focus order. Physical mobile and on-screen-keyboard testing remain separately reportable.
+- Preserve authentication, visibility, job-specific sharing, ad lifecycle and recruitment logic. A visual migration must not silently introduce the demo's simulated business behaviour.
+
+### Verification and limits of this comparison
+
+Read the current audit and action plan, plus `app/styles/theme.css`, `app/product-design.css`, `app/company/page.tsx`, `app/company/company-design.css`, `components/company-match-profile-form.tsx`, `components/candidate-assessment-panel.tsx`, `app/chats/chat.module.css`, `components/youth-navigation.module.css` and `app/page.tsx`. Compared them with the demo's source and the demo's visually checked desktop/375px walkthrough from this session.
+
+Viewed current deployed dev `/` and `/features` in the browser. `/company` required login, so this comparison's observations about authenticated product screens are **from code**, not a new signed-in visual acceptance test. No frontend, database or demo-access changes are made by this documentation update. Existing task owners/statuses and the audit's historical evidence remain intact. No build or functional tests are claimed for this documentation-only comparison.
+
+## How to use this file
+
+Use `docs/ATGARDSPLAN.md` for the current global work order and dependencies. The table below groups audit findings by priority; it is not a separate execution queue. Each item says where the problem is, what to change, and how to check it. To hand an item to an AI agent in VS Code, a prompt like this works:
+
+> Read `AGENTS.md`, `docs/ATGARDSPLAN.md` and item DA-01 in `docs/DESIGN_AUDIT_2026-10-22_1.md`. Implement only DA-01 on a new branch from `dev`. Do not change copy, business logic or other items. Run lint, TypeScript and a production build, then check the result at 375px and 1280px width and report what you actually verified.
+
+Several findings touch items that already exist or are in progress. Those are marked **Coordinate with** and should be added to the existing item rather than started separately:
+
+- **D05** (landing page, Max / Claude, in progress) — DA-03, DA-10, DA-17
+- **F23** (accessibility, branch `claude/f23-accessibility-20261022` was active today) — leave role selection, tabs and dialogs to F23
+- **F20** (privacy and help easy to reach) — DA-08, DA-09
+- **D07** (microcopy and brand text), **D08** (empty states and page widths) — DA-07
+
+## What was checked
+
+- **Seen in the browser:** `/`, `/features`, `/pricing`, `/login`, `/signup`, `/forgot-password`, `/privacy` and the `/swipe` redirect. Viewed at 375×812 (mobile emulation) and about 608px wide, with layout measured via script at 1280×800.
+- **Reviewed in code:** the global styles and tokens (`app/globals.css`, `app/styles/theme.css`, `app/product-design.css`), every CSS file and CSS module, the root layout, the marketing pages and their components, the auth page, youth discovery, navigation and the large legacy views.
+- **Not seen in the browser:** the logged-in youth and company screens (swipe, profile, applications, chats, map, company workspace). Findings about them come from code only and are marked *(from code)*. A visual pass over those screens with a fictional QA account is still worth doing; it fits under L08.
+
+## Priority overview
+
+| ID | Priority | Area | Finding |
+|---|---|---|---|
+| [DA-01](#da-01) | P1 | Landing | Illustrations in the platform section render as empty dark boxes below 1024px |
+| [DA-02](#da-02) | P1 | Brand / SEO | New supplied logo implemented in favicon, app icons and share image; remaining acceptance/metadata checks tracked below |
+| [DA-03](#da-03) | P1 | Landing | The first screen shows no product and no static explanation |
+| [DA-04](#da-04) | P2 | Design system | Colour tokens exist but are bypassed, duplicated and drifting |
+| [DA-05](#da-05) | P2 | Design system | No type, radius or weight scale (93 font sizes, 47 radii) |
+| [DA-06](#da-06) | P2 | Accessibility | Subtle and muted text fail WCAG AA contrast on some surfaces |
+| [DA-07](#da-07) | P2 | Brand | Shared supplied logo implemented across brand surfaces, including auth; visual acceptance remains |
+| [DA-08](#da-08) | P2 | Marketing | Three different footers; none links to privacy |
+| [DA-09](#da-09) | P2 | Privacy page | Logged-out visitors get "Till profilen"; draft legal note is public |
+| [DA-10](#da-10) | P2 | Performance | Full-screen WebGL background runs non-stop and ignores reduced motion |
+| [DA-11](#da-11) | P2 | Performance / SEO | Marketing pages are fully client-rendered; Mapbox CSS loads on every page |
+| [DA-12](#da-12) | P2 | Code health | Legacy inline styles reskinned through `!important` and `[style*=]` overrides |
+| [DA-13](#da-13) | P3 | Pricing | The only youth plan has a secondary-style button; the highlight class is unused |
+| [DA-14](#da-14) | P3 | Auth | Card-in-card on mobile, diagonal "↗" arrow, text glyphs instead of the icon set |
+| [DA-15](#da-15) | P3 | Features page | Twelve identical cards, repeated icons, heavy overlap with the landing page |
+| [DA-16](#da-16) | P3 | Mobile | Small text and touch targets in discovery and footers *(partly from code)* |
+| [DA-17](#da-17) | P3 | Landing | The page ends without a call to action |
+| [DA-18](#da-18) | Decision | Product | Logged-out visitors cannot see a single job |
+| [DA-19](#da-19) | P3 | Mobile | Tap targets under 44px found in the 2026-11-12 browser review |
+| [DA-20](#da-20) | P3 | Typography | Visible text under 12px in signed-in company views and the map |
+| [DA-21](#da-21) | P3 | Company | The ad builder's first step mixes label styles |
+
+Original audit sequencing advice (subject to current action-plan status and global order): DA-01 and DA-02 first (small, visible, independent). Then DA-04 → DA-05 → DA-06 as one design-system block, because the later visual fixes get much easier once tokens are in place. DA-12 runs alongside, one legacy view at a time.
+
+---
+
+## P1 — fix before launch
+
+<a id="da-01"></a>
+### DA-01 Landing illustrations are blank below 1024px
+
+- **Seen:** At 375px and about 608px, all five cards in "En plattform, hela vägen" show an empty dark box with a barely visible dark shape. The section looks unfinished.
+- **Cause (verified in the browser):** `PlatformShowcase` renders every visual twice: once in the desktop column (`.platform-showcase-image-col`, `display: none` below 1024px) and once in the mobile list. Each SVG in `components/ui/platform-visuals.tsx` uses fixed gradient ids (`ai-grad`, `ai-glow`, `match-grad`, `chat-grad`, `map-grad`, `ew-grad`). The ids appear twice in the DOM, `url(#ai-grad)` resolves to the first copy, and that copy sits inside a `display: none` container, so Chrome paints nothing.
+- **Fix:** Give each SVG instance unique ids with React `useId()`, for example `const id = useId(); const grad = `${id}-grad`;` and reference `url(#${grad})`. Alternatively, render only one copy of each visual. Do not solve it by un-hiding the desktop column.
+- **Files:** `components/ui/platform-visuals.tsx`, `components/ui/platform-showcase.tsx`
+- **Done when:** All five illustrations show their pink gradients at 375px, 800px and 1280px, and `document.querySelectorAll('[id="ai-grad"]').length` is never above 1.
+
+<a id="da-02"></a>
+### DA-02 Favicon, app icons, share image and page titles
+
+- **Implementation update — 2026-10-25:** The uploaded original `public/brand/matchnwork-logo.png` is preserved unchanged. `scripts/generate-brand-icons.mjs` derives the favicon (16/32/48px), SVG icon, Apple icon (180px), manifest icons (192/512px) and padded maskable icon (512px) from it. The Open Graph image uses the same original. Included in [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merged to dev as `ccf94bf`; approved dev deployment. Do not replace it with the former generated M mark.
+- **Actually verified:** Original bytes, icon dimensions, ICO frames, renderable SVG, production build and local HTTP 200/correct MIME for logo, favicon, SVG, Apple icon, manifest and share image. Deployed dev logo and favicon match the delivered files byte-for-byte.
+- **Still to verify:** Visual desktop/mobile acceptance, installed mobile icon and real social link previews; this update does not claim all page-title/metadata acceptance is complete. Existing DA-02 ownership/status in the action plan is preserved.
+
+**Original audit finding (2026-10-22):**
+
+- **Seen:** `app/favicon.ico` is the unchanged create-next-app favicon (25,931 bytes), so browser tabs and bookmarks show the Next.js/Vercel mark. `public/` still holds the starter SVG (`file.svg`). There is no `apple-icon`, no web manifest and no `theme-color`, so "Lägg till på hemskärmen" gets a screenshot instead of an icon. All pages share the title "MatchnWork" and there is no Open Graph image, so a link shared on Snapchat, Instagram or iMessage has no preview.
+- **Fix:**
+  1. Use the supplied MatchnWork logo in `app/icon.svg`, `app/apple-icon.png` (180×180) and `app/favicon.ico`; retain the original source and generate size variants with the shared script. The earlier M-mark proposal has been superseded.
+  2. Add `app/manifest.ts` with name, short_name, `theme_color: "#b84164"`, `background_color: "#fffafb"` and the icons. Add `export const viewport = { themeColor: "#fffafb" }` in `app/layout.tsx`.
+  3. Add `app/opengraph-image.tsx` (1200×630, brand gradient, headline and logo).
+  4. Use a title template in `app/layout.tsx` (`title: { default: "MatchnWork", template: "%s · MatchnWork" }`) and per-page titles such as "Funktioner", "Priser", "Logga in", "Skapa konto" and "Integritet och AI". This needs DA-11 for the pages that are currently fully client-rendered.
+- **Done when:** The tab shows the supplied MatchnWork logo, a shared link to `/` shows the image and the right title in a link previewer, and every public page has its own title.
+
+<a id="da-03"></a>
+### DA-03 The first screen shows no product
+
+**Coordinate with D05.** This item adds input to D05 and should not become a separate branch.
+
+- **Seen:** On mobile the first screen is a half-typed headline ("En enklare väg till|"), two buttons and the animated gradient. Nothing explains that this is a job app for young people, and nothing shows the product. The next section opens with unemployment statistics, so the visitor sees the problem before learning what MatchnWork is. The statistics cover ages 15–24, while the product targets roughly 12–20.
+- **Fix (proposal for D05):**
+  - Put the static one-line explanation from D05 directly under the headline, visible on the first frame.
+  - Show the product in the hero: one tilted swipe card (a real card design from `components/job-discovery.module.css`, with an invented but obviously fictional job) in a phone frame, next to the headline on desktop and below it on mobile. This was already an open question, and the app now has a strong card design worth showing.
+  - Let the typewriter animate only the last word or phrase, and render the full headline as static text for screen readers and `prefers-reduced-motion`. The latter is already partly handled.
+  - Move the statistics below "En plattform, hela vägen", or reframe them for the actual age group.
+- **Done when:** A first-time visitor on a 375px screen can say what the service does and who it is for from the first frame, without waiting for the animation.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** The typewriter types only the last phrase and screen readers get the full first headline. A static explanation, moving the statistics and a fictional swipe card were tried in the hero and removed again at the user's request, so the first frame still has no product explanation.
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `c8aa590`):** The D05 changes are in dev (`49137a5`, `52e6e0d`, 2026-11-08), so "not yet in dev" above is outdated. Logged out, Chromium at 375 and 1280px: the first frame shows the full headline "Ditt första jobb börjar här." with "Kom igång" and "För företag", and screen readers get the full headline from the start. There is no product explanation in the first frame, as the update says, so DA-03's "Done when" is still not met.
+- **Implementation update — 2026-11-23 (D05, Max / Claude, branch `Max`, not yet in dev):** By the user's decision, a short static line, "Jobbappen som matchar unga med arbetsgivare", now sits above the headline in the first frame so that both young people and employers see the service is for them. It is server-rendered and uses the dark ink colour, so the worst-case contrast against the background is 5.00:1. Below 720px it breaks before "med arbetsgivare". The hero stays centred, with the same background, headline and buttons; there is no phone-frame card, by the user's decision. The statistics stay directly after the hero. Checked in Chromium on a local production build at 320–1280px, with and without reduced motion. See D05 for details.
+
+---
+
+## P2 — design system and consistency
+
+<a id="da-04"></a>
+### DA-04 Colour tokens are bypassed, duplicated and drifting
+
+- **Implementation update — 2026-11-16 (Max / Claude, branch `Max`, not yet in dev):** The company-side files `components/recruitment.module.css`, `app/company/company-design.css` and `components/company-verification-status.css` no longer define colour values. New tokens: `--color-warning-border` and `--color-info`/`--color-info-soft`/`--color-info-border` for neutral information and the MatchnWork verification mark. 434 → 376 colour literals. Second delivery the same day: the youth-side profile, profile journey, recruitment profile, applications and notifications styles and the job page's pause notice use tokens only (no new tokens), 376 → 309. Remaining: `globals.css` (287) and `product-design.css` (15, DA-12); the 6 image colours in job discovery and the job page count as illustration.
+
+- **Implementation update — 2026-10-29 (Max / Claude, branch `Max`, not yet in dev):** Discovery (`job-discovery.module.css`), the password toggle hover and the profile-step error box use palette tokens (nearest value). The job card's image fallback, gradient and photo shade stay as illustration colours. With the DA-05 fixes below: 555 → 538 colour literals, baseline lowered. Remaining: `globals.css` (287), `video.module.css` (57) and the chat (47 one-off pinks, needs a signed-in visual check).
+
+- **Seen (code):** `app/styles/theme.css` says it is the single source of truth, but:
+  - About 1,300 hard-coded hex values sit in 23 other CSS files (`globals.css` 373, `product-design.css` 215, `profile.css` 95, `company-design.css` 74 and more). The brand colour `#b84164` alone is written out 130 times instead of `var(--color-brand)`.
+  - `.mnw-product` in `app/product-design.css` (line 2) redefines the tokens, and one value conflicts: `--color-surface-soft` is `#fff0f4` in `theme.css` and `#fce9ef` under `.mnw-product`. The same token name renders two different pinks depending on where a component sits.
+  - Six CSS modules define their own copies (`--ink`, `--muted`, `--rose`, `--accent`): `job-discovery`, `job-detail`, `activity`, `youth-navigation`, `profile.css` and `chat.module.css`.
+  - **Drift:** `app/chats/chat.module.css` uses `--ink:#4e3341; --muted:#927887; --accent:#ac4066`, which are slightly different from the brand values. Chats therefore look subtly off-palette.
+  - Leftover neutral palettes (`#1d1d1f`, `#6e6e73`, `#d2d2d7`, `#737373`, `#e8e8e8`) remain, mostly in `globals.css` (58 uses) and inline styles in TSX (18 files).
+- **Fix:**
+  1. Settle the values in `theme.css`. Pick one pink for `--color-surface-soft` and add the missing tokens that are in use: `--color-rose: #fce9ef`, `--color-plum-900: #241419` (the dark landing section), `--color-brand-accent: #dc6f8d`, `--color-warning: #7c5b08` and `--color-warning-soft: #fff5d9`.
+  2. Delete the token block on `.mnw-product` and every local `--ink`/`--muted`/`--rose`/`--accent` definition, and point the modules at the global tokens.
+  3. Replace hex literals with `var(--…)`, file by file, starting with chats (the drift) and `product-design.css`. A careful find-and-replace per value is enough, but review each diff.
+  4. Add a check script, for example in `scripts/check-design-tokens.mjs`, that counts hex literals outside `theme.css` and fails if the number goes up.
+- **Done when:** Only `theme.css` defines colour values (allowed exceptions: SVG illustrations and the map), the chat palette matches the rest, and the token check runs.
+
+<a id="da-05"></a>
+### DA-05 No type, radius or weight scale
+
+- **Implementation update — 2026-10-29 (Max / Claude, branch `Max`, not yet in dev):** `check:design-tokens` now counts only literal values: a value that is just a theme token (`var(--…)`) is the scale, and `@font-face` descriptors are ignored. Before, every new use of the scale made the check fail. `--shadow-sm`/`--shadow-md` were invalid (slash alpha with the comma-separated `--color-text-rgb`) and computed to `none`; they now use `rgba(var(--color-text-rgb), …)`. New values since the baseline got tokens: the map pin count (11px → `--text-xs`), the logo tile (`--color-logo-mark`, `--radius-logo-mark`) and the withdraw dialog (`--shadow-dialog`, `--color-backdrop`, palette text, border and focus). The check passes on the branch; verified in Chromium against a production build that every changed rule resolves.
+
+- **Seen (code):** The CSS uses 93 different font sizes, 47 different border radii and 10 different font weights (400, 500, 550, 600, 650, 700, 750, 800, 850 and 900). There are 17 different negative letter-spacing values, from −.005em to −.085em. This is why pages feel close to each other but not quite the same.
+- **Fix:** Add a small scale to `theme.css` and migrate to it as part of DA-04:
+
+  ```css
+  :root {
+    /* Type */
+    --text-xs: .75rem;   /* 12px — minimum for any visible text */
+    --text-sm: .875rem;  /* 14px */
+    --text-md: 1rem;     /* 16px — body, and every input to avoid iOS zoom */
+    --text-lg: 1.25rem;
+    --text-xl: 1.6rem;
+    --text-2xl: clamp(1.9rem, 4vw, 2.6rem);
+    --text-display: clamp(2.6rem, 7vw, 4.5rem);
+    --tracking-tight: -.04em;
+    --tracking-display: -.055em;
+    /* Weight (Inter variable) */
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+    /* Shape */
+    --radius-sm: 10px;
+    --radius-md: 14px;   /* buttons, inputs */
+    --radius-lg: 22px;   /* cards */
+    --radius-xl: 28px;   /* hero cards, dialogs */
+    --radius-pill: 999px;
+    /* Elevation */
+    --shadow-sm: 0 5px 20px rgb(var(--color-text-rgb) / .03);
+    --shadow-md: 0 18px 32px rgb(var(--color-text-rgb) / .09);
+  }
+  ```
+
+- **Done when:** New and touched CSS uses only these values, and the number of distinct font sizes and radii goes down with each migrated file. Measure it with the same check script as DA-04.
+
+<a id="da-06"></a>
+### DA-06 Some text colours fail WCAG AA contrast
+
+- **Measured:**
+
+  | Text | Background | Ratio | AA for body text (4.5:1) |
+  |---|---|---|---|
+  | `--color-text-subtle` `#a57b88` | canvas `#fffafb` | 3.51 | Fails |
+  | `--color-text-muted` `#896a76` | rose `#fce9ef` | 4.11 | Fails |
+  | `--color-text-muted` `#896a76` | canvas `#fffafb` | 4.63 | Passes |
+  | `--color-brand` `#b84164` | rose `#fce9ef` | 4.53 | Passes, barely |
+  | white | `--color-brand` | 5.28 | Passes |
+
+  `--color-text-subtle` (and its alias `--text-tertiary`) appears 20 times in the CSS, partly on body text. Muted text sits on rose surfaces in, for example, the CV banner, chips and status cards.
+- **Fix:** Darken `--color-text-muted` to `#7f616d` (5.30 on canvas, 4.71 on `#fce9ef`, 4.96 on `#fff0f4`). Keep `--color-text-subtle` for icons, borders, placeholders and large text only, and stop using it for body text. Raise the smallest text to at least 12px (see DA-16).
+- **Done when:** All body text meets 4.5:1 on its actual background, checked with Lighthouse or axe on the public pages and a sample of logged-in pages.
+
+<a id="da-07"></a>
+### DA-07 Shared supplied logo across the site
+
+**Coordinate with D07.**
+
+- **Implemented in dev — 2026-10-25:** Vilgot's supplied logo replaces the previous M marks and text-only logos through the shared `components/brand-logo.tsx`. Used in marketing navigation/footer, login/signup/password recovery, privacy, youth/company navigation, discovery, youth/company onboarding, the listing builder and admin. Component options are `variant="full" | "mark"` and `tone="inherit" | "light" | "dark"`. Full mode combines the supplied artwork with the MatchnWork name; mark mode gives the image its accessible name. The original artwork and colours are unchanged.
+- **Delivery:** [PR #105](https://github.com/vilgotdidrikson/youth-job-mvp/pull/105), merge `ccf94bf`, deployed to dev. The same artwork also supplies DA-02's browser/app/share-image assets.
+- **Verification:** TypeScript, targeted ESLint without errors, production build and accessibility/search/navigation/profile regressions pass. Public page HTML references the supplied logo; local production HTTP checks pass. Visual acceptance on desktop/mobile and authenticated surfaces remains; no browser screenshots or physical installation are claimed. Other D07 copy tasks remain open.
+
+**Original audit finding (2026-10-22):**
+
+- **Seen:** The landing nav and footer use the M mark plus wordmark. `/privacy` uses a pink text-only wordmark. The auth pages (`/login`, `/signup`, `/forgot-password`) have no logo at all, only "← Tillbaka". Admin uses a mark with an asymmetric radius, and the mobile discovery header uses a text-only brand *(from code)*.
+- **Fix:** Create `components/brand-logo.tsx` with `variant="full" | "mark"` and `tone="inherit" | "light" | "dark"`, using the supplied original PNG rather than reconstructing an M mark. Use it in the marketing nav and footer, on the auth pages (centred above the card, linking to `/`), on `/privacy`, in the youth and company navigation, and in admin.
+- **Done when:** One component draws the logo everywhere, and every public page shows it.
+
+<a id="da-08"></a>
+### DA-08 Three different footers, none linking to privacy
+
+**Coordinate with F20.**
+
+- **Implementation update — 2026-10-25 (klar, [PR #108](https://github.com/vilgotdidrikson/youth-job-mvp/pull/108), merge `a519de2`):** New shared `components/marketing-footer.tsx`, extracted from the landing footer, with the links Funktioner, Priser, Integritet (`/privacy`) and Logga in. Used on `/`, `/features` and `/pricing`; existing `landing-bold-footer` styles unchanged. `/signup` has a line under the submit button linking to `/privacy` (signup mode only, not login). The contact link waits for the contact address decision (D07). `/privacy` keeps its own footer until DA-09.
+- **Verified:** TypeScript, ESLint on changed files, `test:accessibility`, `test:platform-visuals` and a production build (webpack). `check:design-tokens` fails identically with and without this change (pre-existing growth in `applications-design.css` and `brand-logo.module.css`); this change adds no colour literals or new type values. Chromium against a local production build at 375px and 1280px, 34/34: one identical footer with the privacy link on all three pages, no horizontal scroll, footer and signup links open `/privacy`, signup note under the button at ≥12px and absent on login, no page errors. The same 34/34 check passes against deployed dev (https://youth-job-mvp-dev.vercel.app) after the merge. Not checked in Safari/Firefox or on a physical phone.
+- **Seen:** `/` has a full footer (logo, tagline, Funktioner/Priser/Logga in, ©). `/features` and `/pricing` use the same class but only show © and the tagline. `/privacy` has its own footer. No footer links to `/privacy`, and the signup page does not either.
+- **Fix:** Extract `components/marketing-footer.tsx` from the landing footer, add "Integritet" (`/privacy`) and a contact link once the contact address is decided (D07), and use it on all three marketing pages. Add a short line under the signup button linking to the privacy page (F20).
+- **Done when:** Every public page has the same footer, and privacy is one tap away from signup.
+
+<a id="da-09"></a>
+### DA-09 Privacy page assumes the visitor is logged in
+
+**Coordinate with F20.**
+
+- **Implementation update — 2026-10-25 (klar, [PR #110](https://github.com/vilgotdidrikson/youth-job-mvp/pull/110), merge `b69056c`):** `/privacy` now uses the shared `MarketingNav` and `MarketingFooter` for every visitor; the page's own header is removed. "Tillbaka till profilen" at the end of the policy is rendered by `app/privacy/privacy-profile-link.tsx` only when `useSession` has a user, so logged-out visitors see no profile link. Signed-in visitors get "Gå till appen" from the shared nav. The page stays a server component with its metadata. The legal-review note is unchanged and remains tracked under L10/L14.
+- **Verified:** TypeScript, ESLint on `app/privacy`, `test:accessibility` and a production build (webpack). Chromium against a local production build, logged out, at 375px and 1280px, 26/26: shared nav and footer present, no profile link or "profilen" text, footer privacy link, title "Integritet och AI · MatchnWork", heading below the nav, legal note still shown, no horizontal scroll, mobile and desktop login/signup actions, no page errors. The same 26/26 check passes against deployed dev after the merge. Not verified with a signed-in account (no QA account used), in Safari/Firefox or on a physical phone.
+
+- **Seen:** `/privacy` is public, but its header and footer link to "Till profilen" and "Tillbaka till profilen". A logged-out visitor gets sent to login. The page also shows publicly that the policy must be legally reviewed before production. That's fine on dev, but it needs to be gone or replaced before launch.
+- **Fix:** Use the shared marketing nav and footer (DA-07, DA-08) for logged-out visitors, and keep the profile link only when there is a session (`useSession`). Track the legal-review note under L10/L14 so it is removed together with the final policy.
+- **Files:** `app/privacy/page.tsx`
+
+<a id="da-10"></a>
+### DA-10 The landing background runs WebGL non-stop
+
+**Coordinate with D05.**
+
+- **Seen (code + browser):** `components/ui/velaris.tsx` runs a full-screen WebGL shader in a `fixed inset-0` canvas behind the whole landing page. It renders every frame with `requestAnimationFrame` for as long as the page is open, also when scrolled far below the hero and when the tab is hidden. It does not check `prefers-reduced-motion`. On mid-range Android phones, which much of the audience uses, this costs battery and makes scrolling heavier.
+- **Fix:** Stop the loop when the hero is out of view (`IntersectionObserver`) and on `visibilitychange`. Render a single static frame, or a plain CSS gradient, when reduced motion is on. Cap the device pixel ratio at 1.5 on touch devices, and consider throttling to 30 fps.
+- **Done when:** The Performance panel shows no animation frames while scrolled past the hero or with the tab hidden, and reduced motion gives a still background.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** `components/ui/velaris.tsx` pauses when the hero is off screen (`IntersectionObserver`) or the tab is hidden, draws one still frame with reduced motion, caps the pixel ratio at 1.5 and runs at 30 fps on touch devices. The landing keeps its original colours and dark edges (user decision 2026-11-08); text over the darker parts of the animation does not meet WCAG AA at every moment, before or after D05. Frame counts measured in Chromium: 0 frames scrolled past the hero and with a hidden tab, 0 after the still frame with reduced motion.
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `c8aa590`):** In dev since `49137a5`. Headless Chromium with SwiftShader WebGL at 1280px, counting WebGL draw calls: 36 per 2 s at the top of `/`, 0 scrolled past the hero, 0 after a simulated hidden tab (`visibilitychange`), and with reduced motion 2 draws at load and 0 afterwards. The 30 fps limit and pixel-ratio cap on touch devices were not measured.
+
+<a id="da-11"></a>
+### DA-11 Client-rendered marketing pages and a global Mapbox stylesheet
+
+- **Status — 2026-10-29: klar.** The canonical fix is in dev (`5e1276f`). Deployed dev: no canonical link on `/`, Lighthouse mobile SEO 100 on `/`, `/features` and `/pricing`; text without JavaScript, own titles and no Mapbox stylesheet on the public pages re-checked.
+
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `fb3b928`):** Logged out, Chromium at 375 and 1280px: `/`, `/features` and `/pricing` show their headline and body text without JavaScript and have their own titles; none of the seven public pages loads the Mapbox stylesheet (the only `mapboxgl` rules there are the app's eight map overrides). Signed in with an existing youth account in dev (read only), `/kartan` at 375 and 1280px loads the Mapbox stylesheet, renders the map, and the control group gets the app's border, 16px radius and shadow, so the raised specificity wins over Mapbox's defaults. No horizontal scroll and no page errors. Outside DA-11: on `/kartan` the zoom buttons are 42px and the eyebrow "Jobb nära dig" and the job count are 10.4–11.2px ([DA-19](#da-19), [DA-20](#da-20)).
+- **Implementation update — 2026-10-26 (klar, see status above; branch `Max`):** `/`, `/features` and `/pricing` are server components with their own `metadata`; the title-only segment layouts are removed. The interactive parts are `app/landing-hero.tsx` (typed headline and session-aware buttons) and `app/pricing/pricing-plans.tsx` (audience switch and plans). The headline starts fully written, `NumberTicker` server-renders its final value, and a `<noscript>` style shows the scroll-revealed text without JavaScript. `platform-visuals.tsx` is a client module so each copy keeps its own SVG ids (otherwise DA-01 returns). The Mapbox CSS is imported in `components/job-map.tsx`, and the map control rule's specificity is raised because Mapbox now loads after the app CSS. Copy and animations are otherwise unchanged.
+- **Verified:** TypeScript, ESLint, production build (webpack), `test:accessibility`, `test:map-fallback`, `test:local-fonts`. Local production builds before/after in Chromium: screenshots of `/`, `/features`, `/pricing`, `/login` at 375px and 1280px are pixel-identical; without JavaScript the landing page now shows its headline, stats and manifesto; no Mapbox stylesheet on `/`, `/features`, `/pricing`, `/login`, `/signup` or `/privacy`. Not yet done: Lighthouse mobile before/after on deployed dev, and a signed-in visual check of `/kartan`.
+
+- **Seen (code):**
+  - `app/page.tsx`, `app/features/page.tsx` and `app/pricing/page.tsx` all start with `"use client"`. All of their text is rendered by JavaScript, they cannot export `metadata` (blocking DA-02), and the first meaningful paint waits for the JS bundle.
+  - `app/globals.css` line 1 imports `mapbox-gl/dist/mapbox-gl.css`, so every page, including the landing page and login, downloads the map stylesheet.
+- **Fix:** Turn each marketing `page.tsx` into a server component that exports `metadata`, and move only the interactive parts (animated headline, background, platform showcase, pricing switch, session-aware buttons) into small client components. Move the Mapbox CSS import into `components/job-map.tsx`.
+- **Done when:** The pages render their text without JavaScript, have their own metadata, and the Mapbox CSS only loads on routes with a map. Compare Lighthouse mobile scores before and after, on the deployed dev.
+
+<a id="da-12"></a>
+### DA-12 Legacy inline styles are reskinned through overrides
+
+- **Implementation update — 2026-10-26, first view (in dev through [PR #126](https://github.com/vilgotdidrikson/youth-job-mvp/pull/126), merge `f40f1d3`; reviewed on deployed dev 2026-11-12, see below; William / Claude, branch `claude/da12-company-view-20261026`):** Every inline style that renders in `app/company/page.tsx` is now a class in `app/company/company-design.css`: the no-access card, the match banner, the error banner, the candidate CV button, CV error and decision row, two spacing rules in the ad builder, the empty ad list and the ad cards (summary link, meta line, type chips, publication status, action row and delete button). The status colour moved from inline ternaries to `data-state` on the element. The `padding:25px!important` on the ad cards and the two `div:has(> button[aria-label="Stäng"])` rules for the match banner are gone, since they only existed to override the inline styles. The new CSS uses tokens and DA-05 scale values, so off-palette values now map to the palette: success, danger and warning colours to their tokens, the grey "Pausad" pill to rose, the decision divider to `--color-divider`, and 11.5–15.2px text to 12, 14 and 16px. On mobile the ad cards are shorter because the action buttons wrap into fewer rows. The generic `[style*=]` colour overrides in `product-design.css` stay, because other views still use those inline colours. Logic, copy and markup structure are unchanged.
+- **Verified (local production build, webpack, Chromium):** The page was rendered against locally mocked, clearly fictional Supabase responses (no real project or account) in eight states at 375 and 1280px: ad list, empty ad list, failed ad action, candidate list, accepted candidate with match banner, CV error, ad builder and a non-company account. The computed style of every element in `main` was compared before and after: the only differences are the token and scale mappings listed above and the layout they cause; the ad builder and no-access states are identical. Inline styles rendered in `main`: 41 → 0 on the ad list, 12 → 1 with the match banner, 9 → 8 in the builder (the remainder belong to child components). Contrast of the new pairs: status pills 5.98 (published), 5.75 (waiting), 4.71 (other); error banner 4.94. TypeScript, ESLint (no new warnings), production build, `test:accessibility`, `test:company-navigation`, `test:job-ai-review`, `test:job-edit`, `test:job-fields`, `test:job-practical`, `test:video-retirement`, `test:job-drafts`. `test:job-publication` and `check:design-tokens` fail identically on dev without this change. Not checked signed in on deployed dev, in Safari/Firefox or on a physical phone.
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `fb3b928`):** Chromium at 375 and 1280px with a clearly fictional QA company created through `/signup?role=company` and deleted afterwards through "Radera konto permanent" (login with it fails afterwards). States: empty ad list, ad list with one unpublished QA ad awaiting company verification, empty candidates tab and the ad builder; the no-access card with an existing youth account (read only). Inline styles rendered in `main`: 0 on the ad list (empty and with an ad) and on the no-access card; 1 in the builder (`section` margin-top, a child component). The ad card's status pill uses `data-state="waiting"` with the warning tokens at 12px, its action buttons are 44–48px and wrap on mobile. No horizontal scroll, no page errors or console errors. Not reviewed: the candidate list, accepted candidate with match banner, CV error and failed ad action. They need an application, and ads from an unverified company are not shown to youth, so a new QA company cannot get one without an admin verifying it first. Remaining small text and tap targets in this view are listed under [DA-19](#da-19) and [DA-20](#da-20); the builder's label styles under [DA-21](#da-21).
+- **Remains in this view:** The two `{false && …}` blocks (the old swipe review and chat workspace) and the CV modal that only they open still carry about 50 inline styles. They never render. Removing them also removes the state and handlers only they use, which is a logic cleanup for the owner of the company workspace rather than a style migration. Next views in DA-12 order: `app/company/onboarding/page.tsx`, `app/profile/page.tsx`, `components/voice-cv-interview.tsx`, and `components/youth-onboarding-flow.tsx` last.
+- **Implementation update — 2026-10-26, second view (in dev through [PR #126](https://github.com/vilgotdidrikson/youth-job-mvp/pull/126), merge `f40f1d3`; reviewed on deployed dev 2026-11-12, see below; William / Claude, branch `claude/da12-company-onboarding-20261026`):** The company onboarding `app/company/onboarding/page.tsx` renders no inline styles except the progress bar's data-driven width. The question header, step count, progress bar, error banner, question card, labels, inputs, industry chips, organisation-number help, the Back/Next row and the completion screen use classes in `company-onboarding-design.css`. The live inputs drop their Tailwind utilities, including the hard-coded `border-[#e8e8e8]`. The `!important` overrides that only existed to beat the inline styles are gone (labels, inputs, chips, progress bar and the completion screen); one `!important` remains on the input background, because the shared onboarding input rule in `product-design.css` also uses it. The progress animation respects reduced motion. Deliberate visible changes: labels 12.8 → 14px, Back and Next both 14px (16 and 15.2px before), chips 12.5 → 12px, and on the completion screen the two secondary links now match the primary button (14px text, 50px high, one even gap) instead of 18–19px text that outweighed it.
+- **Verified (local production build, webpack, Chromium):** Rendered against locally mocked, fictional Supabase responses in seven states at 375 and 1280px: each of the four questions, a selected chip, an invalid organisation number and the completion screen. Computed styles of every element in `main` before and after: no differences beyond the changes listed above and the layout they cause; the error banner matches the company view's. TypeScript, ESLint without errors, production build, `test:accessibility`, `test:company-navigation`, `test:company-verification`; `check:design-tokens` reports the same counts as dev. Not checked signed in on deployed dev, in Safari/Firefox or on a physical phone.
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `fb3b928`):** Same fictional QA company as the first view, before it was deleted. Chromium at 375 and 1280px: each of the four questions, a selected industry chip, an invalid organisation number and the completion screen. The only inline style rendered in `main` is the progress bar width (plus Next's `color: transparent` on the logo image). Labels are 14px, Back/Next 14px, and the three completion actions are 50px high with 14px text. The invalid number shows "Organisationsnumret stämmer inte…" in the error banner. No horizontal scroll, no page errors or console errors. The intro eyebrow is still under 12px and two tap targets are under 44px; see [DA-19](#da-19) and [DA-20](#da-20).
+- **Remains in this view:** Questions 5–8 (city, priorities, description, logo and links) and the job form after onboarding cannot be reached: the question index stops at 4 and nothing sets the job step. They keep about 35 inline styles and the `labelStyle` object. Removing them is a logic cleanup for the view's owner.
+- **Implementation update — 2026-10-28, third delivery (William / Claude, branch `claude/da12-loading-private-20261028`):** New `components/page-loading.tsx` renders the existing session card with spinner (the same look as `AuthGateMessage`'s checking state). It replaces the inline-styled or unstyled loading text in `/dashboard`, `/swipe` (CV check and Suspense fallback), `/private`, `/youth/cv`, `/youth/cv/create`, `/company` and `/kartan` (Suspense fallbacks) and `/voice-cv` (behind its feature flag). Loading texts are unchanged. The private workspace `app/private/page.tsx` has no inline styles: its rules moved from `product-design.css` into `app/private/private-design.css` without the `!important` overrides, and the dead `max-width:900px` rule (always beaten by the shared shell width) is gone. Visible fixes there: Avvisa and Avsluta uppdrag had zero inner padding and now match the other buttons; each applicant is one row with name and city left, actions right (stacked full width below 480px); task status is a pill (green active, rose closed); the error uses the danger tokens; text follows the scale (11.5–14.1px → 12 and 14px, task titles 16.8 → 20px to match the form heading). `test:map-fallback` and `test:discovery-undo` stub the new import.
+- **Verified (local production build, webpack, Chromium, 375 and 1280px):** Locally mocked, fictional Supabase responses for `/private` (tasks with applicants, no tasks, failed applicant load), `/dashboard` and `/swipe` while loading; `/swipe`, `/company`, `/kartan` and `/youth/cv` fallbacks without JavaScript. Computed styles before and after: no differences beyond those listed and the restructured applicant rows; no page errors; no tap target under 44px or text under 12px in the private workspace. TypeScript, production build, `test:company-navigation`, `test:job-discovery`, `test:map-fallback`, `test:discovery-undo`, `test:local-fonts`, `test:platform-visuals`. On dev before this change `test:accessibility` fails (company applications tabs moved by N25) and ESLint reports one error in `components/recruitment-profile-editor.tsx`; both unchanged here. `check:design-tokens` reports the same counts as dev.
+- **In dev — 2026-10-28:** Merged through [PR #146](https://github.com/vilgotdidrikson/youth-job-mvp/pull/146) (merge `7f342c2`). Deployed dev without JavaScript shows the shared loading card with spinner on `/swipe`, `/company`, `/kartan` and `/youth/cv`. The signed-in private workspace was verified locally only. DA-12 stays in progress until the remaining views below are migrated.
+- **Remains in DA-12:** `app/profile/page.tsx` (L03 and L13 changed it this week; coordinate first), `components/auth-page.tsx`'s loading state (L02 in progress), the unreachable blocks noted above, and `components/youth-onboarding-flow.tsx` last (N19 in progress).
+
+- **Seen (code):** The largest older views still style themselves inline: `components/youth-onboarding-flow.tsx` (2,024 lines, 213 `style={{…}}`), `app/company/page.tsx` (85), `app/company/onboarding/page.tsx` (53), `app/profile/page.tsx` (20), `components/voice-cv-interview.tsx` (17). To make them match the new design, `app/product-design.css` overrides them with about 50 lines of `!important` declarations and attribute selectors such as `.mnw-product [style*="color: #737373"]`. There are about 145 `!important` lines across the CSS. It works today, but any change to an inline value silently breaks the override, and the cascade is hard to reason about.
+- **Fix:** Migrate one view at a time into a CSS module that uses the DA-04 and DA-05 tokens, and delete the matching overrides from `product-design.css` in the same PR. Start with `app/company/page.tsx` (company-facing, frequently changed) and leave `youth-onboarding-flow.tsx` for last, because it is the largest. This also helps the planned React Native/Expo app, since styling no longer lives inside the logic.
+- **Done when:** Each migrated view has no inline colour or spacing styles, and its overrides are gone from `product-design.css`.
+
+---
+
+## P3 — polish
+
+<a id="da-13"></a>
+### DA-13 Pricing: the main call to action looks secondary
+
+- **Implementation update — 2026-10-25 (klar, [PR #111](https://github.com/vilgotdidrikson/youth-job-mvp/pull/111), merge `ba70209`):** `PricingPlan` in `lib/pricing-data.ts` has an optional `highlighted` flag, set on the only youth plan and the only company plan. `app/pricing/page.tsx` adds `pricing-cta-highlighted` to that plan's "Kom igång gratis", so it is a filled brand button; a matching hover rule keeps it filled (`--color-brand-hover`) instead of falling back to the light outline hover. Below 720px the grid's bottom padding is 2rem and the footer's top margin 1rem, so the card-to-footer gap drops from 121px to 48px; the desktop spacing is unchanged. Prices, texts and links are unchanged (F06 untouched).
+- **Verified:** TypeScript, ESLint on `app/pricing` and `lib/pricing-data.ts`, production build (webpack); `check:design-tokens` reports the same counts as dev. Chromium against a local production build at 375px and 1280px, both tabs, 34/34: one highlighted CTA with unchanged text and link, brand fill with white text (contrast ≥ 4.5:1, also on hover), mobile gap ≤ 60px, desktop gap ≥ 80px, no horizontal scroll, no page errors. The same 34/34 check passes against deployed dev after the merge. Not checked in Safari/Firefox or on a physical phone.
+
+- **Seen:** On `/pricing` (youth tab), the only plan's "Kom igång gratis" is a white outlined button. `.pricing-cta-highlighted` exists in `app/pricing/pricing.css` but is never applied. On mobile there is a large empty gap between the card and the footer. Do not change the price explanation itself; that belongs to F06, which is blocked.
+- **Fix:** Apply the highlighted style to the recommended plan (add a `highlighted` flag to the plan data in `lib/pricing-data.ts`), and tighten the bottom spacing.
+
+<a id="da-14"></a>
+### DA-14 Auth pages: card-in-card, a misleading arrow and text glyphs
+
+- **Implementation update — 2026-10-25 (klar, [PR #112](https://github.com/vilgotdidrikson/youth-job-mvp/pull/112), merge `8c2be47`):** Below 480px the auth card on `/login`, `/signup`, `/forgot-password` and `/reset-password` has no border, background or shadow and no side padding, so the form uses the full page width; desktop keeps the card. The "↗" in all auth submit buttons and links is now `UiIcon name="arrow"`, and the "←" in the back links is `UiIcon name="chevron-left"`. On the marketing pages the hero "→" (`/`), the plan "✓" (`/pricing`) and the process "→" (`/features`) are `UiIcon`. The logo above the auth heading was already in place (DA-07); the role choice is left to F23. Not changed: the decorative platform symbols on `/` and the "✦"/"↓" on `/features` (DA-15 covers that page's icons).
+- **Verified:** TypeScript, ESLint on the changed files, `test:accessibility` and a production build (webpack); `check:design-tokens` reports the same counts as dev. Chromium against a local production build at 375px and 1280px, 79/79: no ↗ ← → ✓ text on the four auth pages, svg icons in submit and back controls, back controls ≥ 44px tall, no card border or shadow and form/inputs ≥ 88–90% of the width at 375px, card border kept at 1280px, svg icons in the hero, plan and process spots, no horizontal scroll, no page errors. The same 79/79 check passes against deployed dev after the merge. `/reset-password` was only checked in its invalid-link state; not checked in Safari/Firefox or on a physical phone.
+
+- **Seen:** On mobile, `/login`, `/signup` and `/forgot-password` place a bordered card inside a 16px page margin. That leaves the form about 70% of the screen width and makes the screen feel boxed in. The submit buttons end in "↗" (in `components/auth-page.tsx` line 164, `app/forgot-password/page.tsx` and `app/reset-password/page.tsx`), a symbol people usually read as "opens an external site". Elsewhere the app uses text glyphs (✓, →, ↗) even though `components/ui-icon.tsx` has a matching icon set.
+- **Fix:** Below 480px, drop the card border and shadow and let the form use the full width. Show the logo above the heading (DA-07). Remove the "↗", or use `UiIcon name="arrow"`. Replace text glyphs with `UiIcon` across the marketing and auth pages. Leave the role choice to F23.
+
+<a id="da-15"></a>
+### DA-15 The features page is long and repetitive
+
+- **Status — 2026-10-28: klar.** Merged through [PR #124](https://github.com/vilgotdidrikson/youth-job-mvp/pull/124). On deployed dev at 375, 639, 640 and 1280px: 14 distinct icons, one column below 640px and two from 640px, product view beside the grid at 1280px, both previews with accessible names, no text glyphs, no horizontal scroll, no page errors; `/features` is 5,623px at 375px (5,784px before). Safari/Firefox and a physical phone not checked.
+- **Implementation update — 2026-10-26 (William / Claude, branch `claude/da15-da16-mobile-features-20261026`):** Every feature on `/features` has its own icon (14 distinct). Four icons were added to `UiIcon` in the existing stroke style: `cards` (Swipea jobb), `match` (AI-matchning), `messages` (Kandidatchatt) and `store` (Företagsprofil); Komplettera ansökan uses `edit` and AI-screening `eye`. Each audience section now opens with a static, clearly fictional product view from the new `components/marketing-product-preview.tsx`: a swipe card for youth and a candidate list for companies, both marked "Exempel" and exposed as one image with a text description. Layout: one column of compact rows (icon beside text) below 640px, two columns from 640px, and from 1024px the product view sits beside the grid. Icon tiles are rose with a brand icon instead of solid pink, following the demo direction. The "✦" in the AI list and the "↓" in the matching flow are `UiIcon`. Copy, links, the AI, matching and process sections are unchanged. The preview component can be reused for DA-03's hero card under D05.
+- **Verified (local production build, webpack, Chromium):** TypeScript, ESLint on the changed files, `test:accessibility`, `test:platform-visuals`, `test:job-discovery`, `test:local-fonts`, `test:map-fallback` and a production build. `check:design-tokens` fails identically with and without this change (pre-existing `applications-design.css` and `brand-logo.module.css`); the new CSS uses tokens and existing scale values only. 14 cards with 14 distinct icons; one column at 375 and 639px, two at 640 and 1280px; product view beside the grid at 1280px; both previews have accessible names; no text glyphs; no page errors; no horizontal scroll. Page height at 375px: 5,784px on deployed dev before, 5,623px after. At 800px the page is longer (preview above the two-column grid). Not yet checked on deployed dev, in Safari/Firefox or on a physical phone.
+- **Observed, not changed (DA-05 owner):** `--shadow-sm` and `--shadow-md` in `theme.css` compute to `none` in Chromium, because `rgb(var(--color-text-rgb) / .03)` mixes the comma-separated `--color-text-rgb` with slash alpha. The previews therefore use `rgba(var(--color-text-rgb), …)` directly.
+
+- **Seen:** `/features` is twelve visually identical white cards stacked on mobile. The same sparkle icon is used for "Swipea jobb", "Smart jobbmatchning" and "AI-matchning", and an info icon stands for "AI-screening". Most of the content repeats the landing page.
+- **Fix:** Give each feature its own icon, group the cards into a two-column grid from 640px, and lead each audience section with one real product visual (the same swipe card as DA-03 for youth, and the candidate view for companies) instead of a twelfth card. Alternatively, merge the page into the landing page and pricing.
+
+<a id="da-16"></a>
+### DA-16 Small text and touch targets on mobile
+
+- **Status — 2026-10-28:** Merged through [PR #124](https://github.com/vilgotdidrikson/youth-job-mvp/pull/124). On deployed dev at 375px, `/`, `/features`, `/pricing`, `/signup`, `/forgot-password` and `/privacy` have no tap target under 44px and no text under 12px. `/login` had one new target: "Skicka ny bekräftelselänk" (35px, added with L02), because `.auth-switch`'s `min-height` does not apply to an inline link. Fixed on branch `claude/da12-loading-private-20261028` with CSS only (the link is inline-flex and aligned with "Glömt lösenord?"); 44px in a local production build. Discovery was verified locally only (signed in).
+- **Status — 2026-10-28: klar.** The `/login` fix is merged through [PR #146](https://github.com/vilgotdidrikson/youth-job-mvp/pull/146) (merge `7f342c2`). On deployed dev at 375px, all seven public pages have no tap target under 44px and no text under 12px, and no page has horizontal scroll at 375 or 1280px (39/39 checks). Signed-in discovery, Safari/Firefox and a physical phone not checked.
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `fb3b928`):** Logged out, Chromium at 375 and 1280px: `/`, `/features`, `/pricing`, `/login`, `/signup` and `/forgot-password` have no tap target under 44px, no text under 12px and no horizontal scroll. New since the 2026-10-28 check: on `/privacy` the "Hjälp och kontakt" link at the end of the policy (added in `3d16528`, F12/F20/D07) is 19px tall, and the new `/help` page has two 20px links ([DA-19](#da-19)). Signed in with an existing youth account in dev (read only), `/swipe` and its saved list at 375px have no tap target under 44px and no text under 12px; the bottom navigation labels are 12px with 88×46px targets. That account had no jobs left to discover and no saved jobs. A new, clearly fictional QA youth account (created through `/signup`, onboarding completed with invented details, deleted afterwards; login with it fails) saw 11 QA ads: at 375 and 1280px the card badge, card chips, "Inte nu", "Intresserad" and "Detaljer" (50px), the saved list with one saved job and the bottom navigation have no text under 12px and no horizontal scroll, and there were no page or console errors. Two targets are still under 44px: the job title link on the card (30px at 375px) and the desktop navigation's logo link (42px); see [DA-19](#da-19).
+- **Implementation update — 2026-10-26 (klar, see status above; William / Claude, branch `claude/da15-da16-mobile-features-20261026`):** Size-only CSS. 44px tap areas for the marketing nav logo, the narrow-screen "Kom igång" and menu buttons (41px before), the footer links (20px before), the auth logo link, the signup privacy link and the discovery hint link (the two inline links keep their line through negative margin), the discovery logo link and the CV banner link. The discovery filter chips' mobile rule now matches the existing 44px rule. Visible text is at least `--text-xs` (12px): footer copyright, landing source line (only its size; D05 owns the section), features eyebrows, privacy eyebrow, auth footer, and in discovery the filter chips, card badge, card chips, action labels, hints, CV banner and saved list, plus the youth bottom navigation labels. No copy, colours, layout structure or logic changed.
+- **Verified:** Before, on deployed dev at 375px: 7 tap targets under 44px and 1–3 texts under 12px per public page. After, on a local production build at 375px: none on `/`, `/features`, `/pricing`, `/login`, `/signup`, `/forgot-password` and `/privacy`, and none in a local discovery harness rendering `JobDiscovery` and the youth navigation with fictional jobs (not committed; the real `/swipe` needs a signed-in youth account). No horizontal scroll at 375 or 1280px. The signup privacy link's tap area does not cover the submit button. Same build and test runs as DA-15 above. Not yet checked on deployed dev, signed in, in Safari/Firefox or on a physical phone.
+
+- **Seen:** At 375px the footer links are 20px tall, and the logo link is 32px tall. In discovery *(from code)* the filter chips are 34px tall, the CV banner text is .71rem (11.4px) and the card chips are .68rem (10.9px). On the landing page the source line is 10.9px.
+- **Fix:** Make every tappable element at least 44×44px (padding is enough; the visual size can stay). Never go below `--text-xs` (12px) for visible text.
+
+<a id="da-17"></a>
+### DA-17 The landing page ends without a call to action
+
+**Coordinate with D05.**
+
+- **Seen:** After "Potential syns inte alltid i ett tomt CV." the page goes straight to the footer. `/features` ends with a "Kom igång" button, but the landing page does not.
+- **Fix:** Add a closing block with the primary "Kom igång" button and a secondary "För företag" link, reusing the existing `.landing-bold-primary` styles.
+- **Implementation update — 2026-11-08 (D05, branch `Max`, not yet in dev):** The manifesto ends with the same sign-up actions as the hero (shared `LandingActions`, "Gå till appen" when signed in).
+- **Browser review on deployed dev — 2026-11-12 (William / Claude, dev `c8aa590`):** In dev since `49137a5`. Logged out, Chromium at 375 and 1280px: after "Potential syns inte alltid i ett tomt CV." the page ends with "Kom igång" (`/signup`) and "För företag" (`/signup?role=company`) before the footer, 56px high at 375px and 70px at 1280px.
+
+<a id="da-19"></a>
+### DA-19 Tap targets under 44px found in the 2026-11-12 browser review
+
+**Added 2026-11-12 (William / Claude) from the browser review of DA-11, DA-12 and DA-16. Not reserved. Coordinate with F20 for `/privacy` and `/help`, and with L08 for the map.**
+
+- **Seen (deployed dev `c8aa590`, Chromium, measured height × width):**
+  - `/privacy`: the "Hjälp och kontakt" link at the end of the policy, 106×19px at 375 and 1280px (`app/privacy/page.tsx`, added in `3d16528`).
+  - `/help`: "Läs om profil och ansökan" and "Mina personuppgiftsärenden", 20px tall (`app/help/page.tsx`).
+  - `/swipe`: the job title link on the card, 30px tall at 375px and 41px at 1280px (`components/job-swipe-deck.tsx`).
+  - Company candidates tab: "Till era annonser", 20px tall (`components/company-job-candidates.tsx`).
+  - Ad builder: the "Ändra jobbtyp" summary, 24px tall (`components/job-category-field.tsx`).
+  - `/kartan`: the zoom buttons, 42×42px (`.job-map-canvas .mapboxgl-ctrl button`, 2.6rem).
+  - The logo link in the desktop youth and company navigation and in the company onboarding header, 42px tall.
+  - Company onboarding: the "IT" industry chip, 39px wide.
+- **Implementation update — 2026-11-12 (klar, William / Claude, branch `claude/da19-da21-design-fixes-20261112`, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207), merge `7328d75`):** Size-only CSS, plus one class on the candidates tab's empty-state link. 44px tap areas for the `/privacy` end link, the standalone `/help` links (`.layout section > a`) and its inline text links (padding with negative margin, so the line stays), the swipe card's title link (the two-line clamp moves from the `h2` to the link, which gets 8px padding with negative margin), "Till era annonser", the "Ändra jobbtyp" summary (see DA-21), the map zoom buttons (2.6 → 2.75rem), the logo link in the youth/company navigation and the company onboarding header, and `min-width:44px` on the onboarding industry chips. No copy, colours or logic changed.
+- **Verified (local, 2026-11-12):** TypeScript, ESLint on the changed TSX (0 errors), production build (webpack), `test:company-navigation`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:company-verification`, `test:local-fonts`; `check:design-tokens` reports the same counts as dev (538 colour literals). `test:accessibility` fails identically on dev without this change (the company applications tab expectation from N25). Chromium against the local production build at 375 and 1280px: `/privacy`, `/help`, `/` and `/login` have no tap target under 44px, no text under 12px and no horizontal scroll, and the `/help` inline link keeps its line. Signed-in views to be checked on deployed dev after the merge.
+- **Verified on deployed dev — 2026-11-12 (William / Claude, merge `7328d75`, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207)):** Chromium at 375 and 1280px with a clearly fictional QA company and QA youth, both created through `/signup` and deleted afterwards through "Radera konto permanent". Company onboarding (first question, industry chips with IT selected), ad builder, ad list with one unpublished QA ad and candidates tab; youth `/swipe` with 11 QA ads and `/kartan`: no tap target under 44px except Mapbox's own attribution links, no horizontal scroll, no page or console errors. The swipe card's title link is 55px tall and still clamps to two lines. Safari/Firefox and a physical phone not checked.
+- **Fix:** Give each of these a tap area of at least 44×44px with padding, `min-height` or `min-width`. The visual size can stay. Inline links inside a sentence can keep their line with a negative margin, as DA-16 did.
+- **Done when:** None of the listed elements is under 44px at 375 or 1280px on deployed dev.
+
+<a id="da-20"></a>
+### DA-20 Visible text under 12px in signed-in company views and the map
+
+**Added 2026-11-12 (William / Claude) from the same review. Not reserved. The rules predate DA-12; coordinate with DA-12 for the company view and with F08 for the verification card.**
+
+- **Seen (deployed dev `c8aa590`, computed font size):**
+  - `/company`: the eyebrow "Er rekrytering" (`.company-workspace-heading > p`, .72rem = 11.5px), the ad count in the tab (`.company-workspace-tabs span`, .7rem = 11.2px) and the job-type chips on ad cards (`.company-jobs-grid .chip`, .7rem = 11.2px), all in `app/company/company-design.css`.
+  - The verification card's eyebrow "Företagsverifiering" (`.company-verification-eyebrow` in `components/company-verification-status.css`, .68rem = 10.9px), shown on every company tab.
+  - Ad builder: the step descriptions in the step bar (`.job-builder-steps button small`, .68rem = 10.9px), "Steg 1 av 3" on the draft card (11.2px), the AI button "Skapa annons + matchning med AI" and "(valfritt)" (11.5px), from `app/globals.css`.
+  - `/company/onboarding`: the eyebrow "Er nästa kollega börjar här" (`.company-onboarding-intro > p`, .73rem = 11.7px).
+  - `/kartan`: the eyebrow "Jobb nära dig" (10.4px at 375px, 11.2px at 1280px) and the job count (11.2px).
+- **Implementation update — 2026-11-12 (klar, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207) merge `7328d75` and [PR #208](https://github.com/vilgotdidrikson/youth-job-mvp/pull/208) merge `3547ad4`; William / Claude):** Every listed size is now `var(--text-xs)`: `.company-workspace-heading > p`, `.company-workspace-tabs span`, `.company-jobs-grid .chip`, `.company-verification-eyebrow`, `.job-builder-steps button small`, `.job-builder-eyebrow` ("Steg 1 av 3"), `.job-builder-ai`, `.job-builder-label span`/`.job-builder-optional`, `.job-builder-age > span em`, `.company-onboarding-intro > p`, and on `/kartan` `.mnw-map-heading p` (both breakpoints) and the job count `.mnw-map-list > header span`.
+- **Verified (local, 2026-11-12):** TypeScript, ESLint on the changed TSX (0 errors), production build (webpack), `test:company-navigation`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:company-verification`, `test:local-fonts`; `check:design-tokens` reports the same counts as dev (538 colour literals). `test:accessibility` fails identically on dev without this change (the company applications tab expectation from N25). Chromium against the local production build at 375 and 1280px: `/privacy`, `/help`, `/` and `/login` have no tap target under 44px, no text under 12px and no horizontal scroll, and the `/help` inline link keeps its line. Signed-in views to be checked on deployed dev after the merge.
+- **Verified on deployed dev — 2026-11-12 (William / Claude, merge `7328d75`, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207)):** Chromium at 375 and 1280px with a clearly fictional QA company and QA youth, both created through `/signup` and deleted afterwards through "Radera konto permanent". Company onboarding (first question, industry chips with IT selected), ad builder, ad list with one unpublished QA ad and candidates tab; youth `/swipe` with 11 QA ads and `/kartan`: no tap target under 44px except Mapbox's own attribution links, no horizontal scroll, no page or console errors. No text under 12px in the company views, onboarding or `/swipe`. On `/kartan` the job list items (avatar initials, company, place, pay and "Visa jobb", 10.4–11.2px) only showed with a youth account that has jobs, so they are raised to `--text-xs` in [PR #208](https://github.com/vilgotdidrikson/youth-job-mvp/pull/208). After that merge, a new fictional QA youth (deleted afterwards) sees no text under 12px and no horizontal scroll on `/kartan` at 375 and 1280px. Safari/Firefox and a physical phone not checked.
+- **Fix:** Use at least `--text-xs` (12px) for these, as DA-05 and DA-16 require.
+- **Done when:** No visible text is under 12px on `/company` (ad list, candidates tab and builder), `/company/onboarding` and `/kartan` at 375 and 1280px.
+
+<a id="da-21"></a>
+### DA-21 The ad builder's first step mixes label styles
+
+**Added 2026-11-12 (William / Claude) from the same review. Not reserved. Coordinate with DA-12 (company view) and the owners of the builder fields.**
+
+- **Seen (deployed dev `c8aa590`, step 1 of "Ny annons" at 375 and 1280px):** "Arbetstitel *" and "Beskriv jobbet…" use the small bold field label. "Krav i annonsen" is a plain 16px label that sits directly under the description field without the usual spacing (`app/company/page.tsx`, the `<label>` around the requirements textarea). "Anställningsform – välj ovan eller skriv eget" is also plain and large on mobile. The job-type block (`components/job-category-field.tsx`) shows "Jobbet saknar gemensam jobbtyp" in bold 16px with a 16px body line and a native, unstyled "Ändra jobbtyp" disclosure.
+- **Implementation update — 2026-11-12 (klar, William / Claude, branch `claude/da19-da21-design-fixes-20261112`, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207), merge `7328d75`):** "Krav i annonsen" and "Anställningsform – välj ovan eller skriv eget" use `job-builder-label company-builder-spaced`, the same label style and spacing as the other fields; helper text inside a label is 12px muted and regular weight. `JobCategoryField` drops its inline style for `components/job-category-field.module.css`: a light bordered group with 14px text, the status line in semibold, and "Ändra jobbtyp" as a 44px brand-coloured control with a focus ring. The same component in the job-type editor gets the same look. No copy, fields or logic changed.
+- **Verified (local, 2026-11-12):** TypeScript, ESLint on the changed TSX (0 errors), production build (webpack), `test:company-navigation`, `test:job-discovery`, `test:map-fallback`, `test:platform-visuals`, `test:company-verification`, `test:local-fonts`; `check:design-tokens` reports the same counts as dev (538 colour literals). `test:accessibility` fails identically on dev without this change (the company applications tab expectation from N25). Chromium against the local production build at 375 and 1280px: `/privacy`, `/help`, `/` and `/login` have no tap target under 44px, no text under 12px and no horizontal scroll, and the `/help` inline link keeps its line. Signed-in views to be checked on deployed dev after the merge.
+- **Verified on deployed dev — 2026-11-12 (William / Claude, merge `7328d75`, [PR #207](https://github.com/vilgotdidrikson/youth-job-mvp/pull/207)):** Chromium at 375 and 1280px with a clearly fictional QA company and QA youth, both created through `/signup` and deleted afterwards through "Radera konto permanent". Company onboarding (first question, industry chips with IT selected), ad builder, ad list with one unpublished QA ad and candidates tab; youth `/swipe` with 11 QA ads and `/kartan`: no tap target under 44px except Mapbox's own attribution links, no horizontal scroll, no page or console errors. In step 1 every field label (Arbetstitel, Beskriv jobbet, Krav i annonsen, Anställningsform and its free-text field) is 12.5px weight 500, the helper text is 12px, the job-type block is a bordered group and "Ändra jobbtyp" is a 44px control. Screenshots reviewed. Safari/Firefox and a physical phone not checked.
+- **Fix:** Use the same label class and spacing for every field label in step 1, and give the job-type block the builder's secondary styling (smaller supporting text, the disclosure styled as a secondary control). No copy or field changes.
+- **Done when:** Every field label in step 1 has the same style and spacing at 375 and 1280px, and the job-type block reads as part of the form.
+
+---
+
+## Decision needed
+
+<a id="da-18"></a>
+### DA-18 Logged-out visitors cannot see any jobs
+
+`/swipe` redirects to login, so someone arriving from a shared link or an ad cannot see a single job before creating an account. For a two-sided marketplace in its cold-start phase, a public preview of a few real, published listings (read-only, no applying) is one of the strongest conversion levers. It is a product and privacy decision, not a bug. It only concerns published job content, never youth data. Decide it together with F26/N19, which already define what job information is public.
+
+---
+
+## Already good
+
+Keep these when making changes: the rose and plum palette and Inter typography are coherent; the swipe card design and its responsive height (`clamp(310px, calc(100svh - 290px), 460px)`) are strong; reduced-motion handling exists in most modules; native dialogs give focus containment; forms use 16px inputs; and no horizontal overflow showed up at 375px on the public pages.

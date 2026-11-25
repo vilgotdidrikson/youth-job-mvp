@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {auditInventory,readInventory,readReviewedCatalog,mergeReviewedCatalogAdditions,mergeReviewedColumnAdditions} from './check-personal-data-inventory.mjs';
+const catalog=readReviewedCatalog(),inventory=readInventory(),copy=structuredClone;
+assert.deepEqual(auditInventory(catalog,inventory,catalog),[]);
+let passed=1;
+const base={projectRef:'qa',relations:[{schema_name:'public',table_name:'existing'}],buckets:[{id:'existing'}]},addition={mode:'additions-only',projectRef:'qa',capturedOn:'2026-10-30',relations:[{schema_name:'private',table_name:'added'}],buckets:[{id:'added'}]};
+assert.equal(mergeReviewedCatalogAdditions(base,addition).relations.length,2);assert.equal(base.relations.length,1);passed++;
+for(const mode of ['relation','bucket','project','mode']){const next=copy(addition);if(mode==='relation')next.relations=[base.relations[0]];if(mode==='bucket')next.buckets=[base.buckets[0]];if(mode==='project')next.projectRef='other';if(mode==='mode')next.mode='replace';assert.throws(()=>mergeReviewedCatalogAdditions(base,next));passed++;}
+const colBase={projectRef:'qa',relations:[{schema_name:'private',table_name:'events',columns:[{name:'id',type:'uuid'}]}]},colPatch={mode:'column-additions-only',projectRef:'qa',capturedOn:'2026-11-17',relations:[{schema_name:'private',table_name:'events',columns:[{name:'review_after',type:'timestamp with time zone'}]}]};
+assert.equal(mergeReviewedColumnAdditions(colBase,colPatch).relations[0].columns.length,2);assert.equal(colBase.relations[0].columns.length,1);passed++;
+for(const mode of ['replace','unknown','duplicate','malformed','extra','project']){const c=copy(colPatch);if(mode==='replace')c.relations[0].columns=[{name:'id',type:'text'}];if(mode==='unknown')c.relations[0].table_name='unknown';if(mode==='duplicate')c.relations.push(copy(c.relations[0]));if(mode==='malformed')c.relations[0].columns=[{name:'missing-type'}];if(mode==='extra')c.relations[0].rls_enabled=false;if(mode==='project')c.projectRef='wrong';assert.throws(()=>mergeReviewedColumnAdditions(colBase,c));passed++;}
+const rejects=(change,pattern)=>{const c=copy(catalog),i=copy(inventory);change(c,i);assert.match(auditInventory(c,i,catalog).join('\n'),pattern);passed++;};
+rejects(c=>c.relations.push({...copy(c.relations[0]),table_name:'new_private_ai_history'}),/Unclassified relation/);
+rejects(c=>c.relations[0].columns.push({name:'new_private_notes',type:'jsonb'}),/New\/changed column/);
+rejects(c=>c.relations[0].columns[0].type='text',/New\/changed column/);
+rejects(c=>c.relations[0].columns.pop(),/Removed column/);
+rejects(c=>c.relations.shift(),/Missing relation/);
+rejects(c=>c.relations[0].foreign_keys.push('FOREIGN KEY (id) REFERENCES other_accounts(id)'),/Ownership\/foreign keys changed/);
+rejects(c=>c.relations[0].rls_enabled=!c.relations[0].rls_enabled,/RLS changed/);
+rejects(c=>c.relations[0].relkind='v',/Relation kind/);
+rejects(c=>c.buckets[0].public=!c.buckets[0].public,/Bucket visibility/);
+rejects(c=>c.buckets.push({id:'new-export-packages',public:false}),/Unclassified bucket/);
+rejects(c=>c.buckets.pop(),/Missing bucket/);
+rejects((c,i)=>i.groups[0].relations.push(i.groups[1].relations[0]),/Duplicate classification/);
+rejects((c,i)=>i.groups[0].relations.shift(),/Unclassified relation/);
+rejects((c,i)=>i.groups[0].review='',/Malformed/);
+rejects((c,i)=>i.automaticExportEnabled=true,/cannot enable/);
+rejects(c=>c.relations.push(copy(c.relations[0])),/Malformed catalog/);
+rejects(c=>delete c.relations[0].columns,/Malformed catalog/);
+assert.deepEqual(auditInventory({users:[{email:'qa@example.invalid'}]},inventory,catalog),['Malformed catalog metadata; expected relations/columns/foreign_keys and bucket configuration, not data rows.']);passed++;
+// Column/FK ordering is not semantic drift.
+const reordered=copy(catalog);reordered.relations.reverse();for(const r of reordered.relations){r.columns.reverse();r.foreign_keys.reverse();}reordered.buckets.reverse();assert.deepEqual(auditInventory(reordered,inventory,catalog),[]);passed++;
+const missing=spawnSync(process.execPath,['scripts/check-personal-data-inventory.mjs'],{encoding:'utf8'});assert.equal(missing.status,1);assert.match(missing.stderr,/Usage/);passed++;
+console.log(`PASS ${passed} inventory/drift checks, including new private sources/columns, changed ownership/RLS/types, bucket exposure, deletions, malformed/duplicate inputs, missing CLI input and ordering. Synthetic mutations only; no database writes or user rows.`);

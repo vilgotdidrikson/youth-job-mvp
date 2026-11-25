@@ -1,7 +1,8 @@
-"use client";
+import type { Metadata } from "next";
+import { AuthPage } from "@/components/auth-page";
 
-import LoginPage from "@/app/login/page";
+export const metadata: Metadata = { title: "Skapa konto" };
 
 export default function SignupPage() {
-  return <LoginPage initialMode="signup" />;
+  return <AuthPage initialMode="signup" />;
 }

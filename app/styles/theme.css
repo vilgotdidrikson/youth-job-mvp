@@ -1,5 +1,5 @@
 /*
- * Employo colour system
+ * MatchnWork colour system
  *
  * This is the single source of truth for the UI palette. Adjust a token here
  * to update the shared look of the app without hunting down colour values.
@@ -12,24 +12,268 @@
   --color-surface-rose-strong: #fbd8e2;
   --color-border: #f0d9e0;
 
-  --color-text: #633f4b;
-  --color-text-rgb: 99, 63, 75;
-  --color-text-muted: #896a76;
+  --color-text: #4c303b;
+  --color-text-rgb: 76, 48, 59;
+  --color-black-rgb: 0, 0, 0;
+  --color-white-rgb: 255, 255, 255;
+  --color-canvas-tint-rgb: 255, 250, 251;
+  --color-card-overlay-start-rgb: 40, 20, 30;
+  --color-card-overlay-middle-rgb: 45, 23, 34;
+  --color-card-overlay-end-rgb: 48, 25, 34;
+  --color-card-overlay-solid: #301922;
+  --color-job-detail-illustration-rose: #dc8da7;
+  --color-job-detail-illustration-base: #e7a0b6;
+  --color-discovery-illustration-rose: #e8a0b7;
+  --color-discovery-illustration-base: #ebadbf;
+  --color-job-detail-illustration-light: #f2ccd8;
+  --color-discovery-illustration-light: #f5d5df;
+  /* Darkened from #896a76 so muted body text meets WCAG AA on canvas and rose (DA-06). */
+  --color-text-muted: #7f616d;
+  --color-text-muted-strong: #765563;
+  /* Icons, borders, placeholders and large text only: 3.5:1 on canvas, too light for body text. */
   --color-text-subtle: #a57b88;
+  --color-white: #ffffff;
 
-  --color-brand: #dc6f8d;
-  --color-brand-strong: #ec7598;
-  --color-brand-hover: #d96886;
+  --color-brand: #b84164;
+  --color-brand-strong: #b84164;
+  --color-brand-hover: #a73858;
   --color-brand-soft: #f7c2ce;
   --color-on-brand: #ffffff;
   --color-cream: #ffe0c9;
+  --color-brand-accent: #dc6f8d;
+  --color-brand-on-rose: #9c304f;
+  /* The product's soft pink. --color-surface-soft stays lighter on the marketing pages. */
+  --color-rose: #fce9ef;
+  --color-rose-track: #f4dce5;
+  --color-divider: #f6e4ea;
+  --color-dashed: #e3b9c7;
+  --color-ring: #e7c9d3;
+  --color-plum-900: #241419;
+  --color-backdrop: rgb(36 20 25 / .5);
+  /* The supplied logo's black tile and its corner, relative to the logo size (D07). */
+  --color-logo-mark: #000000;
+  --radius-logo-mark: .25em;
+
+  /* Recognizable software marks in the CV skills picker. */
+  --color-software-excel: #217346;
+  --color-software-word: #2B579A;
+  --color-software-powerpoint: #B7472A;
+  --color-software-react: #087EA4;
+  --color-software-canva: #00A9B5;
+  --color-software-figma: #A259FF;
+  --color-software-photoshop: #1473E6;
+  --color-software-teams: #6264A7;
+  --color-software-slack: #4A154B;
+  --color-software-instagram: #D62976;
+  --color-software-tiktok: #111111;
+  --color-software-google-drive: #4285F4;
 
   --color-success: #21855d;
   --color-success-soft: #eef9f3;
   --color-success-border: #b9e5d7;
+  --color-success-strong: #226a54;
   --color-danger: #c0392b;
   --color-danger-soft: #fff1f0;
   --color-danger-border: #ffd6d3;
+  --color-warning: #7c5b08;
+  --color-warning-soft: #fff5d9;
+  --color-warning-border: #f0c36d;
+  /* Neutral information and the MatchnWork verification mark (DA-04). */
+  --color-info: #36507a;
+  --color-info-soft: #f7f9fc;
+  --color-info-border: #d4dce9;
+
+  /* Existing colours shared by legacy layouts. Prefer semantic tokens in new styles. */
+  --color-legacy-blue-110: #101828;
+  --color-legacy-blue-161: #1f2933;
+  --color-legacy-blue-390: #285b9f;
+  --color-legacy-blue-400: #0066cc;
+  --color-legacy-blue-445: #0071e3;
+  --color-legacy-blue-476: #69808a;
+  --color-legacy-blue-553: #80929a;
+  --color-legacy-blue-922: #d7e6ff;
+  --color-legacy-blue-975: #f2f7ff;
+  --color-legacy-green-255: #176b3a;
+  --color-legacy-green-300: #26734d;
+  --color-legacy-green-312: #495650;
+  --color-legacy-green-349: #52605a;
+  --color-legacy-green-435: #69756f;
+  --color-legacy-green-820: #bce6cc;
+  --color-legacy-green-847: #d3ded2;
+  --color-legacy-green-873: #d7e6df;
+  --color-legacy-green-875: #d7e7db;
+  --color-legacy-green-902: #e7eddf;
+  --color-legacy-green-933: #e8f4ed;
+  --color-legacy-green-941: #e8f8f1;
+  --color-legacy-green-945: #e8faf0;
+  --color-legacy-green-961: #effbf3;
+  --color-legacy-neutral-67: #111111;
+  --color-legacy-neutral-75: #141214;
+  --color-legacy-neutral-78: #0f1915;
+  --color-legacy-neutral-98: #141e1c;
+  --color-legacy-neutral-106: #1f1a17;
+  --color-legacy-neutral-118: #1d1d1f;
+  --color-legacy-neutral-200: #333333;
+  --color-legacy-neutral-271: #454545;
+  --color-legacy-neutral-290: #4a4a4a;
+  --color-legacy-neutral-322: #525252;
+  --color-legacy-neutral-324: #515154;
+  --color-legacy-neutral-333: #555555;
+  --color-legacy-neutral-359: #56615d;
+  --color-legacy-neutral-371: #59645f;
+  --color-legacy-neutral-400: #666666;
+  --color-legacy-neutral-441: #6e6e73;
+  --color-legacy-neutral-445: #6c7773;
+  --color-legacy-neutral-451: #737373;
+  --color-legacy-neutral-641: #a1a1a6;
+  --color-legacy-neutral-829: #cfd8d0;
+  --color-legacy-neutral-833: #d2d2d7;
+  --color-legacy-neutral-847: #d4dcda;
+  --color-legacy-neutral-851: #d9ded4;
+  --color-legacy-neutral-857: #d7dfd6;
+  --color-legacy-neutral-867: #dddddd;
+  --color-legacy-neutral-873: #dce1de;
+  --color-legacy-neutral-876: #dde2de;
+  --color-legacy-neutral-884: #dfe4e1;
+  --color-legacy-neutral-894: #e4e4e4;
+  --color-legacy-neutral-908: #e5e5ea;
+  --color-legacy-neutral-910: #e8e8e8;
+  --color-legacy-neutral-918: #e9ece8;
+  --color-legacy-neutral-918-2: #e8ecea;
+  --color-legacy-neutral-920: #e6efeb;
+  --color-legacy-neutral-920-2: #e8e8ed;
+  --color-legacy-neutral-920-3: #e7eeeb;
+  --color-legacy-neutral-925: #ececec;
+  --color-legacy-neutral-931: #eaf1ee;
+  --color-legacy-neutral-935: #eff2eb;
+  --color-legacy-neutral-935-2: #edf0ee;
+  --color-legacy-neutral-939: #edf2ef;
+  --color-legacy-neutral-941: #f0f0f0;
+  --color-legacy-neutral-947: #f0f3f1;
+  --color-legacy-neutral-949: #f7f4ed;
+  --color-legacy-neutral-949-2: #f2f2f2;
+  --color-legacy-neutral-949-3: #f1f3f2;
+  --color-legacy-neutral-961: #f0faf5;
+  --color-legacy-neutral-961-2: #f5f5f5;
+  --color-legacy-neutral-961-3: #f2f8f5;
+  --color-legacy-neutral-963: #f5f6f5;
+  --color-legacy-neutral-965: #f5f5f7;
+  --color-legacy-neutral-969: #f7f7f7;
+  --color-legacy-neutral-969-2: #f3fbf9;
+  --color-legacy-neutral-978: #fff4f7;
+  --color-legacy-neutral-980: #fafafa;
+  --color-legacy-neutral-982: #fafbfa;
+  --color-legacy-neutral-984: #fff7fb;
+  --color-legacy-neutral-984-2: #f7faff;
+  --color-legacy-neutral-988: #fffdf9;
+  --color-legacy-neutral-988-2: #f9fff9;
+  --color-legacy-orange-196: #3a302a;
+  --color-legacy-orange-271: #8a4b00;
+  --color-legacy-orange-384: #6b6259;
+  --color-legacy-orange-624: #e89d56;
+  --color-legacy-orange-635: #f2a852;
+  --color-legacy-orange-690: #f3b66d;
+  --color-legacy-orange-700: #f2b973;
+  --color-legacy-orange-733: #efc687;
+  --color-legacy-orange-769: #cfc7b9;
+  --color-legacy-orange-825: #e8d4bd;
+  --color-legacy-orange-894: #ece7dc;
+  --color-legacy-orange-918: #f2ede2;
+  --color-legacy-orange-941: #f9f2e7;
+  --color-legacy-orange-955: #fff8e8;
+  --color-legacy-orange-957: #fff8e9;
+  --color-legacy-red-394: #9f332a;
+  --color-legacy-red-400: #b42318;
+  --color-legacy-red-425: #a53e34;
+  --color-legacy-red-859: #f3c9c3;
+  --color-legacy-red-971: #fff3f0;
+  --color-legacy-rose-143: #2c1d21;
+  --color-legacy-rose-318: #633f4b;
+  --color-legacy-rose-371: #8c315e;
+  --color-legacy-rose-378: #9d2453;
+  --color-legacy-rose-786: #e3aec3;
+  --color-legacy-rose-833: #f0b9d4;
+  --color-legacy-rose-892: #f0d7e4;
+  --color-legacy-rose-916: #f4dfe5;
+  --color-legacy-rose-918: #f8dce5;
+  --color-legacy-rose-971: #fff0f7;
+  --color-legacy-rose-973: #fff1f5;
+  --color-legacy-rose-973-2: #fff1f6;
+  --color-legacy-teal-108: #14231f;
+  --color-legacy-teal-120: #172621;
+  --color-legacy-teal-163: #16343d;
+  --color-legacy-teal-175: #26332e;
+  --color-legacy-teal-200: #164b50;
+  --color-legacy-teal-208: #00616a;
+  --color-legacy-teal-229: #34413c;
+  --color-legacy-teal-239: #2b4f4f;
+  --color-legacy-teal-241: #2d4e4a;
+  --color-legacy-teal-255: #007782;
+  --color-legacy-teal-261: #28515d;
+  --color-legacy-teal-261-2: #236249;
+  --color-legacy-teal-261-3: #2e574e;
+  --color-legacy-teal-269: #38514a;
+  --color-legacy-teal-269-2: #2d5c4d;
+  --color-legacy-teal-280: #3e514b;
+  --color-legacy-teal-300: #365b63;
+  --color-legacy-teal-333: #4e5c57;
+  --color-legacy-teal-351: #49636a;
+  --color-legacy-teal-363: #4a6f61;
+  --color-legacy-teal-369: #457377;
+  --color-legacy-teal-390: #536d74;
+  --color-legacy-teal-394: #587170;
+  --color-legacy-teal-416: #58747c;
+  --color-legacy-teal-418: #64716d;
+  --color-legacy-teal-420: #65716d;
+  --color-legacy-teal-433: #61777c;
+  --color-legacy-teal-435: #63777b;
+  --color-legacy-teal-443: #6b7772;
+  --color-legacy-teal-455: #687d80;
+  --color-legacy-teal-469: #6d8082;
+  --color-legacy-teal-473: #71807b;
+  --color-legacy-teal-486: #6e868a;
+  --color-legacy-teal-571: #8a9997;
+  --color-legacy-teal-588: #73aab9;
+  --color-legacy-teal-671: #8dc0c9;
+  --color-legacy-teal-704: #a9bdbe;
+  --color-legacy-teal-753: #a7d9d5;
+  --color-legacy-teal-814: #bfdae0;
+  --color-legacy-teal-933: #e7f5f4;
+  --color-legacy-teal-953: #edf9f7;
+
+  /* Type, weight, shape and elevation scale (DA-05). New and touched CSS uses only these values. */
+  --text-xs: .75rem;   /* 12px, the minimum for visible text */
+  --text-sm: .875rem;  /* 14px */
+  --text-md: 1rem;     /* 16px, body and every input (avoids iOS zoom) */
+  --text-lg: 1.25rem;
+  --text-xl: 1.6rem;
+  --text-2xl: clamp(1.9rem, 4vw, 2.6rem);
+  --text-display: clamp(2.6rem, 7vw, 4.5rem);
+  --tracking-tight: -.04em;
+  --tracking-display: -.055em;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --radius-sm: 10px;
+  --radius-md: 14px;   /* buttons, inputs */
+  --radius-lg: 22px;   /* cards */
+  --radius-xl: 28px;   /* hero cards, dialogs */
+  --radius-pill: 999px;
+  /* rgba() with commas: --color-text-rgb is comma-separated, so the slash syntax made both shadows invalid. */
+  --shadow-sm: 0 5px 20px rgba(var(--color-text-rgb), .03);
+  --shadow-md: 0 18px 32px rgba(var(--color-text-rgb), .09);
+  --shadow-dialog: 0 20px 80px rgba(var(--color-text-rgb), .2);
+
+  /* Shared page frame for signed-in product views (D08). */
+  --page-width: 1060px;        /* single-column views: discover, applications, profile, notifications */
+  --page-width-wide: 1180px;   /* deliberate two-column workspaces: chat and the company workspace */
+  --page-gutter: 32px;
+  --page-gutter-tablet: 24px;  /* 721–900px */
+  --page-top: 122px;           /* clears the 88px desktop navigation */
+  --page-width-mobile: 480px;
+  --page-gutter-mobile: 18px;
+  --page-top-mobile: 24px;
 
   /* Existing component aliases, kept while the app is gradually refactored. */
   --bg: var(--color-canvas);

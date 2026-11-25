@@ -1,5 +1,6 @@
 "use client";
 
+import { uploadedCvPath } from "./cv-document-path";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import type {
@@ -9,6 +10,8 @@ import type {
   SaveYouthProfileInput,
   YouthProfile,
 } from "@/lib/types";
+import { reviewedCvPayload, cvReviewSnapshot, syncRecruitmentCvLanguages } from "./cv-fact-review";
+import { contactProfilePayload } from "./contact-profile";
 import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
 
 const ONBOARDING_QUESTIONS = [
@@ -68,8 +71,7 @@ export async function getOrCreateOnboardingSession(): Promise<OnboardingSession>
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to fetch onboarding session.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   if (data && !data.completed_at && data.status !== "completed") {
@@ -86,8 +88,7 @@ export async function getOrCreateOnboardingSession(): Promise<OnboardingSession>
     .single();
 
   if (createError) {
-    console.error("Failed to create onboarding session.", createError);
-    throw new Error(createError.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 
   return created as OnboardingSession;
@@ -102,8 +103,7 @@ export async function getOnboardingMessages(sessionId: string): Promise<Onboardi
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Failed to fetch onboarding messages.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
@@ -128,8 +128,7 @@ export async function addOnboardingMessage(
   });
 
   if (error) {
-    console.error("Failed to add onboarding message.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 }
 
@@ -144,8 +143,7 @@ export async function completeOnboardingSession(sessionId: string): Promise<void
     .eq("id", sessionId);
 
   if (error) {
-    console.error("Failed to complete onboarding session.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 }
 
@@ -159,8 +157,7 @@ export async function getYouthProfile(userId?: string): Promise<YouthProfile | n
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to fetch youth profile.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte läsa uppgifterna.");
   }
 
   return (data ?? null) as YouthProfile | null;
@@ -170,6 +167,12 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
   const user = await requireYouthUser();
   const supabase = getSupabaseClient();
   const existing = await getYouthProfile(user.id);
+  if (payload.cv_structured && existing) {
+    for (const key of ["cv_structured", "cv_text", "languages", "work_experience", "education", "strengths", "certificates", "extracurriculars"]) {
+      if (!(key in existing)) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+    }
+    if ("recruitment_profile" in existing) payload = { ...payload, recruitment_profile: syncRecruitmentCvLanguages(existing.recruitment_profile, existing.cv_structured, payload.cv_structured) } as SaveYouthProfileInput;
+  }
   const writablePayload = pickWritableKeys(
     {
       user_id: user.id,
@@ -189,8 +192,7 @@ async function persistYouthProfile(payload: SaveYouthProfileInput): Promise<Yout
   const { data, error } = await query;
 
   if (error) {
-    console.error("Failed to save youth profile.", error);
-    throw new Error(error.message);
+    throw new Error("Kunde inte spara uppgifterna.");
   }
 
   return data as YouthProfile;
@@ -206,6 +208,26 @@ export function normalizeFullName(value: string | null | undefined): string {
 
 export const MISSING_FULL_NAME_MESSAGE = "Skriv ditt fullständiga namn för att fortsätta.";
 
+export async function saveReviewedCvToProfile(text: string, cv: StructuredCvData, approval: string | null, generatedDocument?: import("./types").YouthDocument): Promise<YouthProfile> {
+  const payload = reviewedCvPayload(text, cv, approval);
+  const user = await requireYouthUser();
+  const existing = await getYouthProfile(user.id);
+  if (!existing) throw new Error("Profilen kunde inte hämtas. Din text finns kvar.");
+  for (const key of Object.keys(payload)) if (!(key in existing)) throw new Error("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+  const documents = (Array.isArray(existing.documents) ? existing.documents : []).filter((doc) => doc.type !== "generated_cv");
+  if (generatedDocument) documents.push(generatedDocument);
+  const client = getSupabaseClient();
+  const { data, error } = await client.from("youth_profiles").update({ ...payload, documents,
+    ...("recruitment_profile" in existing ? { recruitment_profile: syncRecruitmentCvLanguages(existing.recruitment_profile, existing.cv_structured, cv) } : {}),
+  }).eq("user_id", user.id).select("*").single();
+  if (error || !data) throw new Error("Kunde inte spara CV och profilfakta.");
+  return data as YouthProfile;
+}
+
+export async function saveYouthContactDetails(input: {name:string;dateOfBirth:string;address:string;postalCode:string;city:string}): Promise<YouthProfile> {
+  return persistYouthProfile(contactProfilePayload(input));
+}
+
 export async function saveYouthProfileDraft(input: {
   name: string;
   dateOfBirth: string;
@@ -219,18 +241,17 @@ export async function saveYouthProfileDraft(input: {
   certificates: string;
   extracurriculars: string;
 }): Promise<YouthProfile> {
+  const existing = await getYouthProfile();
+  // CV facts are edited and approved together in the CV editor. Account edits
+  // must not overwrite them with a stale copy of the separate profile form.
+  const cvFacts = existing?.cv_text?.trim() ? {} : { strengths: input.skills, work_experience: splitListFromText(input.experience), education: splitListFromText(input.education), languages: splitListFromText(input.languages), certificates: input.certificates || null, extracurriculars: input.extracurriculars || null };
   return persistYouthProfile({
     full_name: normalizeFullName(input.name) || null,
     date_of_birth: input.dateOfBirth || null,
     address: input.address || null,
     postal_code: input.postalCode || null,
     city: input.city || null,
-    strengths: input.skills,
-    work_experience: splitListFromText(input.experience),
-    education: splitListFromText(input.education),
-    languages: splitListFromText(input.languages),
-    certificates: input.certificates || null,
-    extracurriculars: input.extracurriculars || null,
+    ...cvFacts,
   });
 }
 
@@ -242,27 +263,16 @@ export async function saveYouthAccountDetails(input: {
   postal_code: string;
   additional_addresses: Array<{ city: string; address: string; postal_code: string }>;
 }): Promise<YouthProfile> {
-  // Validated here as well as in the form: the profile is written straight to
-  // Supabase, so this is the last gate before a nameless row is persisted.
-  const fullName = normalizeFullName(input.full_name);
-  if (!fullName) throw new Error(MISSING_FULL_NAME_MESSAGE);
-
-  const birthDate = new Date(`${input.date_of_birth}T00:00:00`);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const birthdayHasPassed =
-    today.getMonth() > birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
-  if (!birthdayHasPassed) age -= 1;
-
+  if (!input.date_of_birth) throw new Error("Ange ditt födelsedatum.");
   return persistYouthProfile({
-    full_name: fullName,
-    date_of_birth: input.date_of_birth,
-    address: input.address.trim(),
-    city: input.city.trim(),
-    postal_code: input.postal_code.trim(),
+    ...contactProfilePayload({
+      name: input.full_name,
+      dateOfBirth: input.date_of_birth,
+      address: input.address,
+      city: input.city,
+      postalCode: input.postal_code,
+    }),
     additional_addresses: input.additional_addresses,
-    age: Number.isFinite(age) && age >= 0 ? age : null,
     onboarding_completed: false,
   });
 }
@@ -349,18 +359,26 @@ export async function saveVoiceCvToProfile(input: StructuredCvData): Promise<You
 }
 
 export async function saveUploadedCvToProfile(document: import("./types").YouthDocument): Promise<YouthProfile> {
-  const existing = await getYouthProfile();
-  const documents = [
-    ...((existing?.documents ?? []).filter((item) => item.type !== "cv")),
-    document,
-  ];
-
-  return persistYouthProfile({
-    documents,
-    cv_uploaded: true,
-    onboarding_completed: true,
-    cv_generated: false,
-  });
+  const user = await requireYouthUser();
+  const path = document && uploadedCvPath([document], user.id);
+  if (!document || document.type !== "cv" || !path || path !== document.url || /[?#%\x00-\x1f]/.test(document.url)) {
+    throw new Error("Välj en PDF som du har laddat upp till ditt eget konto.");
+  }
+  const client = getSupabaseClient();
+  const { data: file, error: fileError } = await client.storage.from("youth-documents").info(document.url);
+  if (fileError || !file || file.contentType !== "application/pdf" || !Number.isSafeInteger(file.size) || !file.size || file.size > 5 * 1024 * 1024) {
+    throw new Error("PDF-filen kunde inte verifieras. Ladda upp filen igen.");
+  }
+  const existing = await getYouthProfile(user.id);
+  const current = await getCurrentUser();
+  if (!existing || current?.id !== user.id) throw new Error("Kontot har ändrats. Öppna CV-sidan igen.");
+  const documents = [...((existing.documents ?? []).filter(item => item.type !== "cv")), document];
+  // Never let a session switch retarget this write to the new account.
+  const { data, error } = await client.from("youth_profiles").update({
+    documents, cv_uploaded: true, onboarding_completed: true, cv_generated: false,
+  }).eq("user_id", user.id).select("*").single();
+  if (error || !data || data.user_id !== user.id) throw new Error("CV:t kunde inte sparas. Filen finns kvar. Försök igen.");
+  return data as YouthProfile;
 }
 
 export async function completeYouthOnboarding(input: {
@@ -404,5 +422,6 @@ export async function completeYouthOnboarding(input: {
     onboarding_completed: true,
     cv_generated: (input.cv_text ?? "").trim().length > 0,
     cv_uploaded: input.cv_uploaded ?? false,
+    ...(input.cv_structured && input.cv_text ? reviewedCvPayload(input.cv_text, input.cv_structured, cvReviewSnapshot(input.cv_text, input.cv_structured)) : {}),
   });
 }

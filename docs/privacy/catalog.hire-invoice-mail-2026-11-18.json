@@ -1,0 +1,51 @@
+{
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-18",
+  "mode": "additions-only",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "invoice_id",
+          "type": "uuid"
+        },
+        {
+          "name": "recipient",
+          "type": "text"
+        },
+        {
+          "name": "state",
+          "type": "text"
+        },
+        {
+          "name": "attempts",
+          "type": "integer"
+        },
+        {
+          "name": "available_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "lease_token",
+          "type": "uuid"
+        },
+        {
+          "name": "lease_until",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "sent_at",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "hire_test_invoice_mail",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (invoice_id) REFERENCES private.hire_test_invoices(id) ON DELETE CASCADE"
+      ]
+    }
+  ],
+  "buckets": []
+}

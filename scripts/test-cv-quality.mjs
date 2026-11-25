@@ -51,9 +51,10 @@ if (process.argv.includes("--live")) {
   mkdirSync("tmp/voice-quality", { recursive: true });
   writeFileSync("tmp/voice-quality/sample-cv.txt", rendered);
   console.log(`PASS live CV: two employers, education, languages, no invented merits (${Date.now() - started} ms)`);
-  const decision = await client.responses.create({ model: process.env.OPENAI_VOICE_INTERVIEW_MODEL ?? "gpt-4o-mini", store: false, instructions: INTERVIEW_INSTRUCTIONS,
+  const { openaiResponseOptions, currentRealtimeModel } = require("../lib/openai-config.ts");
+  const decision = await client.responses.create({ ...openaiResponseOptions(1200, process.env.OPENAI_VOICE_INTERVIEW_MODEL), instructions: INTERVIEW_INSTRUCTIONS,
     input: JSON.stringify({ source, conversation, questions: INTERVIEW_QUESTIONS, allowed: INTERVIEW_QUESTIONS.map((q) => q.id) }),
-    text: { format: { type: "json_schema", name: "coverage_test", strict: true, schema: interviewDecisionSchema(INTERVIEW_QUESTIONS.map((question) => question.id)) } }, max_output_tokens: 1200, temperature: 0 });
+    text: { format: { type: "json_schema", name: "coverage_test", strict: true, schema: interviewDecisionSchema(INTERVIEW_QUESTIONS.map((question) => question.id)) } } });
   const result = JSON.parse(decision.output_text);
   for (const id of ["work_employer_role", "work_tasks", "work_period", "education_overview", "education_program", "languages_overview", "merits_overview"]) assert(result.coverage[id], `Missing cross-area coverage: ${id}`);
   assert(!result.coverage[result.next_question_id], "Next question already answered");
@@ -73,12 +74,13 @@ if (process.argv.includes("--live")) {
   writeFileSync("tmp/voice-quality/first-job-cv.txt", renderStructuredCv(firstCv));
   console.log("PASS live first job: school project and team captain retained; corrections respected");
   const speechStarted = Date.now();
-  const speech = await client.audio.speech.create({ model: "gpt-4o-mini-tts", voice: "marin", input: INTERVIEW_QUESTIONS[0].text, instructions: "Tala svenska med naturligt svenskt uttal. Varm och tydlig samtalston. Jämnt, ledigt tempo.", response_format: "mp3", speed: 1.05 });
-  const bytes = Buffer.from(await speech.arrayBuffer());
+  const { synthesizeQuestion } = require("../lib/realtime-speech.ts");
+  const bytes = Buffer.from(await synthesizeQuestion(INTERVIEW_QUESTIONS[0].text, currentRealtimeModel(process.env.OPENAI_SPEECH_MODEL, true), process.env.OPENAI_API_KEY));
   assert(bytes.length > 1000);
-  writeFileSync("tmp/voice-quality/question.mp3", bytes);
+  writeFileSync("tmp/voice-quality/question.wav", bytes);
   const { toFile } = await import("openai/uploads");
-  const heard = await client.audio.transcriptions.create({ file: await toFile(bytes, "question.mp3", { type: "audio/mpeg" }), model: "gpt-4o-mini-transcribe", language: "sv" });
+  const transcriptionRequest = { file: await toFile(bytes, "question.wav", { type: "audio/wav" }), model: "gpt-transcribe" };
+  const heard = await client.audio.transcriptions.create(transcriptionRequest, { body: { ...transcriptionRequest, languages: ["sv"] } });
   assert(/egenskaper/i.test(heard.text));
   console.log(`PASS live Swedish speech round trip (${Date.now() - speechStarted} ms, ${bytes.length} bytes)`);
 }

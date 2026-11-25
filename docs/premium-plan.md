@@ -1,5 +1,9 @@
 # Plan: Phase 5 — premium-backend utan betalning
 
+> Historisk plan före implementationen. För aktuellt läge, se `premium-testing.md`.
+> Premium-backenden är nu implementerad. Gränsen på en aktiv annons per företag
+> togs bort i DEV 2026-10-07 på användarens begäran.
+
 ## Avgränsning och nuläge
 
 Den här fasen bygger **premiumrättigheter**, inte betalning, fakturor, priser i

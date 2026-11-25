@@ -251,15 +251,11 @@ export default function CvBuilderPage() {
         <h1 className="text-2xl font-semibold text-[#132742]">{t.title}</h1>
         <p className="mt-2 text-sm text-[#3f5f82]">{t.subtitle}</p>
 
-        <div className="mt-4 space-y-2 rounded-2xl bg-[#f7fbff] p-3">
+        <div className="cv-builder-conversation">
           {turns.map((turn) => (
             <div
               key={turn.id}
-              className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm ${
-                turn.role === "assistant"
-                  ? "bg-white text-[#2e4f75]"
-                  : "ml-auto bg-[#e7f1ff] text-[#113f72]"
-              }`}
+              className={`cv-builder-turn${turn.role === "assistant" ? "" : " is-youth"}`}
             >
               {turn.text}
             </div>

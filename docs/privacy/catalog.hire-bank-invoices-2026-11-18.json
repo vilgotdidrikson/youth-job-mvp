@@ -1,0 +1,124 @@
+{
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-18",
+  "mode": "additions-only",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "match_id",
+          "type": "uuid"
+        },
+        {
+          "name": "company_user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "buyer_name",
+          "type": "text"
+        },
+        {
+          "name": "buyer_org",
+          "type": "text"
+        },
+        {
+          "name": "address_line1",
+          "type": "text"
+        },
+        {
+          "name": "address_line2",
+          "type": "text"
+        },
+        {
+          "name": "postal_code",
+          "type": "text"
+        },
+        {
+          "name": "city",
+          "type": "text"
+        },
+        {
+          "name": "recipient",
+          "type": "text"
+        },
+        {
+          "name": "accepted_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "terms_version",
+          "type": "text"
+        },
+        {
+          "name": "terms_text",
+          "type": "text"
+        },
+        {
+          "name": "seller",
+          "type": "jsonb"
+        },
+        {
+          "name": "amount_ore",
+          "type": "integer"
+        },
+        {
+          "name": "invoice_number",
+          "type": "text"
+        },
+        {
+          "name": "issued_on",
+          "type": "date"
+        },
+        {
+          "name": "due_on",
+          "type": "date"
+        },
+        {
+          "name": "held_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "paid_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "payment_reference",
+          "type": "text"
+        },
+        {
+          "name": "mail_state",
+          "type": "text"
+        },
+        {
+          "name": "mail_attempts",
+          "type": "integer"
+        },
+        {
+          "name": "mail_available_at",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "mail_lease",
+          "type": "uuid"
+        },
+        {
+          "name": "mail_lease_until",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "relkind": "r",
+      "table_name": "hire_bank_invoices",
+      "rls_enabled": true,
+      "schema_name": "private",
+      "foreign_keys": [
+        "FOREIGN KEY (company_user_id) REFERENCES company_profiles(user_id) ON DELETE SET NULL",
+        "FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE SET NULL"
+      ]
+    }
+  ],
+  "buckets": []
+}

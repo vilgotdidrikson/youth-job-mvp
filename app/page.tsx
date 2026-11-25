@@ -1,17 +1,192 @@
-import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { PrelaunchSignup } from "@/components/prelaunch-signup";
-import "./prelaunch.css";
+import { MarketingNav } from "@/components/marketing-nav";
+import { MarketingFooter } from "@/components/marketing-footer";
+import Velaris from "@/components/ui/velaris";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { Reveal } from "@/components/ui/reveal";
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+import { VerticalTimeline, type TimelineStep } from "@/components/ui/vertical-timeline";
+import { PlatformShowcase, type PlatformItem } from "@/components/ui/platform-showcase";
+import { AiVisual, MatchVisual, ChatVisual, MapVisual, EverywhereVisual } from "@/components/ui/platform-visuals";
+import { LandingActions, LandingHero } from "./landing-hero";
+import "./landing.css";
+
+export const metadata: Metadata = {
+  title: { absolute: "MatchnWork" },
+};
+
+const LANDING_BG_COLORS = ["#f7c2ce", "#ec7598", "#dc6f8d", "#ffffff"];
+
+interface StatItem {
+  value: number;
+  decimals: number;
+  suffix: string;
+  label: string;
+  note: string;
+}
+
+const stats: StatItem[] = [
+  {
+    value: 24.9,
+    decimals: 1,
+    suffix: "%",
+    label: "ungdomsarbetslöshet i Sverige",
+    note: "juni 2026 · EU-snitt: 15,4 %",
+  },
+  {
+    value: 206500,
+    decimals: 0,
+    suffix: "",
+    label: "unga (15–24 år) utan jobb",
+    note: "maj 2026",
+  },
+];
+
+const steps: TimelineStep[] = [
+  {
+    number: "01",
+    title: "Skapa konto och utforska",
+    body: "Börja med några grunduppgifter och upptäck jobb. Skapa eller ladda upp ditt CV när du vill söka.",
+  },
+  {
+    number: "02",
+    title: "Swipea och hitta jobb",
+    body: "Bläddra bland jobb nära dig, swipea och visa intresse för roller som passar.",
+  },
+  {
+    number: "03",
+    title: "Ni har matchat",
+    body: "Matcha, börja chatta med företaget och ta nästa steg mot en intervju.",
+  },
+];
+
+const platformItems: PlatformItem[] = [
+  {
+    id: "ai",
+    icon: "✦",
+    title: "Stöd när du söker jobb",
+    body: "Vår AI hjälper dig skriva CV och ställer kompletteringsfrågor när en ansökan saknar uppgifter.",
+    visual: <AiVisual />,
+  },
+  {
+    id: "match",
+    icon: "◎",
+    title: "Matchning åt båda håll",
+    body: "Både du och företaget väljer vem ni vill prata med – ingen ansökan försvinner i tystnad.",
+    visual: <MatchVisual />,
+  },
+  {
+    id: "chat",
+    icon: "◈",
+    title: "Trygg chatt",
+    body: "Prata direkt i appen. Du delar aldrig mer än du själv vill, när du själv vill.",
+    visual: <ChatVisual />,
+  },
+  {
+    id: "map",
+    icon: "⌖",
+    title: "Jobb nära dig",
+    body: "Se lediga roller på kartan och upptäck möjligheter i ditt eget område.",
+    visual: <MapVisual />,
+  },
+  {
+    id: "everywhere",
+    icon: "▤",
+    title: "Mobil och dator",
+    body: "Använd MatchnWork i webbläsaren på mobilen eller datorn.",
+    visual: <EverywhereVisual />,
+  },
+];
+
+const HERO_ID = "landing-hero";
+
+const copy = {
+  eyebrow: ["Jobbappen som matchar unga", "med arbetsgivare"] as const,
+  primary: "Kom igång",
+  secondary: "För företag",
+  statsHeading: "Ett verkligt problem",
+  statsSource: "Källa: SCB / Ekonomifakta",
+  platformTitleStart: "En plattform, ",
+  platformTitleAccent: "hela vägen",
+  platformSub: "MatchnWork samlar jobbsökande, ansökningar och kontakt med arbetsgivaren. Lön och anställningsvillkor hanterar du med arbetsgivaren.",
+  howTitle: "Tre steg. Inget krångel.",
+  manifesto: "Potential syns inte alltid i ett tomt CV.",
+  manifestoSub: "Därför hjälper MatchnWork unga att visa vem de är – och företag att se mer än bara tidigare erfarenhet.",
+};
 
 export default function Home() {
-  return <main className="pl-page pl-signup-first">
-    <section className="pl-first-screen" aria-label="Intresseanmälan">
-      <a href="/" aria-label="MatchnWork startsida" className="pl-logo"><span className="pl-logo-box"><Image src="/brand/matchnwork-logo.png" alt="" width={44} height={44} priority /></span><span>matchnwork<span className="pl-brand-dot">.</span></span></a>
-      <PrelaunchSignup />
-      <a className="pl-scroll-info" href="#om-matchnwork">Lär känna MatchnWork <span>↓</span></a>
-    </section>
-    <section className="pl-about" id="om-matchnwork"><div className="pl-about-heading"><span className="pl-eyebrow">POTENTIAL FÖRTJÄNAR EN CHANS</span><h2>Ditt första jobb.<br /><em>Er nästa medarbetare.</em></h2><p>MatchnWork för samman unga från 15 år som vill jobba med företag som ser möjligheter. En enklare väg till extrajobb, sommarjobb och nya kollegor.</p></div><div className="pl-about-details"><article><span>01 / UPPTÄCK</span><h3>Hitta något som passar.</h3><p>Unga upptäcker jobb nära sig. Företag visar vilka de är och vem de söker.</p></article><article><span>02 / VISA INTRESSE</span><h3>Mer än ett tomt CV.</h3><p>Personlighet, tillgänglighet och erfarenheter får ta plats i ansökan.</p></article><article><span>03 / TA KONTAKT</span><h3>Börja med ett hej.</h3><p>En direkt kontakt mellan kandidat och företag gör nästa steg enklare.</p></article></div></section>
-    <section className="pl-demo-invite"><div><span className="pl-eyebrow">NYFIKEN PÅ HUR DET FUNKAR?</span><h2>Ta en liten <em>förhandstitt.</em></h2><p>Testa upplevelsen som ungdom eller företag i vår interaktiva demo.</p></div><Link href="/demo" className="pl-button">Testa demon <span>↗</span></Link></section>
-    <footer className="pl-footer"><a href="/" className="pl-footer-brand">matchnwork<span>.</span></a><p>Potential förtjänar en chans.</p><div><Link href="/launch-privacy">Integritet</Link><a href="mailto:info@matchnwork.se">Kontakt ↗</a><span>© 2026 MatchnWork UF</span></div></footer>
-  </main>;
+  return (
+    <main className="landing-page landing-bold">
+      {/* The scroll animations start hidden and are revealed by JavaScript. */}
+      <noscript>
+        <style>{".reveal,.text-generate-word{opacity:1;filter:none;transform:none}"}</style>
+      </noscript>
+      <Velaris
+        className="fixed inset-0 -z-10"
+        height="100vh"
+        bg="#ffffff"
+        colors={LANDING_BG_COLORS}
+        pauseOutsideId={HERO_ID}
+      />
+
+      <MarketingNav />
+
+      <LandingHero id={HERO_ID} eyebrow={copy.eyebrow} primary={copy.primary} secondary={copy.secondary} />
+
+      <div className="landing-bold-body">
+        <div className="landing-bold-actions"><Link href="/jobb" className="landing-bold-secondary">Se ett urval av lediga jobb</Link></div>
+        <section className="landing-bold-stats">
+          <div className="landing-bold-stats-heading">
+            <h2>
+              <TextGenerateEffect words={copy.statsHeading} />
+            </h2>
+          </div>
+          <div className="landing-bold-stats-grid">
+            {stats.map((stat) => (
+              <article key={stat.label}>
+                <NumberTicker
+                  value={stat.value}
+                  decimals={stat.decimals}
+                  suffix={stat.suffix}
+                  className="landing-bold-stat-value"
+                />
+                <p>{stat.label}</p>
+                <span className="landing-bold-stat-note">{stat.note}</span>
+              </article>
+            ))}
+          </div>
+          <p className="landing-bold-stats-source">{copy.statsSource}</p>
+        </section>
+
+        <section className="landing-bold-platform">
+          <PlatformShowcase
+            items={platformItems}
+            heading={
+              <>
+                {copy.platformTitleStart}
+                <span className="landing-bold-platform-sweep">{copy.platformTitleAccent}</span>
+              </>
+            }
+            subheading={copy.platformSub}
+          />
+        </section>
+
+        <section className="landing-bold-how">
+          <h2>{copy.howTitle}</h2>
+          <VerticalTimeline steps={steps} />
+        </section>
+
+        <section className="landing-bold-manifesto">
+          <Reveal>
+            <p>{copy.manifesto}</p>
+            <span className="landing-bold-manifesto-sub">{copy.manifestoSub}</span>
+          </Reveal>
+          <LandingActions primary={copy.primary} secondary={copy.secondary} />
+        </section>
+
+        <MarketingFooter />
+      </div>
+    </main>
+  );
 }

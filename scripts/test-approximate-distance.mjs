@@ -1,0 +1,52 @@
+// F26/N19: town-level distance from postal code. Runs the real server module, table and matching source builders.
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire, Module } from 'node:module';
+import path from 'node:path';
+import ts from 'typescript';
+const require = createRequire(import.meta.url);
+for (const extension of ['.ts', '.tsx']) Module._extensions[extension] = (module, file) => module._compile(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true, resolveJsonModule: true } }).outputText, file);
+const load = Module._load;
+Module._load = function (name, ...rest) { return load.call(this, name.startsWith('@/') ? path.resolve(name.slice(2)) : name, ...rest); };
+const { postalPlace, cityPlace, distanceBand, estimatedDistanceLine, matchingDistanceLine } = require('../lib/server/approximate-distance.ts');
+const { candidateSourceDetails, matchingCriteria, assessDisclosedCandidate } = require('../lib/candidate-assessment.ts');
+const { disclosedMatchingSource } = require('../lib/application-disclosure.ts');
+const { emptyRecruitmentProfile } = require('../lib/recruitment-profile.ts');
+const table = require('../lib/server/postal-places-se.json');
+let passed = 0;
+const check = (ok, label) => { assert.ok(ok, label); passed++; };
+const near = (point, lat, lng) => Boolean(point) && Math.abs(point[0] - lat) < 0.05 && Math.abs(point[1] - lng) < 0.05;
+
+check(/GeoNames.*CC BY 4\.0/.test(table.source) && table.ranges.length > 3000 && table.places.length > 1500, 'table carries its source and licence');
+check(table.ranges.every((range, index) => range[0] <= range[1] && (index === 0 || table.ranges[index - 1][1] < range[0]) && range[2] < table.places.length), 'ranges are sorted, disjoint and point at a place');
+check(Object.values(table.names).every(index => Number.isInteger(index) && index < table.places.length), 'name index points at existing places');
+check(near(postalPlace('411 01'), 57.707, 11.967) && near(postalPlace('41101'), 57.707, 11.967) && near(postalPlace(' 411 01 '), 57.707, 11.967), 'postal code resolves to its postal town with or without space');
+check(near(postalPlace('111 20'), 59.33, 18.06) && near(postalPlace('211 20'), 55.6, 13.0), 'Stockholm and Malmö codes resolve');
+for (const value of ['4110', '411011', 'abcde', '', '4 1101', '00000', '09999', null, undefined, 41101, ['41101']]) check(postalPlace(value) === null, `no place for ${JSON.stringify(value)}`);
+check(near(cityPlace('Göteborg'), 57.707, 11.967) && near(cityPlace('  göteborg '), 57.707, 11.967) && near(cityPlace('GÖTEBORG'), 57.707, 11.967), 'city name lookup ignores case and spaces');
+check(cityPlace('QA Teststad') === null && cityPlace('') === null && cityPlace(null) === null && cityPlace('constructor') === null && cityPlace('__proto__') === null, 'unknown or unsafe city names give no place');
+check(distanceBand(0) === 'samma ort eller närområde, under cirka 10 km' && distanceBand(9.9).startsWith('samma ort') && distanceBand(10) === 'cirka 10–25 km' && distanceBand(24.9) === 'cirka 10–25 km' && distanceBand(25) === 'cirka 25–50 km' && distanceBand(50) === 'cirka 50–100 km' && distanceBand(100) === 'över 100 km', 'band boundaries');
+const line = (code, cities) => estimatedDistanceLine(code, cities);
+check(line('411 01', ['Göteborg']).includes('under cirka 10 km') && line('411 01', ['Mölndal']).includes('under cirka 10 km'), 'same or neighbouring town');
+check(line('211 20', ['Lund']).includes('cirka 10–25 km'), 'Malmö to Lund is 10–25 km');
+check(/cirka 10–25 km|cirka 25–50 km/.test(line('411 01', ['Kungsbacka'])), 'Göteborg to Kungsbacka is in a neighbouring band');
+check(line('111 20', ['Uppsala']).includes('cirka 50–100 km'), 'Stockholm to Uppsala is 50–100 km');
+check(line('411 01', ['Stockholm']).includes('över 100 km'), 'Göteborg to Stockholm is over 100 km');
+check(line('411 01', ['Stockholm', 'Mölndal', 'QA Teststad']).includes('under cirka 10 km'), 'nearest known workplace town decides');
+check(line('00000', ['Göteborg']) === null && line('411 01', ['QA Teststad']) === null && line('411 01', []) === null && line('411 01', null) === null && line(null, ['Göteborg']) === null, 'unknown postal code or town gives no line, never a guess');
+const text = line('411 01', ['Kungsbacka']);
+check(text.startsWith('Uppskattat avstånd mellan egen postort och närmaste arbetsort: ') && !/411|Göteborg|Kungsbacka/.test(text), 'the line names neither postal code nor towns');
+check(matchingDistanceLine({ postal_code: '41101', job_context: { workplace_cities: ['Kungsbacka'] } }) === text && matchingDistanceLine({ postal_code: '41101' }) === null && matchingDistanceLine(null) === null && matchingDistanceLine({ postal_code: '41101', job_context: ['x'] }) === null, 'reads postal code and workplace towns from the internal matching input');
+
+// Matching source: the band is added, the postal code and address still never are.
+const internal = { full_name: 'QA Ungdom', address: 'Testgatan 12', postal_code: '41101', cv_text: 'Fiktivt CV. Jag har arbetat i butik.', recruitment_profile: emptyRecruitmentProfile(), job_context: { workplace_cities: ['Kungsbacka'] } };
+const withLine = candidateSourceDetails({ ...internal, estimated_distance_line: matchingDistanceLine(internal) }), without = candidateSourceDetails(internal);
+check(withLine.text.includes(text) && !withLine.text.includes('41101') && !withLine.text.includes('Testgatan'), 'matching text gets the band but not the postal code or address');
+check(!without.text.includes('Uppskattat avstånd') && withLine.status === without.status, 'no line without a computed distance, and the input status is unchanged');
+check(!candidateSourceDetails({ ...internal, estimated_distance_line: null }).text.includes('Uppskattat') && !candidateSourceDetails({ ...internal, estimated_distance_line: 5 }).text.includes('Uppskattat'), 'null or non-text distance is ignored');
+const packet = { version: 1, revision: 1, job_id: 'job', youth_user_id: 'youth', job_title: 'QA', company_name: 'QA', identity: { full_name: 'QA Ungdom', age: 17 }, cv: { text: 'Fiktivt CV. Jag har arbetat i butik.', structured: {}, documents: [] }, practical: { city: 'Göteborg', availability: emptyRecruitmentProfile().availability }, profile_items: [] };
+const criteria = matchingCriteria([{ label: 'Rimligt avstånd till arbetsplatsen', required: false }]), raw = [{ id: 'c0', status: 'fulfilled', evidence: text }];
+check(assessDisclosedCandidate(criteria, raw, withLine.text, disclosedMatchingSource(packet, '', text).text).criteria[0].status === 'fulfilled', 'the band can be quoted to the company when it is in both sources');
+check(assessDisclosedCandidate(criteria, raw, withLine.text, disclosedMatchingSource(packet).text).criteria[0].status === 'unknown', 'without the band in the shared source the company gets no quote');
+check(!disclosedMatchingSource(packet, '', text).text.includes('41101'), 'shared source never contains the postal code');
+console.log(`approximate-distance: ${passed} checks passed`);

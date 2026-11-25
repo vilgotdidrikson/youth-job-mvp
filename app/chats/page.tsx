@@ -1,342 +1,232 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {useSearchParams} from "next/navigation";
+import {NotificationLink} from "@/components/notification-link";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { AuthGateMessage } from "@/components/auth-gate-message";
 import { useCvCompletion } from "@/hooks/use-cv-completion";
-import { getMessages, getMyConversationContacts, getMyConversations, sendMessage, subscribeToConversationMessages } from "@/lib/chat";
-import { getMyMatches } from "@/lib/matching";
-import type { ChatMessage, ConversationSummary } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useConversationRetention } from "@/hooks/use-data-retention";
+import { ConversationRetentionNotice } from "@/components/data-retention-notice";
+import { getMessages, subscribeToConversationMessages } from "@/lib/chat";
+import { readChatInbox, type ChatInboxItem } from "@/lib/chat-inbox";
+import { createChatTextSender } from "@/lib/chat-text-sender";
+import { createLatestRead } from "@/lib/latest-read";
+import { chatRequestKey, isRequestedConversation } from "@/lib/chat-navigation";
+import { RecruitmentPanel } from "@/components/recruitment-panel";
+import { employmentStatusLabel } from "@/lib/recruitment-types";
+import type { ChatMessage, Role } from "@/lib/types";
+import { ReportDialog } from "@/components/report-dialog";
+import { ChatVideoComposer, VideoMessage } from "@/components/chat-video";
+import { blockConversationUser } from "@/lib/moderation";
+import { markMatchNotificationsRead } from "@/lib/notifications";
+import { UiIcon } from "@/components/ui-icon";
+import styles from "./chat.module.css";
+import { chatIsReadOnly } from "@/lib/application-withdrawal";
+import { subscribeVisibleRefresh } from "@/lib/visible-refresh";
 
-interface ConvDisplay {
-  conv: ConversationSummary;
-  otherName: string;
-  jobTitle?: string;
-  status: string;
+const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt pågår", interview: "Intervju", hired: employmentStatusLabel(), rejected: "Avslutad", cancelled: "Avslutad" };
+const initials = (name: string) => name.split(" ").filter(Boolean).slice(0,2).map(word => word[0]).join("").toUpperCase();
+function messageTime(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", { hour:"2-digit", minute:"2-digit" }).format(date); }
+function messageDate(value: unknown) { const date = new Date(String(value ?? "")); return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("sv-SE", {day:"numeric", month:"long"}).format(date); }
+function mergeMessages(a: ChatMessage[], b: ChatMessage[]) {
+  return [...new Map([...a,...b].map(item => [item.id,item])).values()].sort((x,y) => String(x.created_at ?? "").localeCompare(String(y.created_at ?? "")));
 }
 
-type ConversationState = "loading" | "empty" | "data" | "error";
-
-const statusLabels: Record<string, string> = { matched: "Matchad", in_contact: "Kontakt", interview: "Intervju", hired: "Anställd", rejected: "Avvisad", cancelled: "Avslutad" };
-
-export default function ChatsPage() {
+function ChatsPageContent() {
   const { user, profile, status, error: sessionError } = useRequireAuth();
-  const router = useRouter();
+  if(status !== "ready") return <AuthGateMessage status={status} error={sessionError}/>;
+  if(!user || !profile) return <AuthGateMessage status="checking"/>;
+  return <ChatsWorkspace key={user.id} user={user} profile={profile}/>;
+}
+
+function ChatsWorkspace({ user, profile }: { user: { id: string }; profile: { role: Role } }) {
   const { cvCompleted, cvLoading } = useCvCompletion(user?.id, profile?.role === "youth");
-  const [convDisplays, setConvDisplays] = useState<ConvDisplay[]>([]);
-  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [draft, setDraft] = useState("");
-  const [error, setError] = useState("");
-  const [conversationState, setConversationState] = useState<ConversationState>("loading");
-  const bottomRef = useRef<HTMLDivElement>(null);
-
+  const [conversations, setConversations] = useState<ChatInboxItem[]>([]), [selectedId, setSelectedId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{id:string; items:ChatMessage[]}>({id:"",items:[]});
+  const [drafts, setDrafts] = useState<Record<string,string>>({}), [search, setSearch] = useState("");
+  const [listState, setListState] = useState<"loading" | "ready" | "error">("loading"), [loadedId, setLoadedId] = useState("");
+  const [error, setError] = useState(""), [messageError, setMessageError] = useState(""), [sending, setSending] = useState(false);
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const retention = useConversationRetention(selectedId, user?.id);
+  const [blocking, setBlocking] = useState(false);
+  const pageRef = useRef<HTMLElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const mobileBackRef = useRef<HTMLButtonElement>(null);
+  const inboxOpener = useRef<HTMLButtonElement | null>(null);
+  const returningToInbox = useRef(false);
+  const bottomRef = useRef<HTMLDivElement>(null), selectedRef = useRef<string | null>(null), sendLock = useRef(false);
+  const active = useRef(false), foreground = useRef(true);
+  const inboxReader = useRef<ReturnType<typeof createLatestRead<ChatInboxItem[], boolean>> | null>(null);
+  const sender = useRef<ReturnType<typeof createChatTextSender> | null>(null);
   useEffect(() => {
-    if (!user || cvLoading || !cvCompleted) return;
-    void loadConversations();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profile?.role, cvCompleted, cvLoading]);
-
-  const loadConversations = async (showLoading = true) => {
-    if (showLoading) setConversationState("loading");
-    setError("");
-    try {
-      const [convs, contacts, matches] = await Promise.all([getMyConversations(), getMyConversationContacts(), getMyMatches()]);
-      const contactMap = new Map(contacts.map((contact) => [contact.conversation_id, contact]));
-      const matchStatusMap = new Map(matches.map((match) => [match.id, match.status ?? "matched"]));
-
-      const displays = convs.map((conv) => ({
-          conv,
-          otherName: contactMap.get(conv.id)?.other_name ?? "Kontakt",
-          jobTitle: contactMap.get(conv.id)?.job_title ?? undefined,
-          status: conv.match_id ? matchStatusMap.get(conv.match_id) ?? "matched" : "matched",
-        }));
-      setConvDisplays(displays);
-      setConversationState(displays.length > 0 ? "data" : "empty");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Kunde inte ladda konversationer.");
-      setConversationState("error");
-    }
-  };
-
+    active.current = true;
+    const current = createChatTextSender(user.id); sender.current = current;
+    return () => { active.current = false; current.stop(); if(sender.current === current) sender.current = null; };
+  }, [user.id]);
+  const query=useSearchParams(), requestedJob=query.get("job"), requestedConversation=query.get("conversation"), requestedMatch=query.get("match");
+  const openedRequest=useRef("");
+  useEffect(()=>{const input=composerRef.current;if(input){input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;}},[selectedId,drafts]);
+  // A separate recording page must not discard an unfinished chat message.
+  useEffect(()=>{
+    if(!selectedId||!user?.id)return;
+    const id=selectedId;let cached="";
+    try{cached=sessionStorage.getItem(`mnw-chat-draft:${user.id}:${id}`)||"";}catch{return;}
+    if(!cached)return;
+    const timer=setTimeout(()=>setDrafts(current=>current[id]?current:{...current,[id]:cached}),0);
+    return()=>clearTimeout(timer);
+  },[selectedId,user?.id]);
+  const loadConversations = useCallback((showLoading = true) => {
+    foreground.current = showLoading;
+    return inboxReader.current?.load(showLoading) ?? Promise.resolve();
+  }, []);
+  const canLoad = !cvLoading && (profile.role !== "youth" || cvCompleted);
   useEffect(() => {
-    if (!selectedConvId) return;
-    void (async () => {
-      try {
-        setMessages(await getMessages(selectedConvId));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Kunde inte ladda meddelanden.");
+    if(!canLoad) return;
+    const reader = createLatestRead<ChatInboxItem[], boolean>({
+      read: (_, signal) => readChatInbox(user.id, signal),
+      errorMessage: "Kunde inte läsa dina chattar. Försök igen.",
+      update: state => {
+      if(state.status === "loading") { if(foreground.current) setListState("loading"); return; }
+      if(state.status === "error") { setError(state.message); setListState(current => foreground.current || current === "loading" ? "error" : current); return; }
+      const display = state.value;
+      setConversations(display);
+      if(selectedRef.current && !display.some(item => item.conv.id === selectedRef.current)) {
+        selectedRef.current = null; setSelectedId(null); setLoadedId(""); setMessages({ id: "", items: [] });
       }
-    })();
-  }, [selectedConvId]);
-
+      const request={conversationId:requestedConversation,matchId:requestedMatch,jobId:requestedJob};
+      const requestKey=chatRequestKey(request);
+      const target=display.find(item=>isRequestedConversation(item.conv,request));
+      if(target && openedRequest.current!==requestKey) {openedRequest.current=requestKey;selectedRef.current=target.conv.id;setSelectedId(target.conv.id);setLoadedId("");setMessageError("");}
+      setListState("ready"); setError("");
+      },
+    });
+    inboxReader.current = reader; foreground.current = true; void reader.load(true);
+    return () => { reader.stop(); if(inboxReader.current === reader) inboxReader.current = null; };
+  }, [user.id,canLoad,requestedJob,requestedConversation,requestedMatch]);
+  useEffect(() => subscribeVisibleRefresh(() => loadConversations(false)), [loadConversations]);
   useEffect(() => {
-    if (!selectedConvId) return;
-    return subscribeToConversationMessages(selectedConvId, (message) => {
-      setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+    if(!selectedId) return;
+    let active = true;
+    const unsubscribe = subscribeToConversationMessages(selectedId,message => {
+      if(!active || message.conversation_id !== selectedId) return;
+      setMessages(current => ({id:selectedId, items:mergeMessages(current.id === selectedId ? current.items : [],[message])}));
       void loadConversations(false);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedConvId]);
-
+    const reader = createLatestRead<ChatMessage[]>({
+      read: (_, signal) => getMessages(selectedId, signal),
+      update: state => {
+        if(state.status === "ready") {
+          setMessages(current => ({id:selectedId, items:mergeMessages(state.value,current.id === selectedId ? current.items : [])})); setLoadedId(selectedId);
+        } else if(state.status === "error") setMessageError(state.message);
+      }, errorMessage: "Kunde inte läsa meddelanden. Hämta historiken igen.",
+    });
+    void reader.load();
+    return () => { active = false; reader.stop(); unsubscribe(); };
+  },[selectedId,loadConversations,historyRetry]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({behavior:"instant",block:"nearest"}); },[messages]);
+  // An open, visible conversation has been seen: clear its match and message notices and badges.
+  const openMatchId = loadedId && loadedId === selectedId ? conversations.find(item => item.conv.id === loadedId)?.matchId : undefined;
+  const seenCount = messages.id === loadedId ? messages.items.length : 0;
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSend = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!selectedConvId || !draft.trim()) return;
-    const text = draft.trim();
-    setDraft("");
-    try {
-      await sendMessage(selectedConvId, text);
-      setMessages(await getMessages(selectedConvId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Kunde inte skicka meddelande.");
-      setDraft(text);
-    }
+    if(!user?.id || !openMatchId) return;
+    const userId = user.id, matchId = openMatchId;
+    const markSeen = () => { if(document.visibilityState === "visible") void markMatchNotificationsRead(userId,matchId).then(changed => { if(changed) window.dispatchEvent(new Event("mnw-navigation-refresh")); }).catch(() => {}); };
+    markSeen();
+    document.addEventListener("visibilitychange",markSeen);
+    return () => document.removeEventListener("visibilitychange",markSeen);
+  },[user?.id,openMatchId,seenCount]);
+  const select = (id: string | null) => {
+    if (id === selectedRef.current) return;
+    selectedRef.current=id; setSelectedId(id); setLoadedId(""); setMessageError("");  setError("");
   };
+  const retryMessages = () => { setMessageError(""); setLoadedId(""); setHistoryRetry(current => current + 1); };
+  const handleSend = async (event: FormEvent) => {
+    event.preventDefault();
+    const id = selectedId, text = id ? drafts[id]?.trim() : "";
+    if(!active.current || !sender.current || !id || !text || loadedId !== id || retention.writeBlocked || sendLock.current || chatIsReadOnly(conversations.find(item => item.conv.id === id)?.status || "")) return;
+    sendLock.current=true; setSending(true); setMessageError("");
+    try {
+      const confirmed = await sender.current.send(id,text);
+      if(!confirmed || !active.current) return;
+      try{const key=`mnw-chat-draft:${user?.id}:${id}`;if(sessionStorage.getItem(key)?.trim()===text)sessionStorage.removeItem(key);}catch{/* Storage may be disabled. */}
+      setDrafts(current => ({...current,[id]:current[id]?.trim() === text ? "" : current[id]}));
 
-  if (status !== "ready") return <AuthGateMessage status={status} error={sessionError} />;
-  if (!user) return null;
+      if(selectedRef.current === id) retryMessages();
+      void loadConversations(false);
+    } catch(reason) { if(active.current && selectedRef.current === id) setMessageError(reason instanceof Error ? reason.message : "Sändningen kunde inte bekräftas. Texten finns kvar. Försök igen för att kontrollera samma meddelande."); }
+    finally { sendLock.current=false; if(active.current) setSending(false); }
+  };
+  const selected = conversations.find(item => item.conv.id === selectedId);
+  const hasConversation = Boolean(selected);
+  useEffect(() => {
+    if (hasConversation && inboxOpener.current && window.matchMedia("(max-width: 720px)").matches) {
+      mobileBackRef.current?.focus({ preventScroll: true });
+    } else if (!hasConversation && returningToInbox.current) {
+      inboxOpener.current?.focus();
+      returningToInbox.current = false;
+      inboxOpener.current = null;
+    }
+  }, [hasConversation]);
+  useEffect(() => {
+    const page = pageRef.current;
+    const viewport = window.visualViewport;
+    if (!hasConversation || !page || !viewport) return;
+    const mobile = window.matchMedia("(max-width: 720px)");
+    const resize = () => {
+      // Mobile keyboards may resize only the visual viewport. Preserve pinch zoom.
+      if (mobile.matches && viewport.scale === 1 && window.innerHeight - viewport.height > 100) {
+        const visibleBottom = viewport.height + viewport.offsetTop;
+        const height = Math.max(0, visibleBottom - page.getBoundingClientRect().top);
+        page.style.setProperty("--chat-visible-height", `${height}px`);
+      } else {
+        page.style.removeProperty("--chat-visible-height");
+      }
+    };
+    resize();
+    viewport.addEventListener("resize", resize);
+    viewport.addEventListener("scroll", resize);
+    window.addEventListener("resize", resize);
+    return () => {
+      viewport.removeEventListener("resize", resize);
+      viewport.removeEventListener("scroll", resize);
+      window.removeEventListener("resize", resize);
+      page.style.removeProperty("--chat-visible-height");
+    };
+  }, [hasConversation]);
+  const handleBlock = async () => {
+    if(!selected || blocking || !window.confirm(`Blockera ${selected.otherName}? Ingen av er kommer kunna skicka fler meddelanden i chatten.`)) return;
+    setBlocking(true); try { await blockConversationUser(selected.conv.id); select(null); setMessages({id:"",items:[]}); await loadConversations(false); } catch(reason) { setError(reason instanceof Error ? reason.message : "Kunde inte blockera användaren."); } finally { setBlocking(false); }
+  };
+  if(cvLoading) return <main className={styles.page}><section className={styles.empty} role="status">Hämtar dina chattar…</section></main>;
+  if(profile?.role === "youth" && !cvCompleted) return <main className={`${styles.page} ${styles.cvGate}`}><section className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h1>Gör klart ditt CV</h1><p>Ett färdigt CV behövs för att skicka din ansökan. När ni båda är intresserade öppnas chatten här.</p><Link className={styles.primary} href="/youth/cv">Fortsätt med CV:t <UiIcon name="arrow"/></Link></section></main>;
+  const visible = conversations.filter(item => `${item.otherName} ${item.jobTitle}`.toLocaleLowerCase("sv").includes(search.toLocaleLowerCase("sv")));
+  const currentMessages = messages.id === selectedId ? messages.items : [];
+  const isCompany = profile?.role === "company";
+  const emptyNextStep = isCompany
+    ? <Link href="/company?view=kandidater" className={styles.primary}>Granska kandidater <UiIcon name="arrow"/></Link>
+    : <><Link href="/swipe" className={styles.primary}>Upptäck jobb <UiIcon name="arrow"/></Link><Link href="/applications" className={styles.secondary}>Se dina ansökningar</Link></>;
 
-  if (cvLoading) {
-    return (
-      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#737373", fontSize: "0.9rem" }}>Hämtar innehåll...</p>
-      </main>
-    );
-  }
+  return <main ref={pageRef} className={`${styles.page} ${selected ? styles.hasConversation : ""}`}>
+    <header className={styles.heading}><div className={styles.headingRow}><div className={styles.headingTitle}><Link href={profile?.role==="youth" ? "/applications" : "/company?view=kandidater"} className={styles.back}><UiIcon name="arrow"/>Tillbaka</Link><h1>Meddelanden</h1></div><NotificationLink/></div></header>
+    <div className={styles.workspace}><aside className={styles.inbox} aria-label="Inkorg"><div className={styles.inboxHeader}><h2>Meddelanden <span>{conversations.length}</span></h2><label className={styles.search}><span className="sr-only">Sök bland chattar</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Sök namn eller jobb"/></label></div>
+      {error && listState !== "error" && <div className={styles.listNote}><p role="alert">{error}</p><button type="button" className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div>}
+      {listState === "loading" ? <p className={styles.listNote} role="status">Hämtar matchningar…</p> : listState === "error" ? <div className={styles.listNote}><p role="alert">{error}</p><button className={styles.secondary} onClick={() => void loadConversations()}>Försök igen</button></div> : visible.length === 0 ? <div className={`${styles.listNote} ${search ? "" : styles.inboxEmpty}`}><UiIcon name="chat"/><h3>{search ? "Ingen chatt hittades" : "Dina matchningar landar här"}</h3><p>{search ? "Prova ett annat namn eller jobb." : "När båda visar intresse kan ni börja prata."}</p>{!search && <div className={styles.listActions}>{emptyNextStep}</div>}</div> : <div className={styles.contacts}>{visible.map(item => <button key={item.conv.id} className={`${styles.contact} ${selectedId === item.conv.id ? styles.contactActive : ""}`} type="button" aria-pressed={selectedId === item.conv.id} onClick={event => { inboxOpener.current = event.currentTarget; select(item.conv.id); }}><span className={styles.avatar}>{initials(item.otherName)}</span><span className={styles.contactText}><strong>{item.otherName}</strong><span>{item.jobTitle || "Din matchning"}</span><small>{statusLabels[item.status] || item.status}</small></span><UiIcon name="arrow" width="16"/></button>)}</div>}
+    </aside><section className={styles.conversation} aria-label={selected ? `Samtal med ${selected.otherName}` : "Konversation"}>{selected ? <>
+      <header className={styles.conversationHeader}><button className={styles.mobileBack} ref={mobileBackRef} type="button" aria-label="Tillbaka till inkorgen" onClick={() => { returningToInbox.current = true; select(null); }}><UiIcon name="arrow"/></button><span className={styles.avatar}>{initials(selected.otherName)}</span><div><h2>{selected.otherName}</h2><p>{selected.jobTitle || "Din matchning"}</p></div><span className={styles.matchStatus}>{statusLabels[selected.status] || selected.status}</span><details className={styles.options}><summary aria-label="Alternativ för chatten">•••</summary><div>{selected.conv.job_id && <Link className={styles.jobLink} href={`/jobb/${selected.conv.job_id}`}>Visa jobbannons</Link>}<ReportDialog targetType="conversation" targetId={selected.conv.id} label="Anmäl chatt"/><button type="button" disabled={blocking} onClick={() => void handleBlock()}>{blocking ? "Blockerar…" : "Blockera kontakt"}</button></div></details></header>
 
-  if (profile?.role === "youth" && !cvCompleted) {
-    return (
-      <main className="mobile-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-          <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "#111111", marginBottom: "0.4rem" }}>Slutför ditt CV först</p>
-          <p style={{ fontSize: "0.85rem", color: "#737373", lineHeight: 1.5 }}>Du kan inte swipa jobb eller chatta med företag förrän du har slutfört ditt CV.</p>
-          <button type="button" className="cta-btn" onClick={() => router.push("/youth/cv")} style={{ marginTop: "0.9rem", padding: "0.75rem 1rem" }}>Skapa mitt CV</button>
-        </div>
-      </main>
-    );
-  }
+      {selected.matchId && <details className={styles.nextSteps} key={selected.matchId}><summary>Jobbet och nästa steg</summary><RecruitmentPanel compact matchId={selected.matchId} company={profile?.role === "company"} onChanged={() => void loadConversations(false)} /></details>}
+      <div className={styles.messages} aria-label="Meddelanden">{retention.value?.expired ? <p className={styles.messageNote} role="status">{retention.value.purged_at ? "Chattens meddelanden har raderats." : "Chattens meddelanden är inte längre tillgängliga."}</p> : loadedId !== selectedId ? <p className={styles.messageNote} role="status">{messageError ? "Meddelandena kunde inte hämtas." : "Hämtar meddelanden…"}</p> : currentMessages.length === 0 ? <div className={styles.welcome}><UiIcon name="discover"/><h3>Ni har matchat!</h3><p>{profile?.role === "company" ? "Presentera jobbet och ta nästa steg tillsammans." : "Säg hej och berätta lite om dig själv."}</p></div> : currentMessages.map((message,index) => <div className={styles.messageGroup} key={message.id}>{(index === 0 || messageDate(currentMessages[index - 1].created_at) !== messageDate(message.created_at)) && <p className={styles.date}>{messageDate(message.created_at)}</p>}<div className={`${styles.bubble} ${message.sender_user_id === user?.id ? styles.mine : ""}`}>{!message.video_kind&&<p>{message.message_text}</p>}{message.video_kind&&<VideoMessage message={message} own={message.sender_user_id===user?.id}/>}<time dateTime={String(message.created_at ?? "")}>{messageTime(message.created_at)}</time></div></div>)}<div ref={bottomRef}/></div>
 
-  const selectedDisplay = selectedConvId
-    ? convDisplays.find((d) => d.conv.id === selectedConvId)
-    : null;
+      {messageError && <div className={styles.error}><p role="alert">{messageError}</p><button type="button" className={styles.secondary} disabled={sending} onClick={retryMessages}>Hämta meddelanden igen</button></div>}
 
-  /* ── Chat detail view ───────────────────────────────────── */
-  if (selectedConvId && selectedDisplay) {
-    const initials = selectedDisplay.otherName
-      .split(" ")
-      .map((w) => w[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-
-    return (
-      <main
-        className="mobile-shell"
-        style={{ display: "flex", flexDirection: "column" }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            paddingTop: "0.5rem",
-            paddingBottom: "0.85rem",
-            borderBottom: "1.5px solid #f0f0f0",
-            flexShrink: 0,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => { setSelectedConvId(null); setMessages([]); setError(""); }}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              padding: "0.25rem 0.35rem", borderRadius: 8, fontSize: "1.1rem", color: "#111",
-            }}
-          >
-            ←
-          </button>
-          <div
-            style={{
-              width: 38, height: 38, borderRadius: "50%",
-              background: "#111", color: "#fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.78rem", fontWeight: 700, flexShrink: 0,
-            }}
-          >
-            {initials || "?"}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 700, fontSize: "0.97rem", color: "#111", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {selectedDisplay.otherName}
-            </p>
-            {selectedDisplay.jobTitle && (
-              <p style={{ fontSize: "0.76rem", color: "#737373", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {selectedDisplay.jobTitle}
-              </p>
-            )}
-            <p style={{ fontSize: "0.72rem", color: "#1a7f4b", margin: "0.12rem 0 0", fontWeight: 700 }}>{statusLabels[selectedDisplay.status] ?? selectedDisplay.status}</p>
-          </div>
-        </div>
-
-        {error && (
-          <div style={{ borderRadius: 10, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.65rem 1rem", fontSize: "0.82rem", color: "#c0392b", margin: "0.5rem 0", flexShrink: 0 }}>
-            {error}
-          </div>
-        )}
-
-        {/* Messages */}
-        <div
-          style={{
-            flex: 1, overflowY: "auto",
-            display: "flex", flexDirection: "column", gap: "0.45rem",
-            padding: "0.75rem 0 0.5rem",
-          }}
-        >
-          {messages.length === 0 && (
-            <p style={{ textAlign: "center", color: "#a3a3a3", fontSize: "0.85rem", padding: "2rem 0" }}>
-              Inga meddelanden ännu. Säg hej! 👋
-            </p>
-          )}
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              style={{
-                maxWidth: "80%",
-                padding: "0.55rem 0.9rem",
-                borderRadius: 16,
-                fontSize: "0.9rem",
-                lineHeight: 1.45,
-                alignSelf: msg.sender_user_id === user.id ? "flex-end" : "flex-start",
-                background: msg.sender_user_id === user.id ? "#111111" : "#ffffff",
-                color: msg.sender_user_id === user.id ? "#ffffff" : "#111111",
-                border: msg.sender_user_id === user.id ? "none" : "1.5px solid #e8e8e8",
-              }}
-            >
-              {msg.message_text}
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Send form */}
-        <form
-          style={{ display: "flex", gap: "0.5rem", paddingTop: "0.5rem", flexShrink: 0 }}
-          onSubmit={handleSend}
-        >
-          <input
-            className="input-field"
-            style={{ flex: 1 }}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Skriv ett meddelande..."
-          />
-          <button
-            type="submit"
-            className="cta-btn"
-            style={{ padding: "0 1rem", height: 48, flexShrink: 0 }}
-          >
-            Skicka
-          </button>
-        </form>
-      </main>
-    );
-  }
-
-  /* ── Inbox list view ───────────────────────────────────── */
-  return (
-    <main className="mobile-shell">
-      <div style={{ marginBottom: "1.25rem", paddingTop: "0.5rem" }}>
-        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#a3a3a3", margin: 0 }}>
-          Employo
-        </p>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#111111", margin: "0.2rem 0 0" }}>
-          Matchningar
-        </h1>
-        <p style={{ marginTop: "0.3rem", fontSize: "0.85rem", color: "#737373" }}>
-          När båda är intresserade öppnas en chatt här.
-        </p>
-      </div>
-
-      {error && conversationState !== "error" && (
-        <div style={{ borderRadius: 12, background: "#fff1f0", border: "1px solid #ffd6d3", padding: "0.75rem 1rem", fontSize: "0.85rem", color: "#c0392b", marginBottom: "0.75rem" }}>
-          {error}
-        </div>
-      )}
-
-      {conversationState === "loading" ? (
-        <div role="status" style={{ textAlign: "center", paddingTop: "3rem", color: "#737373" }}>
-          <p style={{ fontWeight: 700, fontSize: "1rem" }}>Laddar matchningar...</p>
-        </div>
-      ) : conversationState === "error" ? (
-        <div role="alert" style={{ textAlign: "center", paddingTop: "2rem" }}>
-          <p style={{ color: "#b42318", fontSize: "0.9rem" }}>{error || "Kunde inte ladda konversationer."}</p>
-          <button type="button" className="secondary-btn" onClick={() => void loadConversations()} style={{ marginTop: ".75rem" }}>Försök igen</button>
-        </div>
-      ) : conversationState === "empty" ? (
-        <div style={{ textAlign: "center", paddingTop: "3rem" }}>
-          <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🤝</p>
-          <p style={{ fontWeight: 700, fontSize: "1.1rem", color: "#111111", marginBottom: "0.4rem" }}>Inga matchningar ännu</p>
-          <p style={{ fontSize: "0.85rem", color: "#737373" }}>Fortsätt swipa — matchningar låser upp chatt.</p>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {convDisplays.map(({ conv, otherName, jobTitle }) => {
-            const initials = otherName
-              .split(" ")
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
-            return (
-              <button
-                key={conv.id}
-                type="button"
-                onClick={() => setSelectedConvId(conv.id)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.85rem",
-                  padding: "0.9rem 1rem",
-                  borderRadius: 14,
-                  background: "#fff",
-                  border: "1.5px solid #e8e8e8",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  width: "100%",
-                  transition: "border-color 0.15s ease",
-                }}
-              >
-                <div
-                  style={{
-                    width: 44, height: 44, borderRadius: "50%",
-                    background: "#111111", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.85rem", fontWeight: 700, flexShrink: 0,
-                  }}
-                >
-                  {initials || "?"}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.95rem", color: "#111", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {otherName}
-                  </p>
-                  {jobTitle && (
-                    <p style={{ fontSize: "0.8rem", color: "#737373", margin: "0.1rem 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {jobTitle}
-                    </p>
-                  )}
-                  <span style={{ display: "inline-block", marginTop: ".25rem", fontSize: ".7rem", color: "#1a7f4b", fontWeight: 700 }}>{statusLabels[convDisplays.find((item) => item.conv.id === conv.id)?.status ?? "matched"] ?? "Matchad"}</span>
-                </div>
-                <span style={{ color: "#c0c0c0", fontSize: "1.25rem", flexShrink: 0, lineHeight: 1 }}>›</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </main>
-  );
+      <ConversationRetentionNotice value={retention.value} state={retention.state} retry={retention.retry}/>
+      {chatIsReadOnly(selected.status) && !retention.value?.expired ? <p className={styles.messageNote} role="status">Rekryteringen är avslutad. Chatthistoriken finns kvar att läsa, men ni kan inte skicka fler meddelanden.</p> : retention.writeBlocked ? null : <>
+      {user&&profile?.role==='youth'&&loadedId===selectedId&&<ChatVideoComposer key={selected.conv.id} conversationId={selected.conv.id} userId={user.id} onSent={()=>{retryMessages();void loadConversations(false);}}/>}
+      <form className={styles.composer} onSubmit={handleSend}><label><span className="sr-only">Meddelande till {selected.otherName}</span><textarea ref={composerRef} rows={1} value={drafts[selected.conv.id] || ""} onChange={event => {const input=event.currentTarget;input.style.height="auto";input.style.height=`${Math.min(120,input.scrollHeight)}px`;const value=input.value;try{sessionStorage.setItem(`mnw-chat-draft:${user?.id}:${selected.conv.id}`,value);}catch{/* Storage may be disabled. */}setDrafts(current => ({...current,[selected.conv.id]:value}));}} onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing&&window.matchMedia("(pointer:fine)").matches){event.preventDefault();event.currentTarget.form?.requestSubmit();}}} placeholder="Skriv ett meddelande…" disabled={sending || loadedId !== selectedId}/></label><button type="submit" aria-label={sending ? "Skickar meddelande" : "Skicka meddelande"} disabled={sending || loadedId !== selectedId || !drafts[selected.conv.id]?.trim()}><UiIcon name="arrow"/></button></form></>}
+    </> : listState !== "ready" ? null : conversations.length === 0 ? <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Inga samtal ännu</h2><p>{isCompany ? "Chatten öppnas när du och en kandidat båda har visat intresse." : "Chatten öppnas när du och ett företag båda har visat intresse."}</p><div className={styles.emptyActions}>{emptyNextStep}</div></div> : <div className={styles.empty}><span className={styles.emptyIcon}><UiIcon name="chat" width="30" height="30"/></span><h2>Välj ett samtal</h2><p>Öppna ett samtal i inkorgen för att läsa eller skriva ett meddelande.</p></div>}</section></div>
+  </main>;
 }
+
+export default function ChatsPage() {return <Suspense fallback={<main className={styles.page}><p role="status">Hämtar meddelanden…</p></main>}><ChatsPageContent/></Suspense>;}

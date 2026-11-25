@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+function compile(file, imports = {}) {
+  const testModule = { exports: {} };
+  const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  new Function('module', 'exports', 'require', code)(testModule, testModule.exports, name => imports[name] ?? require(name));
+  return testModule.exports;
+}
+const progress = compile('lib/assessment-progress.ts');
+const { observeAssessment, assessmentDeadline } = progress;
+const settle = () => new Promise(resolve => setImmediate(resolve));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const result = { criteria: [], score: null, confidence: 'low', coverage: 0, explanation: 'Fiktivt testunderlag' };
+let states, failures, reads, enqueues;
+function watch(read, overrides = {}) {
+  states = []; failures = []; reads = 0; enqueues = 0;
+  return observeAssessment({ read: async signal => { reads++; return read(signal); }, enqueue: async () => { enqueues++; }, update: value => states.push(value), fail: value => failures.push(value), visible: () => true, pollMs: 5, waitMs: 500, requestMs: 100, ...overrides });
+}
+let observer = watch(() => ({ status: 'unavailable' }));
+await settle(); assert.equal(states[0].status, 'unavailable'); assert.equal(enqueues, 0); assert.equal(failures.length, 0); observer.stop();
+observer = watch(() => ({ status: 'completed', assessment: result, updated_at: '2026-10-15T14:00:00Z' }));
+await settle(); assert.equal(states[0].assessment, result); assert.equal(enqueues, 0); observer.stop();
+observer = watch(() => reads === 1 ? { status: 'unrequested' } : { status: 'completed', assessment: result });
+await sleep(20); assert.equal(enqueues, 1); assert.equal(states.at(-1).assessment, result); observer.stop();
+observer = watch(() => ({ status: 'pending' }), { waitMs: 20 });
+await sleep(35); assert.match(failures[0], /längre tid/); const stoppedReads = reads; await sleep(15); assert.equal(reads, stoppedReads); observer.stop();
+observer = watch(() => { throw new Error('offline'); });
+await settle(); assert.match(failures[0], /anslutningen/); observer.stop();
+observer = watch(() => ({ status: 'failed', retrying: false }));
+await settle(); assert.match(failures[0], /Försök igen/); observer.stop();
+observer = watch(() => ({ status: 'unrequested' }), { enqueue: async () => { throw new Error('denied'); } });
+await settle(); assert.equal(failures.length, 1); observer.stop();
+let resolveRead;
+observer = watch(() => new Promise(resolve => { resolveRead = resolve; }));
+observer.stop(); resolveRead({ status: 'completed', assessment: result }); await settle(); assert.equal(states.length, 0);
+observer = watch(() => new Promise(() => {}), { requestMs: 10 });
+await sleep(25); assert.equal(failures.length, 1, 'Hung RPC must release polling and show recovery'); observer.stop();
+const aborted = new AbortController(); aborted.abort();
+await assert.rejects(assessmentDeadline(new Promise(() => {}), aborted.signal), /lång tid/);
+
+// Execute actual component handlers with deterministic hook/transport boundaries.
+const slots = [], effects = [], registeredEffects = new Set(), pendingFollowups = []; let index = 0, pendingResponse, followupFails = false, deferFollowups = false;
+const react = { useState(initial) { const i = index++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = value; }]; }, useRef(initial) { const i = index++; return slots[i] ??= { current: initial }; }, useEffect(fn) { const slot = index++; if (!registeredEffects.has(slot)) { registeredEffects.add(slot); effects.push(fn); } } };
+const component = compile('components/candidate-assessment-panel.tsx', {
+  react,
+  '@/lib/api-client': { authenticatedHeaders: async () => ({}) },
+  '@/lib/assessment-progress': progress,
+  './candidate-assessment-history': { CandidateAssessmentHistory: () => null },
+  '@/lib/supabase': { getSupabaseClient: () => ({ rpc: () => ({ abortSignal: async () => ({ data: { status: 'pending' } }) }) }) },
+  '@/lib/application-completions': { getApplicationFollowups: async () => { if (deferFollowups) return new Promise(resolve => pendingFollowups.push(resolve)); if (followupFails) throw new Error('followups unavailable'); return []; } },
+  '@/lib/visible-refresh': { subscribeVisibleRefresh: () => () => {} },
+});
+const props = { jobId: 'qa-job', youthUserId: 'qa-youth' };
+const wrapper = component.CandidateAssessmentPanel(props);
+assert.notEqual(wrapper.key, component.CandidateAssessmentPanel({ ...props, youthUserId: 'qa-other' }).key, 'Candidate changes reset all state');
+const render = () => { index = 0; return wrapper.type(props); };
+const nodes = root => !root || typeof root !== 'object' ? [] : [root, ...(Array.isArray(root) ? root : [root.props?.children]).flat(Infinity).flatMap(child => child === root ? [] : nodes(child))];
+const button = () => nodes(render()).find(node => node.type === 'button');
+globalThis.document = { visibilityState: 'visible' };
+globalThis.fetch = async () => pendingResponse;
+render(); const cleanups = effects.map(effect => effect()); await settle();
+assert.equal(button().props.disabled, false, 'Pending background jobs must not disable manual recovery');
+pendingResponse = new Response(JSON.stringify({ assessment: result, createdAt: '2026-10-15T14:00:00Z', cached: true }), { status: 200 });
+followupFails = true;
+await button().props.onClick(); await settle();
+assert.ok(nodes(render()).some(node => node.type === 'time' && node.props.dateTime === '2026-10-15T14:00:00Z'));
+assert.equal(nodes(render()).filter(node => node.props?.role === 'alert').length, 0, 'Follow-up failure may not hide a completed assessment');
+pendingResponse = new Response(JSON.stringify({ error: 'Tillfälligt fel' }), { status: 503 });
+await button().props.onClick(); await settle();
+assert.equal(button().props.children, 'Försök igen');
+assert.ok(nodes(render()).some(node => node.type === 'summary' && node.props.children === 'Sammanfattande matchgrad och täckning'), 'Previous assessment survives update errors');
+assert.ok(nodes(render()).some(node => node.props?.role === 'alert'));
+pendingResponse = new Response(JSON.stringify({ assessment: result }), { status: 200 });
+await button().props.onClick(); await settle();
+assert.equal(nodes(render()).filter(node => node.props?.role === 'alert').length, 0);
+for (const cleanup of cleanups) cleanup?.();
+// A slow initial read may not replace the new read after manual analysis.
+slots.length = 0; effects.length = 0; registeredEffects.clear(); deferFollowups = true; followupFails = false;
+render(); const raceCleanups = effects.map(effect => effect()); await settle();
+assert.equal(pendingFollowups.length, 1);
+pendingResponse = new Response(JSON.stringify({ assessment: result }), { status: 200 });
+await button().props.onClick(); await settle(); assert.equal(pendingFollowups.length, 2);
+const followup = { id: 'qa-question', job_id: props.jobId, youth_user_id: props.youthUserId, question: 'När kan du börja?', status: 'answered', answer: 'Nästa vecka' };
+pendingFollowups[1]([followup]); await settle();
+const visibleAnswers = () => nodes(render()).filter(node => node.type === 'p').map(node => node.props.children).flat(Infinity).join(' ');
+assert.match(visibleAnswers(), /Nästa vecka/);
+pendingFollowups[0]([{...followup, status: 'pending', answer: null}]); await settle();
+assert.match(visibleAnswers(), /Nästa vecka/, 'A late initial read cannot replace newer answered followups with an old pending question');
+for (const cleanup of raceCleanups) cleanup?.();
+console.log('PASS: completed, queue, bounded wait, offline, terminal failure, enqueue failure, cancellation, hung RPC, actual manual recovery, cache date, follow-up isolation, preserved results and successful retry.');

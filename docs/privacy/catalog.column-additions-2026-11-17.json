@@ -1,0 +1,55 @@
+{
+  "mode": "column-additions-only",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-17",
+  "relations": [
+    {
+      "schema_name": "auth",
+      "table_name": "one_time_tokens",
+      "columns": [
+        {
+          "name": "link_token_hash",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "saml_providers",
+      "columns": [
+        {
+          "name": "dedicated_scope",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "schema_name": "private",
+      "table_name": "privacy_case_events",
+      "columns": [
+        {
+          "name": "review_after",
+          "type": "timestamp with time zone"
+        },
+        {
+          "name": "external_sent_at",
+          "type": "timestamp with time zone"
+        }
+      ]
+    },
+    {
+      "schema_name": "private",
+      "table_name": "privacy_cases",
+      "columns": [
+        {
+          "name": "intake_source",
+          "type": "text"
+        },
+        {
+          "name": "contact_email",
+          "type": "text"
+        }
+      ]
+    }
+  ]
+}

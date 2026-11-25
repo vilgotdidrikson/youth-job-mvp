@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -46,8 +48,8 @@ export function MarketingNav() {
 
   return (
     <nav className="landing-bold-nav" aria-label="Huvudnavigation" ref={navRef}>
-      <Link className="landing-logo" href="/" aria-label="Employo startsida">
-        <span className="landing-logo-mark">E</span><span>employo</span>
+      <Link className="landing-logo" href="/" aria-label="MatchnWork startsida">
+        <BrandLogo/>
       </Link>
 
       <div className="landing-bold-nav-actions landing-bold-nav-actions-desktop">

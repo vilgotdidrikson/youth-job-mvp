@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Profilbygget – Kunskaper</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b84164}a:hover{color:#9c304f}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1320px; box-sizing: border-box; overflow: hidden; background: #fffafb; color: #4c303b; font-family: Inter, Arial, sans-serif">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 14px; border-bottom: 1px solid #f0d9e0">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Steg3Tider.dc.html" aria-label="Föregående steg: När jag kan jobba" style="display: grid; place-items: center; width: 44px; height: 44px; margin-left: -10px; border-radius: 50%; color: #4c303b; text-decoration: none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span style="font-size: 13px; font-weight: 500; color: #7f616d">Steg 4 av 5</span>
+      <span style="width: 44px"></span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px" aria-hidden="true">
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #b84164"></span>
+      <span style="height: 5px; border-radius: 999px; background: #f4dce5"></span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 18px; padding: 24px 20px 140px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.03em">Vad kan du?</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #7f616d">Lägg till det du faktiskt kan. Det är okej att fortfarande lära sig.</p>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #f0d9e0; border-radius: 22px; background: #ffffff">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+        <label for="beh" style="font-size: 17px; font-weight: 600">Körkort och behörigheter</label>
+        <span style="font-size: 13px; color: #7f616d; white-space: nowrap">{{licCount}} av 8</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 52px; padding: 8px 10px; box-sizing: border-box; border: 1px solid #f0d9e0; border-radius: 14px; background: #fffafb">
+        <sc-for list="{{lic}}" as="t" hint-placeholder-count="1">
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #fce9ef; font-size: 14px; font-weight: 500">{{t.label}}<button type="button" aria-label="{{t.removeLabel}}" onClick="{{t.remove}}" style="display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: #7f616d; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+        </sc-for>
+        <input id="beh" placeholder="Skriv eller välj" style="flex: 1; min-width: 110px; height: 34px; border: 0; outline: none; background: transparent; color: #4c303b; font: inherit; font-size: 16px">
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{licSugg}}" as="s" hint-placeholder-count="3">
+          <button type="button" onClick="{{s.add}}" style="min-height: 40px; padding: 0 12px; border: 1px solid #f0d9e0; border-radius: 999px; background: #ffffff; color: #4c303b; font: inherit; font-size: 13px; cursor: pointer">+ {{s.label}}</button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #f0d9e0; border-radius: 22px; background: #ffffff">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+        <label for="verktyg" style="font-size: 17px; font-weight: 600">Verktyg och kunskaper</label>
+        <span style="font-size: 13px; color: #7f616d; white-space: nowrap">{{toolCount}} av 12</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 52px; padding: 8px 10px; box-sizing: border-box; border: 1px solid #f0d9e0; border-radius: 14px; background: #fffafb">
+        <sc-for list="{{tools}}" as="t" hint-placeholder-count="2">
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #fce9ef; font-size: 14px; font-weight: 500">{{t.label}}<button type="button" aria-label="{{t.removeLabel}}" onClick="{{t.remove}}" style="display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: #7f616d; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+        </sc-for>
+        <input id="verktyg" placeholder="Skriv eller välj" style="flex: 1; min-width: 110px; height: 34px; border: 0; outline: none; background: transparent; color: #4c303b; font: inherit; font-size: 16px">
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{toolSugg}}" as="s" hint-placeholder-count="4">
+          <button type="button" onClick="{{s.add}}" style="min-height: 40px; padding: 0 12px; border: 1px solid #f0d9e0; border-radius: 999px; background: #ffffff; color: #4c303b; font: inherit; font-size: 13px; cursor: pointer">+ {{s.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; color: #7f616d">Ta bara med sådant du har använt på riktigt.</span>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid #f0d9e0; border-radius: 22px; background: #ffffff">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600">Språk</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: #fce9ef">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 13px; font-weight: 600; color: #7f616d">Från ditt CV</span>
+          <a href="Steg1CV.dc.html" style="display: inline-flex; align-items: center; min-height: 32px; font-size: 13px; font-weight: 600; text-decoration: none">Ändra i CV:t</a>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span style="font-weight: 600">Svenska</span><span style="color: #7f616d">Modersmål</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span style="font-weight: 600">Engelska</span><span style="color: #7f616d">God</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <label for="sprak" style="font-size: 14px; font-weight: 500">Lägg till ett språk</label>
+        <input id="sprak" value="Spanska" style="box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; border: 1px solid #f0d9e0; border-radius: 14px; background: #fffafb; color: #4c303b; font: inherit; font-size: 16px">
+        <div role="radiogroup" aria-label="Nivå för Spanska" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{levels}}" as="l" hint-placeholder-count="5">
+            <button type="button" role="radio" aria-checked="{{l.checked}}" onClick="{{l.pick}}" style="{{l.style}}">{{l.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <button type="button" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; border: 1.5px dashed #e3b9c7; border-radius: 14px; background: transparent; color: #b84164; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">+ Ett språk till</button>
+    </section>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 14px 20px 30px; border-top: 1px solid #f0d9e0; background: rgba(255, 250, 251, 0.96)">
+    <a href="Steg5Exempel.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; color: #7f616d; font-size: 15px; font-weight: 500; text-decoration: none">Hoppa över</a>
+    <a href="Steg5Exempel.dc.html" style="flex: 1; display: grid; place-items: center; min-height: 52px; border-radius: 16px; background: #b84164; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none">Spara och fortsätt</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1320}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { lic: ['B-körkort'], tools: ['Kassasystem', 'Canva'], level: 'Grundläggande' };
+  }
+  tags(key, max) {
+    var self = this;
+    return this.state[key].map(function (label) {
+      return {
+        label: label,
+        removeLabel: 'Ta bort ' + label,
+        remove: function () { var p = {}; p[key] = self.state[key].filter(function (x) { return x !== label; }); self.setState(p); }
+      };
+    });
+  }
+  suggestions(key, all, max) {
+    var self = this;
+    return all.filter(function (label) { return self.state[key].indexOf(label) === -1; }).map(function (label) {
+      return {
+        label: label,
+        add: function () { if (self.state[key].length < max) { var p = {}; p[key] = self.state[key].concat([label]); self.setState(p); } }
+      };
+    });
+  }
+  renderVals() {
+    var self = this;
+    var levels = ['Grundläggande', 'God', 'Mycket god', 'Flytande', 'Modersmål'].map(function (label) {
+      var on = self.state.level === label;
+      return {
+        label: label, checked: on ? 'true' : 'false',
+        style: 'min-height: 40px; padding: 0 12px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; ' + (on ? 'border: 1.5px solid #b84164; background: #fce9ef; color: #9c304f; font-weight: 600;' : 'border: 1px solid #f0d9e0; background: #ffffff; color: #4c303b; font-weight: 500;'),
+        pick: function () { self.setState({ level: label }); }
+      };
+    });
+    return {
+      lic: this.tags('lic', 8),
+      licCount: this.state.lic.length,
+      licSugg: this.suggestions('lic', ['B-körkort', 'AM-körkort', 'HLR-utbildning', 'Truckkort'], 8),
+      tools: this.tags('tools', 12),
+      toolCount: this.state.tools.length,
+      toolSugg: this.suggestions('tools', ['Kassasystem', 'Canva', 'Excel', 'Word', 'Google Docs', 'Instagram'], 12),
+      levels: levels
+    };
+  }
+}
+</script>
+</body>
+</html>

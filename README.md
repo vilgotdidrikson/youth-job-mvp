@@ -52,3 +52,4 @@ Open `http://localhost:3000`.
 - Youth documents are private Storage objects and are opened through signed URLs.
 - PDF download uses browser print flow (`Save as PDF`).
 - Premium backend test and manual service-role activation: [docs/premium-testing.md](docs/premium-testing.md).
+- Account deletion and data retention map, plus the staging deletion test: [docs/account-deletion.md](docs/account-deletion.md).

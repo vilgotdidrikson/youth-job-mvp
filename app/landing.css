@@ -65,8 +65,8 @@
   position: absolute;
   padding: .4rem;
   border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 .75rem 2rem rgb(0 0 0 / .16);
+  background: var(--color-surface);
+  box-shadow: 0 .75rem 2rem rgba(var(--color-black-rgb), .16);
   z-index: 40;
 }
 
@@ -114,7 +114,7 @@
   height: 2.75rem;
   border: 1.5px solid rgb(var(--color-text-rgb) / .3);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
   cursor: pointer;
 }
 
@@ -159,18 +159,18 @@
   font-size: 1.02rem;
 }
 
-.landing-bold-nav .landing-logo { font-size: 1.5rem; }
+.landing-bold-nav .landing-logo { min-height: 44px; font-size: 1.5rem; }
 .landing-bold-nav .landing-logo-mark { width: 2.2rem; height: 2.2rem; font-size: 1.15rem; }
 
 .landing-bold-primary {
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
 }
 
 .landing-bold-login {
   border: 1.5px solid rgb(var(--color-text-rgb) / .4);
   color: var(--landing-ink);
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .landing-bold-language,
@@ -186,7 +186,7 @@
 }
 
 .landing-bold-language span {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: .64rem;
 }
 
@@ -197,16 +197,16 @@
 
 .landing-page.landing-bold .landing-logo,
 .landing-page.landing-bold .landing-bold-language {
-  color: #fff;
+  color: var(--color-white);
 }
 
 .landing-page.landing-bold .landing-bold-language {
-  border-color: rgba(255, 255, 255, .4);
+  border-color: rgba(var(--color-white-rgb), .4);
 }
 
 .landing-page.landing-bold .landing-bold-language-active {
-  color: #fff;
-  background: rgba(255, 255, 255, .18);
+  color: var(--color-white);
+  background: rgba(var(--color-white-rgb), .18);
 }
 
 .landing-bold-hero {
@@ -219,23 +219,38 @@
   text-align: center;
 }
 
+/* Dark ink like the headline, so it stays readable on the light centre of the background. */
 .landing-bold-eyebrow {
-  margin: 0 0 1.8rem;
-  color: #fff;
-  font-size: .7rem;
+  margin: 0 auto 1.6rem;
+  color: var(--landing-ink);
+  font-size: .8rem;
   font-weight: 800;
   letter-spacing: .14em;
+  line-height: 1.6;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
+/* Sized so the longest headline ("En enklare väg till rätt") stays on one
+   line from tablet width up; the vh term keeps it in proportion on short,
+   zoomed-in viewports. */
 .landing-bold-hero h1 {
+  display: grid;
   margin: 0;
   color: var(--landing-ink);
-  font-size: clamp(4rem, 10vw, 8.6rem);
+  font-size: clamp(2.75rem, min(6.5vw, 12vh), 6.5rem);
   font-weight: 500;
   letter-spacing: -.045em;
-  line-height: .88;
-  transform: translateY(clamp(-5rem, -7vh, -2.5rem));
+  line-height: .92;
+}
+
+/* The typed headline and the invisible sizers share one cell. */
+.landing-bold-hero h1 > span {
+  grid-area: 1 / 1;
+}
+
+.landing-bold-title-sizer {
+  visibility: hidden;
 }
 
 .landing-bold-hero h1 em {
@@ -257,13 +272,10 @@
   50% { opacity: 0; }
 }
 
+/* In normal flow below the headline, so the two can never collide. */
 .landing-bold-actions {
-  position: absolute;
-  bottom: clamp(13rem, 34vh, 17rem);
-  left: 50%;
   justify-content: center;
-  margin-top: 0;
-  transform: translateX(-50%);
+  margin-top: clamp(2rem, 5vh, 3rem);
 }
 
 .landing-bold-actions .landing-bold-primary,
@@ -281,7 +293,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-white);
   background: transparent;
   font-size: 1.65rem;
   font-weight: 900;
@@ -295,7 +307,7 @@
 
 .landing-bold-note {
   margin: .9rem 0 0;
-  color: #fff;
+  color: var(--color-white);
   font-size: .75rem;
   font-weight: 700;
 }
@@ -308,7 +320,7 @@
 .landing-bold-purpose > p,
 .landing-bold-roles > p {
   margin: 0 0 1.4rem;
-  color: #fff;
+  color: var(--color-white);
   font-size: .67rem;
   font-weight: 800;
   letter-spacing: .13em;
@@ -321,7 +333,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  color: #fff;
+  color: var(--color-white);
   font-size: clamp(1rem, 2vw, 1.35rem);
   font-weight: 700;
 }
@@ -336,7 +348,7 @@
 .landing-bold-scroll {
   display: inline-block;
   margin-left: -.15rem;
-  color: #fff;
+  color: var(--color-white);
   font-size: 1.05rem;
   line-height: 1;
 }
@@ -476,14 +488,14 @@
 
 .landing-bold-stat-note {
   position: relative;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: .78rem;
 }
 
 .landing-bold-stats-source {
   margin: clamp(2.5rem, 5vw, 3.5rem) 0 0;
-  color: var(--color-text-subtle);
-  font-size: .68rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -509,8 +521,8 @@
   position: relative;
   max-width: 100%;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent, #fff 6%, #fff 94%, transparent);
-  mask-image: linear-gradient(to right, transparent, #fff 6%, #fff 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--color-white) 6%, var(--color-white) 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, var(--color-white) 6%, var(--color-white) 94%, transparent);
 }
 
 .infinite-cards-track {
@@ -548,7 +560,7 @@
   width: 2.6rem;
   height: 2.6rem;
   border-radius: .85rem;
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
   font-size: 1.15rem;
 }
@@ -572,8 +584,8 @@
   margin: 0 clamp(1rem, 3.5vw, 2.75rem);
   border-radius: 1.75rem;
   padding: clamp(4rem, 8vw, 6.5rem) clamp(1.5rem, 4vw, 3.5rem);
-  color: #fff;
-  background: #241419;
+  color: var(--color-white);
+  background: var(--color-plum-900);
 }
 
 .platform-showcase-intro {
@@ -593,12 +605,12 @@
   display: inline-block;
   background-image: linear-gradient(
     90deg,
-    #fff 0%,
-    #fff 35%,
+    var(--color-surface) 0%,
+    var(--color-surface) 35%,
     var(--color-brand-soft) 45%,
     var(--color-brand-strong) 55%,
     var(--color-brand) 65%,
-    #fff 75%
+    var(--color-surface) 75%
   );
   background-size: 250% 100%;
   background-clip: text;
@@ -615,7 +627,7 @@
 .platform-showcase-intro p {
   max-width: 26rem;
   margin: .9rem 0 0;
-  color: rgba(255, 255, 255, .62);
+  color: rgba(var(--color-white-rgb), .62);
   font-size: 1.12rem;
   line-height: 1.55;
 }
@@ -641,7 +653,7 @@
   width: 100%;
   padding: 1.1rem 0 .7rem;
   border: 0;
-  color: rgba(255, 255, 255, .5);
+  color: rgba(var(--color-white-rgb), .5);
   background: transparent;
   font-size: 1.65rem;
   font-weight: 600;
@@ -651,13 +663,13 @@
 }
 
 .platform-showcase-item-active .platform-showcase-trigger {
-  color: #fff;
+  color: var(--color-white);
 }
 
 .platform-showcase-body {
   max-width: 26rem;
   margin: 0 0 .85rem;
-  color: rgba(255, 255, 255, .6);
+  color: rgba(var(--color-white-rgb), .6);
   font-size: 1.22rem;
   line-height: 1.6;
 }
@@ -665,7 +677,7 @@
 .platform-showcase-rule {
   position: relative;
   height: 1px;
-  background: rgba(255, 255, 255, .12);
+  background: rgba(var(--color-white-rgb), .12);
 }
 
 .platform-showcase-progress {
@@ -702,8 +714,8 @@
   width: 100%;
   height: 100%;
   border-radius: 1.5rem;
-  background: rgba(255, 255, 255, .04);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, .1) inset;
+  background: rgba(var(--color-white-rgb), .04);
+  box-shadow: 0 0 0 1px rgba(var(--color-white-rgb), .1) inset;
   overflow: hidden;
 }
 
@@ -729,8 +741,8 @@
   justify-content: center;
   height: 15rem;
   border-radius: 1.25rem;
-  background: rgba(255, 255, 255, .04);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, .1) inset;
+  background: rgba(var(--color-white-rgb), .04);
+  box-shadow: 0 0 0 1px rgba(var(--color-white-rgb), .1) inset;
 }
 
 .platform-showcase-mobile-visual .platform-visual-svg {
@@ -747,7 +759,7 @@
 .platform-showcase-mobile-item p {
   max-width: 26rem;
   margin: 0;
-  color: rgba(255, 255, 255, .6);
+  color: rgba(var(--color-white-rgb), .6);
   font-size: .9rem;
   line-height: 1.6;
 }
@@ -857,7 +869,7 @@
   height: 3rem;
   border: 2px solid var(--color-border);
   border-radius: 50%;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   background: var(--color-surface);
   font-size: .82rem;
   font-weight: 800;
@@ -866,7 +878,7 @@
 
 .vertical-timeline-node-active {
   border-color: var(--color-brand);
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-brand);
 }
 
@@ -898,7 +910,7 @@
   line-height: .98;
 }
 
-.landing-bold-manifesto span {
+.landing-bold-manifesto-sub {
   display: block;
   max-width: 40rem;
   margin: 1.8rem auto 0;
@@ -915,7 +927,7 @@
   margin: 0 clamp(1rem, 3.5vw, 2.75rem) clamp(1rem, 3.5vw, 2.75rem);
   border-radius: 1.75rem;
   padding: clamp(3rem, 6vw, 4rem) clamp(1.5rem, 4vw, 3.5rem) 2rem;
-  color: rgba(255, 255, 255, .78);
+  color: rgba(var(--color-white-rgb), .78);
   background: var(--landing-ink);
 }
 
@@ -924,11 +936,11 @@
 }
 
 .landing-bold-footer-brand .landing-logo {
-  color: #fff;
+  color: var(--color-white);
 }
 
 .landing-bold-footer-brand .landing-logo-mark {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--landing-ink);
 }
 
@@ -947,22 +959,36 @@
 }
 
 .landing-bold-footer-links a {
-  color: rgba(255, 255, 255, .78);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: rgba(var(--color-white-rgb), .78);
   font-size: .85rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .landing-bold-footer-links a:hover {
-  color: #fff;
+  color: var(--color-white);
+}
+
+.landing-bold-footer-links .landing-bold-footer-social {
+  border-radius: 999px;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.landing-bold-footer-links .landing-bold-footer-social:hover {
+  background: rgba(var(--color-white-rgb), .1);
 }
 
 .landing-bold-footer-copy {
   grid-column: 1 / -1;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, .14);
-  color: rgba(255, 255, 255, .5);
-  font-size: .72rem;
+  border-top: 1px solid rgba(var(--color-white-rgb), .14);
+  color: rgba(var(--color-white-rgb), .64);
+  font-size: var(--text-xs);
 }
 
 @media (max-width: 900px) {
@@ -1001,12 +1027,22 @@
     padding: 2rem 1.25rem 3rem;
   }
 
+  .landing-bold-eyebrow {
+    margin-bottom: 1.25rem;
+    font-size: .74rem;
+  }
+
+  /* Break between the two halves of the line; the space is still read aloud. */
+  .landing-bold-eyebrow-break {
+    display: block;
+    height: 0;
+    overflow: hidden;
+  }
+
   .landing-bold-hero h1 {
-    min-height: 2.9em;
     font-size: clamp(2.4rem, 11.5vw, 3.6rem);
     line-height: .95;
     letter-spacing: -.035em;
-    transform: none;
   }
 
   .landing-bold-actions {
@@ -1015,7 +1051,6 @@
     width: min(100%, 20rem);
     margin: 2.25rem auto 0;
     gap: .65rem;
-    transform: none;
   }
 
   .landing-bold-actions .landing-bold-primary,
@@ -1051,7 +1086,7 @@
   /* Manifesto */
   .landing-bold-manifesto { padding: clamp(4rem, 13vw, 6rem) 1.25rem; }
   .landing-bold-manifesto p { font-size: clamp(2rem, 8.5vw, 3.2rem); line-height: 1.04; }
-  .landing-bold-manifesto span { margin-top: 1.4rem; font-size: .95rem; }
+  .landing-bold-manifesto-sub { margin-top: 1.4rem; font-size: .95rem; }
 
   /* Footer */
   .landing-bold-footer {
@@ -1066,7 +1101,7 @@
     grid-column: 1;
     justify-content: center;
   }
-  .landing-bold-footer-links { flex-wrap: wrap; gap: 1.25rem; }
+  .landing-bold-footer-links { flex-wrap: wrap; gap: .25rem 1rem; }
   .landing-bold-footer-brand p { margin-inline: auto; }
   .landing-bold-footer-copy { padding-top: 1.5rem; }
 }
@@ -1075,16 +1110,49 @@
   .landing-bold-nav-actions-mobile { gap: .4rem; }
 
   .landing-bold-nav-actions-mobile .landing-bold-primary {
-    min-height: 2.55rem;
+    min-height: 2.75rem;
     padding: 0 .85rem;
     font-size: .82rem;
   }
 
-  .landing-bold-hamburger { width: 2.55rem; height: 2.55rem; }
+  .landing-bold-hamburger { width: 2.75rem; height: 2.75rem; }
 
   .landing-bold-hero h1 { font-size: clamp(2.1rem, 11vw, 2.8rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-hero-caret { animation: none; }
+}
+
+/* Shared rose/plum navigation remains readable on the light canvas. */
+.landing-bold-nav,.landing-bold-footer { --landing-ink:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo,.landing-bold-language),.landing-bold-nav .landing-logo { color:var(--color-text); }
+.landing-page.landing-bold .landing-bold-nav .landing-bold-language { opacity:1; }
+.landing-bold-nav .landing-bold-language-active { color:var(--color-brand-strong)!important; }
+.landing-bold-nav .landing-logo { font-weight:550;letter-spacing:-.055em; }
+.landing-bold-nav :is(.landing-bold-language,.landing-bold-login) { font-weight:500; }
+.landing-bold-nav :is(a,button):focus-visible,.landing-bold-footer a:focus-visible { outline:3px solid var(--color-brand-strong);outline-offset:4px; }
+.landing-bold-nav .landing-bold-language:hover { color:var(--color-brand-strong)!important; }
+
+/* On the landing page the nav sits on the hero's dark edges: white text there.
+   /features and /pricing keep the dark text from the rules above. */
+.landing-page.landing-bold .landing-bold-nav :is(.landing-logo, .landing-bold-language) { color: var(--color-white); }
+
+/* D05: the first line changes with the headline; only the last phrase is typed. */
+.landing-hero-stem { animation: landing-hero-stem-in .35s ease both; }
+
+@keyframes landing-hero-stem-in {
+  from { opacity: 0; }
+}
+
+.landing-bold-actions .landing-bold-secondary {
+  border: 1.5px solid var(--color-brand-accent);
+  background: var(--color-surface);
+}
+
+/* DA-17: the page ends with the same actions as the first view. */
+.landing-bold-manifesto .landing-bold-actions { margin-top: 2.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-stem { animation: none; }
 }

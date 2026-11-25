@@ -1,0 +1,27 @@
+{
+  "mode": "column-additions-only",
+  "projectRef": "vwcfjvwfeatvuisojwrh",
+  "capturedOn": "2026-11-19",
+  "relations": [
+    {
+      "schema_name": "public",
+      "table_name": "jobs",
+      "columns": [
+        {
+          "name": "application_video_prompt",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "table_name": "youth_videos",
+      "columns": [
+        {
+          "name": "application_job_id",
+          "type": "uuid"
+        }
+      ]
+    }
+  ]
+}

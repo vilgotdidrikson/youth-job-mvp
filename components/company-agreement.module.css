@@ -1,0 +1,44 @@
+.panel, .form {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  margin-block: 0.75rem;
+}
+
+.form label:has(input:not([type="checkbox"])) {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.panel details {
+  width: 100%;
+}
+
+.panel summary {
+  cursor: pointer;
+}
+
+.text {
+  margin-block: 0.75rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.youthNotice {
+  margin: 0.75rem auto;
+  width: min(44rem, calc(100% - 2rem));
+}
+
+.recruitmentNotice {
+  margin-block: 0.75rem;
+}
+
+.recruitmentNotice summary {
+  cursor: pointer;
+}
+
+.form textarea {
+  width: 100%;
+  min-height: 4.5rem;
+}

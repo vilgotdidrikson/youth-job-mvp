@@ -1,19 +1,37 @@
 "use client";
 
+import { readPrivateCvWork, writePrivateCvWork } from "@/lib/private-cv-work-storage";
+import {AccountCvDraftPanel} from "./account-cv-draft-panel";
+import {type AccountCvDraft,type CvFormDraft} from "@/lib/account-cv-draft";
+import { applicationCountLabel } from "@/lib/product-copy";
+
+import { ProfileStepComplete } from "./profile-journey";
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
+
+import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
+
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { UiIcon } from "./ui-icon";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
-import { authenticatedHeaders } from "@/lib/api-client";
-import { getYouthProfile, saveUploadedCvToProfile } from "@/lib/onboarding";
-import { getSupabaseClient } from "@/lib/supabase";
-import { getYouthDocumentSignedUrl, uploadYouthDocument } from "@/lib/storage";
-import { renderStructuredCv, structuredCvFromForm, structuredCvToLegacy, type StructuredCvData } from "@/lib/structured-cv";
+import { getYouthProfile } from "@/lib/onboarding";
+import { openYouthDocument } from "@/lib/open-youth-document";
+import { CvFeedback } from "./cv-feedback";
+import { createCvSave, ownedCvHeaders, uploadOwnedCvPdf, verifyOwnedCvUpload, CvWorkflowError, CvSaveUnconfirmed, CvUploadUnconfirmed } from "@/lib/cv-save-workflow";
+import { renderStructuredCv, structuredCvFromForm, type StructuredCvData } from "@/lib/structured-cv";
+import { type ApplicationDraftSubmissionResult } from "@/lib/youth-job-flow";
 import type { YouthDocument, YouthProfile } from "@/lib/types";
+import { useVerifiedExperience } from "@/hooks/use-verified-experience";
+import { withVerifiedExperience } from "@/lib/recruitment-types";
+import { cvCreationMethod, type CvCreationMethod } from "@/lib/cv-method";
+import styles from "./cv-method.module.css";
+import { CvFactReview } from "./cv-fact-review";
+import { cvReviewSnapshot, cvSourceText, hasApprovedCv } from "@/lib/cv-fact-review";
 
 type FormStep = "about" | "education" | "experience" | "skills" | "languages" | "merits";
 type Step = "start" | "pdf" | "review" | "preview" | FormStep;
-type Draft = { about: string; school: string; program: string; graduation: string; experience: string; noExperience: boolean; skills: string; languages: string; merits: string; linkedin: string; portfolio: string; otherLink: string };
+type Draft = CvFormDraft;
 const EMPTY: Draft = { about: "", school: "", program: "", graduation: "", experience: "", noExperience: false, skills: "", languages: "", merits: "", linkedin: "", portfolio: "", otherLink: "" };
 const STEPS: FormStep[] = ["about", "education", "experience", "skills", "languages", "merits"];
 const LABELS: Record<FormStep, string> = { about: "Kort om mig", education: "Utbildning", experience: "Erfarenhet", skills: "Kompetenser", languages: "Språk", merits: "Meriter & länkar" };
@@ -21,6 +39,16 @@ const YEARS = Array.from({ length: 16 }, (_, i) => String(new Date().getFullYear
 const SKILLS = ["Service", "Samarbete", "Canva", "Excel", "Sociala medier", "Kassasystem", "Matlagning", "Barnpassning"];
 const LANGUAGES = ["Svenska", "Engelska", "Arabiska", "Spanska", "Finska", "Somaliska"];
 const append = (value: string, item: string) => value.split(",").map((part) => part.trim()).includes(item) ? value : [value.trim(), item].filter(Boolean).join(", ");
+
+function completedCvMessage(result: ApplicationDraftSubmissionResult, fallback: string) {
+  const parts = [fallback];
+  if (result.sent === 1) parts.push("Din sparade ansökan har skickats.");
+  if (result.sent > 1) parts.push(`${result.sent} sparade ansökningar har skickats.`);
+  if (result.unavailable === 1) parts.push("En annons tar inte längre emot ansökningar.");
+  if (result.unavailable > 1) parts.push(`${result.unavailable} annonser tar inte längre emot ansökningar.`);
+  if (result.pending > 0) parts.push(`${applicationCountLabel(result.pending)} kan kompletteras. Öppna Dina ansökningar för att svara eller skicka med uppgift saknas.`);
+  return parts.join(" ");
+}
 
 function buildSource(draft: Draft, name: string, city: string) {
   return structuredCvFromForm({
@@ -41,10 +69,9 @@ function draftFromProfile(profile: YouthProfile): Draft {
     school: cv.education[0]?.school ?? "",
     program: cv.education[0]?.program ?? "",
     graduation: cv.education[0]?.expectedGraduation ?? cv.education[0]?.endDate ?? "",
-    experience: cv.workExperience.flatMap((item) => item.sourceNotes.length ? item.sourceNotes : item.responsibilities).join("\n"),
-    noExperience: cv.workExperience.length === 0,
+    experience: cv.workExperience.map((item) => [item.role, item.employer, item.startDate, item.endDate, item.duration, ...item.responsibilities].filter(Boolean).join(" – ")).join("\n"),
     skills: cv.skills.map((item) => item.name).join(", "),
-    languages: cv.languages.map((item) => item.name).join(", "),
+    languages: cv.languages.map((item) => [item.name, item.level].filter(Boolean).join(" – ")).join(", "),
     merits: cv.certifications.map((item) => item.name).filter(Boolean).join(", "),
     linkedin: cv.personalInfo.linkedin ?? "",
     portfolio: cv.personalInfo.portfolio ?? "",
@@ -55,16 +82,15 @@ function draftFromProfile(profile: YouthProfile): Draft {
     about: (profile.strengths ?? []).join(", "),
     school: (profile.education ?? []).join("\n"),
     experience: (profile.work_experience ?? []).join("\n"),
-    noExperience: !(profile.work_experience ?? []).length,
     skills: (profile.strengths ?? []).join(", "),
     languages: (profile.languages ?? []).join(", "),
     merits: [profile.certificates, profile.extracurriculars].filter(Boolean).join("\n"),
   };
 }
 
-function Chips({ values, selected, onPick }: { values: string[]; selected: string; onPick: (value: string) => void }) {
+function Chips({ values, selected, onPick, label }: { values: string[]; selected: string; onPick: (value: string) => void; label: string }) {
   const selectedValues = selected.split(",").map((item) => item.trim());
-  return <div className="cv-hub-chips">{values.map((value) => <button key={value} type="button" className={selectedValues.includes(value) ? "is-selected" : ""} onClick={() => onPick(value)} aria-pressed={selectedValues.includes(value)}>{value}</button>)}</div>;
+  return <div className="cv-hub-chips" role="group" aria-label={label}>{values.map((value) => <button key={value} type="button" className={selectedValues.includes(value) ? "is-selected" : ""} onClick={() => onPick(value)} aria-pressed={selectedValues.includes(value)}>{value}</button>)}</div>;
 }
 
 function sectionSummary(item: FormStep, draft: Draft) {
@@ -76,13 +102,27 @@ function sectionSummary(item: FormStep, draft: Draft) {
   return [draft.merits, draft.linkedin, draft.portfolio, draft.otherLink].filter(Boolean).join(" · ") || "Inte ifyllt ännu";
 }
 
-export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean }) {
+export function YouthCvHub(props: { initialCreate?: boolean }) {
+  const { user } = useSession();
+  return <YouthCvHubContent key={user?.id ?? "signed-out"} {...props} />;
+}
+
+function YouthCvHubContent({ initialCreate = false }: { initialCreate?: boolean }) {
   const router = useRouter();
   const query = useSearchParams();
   const { user, profile, loading } = useSession();
+  const verified = useVerifiedExperience(user?.id);
   const jobId = query.get("job");
   const title = query.get("title");
-  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : "/profile";
+  const inJourney = query.get("return") === "build" && !jobId;
+  const [completed,setCompleted] = useState(false);
+  const alive=useRef(false),lock=useRef(false),request=useRef<AbortController|null>(null);
+  const saveTask=useRef<ReturnType<typeof createCvSave>|null>(null);
+  const fileCandidate=useRef<YouthDocument|null>(null),originalUploaded=useRef<YouthDocument|null>(null);
+  const [recovery,setRecovery]=useState<"save"|"upload"|"file"|null>(null);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;request.current?.abort();};},[]);
+  const returnPath = jobId && /^[0-9a-f-]{36}$/i.test(jobId) ? `/jobb/${jobId}` : inJourney ? "/profile/build" : "/profile?tab=work";
+  const [method, setMethod] = useState<CvCreationMethod>("manual");
   const [step, setStep] = useState<Step>(initialCreate ? "about" : "start");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [name, setName] = useState("");
@@ -92,8 +132,12 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [draftStorageUnavailable, setDraftStorageUnavailable] = useState(false);
   const [uploaded, setUploaded] = useState<YouthDocument | null>(null);
   const [generated, setGenerated] = useState<{ text: string; structured: StructuredCvData } | null>(null);
+  const [approvedSnapshot, setApprovedSnapshot] = useState<string | null>(null);
+  const [reviewSource, setReviewSource] = useState("");
+  const factsApproved = generated ? hasApprovedCv(approvedSnapshot, generated.text, generated.structured) : false;
   const [returnToReview, setReturnToReview] = useState(false);
   const [editedSections, setEditedSections] = useState<FormStep[]>([]);
   const [supportsStructuredCv, setSupportsStructuredCv] = useState(false);
@@ -101,7 +145,7 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
   const key = `employo-cv-hub-draft:${user?.id ?? "anonymous"}`;
   const index = STEPS.indexOf(step as FormStep);
   const source = useMemo(() => buildSource(draft, name, city), [draft, name, city]);
-  const update = (field: keyof Draft, value: string | boolean) => setDraft((current) => ({ ...current, [field]: value }));
+  const update = (field: keyof Draft, value: string | boolean) => {if(!lock.current&&!recovery)setDraft((current) => ({ ...current, [field]: value }));};
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -118,27 +162,31 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
         setSupportsStructuredCv(Object.prototype.hasOwnProperty.call(youth ?? {}, "cv_structured"));
         setSupportsCvExtras(Object.prototype.hasOwnProperty.call(youth ?? {}, "certificates") && Object.prototype.hasOwnProperty.call(youth ?? {}, "extracurriculars"));
         const docs = Array.isArray(youth?.documents) ? youth.documents : [];
-        setUploaded(docs.find((doc) => doc.type === "cv") ?? null);
-        const saved = localStorage.getItem(key);
+        originalUploaded.current=docs.find((doc)=>doc.type==="cv")??null;setUploaded(originalUploaded.current);
+        const saved = readPrivateCvWork<{ method?: unknown; step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] }>(localStorage, key);
         if (query.get("edit") === "1" && (youth?.cv_structured || youth?.cv_text)) {
           const existingDraft = draftFromProfile(youth);
           const existingStructured = youth.cv_structured ?? buildSource(existingDraft, youth.full_name ?? "", youth.city ?? "");
           setDraft(existingDraft);
+          setReviewSource(youth.cv_text || renderStructuredCv(existingStructured));
           setGenerated({ text: youth.cv_text || renderStructuredCv(existingStructured), structured: existingStructured });
           setStep("preview");
-        } else if (query.get("voice") === "finalize") {
-          const voice = sessionStorage.getItem("employo-voice-cv-structured");
+        } else if (VOICE_CV_ENABLED && query.get("voice") === "finalize") {
+          const voice = sessionStorage.getItem(voiceCvStorageKey("employo-voice-cv-structured", user?.id));
           if (voice) {
             const cv = JSON.parse(voice) as StructuredCvData;
             setDraft({ ...EMPTY, about: cv.profile.summary ?? cv.profile.sourceNotes.join(" "), skills: cv.skills.map((item) => item.name).join(", "), languages: cv.languages.map((item) => item.name).join(", "), merits: cv.certifications.map((item) => item.name).filter(Boolean).join(", "), experience: cv.workExperience.flatMap((item) => item.sourceNotes).join("\n"), school: cv.education[0]?.school ?? "", program: cv.education[0]?.program ?? "", graduation: cv.education[0]?.expectedGraduation ?? cv.education[0]?.endDate ?? "" });
             setStep("merits");
           }
         } else if (saved) {
-          const parsed = JSON.parse(saved) as { step?: Step; draft?: Partial<Draft>; returnToReview?: boolean; editedSections?: FormStep[] };
+          const parsed = saved;
+          setMethod(cvCreationMethod(parsed.method));
           if (parsed.draft) setDraft({ ...EMPTY, ...parsed.draft });
           if (parsed.step && !["start", "pdf", "preview", "review"].includes(parsed.step)) setStep(parsed.step);
           setReturnToReview(Boolean(parsed.returnToReview));
           setEditedSections(parsed.editedSections ?? []);
+        } else if (youth) {
+          setDraft(draftFromProfile(youth));
         }
       } catch { if (active) setError("Kunde inte läsa ditt sparade utkast."); }
       finally { if (active) setReady(true); }
@@ -146,133 +194,225 @@ export function YouthCvHub({ initialCreate = false }: { initialCreate?: boolean 
     return () => { active = false; };
   }, [key, query, user?.id]);
   useEffect(() => {
-    if (ready && user && !["start", "pdf", "preview"].includes(step)) localStorage.setItem(key, JSON.stringify({ step, draft, returnToReview, editedSections }));
-  }, [draft, editedSections, key, ready, returnToReview, step, user]);
+    if (ready && user && !["start", "pdf", "preview"].includes(step)) {
+      try { writePrivateCvWork(localStorage, key, { method, step, draft, returnToReview, editedSections }); setDraftStorageUnavailable(false); }
+      catch { setDraftStorageUnavailable(true); }
+    }
+  }, [draft, editedSections, key, method, ready, returnToReview, step, user]);
+
+  useEffect(() => {
+    if (ready) window.scrollTo({ top: 0, behavior: "instant" });
+  }, [ready, step]);
 
   const generate = async () => {
+    if (method !== "ai" || generating || saving || recovery || lock.current || !alive.current || !user?.id) return;
+    lock.current=true;const controller=new AbortController();request.current=controller;const deadline=setTimeout(()=>controller.abort(new DOMException("CV generation timed out","TimeoutError")),70_000);
     setError(""); setGenerating(true);
+    setApprovedSnapshot(null);
+    setReviewSource(cvSourceText(source));
     try {
+      const headers=await ownedCvHeaders(user.id,controller.signal);
+      if(!alive.current||controller.signal.aborted)return;
       const response = await fetch("/api/youth/cv/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authenticatedHeaders()) },
+        headers: { "Content-Type": "application/json", ...headers },
+        signal:controller.signal,
         body: JSON.stringify({ structured: source, profile_details: draft.about, work_experience: draft.noExperience ? "" : draft.experience, skills_text: draft.skills, languages: draft.languages, certificates: draft.merits, linkedin: draft.linkedin, portfolio: draft.portfolio }),
       });
       const result = await response.json() as { cv?: string; structured?: StructuredCvData; error?: string };
+      if(!alive.current||controller.signal.aborted)return;
       if (!response.ok || !result.cv || !result.structured) throw new Error(result.error ?? "Kunde inte skriva CV:t just nu.");
       setGenerated({ text: result.cv, structured: result.structured });
       setReturnToReview(false);
       setStep("preview");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte skapa CV:t. Dina svar är kvar."); }
-    finally { setGenerating(false); }
+    } catch { if(alive.current)setError("Kunde inte skapa CV:t. Dina svar är kvar."); }
+    finally { clearTimeout(deadline);lock.current=false;if(request.current===controller)request.current=null;if(alive.current)setGenerating(false); }
   };
   const advance = (skip = false) => {
+    if(lock.current||recovery)return;
     setError("");
+    setApprovedSnapshot(null);
     if (!skip && step === "about" && !draft.about.trim()) { setError("Skriv några ord om dig själv, eller hoppa över och fyll i senare."); return; }
-    if (returnToReview) { setEditedSections((current) => current.includes(step as FormStep) ? current : [...current, step as FormStep]); setGenerated({ text: renderStructuredCv(source), structured: source }); setStep("preview"); setReturnToReview(false); return; }
+    if (returnToReview) {
+      const field = step as FormStep;
+      setEditedSections((current) => current.includes(field) ? current : [...current, field]);
+      const previous = generated?.structured;
+      const patch = {
+        about: { profile: source.profile },
+        education: { education: source.education },
+        experience: { workExperience: source.workExperience },
+        skills: { skills: source.skills },
+        languages: { languages: source.languages },
+        merits: {
+          certifications: source.certifications,
+          personalInfo: { ...previous?.personalInfo, linkedin: source.personalInfo.linkedin, portfolio: source.personalInfo.portfolio },
+          otherExperience: [...(previous?.otherExperience ?? []).filter(entry => entry.type !== "link"), ...source.otherExperience],
+        },
+      }[field];
+      const structured = previous ? { ...previous, ...patch } : source;
+      if (previous && structured.cvOmitted) {
+        const omitted = { ...structured.cvOmitted };
+        for (const section of Object.keys(patch) as (keyof typeof omitted)[]) delete omitted[section];
+        structured.cvOmitted = omitted;
+      }
+      delete structured.textBasis;
+      setGenerated({ text: renderStructuredCv(structured), structured });
+      setStep("preview");
+      setReturnToReview(false);
+      return;
+    }
     if (step === "merits") { if (canUseAi) void generate(); else prepareManualPreview(); return; }
     setStep(STEPS[index + 1]);
   };
   const prepareManualPreview = () => {
+    if(lock.current||recovery)return;
+    setApprovedSnapshot(null);
+    setReviewSource(cvSourceText(source));
     setGenerated({ text: renderStructuredCv(source), structured: source });
     setReturnToReview(false);
     setStep("preview");
   };
-  const canUseAi = true;
-  const finish = async () => {
-    if (!user?.id || !generated) return;
-    setSaving(true); setError("");
-    try {
-      const legacy = structuredCvToLegacy(generated.structured);
-      const client = getSupabaseClient();
-      const { error: saveError } = await client.from("youth_profiles").update({
-        cv_text: generated.text, cv_generated: true,
-        strengths: legacy.strengths, work_experience: legacy.workExperience, education: legacy.education,
-        languages: legacy.languages,
-      }).eq("user_id", user.id);
-      if (saveError) throw saveError;
-      if (supportsStructuredCv || supportsCvExtras) {
-        const extendedPayload: Record<string, unknown> = {};
-        if (supportsStructuredCv) extendedPayload.cv_structured = generated.structured;
-        if (supportsCvExtras) {
-          extendedPayload.certificates = legacy.certificates.join("\n") || null;
-          extendedPayload.extracurriculars = legacy.extracurriculars.join("\n") || null;
-        }
-        const { error: extendedSaveError } = await client.from("youth_profiles").update(extendedPayload).eq("user_id", user.id);
-        if (extendedSaveError) console.warn("Kunde inte spara utökade CV-fält:", extendedSaveError.message);
-      }
-      localStorage.removeItem(key); setMessage("Ditt CV är klart!");
-      window.setTimeout(() => router.push(returnPath), 650);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte göra klart ditt CV."); }
-    finally { setSaving(false); }
+  const canUseAi = method === "ai";
+  const complete = async (task:ReturnType<typeof createCvSave>,signal:AbortSignal) => {
+    const result=await task.read(signal);
+    if(!alive.current||signal.aborted)return;
+    if(!result.confirmed){saveTask.current=null;setMessage("");setRecovery(fileCandidate.current?"file":null);throw new CvWorkflowError("Det sparade CV:t motsvarar inte ditt utkast. Granska det innan du väljer att spara igen.");}
+    const applications=await task.submitDrafts(signal).catch(()=>null);
+    if(!alive.current||signal.aborted)return;
+    if(VOICE_CV_ENABLED&&query.get("voice")==="finalize")for(const base of ["employo-voice-cv-answers","employo-voice-cv-structured","employo-voice-cv-conversation","employo-voice-cv-draft"])try{sessionStorage.removeItem(voiceCvStorageKey(base,user?.id));}catch{}
+    try{localStorage.removeItem(key);}catch{}
+    setMessage(applications?completedCvMessage(applications,"Ditt CV är sparat och klart."):"Ditt CV är sparat. Status för dina väntande ansökningar kunde inte bekräftas. Kontrollera Dina ansökningar.");
+    setCompleted(true);setRecovery(null);
   };
-  const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; if (!file) return;
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { setError("Välj en PDF-fil."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("PDF:en är för stor. Max är 5 MB."); return; }
-    setSaving(true); setError("");
-    try { const url = await uploadYouthDocument(file); const document = { name: file.name, url, type: "cv" as const }; await saveUploadedCvToProfile(document); setUploaded(document); localStorage.removeItem(key); setMessage("Ditt CV är uppladdat och klart."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Kunde inte ladda upp PDF:en."); }
-    finally { setSaving(false); event.target.value = ""; }
+  const run = async (action:(signal:AbortSignal)=>Promise<void>) => {
+    if(lock.current||!alive.current)return;
+    lock.current=true;setSaving(true);setError("");setMessage("");const controller=new AbortController();request.current=controller;
+    try{await action(controller.signal);}
+    catch(reason){if(alive.current&&!controller.signal.aborted){if(reason instanceof CvSaveUnconfirmed)setRecovery("save");if(reason instanceof CvUploadUnconfirmed){fileCandidate.current=reason.document;setRecovery("upload");}setError(reason instanceof CvWorkflowError?reason.message:"CV:t kunde inte bekräftas. Dina uppgifter finns kvar här.");}}
+    finally{lock.current=false;if(request.current===controller)request.current=null;if(alive.current)setSaving(false);}
   };
+  const persist = async (task:ReturnType<typeof createCvSave>,signal:AbortSignal) => {
+    saveTask.current=task;await task.save(signal);
+    if(!alive.current||signal.aborted)return;
+    setRecovery("save");setMessage("CV:t är sparat. Kontrollerar de sparade uppgifterna…");await complete(task,signal);
+  };
+  const finish = () => void run(async signal=>{
+    if(!user?.id||!generated||recovery)return;
+    if(!factsApproved)throw new CvWorkflowError("Granska och godkänn CV-texten och profilfakta innan du sparar.");
+    if(!supportsStructuredCv||!supportsCvExtras)throw new CvWorkflowError("Profilen saknar stöd för samordnade CV-fakta. Din text finns kvar.");
+    await persist(createCvSave(user.id,{kind:"reviewed",text:generated.text,structured:generated.structured,approval:approvedSnapshot}),signal);
+  });
+  const upload = (event:React.ChangeEvent<HTMLInputElement>) => {
+    const field=event.currentTarget,file=field.files?.[0];field.value="";
+    if(!file||!user?.id||recovery||lock.current)return;
+    void run(async signal=>{
+      const document=await uploadOwnedCvPdf(user.id,file,signal);
+      if(!alive.current||signal.aborted)return;
+      fileCandidate.current=document;setUploaded(document);setRecovery("file");
+      await persist(createCvSave(user.id,{kind:"uploaded",document}),signal);
+    });
+  };
+  const recover = () => void run(async signal=>{
+    if(recovery==="save"&&saveTask.current)await complete(saveTask.current,signal);
+    else if(recovery==="upload"&&fileCandidate.current&&user?.id){await verifyOwnedCvUpload(user.id,fileCandidate.current,signal);if(alive.current&&!signal.aborted){setUploaded(fileCandidate.current);setRecovery("file");setMessage("PDF-filen finns uppladdad. Välj Spara uppladdad PDF för att använda den som ditt CV.");}}
+    else if(recovery==="file"&&fileCandidate.current&&user?.id)await persist(createCvSave(user.id,{kind:"uploaded",document:fileCandidate.current}),signal);
+  });
+  const recoveryNotice = recovery&&<section className="cv-hub-status" aria-label="Kontrollera CV-sparning"><p>{recovery==="save"?"Kontrollera det sparade resultatet innan du skickar igen. Dina uppgifter finns kvar här.":"Fortsätt med samma PDF utan en ny uppladdning."}</p><button className="secondary-btn" type="button" disabled={saving} onClick={recover}>{recovery==="save"?"Kontrollera sparningen":recovery==="upload"?"Kontrollera uppladdningen":"Spara uppladdad PDF"}</button>{recovery!=="save"&&<button className="secondary-btn" type="button" disabled={saving} onClick={()=>{if(lock.current)return;fileCandidate.current=null;saveTask.current=null;setUploaded(originalUploaded.current);setRecovery(null);setMessage("");setError("");}}>Välj PDF igen</button>}</section>;
+  const previewPdf = () => {
+    if(!user?.id||!uploaded||lock.current||!alive.current)return;
+    void run(signal=>openYouthDocument({subjectId:user.id,path:uploaded.url,signal,openWindow:()=>window.open("about:blank","_blank")}).catch(reason=>{throw new CvWorkflowError(reason instanceof Error&&reason.message.startsWith("Tillåt ett nytt fönster")?reason.message:"PDF:en kunde inte öppnas. Kontrollera din anslutning och försök igen.");}));
+  };
+  const accountDraftSnapshot:AccountCvDraft={version:1,method,step,draft,returnToReview,editedSections,generated,reviewSource};
+  const accountDraftPanel=user?.id&&ready&&<AccountCvDraftPanel key="account-cv-draft" userId={user.id} snapshot={accountDraftSnapshot} disabled={generating||saving||!!recovery} completed={completed} onRestore={value=>{
+    if(lock.current||recovery)return;
+    setDraft(value.draft);setMethod(value.method);setStep(value.step);setReturnToReview(value.returnToReview);setEditedSections(value.editedSections as FormStep[]);setGenerated(value.generated);setReviewSource(value.reviewSource);setApprovedSnapshot(null);setError("");setMessage("");
+  }}/>;
   const jobNote = jobId ? <aside className="cv-hub-job">CV:t behövs för: <strong>{title || "det valda jobbet"}</strong><Link href={returnPath}>Tillbaka till jobbet</Link></aside> : null;
 
-  if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p></main>;
+  if (loading || !ready) return <main className="mobile-shell cv-hub"><p>Laddar ditt CV...</p>{accountDraftPanel}</main>;
+  if (completed) return <main className="mobile-shell cv-hub"><h1>Ditt CV är sparat</h1><p role="status" className="cv-hub-success">{message}</p>{inJourney ? <ProfileStepComplete step="cv"/> : <div className="mnw-profile-buttons"><Link className="cta-btn" href={returnPath}>{jobId?"Tillbaka till jobbet":"Till min jobbprofil"}</Link><Link className="secondary-btn" href="/applications">Dina ansökningar</Link></div>}{accountDraftPanel}</main>;
   if (step === "start") return <main className="mobile-shell cv-hub">
-    <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>{jobNote}
-    <p className="cv-hub-eyebrow">Ditt nästa steg</p><h1>Skapa ditt CV</h1>
-    <p className="cv-hub-lead">Svara fritt med egna ord. AI:n ordnar sedan dina fakta till ett CV som du själv granskar och redigerar.</p>
-    <div className="cv-hub-options">
-      <button className="cv-hub-option recommended" onClick={() => setStep("about")}><span>Rekommenderat</span><strong>Skapa med guidat formulär</strong><small>Svara på enkla frågor. Tar cirka 3–5 minuter.</small></button>
-      <button className="cv-hub-option" onClick={() => setStep("pdf")}><strong>Ladda upp ett CV</strong><small>Ladda upp en PDF om du redan har ett CV.</small></button>
-      <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>
-    </div>{error && <p className="cv-hub-error">{error}</p>}
-  </main>;
+    
+    {/* In the profile journey the step menu leads back; a back link appears once a CV method is chosen. */}
+    {!inJourney && <Link href={returnPath} className="cv-hub-back">← Tillbaka</Link>}{jobNote}
+    <h1>Skapa ditt CV</h1>
+    <div className={`cv-hub-options ${styles.options}`}>
+      <button className="cv-hub-option" onClick={() => { setMethod("manual"); setStep("about"); }}><span className="cv-hub-option-icon"><UiIcon name="edit" width="25" height="25" /></span><strong>Skriv själv</strong><small>Fyll i dina uppgifter och granska ditt CV utan AI.</small></button>
+      <button className="cv-hub-option" onClick={() => { setMethod("ai"); setStep("about"); }}><span className="cv-hub-option-icon"><UiIcon name="chat" width="25" height="25" /></span><strong>Ta hjälp av AI</strong><small>Fyll i samma uppgifter och få ett textförslag att granska.</small></button>
+      <button className="cv-hub-option" onClick={() => setStep("pdf")}><span className="cv-hub-option-icon"><UiIcon name="upload" width="25" height="25" /></span><strong>Ladda upp ett CV</strong><small>Har du redan ett CV? PDF, max 5 MB.</small></button>
+      {VOICE_CV_ENABLED && <Link className="cv-hub-option" href={`/voice-cv${jobId ? `?job=${encodeURIComponent(jobId)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`}><span className="cv-hub-option-icon"><UiIcon name="microphone" width="25" height="25" /></span><strong>Prata fram ditt CV <em>Valfritt</em></strong><small>Svara muntligt på frågor.</small></Link>}
+    </div>{error && <p role="alert" className="cv-hub-error">{error}</p>}
+  {accountDraftPanel}</main>;
   if (step === "pdf") return <main className="mobile-shell cv-hub">
-    <button className="cv-hub-back" onClick={() => setStep("start")}>← Tillbaka till valen</button>{jobNote}
-    <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB.</p>
-    <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
-    {uploaded && <section className="cv-hub-status"><strong>CV uppladdat</strong><p>{uploaded.name}</p><button onClick={() => void getYouthDocumentSignedUrl(uploaded.url).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Kunde inte öppna PDF:en."))}>Förhandsvisa PDF</button></section>}
-    {message && <p className="cv-hub-success">{message}</p>}{error && <p className="cv-hub-error">{error}</p>}
-  </main>;
+    
+    <button className="cv-hub-back" disabled={saving || !!recovery} onClick={() => {if(!lock.current&&!recovery)setStep("start");}}>← Tillbaka till valen</button>{jobNote}
+    <p className="cv-hub-eyebrow">Ladda upp PDF</p><h1>Har du redan ett CV?</h1><p className="cv-hub-lead">Välj en PDF på högst 5 MB. Innehållet i filen, även eventuella kontaktuppgifter, blir synligt när du delar CV:t i en ansökan.</p>
+    <label className="cv-hub-upload"><input type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event)} disabled={saving || !!recovery} />{saving ? "Laddar upp..." : "Välj PDF"}</label>
+    {uploaded && <section className="cv-hub-status"><strong>PDF-fil</strong><p>{uploaded.name}</p><button disabled={saving} onClick={previewPdf}>Förhandsvisa PDF</button></section>}
+    {uploaded && user && !saving && !recovery && <CvFeedback key={`${user.id}:${uploaded.url}`} ownerId={user.id} />}
+    {recoveryNotice}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}{error && <p role="alert" className="cv-hub-error">{error}</p>}
+  {accountDraftPanel}</main>;
+  const methodChoice = <fieldset className={styles.method} disabled={generating || saving || !!recovery}><legend>Så skapar du ditt CV</legend>{([{value:"manual",label:"Skriv själv"},{value:"ai",label:"Med AI-hjälp"}] as const).map(item => <label key={item.value}><input type="radio" name="cv-method" checked={method === item.value} onChange={() => { if(lock.current||recovery)return;setMethod(item.value); setApprovedSnapshot(null); }} />{item.label}</label>)}</fieldset>;
+
   if (step === "review") return <main className="mobile-shell cv-hub cv-hub-review-page">
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
-    <p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
+    {methodChoice}<p className="cv-hub-eyebrow">Redigera CV</p><h1>Gör dina ändringar i lugn och ro</h1>
     <p className="cv-hub-lead">Välj en del i taget. Dina ändringar sparas här medan du arbetar och syns när du förhandsvisar CV:t.</p>
     <section className="cv-hub-saved-banner" aria-live="polite">
       <strong>{editedSections.length ? "Ändringar sparade" : "Ditt redigeringsutkast"}</strong>
       <span>{editedSections.length ? `${editedSections.length} ${editedSections.length === 1 ? "del är" : "delar är"} sparad${editedSections.length === 1 ? "" : "e"}.` : "Välj en del för att börja redigera."}</span>
     </section>
     <div className="cv-hub-review-list">
-      {STEPS.map((item) => <button className="cv-hub-review-card" key={item} type="button" onClick={() => { setReturnToReview(true); setStep(item); }}><span className="cv-hub-review-card-copy"><strong>{LABELS[item]}</strong><small>{sectionSummary(item, draft)}</small></span><span className="cv-hub-review-card-meta">{editedSections.includes(item) && <em>Sparat</em>}<b>Ändra</b></span></button>)}
+      {STEPS.map((item) => <button className="cv-hub-review-card" key={item} type="button" disabled={saving || generating || !!recovery} onClick={() => { if(lock.current||recovery)return;setReturnToReview(true); setStep(item); }}><span className="cv-hub-review-card-copy"><strong>{LABELS[item]}</strong><small>{sectionSummary(item, draft)}</small></span><span className="cv-hub-review-card-meta">{editedSections.includes(item) && <em>Sparat</em>}<b>Ändra</b></span></button>)}
     </div>
-    <button className="cta-btn" disabled={generating} onClick={() => { if (canUseAi) void generate(); else prepareManualPreview(); }}>{generating ? "AI:n skriver ditt CV..." : canUseAi ? "Skapa mitt CV" : "Förhandsvisa ändringar"}</button>
+    <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => { if (canUseAi) void generate(); else prepareManualPreview(); }}>{generating ? "AI:n skriver ditt CV..." : canUseAi ? "Skapa mitt CV" : "Förhandsvisa ändringar"}</button>
     <p className="cv-hub-cost-note">{canUseAi ? "AI:n används bara för den första versionen. Du kan göra hur många ändringar du vill innan dess." : "Det här CV:t uppdateras utan AI. Dina sparade ändringar visas i förhandsvisningen."}</p>
-    {error && <p className="cv-hub-error">{error}</p>}
-  </main>;
+    {error && <p role="alert" className="cv-hub-error">{error}</p>}
+  {accountDraftPanel}</main>;
   if (step === "preview") return <main className="mobile-shell cv-hub cv-hub-preview-page">
+    
     <Link href={returnPath} className="cv-hub-back">← Tillbaka till profilen</Link>{jobNote}
-    <p className="cv-hub-eyebrow">Din CV-förhandsvisning</p><h1>Så här kommer företag att se din profil.</h1>
-    <p className="cv-hub-status"><strong>Status: redo att granska</strong><br />Dina ändringar är med. Du kan redigera manuellt eller be AI:n skriva en ny version när du vill.</p>
-    <div className="cv-hub-edit-links">{STEPS.map((item) => <button key={item} onClick={() => { setReturnToReview(true); setStep(item); }}>Redigera {LABELS[item]}</button>)}</div>
-    <textarea className="cv-hub-preview" value={generated?.text ?? ""} onChange={(event) => setGenerated((current) => current ? { ...current, text: event.target.value } : current)} rows={20} />
-    <button className="cv-hub-skip" disabled={generating} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>
-    <button className="cta-btn" disabled={saving || !generated?.text.trim()} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
-    {error && <p className="cv-hub-error">{error}</p>}{message && <p className="cv-hub-success">{message}</p>}
-  </main>;
+    <h1>Granska ditt CV</h1>
+    <div className="cv-hub-edit-links" role="group" aria-label="Redigera en del av CV:t"><span aria-hidden="true">Redigera:</span>{STEPS.map((item) => <button key={item} disabled={saving || generating || !!recovery} onClick={() => { if(lock.current||recovery)return;setReturnToReview(true); setStep(item); }}>{LABELS[item]}</button>)}</div>
+    <textarea aria-label={canUseAi ? "Redigera CV-förhandsvisningen" : "CV-förhandsvisning"} className="cv-hub-preview" readOnly={!canUseAi} disabled={saving || generating || !!recovery} value={generated?.text ?? ""} onChange={(event) => { setApprovedSnapshot(null); setGenerated((current) => current ? { ...current, text: event.target.value } : current); }} rows={20} />
+    {!canUseAi && <p className={styles.note}>Ändra texten genom delarna ovan eller uppgifterna nedan. CV och profilfakta hålls ihop utan AI.</p>}
+    {generated && <CvFactReview manual={!canUseAi} text={generated.text} onSync={(cv) => { setApprovedSnapshot(null); setReviewSource(generated.text); setGenerated({ text: generated.text, structured: cv }); }} cv={generated.structured} sourceText={reviewSource || cvSourceText(source)} approved={factsApproved} disabled={saving || generating || !!recovery}
+      onApprove={(approved) => setApprovedSnapshot(approved ? cvReviewSnapshot(generated.text, generated.structured) : null)}
+      onChange={(cv) => { setApprovedSnapshot(null); setGenerated({ text: renderStructuredCv(cv), structured: cv }); }} />}
+    {verified.items.some(item => item.include_in_cv) && <section className="card" style={{padding:"1rem",margin:"1rem 0"}}><h2>Bekräftad erfarenhet som läggs till automatiskt</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",fontSize:".85rem"}}>{withVerifiedExperience("", verified.items)}</pre><Link href="/profile">Ändra vad som tas med på din profil →</Link></section>}
+    {verified.error && <p role="alert" className="cv-hub-error">{verified.error}</p>}
+    {canUseAi && <p className={styles.note}><Link href="/privacy#ai-cv">Så används dina uppgifter när du skriver om CV:t med AI</Link>.</p>}
+    {canUseAi && <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => void generate()}>{generating ? "AI:n skriver en ny version..." : "Skriv om med AI"}</button>}
+    <button className="cta-btn" disabled={saving || generating || !!recovery || !factsApproved} onClick={() => void finish()}>{saving ? "Gör klart..." : "Gör mitt CV klart"}</button>
+    {recoveryNotice}{error && <p role="alert" className="cv-hub-error">{error}</p>}{message && <p role="status" className="cv-hub-success">{message} <Link href="/applications">Dina ansökningar →</Link></p>}
+  {accountDraftPanel}</main>;
 
   return <main className="mobile-shell cv-hub">
-    <button className="cv-hub-back" onClick={() => { if (returnToReview) { setReturnToReview(false); setStep("preview"); } else setStep(index <= 0 ? "start" : STEPS[index - 1]); }}>← {returnToReview ? "Tillbaka till förhandsvisningen" : "Tillbaka"}</button>{jobNote}
-    <p className="cv-hub-eyebrow">Steg {index + 1} av {STEPS.length}</p><div className="cv-hub-progress"><span style={{ width: `${Math.round(((index + 1) / STEPS.length) * 100)}%` }} /></div><h1>{LABELS[step]}</h1>
+    
+    {/* One compact row (back + question count) above a thin bar; the journey header above already shows the five profile steps. */}
+    <div className="cv-hub-question-head">
+      <div><button className="cv-hub-back" onClick={() => { if (returnToReview) { setReturnToReview(false); setStep("preview"); } else setStep(index <= 0 ? "start" : STEPS[index - 1]); }}>← {returnToReview ? "Tillbaka till förhandsvisningen" : "Tillbaka"}</button><span>Fråga {index + 1} av {STEPS.length}</span></div>
+      <div className="cv-hub-progress" role="progressbar" aria-label="Frågor i CV-formuläret" aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={index + 1}><span style={{ width: `${Math.round(((index + 1) / STEPS.length) * 100)}%` }} /></div>
+    </div>{jobNote}<h1>{LABELS[step]}</h1>
     <div className="cv-hub-form">
-      {step === "about" && <><p>Skriv som du vill. Exempel: vad du gillar, hur du är som person och vad du vill lära dig.</p><textarea autoFocus rows={6} value={draft.about} onChange={(event) => update("about", event.target.value)} placeholder="Skriv kort om dig själv" /></>}
-      {step === "education" && <><p>Valfritt. Lägg till det du vill att arbetsgivaren ska känna till.</p><input value={draft.school} onChange={(event) => update("school", event.target.value)} placeholder="Skola" /><input value={draft.program} onChange={(event) => update("program", event.target.value)} placeholder="Program eller inriktning" /><label>Planerad examen<select value={draft.graduation} onChange={(event) => update("graduation", event.target.value)}><option value="">Välj år (valfritt)</option>{YEARS.map((year) => <option key={year}>{year}</option>)}</select></label></>}
-      {step === "experience" && <><p>Skriv fritt. Ett starkt svar beskriver <strong>när, var, vad, hur och hur länge</strong>: “Sommaren 2025 hjälpte jag i mammas café i fyra veckor, tog beställningar och höll rent.”</p><textarea rows={7} disabled={draft.noExperience} value={draft.experience} onChange={(event) => update("experience", event.target.value)} placeholder="Berätta om jobb, praktik, ansvar hemma eller förening" /><label className="cv-hub-check"><input type="checkbox" checked={draft.noExperience} onChange={(event) => update("noExperience", event.target.checked)} /> Jag har ingen erfarenhet ännu</label></>}
-      {step === "skills" && <><p>Skriv fritt eller välj piller. Välj bara sådant du faktiskt kan eller har använt.</p><textarea rows={4} value={draft.skills} onChange={(event) => update("skills", event.target.value)} placeholder="T.ex. Jag är bra på att möta kunder och har använt Excel i skolan" /><Chips values={SKILLS} selected={draft.skills} onPick={(chip) => update("skills", draft.skills.split(",").map((item) => item.trim()).includes(chip) ? draft.skills.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.skills, chip))} /></>}
-      {step === "languages" && <><p>Skriv fritt eller tryck på ett språk.</p><input value={draft.languages} onChange={(event) => update("languages", event.target.value)} placeholder="T.ex. svenska, engelska" /><Chips values={LANGUAGES} selected={draft.languages} onPick={(chip) => update("languages", draft.languages.split(",").map((item) => item.trim()).includes(chip) ? draft.languages.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.languages, chip))} /></>}
-      {step === "merits" && <><p>Valfritt: körkort, certifikat, förening eller en länk som visar mer om dig.</p><textarea rows={4} value={draft.merits} onChange={(event) => update("merits", event.target.value)} placeholder="T.ex. HLR-utbildning, ledare i en förening" /><input type="url" value={draft.linkedin} onChange={(event) => update("linkedin", event.target.value)} placeholder="LinkedIn-länk (valfritt)" /><input type="url" value={draft.portfolio} onChange={(event) => update("portfolio", event.target.value)} placeholder="Portfolio, GitHub eller egen hemsida (valfritt)" /><input type="url" value={draft.otherLink} onChange={(event) => update("otherLink", event.target.value)} placeholder="Annan länk, t.ex. ett projekt (valfritt)" /></>}
+      {step === "about" && <><p>Till exempel vad du gillar, hur du är och vad du vill lära dig.</p><textarea aria-label="Kort om mig" autoFocus rows={6} value={draft.about} onChange={(event) => update("about", event.target.value)} placeholder="Skriv kort om dig själv" /></>}
+      {step === "education" && <><p>Valfritt.</p><input aria-label="Skola" value={draft.school} onChange={(event) => update("school", event.target.value)} placeholder="Skola" /><input aria-label="Program eller inriktning" value={draft.program} onChange={(event) => update("program", event.target.value)} placeholder="Program eller inriktning" /><label>Planerad examen<select value={draft.graduation} onChange={(event) => update("graduation", event.target.value)}><option value="">Välj år (valfritt)</option>{YEARS.map((year) => <option key={year}>{year}</option>)}</select></label></>}
+      {/* The box is only ever ticked by the person; an empty profile is not the same as "no experience". */}
+      {step === "experience" && <><label className="cv-hub-check"><input type="checkbox" checked={draft.noExperience} onChange={(event) => update("noExperience", event.target.checked)} /> Jag har ingen erfarenhet ännu</label>{draft.noExperience ? <div className="cv-hub-check-note" role="status"><strong>Du behöver inte skriva något här.</strong><span> Det är helt okej att inte ha jobbat än. Gå vidare till nästa steg.{draft.experience.trim() ? " Det du har skrivit sparas inte så länge rutan är ikryssad." : ""}</span></div> : <textarea aria-label="Erfarenhet" rows={7} value={draft.experience} onChange={(event) => update("experience", event.target.value)} placeholder="Berätta om jobb, praktik, ansvar hemma eller förening" />}</>}
+      {step === "skills" && <><p>Skriv eller välj bland förslagen – bara sådant du faktiskt kan.</p><textarea aria-label="Kompetenser" rows={4} value={draft.skills} onChange={(event) => update("skills", event.target.value)} placeholder="T.ex. Jag är bra på att möta kunder och har använt Excel i skolan" /><Chips label="Förslag på kompetenser" values={SKILLS} selected={draft.skills} onPick={(chip) => update("skills", draft.skills.split(",").map((item) => item.trim()).includes(chip) ? draft.skills.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.skills, chip))} /></>}
+      {step === "languages" && <><p>Skriv fritt eller tryck på ett språk.</p><input aria-label="Språk" value={draft.languages} onChange={(event) => update("languages", event.target.value)} placeholder="T.ex. svenska, engelska" /><Chips label="Förslag på språk" values={LANGUAGES} selected={draft.languages} onPick={(chip) => update("languages", draft.languages.split(",").map((item) => item.trim()).includes(chip) ? draft.languages.split(",").map((item) => item.trim()).filter((item) => item !== chip).join(", ") : append(draft.languages, chip))} /></>}
+      {step === "merits" && <><p>Valfritt: körkort, certifikat, förening eller en länk som visar mer om dig.</p><textarea aria-label="Meriter och certifikat" rows={4} value={draft.merits} onChange={(event) => update("merits", event.target.value)} placeholder="T.ex. HLR-utbildning, ledare i en förening" /><input aria-label="LinkedIn-länk" type="url" value={draft.linkedin} onChange={(event) => update("linkedin", event.target.value)} placeholder="LinkedIn-länk (valfritt)" /><input aria-label="Portfolio eller hemsida" type="url" value={draft.portfolio} onChange={(event) => update("portfolio", event.target.value)} placeholder="Portfolio, GitHub eller egen hemsida (valfritt)" /><input aria-label="Annan länk" type="url" value={draft.otherLink} onChange={(event) => update("otherLink", event.target.value)} placeholder="Annan länk, t.ex. ett projekt (valfritt)" /></>}
     </div>
-    <button className="cta-btn" disabled={generating} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa min CV-förhandsvisning" : "Förhandsvisa ändringar" : "Fortsätt"}</button>
-    <button className="cv-hub-skip" disabled={generating} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "about" ? "Jag vill skriva detta senare" : "Hoppa över"}</button>
-    {error && <p className="cv-hub-error">{error}</p>}
-  </main>;
+    {error && <p role="alert" className="cv-hub-error">{error}</p>}
+    {methodChoice}
+    {canUseAi && step === "merits" && !returnToReview && <p className={styles.note}>AI använder dina svar för att skriva ett CV-förslag som du granskar. <Link href="/privacy#ai-cv">Så används dina uppgifter</Link>.</p>}
+    <div className="cv-hub-question-actions">
+      <button className="cta-btn" disabled={generating || saving || !!recovery} onClick={() => advance()}>{generating ? "AI:n skriver ditt CV..." : returnToReview ? "Spara ändringen" : step === "merits" ? canUseAi ? "Skapa CV-förslag med AI" : "Förhandsvisa mitt CV" : "Fortsätt"}</button>
+      <button className="cv-hub-skip" disabled={generating || saving || !!recovery} onClick={() => advance(true)}>{returnToReview ? "Spara och återgå till förhandsvisningen" : step === "merits" ? canUseAi ? "Hoppa över och skapa CV-förslag" : "Hoppa över och förhandsvisa" : "Hoppa över"}</button>
+    </div>
+    {/* Bekräftad erfarenhet visas i förhandsvisningen; i profilbygget finns "Pausa och fortsätt senare" redan i stegrubriken. */}
+    <p className="cv-hub-draft-note"><UiIcon name="info" width="17" />{draftStorageUnavailable ? "Utkastet kunde inte sparas på den här enheten. Stanna på sidan tills du har granskat och gjort CV:t klart." : "Sparas på den här enheten medan du skriver."}</p>
+    {!draftStorageUnavailable && !inJourney && <Link className="cv-hub-save-later" href={returnPath}>Fortsätt senare <UiIcon name="arrow" width="16" /></Link>}
+  {accountDraftPanel}</main>;
 }

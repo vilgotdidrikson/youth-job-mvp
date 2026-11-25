@@ -2,20 +2,23 @@
 
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from "@/lib/supabase-errors";
 import type { Profile, Role } from "@/lib/types";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-async function insertRoleProfile(userId: string, role: Role) {
-  const supabase = getSupabaseClient();
-  const { error } = role === "youth"
-    ? await supabase.from("youth_profiles").insert({ user_id: userId })
-    : role === "company"
-      ? await supabase.from("company_profiles").insert({ user_id: userId })
-      : await supabase.from("private_profiles").insert({ user_id: userId });
-  if (error) throw new Error(error.message);
+// 4xx answers (account already exists, wrong password, ...) are expected user
+// input errors that the form explains, and a lost connection is not a bug;
+// only log real failures as errors.
+function logUnexpectedAuthError(message: string, error: { status?: number }) {
+  if (error.status && error.status >= 400 && error.status < 500) return;
+  if (isNetworkError(error)) {
+    console.warn(message, error);
+    return;
+  }
+  console.error(message, error);
 }
 
 export async function signUp(
@@ -27,26 +30,23 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email: normalizeEmail(email),
     password,
+    options: {
+      // The auth.users trigger validates this allowlisted value and creates the
+      // immutable application profile in the same database transaction.
+      data: { role },
+      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+    },
   });
 
   if (error) {
-    console.error("Supabase sign up failed.", error);
-    throw new Error(error.message);
+    logUnexpectedAuthError("Supabase sign up failed.", error);
+    throw new Error(getSupabaseErrorMessage(error, error.message));
   }
 
   if (!data.user?.id) {
     const unexpectedError = new Error("Supabase did not return a user during sign up.");
     console.error(unexpectedError.message);
     throw unexpectedError;
-  }
-
-  const { error: profileError } = await supabase.from("profiles").insert({ id: data.user.id, role });
-  if (profileError) throw new Error(profileError.message);
-  try {
-    await insertRoleProfile(data.user.id, role);
-  } catch (profileInsertError) {
-    await supabase.from("profiles").delete().eq("id", data.user.id);
-    throw profileInsertError;
   }
 
   return { user: data.user, session: data.session };
@@ -60,8 +60,13 @@ export async function signIn(email: string, password: string): Promise<Session> 
   });
 
   if (error) {
-    console.error("Supabase sign in failed.", error);
-    throw new Error(error.message);
+    if (error.code === "email_not_confirmed") {
+      const confirmationError = new Error("Bekräfta din e-postadress innan du loggar in.");
+      confirmationError.name = "EmailConfirmationRequiredError";
+      throw confirmationError;
+    }
+    logUnexpectedAuthError("Supabase sign in failed.", error);
+    throw new Error(getSupabaseErrorMessage(error, error.message));
   }
 
   if (!data.session) {
@@ -71,6 +76,41 @@ export async function signIn(email: string, password: string): Promise<Session> 
   }
 
   return data.session;
+}
+
+export async function resendSignupConfirmation(email: string): Promise<void> {
+  const { error } = await getSupabaseClient().auth.resend({
+    type: "signup",
+    email: normalizeEmail(email),
+    options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined },
+  });
+  // Do not reveal whether the address exists or has already been confirmed.
+  if (!error || error.code === "user_not_found") return;
+  throw new Error(error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit"
+    ? "För många försök. Vänta en stund och försök igen."
+    : "Kunde inte begära en ny bekräftelselänk. Försök igen om en stund.");
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;
+  const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), { redirectTo });
+  if (error) throw new Error(error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit"
+    ? "För många försök. Vänta en stund och begär sedan en ny länk."
+    : getSupabaseErrorMessage(error, "Kunde inte skicka återställningslänken."));
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  if (password.length < 8) throw new Error("Lösenordet måste innehålla minst 8 tecken.");
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new Error(error.message);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string, options?: import("./account-settings").AccountChangeOptions) {
+  if (newPassword.length < 8) throw new Error("Det nya lösenordet måste innehålla minst 8 tecken.");
+  const { changeAccountPassword } = await import("./account-settings");
+  return changeAccountPassword(currentPassword, newPassword, options);
 }
 
 export async function signOut(): Promise<void> {
@@ -91,9 +131,12 @@ export async function getCurrentUser(): Promise<User | null> {
   } = await supabase.auth.getUser();
 
   if (error) {
-    // A browser may retain a stale local session after a token was revoked.
-    // Treat it as signed out so UI state agrees with protected API routes.
-    await supabase.auth.signOut({ scope: "local" });
+    // Without a server answer the stored session may still be valid; keep it
+    // so the user is not signed out by a dropped connection.
+    if (isNetworkError(error) || (error.status ?? 0) >= 500) throw new Error(NETWORK_ERROR_MESSAGE);
+    // Clear the caller's UI through SessionProvider. Signing out the shared
+    // client here could clear a newer account after this request's auth lock
+    // has been released. The SDK owns refresh-token/storage cleanup.
     return null;
   }
 
@@ -115,6 +158,7 @@ export async function getUserProfile(userId?: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) {
+    if (isNetworkError(error)) throw new Error(NETWORK_ERROR_MESSAGE);
     console.error("Failed to load the current user's profile row.", error);
     throw new Error(error.message);
   }

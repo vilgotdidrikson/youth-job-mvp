@@ -1,0 +1,16 @@
+.panel { margin:1.5rem 0; padding:1.25rem; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface); }
+.panel header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+.panel h3 { margin:0; font-size:var(--text-md); font-weight:var(--weight-semibold); }
+.panel p { font-size:var(--text-sm); line-height:1.6; overflow-wrap:anywhere; }
+.panel ul { list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:1rem; }
+.panel li p { margin:0 0 .25rem; color:var(--color-text); }
+.panel li span { font-size:var(--text-sm); color:var(--color-text-muted); }
+.panel form { display:grid; gap:.75rem; margin-top:1rem; }
+.panel label { font-size:var(--text-md); }
+.panel textarea { width:100%; box-sizing:border-box; resize:vertical; min-height:6rem; padding:.75rem; border:1px solid var(--color-border); border-radius:var(--radius-sm); background:var(--color-surface); color:var(--color-text); font:inherit; font-size:var(--text-md); }
+.panel form p { margin:0; color:var(--color-text-muted); }
+.panel form > div { display:flex; gap:.75rem; flex-wrap:wrap; }
+.panel button { min-height:44px; font-size:var(--text-sm); }
+.panel :is(button,textarea):focus-visible { outline:2px solid var(--color-brand); outline-offset:3px; }
+.panel .error { color:var(--color-danger); }
+@media(max-width:600px) { .panel { padding:1rem; } .panel header { align-items:stretch; flex-direction:column; } .panel form > div button { flex:1; } }

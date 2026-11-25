@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
+import { authGuardStatus } from "@/lib/auth-guard-state";
 
-export type AuthGuardStatus = "checking" | "redirecting" | "error" | "ready";
+export type { AuthGuardStatus } from "@/lib/auth-guard-state";
 
 /**
  * Guards a client page behind an authenticated session.
@@ -22,7 +23,7 @@ export function useRequireAuth() {
     router.replace(`/login?redirect=${encodeURIComponent(target)}`);
   }, [error, loading, router, user]);
 
-  const status: AuthGuardStatus = loading ? "checking" : error ? "error" : !user ? "redirecting" : "ready";
+  const status = authGuardStatus(loading, user?.id ?? null, session.profile?.id ?? null, error);
 
   return { ...session, status };
 }

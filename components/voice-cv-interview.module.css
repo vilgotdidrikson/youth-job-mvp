@@ -1,0 +1,65 @@
+main.page {
+  display: block;
+  min-height: 100svh;
+  max-width: 780px;
+  position: relative;
+  padding-top: calc(env(safe-area-inset-top) + 4.75rem);
+}
+.back {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  margin: 0 0 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+.page > .card {
+  display: grid;
+  gap: 1.1rem;
+  padding: 35px;
+  text-align: center;
+  border-radius: 25px;
+  box-shadow: 0 15px 40px color-mix(in srgb, var(--color-text) 1.960784%, transparent);
+}
+.card > p { margin: 0; line-height: 1.85; }
+.card .eyebrow { color: var(--accent); font-size: var(--text-xs); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.card .title { margin: 0; color: var(--text-primary); font-size: var(--text-2xl); letter-spacing: -.05em; }
+.card .intro { margin-block-start: -.5rem; color: var(--text-secondary); font-size: var(--text-sm); }
+.microphone {
+  display: grid;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: .4rem auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--color-rose);
+}
+.microphone[data-recording="true"] { color: var(--color-on-brand); background: var(--color-brand); }
+.question { color: var(--text-primary); font-size: var(--text-md); }
+.transcript { padding: 17px; border: 1px solid var(--color-border); border-radius: 15px; background: var(--color-canvas); text-align: left; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.8; }
+.option { display: flex; gap: 9px; justify-content: center; align-items: center; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.7; }
+.option input { accent-color: var(--color-brand); }
+.status { min-height: 1.4rem; color: var(--text-secondary); font-size: var(--text-sm); }
+.error { color: var(--color-danger); font-size: var(--text-sm); }
+.card .primary { min-height: 3.35rem; border-color: var(--color-brand); background: var(--color-brand); font-size: var(--text-md); }
+.primary:disabled { opacity: .65; }
+.actions { display: flex; justify-content: center; gap: 1rem; }
+.control, .skip, .danger { padding: .35rem; border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: var(--text-sm); font-weight: 700; cursor: pointer; }
+.skip { justify-self: center; padding: .25rem; }
+.danger { color: var(--color-danger); }
+.privacy { color: var(--text-tertiary); font-size: var(--text-xs); }
+
+@media (max-width: 720px) {
+  .page > .card { padding: 25px 20px; }
+}
+
+@media (min-width: 721px) {
+  main.page { padding-top: 8.75rem; }
+}

@@ -1,0 +1,44 @@
+import { applicationSubmissionFailure, reportServerFailure } from "@/lib/server-failures";
+import { after, NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { requireApiUser } from "@/lib/api-auth";
+import { analyzeApplicationFollowups } from "@/lib/analyze-application-followups";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+export async function POST(request: NextRequest) {
+  const startedAt = new Date().toISOString();
+  const auth = await requireApiUser(request, "application-submit", ["youth"]);
+  if ("response" in auth) return auth.response;
+  const body = await request.json().catch(() => null);
+  if (!["prepare", "answers", "drafts", "withdraw"].includes(body?.action) || (body.action !== "drafts" && (typeof body.jobId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.jobId)))) return NextResponse.json({ error: "Ogiltig ansökan." }, { status: 400 });
+  if (body.action === "withdraw" && typeof body.expectedSubmitted !== "boolean") return NextResponse.json({ error: "Ansökningsstatus måste anges." }, { status: 400 });
+  if (body.action === "answers" && (typeof body.submit !== "boolean" || !body.answers || typeof body.answers !== "object" || Array.isArray(body.answers))) return NextResponse.json({ error: "Ogiltiga ansökningssvar." }, { status: 400 });
+  if (body.aiConsent !== undefined && (body.action !== "prepare" || typeof body.aiConsent !== "boolean")) return NextResponse.json({ error: "Ogiltigt AI-val." }, { status: 400 });
+  const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    accessToken: async () => auth.token, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  let rpcResult;
+  try {
+    rpcResult = body.action === "withdraw" ? await client.rpc("withdraw_my_application", { p_job_id: body.jobId, p_expected_submitted: body.expectedSubmitted }) : body.action === "drafts" ? await client.rpc("submit_my_application_drafts") : body.action === "answers"
+      ? await client.rpc("save_my_application_answers", { p_job_id: body.jobId, p_answers: body.answers, p_submit: body.submit })
+      : await client.rpc(body.aiConsent === true ? "submit_my_application_with_ai" : "prepare_my_application", { p_job_id: body.jobId });
+  } catch (error) {
+    const incidentId = reportServerFailure("application_submission_failed", error);
+    return NextResponse.json({ error: "Ansökan kunde inte uppdateras just nu. Hämta aktuell status innan du försöker igen.", incidentId }, { status: 503 });
+  }
+  const { data, error } = rpcResult;
+  if (error) {
+    const failure = applicationSubmissionFailure(error);
+    const incidentId = reportServerFailure("application_submission_failed", error);
+    return NextResponse.json({ error: failure.error, incidentId }, { status: failure.status });
+  }
+  const result = Array.isArray(data) ? data[0] : data;
+  if (body.action === "drafts" || result?.status === "submitted") after(async () => {
+    try {
+      const ids = body.action === "drafts" ? (await client.from("application_completions").select("job_id").eq("youth_user_id", auth.user.id).eq("status", "submitted").gte("submitted_at", startedAt).order("submitted_at").limit(10)).data?.map((item) => item.job_id) ?? [] : [body.jobId];
+      await Promise.allSettled(ids.map((jobId: string) => analyzeApplicationFollowups(client, jobId, auth.user.id)));
+    } catch { /* Application submission remains successful; the applications view can retry analysis. */ }
+  });
+  return NextResponse.json({ application: result });
+}

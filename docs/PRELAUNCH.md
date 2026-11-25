@@ -5,7 +5,7 @@
 - Supabase Primary: MatchnWork, `iarnopkuoqumictgnqin` — production, frontend `master`.
 - Supabase Secondary: MatchnWork DevStaging, `vwcfjvwfeatvuisojwrh` — `dev` only.
 - Production Vercel project: `youth-job-mvp` (`prj_vYR35lijwAAiePVYzBYIcngwb1Tw`), team Employo. Public domain: https://matchnwork.se.
-- Build from master; do not merge dev to ship the prelaunch site.
+- The current production deployment is prelaunch. The release candidate keeps the prelaunch experience until the production launch switch is enabled.
 
 ## Implemented
 
@@ -52,7 +52,26 @@ The first viewport is a centered signup card. Product information is below it an
 
 Admin login is now embedded at `/launch-admin`; no ordinary app login/registration page needs to be exposed. The admin can sign in/out there, then load or export contacts. Do not re-open `/login` as a workaround.
 
-The boundary is intended for the production prelaunch branch. Do not copy it to the dev site. Remove or update it deliberately when launching the full application. Existing Supabase authorization remains independent of this website routing boundary.
+### Launch switch
+
+The production hostname or a deployment that is configured to use the Primary
+Supabase project serves the prelaunch landing and enforces the boundary by
+default. DevStaging serves the full application for testing. For a local
+prelaunch check, start the server with `MATCHNWORK_LAUNCH_MODE=prelaunch`.
+
+After the production backup, restore rehearsal, approved migrations and
+release checks pass, set the **server-side** variable
+`MATCHNWORK_LAUNCH_MODE=live` in the production deployment to open the full
+app. Without that value, moving the app code into a production deployment keeps
+the prelaunch site closed to full-app traffic. The admin export and existing
+unsubscribe links work in either mode. Supabase authorization is independent of
+the launch switch. This switch controls HTTP routing and serves the correct
+landing page. It does not change the database or start background jobs.
+
+The three prelaunch SQL files in the release candidate use the exact versions
+already recorded in production. Reconcile and rehearse the remaining migration
+sequence separately before applying it to production. See the backup and
+rehearsal in PR #262.
 
 Tests: `node --experimental-strip-types scripts/test-prelaunch.mjs` and `node --experimental-strip-types scripts/test-prelaunch-boundary.mjs`. These cover the actual Next.js matcher/proxy, direct legacy routes, RSC/prefetch headers, old APIs and the allowlist.
 

@@ -1,0 +1,210 @@
+/* Profile builder design (docs/profilbygget/SPEC.md). Short local names for the theme tokens (DA-04). */
+.page, .card, .chips, .tagInput, .segmented, .stepper, .tile, .actions, .header, .rail, .cvToggle, .lockNote, .title, .tip, .savedRow, .dashedButton, .tagSuggestions {
+  --pb-canvas: var(--color-canvas); --pb-surface: var(--color-surface); --pb-rose: var(--color-rose); --pb-rose-track: var(--color-rose-track); --pb-border: var(--color-border);
+  --pb-divider: var(--color-divider); --pb-dashed: var(--color-dashed); --pb-ring: var(--color-ring); --pb-ink: var(--color-text); --pb-muted: var(--color-text-muted);
+  --pb-brand: var(--color-brand); --pb-brand-on-rose: var(--color-brand-on-rose); --pb-success: var(--color-success); --pb-success-soft: var(--color-success-soft);
+  --pb-shadow-segment: 0 2px 8px rgba(var(--color-text-rgb), .12);
+  color: var(--pb-ink);
+}
+
+/* Journey page: step header + content on mobile, step rail + form on desktop. Breakpoint follows the app (720px). */
+.page { min-height: 100svh; background: var(--pb-canvas); font-family: var(--font-inter), Arial, sans-serif; }
+.layout { display: grid; gap: 18px; padding: 24px 20px 140px; }
+.main { display: grid; align-content: start; gap: 18px; min-width: 0; }
+
+.title { display: grid; gap: 8px; }
+/* .mnw-product h1 forces weight 500 with !important; the design asks for 600. */
+div.title h1 { margin: 0; font-size: 30px; font-weight: 600 !important; line-height: 1.15; letter-spacing: -.03em; color: var(--pb-ink); }
+div.title p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--pb-muted); }
+/* Outside the journey (embedded in /profile, standalone) the step title is a section heading. */
+div.title h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; color: var(--pb-ink); }
+
+/* StepHeader (mobile) */
+.header { display: grid; gap: 14px; padding: 18px 20px 14px; border-bottom: 1px solid var(--pb-border); background: var(--pb-canvas); }
+.header .headerTop { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.header .back { display: grid; place-items: center; width: 44px; height: 44px; margin-left: -10px; border-radius: 50%; color: var(--pb-ink); }
+.header .stepCount { font-size: 13px; font-weight: 500; color: var(--pb-muted); white-space: nowrap; }
+.header .pause { justify-self: end; display: inline-flex; align-items: center; min-height: 44px; max-width: 150px; color: var(--pb-muted); font-size: 13px; font-weight: 500; line-height: 1.25; text-align: right; text-decoration: none; }
+.header .segments { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.header .segments span { height: 5px; border-radius: 999px; background: var(--pb-rose-track); }
+.header .segments .filled { background: var(--pb-brand); }
+
+/* StepRail (desktop) */
+.rail { display: flex; flex-direction: column; gap: 22px; }
+.rail .railBack { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; width: fit-content; color: var(--pb-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
+.rail ol { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.rail ol a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: var(--pb-muted); font-size: 14px; text-decoration: none; }
+.rail ol a[aria-current="step"] { background: var(--pb-rose); color: var(--pb-ink); font-weight: 600; }
+.rail .marker { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; box-sizing: border-box; border: 1.5px solid var(--pb-ring); border-radius: 50%; font-size: 12px; font-weight: 600; }
+.rail .markerDone { border: 0; background: var(--pb-success-soft); color: var(--pb-success); }
+.rail .markerCurrent { border: 0; background: var(--pb-brand); color: var(--color-white); font-weight: 700; }
+.rail .railPause { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--pb-muted); font-size: 14px; font-weight: 500; }
+.rail .info { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid var(--pb-border); border-radius: 18px; background: var(--pb-surface); }
+.rail .info strong { font-size: 13px; font-weight: 600; }
+.rail .info p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--pb-muted); }
+.rail .info button { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--pb-brand); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* CV facts toggle (mobile) and the facts themselves */
+.cvToggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 10px 14px; border: 0; border-radius: 14px; background: var(--pb-rose); color: var(--pb-ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.cvToggle > svg { flex-shrink: 0; color: var(--pb-brand); }
+.cvToggle > span { flex: 1; }
+.cvToggle > strong { font-weight: 600; color: var(--pb-brand); }
+.cvFacts { margin: 0; padding: 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-surface); font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--pb-ink); }
+
+/* Step form: the fieldset disables every control while saving. */
+.stepForm { display: grid; align-content: start; gap: 18px; min-width: 0; }
+.fieldset { display: grid; align-content: start; gap: 18px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.fieldset:disabled { opacity: .7; }
+
+/* FormCard */
+.card { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 20px; border: 1px solid var(--pb-border); border-radius: 22px; background: var(--pb-surface); }
+.card .cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.card h2.cardTitle, .card .cardTitle { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0; color: var(--pb-ink); }
+.card label.cardTitle { display: block; }
+.card .count { font-size: 13px; color: var(--pb-muted); white-space: nowrap; }
+.card .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card .fieldLabel { font-size: 14px; font-weight: 500; color: var(--pb-ink); }
+.card .help { font-size: 13px; line-height: 1.5; color: var(--pb-muted); }
+.card .split { display: flex; flex-direction: column; gap: 16px; }
+.card textarea.textarea { box-sizing: border-box; width: 100%; padding: 12px 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; }
+.card .inlineAdd { display: flex; gap: 8px; width: 100%; }
+.card .inlineAdd input { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; }
+.card .inlineAdd button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--pb-brand); color: var(--color-white); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.card .inlineAdd button:disabled { opacity: .5; }
+
+/* ChipGroup */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips .chip, .tagSuggestions .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 999px; background: var(--pb-surface); color: var(--pb-ink); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.chips .chip[aria-pressed="true"], .chips .chip[aria-checked="true"] { border: 1.5px solid var(--pb-brand); background: var(--pb-rose); color: var(--pb-brand-on-rose); font-weight: 600; }
+.chips .chip:disabled, .tagSuggestions .chip:disabled { cursor: not-allowed; opacity: .45; }
+.chips .chip.dashed { border: 1.5px dashed var(--pb-dashed); background: transparent; color: var(--pb-brand); font-weight: 600; }
+.chips .chip.more { color: var(--pb-brand); font-weight: 600; }
+.chips .suggestion, .tagSuggestions .suggestion { min-height: 44px; padding: 0 12px; font-size: 13px; font-weight: 400; }
+
+/* TagInput */
+.tagInput { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 52px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); cursor: text; }
+.tagInput:focus-within { outline: 3px solid var(--pb-brand); outline-offset: 2px; }
+.tagInput .tag { display: inline-flex; align-items: center; gap: 4px; padding: 6px 6px 6px 12px; border-radius: 999px; background: var(--pb-rose); font-size: 14px; font-weight: 500; }
+.tagInput .tag button { position: relative; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--pb-muted); cursor: pointer; }
+/* Visual 26px, touch target 44px. */
+.tagInput .tag button::before { content: ""; position: absolute; inset: -9px; }
+.tagInput input.tagField { flex: 1; min-width: 110px; height: 34px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--pb-ink); font: inherit; font-size: 16px; }
+.tagInput input.tagField:focus-visible { outline: none; }
+.tagSuggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* SegmentedControl */
+.segmented { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 4px; padding: 4px; border-radius: 14px; background: var(--pb-rose); }
+.segmented button { min-height: 44px; padding: 0 2px; white-space: nowrap; border: 0; border-radius: 11px; background: transparent; color: var(--pb-muted); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.segmented button[aria-pressed="true"], .segmented button[aria-checked="true"] { background: var(--pb-surface); color: var(--pb-ink); font-weight: 600; box-shadow: var(--pb-shadow-segment); }
+.otherMinutes { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--pb-muted); }
+.otherMinutes input { width: 96px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; }
+
+/* NumberStepper */
+.stepper { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); }
+.stepper button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 11px; background: var(--pb-surface); color: var(--pb-brand); font: inherit; font-size: 20px; font-weight: 600; cursor: pointer; }
+.stepper button:disabled { opacity: .4; cursor: not-allowed; }
+.stepper output { min-width: 48px; font-size: 16px; font-weight: 600; text-align: center; }
+
+/* ChoiceTile */
+.tile { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; box-sizing: border-box; padding: 14px 16px; border: 1px solid var(--pb-border); border-radius: 18px; background: var(--pb-surface); color: var(--pb-ink); font: inherit; text-align: left; cursor: pointer; }
+.tile[aria-checked="true"], .tile[aria-pressed="true"] { border: 1.5px solid var(--pb-brand); background: var(--pb-rose); }
+.tile .tileIcon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--pb-rose); color: var(--pb-brand); }
+.tile[aria-checked="true"] .tileIcon, .tile[aria-pressed="true"] .tileIcon { background: var(--pb-surface); }
+.tile .tileText { display: grid; gap: 2px; flex: 1; }
+.tile .tileText strong { font-size: 15px; font-weight: 600; }
+.tile .tileText small { font-size: 13px; color: var(--pb-muted); }
+
+/* StickyActions: fixed bar on mobile in the journey, a row at the end of the form otherwise. */
+.actions { display: flex; align-items: center; gap: 12px; }
+.actions.fixed { position: fixed; z-index: 80; inset-inline: 0; bottom: 0; padding: 14px 20px calc(14px + max(16px, env(safe-area-inset-bottom))); border-top: 1px solid var(--pb-border); background: rgba(var(--color-canvas-tint-rgb), .96); }
+.actions .secondary { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border: 0; background: none; color: var(--pb-muted); font: inherit; font-size: 15px; font-weight: 500; text-decoration: none; cursor: pointer; }
+.actions .primary { flex: 1; display: grid; place-items: center; min-height: 52px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--pb-brand); color: var(--color-white); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.actions .primary:disabled, .actions .secondary:disabled { opacity: .6; cursor: progress; }
+.actions .actionNote { display: none; }
+
+.lockNote { display: flex; gap: 8px; margin: 0; font-size: 13px; line-height: 1.5; color: var(--pb-muted); }
+.lockNote svg { flex-shrink: 0; margin-top: 2px; }
+.error { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--color-surface-soft); color: var(--color-brand-on-rose); font-size: 14px; }
+
+/* Shared form pieces for steps 4 and 5 */
+.card input.input { box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; border: 1px solid var(--pb-border); border-radius: 14px; background: var(--pb-canvas); color: var(--pb-ink); font: inherit; font-size: 16px; }
+.chips .chip.small { font-size: 13px; }
+.dashedButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 16px; border: 1.5px dashed var(--pb-dashed); border-radius: 14px; background: transparent; color: var(--pb-brand); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dashedButton span { font-weight: 500; color: var(--pb-muted); }
+.dashedButton:disabled { opacity: .5; cursor: not-allowed; }
+.textButton { min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--pb-brand); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.iconButton { position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--pb-muted); cursor: pointer; }
+.iconButton::before { content: ""; position: absolute; inset: -6px; }
+
+/* Step 4: two tag cards (side by side on desktop) and languages */
+.pair { display: grid; gap: 18px; min-width: 0; }
+.cvLanguages { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: var(--pb-rose); }
+.cvLanguagesHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
+.cvLanguagesHead a { display: inline-flex; align-items: center; min-height: 32px; color: var(--pb-brand); font-weight: 600; text-decoration: none; }
+.cvLanguage { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.cvLanguage strong { font-weight: 600; }
+.cvLanguage span { color: var(--pb-muted); text-align: right; }
+.languageList { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.languageRow { display: flex; flex-direction: column; gap: 10px; }
+.languageRow + .languageRow { padding-top: 14px; border-top: 1px solid var(--pb-divider); }
+.languageRowHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Step 5: tip, saved rows and the example card */
+.tip { display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--pb-rose); color: var(--pb-ink); font-size: 14px; line-height: 1.5; }
+.tip svg { flex-shrink: 0; margin-top: 1px; color: var(--pb-brand); }
+.rail .tip { border: 1px solid var(--pb-border); border-radius: 18px; background: var(--pb-surface); color: var(--pb-muted); font-size: 13px; }
+.savedRow { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--pb-border); border-radius: 20px; background: var(--pb-surface); }
+.savedIcon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--pb-success-soft); color: var(--pb-success); }
+.savedText { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.savedText span { font-size: 13px; font-weight: 600; color: var(--pb-brand); }
+.savedText strong { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.card.exampleCard { gap: 16px; border: 1.5px solid var(--pb-brand); }
+.exampleCardHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -10px -10px -6px 0; }
+.kicker { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--pb-brand); }
+.card .exampleLabel { font-size: 15px; font-weight: 600; color: var(--pb-ink); }
+.addExample { min-height: 48px; border-radius: 16px; }
+
+@media (min-width: 721px) {
+  .mobileOnly { display: none !important; }
+  .header { display: none; }
+  .page { padding-top: 88px; }
+  .layout { grid-template-columns: 260px minmax(0, 1fr); gap: 56px; width: min(980px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 64px; }
+  .main { gap: 20px; max-width: 640px; }
+  .stepForm, .fieldset { gap: 20px; }
+  div.title h1 { font-size: 36px; line-height: 1.1; letter-spacing: -.035em; }
+  div.title p { font-size: 16px; }
+  .card { padding: 24px; }
+  .card .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .card .split .fieldLabel { font-weight: 600; }
+  .card textarea.textarea, .card .inlineAdd input { font-size: 15px; }
+  .tagInput { min-height: 48px; gap: 6px; padding: 6px 8px; }
+  .tagInput .tag { gap: 2px; padding: 4px 4px 4px 10px; font-size: 13px; }
+  .tagInput .tag button { width: 24px; height: 24px; }
+  .tagInput .tag button::before { inset: -10px; }
+  .tagInput input.tagField { min-width: 90px; height: 32px; font-size: 15px; }
+  .segmented button { font-size: 13px; }
+  .collapsed .collapsible:not([aria-pressed="true"]) { display: none; }
+  .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .pair .card { padding: 22px; }
+  .pair .card .cardTitle { font-size: 16px; }
+  .card input.input { min-height: 48px; font-size: 15px; }
+  .languagesWithCv { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 24px; }
+  .languageList .dashedButton { align-self: flex-start; min-height: 44px; border-radius: 12px; font-size: 13px; }
+  .addExample { justify-self: start; min-height: 44px; padding: 0 14px; border-radius: 12px; }
+  .savedIcon { display: none; }
+  .savedRow { padding: 16px 18px; }
+  .actions { justify-content: space-between; gap: 16px; padding-top: 4px; }
+  .actions.fixed { position: static; padding: 4px 0 0; border: 0; background: none; }
+  .actions .actionNote { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pb-muted); }
+  .actions .buttons { display: flex; gap: 10px; }
+  .actions .secondary { padding: 0 18px; }
+  .actions .primary { flex: initial; min-height: 48px; padding: 0 24px; border-radius: 14px; font-size: 15px; }
+}
+@media (max-width: 720px) {
+  .desktopOnly { display: none !important; }
+  .actions .buttons { display: contents; }
+  .embeddedPage .layout { padding: 0; }
+}
+
+/* The CV hub inside the step frame: the frame owns the page spacing. */
+.page .main .framed :global(.mobile-shell.cv-hub) { width: 100%; max-width: none; margin: 0; padding: 0; }

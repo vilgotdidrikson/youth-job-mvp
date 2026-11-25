@@ -1,0 +1,15 @@
+.preference {
+  display: grid;
+  gap: .375rem;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+.preference p { margin: 0; }
+.preference a { text-decoration: underline; }
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: .625rem;
+  color: var(--text-primary);
+}
+.choice input { flex: none; margin-block-start: .2em; }

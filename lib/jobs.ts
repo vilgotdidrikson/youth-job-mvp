@@ -1,10 +1,13 @@
 "use client";
 
+import { validJobCategoryIds } from "@/lib/job-categories";
 import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { getSupabaseErrorMessage, logSupabaseError } from "@/lib/supabase-errors";
 import { getSupabaseClient } from "@/lib/supabase";
+import { JobWorkplaceConflictError, validateJobWorkplaces, type JobWorkplace } from "@/lib/job-workplaces";
 import { geocodeJobLocation } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
+import { readPracticalDetails } from "@/lib/job-practical";
 
 const JOB_TABLE_FIELDS = [
   "title",
@@ -12,11 +15,14 @@ const JOB_TABLE_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -29,6 +35,7 @@ const JOB_TABLE_FIELDS = [
   "created_at",
   "min_age",
   "max_age",
+  "practical_details",
 ] as const;
 
 const JOB_CREATE_INPUT_FIELDS = [
@@ -37,11 +44,14 @@ const JOB_CREATE_INPUT_FIELDS = [
   "city",
   "address",
   "postal_code",
+  "workplaces",
   "longitude",
   "latitude",
   "salary_per_hour",
   "employment_type",
   "category",
+  "job_category_ids",
+  "job_category_manual",
   "requirements",
   "benefits",
   "company_name",
@@ -50,6 +60,7 @@ const JOB_CREATE_INPUT_FIELDS = [
   "open_positions",
   "min_age",
   "max_age",
+  "practical_details",
 ] as const;
 
 const JOB_UPDATE_INPUT_FIELDS = [...JOB_CREATE_INPUT_FIELDS, "is_active", "status"] as const;
@@ -58,6 +69,9 @@ const JOB_PROTECTED_CREATE_FIELDS = ["company_user_id", "is_active", "created_at
 const JOB_PROTECTED_UPDATE_FIELDS = ["company_user_id", "created_at"] as const;
 
 export interface CreateJobInput {
+  job_category_ids?: string[];
+  job_category_manual?: boolean;
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -76,6 +90,7 @@ export interface CreateJobInput {
   open_positions?: number | null;
   min_age?: number | null;
   max_age?: number | null;
+  practical_details?: import("@/lib/job-practical").JobPracticalDetails;
 }
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {
@@ -84,6 +99,7 @@ export interface UpdateJobInput extends Partial<CreateJobInput> {
 }
 
 interface JobInsertPayload {
+  workplaces?: JobWorkplace[];
   title: string;
   description: string;
   city: string;
@@ -94,6 +110,8 @@ interface JobInsertPayload {
   salary_per_hour: string;
   employment_type: string;
   category: string;
+  job_category_ids: string[];
+  job_category_manual: boolean;
   requirements: string;
   benefits: string;
   company_name: string;
@@ -105,6 +123,7 @@ interface JobInsertPayload {
   open_positions: number;
   min_age?: number | null;
   max_age?: number | null;
+  practical_details?: import("@/lib/job-practical").JobPracticalDetails;
 }
 
 function normalizeJobString(value: unknown): string {
@@ -218,6 +237,7 @@ function assertValidInsertPayload(payload: Record<string, unknown>): void {
 function normalizeJob(row: Record<string, unknown>): JobPost {
   return {
     id: String(row.id ?? ""),
+    workplaces: Array.isArray(row.workplaces) ? row.workplaces as JobWorkplace[] : [],
     title: normalizeJobString(row.title),
     description: normalizeJobString(row.description),
     city: normalizeJobString(row.city),
@@ -228,6 +248,8 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     salary_per_hour: normalizeJobString(row.salary_per_hour),
     employment_type: normalizeJobString(row.employment_type),
     category: normalizeJobString(row.category),
+    job_category_ids: Array.isArray(row.job_category_ids) ? row.job_category_ids as string[] : [],
+    job_category_manual: row.job_category_manual === true,
     requirements: normalizeJobString(row.requirements),
     benefits: normalizeJobString(row.benefits),
     company_name: normalizeJobString(row.company_name),
@@ -236,11 +258,14 @@ function normalizeJob(row: Record<string, unknown>): JobPost {
     job_kind: row.job_kind === "private_task" ? "private_task" : "employment",
     is_active: typeof row.is_active === "boolean" ? row.is_active : true,
     status: row.status === "paused" || row.status === "closed" ? row.status : "active",
+    publication_status: row.publication_status === "pending_verification" || row.publication_status === "published" ? row.publication_status : undefined,
     open_positions: typeof row.open_positions === "number" ? row.open_positions : 1,
     is_boosted: row.is_boosted === true,
     created_at: normalizeJobString(row.created_at),
+    first_published_at: normalizeJobString(row.first_published_at) || null,
     min_age: typeof row.min_age === "number" ? row.min_age : null,
     max_age: typeof row.max_age === "number" ? row.max_age : null,
+    practical_details: readPracticalDetails(row.practical_details),
   };
 }
 
@@ -261,6 +286,7 @@ async function assertCompanyUser(): Promise<{ id: string; email: string | null }
 
 function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown> {
   return stripUndefinedValues({
+    workplaces: updates.workplaces,
     title: updates.title,
     description: updates.description,
     city: updates.city,
@@ -271,6 +297,8 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     salary_per_hour: updates.salary_per_hour,
     employment_type: updates.employment_type,
     category: updates.category,
+    job_category_ids: updates.job_category_ids === undefined ? undefined : validJobCategoryIds(updates.job_category_ids),
+    job_category_manual: updates.job_category_manual,
     requirements: updates.requirements,
     benefits: updates.benefits,
     company_name: updates.company_name,
@@ -281,6 +309,7 @@ function buildJobUpdatePayload(updates: UpdateJobInput): Record<string, unknown>
     open_positions: updates.open_positions,
     min_age: updates.min_age,
     max_age: updates.max_age,
+    practical_details: updates.practical_details === undefined ? undefined : readPracticalDetails(updates.practical_details),
   });
 }
 
@@ -298,11 +327,17 @@ async function insertJobRow(payload: JobInsertPayload) {
   return normalizeJob(data as Record<string, unknown>);
 }
 
-async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
+async function updateJobRow(jobId: string, updates: Record<string, unknown>, expectedWorkplaces?: JobWorkplace[]) {
   assertOnlyKnownJobFields(updates);
 
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from("jobs").update(updates).eq("id", jobId).select("*").single();
+  let query = supabase.from("jobs").update(updates).eq("id", jobId);
+  // Postgres evaluates JSONB equality and the write atomically, even when another
+  // editor saves after the ownership read. Unrelated listing changes do not conflict.
+  if (expectedWorkplaces !== undefined) query = query.eq("workplaces", JSON.stringify(expectedWorkplaces));
+  const result = query.select("*");
+  const { data, error } = expectedWorkplaces === undefined ? await result.single() : await result.maybeSingle();
+  if (!error && !data && expectedWorkplaces !== undefined) throw new JobWorkplaceConflictError();
 
   if (error || !data) {
     logSupabaseError("jobs.update", error ?? new Error("Supabase returned no job row after update."), {
@@ -313,6 +348,24 @@ async function updateJobRow(jobId: string, updates: Record<string, unknown>) {
   }
 
   return normalizeJob(data as Record<string, unknown>);
+}
+
+// Keyset pages avoid the API's default row cap and premium ordering.
+export async function getDiscoveryJobs(): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  let cursor = "";
+  while (true) {
+    let query = getSupabaseClient().from("jobs").select("*")
+      .eq("status", "active").eq("is_active", true).eq("publication_status", "published")
+      .eq("job_kind", "employment").order("id").limit(200);
+    if (cursor) query = query.gt("id", cursor);
+    const { data, error } = await query;
+    if (error) throw new Error("Kunde inte hämta jobb. Försök igen.");
+    const rows = data ?? [];
+    jobs.push(...rows.map(row => normalizeJob(row)));
+    if (rows.length < 200) return jobs;
+    cursor = String(rows[rows.length - 1].id);
+  }
 }
 
 export async function getJobs(includeInactive = false): Promise<JobPost[]> {
@@ -375,10 +428,13 @@ export async function getJobById(jobId: string): Promise<JobPost | null> {
   return inactiveData ? normalizeJob(inactiveData as Record<string, unknown>) : null;
 }
 
-export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
+export async function createJob(jobData: CreateJobInput, expectedOwnerId?: string): Promise<JobPost> {
   assertAllowedJobCreateInput(toRecord(jobData));
+  const companyUser = await assertCompanyUser();
+  if (expectedOwnerId !== undefined && companyUser.id !== expectedOwnerId) throw new Error("Kontot har ändrats. Öppna annonsutkastet igen innan du publicerar.");
 
-  const hasAddress = Boolean(jobData.address?.trim());
+  const workplaces = jobData.workplaces ? await resolveWorkplaces(jobData.workplaces) : undefined;
+  const hasAddress = Boolean(jobData.address?.trim()) || Boolean(workplaces?.length);
   const hasCoordinates = validCoordinates(jobData.longitude, jobData.latitude);
   if (!hasAddress && !hasCoordinates) {
     throw new Error("Ange en arbetsplatsadress eller giltiga koordinater.");
@@ -387,16 +443,16 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     throw new Error("Koordinater måste innehålla både giltig longitud och latitud.");
   }
 
-  const companyUser = await assertCompanyUser();
-  const coordinates = hasCoordinates
+  const coordinates = workplaces?.[0] ?? (hasCoordinates
     ? { longitude: jobData.longitude, latitude: jobData.latitude }
     : await geocodeJobLocation({
       address: jobData.address,
       postalCode: jobData.postal_code,
       city: jobData.city,
-    });
+    }));
 
   const payload: JobInsertPayload = {
+    ...(workplaces ? { workplaces } : {}),
     title: jobData.title,
     description: jobData.description,
     city: jobData.city,
@@ -406,7 +462,9 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
     latitude: coordinates?.latitude ?? null,
     salary_per_hour: jobData.salary_per_hour,
     employment_type: jobData.employment_type,
-    category: jobData.category ?? jobData.employment_type,
+    category: jobData.category ?? "",
+    job_category_ids: validJobCategoryIds(jobData.job_category_ids ?? []),
+    job_category_manual: jobData.job_category_manual === true,
     requirements: jobData.requirements ?? "",
     benefits: jobData.benefits ?? "",
     company_name: jobData.company_name ?? companyUser.email ?? "Company",
@@ -422,12 +480,17 @@ export async function createJob(jobData: CreateJobInput): Promise<JobPost> {
   // the 20260518 migration has been applied to the Supabase project.
   if (jobData.min_age != null) payload.min_age = jobData.min_age;
   if (jobData.max_age != null) payload.max_age = jobData.max_age;
+  // Same for practical details (N05): an empty value is the column default.
+  const practical = readPracticalDetails(jobData.practical_details);
+  if (Object.keys(practical).length) payload.practical_details = practical;
 
+  if ((await getCurrentUser())?.id !== companyUser.id) throw new Error("Kontot har ändrats. Öppna annonsutkastet igen innan du publicerar.");
   return insertJobRow(payload);
 }
 
-export async function updateJob(jobId: string, updates: UpdateJobInput): Promise<JobPost> {
+export async function updateJob(jobId: string, updates: UpdateJobInput, options?: { expectedWorkplaces: JobWorkplace[] }): Promise<JobPost> {
   assertAllowedJobUpdateInput(toRecord(updates));
+  if (options && (!updates.workplaces || !Array.isArray(options.expectedWorkplaces))) throw new Error("Arbetsplatsernas ursprungliga version saknas. Öppna redigeringen igen.");
 
   const companyUser = await assertCompanyUser();
   const existing = await getJobById(jobId);
@@ -441,6 +504,9 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
   }
 
   const payload = buildJobUpdatePayload(updates);
+  if (updates.workplaces) {
+    payload.workplaces = await resolveWorkplaces(updates.workplaces);
+  }
 
   const hasExplicitCoordinates = updates.longitude !== undefined || updates.latitude !== undefined;
   if (hasExplicitCoordinates && !validCoordinates(updates.longitude, updates.latitude)) {
@@ -461,7 +527,7 @@ export async function updateJob(jobId: string, updates: UpdateJobInput): Promise
     return existing;
   }
 
-  return updateJobRow(jobId, payload);
+  return updateJobRow(jobId, payload, options?.expectedWorkplaces);
 }
 
 export async function deleteJob(jobId: string): Promise<void> {
@@ -489,4 +555,13 @@ export async function getCompanyJobs(companyUserId?: string, includeInactive = t
   const ownerId = companyUserId ?? (await assertCompanyUser()).id;
   const jobs = await getJobs(includeInactive);
   return jobs.filter((job) => job.company_user_id === ownerId);
+}
+
+async function resolveWorkplaces(input: JobWorkplace[]): Promise<JobWorkplace[]> {
+  return Promise.all(validateJobWorkplaces(input).map(async place => {
+    const coordinates = place.longitude !== null && place.latitude !== null
+      ? { longitude: place.longitude, latitude: place.latitude }
+      : await geocodeJobLocation({ address: place.address, postalCode: place.postal_code, city: place.city });
+    return { ...place, longitude: coordinates?.longitude ?? null, latitude: coordinates?.latitude ?? null };
+  }));
 }

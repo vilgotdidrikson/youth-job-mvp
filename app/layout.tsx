@@ -1,21 +1,28 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+﻿import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { SessionProvider } from "@/hooks/use-session";
+import { ProductSurface } from "@/components/product-surface";
+import { NavigationIndicatorsProvider } from "@/hooks/use-navigation-indicators";
+import { IndicatorPreferencesProvider } from "@/hooks/use-indicator-preferences";
+import "./fonts.css";
 import "./globals.css";
+import "./product-design.css";
 
-const inter = localFont({ src: "../public/fonts/inter-latin.woff2", variable: "--font-inter", display: "swap", weight: "100 900" });
-const fraunces = localFont({ src: "../public/fonts/fraunces-latin.woff2", variable: "--font-fraunces", display: "swap", weight: "100 900" });
-
+// Pinned Inter/Fraunces files, unicode coverage and fallback metrics live in fonts.css.
 export const metadata: Metadata = {
-  metadataBase: new URL("https://matchnwork.se"),
-  title: "MatchnWork – Mer potential. Mindre krångel.",
-  applicationName: "MatchnWork",
-  openGraph: { title: "MatchnWork – Var med från start", description: "För unga som vill jobba och företag som ser möjligheter. Anmäl intresse inför lanseringen.", siteName: "MatchnWork", locale: "sv_SE", type: "website", images: ["/brand/matchnwork-logo.png"] },
-  icons: { icon: "/favicon.ico", apple: "/icons/icon-192.png" },
+  // Absolute URLs for the share image. Unset, Next.js uses the Vercel deployment URL.
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
+  title: { default: "MatchnWork", template: "%s · MatchnWork" },
   description:
     "Mobilanpassad jobbmatchningsplattform för ungdomar i Sverige och företag som anställer för deltidsjobb, tillfälliga jobb och sommarjobb.",
+  applicationName: "MatchnWork",
+  openGraph: { siteName: "MatchnWork", locale: "sv_SE", type: "website" },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fffafb",
 };
 
 export default function RootLayout({
@@ -24,16 +31,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="sv" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="sv" suppressHydrationWarning className="mnw-fonts">
+      <head>
+        <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body
         suppressHydrationWarning
         className="antialiased"
       >
         <SessionProvider>
-          {children}
+          <IndicatorPreferencesProvider>
+          <NavigationIndicatorsProvider>
+          <ProductSurface>{children}</ProductSurface>
           <Suspense fallback={null}>
             <MobileNav />
           </Suspense>
+          </NavigationIndicatorsProvider>
+          </IndicatorPreferencesProvider>
         </SessionProvider>
       </body>
     </html>

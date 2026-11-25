@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createRequire,Module} from 'node:module';
+import path from 'node:path';
+import ts from 'typescript';
+const require=createRequire(import.meta.url),originalLoad=Module._load;
+for(const ext of ['.ts','.tsx'])Module._extensions[ext]=(m,f)=>m._compile(ts.transpileModule(readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,f);
+const {validateBilling,parseBillingRecord,emptyBilling}=require('../lib/company-billing.ts');
+const values={invoice_email:' QA@EXAMPLE.INVALID ',address_line1:' QA Gatan 1 ',address_line2:'',postal_code:'123 45',city:'QA Ort',reference:'QA'};
+const canonical=validateBilling(values).value;
+const row={...canonical,user_id:'A',country_code:'SE',version:1};
+assert.deepEqual(validateBilling(values).errors,{});assert.equal(canonical.invoice_email,'qa@example.invalid');assert.equal(canonical.postal_code,'12345');
+for(const change of [{invoice_email:'bad'},{reference:'x'.repeat(101)},{reference:'QA\r\nBcc: secret@example.invalid'},{address_line1:''},{postal_code:'1234'},{city:2}])assert.ok(Object.keys(validateBilling({...values,...change}).errors).length);
+assert.equal(parseBillingRecord(row,'A').version,1);
+for(const change of [{user_id:'B'},{country_code:'US'},{version:NaN},{version:1.5},{city:null}])assert.throws(()=>parseBillingRecord({...row,...change},'A'));
+const {createClient}=require('@supabase/supabase-js');let response=[row],status=200,requests=[];
+const sdk=createClient('https://qa.supabase.co','qa-key',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:async(url,options)=>{requests.push({url:new URL(url),options});return new Response(JSON.stringify(response),{status,headers:{'Content-Type':'application/json'}});}}});
+Module._load=function(name,parent,...args){if(name==='./supabase'&&parent.filename.endsWith('company-billing-client.ts'))return{getSupabaseClient:()=>sdk};return originalLoad.call(this,name,parent,...args);};
+const client=require('../lib/company-billing-client.ts'),controller=new AbortController();
+assert.equal((await client.loadCompanyBilling('A',controller.signal)).version,1);
+assert.equal(requests.at(-1).url.searchParams.get('user_id'),'eq.A');assert.ok(requests.at(-1).url.searchParams.get('select').includes('invoice_email'));assert.equal(requests.at(-1).options.signal,controller.signal);
+response=[];assert.equal(await client.loadCompanyBilling('A',controller.signal),null);
+response=[{...row,user_id:'B'}];await assert.rejects(client.loadCompanyBilling('A',controller.signal));
+status=403;response={message:'private diagnostic',code:'42501'};await assert.rejects(client.loadCompanyBilling('A',controller.signal),e=>!e.message.includes('private'));
+status=200;response=[{...row,version:2}];assert.equal((await client.saveCompanyBilling('A',1,values,controller.signal)).version,2);
+assert.deepEqual(JSON.parse(requests.at(-1).options.body),{p_owner_id:'A',p_expected_version:1,p_details:canonical});
+const count=requests.length;await assert.rejects(client.saveCompanyBilling('A',1,emptyBilling,controller.signal));assert.equal(requests.length,count);
+status=409;response={code:'40001',message:'private diagnostic'};await assert.rejects(client.saveCompanyBilling('A',1,values,controller.signal),/har ändrats/);
+status=200;for(const invalid of [[],[{...row,user_id:'B',version:2}],[{...row,version:9}]]){response=invalid;await assert.rejects(client.saveCompanyBilling('A',1,values,controller.signal));}
+controller.abort();await assert.rejects(client.loadCompanyBilling('A',controller.signal));
+Module._load=originalLoad;
+// Execute real component callbacks; HTTP and timing remain simulated.
+const react=require('react'),originals={formData:globalThis.FormData,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout};
+let view,read,write,loads=[],saves=[],timers=new Map(),timerId=0;
+const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{resolve,reject,promise};};
+const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
+const nodes=n=>!n||typeof n!=='object'?[]:[n,...(Array.isArray(n)?n:[n.props?.children]).flat(Infinity).flatMap(nodes)];
+const text=n=>n==null||typeof n==='boolean'?'':typeof n!=='object'?String(n):(Array.isArray(n)?n:[n.props?.children]).flat(Infinity).map(text).join('');
+const hooks={...react,useState(initial){const i=view.index++;if(!(i in view.slots))view.slots[i]=typeof initial==='function'?initial():initial;return[view.slots[i],x=>{view.slots[i]=typeof x==='function'?x(view.slots[i]):x;view.updates++;}];},useRef(initial){const i=view.index++;return view.slots[i]??={current:initial};},useEffect(fn){const i=view.index++;view.effects[i]??={fn};}};
+Module._load=function(name,parent,...args){if(name==='react')return hooks;if(name.endsWith('.module.css'))return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};if(name==='@/lib/company-billing-client')return{loadCompanyBilling:(id,signal)=>{loads.push({id,signal});return read.promise;},saveCompanyBilling:(...args)=>{saves.push(args);return write.promise;}};if(name.startsWith('@/'))return originalLoad.call(this,path.resolve(name.slice(2)),parent,...args);return originalLoad.call(this,name,parent,...args);};
+globalThis.FormData=class{constructor(form){this.values=form;}get(key){return this.values[key];}};
+globalThis.setTimeout=(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id;};globalThis.clearTimeout=id=>timers.delete(id);
+const Wrapper=require('../components/company-billing-settings.tsx').CompanyBillingSettings;
+assert.notEqual(Wrapper({userId:'A'}).key,Wrapper({userId:'B'}).key,'Accounts use distinct form lifecycles');const Component=Wrapper({userId:'A'}).type;
+const create=()=>{read=deferred();write=deferred();loads=[];saves=[];timers.clear();view={slots:[],effects:[],index:0,updates:0,render(){this.index=0;return Component({userId:'A'});},stop(){for(const e of this.effects.filter(Boolean))e.cleanup?.();}};view.render();for(const e of view.effects.filter(Boolean))e.cleanup=e.fn();};
+const submit=()=>nodes(view.render()).find(n=>n.type==='form').props.onSubmit,event={preventDefault(){},currentTarget:values};
+try{
+ create();await submit()(event);assert.equal(saves.length,0);read.reject(Error('offline'));await settle();assert.match(text(view.render()),/kunde inte hämtas/);await submit()(event);assert.equal(saves.length,0);view.stop();
+ create();read.resolve(null);await settle();const send=submit();const first=send(event),duplicate=send(event);assert.equal(saves.length,1);assert.equal(saves[0][1],null);assert.equal(saves[0][2].invoice_email,'qa@example.invalid');write.resolve(row);await Promise.all([first,duplicate]);assert.match(text(view.render()),/är sparade/);assert.equal(nodes(view.render()).find(n=>n.props?.name==='invoice_email').props.value,'qa@example.invalid');view.stop();
+ create();read.resolve(row);await settle();const stale=submit();const pending=stale({...event,currentTarget:{...values,reference:'AUTOFILLED'}});write.reject(Error('Uppgifterna har ändrats.'));await pending;await stale(event);assert.equal(saves.length,1,'Failed writes require explicit reload even through stale handlers');assert.match(text(view.render()),/har ändrats/);assert.equal(nodes(view.render()).find(n=>n.props?.name==='reference').props.value,'AUTOFILLED','Keep submitted autofill after a failed save');view.stop();
+ create();read.resolve(row);await settle();const timeout=submit()(event);for(const timer of [...timers.values()])if(timer.ms===15000)timer.fn();await timeout;assert.match(text(view.render()),/kunde inte bekräftas/);write.resolve({...row,version:2});await settle();assert.doesNotMatch(text(view.render()),/är sparade/);view.stop();assert.equal(timers.size,0);
+ create();read.resolve(row);await settle();const detached=submit()(event);view.stop();const before=view.updates;write.resolve({...row,version:2});await detached;assert.equal(view.updates,before);assert.equal(saves[0][3].aborted,true);
+ create();read.resolve(row);await settle();const oldSubmit=submit();read=deferred();nodes(view.render()).find(n=>n.type==='button'&&text(n)==='Läs in sparade uppgifter').props.onClick();await oldSubmit(event);assert.equal(saves.length,0,'Reload blocks stale save controls synchronously');view.stop();read.resolve(row);await settle();
+ console.log('PASS billing normalization/validation, actual SDK ownership/filter/write contract and actual form callbacks: load errors, duplicate save, confirmed success, stale writes, timeout/late completion, unmount and reload. HTTP simulated.');
+}finally{view?.stop();Module._load=originalLoad;globalThis.FormData=originals.formData;globalThis.setTimeout=originals.setTimeout;globalThis.clearTimeout=originals.clearTimeout;}

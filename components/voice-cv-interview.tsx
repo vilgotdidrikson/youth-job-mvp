@@ -1,0 +1,353 @@
+"use client";
+
+import styles from "./voice-cv-interview.module.css";
+import { voiceCvStorageKey } from "@/lib/voice-cv-storage";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { AuthGateMessage } from "@/components/auth-gate-message";
+import { getYouthProfile } from "@/lib/onboarding";
+import { createEmptyStructuredCv, type StructuredCvData } from "@/lib/structured-cv";
+import type { CvInterviewArea } from "@/lib/cv-interview";
+import { INTERVIEW_QUESTIONS, type InterviewTurn } from "@/lib/voice-interview";
+import { authenticatedAudioUrl, authenticatedHeaders } from "@/lib/api-client";
+import { UiIcon } from "@/components/ui-icon";
+import { PageLoading } from "@/components/page-loading";
+
+const VOICE_CV_STORAGE_KEY = "employo-voice-cv-answers";
+const VOICE_CV_STRUCTURED_KEY = "employo-voice-cv-structured";
+const VOICE_CV_DRAFT_KEY = "employo-voice-cv-draft";
+type VoiceArea = "strengths" | "languages" | "work_experience" | "education" | "certificates";
+type VoiceAnswers = Partial<Record<VoiceArea, string>>;
+interface VoiceInterviewState {
+  currentArea: CvInterviewArea;
+  answerCounts: Partial<Record<CvInterviewArea, number>>;
+  askedQuestionIds: string[];
+  lastQuestion?: string;
+  conversation?: InterviewTurn[];
+  structuredCv: StructuredCvData;
+}
+
+export default function VoiceCvInterview() {
+  const router = useRouter();
+  const { user, profile, loading, status: authStatus, error: sessionError } = useRequireAuth();
+  const microphone = useRef<MediaStream | null>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const recordedChunks = useRef<Blob[]>([]);
+  const responseAudio = useRef<HTMLAudioElement | null>(null);
+  const finishResponseAudio = useRef<(() => void) | null>(null);
+  const answers = useRef<VoiceAnswers>({});
+  const interviewState = useRef<VoiceInterviewState>({ currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() });
+  const endingCall = useRef(false);
+  const pausingCall = useRef(false);
+  const discardNextRecording = useRef(false);
+  const retryTurn = useRef<FormData | null>(null);
+  const requestController = useRef<AbortController | null>(null);
+  const silenceMonitor = useRef<number | null>(null);
+  const audioContext = useRef<AudioContext | null>(null);
+  const [status, setStatus] = useState<"idle" | "connecting" | "speaking" | "recording" | "processing" | "paused" | "complete">("idle");
+  const [question, setQuestion] = useState("");
+  const [error, setError] = useState("");
+  const [lastTranscript, setLastTranscript] = useState("");
+  const [longerPauses, setLongerPauses] = useState(false);
+  const silenceDelay = useRef(1100);
+
+  useEffect(() => {
+    if (!loading && user && profile && profile.role !== "youth") router.replace("/company?view=swipe");
+  }, [loading, profile, router, user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const draft = JSON.parse(sessionStorage.getItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id)) ?? "null") as { answers?: VoiceAnswers; state?: VoiceInterviewState; question?: string } | null;
+      if (!draft?.answers || !draft.state) return;
+      if (!draft.state.structuredCv || !Array.isArray(draft.state.askedQuestionIds)) {
+        sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
+        return;
+      }
+      answers.current = draft.answers;
+      interviewState.current = draft.state;
+      setQuestion(draft.question ?? "");
+      setStatus("paused");
+    } catch {
+      sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
+    }
+  }, [user?.id]);
+
+  const saveDraft = (currentQuestion = question) => {
+    sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id), JSON.stringify({ answers: answers.current, state: interviewState.current, question: currentQuestion }));
+  };
+
+  const stopSilenceMonitor = () => {
+    if (silenceMonitor.current !== null) window.clearInterval(silenceMonitor.current);
+    silenceMonitor.current = null;
+    void audioContext.current?.close();
+    audioContext.current = null;
+  };
+
+  const stopCall = () => {
+    endingCall.current = true;
+    requestController.current?.abort();
+    requestController.current = null;
+    stopSilenceMonitor();
+    if (recorder.current?.state === "recording") recorder.current.stop();
+    recorder.current = null;
+    microphone.current?.getTracks().forEach((track) => track.stop());
+    microphone.current = null;
+    responseAudio.current?.pause();
+    finishResponseAudio.current?.();
+    responseAudio.current = null;
+    answers.current = {};
+    interviewState.current = { currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: createEmptyStructuredCv() };
+    retryTurn.current = null;
+    setQuestion("");
+    setStatus((current) => current === "complete" ? current : "idle");
+  };
+  useEffect(() => () => {
+    endingCall.current = true;
+    requestController.current?.abort();
+    if (silenceMonitor.current !== null) window.clearInterval(silenceMonitor.current);
+    void audioContext.current?.close();
+    if (recorder.current?.state === "recording") recorder.current.stop();
+    microphone.current?.getTracks().forEach((track) => track.stop());
+    responseAudio.current?.pause();
+    finishResponseAudio.current?.();
+  }, []);
+
+  const playResponse = async (audioUrl?: string) => {
+    setStatus("speaking");
+    if (!audioUrl) throw new Error("Frågan visas ovan. Tryck på Fortsätt för att svara.");
+    // Keep one playback element throughout the conversation.
+    const audio = responseAudio.current ?? new Audio();
+    responseAudio.current?.pause();
+    const securedAudioUrl = await authenticatedAudioUrl(audioUrl);
+    if (audio.getAttribute("src") !== securedAudioUrl) audio.src = securedAudioUrl;
+    audio.preload = "auto";
+    responseAudio.current = audio;
+    await new Promise<void>((resolve, reject) => {
+      const timer = window.setTimeout(() => fail(), 45_000);
+      const finish = () => { window.clearTimeout(timer); audio.onended = null; audio.onerror = null; finishResponseAudio.current = null; resolve(); };
+      const fail = () => { window.clearTimeout(timer); audio.pause(); audio.onended = null; audio.onerror = null; finishResponseAudio.current = null; reject(new Error("Ljudet kunde inte spelas. Läs frågan ovan och tryck på Fortsätt.")); };
+      finishResponseAudio.current = finish;
+      audio.onended = finish;
+      audio.onerror = fail;
+      void audio.play().catch(fail);
+    });
+  };
+
+  const submitTurn = async (formData: FormData) => {
+    retryTurn.current = formData;
+    setError("");
+    setStatus("processing");
+    const controller = new AbortController();
+    requestController.current?.abort();
+    requestController.current = controller;
+    try {
+      const response = await fetch("/api/voice/turn", { method: "POST", headers: await authenticatedHeaders(), body: formData, signal: controller.signal });
+      const result = await response.json() as { answers?: VoiceAnswers; state?: VoiceInterviewState; structured?: StructuredCvData; complete?: boolean; nextQuestion?: string; audioUrl?: string; transcript?: string; error?: string };
+      if (!response.ok || !result.answers || !result.state || !result.nextQuestion) throw new Error(result.error ?? "Kunde inte behandla ditt svar.");
+      answers.current = result.answers;
+      interviewState.current = result.state;
+      if (result.transcript) setLastTranscript(result.transcript);
+      const nextQuestion = result.nextQuestion ?? "";
+      setQuestion(nextQuestion);
+      saveDraft(nextQuestion);
+      if (result.complete) {
+        sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_STORAGE_KEY, user?.id), JSON.stringify(result.answers));
+        sessionStorage.setItem(voiceCvStorageKey(VOICE_CV_STRUCTURED_KEY, user?.id), JSON.stringify(result.structured ?? result.state.structuredCv));
+        sessionStorage.setItem(voiceCvStorageKey("employo-voice-cv-conversation", user?.id), JSON.stringify(result.state.conversation ?? []));
+        sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
+        retryTurn.current = null;
+        microphone.current?.getTracks().forEach((track) => track.stop());
+        microphone.current = null;
+        // Completion is also visible; audio failure must not restart a finished interview.
+        await playResponse(result.audioUrl).catch(() => {});
+        if (!endingCall.current) setStatus("complete");
+        return;
+      }
+      retryTurn.current = null;
+      await playResponse(result.audioUrl);
+      if (!endingCall.current && !pausingCall.current) startRecording();
+    } catch (turnError) {
+      if (controller.signal.aborted) return;
+      setError(turnError instanceof Error ? turnError.message : "Kunde inte behandla ditt svar.");
+      if (!endingCall.current) setStatus("paused");
+    } finally {
+      if (requestController.current === controller) requestController.current = null;
+    }
+  };
+
+  const startCall = async () => {
+    if (!user) return;
+    setError(""); setLastTranscript(""); setQuestion(""); setStatus("connecting"); endingCall.current = false; pausingCall.current = false; answers.current = {};
+    const welcomeAudio = new Audio(await authenticatedAudioUrl(`/api/voice/speech?id=${INTERVIEW_QUESTIONS[0].id}&v=2`));
+    welcomeAudio.preload = "auto";
+    welcomeAudio.load();
+    responseAudio.current = welcomeAudio;
+    try {
+      const youthProfile = await getYouthProfile(user.id);
+      const initialCv = createEmptyStructuredCv({ name: youthProfile?.full_name ?? undefined, city: youthProfile?.city ?? undefined });
+      initialCv.profile.targetRoles = youthProfile?.desired_roles ?? [];
+      interviewState.current = { currentArea: "profile", answerCounts: {}, askedQuestionIds: [], structuredCv: initialCv };
+      microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const formData = new FormData();
+      formData.set("start", "true");
+      formData.set("structuredCv", JSON.stringify(initialCv));
+      await submitTurn(formData);
+    } catch (callError) {
+      stopCall();
+      setError(callError instanceof Error ? callError.message : "Mikrofonen eller röstsamtalet kunde inte startas.");
+    }
+  };
+
+  const startRecording = () => {
+    if (!microphone.current) return;
+    setError("");
+    recordedChunks.current = [];
+    const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) => MediaRecorder.isTypeSupported(type));
+    const currentRecorder = new MediaRecorder(microphone.current, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: 32000 });
+    recorder.current = currentRecorder;
+    currentRecorder.ondataavailable = (event) => { if (event.data.size) recordedChunks.current.push(event.data); };
+    currentRecorder.onstop = () => {
+      stopSilenceMonitor();
+      const discardRecording = discardNextRecording.current;
+      discardNextRecording.current = false;
+      if (endingCall.current || pausingCall.current || discardRecording) return;
+      const recording = new Blob(recordedChunks.current, { type: currentRecorder.mimeType || "audio/webm" });
+      if (!recording.size) { setError("Ingen inspelning kunde tas emot."); setStatus("idle"); return; }
+      const formData = new FormData();
+      formData.set("audio", recording, currentRecorder.mimeType.includes("mp4") ? "answer.m4a" : "answer.webm");
+      formData.set("answers", JSON.stringify(answers.current));
+      formData.set("state", JSON.stringify(interviewState.current));
+      void submitTurn(formData);
+    };
+    currentRecorder.start();
+    setStatus("recording");
+    const context = new AudioContext();
+    void context.resume();
+    const source = context.createMediaStreamSource(microphone.current);
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 1024;
+    source.connect(analyser);
+    audioContext.current = context;
+    const samples = new Uint8Array(analyser.fftSize);
+    let heardSpeech = false;
+    let silentSince: number | null = null;
+    const startedAt = Date.now();
+    silenceMonitor.current = window.setInterval(() => {
+      analyser.getByteTimeDomainData(samples);
+      if (!heardSpeech && Date.now() - startedAt >= 20_000) {
+        pausingCall.current = true;
+        currentRecorder.stop();
+        microphone.current?.getTracks().forEach((track) => track.stop());
+        microphone.current = null;
+        setStatus("paused");
+        return;
+      }
+      if (Date.now() - startedAt >= 90_000) { currentRecorder.stop(); return; }
+      const level = samples.reduce((total, sample) => total + Math.abs(sample - 128), 0) / samples.length / 128;
+      if (level > 0.018) {
+        heardSpeech = true;
+        silentSince = null;
+        return;
+      }
+      if (!heardSpeech) return;
+      const now = Date.now();
+      silentSince ??= now;
+      if (now - silentSince >= silenceDelay.current && currentRecorder.state === "recording") currentRecorder.stop();
+    }, 100);
+  };
+
+  const stopRecording = () => {
+    if (recorder.current?.state === "recording") recorder.current.stop();
+  };
+
+  const skipQuestion = async () => {
+    setError("");
+    if (recorder.current?.state === "recording") { discardNextRecording.current = true; recorder.current.stop(); }
+    try {
+      if (!microphone.current) microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      pausingCall.current = false;
+      const formData = new FormData();
+      formData.set("skip", "true");
+      formData.set("answers", JSON.stringify(answers.current));
+      formData.set("state", JSON.stringify(interviewState.current));
+      await submitTurn(formData);
+    } catch (skipError) {
+      setError(skipError instanceof Error ? skipError.message : "Kunde inte hoppa över frågan.");
+      setStatus("paused");
+    }
+  };
+
+  const pauseCall = () => {
+    pausingCall.current = true;
+    saveDraft();
+    stopSilenceMonitor();
+    if (recorder.current?.state === "recording") recorder.current.stop();
+    responseAudio.current?.pause();
+    finishResponseAudio.current?.();
+    microphone.current?.getTracks().forEach((track) => track.stop());
+    microphone.current = null;
+    setStatus("paused");
+  };
+
+  const resumeCall = async () => {
+    setError("");
+    endingCall.current = false;
+    pausingCall.current = false;
+    try {
+      microphone.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      if (retryTurn.current) { await submitTurn(retryTurn.current); return; }
+      startRecording();
+    } catch (callError) {
+      setError(callError instanceof Error ? callError.message : "Mikrofonen kunde inte startas.");
+      setStatus("paused");
+    }
+  };
+
+  const abortCall = () => {
+    sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
+    stopCall();
+    setError("");
+    setStatus("idle");
+  };
+
+  const finishInterview = async () => {
+    if (recorder.current?.state === "recording") { discardNextRecording.current = true; recorder.current.stop(); }
+    pausingCall.current = false;
+    const form = new FormData();
+    form.set("finish", "true");
+    form.set("state", JSON.stringify(interviewState.current));
+    await submitTurn(form);
+  };
+
+  const goBack = () => {
+    sessionStorage.removeItem(voiceCvStorageKey(VOICE_CV_DRAFT_KEY, user?.id));
+    stopCall();
+    router.push("/youth/cv");
+  };
+
+  if (authStatus !== "ready") return <AuthGateMessage status={authStatus} error={sessionError} />;
+  if (!profile) return <PageLoading label="Hämtar innehåll..." />;
+  return <main className={`mobile-shell ${styles.page}`}>
+    <button type="button" onClick={goBack} aria-label="Tillbaka till CV-val" title="Tillbaka till CV-val" className={styles.back}>←</button>
+    <section className={`card ${styles.card}`}>
+      <p className={styles.eyebrow}>Röstsamtal</p>
+      <h1 className={styles.title}>Prata fram ditt CV</h1>
+      <p className={styles.intro}>AI:n frågar, du svarar. Samtalet går vidare när du har pratat klart.</p>
+      <div className={styles.microphone} data-recording={status === "recording"} aria-hidden="true"><UiIcon name="microphone" width="34" height="34" /></div>
+      {question && <p className={styles.question}>{question}</p>}
+      {lastTranscript && <details className={styles.transcript}><summary>Det här hörde vi senast</summary><p>{lastTranscript}</p></details>}
+      {status !== "complete" && <label className={styles.option}><input type="checkbox" checked={longerPauses} onChange={(event) => { setLongerPauses(event.target.checked); silenceDelay.current = event.target.checked ? 2200 : 1100; }} /> Ge mig mer betänketid mellan meningarna</label>}
+      <p aria-live="polite" className={styles.status}>{status === "connecting" ? "AI:n förbereder första frågan..." : status === "speaking" ? "AI:n pratar..." : status === "recording" ? "AI:n lyssnar på ditt svar..." : status === "processing" ? "AI:n bearbetar ditt svar..." : status === "paused" ? "Samtalet är pausat. Dina tidigare svar finns kvar." : status === "complete" ? "Samtalet är klart." : "Tryck på Starta så börjar AI:n."}</p>
+      {error && <p className={styles.error}>{error}</p>}
+      {status === "speaking" && <button type="button" onClick={() => { responseAudio.current?.pause(); finishResponseAudio.current?.(); }} className={styles.control}>Hoppa över uppläsningen</button>}
+      <button type="button" onClick={status === "idle" ? () => void startCall() : status === "recording" ? stopRecording : status === "paused" ? () => void resumeCall() : status === "complete" ? () => { stopCall(); const params = new URLSearchParams(window.location.search); const job = params.get("job"); const title = params.get("title"); router.push(`/youth/cv/create?voice=finalize${job ? `&job=${encodeURIComponent(job)}${title ? `&title=${encodeURIComponent(title)}` : ""}` : ""}`); } : undefined} disabled={status === "connecting" || status === "speaking" || status === "processing"} className={`cta-btn ${styles.primary}`}>{status === "connecting" ? "Förbereder…" : status === "speaking" ? "AI:n pratar…" : status === "recording" ? "Jag har pratat klart" : status === "processing" ? "Bearbetar…" : status === "paused" ? (error ? "Försök igen" : "Fortsätt samtalet") : status === "complete" ? "Granska mitt CV" : "Starta samtalet"}</button>
+      {(status === "recording" || status === "paused") && <button type="button" onClick={() => void skipQuestion()} className={styles.skip}>Hoppa över området</button>}
+      {status === "paused" && (interviewState.current.conversation?.length ?? 0) > 0 && <button type="button" onClick={() => void finishInterview()} className="cta-btn">Gå vidare med mina sparade svar</button>}
+      {status !== "idle" && status !== "complete" && <div className={styles.actions}>{(status === "recording" || status === "speaking") && <button type="button" onClick={pauseCall} className={styles.control}>Pausa</button>}<button type="button" onClick={abortCall} className={styles.danger}>Avbryt samtalet</button></div>}
+      <p className={styles.privacy}>Ljudet transkriberas och behandlas av OpenAI. Inga ljudinspelningar sparas av MatchnWork.</p>
+    </section>
+  </main>;
+}

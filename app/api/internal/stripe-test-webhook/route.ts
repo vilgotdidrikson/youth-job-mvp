@@ -1,0 +1,4 @@
+import { handleStripeTestWebhook } from "@/lib/server/stripe-test-checkout";
+
+export const runtime = "nodejs";
+export const POST = handleStripeTestWebhook;

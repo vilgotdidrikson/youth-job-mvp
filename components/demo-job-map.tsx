@@ -23,7 +23,9 @@ export function DemoJobMap({
   onOpen: (id: string) => void;
 }) {
   const [fallback, setFallback] = useState(false);
-  const unavailable = useCallback(() => setFallback(true), []);
+  const unavailable = useCallback((message: string | null) => {
+    if (message) setFallback(true);
+  }, []);
   const mapJobs = useMemo<JobPost[]>(
     () =>
       jobs.map((job) => ({

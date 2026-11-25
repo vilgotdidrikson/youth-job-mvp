@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';import {readFileSync}from'node:fs';import{createRequire,Module}from'node:module';import ts from'typescript';
+const require=createRequire(import.meta.url),load=Module._load,owner='11111111-1111-4111-8111-111111111111',path=owner+'/qa.pdf',base='https://qa.example.invalid',saved=process.env.NEXT_PUBLIC_SUPABASE_URL;process.env.NEXT_PUBLIC_SUPABASE_URL=base;
+let identities,events,resolveLink,link,identityResult,windowResult;
+Module._extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
+Module._load=function(n,parent,...args){if(parent?.filename.endsWith('open-youth-document.ts')&&n==='./auth')return{getCurrentUser:()=>{events.push('identity');return identityResult(++identities);}};if(parent?.filename.endsWith('open-youth-document.ts')&&n==='./storage')return{getYouthDocumentSignedUrl:async()=>{events.push('link');return link;}};return load.call(this,n,parent,...args);};
+const {openYouthDocument:open}=require('../lib/open-youth-document.ts');let passed=0;
+const win=()=>({opener:{},closed:false,location:{href:''},close(){this.closed=true;}});
+function start(signal=new AbortController().signal,file=path){return open({subjectId:owner,path:file,signal,openWindow:()=>{events.push('open');return windowResult;}});}
+async function test(name,fn){identities=0;events=[];windowResult=win();identityResult=async()=>({id:owner});link=base+'/storage/v1/object/sign/youth-documents/'+path+'?token=qa';await fn();passed++;console.log('PASS '+name);}
+try{
+ await test('popup reserved synchronously before Auth/URL await and opener detached',async()=>{await start();assert.deepEqual(events,['open','identity','link','identity']);assert.equal(windowResult.opener,null);assert.equal(windowResult.location.href,link);});
+ await test('blocked popup does no identity or signed URL work',async()=>{windowResult=null;await assert.rejects(start(),/Tillåt/);assert.deepEqual(events,['open']);});
+ for(const file of ['https://evil.invalid/a.pdf','other/qa.pdf',owner+'/../qa.pdf',owner+'/a%2fb.pdf',owner+'/a.pdf?x=1'])await test('reject unsafe stored reference '+file,async()=>{await assert.rejects(start(undefined,file));assert.equal(events.length,0);});
+ for(const stage of [1,2])await test('account change at identity check '+stage+' closes popup',async()=>{identityResult=async n=>({id:n===stage?'other':owner});await assert.rejects(start(),/Kontot/);assert.equal(windowResult.closed,true);assert.equal(windowResult.location.href,'');if(stage===1)assert.ok(!events.includes('link'));});
+ for(const url of ['javascript:alert(1)','https://evil.invalid/file.pdf',base+'/storage/v1/object/sign/youth-documents/other/qa.pdf'])await test('reject unexpected signed destination',async()=>{link=url;await assert.rejects(start(),/länk/);assert.equal(windowResult.location.href,'');assert.equal(windowResult.closed,true);});
+ await test('pre-cancelled open creates no popup',async()=>{const c=new AbortController();c.abort();await assert.rejects(start(c.signal));assert.equal(events.length,0);});
+ await test('cancelled pending URL cannot navigate late',async()=>{link=new Promise(r=>resolveLink=r);const c=new AbortController(),p=start(c.signal);await new Promise(r=>setTimeout(r,1));c.abort();await assert.rejects(p);resolveLink(base+'/storage/v1/object/sign/youth-documents/'+path);await new Promise(r=>setTimeout(r,1));assert.equal(windowResult.closed,true);assert.equal(windowResult.location.href,'');});
+ await test('manually closed popup is never navigated',async()=>{identityResult=async()=>{windowResult.closed=true;return{id:owner};};await assert.rejects(start(),/stängdes/);assert.equal(windowResult.location.href,'');});
+ console.log('PASS '+passed+' actual owner-document opening checks; controlled Auth/URL/window.');
+}finally{Module._load=load;if(saved===undefined)delete process.env.NEXT_PUBLIC_SUPABASE_URL;else process.env.NEXT_PUBLIC_SUPABASE_URL=saved;}

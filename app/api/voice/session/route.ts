@@ -1,5 +1,8 @@
+import { VOICE_CV_ENABLED } from "@/lib/feature-flags";
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/api-auth";
+import { currentRealtimeModel } from "@/lib/openai-config";
+import { reportServerFailure } from "@/lib/server-failures";
 
 export const runtime = "nodejs";
 
@@ -21,7 +24,7 @@ const instructions = [
 
 const session = {
   type: "realtime",
-  model: process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime",
+  model: currentRealtimeModel(process.env.OPENAI_REALTIME_MODEL),
   output_modalities: ["audio"],
   instructions,
   max_output_tokens: 192,
@@ -47,6 +50,7 @@ const session = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!VOICE_CV_ENABLED) return new NextResponse(null, { status: 404 });
   const auth = await requireApiUser(request, "voice-session", ["youth"]);
   if ("response" in auth) return auth.response;
   const apiKey = process.env.OPENAI_API_KEY;
@@ -61,14 +65,16 @@ export async function POST(request: NextRequest) {
   formData.set("session", JSON.stringify(session));
   try {
     const response = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: formData });
-    const answer = await response.text();
     if (!response.ok) {
-      console.error("OpenAI Realtime session failed.", response.status, answer);
-      return NextResponse.json({ error: "Kunde inte ansluta röstsamtalet." }, { status: 502 });
+      // An upstream error body can echo private input; do not read or log it.
+      const incidentId = reportServerFailure("voice_session_upstream_failed", undefined, response.status);
+      void response.body?.cancel().catch(() => {});
+      return NextResponse.json({ error: "Kunde inte ansluta röstsamtalet.", incidentId }, { status: 502 });
     }
+    const answer = await response.text();
     return new NextResponse(answer, { headers: { "Content-Type": "application/sdp" } });
   } catch (error) {
-    console.error("OpenAI Realtime session failed.", error);
-    return NextResponse.json({ error: "Rösttjänsten kunde inte nås." }, { status: 502 });
+    const incidentId = reportServerFailure("voice_session_transport_failed", error);
+    return NextResponse.json({ error: "Rösttjänsten kunde inte nås.", incidentId }, { status: 502 });
   }
 }

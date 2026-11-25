@@ -1,0 +1,203 @@
+"use client";
+import { PageLoading } from "@/components/page-loading";
+import {SupportLinks} from "@/components/support-links";
+
+import { BrandLogo } from "@/components/brand-logo";
+
+import { PasswordInput } from "@/components/password-input";
+
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "@/hooks/use-session";
+import { getUserProfile, signIn, signUp } from "@/lib/auth";
+import { hasAuthEmailLinkError } from "@/lib/auth-email-link";
+import { getSupabaseClient } from "@/lib/supabase";
+import type { Role } from "@/lib/types";
+import { getYouthFlowState } from "@/lib/youth-job-flow";
+import { loginDestination, PRIVACY_REQUESTS_PATH } from "@/lib/login-destination";
+
+type Mode = "login" | "signup";
+
+function LoginPageContent({ initialMode = "login" }: { initialMode?: Mode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, profile, loading: sessionLoading } = useSession();
+  const isRedirectingAfterSignup = useRef(false);
+  const submitting = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
+  const requestedRedirect = searchParams.get("redirect");
+  const safeRedirectTarget = requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//") ? requestedRedirect : null;
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<Role>("youth");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [linkError, setLinkError] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const readLink = () => setLinkError(hasAuthEmailLinkError(window.location.search, window.location.hash));
+    const timer = window.setTimeout(readLink, 0);
+    window.addEventListener("hashchange", readLink);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("hashchange", readLink);
+    };
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (sessionLoading || !user || linkError !== false || isRedirectingAfterSignup.current) return;
+    if (safeRedirectTarget === PRIVACY_REQUESTS_PATH) {
+      router.replace(PRIVACY_REQUESTS_PATH);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!active) return;
+      if (!adminError && isAdmin === true) {
+        router.replace(loginDestination(profile?.role ?? "youth", safeRedirectTarget, true));
+        return;
+      }
+      if (!profile) return;
+      if (profile.role === "youth") {
+        const state = await getYouthFlowState(user.id);
+        if (active) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(profile.role, safeRedirectTarget));
+        return;
+      }
+      router.replace(loginDestination(profile.role, safeRedirectTarget));
+    })();
+    return () => { active = false; };
+  }, [linkError, profile, router, safeRedirectTarget, sessionLoading, user]);
+
+  useEffect(() => {
+    if (searchParams.get("role") === "company") {
+      setRole("company");
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting.current || !active.current) return;
+    // Read the submitted controls so password-manager/autofill changes are
+    // included even when they have not triggered React's change handlers.
+    const submitted = new FormData(event.currentTarget);
+    const submittedEmail = String(submitted.get("email") ?? "").trim();
+    const submittedPassword = String(submitted.get("password") ?? "");
+    const submittedConfirmation = String(submitted.get("confirmPassword") ?? "");
+    setError("");
+    setMessage("");
+
+    if (mode === "signup" && submittedPassword !== submittedConfirmation) {
+      setError("Lösenorden matchar inte. Kontrollera och försök igen.");
+      return;
+    }
+    if (mode === "signup" && submittedPassword.length < 8) {
+      setError("Lösenordet måste innehålla minst 8 tecken.");
+      return;
+    }
+
+    submitting.current = true;
+    setLoading(true);
+
+    try {
+      if (mode === "signup") {
+        const result = await signUp(submittedEmail, submittedPassword, role);
+        if (!active.current) return;
+        if (result.session) {
+          isRedirectingAfterSignup.current = true;
+          // A full navigation lets the destination initialize from the newly
+          // persisted Supabase session. Client routing here can race the auth
+          // callback and leave the next page behind its loading gate.
+          window.location.replace(role === "youth" ? "/youth/onboarding" : role === "company" ? "/company/onboarding" : "/private");
+          return;
+        }
+        // Confirmation settings differ between environments. No session must
+        // not send a new account into a loop of unsuccessful login attempts.
+        setMessage("Kontrollera din e-post för att bekräfta kontot. Har du redan ett konto kan du logga in.");
+        setEmail(submittedEmail);
+        setPassword(""); setConfirmPassword("");
+        setMode("login");
+        return;
+      }
+      const session = await signIn(submittedEmail, submittedPassword);
+      if (!active.current) return;
+      if (safeRedirectTarget === PRIVACY_REQUESTS_PATH) {
+        router.replace(PRIVACY_REQUESTS_PATH);
+        return;
+      }
+      const { data: isAdmin, error: adminError } = await getSupabaseClient().rpc("is_admin_account");
+      if (!active.current) return;
+      if (!adminError && isAdmin === true) {
+        router.replace(loginDestination(profile?.role ?? "youth", safeRedirectTarget, true));
+        return;
+      }
+      const signedInProfile = await getUserProfile(session.user.id);
+      if (!active.current) return;
+      if (!signedInProfile) {
+        setError("Kontot saknar en användarprofil. Försök igen om en stund eller kontakta support.");
+        return;
+      }
+      if (signedInProfile.role === "youth") {
+        const state = await getYouthFlowState(session.user.id);
+        if (active.current) router.replace(!state.shortOnboardingCompleted ? "/youth/onboarding" : loginDestination(signedInProfile.role, safeRedirectTarget));
+      } else router.replace(loginDestination(signedInProfile.role, safeRedirectTarget));
+    } catch (submitError) {
+      if (!active.current) return;
+      const msg = submitError instanceof Error ? submitError.message : "Authentication failed.";
+      if (mode === "signup" && msg.toLowerCase().includes("already registered")) {
+        setError("Det finns redan ett konto med den e-postadressen. Logga in istället.");
+        setMode("login");
+      } else {
+        setError(msg.toLowerCase().includes("invalid login credentials") ? "E-postadressen eller lösenordet stämmer inte. Kontrollera och försök igen." : msg);
+      }
+    } finally {
+      submitting.current = false;
+      if (active.current) setLoading(false);
+    }
+  };
+
+  if (sessionLoading) return <PageLoading label="Laddar…" />;
+
+  const isSignup = mode === "signup";
+  return (
+    <main className="auth-page"><Link href="/" className="auth-brand" aria-label="MatchnWork startsida"><BrandLogo/></Link>
+      <section className={`auth-layout auth-layout-form-only ${!isSignup ? "auth-layout-login" : ""}`}>
+        <div className="auth-form-stack">
+          <button type="button" className="auth-back auth-back-above" onClick={() => router.push("/")} aria-label="Tillbaka till startsidan"><span aria-hidden="true"><UiIcon name="chevron-left" width="18" height="18" /></span><span>Tillbaka</span></button>
+          <form className={`auth-card ${!isSignup ? "auth-card-login" : ""}`} onSubmit={handleSubmit}>
+          <div className="auth-card-heading"><h1>{isSignup ? "Skapa konto" : "Logga in"}</h1><p>{isSignup ? "Fyll i dina uppgifter nedan." : "Ange dina uppgifter för att fortsätta."}</p></div>
+          {isSignup && <fieldset className="auth-role"><legend>Jag är...</legend><div>{([["youth", "Arbetssökande"], ["company", "Företag"]] as const).map(([value, label]) => <label key={value} className={role === value ? "auth-role-selected" : ""}><input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />{label}</label>)}</div></fieldset>}
+          {linkError && <div className="auth-message auth-error">
+            <p role="alert">Mejllänken gick inte att bekräfta. Den kan ha gått ut eller redan ha använts.</p>
+            {user ? <button type="button" className="auth-switch" onClick={() => setLinkError(false)}>Fortsätt med din inloggning</button>
+              : <p>Om det gäller ett byte av e-postadress, logga in och kontrollera e-poststatus under kontoinställningarna.</p>}
+          </div>}
+          <div className="auth-fields">
+            <label>E-postadress<input name="email" className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
+            <label>Lösenord<PasswordInput key={mode} name="password" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={isSignup ? "new-password" : "current-password"} aria-describedby={isSignup ? "signup-password-hint" : undefined} required minLength={isSignup ? 8 : undefined} />{isSignup && <span id="signup-password-hint" className="auth-field-hint">Minst 8 tecken.</span>}</label>
+            {!isSignup && <Link href="/forgot-password" className="auth-switch auth-recovery-link">Glömt lösenord?</Link>}
+            {isSignup && <label>Bekräfta lösenord<PasswordInput name="confirmPassword" className="auth-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} /></label>}
+          </div>
+          {error && <p className="auth-message auth-error" role="alert">{error}</p>}
+          {message && <p className="auth-message auth-success" role="status">{message}</p>}
+          {!isSignup && <p className="auth-message"><Link href="/resend-confirmation" className="auth-switch">Skicka ny bekräftelselänk</Link></p>}
+          {isSignup && <p className="auth-privacy-note">{role === "company" ? <Link href="/privacy#company-data">Så används företagets kontouppgifter</Link> : <Link href="/privacy#profile-data">Så används din profil och dina ansökningar</Link>}.</p>}
+          <button type="submit" className="auth-submit" disabled={loading}>{loading ? "Vänta..." : isSignup ? "Skapa konto" : "Logga in"}<span aria-hidden="true"><UiIcon name="arrow" width="16" height="16" /></span></button>
+          <button type="button" className="auth-switch" disabled={loading} onClick={() => { if (submitting.current) return; setMode(isSignup ? "login" : "signup"); setError(""); setMessage(""); setConfirmPassword(""); }}>{isSignup ? "Har du redan ett konto? Logga in" : "Inget konto? Skapa ett"}</button>
+          </form>
+        </div>
+      </section>
+      <SupportLinks/><footer className="auth-footer">© 2026 MatchnWork <span>En enklare väg från nyfiken till anställd.</span></footer>
+    </main>
+  );
+}
+
+export function AuthPage({ initialMode = "login" }: { initialMode?: Mode }) {
+  return <Suspense fallback={<main className="auth-page"><p role="status">Laddar inloggningen…</p><SupportLinks/></main>}><LoginPageContent initialMode={initialMode} /></Suspense>;
+}

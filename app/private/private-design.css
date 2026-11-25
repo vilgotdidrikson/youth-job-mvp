@@ -1,0 +1,42 @@
+/* Private task workspace (DA-12). Moved from product-design.css and rewritten without the
+   !important overrides that only existed to beat inline styles. Tokens and DA-05 scale only. */
+.mnw-private-workspace > header { margin-bottom:18px;padding:.75rem 0 1.25rem; }
+.mnw-private-workspace > header > p { margin:0;color:var(--color-text-muted);font-size:var(--text-sm); }
+.mnw-private-workspace > header > p:first-child { color:var(--color-brand);font-size:var(--text-xs);letter-spacing:.07em;text-transform:uppercase; }
+.mnw-product .mnw-private-workspace > header h1 { margin:12px 0;font-size:2.25rem; }
+
+.private-error { margin:0 0 1rem;padding:.75rem 1rem;border:1px solid var(--color-danger-border);border-radius:10px;background:var(--color-danger-soft);color:var(--color-danger);font-size:var(--text-sm); }
+
+.mnw-product .mnw-private-workspace > .card { margin-bottom:24px;padding:27px; }
+.mnw-private-workspace form.card { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px; }
+.mnw-private-workspace form > :is(h2,button,label:nth-of-type(1),label:nth-of-type(2)) { grid-column:1/-1; }
+.mnw-private-workspace form h2 { margin:0 0 3px;font-size:var(--text-lg); }
+.mnw-private-workspace form label { display:grid;gap:9px;color:var(--color-text);font-size:var(--text-sm);line-height:1.65; }
+.mnw-private-workspace .input-field { width:100%;padding:12px 14px;font-size:16px; }
+.mnw-product .mnw-private-workspace form .cta-btn { width:100%;margin-top:.8rem; }
+
+/* Task cards: status pill, title, meta, then one row per applicant. */
+.private-task-status { display:inline-block;margin:0;padding:.15rem .55rem;border-radius:999px;color:var(--color-text-muted);background:var(--color-rose);font-size:var(--text-xs);font-weight:600; }
+.private-task-status[data-status="active"] { color:var(--color-success-strong);background:var(--color-success-soft); }
+.private-task h2 { margin:.6rem 0 .3rem;font-size:var(--text-lg);font-weight:500;overflow-wrap:anywhere; }
+.private-task-meta { margin:0;color:var(--color-text-muted);font-size:var(--text-sm);line-height:1.6;overflow-wrap:anywhere; }
+.private-candidate { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-divider); }
+.private-candidate > div:first-child { min-width:0; }
+.private-candidate strong { font-weight:600;overflow-wrap:anywhere; }
+.private-candidate p { margin:.2rem 0 0;color:var(--color-text-muted);font-size:var(--text-sm); }
+.private-candidate-actions { display:flex;gap:8px; }
+.mnw-product .mnw-private-workspace :is(.private-candidate-actions button,.private-task-close) { min-height:44px;padding:10px 16px;font-size:var(--text-sm); }
+.mnw-product .mnw-private-workspace .private-task-close { margin-top:18px; }
+
+.private-empty { margin:0 0 1.5rem;color:var(--color-text-muted);font-size:var(--text-sm);text-align:center; }
+.mnw-product .mnw-private-workspace .private-chats-link { display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;font-size:var(--text-sm);text-decoration:none; }
+
+@media (max-width:720px) {
+  .mnw-private-workspace form.card { grid-template-columns:1fr;gap:17px; }
+  .mnw-product .mnw-private-workspace > .card { padding:22px; }
+  .mnw-product .mnw-private-workspace > header h1 { font-size:1.9rem; }
+}
+@media (max-width:480px) {
+  .private-candidate-actions { width:100%; }
+  .private-candidate-actions button { flex:1; }
+}

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-export const PRODUCTION_SUPABASE_URL = "https://iarnopkuoqumictgnqin.supabase.co";
+import { PRODUCTION_SUPABASE_URL } from "@/lib/launch-mode";
 export function prelaunchDb() {
   const configured = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
   if (configured !== PRODUCTION_SUPABASE_URL) throw new Error("Prelaunch requires Primary / MatchnWork.");

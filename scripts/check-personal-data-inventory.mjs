@@ -1,0 +1,113 @@
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const root=new URL('../',import.meta.url);
+/** Append reviewed metadata only; an addition cannot rewrite an existing table
+ * or bucket. Keeps historical Auth metadata byte-identical when publishing a
+ * narrowly scoped schema change. This is a local audit tool, never runtime auth. */
+export function mergeReviewedCatalogAdditions(base,additions) {
+ if(!base||!additions||additions.mode!=='additions-only'||additions.projectRef!==base.projectRef||!/^\d{4}-\d{2}-\d{2}$/.test(additions.capturedOn)||!Array.isArray(base.relations)||!Array.isArray(base.buckets)||!Array.isArray(additions.relations)||!Array.isArray(additions.buckets))throw Error('Malformed reviewed catalog additions.');
+ const relations=[...base.relations,...additions.relations],buckets=[...base.buckets,...additions.buckets];
+ if(new Set(relations.map(r=>r.schema_name+'.'+r.table_name)).size!==relations.length||new Set(buckets.map(b=>b.id)).size!==buckets.length)throw Error('Catalog additions cannot replace existing metadata.');
+ return{...base,capturedOn:additions.capturedOn,relations,buckets};
+}
+/** Reviewed column additions only: never replace old fields/types/ownership. */
+export function mergeReviewedColumnAdditions(base,addition) {
+ if(!base||!addition||addition.mode!=="column-additions-only"||addition.projectRef!==base.projectRef||!/^\d{4}-\d{2}-\d{2}$/.test(addition.capturedOn)||!Array.isArray(addition.relations))throw Error("Malformed column additions.");
+ const result=structuredClone(base),seen=new Set();
+ for(const entry of addition.relations){
+  if(!entry||Object.keys(entry).sort().join()!=="columns,schema_name,table_name"||!Array.isArray(entry.columns)||entry.columns.length===0)throw Error("Malformed column entry.");
+  const id=entry.schema_name+"."+entry.table_name,relation=result.relations.find(r=>r.schema_name===entry.schema_name&&r.table_name===entry.table_name);
+  if(!relation||seen.has(id))throw Error("Column addition needs one known relation.");seen.add(id);
+  for(const column of entry.columns){if(!column||Object.keys(column).sort().join()!=="name,type"||typeof column.name!=="string"||!column.name||typeof column.type!=="string"||!column.type||relation.columns.some(c=>c.name===column.name))throw Error("Column additions cannot replace fields or types.");relation.columns.push({...column});}
+ }
+ return {...result,capturedOn:addition.capturedOn};
+}
+const readBaseReviewedCatalog=()=>[
+ 'docs/privacy/catalog.export-storage-2026-10-30.json',
+ 'docs/privacy/catalog.storage-lifecycle-2026-11-10.json',
+ 'docs/privacy/catalog.account-cv-drafts-2026-11-10.json',
+ 'docs/privacy/catalog.privacy-cases-2026-11-12.json',
+].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.dev-2026-10-28.json',root),'utf8')));
+const readReviewedCatalogBeforeApplicationVideo=()=>[
+ 'docs/privacy/catalog.hire-test-invoices-2026-11-18.json',
+ 'docs/privacy/catalog.hire-invoice-mail-2026-11-18.json',
+ 'docs/privacy/catalog.hire-bank-invoices-2026-11-18.json',
+].reduce((catalog,file)=>mergeReviewedCatalogAdditions(catalog,JSON.parse(readFileSync(new URL(file,root),'utf8'))),
+ mergeReviewedColumnAdditions(readBaseReviewedCatalog(),JSON.parse(readFileSync(new URL('docs/privacy/catalog.column-additions-2026-11-17.json',root),'utf8'))));
+const readReviewedCatalogBeforeStripe=()=>mergeReviewedColumnAdditions(
+ readReviewedCatalogBeforeApplicationVideo(),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.application-video-2026-11-19.json',root),'utf8')));
+export const readReviewedCatalog=()=>mergeReviewedCatalogAdditions(
+ readReviewedCatalogBeforeStripe(),
+ JSON.parse(readFileSync(new URL('docs/privacy/catalog.stripe-test-checkout-2026-11-21.json',root),'utf8')));
+export const readInventory=()=>JSON.parse(readFileSync(new URL('docs/privacy/personal-data-inventory.json',root),'utf8'));
+const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const name=value=>typeof value==='string'&&value.length>0&&value.length<256;
+const text=value=>typeof value==='string'&&value.trim().length>0;
+const unique=values=>new Set(values).size===values.length;
+const sorted=value=>JSON.stringify([...value].sort());
+
+/** Metadata coverage only. Never queries user rows or authorizes an export. */
+export function auditInventory(catalog,inventory=readInventory(),reviewed=readReviewedCatalog()) {
+ const errors=[];
+ const validCatalog=value=>object(value)&&Array.isArray(value.relations)&&value.relations.length>0
+  &&Array.isArray(value.buckets)&&value.relations.every(r=>object(r)&&name(r.schema_name)&&name(r.table_name)
+   &&['r','p','v','m'].includes(r.relkind)&&typeof r.rls_enabled==='boolean'
+   &&Array.isArray(r.foreign_keys)&&r.foreign_keys.every(f=>typeof f==='string')
+   &&Array.isArray(r.columns)&&r.columns.length>0&&r.columns.every(c=>object(c)&&name(c.name)&&typeof c.type==='string'&&c.type.length>0)
+   &&unique(r.columns.map(c=>c.name)))
+  &&unique(value.relations.map(r=>`${r.schema_name}.${r.table_name}`))
+  &&value.buckets.every(b=>object(b)&&name(b.id)&&typeof b.public==='boolean')&&unique(value.buckets.map(b=>b.id));
+ if(!validCatalog(catalog)||!validCatalog(reviewed))return['Malformed catalog metadata; expected relations/columns/foreign_keys and bucket configuration, not data rows.'];
+ if(!object(inventory)||inventory.version!==1||inventory.mode!=='inventory-only'||inventory.automaticExportEnabled!==false
+  ||!Array.isArray(inventory.groups)||!Array.isArray(inventory.buckets)||!Array.isArray(inventory.outsideCatalog))return['Malformed inventory or unsupported export activation. This register cannot enable automatic export.'];
+ const mapped=new Map();const groupIds=new Set();
+ for(const group of inventory.groups){
+  if(!object(group)||!name(group.id)||groupIds.has(group.id)||!['subject','mixed','review','context'].includes(group.classification)
+   ||!['subjectScope','data','review'].every(k=>text(group[k]))
+   ||!Array.isArray(group.relations)||group.relations.length===0||!group.relations.every(name)){errors.push('Malformed/duplicate inventory group.');continue;}
+  groupIds.add(group.id);
+  for(const relation of group.relations){if(mapped.has(relation))errors.push(`Duplicate classification: ${relation}`);mapped.set(relation,group.id);}
+ }
+ const relations=new Map(catalog.relations.map(r=>[`${r.schema_name}.${r.table_name}`,r]));
+ const baseline=new Map(reviewed.relations.map(r=>[`${r.schema_name}.${r.table_name}`,r]));
+ for(const [id,row] of relations){
+  if(!mapped.has(id))errors.push(`Unclassified relation: ${id}`);
+  const old=baseline.get(id);
+  if(!old){errors.push(`Unreviewed relation: ${id}`);continue;}
+  if(row.relkind!==old.relkind||row.rls_enabled!==old.rls_enabled)errors.push(`Relation kind/RLS changed: ${id}`);
+  const columns=new Map(row.columns.map(c=>[c.name,c.type]));const oldColumns=new Map(old.columns.map(c=>[c.name,c.type]));
+  for(const [column,type] of columns)if(oldColumns.get(column)!==type)errors.push(`New/changed column: ${id}.${column}`);
+  for(const column of oldColumns.keys())if(!columns.has(column))errors.push(`Removed column: ${id}.${column}`);
+  if(sorted(row.foreign_keys)!==sorted(old.foreign_keys))errors.push(`Ownership/foreign keys changed: ${id}`);
+ }
+ for(const id of new Set([...mapped.keys(),...baseline.keys()]))if(!relations.has(id))errors.push(`Missing relation: ${id}`);
+ const buckets=new Map(catalog.buckets.map(b=>[b.id,b]));const oldBuckets=new Map(reviewed.buckets.map(b=>[b.id,b]));
+ const bucketIds=new Set();
+ for(const b of inventory.buckets){
+  if(!object(b)||!name(b.id)||!['scope','data','review'].every(k=>typeof b[k]==='string'&&b[k].trim())){errors.push('Malformed bucket classification.');continue;}
+  if(bucketIds.has(b.id))errors.push(`Duplicate bucket classification: ${b.id}`);bucketIds.add(b.id);
+ }
+ for(const [id,b] of buckets){if(!bucketIds.has(id))errors.push(`Unclassified bucket: ${id}`);if(!oldBuckets.has(id)||oldBuckets.get(id).public!==b.public)errors.push(`Bucket visibility/configuration changed: ${id}`);}
+ for(const id of new Set([...bucketIds,...oldBuckets.keys()]))if(!buckets.has(id))errors.push(`Missing bucket: ${id}`);
+ if(!unique(inventory.outsideCatalog.map(s=>s?.id))||inventory.outsideCatalog.length===0||!inventory.outsideCatalog.every(s=>object(s)&&['id','location','data','review'].every(k=>typeof s[k]==='string'&&s[k].trim())))errors.push('Malformed external/local inventory.');
+ return errors;
+}
+
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+ try {
+  const args=process.argv.slice(2);
+  if((args.length!==2&&args.length!==4)||args[0]!=='--catalog'||(args.length===4&&args[2]!=='--reviewed-additions'))throw Error('Usage: npm run check:personal-data-inventory -- --catalog /path/to/metadata.json [--reviewed-additions /path/to/reviewed-additions.json].');
+  const catalog=JSON.parse(readFileSync(process.argv[3],'utf8'));
+  const reviewed=readReviewedCatalog(),inventory=readInventory();
+  const addition=args[3]?JSON.parse(readFileSync(args[3],'utf8')):null;
+  if(addition&&(!object(addition.inventoryGroup)||!Array.isArray(addition.inventoryGroup.relations)||!Array.isArray(addition.relations)
+    ||sorted(addition.inventoryGroup.relations)!==sorted(addition.relations.map(r=>r.schema_name+'.'+r.table_name))))throw Error('Reviewed additions must classify exactly the added relations.');
+  const errors=addition?auditInventory(catalog,{...inventory,groups:[...inventory.groups,addition.inventoryGroup]},mergeReviewedCatalogAdditions(reviewed,addition)):auditInventory(catalog,inventory,reviewed);
+  if(errors.length){console.error(errors.join('\n'));process.exitCode=1;}
+  else console.log(`PASS metadata coverage: ${catalog.relations.length} relations and ${catalog.buckets.length} buckets match the reviewed inventory. No live connection, row-content review or export verification was performed by this command.`);
+ }catch(error){console.error(error instanceof SyntaxError?'Invalid metadata JSON.':error.message);process.exitCode=1;}
+}

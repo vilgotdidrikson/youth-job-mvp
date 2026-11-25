@@ -3,11 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import mapboxgl from "mapbox-gl";
+// Loaded here instead of globally, so only routes with a map download it.
+import "mapbox-gl/dist/mapbox-gl.css";
+import { getJobWorkplaces } from "@/lib/job-workplaces";
 import { getCityCoordinates, type Coordinates } from "@/lib/job-location";
 import type { JobPost } from "@/lib/types";
 
 interface LocatedJob {
   job: JobPost;
+  workplaceId: string;
   coordinates: Coordinates;
   hasPreciseCoordinates: boolean;
 }
@@ -21,8 +25,11 @@ interface JobCluster {
 interface JobMapProps {
   jobs: JobPost[];
   userCoordinates: Coordinates | null;
+  selectedJobId?: string | null;
+  onJobSelect?: (id: string | null) => void;
   onOpenJob?: (id: string) => void;
-  onUnavailable?: () => void;
+  active?: boolean;
+  onUnavailable?: (message: string | null) => void;
 }
 
 const STOCKHOLM: Coordinates = { longitude: 18.0686, latitude: 59.3293 };
@@ -83,7 +90,7 @@ function clusterNearbyJobs(jobs: LocatedJob[]): JobCluster[] {
   });
 
   return groups.map((group) => ({
-    id: group.map(({ job }) => job.id).join(","),
+    id: group.map(({ job, workplaceId }) => `${job.id}:${workplaceId}`).join(","),
     jobs: group,
     coordinates: {
       longitude: group.reduce((total, item) => total + item.coordinates.longitude, 0) / group.length,
@@ -179,58 +186,84 @@ function pinTileMarkup(job: JobPost): string {
   return `<span class="job-map-pin-tile"><span class="job-map-pin-initials">${escapeHtml(companyInitials(job.company_name))}</span>${source ? `<img src="${escapeHtml(source)}" alt="" loading="lazy" decoding="async" />` : ""}</span>`;
 }
 
-export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobMapProps) {
+export function JobMap({ jobs, userCoordinates, selectedJobId, onJobSelect, onOpenJob, active = true, onUnavailable }: JobMapProps) {
   const router = useRouter();
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const keyboardPopup = useRef<string | null>(null);
   const lastViewportClusterKeyRef = useRef("");
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState("");
-  const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
+  const [localClusterId, setActiveClusterId] = useState<string | null>(null);
   const [clusterCardStarts, setClusterCardStarts] = useState<Record<string, number>>({});
   const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-  const locatedJobs = useMemo(() => jobs.map((job) => {
-      const hasPreciseCoordinates = typeof job.longitude === "number" && typeof job.latitude === "number";
-      const coordinates = hasPreciseCoordinates
-        ? { longitude: job.longitude, latitude: job.latitude }
-        : getCityCoordinates(job.city);
-      return coordinates ? { job, coordinates, hasPreciseCoordinates } : null;
-    }).filter((item): item is LocatedJob => item !== null), [jobs]);
+  const locatedJobs = useMemo(() => jobs.flatMap((job) => getJobWorkplaces(job).flatMap(place => {
+    const hasPreciseCoordinates = typeof place.longitude === "number" && Number.isFinite(place.longitude) && Math.abs(place.longitude) <= 180
+      && typeof place.latitude === "number" && Number.isFinite(place.latitude) && Math.abs(place.latitude) <= 90;
+    const coordinates = hasPreciseCoordinates ? { longitude: place.longitude!, latitude: place.latitude! } : getCityCoordinates(place.city);
+    return coordinates ? [{ job: { ...job, address: place.address, postal_code: place.postal_code, city: place.city }, workplaceId: place.id, coordinates, hasPreciseCoordinates }] : [];
+  })), [jobs]);
 
   const jobClusters = useMemo(() => clusterNearbyJobs(locatedJobs), [locatedJobs]);
+  const unavailable = !token ? "Kartan är inte tillgänglig just nu."
+    : jobs.length > 0 && locatedJobs.length === 0 ? "Jobben saknar en plats som kan visas på kartan."
+    : mapError || null;
+  useEffect(() => { onUnavailable?.(unavailable); }, [onUnavailable, unavailable]);
+  useEffect(() => {
+    if (active && mapReady) mapRef.current?.resize();
+  }, [active, mapReady]);
+  const activeClusterId = selectedJobId === undefined ? localClusterId : jobClusters.find(cluster => cluster.id === localClusterId && cluster.jobs.some(item => item.job.id === selectedJobId))?.id ?? jobClusters.find(cluster => cluster.jobs.some(item => item.job.id === selectedJobId))?.id ?? null;
+  useEffect(() => {
+    const selected = locatedJobs.find(item => item.job.id === selectedJobId);
+    if (!selected || !mapReady || !mapRef.current) return;
+    mapRef.current.easeTo({ center:[selected.coordinates.longitude,selected.coordinates.latitude], duration:window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240 });
+  }, [selectedJobId, locatedJobs, mapReady]);
 
   useEffect(() => {
-    if (!token) { onUnavailable?.(); return; }
-    if (!mapContainer.current || mapRef.current) return;
+    if (!token || !mapContainer.current || mapRef.current) return;
 
-    if (!mapboxgl.supported()) {
-      queueMicrotask(() => { setMapError("Din webbläsare saknar stöd för WebGL, som behövs för att visa kartan."); onUnavailable?.(); });
+    const container = mapContainer.current;
+    let instance: mapboxgl.Map | null = null;
+    try {
+      if (!mapboxgl.supported()) {
+        queueMicrotask(() => setMapError("Din webbläsare saknar stöd för WebGL, som behövs för att visa kartan."));
+        return;
+      }
+      mapboxgl.accessToken = token;
+      container.replaceChildren();
+      instance = new mapboxgl.Map({
+        container,
+        style: process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12",
+        center: [STOCKHOLM.longitude, STOCKHOLM.latitude],
+        zoom: 5.3,
+        pitch: 0,
+      });
+      instance.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
+    } catch {
+      try { instance?.remove(); } catch { /* Partially initialized map. */ }
+      container.replaceChildren();
+      queueMicrotask(() => setMapError("Kartan kunde inte startas. Jobben finns kvar i listan."));
       return;
     }
-
-    mapboxgl.accessToken = token;
-    const container = mapContainer.current;
-    container.replaceChildren();
-    let map: mapboxgl.Map;
-    try { map = new mapboxgl.Map({
-      container,
-      style: process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12",
-      center: [STOCKHOLM.longitude, STOCKHOLM.latitude],
-      zoom: 5.3,
-      pitch: 0,
-    }); } catch { setMapError("Kartan kunde inte startas i den här webbläsaren."); onUnavailable?.(); return; }
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
-    let styleLoaded = false;
+    const map = instance;
+    const canvas = map.getCanvas();
+    const contextLost = (event: Event) => {
+      event.preventDefault();
+      setMapError("Kartan tappade grafikstödet. Jobben finns kvar i listan.");
+    };
+    canvas.addEventListener("webglcontextlost", contextLost);
+    let mapLoaded = false;
     const loadTimeout = window.setTimeout(() => {
-      if (!styleLoaded) { setMapError("Mapbox svarade inte. Kontrollera tokenens URL-begränsningar och försök igen."); onUnavailable?.(); }
+      if (!mapLoaded) setMapError("Kartan svarade inte. Du kan fortfarande utforska jobben i listan.");
     }, 15000);
-
-    map.once("style.load", () => {
-      styleLoaded = true;
+    map.once("load", () => {
+      mapLoaded = true;
       window.clearTimeout(loadTimeout);
+    });
+    map.once("style.load", () => {
       // Recolours whatever style is configured into the paper palette. Set
       // NEXT_PUBLIC_MAPBOX_KEEP_STYLE_COLORS=true to keep a hand-made style's
       // own colours instead.
@@ -241,9 +274,8 @@ export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobM
     map.on("error", (event) => {
       const message = event.error?.message || "Kartan kunde inte laddas.";
       const status = (event.error as Error & { status?: number }).status;
-      if (status === 401 || status === 403 || /unauthorized|forbidden|access token|style.*not found/i.test(message)) {
-        setMapError("Mapbox svarade 403 för kartdata. Kontrollera att tokenen är nygenererad med tile-åtkomst och att Mapbox-kontot är aktivt.");
-        onUnavailable?.();
+      if (!mapLoaded || status === 401 || status === 403 || /unauthorized|forbidden|access token|style.*not found|webgl|context lost/i.test(message)) {
+        setMapError("Kartan kunde inte visas just nu. Jobben finns kvar i listan.");
       }
     });
     mapRef.current = map;
@@ -253,12 +285,13 @@ export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobM
       markersRef.current = [];
       popupRef.current?.remove();
       window.clearTimeout(loadTimeout);
+      canvas.removeEventListener("webglcontextlost", contextLost);
       map.remove();
       container.replaceChildren();
       mapRef.current = null;
       setMapReady(false);
     };
-  }, [token, onUnavailable]);
+  }, [token]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -278,31 +311,36 @@ export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobM
       const chipLabel = isCluster ? `${clusterJobs.length} jobb` : (leadJob.company_name || "Företag");
       markerElement.innerHTML = `
         <button type="button" class="job-map-pin" aria-label="${escapeHtml(pinLabel)}" aria-expanded="false">
-          ${isCluster ? `<span class="job-map-pin-count" aria-hidden="true">${clusterJobs.length}</span>` : pinTileMarkup(leadJob)}
+          <svg class="job-map-pin-glyph" viewBox="0 0 36 45" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <path class="job-map-pin-body" d="M18 1C8.6 1 1 8.6 1 18c0 11.8 17 27 17 27s17-15.2 17-27C35 8.6 27.4 1 18 1Z" />
+            ${isCluster ? `<text class="job-map-pin-count" x="18" y="18" text-anchor="middle" dominant-baseline="central">${clusterJobs.length > 99 ? "99+" : clusterJobs.length}</text>` : '<circle class="job-map-pin-dot" cx="18" cy="17" r="5.5" />'}
+          </svg>
         </button>
         <span class="job-map-pin-chip" aria-hidden="true">${escapeHtml(chipLabel)}</span>
       `;
-      // A photo that fails to load uncovers the company initials underneath.
-      markerElement.querySelector("img")?.addEventListener("error", (event) => (event.currentTarget as HTMLImageElement).remove());
 
-      const toggle = (event: Event) => {
+      const pin = markerElement.querySelector(".job-map-pin");
+      pin?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        setActiveClusterId((current) => current === clusterId ? null : clusterId);
-      };
-      markerElement.querySelector(".job-map-pin")?.addEventListener("click", toggle);
-      markerElement.querySelector(".job-map-pin")?.addEventListener("pointerenter", () => {
+        const isOpen = pin.getAttribute("aria-expanded") === "true";
+        keyboardPopup.current = (event as MouseEvent).detail === 0 && !isOpen ? clusterId : null;
+        setActiveClusterId(isOpen ? null : clusterId);
+        onJobSelect?.(isOpen ? null : leadJob.id);
+      });
+      pin?.addEventListener("pointerenter", () => {
         setActiveClusterId(clusterId);
+        onJobSelect?.(leadJob.id);
       });
 
       // Keep Mapbox's anchor independent from our expandable DOM UI. The
-      // element is a 1px coordinate anchor; CSS centres the circular pin on it
-      // and hangs the name chip below, so styling never moves the geo point.
+      // element is a 1px coordinate anchor; CSS puts the drop tip on it.
+      // Only the SVG scales, from its tip, so selection never moves the geo point.
       return new mapboxgl.Marker({ element: markerElement, anchor: "center" })
         .setLngLat([coordinates.longitude, coordinates.latitude])
         .addTo(map);
     });
-  }, [jobClusters, mapReady]);
+  }, [jobClusters, mapReady, onJobSelect]);
 
   // Lift the open pin above its neighbours and keep aria-expanded truthful.
   useEffect(() => {
@@ -331,23 +369,47 @@ export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobM
     const content = document.createElement("div");
     content.className = "job-map-popup-content";
     content.style.setProperty("--job-map-card-width", cardWidth);
-    content.innerHTML = `<section class="job-map-cluster-cards"><button type="button" class="job-map-close" aria-label="Stäng jobbannonserna">×</button>${cardStart > 0 ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-previous" aria-label="Visa tidigare annonser">‹</button>' : ""}<div class="job-map-card-list">${visibleJobs.map(({ job, coordinates: jobCoordinates }) => `<article class="job-map-card"><header class="job-map-card-head">${pinTileMarkup(job)}<p class="job-map-company">${escapeHtml(job.company_name || "Företag")}</p></header><h2>${escapeHtml(job.title)}</h2><div class="job-map-meta"><span>${escapeHtml(job.salary_per_hour || "Lön enligt överenskommelse")}</span>${distanceBetween(userCoordinates, jobCoordinates) ? `<span>${distanceBetween(userCoordinates, jobCoordinates)}</span>` : ""}</div><button type="button" class="job-map-cta" data-job-id="${escapeHtml(job.id)}">Visa jobbet <span aria-hidden="true">→</span></button></article>`).join("")}</div>${cardStart < maxCardStart ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-next" aria-label="Visa fler annonser">›</button>' : ""}</section>`;
+    content.innerHTML = `<section class="job-map-cluster-cards"><button type="button" class="job-map-close" aria-label="Stäng jobbannonserna">×</button>${cardStart > 0 ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-previous" aria-label="Visa tidigare annonser">‹</button>' : ""}<div class="job-map-card-list">${visibleJobs.map(({ job, coordinates: jobCoordinates }) => `<article class="job-map-card"><header class="job-map-card-head">${pinTileMarkup(job)}<p class="job-map-company">${escapeHtml(job.company_name || "Företag")}</p></header><h2>${escapeHtml(job.title)}</h2><div class="job-map-meta"><span>${escapeHtml([job.address, job.city].filter(Boolean).join(", "))}</span><span>${escapeHtml(job.salary_per_hour || "Lön enligt överenskommelse")}</span>${distanceBetween(userCoordinates, jobCoordinates) ? `<span>${distanceBetween(userCoordinates, jobCoordinates)}</span>` : ""}</div><button type="button" class="job-map-cta" data-job-id="${escapeHtml(job.id)}">Visa jobbet <span aria-hidden="true">→</span></button></article>`).join("")}</div>${cardStart < maxCardStart ? '<button type="button" class="job-map-cluster-arrow job-map-cluster-next" aria-label="Visa fler annonser">›</button>' : ""}</section>`;
 
-    const close = () => setActiveClusterId((current) => current === clusterId ? null : current);
+    const close = () => {
+      const restoreFocus = content.contains(document.activeElement);
+      keyboardPopup.current = null;
+      setActiveClusterId((current) => current === clusterId ? null : current);
+      onJobSelect?.(null);
+      if (restoreFocus) requestAnimationFrame(() => {
+        markersRef.current.find(marker => marker.getElement().dataset.clusterId === clusterId)
+          ?.getElement().querySelector<HTMLButtonElement>(".job-map-pin")?.focus();
+      });
+    };
+    content.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+    });
     content.querySelector(".job-map-close")?.addEventListener("click", close);
     content.querySelector(".job-map-cluster-previous")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.max(0, cardStart - 1) })));
     content.querySelector(".job-map-cluster-next")?.addEventListener("click", () => setClusterCardStarts((current) => ({ ...current, [clusterId]: Math.min(maxCardStart, cardStart + 1) })));
-    content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => { const id = button.dataset.jobId || ""; if (onOpenJob) onOpenJob(id); else router.push(`/jobb/${encodeURIComponent(id)}`); }));
+    content.querySelectorAll<HTMLButtonElement>(".job-map-cta").forEach((button) => button.addEventListener("click", () => {
+      const id = button.dataset.jobId;
+      if (!id) return;
+      if (onOpenJob) onOpenJob(id);
+      else router.push(`/jobb/${encodeURIComponent(id)}`);
+    }));
 
-    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, maxWidth: "none", offset: [0, -30] })
+    const popup = new mapboxgl.Popup({ className: "job-map-popup", closeButton: false, closeOnClick: false, focusAfterOpen: false, maxWidth: "none", offset: [0, -52] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .setDOMContent(content)
       .addTo(map);
     popupRef.current = popup;
+    if (keyboardPopup.current === clusterId) {
+      keyboardPopup.current = null;
+      content.querySelector<HTMLButtonElement>(".job-map-close")?.focus();
+    }
     return () => {
       popup.remove();
     };
-  }, [activeClusterId, clusterCardStarts, jobClusters, mapReady, router, userCoordinates, onOpenJob]);
+  }, [activeClusterId, clusterCardStarts, jobClusters, mapReady, router, userCoordinates, onJobSelect, onOpenJob]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -359,20 +421,20 @@ export function JobMap({ jobs, userCoordinates, onOpenJob, onUnavailable }: JobM
     // Fit only when the actual job set changes, never when a pin/card is clicked.
     if (jobClusters.length === 1) {
       const location = jobClusters[0].coordinates;
-      map.easeTo({ center: [location.longitude, location.latitude], zoom: 11, duration: 350 });
+      map.easeTo({ center: [location.longitude, location.latitude], zoom: 11, duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 350 });
     } else {
       const bounds = new mapboxgl.LngLatBounds();
       jobClusters.forEach(({ coordinates }) => bounds.extend([coordinates.longitude, coordinates.latitude]));
       map.fitBounds(bounds, { padding: { top: 110, right: 80, bottom: 130, left: 80 }, maxZoom: 11, duration: 0 });
     }
-  }, [jobClusters, mapReady]);
+  }, [jobClusters, mapReady, onJobSelect, selectedJobId, activeClusterId]);
 
   if (!token) {
     return (
       <div className="job-map-token-message">
         <span>⌖</span>
-        <h2>Aktivera din karta</h2>
-        <p>Lägg till <code>NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN</code> i <code>.env.local</code> och starta om appen.</p>
+        <h2>Kartan är inte tillgänglig just nu</h2>
+        <p>Du kan fortfarande utforska jobben i listan.</p>
       </div>
     );
   }
