@@ -131,6 +131,7 @@ Chromium (Playwright, headless, WebGL via SwiftShader) mot https://youth-job-mvp
 | N20 | Formulär och chatt återanvänder samma språkparser. Två språk på samma rad separeras och båda når CV-granskning och sparning. Testet täcker även separat godkännande och bevarad egen nivåtext. |
 | N02 | DevStaging använder PT409 vid konflikt efter statusändring. SQL-provet för återkallande kontrollerar rätt kod och att en gammal bekräftelse lämnar den skickade ansökan intakt. |
 | N14 | Arbetsplatsprovet skapar fiktiva testkonton i transaktionen och skickar ansökan via ordinarie delningsförhandsvisning. Verifierat i DevStaging, inklusive serverns ögonblicksbild och nekad åtkomst. |
+| N17 | Kategoritestet stubbade CSS-modulen som formulärfältet använder. Hela det lokala kategoriprovet passerade därefter. |
 
 De riktade komponentproven, TypeScript, riktad ESLint och produktionsbygget
 passerade. DevStaging-proven kördes med rollback för rekryteringskedjan,
